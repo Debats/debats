@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
-  root 'static_pages#a_propos'
-  get 'static_pages/a_propos'
+  root                  'static_pages#a_propos'
+  get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
+  get 'contact',              to: 'static_pages#contact',       as: 'contact'
+  get 'sujets/nouveau',       to: 'subjects#new',               as: 'subjects_new'
+  get 'sujets/l-euthanasie',  to: 'subjects#view',              as: 'subjects_view'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
