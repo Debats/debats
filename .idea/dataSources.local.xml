@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal">
+    <data-source name="Rails Debats: development" uuid="eae3b6fc-333e-490e-9432-e94dda0ad0f3" />
+    <data-source name="Rails Debats: test" uuid="9bcdb4ae-0f33-4232-9579-a51099bdfd73" />
+  </component>
+</project>
