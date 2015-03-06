@@ -1,0 +1,24 @@
+class User < ActiveRecord::Base
+
+  ## PASSWORD MANAGEMENT
+  has_secure_password
+
+  ## EMAIL ALWAYS IN DOWNCASE
+  before_save { self.email.downcase! }
+
+  ## NAME VALIDATION
+  validates :name,
+      presence: true,
+      length: {maximum: 50}
+
+  ## EMAIL VALIDATION
+  VALID_EMAIL_REGEX =/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
+  validates :email,
+      presence: true,
+      length: {maximum: 255},
+      format: {with:VALID_EMAIL_REGEX},
+      uniqueness: {case_sensitive: false}
+
+  ## PASSWORD VALIDATION
+  validates :password, length: {minimum: 8}
+end
