@@ -8,6 +8,9 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
       post users_path, user: {name: "", email: "user@invalid", password: "pwd", password_confirmation: "pw"}
     end
     assert_template "users/new"
+    assert_select 'div#error_explanation'
+    assert_select 'div.field_with_errors'
+    assert_not flash[:success]
   end
 
   test "valid user should be created" do
@@ -17,6 +20,9 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
     end
     assert_response :success
     assert_template "users/show"
+    assert_select 'div#error_explanation', false
+    assert_select 'div.field_with_errors', false
+    assert flash[:success]
   end
 
 end
