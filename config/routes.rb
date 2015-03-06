@@ -2,10 +2,10 @@ Rails.application.routes.draw do
   root                  'static_pages#a_propos'
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
-  get 'debatteurs/nouveau',   to: 'users#new',                  as: 'users_new'
-  get 'sujets',               to: 'subjects#list',              as: 'subjects_list'
-  get 'sujets/nouveau',       to: 'subjects#new',               as: 'subjects_new'
   get 'sujets/l-euthanasie',  to: 'subjects#view',              as: 'subjects_view'
+
+  resources :users,     path: "debatteurs",   path_names:   {new: "nouveau", edit: "modifier"}
+  resources :subjects,  path: "sujets",       path_names:   {new: "nouveau", edit: "modifier"}
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
