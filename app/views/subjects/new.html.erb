@@ -1,2 +1,19 @@
-<h1>Subjects#new</h1>
-<p>Find me in app/views/subjects/new.html.erb</p>
+<% provide(:title, "Nouveau sujet") %>
+<h1>Nouveau sujet</h1>
+<p>Vous êtes sur la voie du débat.</p>
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_for(@subject) do |f| %>
+        <% @form_errors = @subject.errors %>
+        <%= render "shared/error_messages" %>
+
+        <%= f.label :title, "Titre" %>
+        <%= f.text_field :title, class: 'form-control' %>
+
+        <%= f.label :presentation, "Presentation"%>
+        <%= f.text_area :presentation, class: 'form-control'  %>
+
+        <%= f.submit "Créer ce sujet", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>

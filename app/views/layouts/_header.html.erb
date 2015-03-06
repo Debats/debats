@@ -1,12 +1,12 @@
 <header class="navbar navbar-fixed-top navbar-inverse">
   <div class="container">
-    <%= link_to "Debats", root_path, id:"logo" %>
+    <%= link_to "Débats", root_path, id:"logo" %>
     <nav>
       <ul class="nav navbar-nav navbar-right">
         <li><%= link_to "À propos", a_propos_path %></li>
-        <li><%= link_to "Sujets", '#' %></li>
+        <li><%= link_to "Sujets", subjects_path %></li>
         <li><%= link_to "Positions", '#' %></li>
-        <li><%= link_to "Ecrire", '#' %></li>
+        <li><%= link_to "Ecrire", new_subject_path %></li>
       </ul>
     </nav>
   </div>

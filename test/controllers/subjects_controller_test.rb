@@ -6,13 +6,8 @@ class SubjectsControllerTest < ActionController::TestCase
     assert_response :success
   end
 
-  test "should get view" do
-    get :view
-    assert_response :success
-  end
-
   test "should get list" do
-    get :list
+    get :index
     assert_response :success
   end
 

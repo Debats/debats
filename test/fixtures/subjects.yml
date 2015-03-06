@@ -1,9 +1,14 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  title: MyString
-  presentation: MyString
+  title: L'euthanasie
+  presentation: La majorité des États ne reconnaît pas ou interdit l'euthanasie active et les autres formes d'aide à la fin de vie, mais dans beaucoup d'entre eux, notamment en Europe et en Amérique du Nord, il existe une tolérance implicite ou explicite à l'encontre de ces pratiques,
+                pour autant qu'elles se déroulent dans un cadre réglementé.
 
 two:
-  title: MyString
-  presentation: MyString
+  title: La dette européenne
+  presentation: L'approche communautaire est une approche globale qui va intégrer l'ensemble des administrations publiques et interdit tout transfert entre les administrations publiques.
+
+three:
+  title: « Je suis Charlie »
+  presentation: Après seulement quelques minutes, le slogan se répand très rapidement sur les blogs et réseaux sociaux, notamment via Twitter et Facebook ou dans les principaux journaux français comme Le Monde, Libération. Twitter France annonce en fin de journée le 8 janvier 2015 que 3,4 millions de messages de solidarité #JeSuisCharlie ont été publiés dans le monde.

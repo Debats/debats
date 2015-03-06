@@ -1,0 +1,8 @@
+<% provide(:title, "Sujets") %>
+<div class="subjects-index" >
+<% @subjects.each do |subject| %>
+      <%= image_tag("subjects/l-euthanasie.png", class:"subject-main-image", alt:"L'euthanasie") %>
+      <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+      <p class="subject-presentation-text"><%= subject.presentation %></p>
+<% end %>
+</div>
