@@ -1,11 +1,19 @@
 Rails.application.routes.draw do
+  get 'sessions/new'
+
   root                  'static_pages#a_propos'
+
+  get    'login'   => 'sessions#new'
+  post   'login'   => 'sessions#create'
+  delete 'logout'  => 'sessions#destroy'
+
+  resources :users,     path: "debatteurs",   path_names:   {new: "nouveau", edit: "modifier"}
+  resources :subjects,  path: "sujets",       path_names:   {new: "nouveau", edit: "modifier"}
+
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
   get 'sujets/l-euthanasie',  to: 'subjects#view',              as: 'subjects_view'
 
-  resources :users,     path: "debatteurs",   path_names:   {new: "nouveau", edit: "modifier"}
-  resources :subjects,  path: "sujets",       path_names:   {new: "nouveau", edit: "modifier"}
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
