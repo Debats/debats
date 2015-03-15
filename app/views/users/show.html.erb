@@ -6,6 +6,9 @@
           <%= gravatar_for @user, {size:160} %>
           <%= @user.name %>
         </h1>
+          <p>
+      <%= link_to "Modifier", edit_user_path(@user), class: "btn btn-primary" %>
+      </p>
     </section>
   </aside>
 </div>

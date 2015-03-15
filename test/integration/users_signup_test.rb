@@ -20,6 +20,7 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
     end
     assert_response :success
     assert_template "users/show"
+    assert is_logged_in?
     assert_select 'div#error_explanation', false
     assert_select 'div.field_with_errors', false
     assert flash[:success]
