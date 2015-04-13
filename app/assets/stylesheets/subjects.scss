@@ -1,6 +1,10 @@
+h2.subject-title {
+  font-size: 2.5em;
+}
+
 img.subject-main-image {
   float: left;
-  margin: 10px;
+  margin-right: 10px;
 }
 
 p.subject-presentation-text {
@@ -8,7 +12,10 @@ p.subject-presentation-text {
 }
 
 div.subjects-index {
+  ul li {
+
+  }
   img.subject-main-image {
-    clear: both;
+
   }
 }

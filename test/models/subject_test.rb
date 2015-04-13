@@ -21,7 +21,7 @@ class SubjectTest < ActiveSupport::TestCase
   end
 
   test "title should not be too long" do
-    @subject.title = "a" * 51
+    @subject.title = "a" * 101
     assert_not @subject.valid?
   end
 

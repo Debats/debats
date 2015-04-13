@@ -1,19 +1,24 @@
 Rails.application.routes.draw do
+  get 'password_resets/new'
+
+  get 'password_resets/edit'
+
   get 'sessions/new'
 
-  root                  'static_pages#a_propos'
+  root                  'subjects#index'
 
   get    'login'   => 'sessions#new'
   post   'login'   => 'sessions#create'
   delete 'logout'  => 'sessions#destroy'
 
-  resources :users,     path: "debatteurs",   path_names:   {new: "nouveau", edit: "modifier"}
-  resources :subjects,  path: "sujets",       path_names:   {new: "nouveau", edit: "modifier"}
+  resources :users,               path: "utilisateurs",     path_names:   {new: "nouveau", edit: "modifier"}
+  resources :account_activations, path: "activation",       path_names:   {edit: "confirmer"},             only: [:edit]
+  resources :password_resets,                                                      only: [:new, :create, :edit, :update]
+  resources :subjects,            path: "sujets",           path_names:   {new: "nouveau", edit: "modifier"}
+  resources :public_figures,      path:"personalites",      path_names:    {new: "nouvelle", edit:"modifier"}
 
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
-  get 'sujets/l-euthanasie',  to: 'subjects#view',              as: 'subjects_view'
-
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

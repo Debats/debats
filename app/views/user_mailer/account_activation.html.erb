@@ -1,0 +1,9 @@
+<h1><%= APP_NAME %></h1>
+
+<p>Cher <%= @user.name%>, </p>
+
+<p>
+  Suite à votre inscription sur <%= APP_NAME %>, veuillez utiliser le lien ci-dessous pour activer votre compte :
+</p>
+
+  <%= link_to "Activer", edit_account_activation_url(@user.activation_token, email: @user.email) %>

@@ -1,8 +1,12 @@
 <% provide(:title, "Sujets") %>
+
+<%= render 'layouts/last_statements' %>
+
+<%= link_to "Nouveau", new_subject_path, class: "btn btn-primary" %>
+
 <div class="subjects-index" >
-<% @subjects.each do |subject| %>
-      <%= image_tag("subjects/l-euthanasie.png", class:"subject-main-image", alt:"L'euthanasie") %>
-      <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
-      <p class="subject-presentation-text"><%= subject.presentation %></p>
-<% end %>
+  <ul id="subjects-index">
+    <%= render @subjects %>
+  </ul>
 </div>
+<%= will_paginate %>

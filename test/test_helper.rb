@@ -25,6 +25,18 @@ class ActiveSupport::TestCase
     end
   end
 
+  # Log out a test user
+  def log_out(user)
+    if integration_test?
+      delete logout_path
+    else
+      user.forget
+      cookies.delete(:user_id)
+      cookies.delete(:remember_token)
+      session.delete(:user_id)
+    end
+  end
+
   # Returns true if a test user is logged in.
   def is_logged_in?
     !session[:user_id].nil?

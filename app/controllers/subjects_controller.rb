@@ -1,7 +1,8 @@
 class SubjectsController < ApplicationController
+  before_action :reputation_to_destroy, only: :destroy
 
   def index
-    @subjects = Subject.all
+    @subjects = Subject.paginate(page: params[:page])
   end
 
   def show
@@ -22,9 +23,28 @@ class SubjectsController < ApplicationController
     end
   end
 
+  def destroy
+    subject = Subject.find(params[:id])
+    title = subject.title
+    subject.destroy
+    flash[:success] = "Sujet \"#{title}\" supprimé"
+    redirect_to subjects_url
+  end
+
   private
 
   def subject_params
     params.require(:subject).permit(:title, :presentation)
+  end
+
+  def reputation_to_destroy
+    if !current_user
+      store_location
+      flash[:danger] = "Vous devez être identifié pour supprimer un sujet"
+      redirect_to login_url
+    elsif current_user.reputation < 1000
+      flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
+      redirect_to(Subject.find(params[:id]))
+    end
   end
 end

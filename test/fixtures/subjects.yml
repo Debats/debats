@@ -12,3 +12,9 @@ two:
 three:
   title: « Je suis Charlie »
   presentation: Après seulement quelques minutes, le slogan se répand très rapidement sur les blogs et réseaux sociaux, notamment via Twitter et Facebook ou dans les principaux journaux français comme Le Monde, Libération. Twitter France annonce en fin de journée le 8 janvier 2015 que 3,4 millions de messages de solidarité #JeSuisCharlie ont été publiés dans le monde.
+
+<% 30.times do |n| %>
+subject_<%= n %>:
+  title:  <%= "Subject #{n}" %>
+  presentation: <%= "presentation #{n} ici" %>
+<% end %>

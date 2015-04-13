@@ -4,7 +4,7 @@ class SiteLayoutTest < ActionDispatch::IntegrationTest
 
   test "layout links" do
     get root_path
-    assert_template "static_pages/a_propos"
+    assert_template "subjects/index"
     assert_select "a[href=?]", root_path
     assert_select "a[href=?]", a_propos_path, count:2
     assert_select "a[href=?]", contact_path

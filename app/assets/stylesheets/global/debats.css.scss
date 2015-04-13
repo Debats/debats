@@ -54,8 +54,6 @@ input {
     color: $state-danger-text;
   }
 }
-
-/* forms */
 .checkbox {
   margin-top: -10px;
   margin-bottom: 10px;
@@ -63,4 +61,12 @@ input {
     margin-left: 20px;
     font-weight: normal;
   }
+}
+
+
+// Last statements on the left
+div#last-statements {
+  width:200px;
+  float:left;
+  margin-right:40px;
 }

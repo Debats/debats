@@ -38,4 +38,14 @@ class UsersControllerTest < ActionController::TestCase
     assert_redirected_to root_url
   end
 
+  test "own reputation should not be editable" do
+    user = users(:Mehdi)
+    user.update_attribute(:reputation, 1000)
+    assert_no_difference "user.reputation" do
+      log_in_as(user)
+      patch :update, id:user, user: {reputation:2000}
+      user.reload
+    end
+  end
+
 end
