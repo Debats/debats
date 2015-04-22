@@ -19,7 +19,9 @@ class PasswordResetsController < ApplicationController
   end
 
   def edit
-
+    if (!@user.activated?)
+      @user.activate
+    end
   end
 
   def update
@@ -39,7 +41,7 @@ class PasswordResetsController < ApplicationController
 
     def valid_user
       @user = User.find_by_email(params[:email])
-      unless (@user && @user.activated? && @user.authenticated?(:reset, params[:id]))
+      if (!@user || !@user.authenticated?(:reset, params[:id]))
         flash[:danger] = "Lien incorrect."
         redirect_to root_url
       end

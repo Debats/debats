@@ -30,20 +30,17 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
     get edit_password_reset_path(user.reset_token, email: "")
     assert_redirected_to root_url
 
-    #Inactive user
-    user.toggle!(:activated)
-    get edit_password_reset_path(user.reset_token, email: user.email)
-    assert_redirected_to root_url
-    user.toggle!(:activated)
-
     #Right email, wrong token
     get edit_password_reset_path("wrong token", email: user.email)
     assert_redirected_to root_url
 
-    # Rightt email, right token
+    # Right email, right token
+    user.toggle!(:activated) # Desactivate user to check correct activation
     get edit_password_reset_path(user.reset_token, email: user.email)
     assert_template "password_resets/edit"
     assert_select "input[name=email][type=hidden][value=?]", user.email
+    user.reload
+    assert user.activated?
 
     # Invalid password & confirmation
     patch password_reset_path(user.reset_token),
