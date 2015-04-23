@@ -11,7 +11,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150324235528) do
+ActiveRecord::Schema.define(version: 20150423002330) do
+
+  create_table "positions", force: :cascade do |t|
+    t.string   "title"
+    t.text     "description"
+    t.integer  "subject_id"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "positions", ["subject_id"], name: "index_positions_on_subject_id"
 
   create_table "public_figures", force: :cascade do |t|
     t.string   "name"
@@ -21,6 +31,19 @@ ActiveRecord::Schema.define(version: 20150324235528) do
     t.datetime "created_at",    null: false
     t.datetime "updated_at",    null: false
   end
+
+  create_table "statements", force: :cascade do |t|
+    t.integer  "subject_id"
+    t.integer  "position_id"
+    t.integer  "public_figure_id"
+    t.datetime "taken_at"
+    t.datetime "created_at",       null: false
+    t.datetime "updated_at",       null: false
+  end
+
+  add_index "statements", ["position_id"], name: "index_statements_on_position_id"
+  add_index "statements", ["public_figure_id"], name: "index_statements_on_public_figure_id"
+  add_index "statements", ["subject_id"], name: "index_statements_on_subject_id"
 
   create_table "subjects", force: :cascade do |t|
     t.string   "title"

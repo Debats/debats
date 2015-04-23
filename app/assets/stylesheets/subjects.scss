@@ -1,9 +1,14 @@
-h2.subject-title {
+h1 {
+  text-align: left;
   font-size: 2.5em;
 }
 
+h2 {
+  text-align: left;
+}
+
 img.subject-main-image {
-  float: left;
+  float: right;
   margin-right: 10px;
   margin: 10px;
 }
@@ -17,6 +22,6 @@ div.subjects-index {
 
   }
   img.subject-main-image {
-
+    float:left;
   }
 }

@@ -33,5 +33,13 @@ class SubjectTest < ActiveSupport::TestCase
     assert_not dup_subject.valid?
   end
 
+  test "associated positions should be destroyed on destroy" do
+    @subject.save
+    @subject.positions.create!(title:"test pos", description: "test")
+    assert_difference "Position.count", -1 do
+      @subject.destroy
+    end
+  end
+
 
 end

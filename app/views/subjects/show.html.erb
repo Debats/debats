@@ -1,7 +1,27 @@
 <% provide(:title, @subject.title ) %>
+
 <h1><%= @subject.title %></h1>
+
 <%= image_tag("subjects/l-euthanasie.png", class:"subject-main-image", alt:"#{@subject.title}") %>
-<% if current_user && current_user.reputation > 999 %>
-<%= link_to "Supprimer", @subject, method: :delete, data: { confirm: "Supprimer \"#{@subject.title}\" ?" }, class: "btn btn-primary" %>
+
+<% if current_user && current_user.reputation >= MIN_REPUTATION_TO_DELETE_SUBJECT %>
+<%=       link_to "Supprimer", @subject, method: :delete, data: { confirm: "Supprimer \"#{@subject.title}\" ?" }, class: "btn btn-primary" %>
 <% end %>
+
 <p class="subject-presentation-text"><%= @subject.presentation %></p>
+
+<h2>Problématique</h2>
+
+<p>La majorité des États ne reconnaît pas ou interdit l'euthanasie active et les autres formes d'aide à la fin de vie, mais dans beaucoup d'entre eux,
+  notamment en Europe et en Amérique du Nord, il existe une tolérance implicite ou explicite à l'encontre de ces pratiques, pour autant qu'elles se
+  déroulent dans un cadre réglementé.</p>
+
+<h2>Les positions</h2>
+
+<p><%= pluralize(@subject.positions.count, 'positions') %>, <%= pluralize(@subject.statements.count, 'prise de position') %>, 99 arguments</p>
+
+<% if @subject.positions.any? %>
+    <ul class="Positions">
+      <%= render @subject.positions %>
+    </ul>
+<% end %>

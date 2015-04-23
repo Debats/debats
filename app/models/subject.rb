@@ -1,4 +1,7 @@
 class Subject < ActiveRecord::Base
+  has_many :positions, dependent: :destroy
+  has_many :statements, dependent: :destroy
+
 
   ## NAME VALIDATION
   validates :title,
