@@ -1,5 +1,6 @@
 <li id="position-<%= position.id %>">
   <span class="PositionTitle"><%=position.title%></span>
+  <%= link_to "X", position, method: :delete, data: { confirm: "Supprimer la position \"#{position.title}\" ?" }, class: "btn btn-danger" %>
   <span class="PositionDescription"><%=position.description%></span>
   <span class="PositionStatements"><%= render position.statements %></span>
 </li>

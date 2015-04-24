@@ -1,37 +1,16 @@
 <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
-      <li id="statement-123">
-        <%= image_tag("public-figures/2/little.png", class:"public-figure-little-image", alt:"Manuel Valls") %>
-        <strong>Manuel Valls</strong>
-        s'est déclaré pour
-        "<strong>Droit nouveau</strong>"
-        dans le débat sur
-        <strong>l'euthanasie</strong>
-      </li>
-      <li id="statement-123">
-        <%= image_tag("public-figures/1/little.png", class:"public-figure-little-image", alt:"François Hollande") %>
-        <strong>François Hollande</strong>
-        s'est déclaré pour
-        "<strong>Droit nouveau</strong>"
-        dans le débat sur
-        <strong>l'euthanasie</strong>
-      </li>
-      <li id="statement-123">
-        <%= image_tag("public-figures/23/little.png", class:"public-figure-little-image", alt:"Axel Kahn") %>
-        <strong>Axel Kahn</strong>
-        s'est déclaré pour
-        "<strong>Mort naturelle complète</strong>"
-        dans le débat sur
-        <strong>l'euthanasie</strong>
-      </li>
-      <li id="statement-123">
-        <%= image_tag("public-figures/123/little.png", class:"public-figure-little-image", alt:"Benyamin Netanyahou") %>
-        <strong>Benyamin Netanyahou</strong>
-        s'est déclaré pour
-        "<strong>maintien de l'unité nationale</strong>"
-        dans le débat sur
-        <strong>"Je suis Charlie"</strong>
-      </li>
+      <% # render @latest_statements %>
+      <% @latest_statements.each do |statement| %>
+          <li id="statement-<%= statement.id %>">
+            <%= image_tag("public-figures/#{statement.public_figure.id}/little.png", class:"public-figure-little-image", alt:statement.public_figure.name) %>
+            <strong><%= statement.public_figure.name %></strong>
+            s'est déclaré pour
+            "<strong><%= statement.position.title %></strong>"
+            dans le débat sur
+            <strong><%= statement.subject.title %></strong>
+          </li>
+      <% end %>
     </ul>
 </div>

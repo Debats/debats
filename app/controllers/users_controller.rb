@@ -44,15 +44,6 @@ class UsersController < ApplicationController
 
     # Before Filters
 
-    # only if logged in
-    def logged_in_user
-      unless logged_in?
-        store_location
-        flash[:danger] = "Vous devez être identifié."
-        redirect_to login_url
-      end
-    end
-
     # only if correct user
     def self_user
       @user = User.find(params[:id])

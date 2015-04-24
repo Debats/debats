@@ -6,4 +6,13 @@ class Statement < ActiveRecord::Base
   validates :position_id, presence: true
   validates :public_figure_id, presence: true
   validates :taken_at, {presence: true}
+
+  class << self
+
+    def latest
+      Statement.order(taken_at: :desc).limit(5)
+    end
+
+  end
+
 end

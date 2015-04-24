@@ -25,11 +25,11 @@ mort_naturelle    = euthanasie.positions.create!(title: "Mort naturelle complèt
 
 
 mort_naturelle.statements.create!(  subject_id: euthanasie.id,    public_figure_id: kahn.id,      taken_at: 5.days.ago)
-pour.statements.create!(            subject_id:euthanasie.id,     public_figure_id: mec.id,       taken_at: 5.days.ago)
+pour.statements.create!(            subject_id: euthanasie.id,    public_figure_id: mec.id,       taken_at: 5.days.ago)
 suicide_assiste.statements.create!( subject_id: euthanasie.id,    public_figure_id: autre.id,     taken_at: 5.days.ago)
-droit_nouveau.statements.create!(   subject_id:euthanasie.id,     public_figure_id: valls.id,     taken_at: 5.days.ago)
-droit_nouveau.statements.create!(   subject_id:euthanasie.id,     public_figure_id: segolene.id,  taken_at: 5.days.ago)
-droit_nouveau.statements.create!(   subject_id:euthanasie.id,     public_figure_id: hollande.id,  taken_at: 5.days.ago)
+droit_nouveau.statements.create!(   subject_id: euthanasie.id,    public_figure_id: valls.id,     taken_at: 5.days.ago)
+droit_nouveau.statements.create!(   subject_id: euthanasie.id,    public_figure_id: segolene.id,  taken_at: 5.days.ago)
+droit_nouveau.statements.create!(   subject_id: euthanasie.id,    public_figure_id: hollande.id,  taken_at: 5.days.ago)
 leonetti.statements.create!(        subject_id: euthanasie.id,    public_figure_id: toto.id,      taken_at: 5.days.ago)
 
 10.times do |n|

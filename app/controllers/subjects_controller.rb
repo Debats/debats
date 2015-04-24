@@ -3,10 +3,12 @@ class SubjectsController < ApplicationController
 
   def index
     @subjects = Subject.paginate(page: params[:page])
+    @latest_statements = Statement.latest
   end
 
   def show
     @subject = Subject.find(params[:id])
+    @new_position = @subject.positions.build
   end
 
   def new
