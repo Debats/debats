@@ -3,7 +3,7 @@
 <p>Vous êtes sur la voie du débat.</p>
 <div class="row">
   <div class="col-md-6 col-md-offset-3">
-    <%= form_for(@subject) do |f| %>
+    <%= form_for(@subject, html: {multipart:true}) do |f| %>
         <%= render "shared/error_messages", object: f.object %>
 
         <%= f.label :title, "Titre" %>
@@ -12,7 +12,17 @@
         <%= f.label :presentation, "Presentation"%>
         <%= f.text_area :presentation, class: 'form-control'  %>
 
+        <span class="picture" ><%= f.file_field :picture, accept: 'image/jpeg,image/gif,image/png' %></span>
+
         <%= f.submit "Créer ce sujet", class: "btn btn-primary" %>
     <% end %>
+    <script type="text/javascript">
+      $("#subject_picture").bind('change', function() {
+          var size_in_MB = this.files[0].size/1024/1024;
+          if (size_in_MB > 5) {
+              alert("L'image ne doit pas dépasser 5 Mo. Veuillez choisir un fichier plus léger. ");
+          }
+      })
+    </script>
   </div>
 </div>

@@ -1,7 +1,7 @@
 class Subject < ActiveRecord::Base
   has_many :positions, dependent: :destroy
   has_many :statements, dependent: :destroy
-
+  mount_uploader :picture, PictureUploader
 
   ## NAME VALIDATION
   validates :title,
@@ -12,4 +12,15 @@ class Subject < ActiveRecord::Base
   ## PRESENTATION VALIDATION
   validates :presentation,
       presence: true
+
+  validate :picture_size
+
+  private
+
+    def picture_size
+      if picture.size > 5.megabytes
+        errors.add(:picture, "L'image ne doit pas d&eacte;passer 5 Mo")
+      end
+    end
+
 end

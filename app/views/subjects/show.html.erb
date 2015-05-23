@@ -2,7 +2,7 @@
 
 <h1><%= @subject.title %></h1>
 
-<%= image_tag("subjects/l-euthanasie.png", class:"subject-main-image", alt:"#{@subject.title}") %>
+<%= image_tag @subject.picture.url, class:"subject-main-image", alt:"#{@subject.title}" if @subject.picture?  %>
 
 <% if current_user && current_user.reputation >= MIN_REPUTATION_TO_DELETE_SUBJECT %>
 <%=       link_to "Supprimer", @subject, method: :delete, data: { confirm: "Supprimer \"#{@subject.title}\" ?" }, class: "btn btn-primary btn-danger" %>

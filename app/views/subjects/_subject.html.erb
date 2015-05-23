@@ -1,5 +1,5 @@
   <div class="row">
-<%= image_tag("subjects/l-euthanasie.png", class:"subject-main-image", alt:"L'euthanasie") %>
-<h2 class="subject-title"><%= link_to subject.title, subject %></h2>
-<p class="subject-presentation-text"><%= subject.presentation %></p>
+    <%= image_tag subject.picture.url, class:"subject-main-image", alt:"#{subject.title}" if subject.picture?  %>
+    <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+    <p class="subject-presentation-text"><%= subject.presentation %></p>
       </div>
