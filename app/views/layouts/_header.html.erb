@@ -4,7 +4,7 @@
     <nav>
       <ul class="nav navbar-nav navbar-right">
         <li><%= link_to "Sujets", subjects_path %></li>
-        <li><%= link_to "Personalités", public_figures_path %></li>
+        <li><%= link_to "Personnalités", public_figures_path %></li>
         <li><%= link_to "À propos", a_propos_path %></li>
         <% if logged_in? %>
         <li class="dropdown">
@@ -22,7 +22,7 @@
         </li>
         <% else %>
             <li><%= link_to "Connexion", login_path %></li>
-            <li><%= link_to "inscription", new_user_path %></li>
+            <li><%= link_to "Inscription", new_user_path %></li>
         <% end %>
       </ul>
     </nav>
