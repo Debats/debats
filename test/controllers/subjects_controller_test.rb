@@ -14,7 +14,7 @@ class SubjectsControllerTest < ActionController::TestCase
 
   test "should redirect destroy when not logged in" do
     assert_no_difference "Subject.count" do
-      delete :destroy, id:subjects(:one)
+      delete :destroy, id:subjects(:euthanasie)
     end
     assert_redirected_to login_url
   end
@@ -22,9 +22,9 @@ class SubjectsControllerTest < ActionController::TestCase
   test "should redirect destroy when insufficient reputation" do
     log_in_as(users(:JohnDoe))
     assert_no_difference "Subject.count" do
-      delete :destroy, id:subjects(:one)
+      delete :destroy, id:subjects(:euthanasie)
     end
-    assert_redirected_to subject_url(subjects(:one))
+    assert_redirected_to subject_url(subjects(:euthanasie))
   end
 
 end

@@ -1,11 +1,26 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  title: MyString
-  description: MyText
-  subject_id: 
+pour:
+  title: "Euthanasie"
+  description: "La décision d'abréger les souffrances d'un patient atteint d'une maladie incurable est non seulement prise par le corps médical mais également exécutée par lui."
+  subject: euthanasie
 
-two:
-  title: MyString
-  description: MyText
-  subject_id: 
+suicide_assiste:
+  title: "Suicide assisté"
+  description: "C’est le patient lui-même qui effectue l'acte provoquant la mort, comme en Suisse, en Belgique ou aux Pays-Bas."
+  subject: euthanasie
+
+droit_nouveau:
+  title: "Droit nouveau"
+  description: "Droit à une sédation « profonde et continue » en phase terminale et que les directives anticipées, jusqu’ici simplement indicatives, s’imposent sous certaines conditions aux médecins."
+  subject: euthanasie
+
+leonetti:
+  title: "Application effective de la loi Leonetti"
+  description: "Directives anticipées, personne de confiance, prise de décision collégiale"
+  subject: euthanasie
+
+mort_naturelle:
+  title: "Mort naturelle complète"
+  description: "Aucune intervention du corps médical ou d’un tiers."
+  subject: euthanasie

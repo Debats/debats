@@ -15,7 +15,7 @@ class SubjectPageActionsTest < ActionDispatch::IntegrationTest
 
   test "delete button should show and work if reputation >= 1000" do
     log_in_as users(:Jalil)
-    subject = subjects(:one)
+    subject = subjects(:euthanasie)
     get subject_path(subject)
     assert_template 'subjects/show'
     assert_select "a[href=?]", subject_path(subject), method: :delete, count:1

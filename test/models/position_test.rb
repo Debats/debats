@@ -3,7 +3,7 @@ require 'test_helper'
 class PositionTest < ActiveSupport::TestCase
 
   def setup
-    @subject = subjects(:one)
+    @subject = subjects(:euthanasie)
     @position = @subject.positions.build(title: "For", description: "People who think we should do it")
   end
 

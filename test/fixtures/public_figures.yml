@@ -1,13 +1,47 @@
-# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+hollande:
+  name: "François Hollande"
+  presentation:
+  wikipedia_url:
+  website_url:
 
-one:
-  name: MyString
-  presentation: MyString
-  wikipedia_url: MyString
-  website_url: MyString
+marisol:
+  name: "Marisol Touraine"
+  presentation:
+  wikipedia_url:
+  website_url:
 
-two:
-  name: MyString
-  presentation: MyString
-  wikipedia_url: MyString
-  website_url: MyString
+segolene:
+  name: "Ségolène Royal"
+  presentation:
+  wikipedia_url:
+  website_url:
+
+valls:
+  name: "Manuel Valls"
+  presentation:
+  wikipedia_url:
+  website_url:
+
+kahn:
+  name: "Axel Kahn"
+  presentation:
+  wikipedia_url:
+  website_url:
+
+mec:
+  name: "Un mec"
+  presentation:
+  wikipedia_url:
+  website_url:
+
+autre:
+  name: "Un autre mec"
+  presentation:
+  wikipedia_url:
+  website_url:
+
+toto:
+  name: "Toto"
+  presentation:
+  wikipedia_url:
+  website_url:
