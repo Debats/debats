@@ -1,0 +1,5 @@
+<div class="row">
+  <%= image_tag public_figure.picture.url, class:"figure-main-image", alt:"#{public_figure.name }" if public_figure.picture?  %>
+  <h2 class="figure-title"><%= link_to public_figure.name, public_figure %></h2>
+  <p class="figure-presentation-text"><%= public_figure.presentation %></p>
+</div>
