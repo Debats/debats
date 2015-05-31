@@ -14,8 +14,13 @@ gem 'coffee-script-source', '1.8.0' # Problem with Coffee-script-source 1.9.0 on
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
+# JQuery UI
+gem 'jquery-ui-rails'
+# Rails JQuery Autocomplete
+gem 'rails-jquery-autocomplete'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 gem 'turbolinks'
+gem 'jquery-turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.0'
 # bundle exec rake doc:rails generates the API under doc/api.

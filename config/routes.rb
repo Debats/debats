@@ -9,10 +9,18 @@ Rails.application.routes.draw do
   resources :account_activations, path: "activation",       path_names:   {edit: "confirmer"},             only: [:edit]
   resources :password_resets,     only: [:new, :create, :edit, :update]
 
-  resources :subjects,            path: "sujets",           path_names:   {new: "nouveau", edit: "modifier"}
+  resources :subjects,            path: "sujets",           path_names:   {new: "nouveau", edit: "modifier"} do
+    member do
+      resources :positions,       only: [:index],           as: "subjects_positions"
+    end
+  end
   resources :public_figures,      path:"personalites",      path_names:    {new: "nouvelle", edit:"modifier"}
   resources :positions,           only: [:create, :destroy]
   resources :statements,          only: [:create, :destroy]
+
+  # AUTOCOMPLETE
+  get 'autocomplete/autocomplete_subject_title'
+  get 'autocomplete/autocomplete_position_title'
 
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
