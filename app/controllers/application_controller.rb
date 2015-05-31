@@ -5,9 +5,19 @@ class ApplicationController < ActionController::Base
   include SessionsHelper
   include ActionView::Helpers::TextHelper
 
+  before_action :set_locale
+
   private
 
     # Before Filters
+    def set_locale
+      I18n.locale = params[:locale] || I18n.default_locale
+    end
+
+    ## Adding locale to URLs
+    ##def default_url_options (options = {})
+      #{locale: I18n.locale}.merge options
+    ## end
 
     # only if logged in
     def logged_in_user

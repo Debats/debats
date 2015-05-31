@@ -14,3 +14,7 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym 'RESTful'
 # end
+
+ActiveSupport::Inflector.inflections(:fr) do |inflect|
+  inflect.plural "(prise)( de position)/i", "\1s\2"
+end

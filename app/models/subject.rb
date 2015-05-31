@@ -19,7 +19,7 @@ class Subject < ActiveRecord::Base
 
     def picture_size
       if picture.size > 5.megabytes
-        errors.add(:picture, "L'image ne doit pas d&eacte;passer 5 Mo")
+        errors.add(:picture, t("image_must_not_be_bigger_than", size: 5, unit:t("mb")))
       end
     end
 
