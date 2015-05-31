@@ -2,7 +2,7 @@ Jalil:
   name: Jalil Example
   email: jalil@example.com
   password_digest: <%= User.digest('password') %>
-  reputation: 1000
+  reputation: 1000000
   activated: true
   activated_at: <%= Time.zone.now %>
 

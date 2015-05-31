@@ -3,7 +3,7 @@ require 'test_helper'
 class StaticPagesControllerTest < ActionController::TestCase
 
   def setup
-    @base_title = " | Débats.fr"
+    @base_title = " | Débats.cc"
   end
 
   test "should get a_propos" do

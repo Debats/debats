@@ -2,7 +2,7 @@ module ApplicationHelper
 
   # Returns the full title of the page
   def full_title(page_title = '')
-    base_title = "Débats.fr"
+    base_title = APP_NAME_WITH_DOMAIN_EXT
     if page_title.empty?
       base_title
     else

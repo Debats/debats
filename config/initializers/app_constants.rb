@@ -1,2 +1,4 @@
-APP_NAME = "Les Débats"
-MAIL_FROM_NO_REPLY = "no-reply@les-debats.fr <#{APP_NAME}>"
+APP_NAME = "Débats"
+APP_NAME_WITH_DOMAIN_EXT = "Débats.cc"
+MAIL_FROM_NO_REPLY = "no-reply@debats.cc"
+MAIL_FROM_NO_REPLY_WITH_NAME = "#{APP_NAME} <#{MAIL_FROM_NO_REPLY}>"
