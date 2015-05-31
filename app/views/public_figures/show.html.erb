@@ -1,0 +1,75 @@
+<% provide(:title, @public_figure.name ) %>
+
+<h1><%= @public_figure.name %></h1>
+
+<%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
+    if @public_figure.picture?  %>
+
+<% if current_user && current_user.reputation >= MIN_REPUTATION_TO_DELETE_PUBLIC_FIGURE %>
+    <%=       link_to "Supprimer", @public_figure,
+                      method: :delete,
+                      data: { confirm: "Supprimer \"#{@public_figure.title}\" ?" },
+                      class: "btn btn-primary btn-danger" %>
+<% end %>
+
+<p class="figure-presentation-text"><%= @public_figure.presentation %></p>
+
+<section class="Statements">
+
+  <h2><%=t "The_statements" %></h2>
+
+  <p><%= t('statements_count', count: @public_figure.statements.count) %></p>
+
+  <% if @public_figure.statements.any? %>
+      <ul class="Statements">
+
+        <%= render @public_figure.statements.select { |s| s.id } %>
+
+        <% if logged_in? %>
+            <li id="new-statement">
+              <%= form_for(@new_statement) do |f| %>
+                  <%= render 'shared/error_messages', object: f.object %>
+                  <%= f.hidden_field :public_figure_id, :value => @public_figure.id %>
+
+                  <%= label_tag "Sujet" %>
+                  <%= autocomplete_field_tag 'Subject', '',
+                                             autocomplete_autocomplete_subject_title_path,
+                                             id_element: '#statement_subject_id',
+                                             class: "Autocomplete"
+                  %>
+                  <%= f.hidden_field :subject_id, value: "",
+                                     data: {
+                                             dynamic_selectable_url: subjects_positions_path(':subject_id', format: :json),
+                                             dynamic_selectable_target: '#statement_position_id'
+                                     }
+                                      %>
+
+                  <%= label_tag t "Position" %>
+                  <%= f.label :position_id, "Position prise" %>
+                  <%= f.select :position_id, {} %>
+
+                  <%= f.fields_for @new_statement.evidences.build do |e| %>
+                    <%= e.label :title, "Intitulé de la preuve" %>
+                    <%= e.text_field :title, placeholder: "Quel média, quelle forme ? " %>
+                    <%= e.label :url, "Lien internet ..." %>
+                    <%= e.text_field :url, placeholder: "http://" %>
+                    <%= e.label :file, "... ou pièce jointe" %>
+                    <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
+                    <%= e.label :evidence_date, "Date du document" %>
+                    <%= e.date_select :evidence_date, start_year: Date.today.year-10, end_year: Date.today.year %>
+                    <%= e.time_select :evidence_date, ignore_date: true %>
+                    <%= e.label :fact_date, "Date des faits" %>
+                    <%= e.date_select :fact_date, start_year: Date.today.year-10, end_year: Date.today.year %>
+                    <%= e.time_select :fact_date, ignore_date: true %>
+
+            <% end %>
+
+                  <%= f.submit "Ajouter", class: "btn btn-primary" %>
+              <% end %>
+
+            </li>
+        <% end %>
+      </ul>
+  <% end %>
+
+</section>

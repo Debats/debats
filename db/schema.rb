@@ -11,7 +11,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150525111659) do
+ActiveRecord::Schema.define(version: 20150530144028) do
+
+  create_table "evidences", force: :cascade do |t|
+    t.integer  "statement_id"
+    t.string   "title"
+    t.string   "url"
+    t.string   "file"
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
+    t.datetime "fact_date"
+    t.datetime "evidence_date"
+  end
+
+  add_index "evidences", ["statement_id"], name: "index_evidences_on_statement_id"
 
   create_table "positions", force: :cascade do |t|
     t.string   "title"
@@ -34,17 +47,15 @@ ActiveRecord::Schema.define(version: 20150525111659) do
   end
 
   create_table "statements", force: :cascade do |t|
-    t.integer  "subject_id"
     t.integer  "position_id"
     t.integer  "public_figure_id"
-    t.datetime "taken_at"
     t.datetime "created_at",       null: false
     t.datetime "updated_at",       null: false
   end
 
+  add_index "statements", ["position_id", "public_figure_id"], name: "index_statements_on_position_id_and_public_figure_id", unique: true
   add_index "statements", ["position_id"], name: "index_statements_on_position_id"
   add_index "statements", ["public_figure_id"], name: "index_statements_on_public_figure_id"
-  add_index "statements", ["subject_id"], name: "index_statements_on_subject_id"
 
   create_table "subjects", force: :cascade do |t|
     t.string   "title"

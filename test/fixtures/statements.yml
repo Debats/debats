@@ -1,35 +1,28 @@
 mort_naturelle_kahn:
   position: mort_naturelle
   public_figure: kahn
-  taken_at: <%= 5.days.ago %>
 
 pour_mec:
   position: pour
   public_figure: mec
-  taken_at: <%= 5.days.ago %>
 
 suicide_assiste_autre:
   position: suicide_assiste
   public_figure: autre
-  taken_at: <%= 5.days.ago %>
 
 droit_nouveau_valls:
   position: droit_nouveau
   public_figure: valls
-  taken_at: <%= 5.days.ago %>
 
 droit_nouveau_segolene:
   position: droit_nouveau
   public_figure: segolene
-  taken_at: <%= 5.days.ago %>
 
 droit_nouveau_hollande:
   position: droit_nouveau
   public_figure: hollande
-  taken_at: <%= 5.days.ago %>
 
 leonetti_toto:
   position: leonetti
   public_figure: toto
-  taken_at: <%= 5.days.ago %>
 
