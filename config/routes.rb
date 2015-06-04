@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       resources :positions,       only: [:index],           as: "subjects_positions"
     end
   end
-  resources :public_figures,      path:"personalites",      path_names:    {new: "nouvelle", edit:"modifier"}
+  resources :public_figures,      path:"personnalites",      path_names:    {new: "nouvelle", edit:"modifier"}
   resources :positions,           only: [:create, :destroy]
   resources :statements,          only: [:create, :destroy]
 
