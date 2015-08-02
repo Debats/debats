@@ -24,4 +24,16 @@ module ApplicationHelper
     nil
   end
 
+  def allowed_to(action)
+    return false if current_user.nil?
+    min_rank = REPUTATION_CONFIG["can"][action.to_s]
+    if (min_rank)
+      min_reputation = REPUTATION_CONFIG["ranks"][min_rank]
+      return current_user.reputation >= min_reputation
+    else
+      # TODO log exception
+      return false
+    end
+  end
+
 end

@@ -1,0 +1,58 @@
+defaults: &defaults
+
+  ranks:
+    new_user:               1     # ==> Can add statement, evidence
+    participate_in_meta:    5     # ==> Can declare bugs, give feedback, ...
+    confirmed_user:        10     # ==> Can add subjects, position
+
+    moderator:          10000     # ==> Can delete subjects, public figures, positions, statements, ...
+
+  can:
+    ## New users
+    add_statement: new_user
+    add_evidence: new_user
+    ## Confirmed users
+    add_subject: confirmed_user
+
+    ## Moderators
+    delete_subject: moderator
+
+## INSPIRATION : https://stackoverflow.com/help/privileges?tab=all
+
+  actions_to_reputation:
+    signed_up:            1
+    founder:        1000000
+    early_bird:      100000
+    blogged_about:    10000
+
+    added_subject:          50
+    added_subject_valided: 100   # to the poster of subject
+    validated_subject:      50   # to the validator
+    edited_subject:         10
+    added_statement:         5
+    added_evidence:          1
+    added_argument:         10
+    added_position:         25
+
+    linked_argument_to_statement: 1
+
+    subject_is_rejected_spam: -1000
+    subject_is_rejected_duplicate: -200
+    subject_is_rejected_off_topic: -100
+    statement_is_rejected: -50
+    evidence_is_rejected: -50
+    argument_is_rejected: -50
+    position_is_rejected: -50
+    argument_to_statement_link_is_rejected: -10
+
+## INSPIRATION : https://stackoverflow.com/help/whats-reputation
+
+
+development:
+  <<: *defaults
+
+test:
+  <<: *defaults
+
+production:
+  <<: *defaults
