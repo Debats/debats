@@ -16,6 +16,6 @@
 !/log/.keep
 /tmp
 
-.idea/workspace.xml
+.idea/
 
 /public/uploads
