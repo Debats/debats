@@ -10,9 +10,12 @@ class Subject < ActiveRecord::Base
       uniqueness: {case_sensitive: false}
 
   ## PRESENTATION VALIDATION
-  validates :presentation,
-      presence: true
+  validates :presentation, presence: true
 
+  ## PROBLEM VALIDATION
+  validates :problem, presence: true
+
+  ## PICTURE VALIDATION
   validate :picture_size
 
   private

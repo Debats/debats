@@ -36,7 +36,7 @@ class SubjectsController < ApplicationController
   private
 
   def subject_params
-    params.require(:subject).permit(:title, :presentation, :picture)
+    params.require(:subject).permit(:title, :presentation, :problem, :picture)
   end
 
   def reputation_to_destroy

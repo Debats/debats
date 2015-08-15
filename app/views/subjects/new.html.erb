@@ -12,6 +12,9 @@
         <%= f.label :presentation, "Presentation"%>
         <%= f.text_area :presentation, class: 'form-control'  %>
 
+        <%= f.label :problem, "Problème" %>
+        <%= f.text_area :problem, class: 'form-control' %>
+
         <span class="picture" ><%= f.file_field :picture, accept: 'image/jpeg,image/gif,image/png' %></span>
 
         <%= f.submit "Créer ce sujet", class: "btn btn-primary" %>
