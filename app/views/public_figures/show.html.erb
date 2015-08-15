@@ -5,7 +5,7 @@
 <%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
     if @public_figure.picture?  %>
 
-<% if current_user && current_user.reputation >= MIN_REPUTATION_TO_DELETE_PUBLIC_FIGURE %>
+<% if allowed_to :delete_public_figure %>
     <%=       link_to "Supprimer", @public_figure,
                       method: :delete,
                       data: { confirm: "Supprimer \"#{@public_figure.title}\" ?" },

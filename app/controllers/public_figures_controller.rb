@@ -43,7 +43,7 @@ class PublicFiguresController < ApplicationController
       store_location
       flash[:danger] = "Vous devez être identifié pour supprimer une personnalité"
       redirect_to login_url
-    elsif current_user.reputation < MIN_REPUTATION_TO_DELETE_PUBLIC_FIGURE
+    elsif allowed_to :delete_public_figure
       flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
       redirect_to(PublicFigure.find(params[:id]))
     end
