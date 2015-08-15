@@ -64,9 +64,14 @@ input {
 }
 
 
+
 // Last statements on the left
 div#last-statements {
   width:200px;
   float:left;
   margin-right:40px;
+  .public-figure-little-image {
+    width: 16px;
+    height: 16px;
+  }
 }
