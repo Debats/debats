@@ -1,6 +1,8 @@
 <% provide(:title, @subject.title ) %>
 
-<h1><%= @subject.title %></h1>
+<h1 class="rest-in-place" data-object="subject" data-attribute="title">
+  <%= @subject.title %>
+</h1>
 
 <%= image_tag @subject.picture.url, class:"subject-main-image", alt:"#{@subject.title}" if @subject.picture?  %>
 
@@ -18,7 +20,7 @@
 
     <h2>Les positions</h2>
 
-    <p><%= pluralize(@subject.positions.count, 'positions') %>, <%= pluralize(@subject.statements.count, 'prise de position') %>, 99 arguments</p>
+    <p><%= pluralize(@subject.positions.count, 'positions') %>, <%= pluralize(@subject.statements.count, 'prise de position') %></p>
 
     <% if @subject.positions.any? %>
         <ul class="Positions">

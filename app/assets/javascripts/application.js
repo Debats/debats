@@ -18,3 +18,4 @@
 //= require bootstrap
 //= require_tree .
 //= require turbolinks
+//= require rest_in_place

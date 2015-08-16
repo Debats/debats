@@ -1,5 +1,6 @@
 class SubjectsController < ApplicationController
-  before_action :reputation_to_destroy, only: :destroy
+  before_action :auth_to_destroy, only: :destroy
+  before_action :auth_to_update, only: :update
 
   def index
     @subjects = Subject.paginate(page: params[:page])
@@ -9,6 +10,10 @@ class SubjectsController < ApplicationController
   def show
     @subject = Subject.find(params[:id])
     @new_position = @subject.positions.build
+    respond_to do |format|
+      format.html
+      format.json {render json: @subject}
+    end
   end
 
   def new
@@ -22,6 +27,21 @@ class SubjectsController < ApplicationController
       redirect_to @subject
     else
       render "new"
+    end
+  end
+
+  def update
+    @subject = Subject.find(params[:id])
+    if @subject.update_attributes!(subject_params)
+      respond_to do |format|
+        format.html {redirect_to @subject}
+        format.json {render json: @subject}
+      end
+    else
+      respond_to do |format|
+        format.html {render action: :edit}
+        format.json {render nothing: true }
+      end
     end
   end
 
@@ -39,7 +59,11 @@ class SubjectsController < ApplicationController
     params.require(:subject).permit(:title, :presentation, :problem, :picture)
   end
 
-  def reputation_to_destroy
+  def auth_to_update
+
+  end
+
+  def auth_to_destroy
     if !current_user
       store_location
       flash[:danger] = "Vous devez être identifié pour supprimer un sujet"
