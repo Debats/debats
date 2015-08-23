@@ -32,15 +32,13 @@ class SubjectsController < ApplicationController
 
   def update
     @subject = Subject.find(params[:id])
-    if @subject.update_attributes!(subject_params)
-      respond_to do |format|
-        format.html {redirect_to @subject}
-        format.json {render json: @subject}
-      end
-    else
-      respond_to do |format|
-        format.html {render action: :edit}
-        format.json {render nothing: true }
+    respond_to do |format|
+      if @subject.update(subject_params)
+          format.html {redirect_to @subject}
+          format.json {respond_with_bip @subject }
+      else
+          format.html {render action: :edit}
+          format.json {respond_with_bip @subject }
       end
     end
   end

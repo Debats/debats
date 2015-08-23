@@ -37,11 +37,14 @@ GEM
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     ansi (1.5.0)
-    arel (6.0.2)
-    autoprefixer-rails (5.2.1.1)
+    arel (6.0.3)
+    autoprefixer-rails (5.2.1.2)
       execjs
       json
     bcrypt (3.1.10-x64-mingw32)
+    best_in_place (3.0.3)
+      actionpack (>= 3.2)
+      railties (>= 3.2)
     binding_of_caller (0.7.2)
       debug_inspector (>= 0.0.1)
     bootstrap-sass (3.3.5.1)
@@ -50,8 +53,7 @@ GEM
     bootstrap-will_paginate (0.0.10)
       will_paginate
     builder (3.2.2)
-    byebug (5.0.0)
-      columnize (= 0.9.0)
+    byebug (6.0.2)
     carrierwave (0.10.0)
       activemodel (>= 3.2.0)
       activesupport (>= 3.2.0)
@@ -65,12 +67,11 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.8.0)
-    columnize (0.9.0)
     debug_inspector (0.0.2)
     erubis (2.7.0)
     excon (0.45.4)
-    execjs (2.5.2)
-    faker (1.4.3)
+    execjs (2.6.0)
+    faker (1.5.0)
       i18n (~> 0.5)
     ffi (1.9.10-x64-mingw32)
     fog (1.23.0)
@@ -80,11 +81,11 @@ GEM
       fog-softlayer
       ipaddress (~> 0.5)
       nokogiri (~> 1.5, >= 1.5.11)
-    fog-brightbox (0.8.0)
+    fog-brightbox (0.9.0)
       fog-core (~> 1.22)
       fog-json
       inflecto (~> 0.0.2)
-    fog-core (1.32.0)
+    fog-core (1.32.1)
       builder
       excon (~> 0.45)
       formatador (~> 0.2)
@@ -98,7 +99,7 @@ GEM
       fog-core
       fog-json
     formatador (0.2.5)
-    globalid (0.3.5)
+    globalid (0.3.6)
       activesupport (>= 4.1.0)
     guard (2.13.0)
       formatador (>= 0.2.4)
@@ -132,7 +133,7 @@ GEM
     listen (3.0.3)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
-    loofah (2.0.2)
+    loofah (2.0.3)
       nokogiri (>= 1.5.9)
     lumberjack (1.0.9)
     mail (2.6.3)
@@ -145,8 +146,8 @@ GEM
     mini_magick (3.8.0)
       subexec (~> 0.2.1)
     mini_portile (0.6.2)
-    minitest (5.7.0)
-    minitest-reporters (1.0.19)
+    minitest (5.8.0)
+    minitest-reporters (1.0.20)
       ansi
       builder
       minitest (>= 5.0)
@@ -185,19 +186,19 @@ GEM
       sprockets-rails
     rails-deprecated_sanitizer (1.0.3)
       activesupport (>= 4.2.0.alpha)
-    rails-dom-testing (1.0.6)
+    rails-dom-testing (1.0.7)
       activesupport (>= 4.2.0.beta, < 5.0)
       nokogiri (~> 1.6.0)
       rails-deprecated_sanitizer (>= 1.0.1)
     rails-html-sanitizer (1.0.2)
       loofah (~> 2.0)
-    rails-jquery-autocomplete (1.0.1)
+    rails-jquery-autocomplete (1.0.2)
       rails (>= 3.2)
     rails_12factor (0.0.2)
       rails_serve_static_assets
       rails_stdout_logging
     rails_serve_static_assets (0.0.4)
-    rails_stdout_logging (0.0.3)
+    rails_stdout_logging (0.0.4)
     railties (4.2.3)
       actionpack (= 4.2.3)
       activesupport (= 4.2.3)
@@ -209,10 +210,8 @@ GEM
       ffi (>= 0.5.0)
     rdoc (4.2.0)
       json (~> 1.4)
-    rest_in_place (2.5.0)
-      rails (>= 3.1)
     ruby-progressbar (1.7.5)
-    sass (3.4.16)
+    sass (3.4.17)
     sass-rails (5.0.3)
       railties (>= 4.0.0, < 5.0)
       sass (~> 3.1)
@@ -224,7 +223,7 @@ GEM
       rdoc (~> 4.0)
     shellany (0.0.1)
     slop (3.6.0)
-    sprockets (3.2.0)
+    sprockets (3.3.3)
       rack (~> 1.0)
     sprockets-rails (2.3.2)
       actionpack (>= 3.0)
@@ -239,7 +238,7 @@ GEM
       coffee-rails
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
-    tzinfo-data (1.2015.5)
+    tzinfo-data (1.2015.6)
       tzinfo (>= 1.0.0)
     uglifier (2.7.1)
       execjs (>= 0.3.0)
@@ -257,6 +256,7 @@ PLATFORMS
 
 DEPENDENCIES
   bcrypt (~> 3.1.7)
+  best_in_place
   bootstrap-sass
   bootstrap-will_paginate
   byebug
@@ -279,7 +279,6 @@ DEPENDENCIES
   rails (= 4.2.3)
   rails-jquery-autocomplete
   rails_12factor (= 0.0.2)
-  rest_in_place
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
   sqlite3
