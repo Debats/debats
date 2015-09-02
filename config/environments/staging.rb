@@ -1,7 +1,7 @@
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
-  config.middleware.insert_after(::Rack::Runtime, "::Rack::Auth::Basic", "Staging") do |u,p|
+  config.middleware.use "::Rack::Auth::Basic", "Staging" do |u,p|
     [u,p] == ['debats', '4Yv4GTrnyJ7I']
   end
 
