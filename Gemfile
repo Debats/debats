@@ -69,7 +69,7 @@ group :test do
   gem 'guard-minitest'
 end
 
-group :production do
+group :production, :staging do
   gem 'pg','0.17.1'
   gem 'rails_12factor','0.0.2'
   gem 'puma', '2.11.1'

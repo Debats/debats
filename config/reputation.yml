@@ -54,5 +54,8 @@ development:
 test:
   <<: *defaults
 
+staging:
+  <<: *defaults
+
 production:
   <<: *defaults
