@@ -1,10 +1,13 @@
+<style>
+  .celebrity {background-image: url(<%= @public_figure.picture.url %>);}
+</style>
 <% provide(:title, @public_figure.name ) %>
 
 <h1 id="PublicFigureTitle">
   <%= best_in_place @public_figure, :name %>
 </h1>
 
-<div id="celebrity fakecrop-fill">
+<div id="celebrity">
 <%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
     if @public_figure.picture?  %>
 </div>
@@ -74,8 +77,3 @@
   <% end %>
 
 </section>
-<script>
-    $(document).ready(function () {
-        $('img').fakecrop();
-    });
-</script>

@@ -21,4 +21,3 @@
 //= require bootstrap
 //= require_tree .
 //= require turbolinks
-//= require crop/jquery.fakecrop
