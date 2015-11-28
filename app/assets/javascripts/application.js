@@ -21,3 +21,4 @@
 //= require bootstrap
 //= require_tree .
 //= require turbolinks
+//= require crop/jquery.nailthumb.1.1
