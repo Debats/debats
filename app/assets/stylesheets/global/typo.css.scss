@@ -1,12 +1,14 @@
 /* typography */
 
 @import "variables";
+@import url(https://fonts.googleapis.com/css?family=Montserrat:400,700);
 
 h1, h2, h3, h4, h5, h6 {
   line-height: 1;
 }
 
 h1 {
+  font-family: 'Montserrat', sans-serif;
   font-size: 3em;
   letter-spacing: -2px;
   margin-bottom: 30px;
@@ -14,6 +16,7 @@ h1 {
 }
 
 h2 {
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.2em;
   letter-spacing: -1px;
   margin-bottom: 30px;
@@ -23,6 +26,7 @@ h2 {
 }
 
 p {
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.1em;
   line-height: 1.7em;
 }
