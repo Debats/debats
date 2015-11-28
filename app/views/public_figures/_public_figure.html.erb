@@ -1,6 +1,6 @@
 <div class="row">
-<% if @public_figure.picture? %>
-  <div style="height:100px; width: 100px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url%>') 50% 50% no-repeat;"></div>
+<% if public_figure.picture? %>
+  <div style="height:100px; width: 100px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat;"></div>
 <% end %>
   <h2 class="figure-title"><%= link_to public_figure.name, public_figure %></h2>
   <p class="figure-presentation-text"><%= public_figure.presentation %></p>
