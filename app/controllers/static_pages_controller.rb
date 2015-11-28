@@ -7,7 +7,7 @@ class StaticPagesController < ApplicationController
 
   end
   
-  def charte
+  def mode_demploi
 
   end
   
