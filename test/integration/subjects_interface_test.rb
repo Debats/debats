@@ -19,9 +19,10 @@ class SubjectsInterfaceTest < ActionDispatch::IntegrationTest
     ## valid submission
     title = "This subject is really important"
     presentation = "and this is why"
+    problem = "and this is problematic"
     picture = fixture_file_upload('test/fixtures/test.jpg', 'image/jpeg')
     assert_difference "Subject.count", 1 do
-      post subjects_path, subject: {title: title, presentation: presentation, picture: picture}
+      post subjects_path, subject: {title: title, presentation: presentation, problem: problem, picture: picture}
     end
     subject = assigns(:subject)
     assert subject.picture?

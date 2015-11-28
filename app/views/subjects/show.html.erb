@@ -1,6 +1,6 @@
 <% provide(:title, @subject.title ) %>
 
-<h1 id="SubjectTitle" class="rest-in-place" data-object="subject" data-attribute="title">
+<h1 id="SubjectTitle">
   <%= best_in_place @subject, :title %>
 </h1>
 
@@ -10,7 +10,7 @@
 <%=       link_to "Supprimer", @subject, method: :delete, data: { confirm: "Supprimer \"#{@subject.title}\" ?" }, class: "btn btn-primary btn-danger" %>
 <% end %>
 
-<p class="subject-presentation-text rest-in-place"><%= best_in_place @subject, :presentation, as: :textarea  %></p>
+<p class="SubjectPresentationText"><%= best_in_place @subject, :presentation, as: :textarea  %></p>
 
 <h2>Problématique</h2>
 
@@ -24,14 +24,21 @@
 
     <% if @subject.positions.any? %>
         <ul class="Positions">
+
           <%= render @subject.positions.select { |p| p.id } %>
-          <% if logged_in? %>
+
+          <% if logged_in? && allowed_to(:add_position) && allowed_to(:add_statement) %>
               <li id="new-position">
                 <%= form_for(@new_position) do |f| %>
                     <%= render 'shared/error_messages', object: f.object %>
                     <%= f.hidden_field :subject_id, :value => @subject.id %>
                     <span class="PositionTitle"><%= f.text_field :title, placeholder: "Nouvelle position" %></span>
                     <span class="PositionDescription"><%= f.text_area :description, placeholder: "Description" %></span>
+
+                    <!-- Il est obligatoire d'ajouter une première prise de position pour valider une nouvelle position, donc on la met tout de suite dans le même formulaire -->
+                    <h3>Qui a pris cette position ?</h3>
+
+
                     <%= f.submit "Ajouter", class: "btn btn-primary" %>
                 <% end %>
 

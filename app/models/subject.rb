@@ -3,20 +3,19 @@ class Subject < ActiveRecord::Base
   has_many :statements, through: :positions, source: :statements
   mount_uploader :picture, PictureUploader
 
-  ## NAME VALIDATION
-  validates :title,
-      presence: true,
-      length: {maximum: 100},
-      uniqueness: {case_sensitive: false}
-
-  ## PRESENTATION VALIDATION
-  validates :presentation, presence: true
-
-  ## PROBLEM VALIDATION
-  validates :problem, presence: true
-
-  ## PICTURE VALIDATION
+  ## VALIDATIONS
+  validates_presence_of :title, :slug, :presentation, :problem
+  validates :title, length: {maximum: 100}, uniqueness: {case_sensitive: false}
+  validates :slug, length: {minimum: 3}, uniqueness: {case_sensitive: false}
   validate :picture_size
+
+  # Friendly ID
+  extend FriendlyId
+  friendly_id :title, use: [:slugged, :finders, :history]
+
+  def should_generate_new_friendly_id?
+    title_changed? || super
+  end
 
   private
 

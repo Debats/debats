@@ -1,4 +1,5 @@
 class PublicFiguresController < ApplicationController
+  before_action :find_public_figure, only: :show
 
   def index
     @public_figures = PublicFigure.paginate(page: params[:page])
@@ -46,6 +47,13 @@ class PublicFiguresController < ApplicationController
     elsif allowed_to :delete_public_figure
       flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
       redirect_to(PublicFigure.find(params[:id]))
+    end
+  end
+
+  def find_public_figure
+    @public_figure = PublicFigure.find params[:id]
+    if request.path != public_figure_path(@public_figure)       # If old URL
+      redirect_to @public_figure, status: :moved_permanently    # Redirect to new URL
     end
   end
 

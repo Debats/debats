@@ -11,20 +11,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150815220852) do
+ActiveRecord::Schema.define(version: 20151022105845) do
 
   create_table "evidences", force: :cascade do |t|
     t.integer  "statement_id"
     t.string   "title"
     t.string   "url"
     t.string   "file"
-    t.datetime "created_at",    null: false
-    t.datetime "updated_at",    null: false
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
     t.datetime "fact_date"
-    t.datetime "evidence_date"
   end
 
   add_index "evidences", ["statement_id"], name: "index_evidences_on_statement_id"
+
+  create_table "friendly_id_slugs", force: :cascade do |t|
+    t.string   "slug",                      null: false
+    t.integer  "sluggable_id",              null: false
+    t.string   "sluggable_type", limit: 50
+    t.string   "scope"
+    t.datetime "created_at"
+  end
+
+  add_index "friendly_id_slugs", ["slug", "sluggable_type", "scope"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
+  add_index "friendly_id_slugs", ["slug", "sluggable_type"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
+  add_index "friendly_id_slugs", ["sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_id"
+  add_index "friendly_id_slugs", ["sluggable_type"], name: "index_friendly_id_slugs_on_sluggable_type"
 
   create_table "positions", force: :cascade do |t|
     t.string   "title"
@@ -44,7 +56,10 @@ ActiveRecord::Schema.define(version: 20150815220852) do
     t.datetime "created_at",    null: false
     t.datetime "updated_at",    null: false
     t.string   "picture"
+    t.string   "slug"
   end
+
+  add_index "public_figures", ["slug"], name: "index_public_figures_on_slug", unique: true
 
   create_table "statements", force: :cascade do |t|
     t.integer  "position_id"
@@ -64,7 +79,10 @@ ActiveRecord::Schema.define(version: 20150815220852) do
     t.datetime "updated_at",   null: false
     t.string   "picture"
     t.string   "problem"
+    t.string   "slug"
   end
+
+  add_index "subjects", ["slug"], name: "index_subjects_on_slug", unique: true
 
   create_table "users", force: :cascade do |t|
     t.string   "name"

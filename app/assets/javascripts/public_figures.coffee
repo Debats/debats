@@ -1,3 +1,17 @@
-# Place all the behaviors and hooks related to the matching controller here.
-# All this logic will automatically be available in application.js.
-# You can use CoffeeScript in this file: http://coffeescript.org/
+$(document).ready ->
+  $("input#name").bind('change', ->
+
+    WikiPF = null
+
+    try ->
+      WikiPF = new WikipediaPublicFigure($(this).text)
+    catch
+      ## Rien trouvé => ne rien faire
+
+    if WikiPF != null
+      ok = "ok"
+      ## Afficher le bloc "Importer le contenu de la page Wikipedia "Nicolas Sarkozy" ?"
+      ## Remplir d'abord nom, intro et photo
+
+
+  )

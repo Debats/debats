@@ -1,6 +1,8 @@
 <% provide(:title, @public_figure.name ) %>
 
-<h1><%= @public_figure.name %></h1>
+<h1 id="PublicFigureTitle">
+  <%= best_in_place @public_figure, :name %>
+</h1>
 
 <%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
     if @public_figure.picture?  %>
@@ -25,7 +27,7 @@
 
         <%= render @public_figure.statements.select { |s| s.id } %>
 
-        <% if logged_in? %>
+        <% if logged_in? && allowed_to(:add_statement) %>
             <li id="new-statement">
               <%= form_for(@new_statement) do |f| %>
                   <%= render 'shared/error_messages', object: f.object %>
@@ -55,9 +57,6 @@
                     <%= e.text_field :url, placeholder: "http://" %>
                     <%= e.label :file, "... ou pièce jointe" %>
                     <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
-                    <%= e.label :evidence_date, "Date du document" %>
-                    <%= e.date_select :evidence_date, start_year: Date.today.year-10, end_year: Date.today.year %>
-                    <%= e.time_select :evidence_date, ignore_date: true %>
                     <%= e.label :fact_date, "Date des faits" %>
                     <%= e.date_select :fact_date, start_year: Date.today.year-10, end_year: Date.today.year %>
                     <%= e.time_select :fact_date, ignore_date: true %>

@@ -1,4 +1,5 @@
 class SubjectsController < ApplicationController
+  before_action :find_subject, only: :show
   before_action :auth_to_destroy, only: :destroy
   before_action :auth_to_update, only: :update
 
@@ -53,22 +54,29 @@ class SubjectsController < ApplicationController
 
   private
 
-  def subject_params
-    params.require(:subject).permit(:title, :presentation, :problem, :picture)
-  end
-
-  def auth_to_update
-
-  end
-
-  def auth_to_destroy
-    if !current_user
-      store_location
-      flash[:danger] = "Vous devez être identifié pour supprimer un sujet"
-      redirect_to login_url
-    elsif ! allowed_to :delete_subject
-      flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
-      redirect_to(Subject.find(params[:id]))
+    def subject_params
+      params.require(:subject).permit(:title, :presentation, :problem, :picture)
     end
-  end
+
+    def auth_to_update
+
+    end
+
+    def auth_to_destroy
+      if !current_user
+        store_location
+        flash[:danger] = "Vous devez être identifié pour supprimer un sujet"
+        redirect_to login_url
+      elsif ! allowed_to :delete_subject
+        flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
+        redirect_to(Subject.find(params[:id]))
+      end
+    end
+
+    def find_subject
+      @subject = Subject.find params[:id]
+      if request.path != subject_path(@subject)             # If old URL
+        redirect_to @subject, status: :moved_permanently    # Redirect to new URL
+      end
+    end
 end

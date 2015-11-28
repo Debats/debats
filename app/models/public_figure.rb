@@ -2,17 +2,19 @@ class PublicFigure < ActiveRecord::Base
   has_many :statements, dependent: :destroy
   mount_uploader :picture, PictureUploader
 
-  ## NAME VALIDATION
-  validates :name,
-            presence: true,
-            length: {maximum: 100},
-            uniqueness: {case_sensitive: false}
-
-  ## PRESENTATION VALIDATION
-  validates :presentation,
-            presence: true
-
+  ## VALIDATION
+  validates_presence_of :name, :presentation
+  validates :name, length: {maximum: 100},  uniqueness: {case_sensitive: false}
+  validates :slug, length: {minimum: 3},    uniqueness: {case_sensitive: false}
   validate :picture_size
+
+  # Friendly ID
+  extend FriendlyId
+  friendly_id :name, use: [:slugged, :finders, :history]
+
+  def should_generate_new_friendly_id?
+    name_changed? || super
+  end
 
   private
 

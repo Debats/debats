@@ -99,6 +99,8 @@ GEM
       fog-core
       fog-json
     formatador (0.2.5)
+    friendly_id (5.1.0)
+      activerecord (>= 4.0.0)
     globalid (0.3.6)
       activesupport (>= 4.1.0)
     guard (2.13.0)
@@ -265,6 +267,7 @@ DEPENDENCIES
   coffee-script-source (= 1.8.0)
   faker
   fog (= 1.23.0)
+  friendly_id
   guard
   guard-minitest
   jbuilder (~> 2.0)
@@ -274,11 +277,11 @@ DEPENDENCIES
   mini_backtrace
   mini_magick (= 3.8.0)
   minitest-reporters
-  pg (= 0.17.1)
-  puma (= 2.11.1)
+  pg
+  puma
   rails (= 4.2.3)
   rails-jquery-autocomplete
-  rails_12factor (= 0.0.2)
+  rails_12factor
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
   sqlite3
