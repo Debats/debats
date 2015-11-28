@@ -5,7 +5,7 @@
 </h1>
 
 <% if @public_figure.picture? %>
-  <div style="height:150px; width: 150px; -webkit-border-radius: 50%; border-radius: 50%; background-size:cover; background-repeat:no-repeat; background:url('<%= @public_figure.picture.url%>');"></div>
+  <div style="height:250px; width: 250px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= @public_figure.picture.url%>') 50% 50% no-repeat;"></div>
 <% end %>
 
 
