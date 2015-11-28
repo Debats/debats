@@ -1,7 +1,7 @@
 defaults: &defaults
 
   ranks:
-    new_user:               1     # ==> Can add statement, evidence
+    new_user:               2     # ==> Can add statement, evidence
     participate_in_meta:    5     # ==> Can declare bugs, give feedback, ...
     confirmed_user:        10     # ==> Can add subjects, position
 
