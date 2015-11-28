@@ -4,7 +4,7 @@
   <%= best_in_place @public_figure, :name %>
 </h1>
 
-<%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
+<%= image_tag @public_figure.picture.url, class:"figure-main-image celebrity nailthumb-container", alt:"#{@public_figure.name}" \
     if @public_figure.picture?  %>
 
 <% if allowed_to :delete_public_figure %>
@@ -72,3 +72,8 @@
   <% end %>
 
 </section>
+<script type="text/javascript">
+      jQuery(document).ready(function() {
+      jQuery('.nailthumb-container').nailthumb();
+     });
+</script>
