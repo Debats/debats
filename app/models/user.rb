@@ -1,16 +1,16 @@
 class User < ActiveRecord::Base
   attr_accessor :remember_token, :activation_token, :reset_token
 
-  ## ACTIVATION DIGEST CREATION
-  before_create :create_activation_digest
-
-  ## EMAIL ALWAYS IN DOWNCASE
-  before_save { self.email.downcase! }
+  ## DEFAULT VALUES
+  after_initialize :default_values
 
   ## NAME VALIDATION
   validates :name,
       presence: true,
       length: {maximum: 50}
+
+  validates :reputation,
+      presence: true
 
   ## EMAIL VALIDATION
   VALID_EMAIL_REGEX =/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
@@ -25,6 +25,11 @@ class User < ActiveRecord::Base
   ## PASSWORD VALIDATION
   validates :password, length: {minimum: 8}, allow_blank: true
 
+  ## EMAIL ALWAYS IN DOWNCASE
+  before_save { self.email.downcase! }
+
+  ## ACTIVATION DIGEST CREATION
+  before_create :create_activation_digest
 
 
   def remember
@@ -71,6 +76,9 @@ class User < ActiveRecord::Base
       self.activation_digest = User.digest(activation_token)
     end
 
+    def default_values
+      self.reputation ||= 0
+    end
 
   class << self
 

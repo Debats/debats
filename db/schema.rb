@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151022105845) do
+ActiveRecord::Schema.define(version: 20151128193845) do
 
   create_table "evidences", force: :cascade do |t|
     t.integer  "statement_id"

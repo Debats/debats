@@ -64,4 +64,13 @@ class UserTest < ActiveSupport::TestCase
     assert_not @user.authenticated?(:remember, 'abc')
   end
 
+  test "new user should have non nil reputation" do
+    guy = User.new(name: "New Guy", email: "guy@example.net",
+                     password: "pwd123456", password_confirmation: "pwd123456")
+    assert_not_nil guy
+    assert_not_nil guy.reputation
+    guy.save
+    assert_not_nil guy.reputation
+  end
+
 end
