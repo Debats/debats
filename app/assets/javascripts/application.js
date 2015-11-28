@@ -11,7 +11,6 @@
 // about supported directives.
 //
 //= require jquery
-//= require jtruncate
 //= require jquery.turbolinks
 //= require jquery_ujs
 //= require jquery-ui
@@ -22,3 +21,4 @@
 //= require bootstrap
 //= require_tree .
 //= require turbolinks
+//= require jquery.jtruncate
