@@ -4,8 +4,10 @@
   <%= best_in_place @public_figure, :name %>
 </h1>
 
-<%= image_tag @public_figure.picture.url, class:"figure-main-image celebrity nailthumb-container", alt:"#{@public_figure.name}" \
-    if @public_figure.picture?  %>
+<% if @public_figure.picture? %>
+  <div style="height:250px; width: 250px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= @public_figure.picture.url%>') 50% 50% no-repeat;"></div>
+<% end %>
+
 
 <% if allowed_to :delete_public_figure %>
     <%=       link_to "Supprimer", @public_figure,
@@ -72,8 +74,3 @@
   <% end %>
 
 </section>
-<script type="text/javascript">
-      jQuery(document).ready(function() {
-      jQuery('.nailthumb-container').nailthumb();
-     });
-</script>

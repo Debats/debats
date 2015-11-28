@@ -5,6 +5,6 @@
 <%= link_to "Nouveau", new_subject_path, class: "btn btn-primary" if  allowed_to(:add_subject) %>
 
 <div class="subjects-index" >
-    <%= render @subjects %>
-</div>
+<%= render @subjects %>
 <%= will_paginate %>
+</div>

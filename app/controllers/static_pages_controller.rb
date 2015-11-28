@@ -6,4 +6,9 @@ class StaticPagesController < ApplicationController
   def contact
 
   end
+  
+  def mode_demploi
+
+  end
+  
 end

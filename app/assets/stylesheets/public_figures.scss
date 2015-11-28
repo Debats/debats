@@ -1,9 +1,11 @@
 // Place all the styles related to the public-figures controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
-#celebrity img {
-	width: 150px;
+#public_figure div {
 	height: 150px;
-	-webkit-border-radius: 50px;
-	border-radius: 50px;
+	width: 150px;
+	-webkit-border-radius: 50%;
+	border-radius: 50%;
+	 background-size:cover;
+  	background-repeat:no-repeat;
 }
