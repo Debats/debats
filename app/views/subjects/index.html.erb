@@ -1,10 +1,12 @@
 <% provide(:title, "Sujets") %>
 
-<%= render 'layouts/last_statements' %>
-
 <%= link_to "Nouveau", new_subject_path, class: "btn btn-primary" if  allowed_to(:add_subject) %>
 
-<div class="subjects-index" >
+<div class="subjects-index col-md-8" >
 <%= render @subjects %>
 <%= will_paginate %>
+</div>
+
+<div class="col-md-4">
+<%= render 'layouts/last_statements' %>
 </div>
