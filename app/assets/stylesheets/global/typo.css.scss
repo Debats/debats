@@ -18,6 +18,12 @@ h1 {
   letter-spacing: -2px;
   margin-bottom: 30px;
   text-align: center;
+  text-transform: uppercase;
+  color: #f21e40;
+  &:hover {
+    color: #222;
+	font-family: 'G333otham-Book', sans-serif;
+  }
 }
 
 h2 {
