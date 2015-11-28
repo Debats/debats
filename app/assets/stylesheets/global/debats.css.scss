@@ -15,12 +15,6 @@ body {
 }
 
 
-p {
-  font-family: 'Gotham-Book';
-  font-size: 12px;
-}
-
-
 section {
   overflow: auto;
 }
@@ -38,6 +32,7 @@ textarea {
 
 div.main-content {
   min-height: 300px;
+  font-family: 'Gotham-Book';
 }
 
 /* forms */
