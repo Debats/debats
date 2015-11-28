@@ -1,11 +1,34 @@
 <% provide(:title,"À propos") %>
 <div class="center jumbotron">
 <h1>Pourquoi Débats.fr ?</h1>
-<p>
-  <strong>D&eacute;bats</strong> est un projet francophone et participatif, ayant pour objectif d’offrir une
-  synth&egrave;se ouverte, objective et v&eacute;rifiable, des sujets clivants de notre soci&eacute;t&eacute;.
-</p>
-<p>
-  <%= link_to "Créer un compte", new_user_path, class: "btn btn-lg btn-primary" %>
-</p>
+<!-- About Section -->
+    <section id="about" class="container content-section">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2">
+                <p align="center">
+                    <img src="img/logoopac.png" height="25%" width="25%" />
+                    <br /><br><i>Débats</i> est un projet francophone et participatif, ayant pour objectif d’offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.</p>
+                <div align="center"><a href="#manifeste" class="btn btn-default btn-lg page-scroll" id="bouton-manifeste"><i class="fa fa-angle-down animated"></i>&nbsp;Pourquoi Débats ?&nbsp;<i class="fa fa-angle-down animated"></i></a></div>
+                <div id="manifeste" style="display:none; text-align:justify;"><br /><br /><br /><br />
+
+
+            <p>
+                
+                Dans un monde de plus en plus complexe, les discours simplistes sont légion. Régulièrement, des controverses se construisent sur la base d'arguments à peine vérifiés, ou simplement invérifiables. 
+C’est ainsi que semblent se développer des idées confuses et des discussions stériles.
+                    </p><p>
+L'intelligibilité du débat public et son accessibilité par tous ceux qui aspirent à y participer déterminent la qualité de notre système démocratique. Or, aujourd’hui, aucun outil, simple d’utilisation, ne permet d’accéder à la pluralité des idées de celles et ceux qui font le choix de s’exprimer publiquement. Prendre connaissance de leurs arguments, comprendre ce qu’ils prétendent ou ce qu’ils laissent entendre est un véritable parcours du combattant. Nous cédons ainsi régulièrement à la facilité, en accordant une valeur démesurée à des postures démagogiques ou en laissant à d’autres le soin de les produire.
+</p><p>
+Pourtant, les ressources sont là, sous nos yeux, elles existent ! Les blogs, les tweets, les journaux télévisés, les discours ou les livres sont un trésor démocratique laissé en jachère, une réserve politique fertile jusqu’ici largement sous-exploitée. Ces traces essaimées tout autour de nous constituent une des clés pour y voir plus clair.
+</p><p>
+        L’ambition de <i>Débats</i> est simple : recenser, sur chaque grand thème qui fait débat, les prises de position de celles et ceux qui décident de s’engager. Cartographier l’évolution de leur pensée, de leurs opinions, des combats qu’ils ont menés. Donner à voir la constance, la progression ou l’incohérence d’un engagement dans le temps.
+</p><p>
+Rédigé par des volontaires sur une plateforme en ligne, et fonctionnant sur le principe du wiki, <i>Débats</i> a pour objectif d'offrir un contenu libre, impartial et vérifiable des prises de position de celles et ceux qui participent aux débats publics.
+</p><p>
+Face à ce que nous considérons comme un dévoiement démocratique, nous partageons une conviction : l’information est notre première arme. Redonner à l’engagement la crédibilité et la valeur qui doivent être les siennes : voilà la raison d’être de <i>Débats</i>.
+                    </p>
+            </div>
+        </div>
+    </section>
+
 </div>
