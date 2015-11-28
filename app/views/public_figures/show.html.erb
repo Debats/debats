@@ -8,8 +8,8 @@
 </h1>
 
 <div id="celebrity">
-<%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
-    if @public_figure.picture?  %>
+<!-- <%= image_tag @public_figure.picture.url, #class:"figure-main-image", alt:"#{@public_figure.name}" \
+    if @public_figure.picture?  %> -->
 </div>
 
 <% if allowed_to :delete_public_figure %>
