@@ -4,7 +4,7 @@
   <%= best_in_place @public_figure, :name %>
 </h1>
 
-<div id="celebrity nailthumb-container">
+<div id="celebrity" class="fakecrop-fill">
 <%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
     if @public_figure.picture?  %>
 </div>
@@ -74,8 +74,11 @@
   <% end %>
 
 </section>
-<script type="text/javascript">
-      jQuery(document).ready(function() {
-      jQuery('.nailthumb-container').nailthumb();
-     });
+<script>
+    $(document).ready(function () {
+        // for a filled square thumbnail
+        $('img').fakecrop();
+        // for a fixed width/height
+        $('img').fakecrop({fill: false});
+    });
 </script>
