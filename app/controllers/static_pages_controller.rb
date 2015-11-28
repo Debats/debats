@@ -7,7 +7,7 @@ class StaticPagesController < ApplicationController
 
   end
   
-  def charter
+  def charte
 
   end
   
