@@ -4,7 +4,7 @@
   <%= best_in_place @public_figure, :name %>
 </h1>
 
-<div id="celebrity" class="fakecrop-fill">
+<div id="celebrity fakecrop-fill">
 <%= image_tag @public_figure.picture.url, class:"figure-main-image", alt:"#{@public_figure.name}" \
     if @public_figure.picture?  %>
 </div>
