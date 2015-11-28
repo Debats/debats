@@ -3,3 +3,12 @@
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p>
       </div>
+  <script type="text/javascript">
+$().ready(function() {  
+    $('#subject-presentation-text').jTruncate({  
+        length: 200,  
+        minTrail: 0,  
+        lessAni: 2000  
+    });  
+});  
+  </script>

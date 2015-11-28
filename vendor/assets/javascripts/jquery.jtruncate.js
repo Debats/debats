@@ -4,8 +4,8 @@
 		var defaults = {
 			length: 300,
 			minTrail: 20,
-			moreText: "more",
-			lessText: "less",
+			moreText: "Lire Plus",
+			lessText: "Réduire",
 			ellipsisText: "...",
 			moreAni: "",
 			lessAni: ""
