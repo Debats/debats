@@ -5,7 +5,7 @@
 </h1>
 
 <% if @public_figure.picture? %>
-  <div class="public_figure" style="background:url(\"#{@public_figure.picture.url}\")"></div>
+  <div class="public_figure" style="background:url('<%= @public_figure.picture.url%>')"></div>
 <% end %>
 
 
