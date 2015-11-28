@@ -24,7 +24,7 @@ Rails.application.routes.draw do
 
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
-  get 'mode_demploi',              to: 'static_pages#mode_demploi',       as: 'mode_demploi'
+  get 'mode_demploi',         to: 'static_pages#mode_demploi',  as: 'mode_demploi'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
