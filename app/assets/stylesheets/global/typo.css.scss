@@ -20,9 +20,8 @@ h1 {
   text-align: center;
   text-transform: uppercase;
   color: #f21e40;
-  &:active, focus {
+  &:active {
     color: #222;
-	font-family: 'G333otham-Book', sans-serif;
   }
 }
 
@@ -36,9 +35,8 @@ h2 {
   color: $light-gray;
   text-transform: uppercase;
   color: #f21e40;
-  &:active,focus {
+  &:active {
     color: #222;
-	font-family: 'G333otham-Book', sans-serif;
   }
 }
 
@@ -48,3 +46,8 @@ p {
   line-height: 1.7em;
 }
 
+ul,li {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.7em;
+}
