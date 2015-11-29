@@ -20,7 +20,7 @@ h1 {
   text-align: center;
   text-transform: uppercase;
   color: #f21e40;
-  &:hover {
+  &:active, focus {
     color: #222;
 	font-family: 'G333otham-Book', sans-serif;
   }
@@ -36,7 +36,7 @@ h2 {
   color: $light-gray;
   text-transform: uppercase;
   color: #f21e40;
-  &:hover {
+  &:active,focus {
     color: #222;
 	font-family: 'G333otham-Book', sans-serif;
   }
