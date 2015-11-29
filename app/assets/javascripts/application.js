@@ -22,3 +22,5 @@
 //= require_tree .
 //= require turbolinks
 //= require jquery.jtruncate
+//= require bootstrap-datepicker
+//= require bootstrap-datepicker/locales/bootstrap-datepicker.fr

@@ -60,12 +60,12 @@
                     <%= e.label :file, "... ou pièce jointe" %>
                     <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
                     <%= e.label :fact_date, "Date des faits" %>
-                    <%= e.date_select :fact_date, start_year: Date.today.year-10, end_year: Date.today.year %>
-                    <%= e.time_select :fact_date, ignore_date: true %>
+                    <%= e.text_field :fact_date, placeholder: "jj/mm/yyyy", class: "Datepicker" %>
 
                   <% end %>
 
                   <%= f.submit "Ajouter", class: "btn btn-primary" %>
+
               <% end %>
 
             </li>

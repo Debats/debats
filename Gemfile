@@ -2,8 +2,6 @@ source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.3'
-# Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .coffee assets and views
@@ -14,10 +12,6 @@ gem 'coffee-script-source', '1.8.0' # Problem with Coffee-script-source 1.9.0 on
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
-# JQuery UI
-gem 'jquery-ui-rails'
-# Rails JQuery Autocomplete
-gem 'rails-jquery-autocomplete'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 gem 'turbolinks'
 gem 'jquery-turbolinks'
@@ -26,8 +20,6 @@ gem 'jbuilder', '~> 2.0'
 # bundle exec rake doc:rails generates the API under doc/api.
 gem 'sdoc', '~> 0.4.0', group: :doc
 
-# Boostrap with SASS
-gem 'bootstrap-sass'
 
 # Paginate
 gem "will_paginate"
@@ -41,14 +33,20 @@ gem 'fog',                     '1.23.0'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.7'
 
-# in-place editing
-gem 'best_in_place'
-
 # friendly ids (slugs)
 gem 'friendly_id'
 
 # SSL
 gem 'net-ssh'
+
+######## UI #######
+gem 'jquery-ui-rails'             # JQuery UI
+gem 'rails-jquery-autocomplete'   # Rails JQuery Autocomplete
+gem 'sass-rails', '~> 5.0'        # Use SCSS for stylesheets
+gem 'bootstrap-sass'              # Boostrap with SASS
+gem 'bootstrap-datepicker-rails'  # Date picker
+gem 'best_in_place'               # in-place editing
+
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
