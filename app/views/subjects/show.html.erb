@@ -25,7 +25,9 @@
     <% if @subject.positions.any? %>
         <ul class="Positions">
 
-	<%= render partial: "statement", collection:@subject.positions.select { |s| s.id }, as: :statement %>
+	<%= render partial: "position", collection:@subject.positions, as: :position %>
+	
+	
           <% if false && logged_in? && allowed_to(:add_position) && allowed_to(:add_statement) %>
               <li id="new-position">
                 <%= form_for(@new_position) do |f| %>

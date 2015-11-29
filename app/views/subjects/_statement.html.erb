@@ -1,6 +1,1 @@
-<li>
-    <%= link_to statement.position.title, statement.position %>
-	<ul>
-		<li><%= link_to statement.public_figure.name, statement.public_figure %></li>
-	</ul>
-</li>
+<li><%= link_to image_tag(statement.public_figure.url), statement.public_figure %></li>
