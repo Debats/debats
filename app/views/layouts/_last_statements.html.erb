@@ -8,10 +8,8 @@
   	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
         <% end %>
             <div class="public-figure-text">
-            <%= link_to(@public_figure.name) do %>
-              <strong><%= statement.public_figure.name %></strong>
-            <% end %>
-            s'est déclaré pour
+            <%= link_to public_figure.name do %><strong><%= statement.public_figure.name %></strong><% end %>
+              s'est déclaré pour
             "<strong><%= statement.position.title %></strong>"
             dans le débat sur
             <strong><%= statement.position.subject.title %></strong></div>
