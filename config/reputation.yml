@@ -11,6 +11,7 @@ defaults: &defaults
     ## New users
     add_statement: new_user
     add_evidence: new_user
+    add_position: new_user
     ## Confirmed users
     add_subject: confirmed_user
 
