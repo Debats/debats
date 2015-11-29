@@ -34,6 +34,12 @@ h2 {
   text-align: center;
   font-weight: normal;
   color: $light-gray;
+  text-transform: uppercase;
+  color: #f21e40;
+  &:hover {
+    color: #222;
+	font-family: 'G333otham-Book', sans-serif;
+  }
 }
 
 p {
