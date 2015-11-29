@@ -1,9 +1,9 @@
 <% provide(:title, "Sujets") %>
 
-<h1>Sujets</h1>
+<div style="display:inline-block;"><h1>Sujets</h1><%= link_to "Créer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to(:add_subject) %></div>
+
 
 <div class="subjects-index col-md-8" >
-<%= link_to "Créer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to(:add_subject) %>
 
 <%= render @subjects %>
 <%= will_paginate %>
