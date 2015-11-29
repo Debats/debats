@@ -1,1 +1,5 @@
-<%= t "public_figure_stated_for_position", public_figure: statement.public_figure.name, position: statement.position.title %>
+<li>
+<%= link_to statement.public_figure.name, statement.public_figure %>
+en faveur de 
+<%= link_to statement.position.title, statement.position %>
+</li>

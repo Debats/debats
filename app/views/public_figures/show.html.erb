@@ -27,7 +27,7 @@
   <% if @public_figure.statements.any? %>
       <ul class="Statements">
 
-        <li><%= render @public_figure.statements.select { |s| s.id } %></li>
+        <%= render @public_figure.statements.select { |s| s.id } %>
 
         <% if logged_in? && allowed_to(:add_statement) %>
             <li id="new-statement">
