@@ -7,11 +7,11 @@
             <% if statement.public_figure.picture? %>
   	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
         <% end %>
-            <div class="public-figure-text"><strong><%= link_to public_figure.name, statement.public_figure.name %></strong>
+            <div class="public-figure-text"><strong><%= statement.public_figure.name %></strong>
             s'est déclaré pour
             "<strong><%= statement.position.title %></strong>"
             dans le débat sur
-            <strong><%= link_to subject.title, statement.position.subject.title %></strong></div>
+            <strong><%= statement.position.subject.title %></strong></div>
           </li>
       <% end %>
     </ul>
