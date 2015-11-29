@@ -1,7 +1,7 @@
   <div class="row">
     <%= image_tag subject.picture.url, class:"subject-main-image", alt:"#{subject.title}" if subject.picture?  %>
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
-    <p class="subject-presentation-text"><%= subject.presentation %></p>
+    <p id="jTruncate_subject-presentation-text" class="subject-presentation-text"><%= subject.presentation %></p>
       </div>
   <script type="text/javascript">
 $().ready(function() {  
