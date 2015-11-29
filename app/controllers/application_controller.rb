@@ -5,7 +5,6 @@ class ApplicationController < ActionController::Base
   include ApplicationHelper
   include SessionsHelper
   include ActionView::Helpers::TextHelper
-  require 'htmlentities'
 
   before_action :set_locale
 
