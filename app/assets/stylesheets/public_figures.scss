@@ -3,17 +3,43 @@
 // You can use Sass (SCSS) here: http://sass-lang.com/
 #public_figure div {
 	height: 150px;
-	width: 150px;
+	width: 100px;
 	-webkit-border-radius: 50%;
 	border-radius: 50%;
 	 background-size:cover;
   	background-repeat:no-repeat;
 }
 
-p.public-figures-index {
-  margin: 10px;
-  text-align: justify;
-  font-family: 'Gotham-Book',"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size: 12px;
+h1 {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 3em;
+  letter-spacing: -2px;
+  margin-bottom: 30px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #f21e40;
+  &:active {
+    color: #222;
+  }
+}
 
+h2 {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.2em;
+  letter-spacing: -1px;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: normal;
+  color: lightgray;
+  text-transform: uppercase;
+  color: #f21e40;
+  &:active {
+    color: #222;
+  }
+}
+
+p {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.7em;
 }

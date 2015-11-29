@@ -3,3 +3,10 @@
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p>
       </div>
+<script type="text/javascript">
+    $(document).ready(function() {
+     
+        $(".subject-presentation-text").shorten();
+     
+    });
+</script>
