@@ -2,11 +2,16 @@ module ApplicationHelper
 
   # Returns the full title of the page
   def full_title(page_title = '')
-    base_title = APP_NAME_WITH_DOMAIN_EXT
+    base_title = "".html_safe
+    base_title << APP_NAME_WITH_DOMAIN_EXT
     if page_title.empty?
       base_title
     else
-      "#{page_title} | #{base_title}"
+      full = "".html_safe
+      full << page_title
+      full << " | "
+      full << base_title
+      full
     end
   end
 
