@@ -39,10 +39,12 @@
 
                   <%= f.fields_for @new_statement.evidences.build do |e| %>
  
-                    <%= e.label :url, "Lien internet ..." %>
-                    <%= e.text_field :url, placeholder: "http://" %>
-                    <%= e.label :file, "... ou pièce jointe" %>
-                    <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
+                   <ul>
+				   <li class="display: inline-block"><%= e.label :url, "Lien internet ..." %>
+                    <%= e.text_field :url, placeholder: "http://" %></li>
+                    <li class="display: inline-block"><%= e.label :file, "... ou pièce jointe" %>
+                    <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %></li>
+					<ul>
                     <%= e.label :title, "Intitulé de la preuve" %>
                     <%= e.text_field :title, placeholder: "Explicitez la référence" %>
 					<%= e.label :fact_date, "Date des faits" %>
