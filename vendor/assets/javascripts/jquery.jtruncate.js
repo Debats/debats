@@ -12,7 +12,7 @@
     $.fn.shorten = function (settings) {
      
         var config = {
-            showChars: 100,
+            showChars: 300,
             ellipsesText: "...",
             moreText: "Lire Plus &rarr;",
             lessText: "Réduire"
