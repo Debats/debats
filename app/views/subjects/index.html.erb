@@ -1,5 +1,6 @@
 <% provide(:title, "Sujets") %>
 
+<h1>Sujets</h1>
 <%= link_to "Nouveau", new_subject_path, class: "btn btn-primary" if  allowed_to(:add_subject) %>
 
 <div class="subjects-index col-md-8" >
