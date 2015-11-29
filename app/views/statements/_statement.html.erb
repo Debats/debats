@@ -1,5 +1,6 @@
-<li>
-<%= link_to statement.public_figure.name, statement.public_figure %>
+<li class="list-style-type: none;">
+Au sujet de
+<%= link_to statement.position.subject.title, statement.position.subject %>
 en faveur de 
 <%= link_to statement.position.title, statement.position %>
 </li>
