@@ -1,59 +1,50 @@
-(function($){
-	$.fn.jTruncate = function(options) {
-	   
-		var defaults = {
-			length: 300,
-			minTrail: 20,
-			moreText: "Lire Plus",
-			lessText: "Réduire",
-			ellipsisText: "...",
-			moreAni: "",
-			lessAni: ""
-		};
-		
-		var options = $.extend(defaults, options);
-	   
+/*
+ * Copyright (c) 2014 Mike King (@micjamking)
+ *
+ * jQuery Succinct plugin
+ * Version 1.1.0 (October 2014)
+ *
+ * Licensed under the MIT License
+ */
+
+ /*global jQuery*/
+(function($) {
+	'use strict';
+
+	$.fn.succinct = function(options) {
+
+		var settings = $.extend({
+				size: 240,
+				omission: '...',
+				ignore: true
+			}, options);
+
 		return this.each(function() {
-			obj = $(this);
-			var body = obj.html();
-			
-			if(body.length > options.length + options.minTrail) {
-				var splitLocation = body.indexOf(' ', options.length);
-				if(splitLocation != -1) {
-					// truncate tip
-					var splitLocation = body.indexOf(' ', options.length);
-					var str1 = body.substring(0, splitLocation);
-					var str2 = body.substring(splitLocation, body.length - 1);
-					obj.html(str1 + '<span class="truncate_ellipsis">' + options.ellipsisText + 
-						'</span>' + '<span class="truncate_more">' + str2 + '</span>');
-					obj.find('.truncate_more').css("display", "none");
-					
-					// insert more link
-					obj.append(
-						'<div class="clearboth">' +
-							'<a href="#" class="truncate_more_link">' + options.moreText + '</a>' +
-						'</div>'
-					);
-​
-					// set onclick event for more/less link
-					var moreLink = $('.truncate_more_link', obj);
-					var moreContent = $('.truncate_more', obj);
-					var ellipsis = $('.truncate_ellipsis', obj);
-					moreLink.click(function() {
-						if(moreLink.text() == options.moreText) {
-							moreContent.show(options.moreAni);
-							moreLink.text(options.lessText);
-							ellipsis.css("display", "none");
-						} else {
-							moreContent.hide(options.lessAni);
-							moreLink.text(options.moreText);
-							ellipsis.css("display", "inline");
+
+			var textDefault,
+				textTruncated,
+				elements = $(this),
+				regex    = /[!-\/:-@\[-`{-~]$/,
+				init     = function() {
+					elements.each(function() {
+						textDefault = $(this).html();
+
+						if (textDefault.length > settings.size) {
+							textTruncated = $.trim(textDefault)
+											.substring(0, settings.size)
+											.split(' ')
+											.slice(0, -1)
+											.join(' ');
+
+							if (settings.ignore) {
+								textTruncated = textTruncated.replace(regex, '');
+							}
+
+							$(this).html(textTruncated + settings.omission);
 						}
-						return false;
-				  	});
-				}
-			} // end if
-			
+					});
+				};
+			init();
 		});
 	};
 })(jQuery);
