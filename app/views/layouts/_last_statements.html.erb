@@ -11,7 +11,7 @@
             <%= link_to statement.public_figure.name, statement.public_figure %></strong>&nbsp; s'est déclaré pour
             "<strong><%= statement.position.title %></strong>"
             dans le débat sur
-            <strong><%= statement.position.subject.title %></strong></div>
+            <strong><%= link_to statement.position.subject.title, statement.subject %></strong></div>
           </li>
       <% end %>
     </ul>
