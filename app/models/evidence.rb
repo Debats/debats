@@ -5,7 +5,6 @@ class Evidence < ActiveRecord::Base
   validates :statement, presence: true
   validates :title, presence: true, length: {maximum: 100}
   validates :fact_date, presence: true
-  validates :evidence_date, presence: true
 
   validate :either_url_or_file
 
