@@ -1,5 +1,6 @@
 <li>
-  <%= link_to statement.public_figure.name, statement.public_figure %>
-  en faveur de
-  <%= link_to statement.position.title, statement.position %>
+    <%= link_to statement.position.title, statement.position %>
+	<ul>
+		<li><%= link_to statement.public_figure.name, statement.public_figure %></li>
+	</ul>
 </li>
