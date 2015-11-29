@@ -6,3 +6,10 @@
   <div style="overflow:hidden;"><h2 class="figure-title"><%= link_to public_figure.name, public_figure %></h2>
   <p class="figure-presentation-text"><%= public_figure.presentation %></p></div>
 </div>
+<script type="text/javascript">
+    $(document).ready(function() {
+     
+        $(".figure-presentation-text").shorten();
+     
+    });
+</script>
