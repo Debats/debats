@@ -1,15 +1,17 @@
 <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
-    <ul class="statement" id="last-statements">
+    <ul id="last-statements">
       <% # render @latest_statements %>
       <% @latest_statements.each do |statement| %>
-          <li id="statement-<%= statement.id %>">
-            <%= image_tag statement.public_figure.picture.url, class:"public-figure-little-image", alt:statement.public_figure.name %>
-            <strong><%= statement.public_figure.name %></strong>
+          <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
+            <% if statement.public_figure.picture? %>
+  	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+        <% end %>
+            <div class="public-figure-text"><strong><%= statement.public_figure.name %></strong>
             s'est déclaré pour
             "<strong><%= statement.position.title %></strong>"
             dans le débat sur
-            <strong><%= statement.position.subject.title %></strong>
+            <strong><%= statement.position.subject.title %></strong></div>
           </li>
       <% end %>
     </ul>

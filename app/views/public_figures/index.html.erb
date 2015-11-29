@@ -1,10 +1,11 @@
 <% provide(:title, "Personnalités") %>
 
-<%= render 'layouts/last_statements' %>
+<h1>Personnalités <%= link_to "Ajouter une personnalité", new_public_figure_path, class: "btn btn-primary" %></h1>
 
-<%= link_to "Nouvelle", new_public_figure_path, class: "btn btn-primary" %>
+<div class="public-figures-index col-md-8" >
 
-<div class="public-figures-index" >
   <%= render @public_figures %>
 </div>
+<div class="col-md-4">
+<%= render 'layouts/last_statements' %></div>
 <%= will_paginate %>
