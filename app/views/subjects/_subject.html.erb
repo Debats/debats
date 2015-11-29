@@ -1,5 +1,7 @@
   <div class="row">
-    <%= image_tag subject.picture.url, class:"subject-main-image", alt:"#{subject.title}" if subject.picture?  %>
+  	<% if subject.picture? %>
+  	 <div style="height:400px; width: 400px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= subject.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center;"></div>
+        <% end %>
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p>
       </div>
