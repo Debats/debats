@@ -3,7 +3,7 @@
 <h1>Sujets</h1>
 
 
-<div class="subjects-index col-md-8" >
+<div class="subjects-index col-md-8" style="margin-bottom:20px">
 <%= link_to "Créer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to(:add_subject) %>
 
 <%= render @subjects %>

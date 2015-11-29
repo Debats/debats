@@ -1,6 +1,6 @@
   <div class="row">
   	<% if subject.picture? %>
-  	 <div style="height:200px; width: 200px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= subject.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+  	 <div style="height:150px; width: 150px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= subject.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
         <% end %>
     <div style="overflow:hidden;"><h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p></div>
