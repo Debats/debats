@@ -14,7 +14,7 @@
         var config = {
             showChars: 100,
             ellipsesText: "...",
-            moreText: "Lire Plus",
+            moreText: "Lire Plus &rarr;",
             lessText: "Réduire"
         };
  
