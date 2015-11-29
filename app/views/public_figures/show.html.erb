@@ -27,7 +27,7 @@
   <% if @public_figure.statements.any? %>
       <ul class="Statements">
 
-        <%= render @public_figure.statements.select { |s| s.id } %>
+        <%= render partial: "statement", collection:@public_figure.statements.select { |s| s.id }, as: :statement %>
 
         <% if logged_in? && allowed_to(:add_statement) %>
             <li id="new-statement">
