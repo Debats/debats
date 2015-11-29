@@ -3,10 +3,10 @@
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p>
       </div>
-<script>
-    $(function(){
-        $('.subject-presentation-text').succinct({
-            omission: '&rarr;'
-        });
+<script type="text/javascript">
+    $(document).ready(function() {
+     
+        $(".subject-presentation-text").shorten();
+     
     });
 </script>
