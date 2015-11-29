@@ -3,7 +3,7 @@
     <ul id="last-statements">
       <% # render @latest_statements %>
       <% @latest_statements.each do |statement| %>
-          <li id="statement-<%= statement.id %>">
+          <li id="statement-<%= statement.id %>" style="margin-bottom: 10px;">
             <%= image_tag statement.public_figure.picture.url, class:"public-figure-little-image", alt:statement.public_figure.name %>
             <strong><%= statement.public_figure.name %></strong>
             s'est déclaré pour
