@@ -4,7 +4,7 @@
 
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
 <h1>Sujets d'actualité</h1>
-  <% # render @subjects %>
+  <% render @subjects %>
   <% @subjects.each do |subject| %>
 <div style="overflow:hidden;" class="col-md-4"><h1 class="subject-title"><%= link_to subject.title, subject %></h1>
 </div>
