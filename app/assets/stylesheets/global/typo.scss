@@ -54,11 +54,30 @@ h2 {
   }
 }
 
+h5 {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 3em;
+  letter-spacing: -2px;
+  margin-bottom: 30px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  }
+}
+
 p {
   font-family: 'Gotham-Book', sans-serif;
   font-size: 1.1em;
   line-height: 1.7em;
-  text-align: justify 
+  text-align: justify;
+}
+
+#white.p {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.7em;
+  text-align: center;
+  color: #FFFFFF;
 }
 
 #last-statements {
