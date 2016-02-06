@@ -14,6 +14,7 @@ defaults: &defaults
     add_statement: new_user
     add_evidence: new_user
     add_position: new_user
+    edit_subject: new_user
     
     ## dummies (-400)
     add_statement: dummies
