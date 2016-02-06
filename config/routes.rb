@@ -1,6 +1,5 @@
 Rails.application.routes.draw do
 
-
   root                  'home#index'
 
   get    'login'   => 'sessions#new'
@@ -32,9 +31,9 @@ Rails.application.routes.draw do
   get 'mode_demploi',         to: 'static_pages#mode_demploi',  as: 'mode_demploi'
 
   #Erreurs 404, 422, 500.
-  match '/404', to: 'errors#erreur_404', via: :all
-  match '/422', to: 'errors#erreur_422', via: :all
-  match '/500', to: 'errors#erreur_500', via: :all
+  match '/404', to: 'errors#404', via: :all
+  match '/422', to: 'errors#422', via: :all
+  match '/500', to: 'errors#500', via: :all
 
 
   # The priority is based upon order of creation: first created -> highest priority.
