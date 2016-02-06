@@ -9,7 +9,7 @@
 <% end %>
 
 
-<% if allowed_to :delete_public_figure %>
+<% if allowed_to? :delete_public_figure %>
     <%=       link_to "Supprimer", @public_figure,
                       method: :delete,
                       data: { confirm: "Supprimer \"#{@public_figure.title}\" ?" },
@@ -29,7 +29,7 @@
 
         <%= render partial: "statement", collection:@public_figure.statements.select { |s| s.id }, as: :statement %>
 
-        <% if logged_in? && allowed_to(:add_statement) %>
+        <% if logged_in? && allowed_to?(:add_statement) %>
             <li id="new-statement">
               <%= form_for(@new_statement) do |f| %>
                   <%= render 'shared/error_messages', object: f.object %>

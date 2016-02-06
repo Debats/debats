@@ -29,7 +29,7 @@ module ApplicationHelper
     nil
   end
 
-  def allowed_to(action)
+  def allowed_to?(action)
     return false if current_user.nil?
     min_rank = REPUTATION_CONFIG["can"][action.to_s]
     if (min_rank)
