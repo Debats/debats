@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
 
-  root                  'home#index'
+    root                  'home#index'
 
   get    'login'   => 'sessions#new'
   post   'login'   => 'sessions#create'
@@ -10,8 +10,8 @@ Rails.application.routes.draw do
   resources :password_resets,                               only: [:new, :create, :edit, :update]
   
   # ROUTE HOME
-  resources :home,            path: 'home'
-  
+  resources :home,            path: 'home' do
+    end 
   
   resources :subjects,            path: 'sujets' do
     member do
