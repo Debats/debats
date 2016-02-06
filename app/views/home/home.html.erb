@@ -7,11 +7,14 @@
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
   <h1>Sujets d'actualité</h1>
   <div class="col-md-4">
-
+  <ul id="subject">
   <% # render @subjects %>
-  <% @subjects.each do |subject| %>
-<h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+  <li>
+    <% @subjects.each do |subject| %>
+    <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p>
+    </li>
+    <ul>
 </div>
 
 <% end %>
@@ -20,8 +23,7 @@
 test
 </div>
 <div class="col-md-4">
-
-<div id="last-statements">
+  <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
       <% # render @latest_statements %>
