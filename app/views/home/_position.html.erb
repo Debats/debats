@@ -1,0 +1,8 @@
+<li>
+    <%= link_to position.title, position %>
+	
+	<ul>
+	<%= render partial: "statement", collection:position.statements, as: :statement %>
+	</ul>
+	
+</li>
