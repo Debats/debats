@@ -8,7 +8,11 @@ Rails.application.routes.draw do
   resources :users,               path: 'utilisateurs'
   resources :account_activations, path: 'activation',       only: [:edit]
   resources :password_resets,                               only: [:new, :create, :edit, :update]
-
+  
+  # ROUTE HOME
+  resources :home,            path: 'home' do
+    end 
+  
   resources :subjects,            path: 'sujets' do
     member do
       resources :positions,       as: 'subjects_positions', only: [:index]
