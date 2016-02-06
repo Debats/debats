@@ -3,7 +3,6 @@
     <h2>JE SUIS Débats</h2>
 <!-- <img src="assets/intro-bg.jpg" alt="home image" height="50%" width="50%" /> -->
   </div>
-<div class="container">
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
   <h1>Sujets d'actualité</h1>
   <div class="col-md-4">
@@ -12,7 +11,6 @@
   <li>
     <% @subjects.each do |subject| %>
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
-    <p class="subject-presentation-text"><%= subject.presentation %></p>
     </li>
     <ul>
 </div>
@@ -40,6 +38,5 @@ test
           </li>
       <% end %>
     </ul>
-</div>
 </div>
 </div>
