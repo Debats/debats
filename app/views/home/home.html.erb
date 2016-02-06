@@ -5,6 +5,7 @@
   </div>
 
 
+
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
 <h1>Sujets d'actualité</h1>
   <% # render @subjects %>
@@ -15,6 +16,7 @@
 </div><% end %>
 
 <div style="overflow:hidden;" class="col-md-4"> 
+<<<<<<< HEAD
         <ul class="Positions">
         <li>
         <% # if @subject.positions.any? %>
@@ -22,6 +24,11 @@
         </li>
         </ul>
         <% #end %>
+=======
+  <% if subject.public_figure.picture? %>
+  	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= subject.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+  <% end %>
+>>>>>>> parent of ec1dd8c... Fix - Home.html.erb
 </div>
     
 </div>
@@ -33,6 +40,8 @@
 
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
+      <% # render @latest_statements %>
+      <% @latest_statements.each do |statement| %>
           <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
             <% if statement.public_figure.picture? %>
   	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
