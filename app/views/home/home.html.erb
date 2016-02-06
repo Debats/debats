@@ -3,58 +3,31 @@
     <h2>JE SUIS Débats</h2>
 <!-- <img src="assets/intro-bg.jpg" alt="home image" height="50%" width="50%" /> -->
   </div>
-
-
-
-
+<div class="container">
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
-<h1>Sujets d'actualité</h1>
-  <% render @subjects %>
+  <div class="col-md-4">
+  <h1>Sujets d'actualité</h1>
+  <% # render @subjects %>
   <% @subjects.each do |subject| %>
-<<<<<<< HEAD
-
-<div style="overflow:hidden;" class="col-md-4">
-  <h1 class="subject-title"><%= link_to subject.title, subject %></h1>
-</div><% end %>
-
-<div style="overflow:hidden;" class="col-md-4"> 
-<<<<<<< HEAD
-        <ul class="Positions">
-        <li>
-        <% # if @subject.positions.any? %>
-        <% # render partial: "position", collection:@subject.positions, as: :position %>
-        </li>
-        </ul>
-        <% #end %>
-=======
-  <% if subject.public_figure.picture? %>
-  	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= subject.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
-  <% end %>
->>>>>>> parent of ec1dd8c... Fix - Home.html.erb
-=======
-<div style="overflow:hidden;" class="col-md-4"><h1 class="subject-title"><%= link_to subject.title, subject %></h1>
+<div style="overflow:hidden;"><h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+    <p class="subject-presentation-text"><%= subject.presentation %></p></div>
 </div>
 
-    <div style="overflow:hidden;" class="col-md-4"> <% if subject.public_figure.picture? %>
-  	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= subject.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
-        <% end %>
->>>>>>> 8379e7b34633a1c30463d3c96f5aa3b6e5351a42
-</div>
-    
-</div>
 <% end %>
-
-
+</div>
 <div class="col-md-4">
-<div id="last-statements">
+test
+</div>
+<div class="col-md-4">
 
+<div id="last-statements">
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
       <% # render @latest_statements %>
       <% @latest_statements.each do |statement| %>
           <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
             <% if statement.public_figure.picture? %>
-  	 <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+     <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
         <% end %>
             <div class="public-figure-text"><strong>
             <%= link_to statement.public_figure.name, statement.public_figure %></strong>&nbsp; s'est déclaré pour
@@ -62,7 +35,8 @@
             dans le débat sur
             <strong><%= link_to statement.position.subject.title, statement.position.subject %></strong></div>
           </li>
-     
+      <% end %>
     </ul>
+</div>
 </div>
 </div>
