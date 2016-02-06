@@ -29,7 +29,7 @@ Rails.application.routes.draw do
   get 'mode_demploi',         to: 'static_pages#mode_demploi',  as: 'mode_demploi'
 
   # HOMEPAGE
-  get 'home'   => 'home#index'
+  get 'home'   => 'home#home'
 
 
   # The priority is based upon order of creation: first created -> highest priority.
