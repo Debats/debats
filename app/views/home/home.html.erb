@@ -1,4 +1,8 @@
-<img src="intro-bg.jpg" alt="home image" />
+  <div class="row" height="500px" style="background:url('assets/intro-bg.jpg');background-size:cover;">
+    <h1>BONJOUR</h1>
+    <h2>JE SUIS Débats</h2>
+<!-- <img src="assets/intro-bg.jpg" alt="home image" height="50%" width="50%" /> -->
+  </div>
 
 
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
@@ -8,16 +12,16 @@
 
 <div style="overflow:hidden;" class="col-md-4">
   <h1 class="subject-title"><%= link_to subject.title, subject %></h1>
-</div>
+</div><% end %>
 
 <div style="overflow:hidden;" class="col-md-4"> 
         <ul class="Positions">
         <li>
-        <% if @subject.positions.any? %>
-        <%= render partial: "position", collection:@subject.positions, as: :position %>
+        <% # if @subject.positions.any? %>
+        <% # render partial: "position", collection:@subject.positions, as: :position %>
         </li>
         </ul>
-        <% end %>
+        <% #end %>
 </div>
     
 </div>
@@ -26,6 +30,7 @@
 
 <div class="col-md-4">
 <div id="last-statements">
+
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
           <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
@@ -38,7 +43,7 @@
             dans le débat sur
             <strong><%= link_to statement.position.subject.title, statement.position.subject %></strong></div>
           </li>
-      <% end %>
+     
     </ul>
 </div>
 </div>
