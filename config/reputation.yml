@@ -22,6 +22,7 @@ defaults: &defaults
     
     ## Confirmed users (1000)
     add_subject: confirmed_user
+    add_personality: confirmed_user
     approve_subject: confirmed_user 
     approve_personality: confirmed_user
     approve_evidentce: confirmed_user
