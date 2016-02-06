@@ -1,24 +1,17 @@
-  <div class="row" height="500px" style="background:url('assets/intro-bg.jpg');background-size:cover;">
+<div class="row" height="500px" style="background:url('assets/intro-bg.jpg');background-size:cover;">
     <h1>BONJOUR</h1>
     <h2>JE SUIS Débats</h2>
-<!-- <img src="assets/intro-bg.jpg" alt="home image" height="50%" width="50%" /> -->
-  </div>
+</div>
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
   <h1>Sujets d'actualité</h1>
-  <div class="col-md-4">
   <ul id="subject">
   <% # render @subjects %>
-  <li>
-    <% @subjects.each do |subject| %>
+  <% @subjects.each do |subject| %>
+    <li>
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     </li>
     <ul>
-</div>
-
 <% end %>
-</div>
-<div class="col-md-4">
-test
 </div>
 <div class="col-md-4">
   <div id="last-statements">
