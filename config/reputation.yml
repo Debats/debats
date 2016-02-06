@@ -14,7 +14,6 @@ defaults: &defaults
     add_statement: new_user
     add_evidence: new_user
     add_position: new_user
-    edit_subject: new_user
     
     ## dummies (-400)
     add_statement: dummies
@@ -41,9 +40,9 @@ defaults: &defaults
     delete_evidentce: moderator
     delete_argument: moderator
     delete_position: moderator
-
-    rename_subject: confirmed_user # ==> Includes description 
-    rename_personality: confirmed_user # ==> Includes description 
+    edit_argument: moderator # ==> Includes description 
+    edit_subject: moderator # ==> Includes description 
+    edit_personality: moderator # ==> Includes description 
 
     ## Founder
     delete_major_subject: founder 
