@@ -26,7 +26,8 @@ Rails.application.routes.draw do
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
   get 'mode_demploi',         to: 'static_pages#mode_demploi',  as: 'mode_demploi'
 
-
+  # HOMEPAGE
+  get 'home'   => 'home#index'
 
 
   # The priority is based upon order of creation: first created -> highest priority.
