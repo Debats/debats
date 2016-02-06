@@ -5,9 +5,11 @@
 <div class="subjects-index col-md-8" style="margin-bottom:20px">
   <h1>Sujets d'actualité</h1>
   <% # render @subjects %>
+  <% @subjects.each do |subject| %>
 <div style="overflow:hidden;"><h2 class="subject-title"><%= link_to subject.title, subject %></h2>
     <p class="subject-presentation-text"><%= subject.presentation %></p></div>
 </div>
+<% end %>
 
 
 <div class="col-md-4">
