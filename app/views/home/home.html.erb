@@ -10,7 +10,6 @@
 </div>
 </div>
 
-### TABLE
 <div class="container subjects-index col-md-8" style="margin-bottom:20px; margin-top: 20px;">
 
 <h1>Sujets d'actualité</h1>
@@ -23,16 +22,17 @@
           <% # render @subjects %>
       <li>
         <% @subjects.each do |subject| %>
+        
        <tr>
 
-      <td>
+      <td style="width:50%">
         
         <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
         <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
       </td>
 
-      <td><% subject.associated_public_figures.each do |public_figure| %>
-
+      <td style="width:50%">
+        <% subject.associated_public_figures.each do |public_figure| %>
         <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div> 
       </td>
          </tr>
@@ -46,7 +46,6 @@
 </div>
 
 
-### END TABLE
 
 <div class="col-md-4" style="text-align:right;">
   <div id="last-statements">
