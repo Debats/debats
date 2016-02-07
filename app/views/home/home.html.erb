@@ -14,7 +14,7 @@
 
 <h1>Sujets d'actualité</h1>
 
-<table class="table">
+<table class="table" style="border: none;">
   <tbody>
 
    
@@ -33,11 +33,12 @@
 
       <% subject.associated_public_figures.each do |public_figure| %>
 
-      <td style="width:50%">
+      <td style="width:50%; text-align:right;vertical-align:top;padding-top:10px;">
         <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
       </td>
 
       <% end %> 
+
          </tr>
         </li>
         
