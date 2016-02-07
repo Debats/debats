@@ -14,7 +14,7 @@
 
 <section class="Positions">
 
-    <h2>Les positions ( <%= pluralize(@subject.positions.count) %> )</h2>
+    <h2>Les positions <%= pluralize(@subject.positions.count) %></h2>
 
     <% if @subject.positions.any? %>
         <ul class="Positions">
