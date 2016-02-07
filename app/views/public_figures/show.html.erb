@@ -20,7 +20,7 @@
 
 <section class="Statements">
 
-  <h2><%=t "The_statements" %><%= t('statements_count', count: @public_figure.statements.count) %></h2>
+  <h2><%=t "The_statements" %></h2><%= t('statements_count', count: @public_figure.statements.count) %>
   <% if @public_figure.statements.any? %>
 
       <ul class="Subjects">
