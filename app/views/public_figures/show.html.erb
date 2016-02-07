@@ -30,13 +30,9 @@
           <%= subject.title %>
 
             <ul>
-
               <% subject.get_positions_for_public_figure(@public_figure).each do |position| %>
-
                 <%= position.title %>
-
               <% end %>
-
             </ul>
 
         <% end %>
