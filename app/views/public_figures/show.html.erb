@@ -22,17 +22,34 @@
 
   <h2><%=t "The_statements" %><%= t('statements_count', count: @public_figure.statements.count) %></h2>
   <% if @public_figure.statements.any? %>
-      <ul class="Statements">
 
-        <%= render partial: "statement", collection:@public_figure.statements.select { |s| s.id }, as: :statement %>
+      <ul class="Subjects">
+
+        <% @public_figure.associated_subjects.each do |subject| %>
+
+          <%= subject.title %>
+
+            <ul>
+
+              <% subject.get_positions_for_public_figure(@public_figure).each do |position| %>
+
+                <%= position.title %>
+
+              <% end %>
+
+            </ul>
+
+        <% end %>
+
+      </ul>
+
+      <% #= render partial: "statement", collection:@public_figure.statements.select { |s| s.id }, as: :statement %>
 
         <% if logged_in? && allowed_to?(:add_statement) %>
             <li id="new-statement">
               <%= form_for(@new_statement) do |f| %>
                   <%= render 'shared/error_messages', object: f.object %>
                   <%= f.hidden_field :public_figure_id, :value => @public_figure.id %>
-
-            
 
                   <%= f.fields_for @new_statement.evidences.build do |e| %>
  
@@ -69,7 +86,7 @@
 
             </li>
         <% end %>
-      </ul>
+
   <% end %>
 
 </section>
