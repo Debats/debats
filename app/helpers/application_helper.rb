@@ -41,4 +41,13 @@ module ApplicationHelper
     end
   end
 
+  def grant_reputation_for!(action)
+    return if current_user.nil?
+    granted_reputation = REPUTATION_CONFIG["actions_to_reputation"][action.to_s]
+    if granted_reputation
+      current_user.reputation += granted_reputation
+      current_user.save
+    end
+  end
+
 end
