@@ -21,13 +21,12 @@ class Subject < ActiveRecord::Base
     statements.map(&:public_figure).flatten
   end
 
-  class << self
 
-    def latest_associated_public_figures
-      associated_public_figures.order(id: :desc).limit(5)
-    end
-
+  def latest_associated_public_figures
+      statements.map(&:public_figure).flatten.order(id: :desc).limit(5)
   end
+
+  
 
 
   def get_positions_for_public_figure(public_figure)
