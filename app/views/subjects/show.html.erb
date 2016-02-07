@@ -19,7 +19,7 @@
     <% if @subject.positions.any? %>
         <ul class="Positions">
 
-	<%= render partial: "position", collection:@subject.positions, as: :position %><%= pluralize(@subject.statements.count, 'prise de position') %>
+	<%= render partial: "position", collection:@subject.positions, as: :position %>
 	
 	
           <% if false && logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
