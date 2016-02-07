@@ -14,7 +14,7 @@
 
 <h1>Sujets d'actualité</h1>
 
-<table class="table">
+<table class="table table-hover">
   <tbody>
 
    
@@ -33,9 +33,7 @@
       </td>
 
       <td style="width:50%">
-        <% if statement.public_figure.picture? %>
         <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
-        <% end %>
       </td>
          </tr>
         </li>
