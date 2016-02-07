@@ -9,36 +9,42 @@
     </div>
 </div>
 </div>
-<div class="subjects-index col-md-8" style="margin-bottom:20px;">
-  <h1>Sujets d'actualité</h1>
 
-  <div style="display:table; width:100%; table-layout:fixed;">
+### TABLE
+<div class="container subjects-index col-md-8" style="margin-bottom:20px; margin-top: 20px;">
 
-  <ul id="subject">
+<h1>Sujets d'actualité</h1>
 
-  <% # render @subjects %>
-  <% @subjects.each do |subject| %>
-    <li>
-  <div style="display:table-cell; text-align:left; width:50%;">    
-    <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
-    <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
-  </div>
-  <div style="display:table-cell; text-align:right; width:50%;">
-        
-        <% subject.associated_public_figures.each do |public_figure| %>
+<table class="table">
+  <tbody>
 
-        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;">
+    <tr>
+      <ul id="subject" style="list-style-type: none;">
+          <% # render @subjects %>
+        <li>
 
-        </div>
-  
+      <td>
+      <% @subjects.each do |subject| %>
+        <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+        <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
+      </td>
+
+      <td><% subject.associated_public_figures.each do |public_figure| %>
+
+        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div> <% end %> 
+      </td>
+
+        </li>
         <% end %> 
-  </div>
-    </li>
-  <% end %> 
-</ul>
+    </ul>
+    </tr>
+  </tbody>
+</table>
 </div>
-</div>
-</div>
+
+
+### END TABLE
+
 <div class="col-md-4" style="text-align:right;">
   <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
