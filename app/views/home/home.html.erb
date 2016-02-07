@@ -15,8 +15,8 @@
   <% # render @subjects %>
   <% @subjects.each do |subject| %>
     <li>
-    <div>
-    <h2 class="subjects-list"><%= link_to subject.title, subject %></h2>
+    <div id="subject-list">
+    <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
 
    <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
         <% subject.implied_public_figures.each do |public_figure| %></div>
