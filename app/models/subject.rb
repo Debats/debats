@@ -21,6 +21,15 @@ class Subject < ActiveRecord::Base
     statements.map(&:public_figure).flatten
   end
 
+  class << self
+
+    def latest_associated_public_figures
+      associated_public_figures.order(id: :desc).limit(5)
+    end
+
+  end
+
+
   def get_positions_for_public_figure(public_figure)
     #TODO performance optimization
     statements                                            # Liste des prises de position liées à ce sujet ...
