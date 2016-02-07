@@ -27,7 +27,7 @@
 
       <td style="width:50%; border: none;">
         
-        <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+        <h2 class="subjects-title" style="text-transform:uppercase;"><%= link_to subject.title, subject %></h2>
         <h6><%= pluralize(subject.positions.count, 'positions') %></h6>
         <h6><%= pluralize(subject.statements.count, 'prise de position') %></h6>
       </td>
