@@ -74,7 +74,7 @@ class SubjectsController < ApplicationController
         store_location
         flash[:danger] = "Vous devez être identifié pour supprimer un sujet"
         redirect_to login_url
-      elsif ! allowed_to? :delete_subject
+      elsif ! allowed_to? :delete_minor_subject
         flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
         redirect_to(Subject.find(params[:id]))
       end

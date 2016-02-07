@@ -11,25 +11,20 @@ defaults: &defaults
 
   can:
     ## New users (0)
-    add_statement: new_user
-    add_evidence: new_user
-    add_position: new_user
-    
-    ## dummies (-400)
-    add_statement: dummies
-    add_evidence: dummies
-    add_position: dummies
+    add_statement: dummies 
+    add_evidence: dummies 
+    add_position: dummies 
     
     ## Confirmed users (1000)
     add_subject: confirmed_user
-    add_personality: confirmed_user
-    approve_subject: confirmed_user 
-    approve_personality: confirmed_user
+    add_personality: confirmed_user 
+    approve_subject: confirmed_user
+    approve_personality: confirmed_user 
     approve_evidentce: confirmed_user
     approve_argument: confirmed_user
     approve_position: confirmed_user
     reject_subject: confirmed_user # ==> Rejecting is the equivalent to signaling the fallacy in the element, but only Moderators will actually be able to delete it
-    reject_personality: confirmed_user
+    reject_personality: confirmed_user 
     reject_evidentce: confirmed_user
     reject_argument: confirmed_user
     reject_position: confirmed_user

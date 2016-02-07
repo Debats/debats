@@ -17,13 +17,16 @@ class Subject < ActiveRecord::Base
     title_changed? || super
   end
 
-  def implied_public_figures
+  def associated_public_figures
     statements.map(&:public_figure).flatten
-    ## public_figures = Array.new
-    ## statements.each do |statement|
-    ##   public_figures << statement.public_figure
-    ## end
-    ## public_figures
+  end
+
+  def get_positions_for_public_figure(public_figure)
+    #TODO performance optimization
+    statements                                            # Liste des prises de position liées à ce sujet ...
+        .select { |s| s.public_figure == public_figure }  # ... et à cette personnalité
+        .map(&:position)                                  # On récupère la position de chacune de ces prises de positions
+        .uniq                                             # Dedup
   end
 
   private

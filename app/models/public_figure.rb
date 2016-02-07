@@ -16,6 +16,14 @@ class PublicFigure < ActiveRecord::Base
     name_changed? || super
   end
 
+  def associated_subjects
+    statements                                # Statements of this personality
+        .reject(&:new_record?)                # Ignore new records
+        .map(&:position)                      # get position of each statement
+        .map(&:subject)                       # get subject of each position
+        .uniq                                 # dedupe
+  end
+
   private
 
   def picture_size
