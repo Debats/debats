@@ -21,8 +21,6 @@ class Subject < ActiveRecord::Base
     statements.map(&:public_figure).flatten
   end
 
-
- 
   def get_positions_for_public_figure(public_figure)
     #TODO performance optimization
     statements                                            # Liste des prises de position liées à ce sujet ...
