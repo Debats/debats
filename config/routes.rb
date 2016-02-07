@@ -27,6 +27,7 @@ Rails.application.routes.draw do
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
   get 'mode_demploi',         to: 'static_pages#mode_demploi',  as: 'mode_demploi'
+    get 'error',              to: 'static_pages#error',  as: 'error'
 
   # HOMEPAGE
   get 'home'   => 'home#home'

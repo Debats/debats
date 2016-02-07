@@ -2,10 +2,24 @@
 
 @import "variables";
 @font-face {
- font-family: 'Gotham-Book';
- src:font-url('Gotham-Book.woff') format('woff');
- font-weight: normal;
- font-style: normal;
+  font-family: 'Gotham-Book';
+  src:font-url('Gotham-Book.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Gotham-Bold';
+  src:font-url('Gotham-Bold.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Gotham-BookItalic';
+  src:font-url('Gotham-BookItalic.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -40,11 +54,33 @@ h2 {
   }
 }
 
+h5 {
+  font-family: 'Gotham-Bold', sans-serif;
+  font-size: 3em;
+  letter-spacing: 1px;
+  margin-bottom: 30px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  font-weight: bold;
+  text-shadow: 0px 0px 5px rgba(0, 115, 162, 1);
+
+}
+
 p {
   font-family: 'Gotham-Book', sans-serif;
   font-size: 1.1em;
   line-height: 1.7em;
-  text-align: justify 
+  text-align: justify;
+}
+
+#white {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.7em;
+  text-align: center;
+  color: #FFFFFF;
+  text-shadow: 0px 0px 30px rgba(0, 115, 162, 1);
 }
 
 #last-statements {

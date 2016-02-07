@@ -1,24 +1,45 @@
-<div class="container-fluid">
-<div class="row" height="500px" style="background:url('<%= asset_path('intro-bg.jpg') %>');background-size:cover;background-position: center center;">
-    <div style="height:500px;width:auto; font-color:white !important;text-align: center;vertical-align: middle;">
-    <br><br><br>
-    BONJOUR<br>
-    JE SUIS Débats<br><br><br>
+<div class="container-fluid" style="width:100vw; position:relative; margin-left:-50vw;left:50%;">
+<div class="row" style="background:url('<%= asset_path('intro-bg.jpg') %>');background-size:cover;background-position: center center;">
+    <div style="font-color:white !important;text-align: center;vertical-align: middle;">
+    <br><br><br><br><br><br>
+    <h5>Bienvenue sur Débats.co</h5><br>
+    <div id="white">Débats est un projet francophone et participatif, ayant pour objectif <br>
+        d’offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.</div>
+    <br><br><br><br><br><br>
     </div>
 </div>
 </div>
-<div class="subjects-index col-md-8" style="margin-bottom:20px">
+<div class="subjects-index col-md-8" style="margin-bottom:20px;">
   <h1>Sujets d'actualité</h1>
+
+  <div style="display:table; width:100%; table-layout:fixed;">
+
   <ul id="subject">
+
   <% # render @subjects %>
   <% @subjects.each do |subject| %>
     <li>
-    <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+  <div style="display:table-cell; text-align:left; width:50%;">    
+    <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+    <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
+  </div>
+  <div style="display:table-cell; text-align:right; width:50%;">
+        
+        <% subject.associated_public_figures.each do |public_figure| %>
+
+        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;">
+
+        </div>
+  
+        <% end %> 
+  </div>
     </li>
-  <% end %>
+  <% end %> 
 </ul>
 </div>
-<div class="col-md-4">
+</div>
+</div>
+<div class="col-md-4" style="text-align:right;">
   <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
