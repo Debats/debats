@@ -1,6 +1,8 @@
 <li>
   Au sujet de
   <%= link_to statement.position.subject.title, statement.position.subject %>
-  en faveur de
+  <br><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %>
+  <br><br>
   <%= link_to statement.position.title, statement.position %>
+  <br>TAGS ASSOCIES    
 </li>
