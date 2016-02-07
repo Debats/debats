@@ -11,38 +11,33 @@ defaults: &defaults
 
   can:
     ## New users (0)
-    add_statement: new_user
-    add_evidence: new_user
-    add_position: new_user
-    
-    ## dummies (-400)
-    add_statement: dummies
-    add_evidence: dummies
-    add_position: dummies
+    add_statement: dummies new_user confirmed_user moderator founder
+    add_evidence: dummies new_user confirmed_user moderator founder
+    add_position: dummies new_user confirmed_user moderator founder
     
     ## Confirmed users (1000)
-    add_subject: confirmed_user
-    add_personality: confirmed_user
-    approve_subject: confirmed_user 
-    approve_personality: confirmed_user
-    approve_evidentce: confirmed_user
-    approve_argument: confirmed_user
-    approve_position: confirmed_user
-    reject_subject: confirmed_user # ==> Rejecting is the equivalent to signaling the fallacy in the element, but only Moderators will actually be able to delete it
-    reject_personality: confirmed_user
-    reject_evidentce: confirmed_user
-    reject_argument: confirmed_user
-    reject_position: confirmed_user
+    add_subject: confirmed_user moderator founder
+    add_personality: confirmed_user moderator founder
+    approve_subject: confirmed_user moderator founder
+    approve_personality: confirmed_user moderator founder
+    approve_evidentce: confirmed_user moderator founder
+    approve_argument: confirmed_user moderator founder
+    approve_position: confirmed_user moderator founder
+    reject_subject: confirmed_user moderator founder # ==> Rejecting is the equivalent to signaling the fallacy in the element, but only Moderators will actually be able to delete it
+    reject_personality: confirmed_user moderator founder
+    reject_evidentce: confirmed_user moderator founder
+    reject_argument: confirmed_user moderator founder
+    reject_position: confirmed_user moderator founder
 
     ## Moderators (10000)
-    delete_minor_subject: moderator # ==> Minor subject: less than 1 week old, or less than 5 statements
-    delete_minor_personality: moderator # ==> Minor personality: less than 1 week old, or less than 2 statements
-    delete_evidentce: moderator
-    delete_argument: moderator
-    delete_position: moderator
-    edit_argument: moderator # ==> Includes description 
-    edit_subject: moderator # ==> Includes description 
-    edit_personality: moderator # ==> Includes description 
+    delete_minor_subject: moderator founder # ==> Minor subject: less than 1 week old, or less than 5 statements
+    delete_minor_personality: moderator founder # ==> Minor personality: less than 1 week old, or less than 2 statements
+    delete_evidentce: moderator founder
+    delete_argument: moderator founder
+    delete_position: moderator founder
+    edit_argument: moderator founder # ==> Includes description 
+    edit_subject: moderator founder # ==> Includes description 
+    edit_personality: moderator founder # ==> Includes description 
 
     ## Founder
     delete_major_subject: founder 

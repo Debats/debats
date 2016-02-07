@@ -9,25 +9,30 @@
     </div>
 </div>
 </div>
-<div class="subjects-index col-md-8" style="margin-bottom:20px">
+<div class="subjects-index col-md-8" style="margin-bottom:20px;">
   <h1>Sujets d'actualité</h1>
+  <div style="display:table; width:100%;">
+  <div style="display:table-cell">
   <ul id="subject">
   <% # render @subjects %>
   <% @subjects.each do |subject| %>
     <li>
-    <div>
-    <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+<div style="text-align:left;">    <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
 
    <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
-        <% subject.implied_public_figures.each do |public_figure| %></div>
-        <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+ </div>
+<div style="text-align:center;">        <% subject.implied_public_figures.each do |public_figure| %>
+        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
+  
         <% end %> 
-    
+    </div>
     </li>
   <% end %> 
 </ul>
 </div>
-<div class="col-md-4">
+</div>
+</div>
+<div class="col-md-4" style="text-align:right;">
   <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
