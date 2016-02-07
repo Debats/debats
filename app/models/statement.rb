@@ -2,10 +2,11 @@ class Statement < ActiveRecord::Base
   belongs_to :public_figure
   belongs_to :position
   has_many :evidences
+  has_many :arguments
 
   validates_presence_of :position_id
   validates_presence_of :public_figure_id
-  validates_uniqueness_of :public_figure_id, scope: :position_id
+  validates_uniqueness_of :argument_id, scope: :position_id
   validate :at_least_one_evidence
 
   class << self
