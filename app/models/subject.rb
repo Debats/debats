@@ -17,6 +17,15 @@ class Subject < ActiveRecord::Base
     title_changed? || super
   end
 
+  def implied_public_figures
+    statements.map(&:public_figure).flatten
+    ## public_figures = Array.new
+    ## statements.each do |statement|
+    ##   public_figures << statement.public_figure
+    ## end
+    ## public_figures
+  end
+
   private
 
     def picture_size
