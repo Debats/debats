@@ -6,7 +6,7 @@
 
 <%= image_tag @subject.picture.url, class:"subject-main-image", alt:"#{@subject.title}" if @subject.picture?  %>
 
-<% if allowed_to?(:delete_subject)  %>
+<% if allowed_to?(:delete_minor_subject)  %>
 <%=       link_to "Supprimer", @subject, method: :delete, data: { confirm: "Supprimer \"#{@subject.title}\" ?" }, class: "btn btn-primary btn-danger" %>
 <% end %>
 
@@ -14,12 +14,12 @@
 
 <section class="Positions">
 
-    <h2>Les positions <%= pluralize(@subject.positions.count, 'positions') %></h2>
+    <h2>Les positions (<%= pluralize(@subject.positions.count) %>)</h2>
 
     <% if @subject.positions.any? %>
         <ul class="Positions">
 
-	<%= render partial: "position", collection:@subject.positions, as: :position %><%= pluralize(@subject.statements.count, 'prise de position') %>
+	<%= render partial: "position", collection:@subject.positions, as: :position %>
 	
 	
           <% if false && logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
