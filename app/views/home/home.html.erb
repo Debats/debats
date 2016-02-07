@@ -11,20 +11,28 @@
 </div>
 <div class="subjects-index col-md-8" style="margin-bottom:20px;">
   <h1>Sujets d'actualité</h1>
-  <div style="display:table; width:100%;">
+
+  <div style="display:table; width:100%; table-layout:fixed;">
+
   <ul id="subject">
+
   <% # render @subjects %>
   <% @subjects.each do |subject| %>
     <li>
-<div style="display:table-cell; text-align:left; width:50%;">    <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+  <div style="display:table-cell; text-align:left; width:50%;">    
+    <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+    <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
+  </div>
+  <div style="display:table-cell; text-align:right; width:50%;">
+        
+        <% subject.associated_public_figures.each do |public_figure| %>
 
-   <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
- </div>
-<div style="display:table-cell; text-align:right; width:50%;">        <% subject.associated_public_figures.each do |public_figure| %>
-        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
+        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;">
+
+        </div>
   
         <% end %> 
-    </div>
+  </div>
     </li>
   <% end %> 
 </ul>
