@@ -27,16 +27,16 @@
 
       <td style="width:50%; border: none; text-transform:uppercase;">
         
-        <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
-        <h6><%= pluralize(subject.positions.count, 'positions') %></h6>
-        <h6><%= pluralize(subject.statements.count, 'prise de position') %></h6>
+        <h2 class="subjects-title" style="color:#333333 !important;"><%= link_to subject.title, subject %></h2>
+        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.positions.count, 'positions') %></h6>
+        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.statements.count, 'prise de position') %></h6>
       </td>
 
 
-      <td style="width:50%; text-align:right;vertical-align:top;padding-top:20px;">
+      <td style="width:50%; text-align:center;vertical-align:middle;">
       <% subject.associated_public_figures.sample(5).each do |public_figure| %>
 
-        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
+        <div style="height:40px; width: 40px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
       <% end %> 
       </td>
 
