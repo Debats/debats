@@ -12,20 +12,14 @@
 
 <p class="SubjectPresentationText"><%= best_in_place_if allowed_to?(:edit_subject), @subject, :presentation, as: :textarea  %></p>
 
-<h2>Problématique</h2>
-
-<p class="subject-problem"><%= best_in_place_if allowed_to?(:edit_subject), @subject, :problem, as: :textarea, nil: "Indiquez ici la problématique" %></p>
-
 <section class="Positions">
 
-    <h2>Les positions</h2>
-
-    <p><%= pluralize(@subject.positions.count, 'positions') %>, <%= pluralize(@subject.statements.count, 'prise de position') %></p>
+    <h2>Les positions <%= pluralize(@subject.positions.count, 'positions') %></h2>
 
     <% if @subject.positions.any? %>
         <ul class="Positions">
 
-	<%= render partial: "position", collection:@subject.positions, as: :position %>
+	<%= render partial: "position", collection:@subject.positions, as: :position %><%= pluralize(@subject.statements.count, 'prise de position') %>
 	
 	
           <% if false && logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
