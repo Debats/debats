@@ -9,7 +9,7 @@
 <% end %>
 
 
-<% if allowed_to? :delete_public_figure %>
+<% if allowed_to? :delete_personality %>
     <%=       link_to "Supprimer", @public_figure,
                       method: :delete,
                       data: { confirm: "Supprimer \"#{@public_figure.title}\" ?" },
