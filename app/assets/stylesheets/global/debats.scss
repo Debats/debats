@@ -69,28 +69,16 @@ statements {
   list-style-type: none;
 }
 
-
-// Last statements on the left
 div#last-statements {
   float:right;
   margin-right:10px;
   .public-figure-little-image {
     width: 50px;
     height: 50px;
-	border-radius: 50%;
-	float:left; 
-	margin-right:15px;
+  border-radius: 50%;
+  float:left; 
+  margin-right:15px;
   }
   .public-figure-text {
-  overflow:hidden;}
-}
-
-
-div#home-subject {
-  float:left;
-  margin-right:10px;
-  }
-
-div#home-public-figure {
   overflow:hidden;}
 }
