@@ -63,7 +63,7 @@ class SubjectsController < ApplicationController
         store_location
         flash[:danger] = "Vous devez être identifié pour éditer un sujet"
         redirect_to login_url
-      elsif ! allowed_to? :edit_subject
+      elsif ! allowed_to? :edit_minor_subject
         flash[:danger] = "Vous n'avez pas assez de réputation pour éditer un sujet"
         redirect_to(Subject.find(params[:id]))
       end
