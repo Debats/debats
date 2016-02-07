@@ -22,13 +22,7 @@ class Subject < ActiveRecord::Base
   end
 
 
-  def latest_associated_public_figures
-      statements.map(&:public_figure).flatten.order(id: :desc).limit(5)
-  end
-
-  
-
-
+ 
   def get_positions_for_public_figure(public_figure)
     #TODO performance optimization
     statements                                            # Liste des prises de position liées à ce sujet ...
