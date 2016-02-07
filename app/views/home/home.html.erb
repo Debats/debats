@@ -16,6 +16,7 @@
   <% @subjects.each do |subject| %>
     <li>
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
+    <p><%= pluralize(@subject.positions.count, 'positions') %>, <%= pluralize(@subject.statements.count, 'prise de position') %></p>
     </li>
   <% end %>
 </ul>
