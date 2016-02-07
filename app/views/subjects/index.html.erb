@@ -28,21 +28,6 @@
       </div>
       <div class="modal-body">
         <p>Yepee</p>
-          <div class="row">
-  <div class="col-md-6 col-md-offset-3">
-    <%= form_for(@subject, html: {multipart:true}) do |f| %>
-        <%= render "shared/error_messages", object: f.object %>
-
-        <%= f.label :title, "Titre" %>
-        <%= f.text_field :title, class: 'form-control' %>
-
-        <%= f.label :presentation, "Presentation"%>
-        <%= f.text_area :presentation, class: 'form-control'  %>
-
-        <%= f.label :problem, "Problème" %>
-        <%= f.text_area :problem, class: 'form-control' %>
-
-      <span class="picture" ><%= f.file_field :picture, accept: 'image/jpeg,image/gif,image/png' %></span></div></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
