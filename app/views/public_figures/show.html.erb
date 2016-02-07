@@ -12,7 +12,7 @@
 <% if allowed_to? :delete_minor_personality %>
     <%=       link_to "Supprimer", @public_figure,
                       method: :delete,
-                      data: { confirm: "Supprimer \"#{@public_figure.title}\" ?" },
+                      data: { confirm: "Supprimer \"#{@public_figure.name}\" ?" },
                       class: "btn btn-primary btn-danger" %>
 <% end %>
 
