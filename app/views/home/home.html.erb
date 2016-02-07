@@ -22,7 +22,8 @@
           <% # render @subjects %>
       <li>
         <% @subjects.each do |subject| %>
-        
+        <% subject.associated_public_figures.each do |public_figure| %>
+
        <tr>
 
       <td style="width:50%">
@@ -32,8 +33,9 @@
       </td>
 
       <td style="width:50%">
-        <% subject.associated_public_figures.each do |public_figure| %>
-        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div> 
+        <% if statement.public_figure.picture? %>
+        <div style="height:30px; width: 30px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
+        <% end %>
       </td>
          </tr>
         </li>
