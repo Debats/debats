@@ -35,6 +35,7 @@ class SubjectsController < ApplicationController
     @subject = Subject.find(params[:id])
     respond_to do |format|
       if @subject.update(subject_params)
+          grant_reputation_for!(:edited_subject)
           format.html {redirect_to @subject}
           format.json {respond_with_bip @subject }
       else
