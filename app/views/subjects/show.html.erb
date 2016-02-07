@@ -6,7 +6,7 @@
 
 <%= image_tag @subject.picture.url, class:"subject-main-image", alt:"#{@subject.title}" if @subject.picture?  %>
 
-<% if allowed_to?(:delete_minor_subject)  %>
+<% if allowed_to? :delete_minor_subject  %>
 <%=       link_to "Supprimer", @subject, method: :delete, data: { confirm: "Supprimer \"#{@subject.title}\" ?" }, class: "btn btn-primary btn-danger" %>
 <% end %>
 
