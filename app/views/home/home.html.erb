@@ -15,11 +15,14 @@
   <% # render @subjects %>
   <% @subjects.each do |subject| %>
     <li>
+    <div>
     <h2 class="subject-title"><%= link_to subject.title, subject %></h2>
-    <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
-        <% subject.implied_public_figures.each do |public_figure| %>
+
+   <p><%= pluralize(subject.positions.count, 'positions') %>, <%= pluralize(subject.statements.count, 'prise de position') %></p>
+        <% subject.implied_public_figures.each do |public_figure| %></div>
         <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
         <% end %> 
+    
     </li>
   <% end %> 
 </ul>
