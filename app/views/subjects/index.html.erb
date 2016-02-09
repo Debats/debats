@@ -1,9 +1,10 @@
 <% provide(:title, "Sujets") %>
 
-<h1>Sujets <%= link_to "Créer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to?(:add_subject) %></h1>
+<h1>Les derniers sujets <%= link_to "Créer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to?(:add_subject) %></h1>
 
 
-<div class="subjects-index col-md-8" style="margin-bottom:20px">
+<div class="subjects-index col-md-8" style="margin-bottom:20px; margin-top: 20px; border-right: 1px solid #ccc;">
+
 
 <%= render @subjects %>
 <%= will_paginate %>
@@ -13,14 +14,17 @@
 <%= render 'layouts/last_statements' %>
 </div>
 
-<!-- Trigger the modal with a button -->
+
+
+<!-- MODALE COMMENTEE 
+<!-- Trigger the modal with a button ->
 <button type="button" class="btn btn-primary btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
 
-<!-- Modal -->
+<!-- Modal ->
 <div id="myModal" class="modal fade" role="dialog">
   <div class="modal-dialog">
 
-    <!-- Modal content-->
+    <!-- Modal content->
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -46,4 +50,4 @@
     </div>
 
   </div>
-</div>
+</div> -->
