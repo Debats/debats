@@ -1,5 +1,8 @@
 class PublicFiguresController < ApplicationController
   before_action :find_public_figure, only: :show
+  before_action :check_reputation_to_destroy, only: :destroy
+  before_action :check_reputation_to_add, only: [:new, :create]
+
 
   def index
     @public_figures = PublicFigure.paginate(page: params[:page])
@@ -44,9 +47,20 @@ class PublicFiguresController < ApplicationController
       store_location
       flash[:danger] = "Vous devez être identifié pour supprimer une personnalité"
       redirect_to login_url
-    elsif allowed_to? :delete_personality
+    elsif !allowed_to? :delete_personality
       flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
       redirect_to(PublicFigure.find(params[:id]))
+    end
+  end
+
+  def check_reputation_to_add
+    if !current_user
+      store_location
+      flash[:danger] = "Vous devez être identifié pour ajouter une personnalité"
+      redirect_to login_url
+    elsif !allowed_to? :add_personality
+      flash[:danger] = "Vous n'avez pas assez de réputation pour ajouter une personnalité"
+      redirect_to public_figures_url
     end
   end
 
