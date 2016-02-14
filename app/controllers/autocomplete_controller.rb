@@ -2,6 +2,8 @@ class AutocompleteController < ApplicationController
 
   autocomplete :subject, :title, full: true, extra_data: [:presentation]
 
+  autocomplete :public_figure, :name, full: true
+
   def autocomplete_position_title
     term = params[:term]
     subject_id = params[:subject_id]

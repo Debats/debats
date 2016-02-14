@@ -23,6 +23,7 @@ Rails.application.routes.draw do
   # AUTOCOMPLETE
   get 'autocomplete/autocomplete_subject_title'
   get 'autocomplete/autocomplete_position_title'
+  get 'autocomplete/autocomplete_public_figure_name'
 
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
