@@ -16,9 +16,14 @@
       	<h2 class="figure-title" style="color:#333333 !important;"><%= link_to public_figure.name, public_figure %>
       	</h2>
 
-      	<h6 style="color:#f21e40 !important;">X sujets actifs</h6>
+        <% if public_figure.subjects.count == 0 %> <h6 style="color:#f21e40 !important;"> Aucun sujet actif</h6>
+        <% else %>
+      	<h6 style="color:#f21e40 !important;"><%= public_figure.subjects.count%>
+          <% if public_figure.subjects.count > 1%>  sujets actifs</h6>
+          <% else %> sujet actif</h6>
+          <% end %>
+        <% end %>
 
-        
       </td>
 
 
