@@ -51,4 +51,14 @@ module SessionsHelper
     session.delete(:forwarding_url)
   end
 
+  def redirect_not_logged_with_message(message)
+    if !current_user
+      store_location
+      flash[:danger] = message
+      redirect_to login_url
+      return true
+    end
+    return false
+  end
+
 end

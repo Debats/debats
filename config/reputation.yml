@@ -13,7 +13,9 @@ defaults: &defaults
     ## New users (0)
     add_statement: dummies 
     add_evidence: dummies 
-    add_position: dummies 
+    add_position: dummies
+
+    add_argument: confirmed_user
     
     ## Confirmed users (1000)
     add_subject: confirmed_user

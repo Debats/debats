@@ -17,8 +17,9 @@ Rails.application.routes.draw do
     end
   end
   resources :public_figures,      path:'personnalites'
-  resources :positions,                                     only: [:create, :destroy]
-  resources :statements,                                    only: [:create, :destroy]
+  resources :positions,                                     only: [:create, :update, :destroy]
+  resources :statements,                                    only: [:create, :update, :destroy]
+  resources :arguments,                                     only: [:create, :update, :destroy]
 
   # AUTOCOMPLETE
   get 'autocomplete/autocomplete_subject_title'

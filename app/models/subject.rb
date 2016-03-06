@@ -1,5 +1,6 @@
 class Subject < ActiveRecord::Base
   has_many :positions, dependent: :destroy
+  has_many :arguments, dependent: :destroy
   has_many :statements, through: :positions, source: :statements
   mount_uploader :picture, PictureUploader
 
