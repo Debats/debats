@@ -22,7 +22,7 @@
 	<%= render partial: "position", collection:@subject.positions, as: :position %>
 	
 	
-          <% if false && logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
+          <% if logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
               <li id="new-position">
                 <%= form_for(@new_position) do |f| %>
                     <%= render 'shared/error_messages', object: f.object %>
@@ -32,7 +32,12 @@
 
                     <!-- Il est obligatoire d'ajouter une première prise de position pour valider une nouvelle position, donc on la met tout de suite dans le même formulaire -->
                     <p>Qui a pris cette position ?</p>
-
+                    <%= autocomplete_field_tag 'PublicFigure', '',
+                                       autocomplete_autocomplete_public_figure_name_path,
+                                       id_element: '#position_public_figure_id',
+                                       class: "Autocomplete"
+                    %>
+                    <%= f.hidden_field :public_figure_id, value: ""%>
 
                     <%= f.submit "Ajouter", class: "btn btn-primary" %>
                 <% end %>

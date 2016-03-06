@@ -2,7 +2,7 @@ Rails.application.routes.draw do
 
   get 'home/home'
 
-  root                  'subjects#index'
+  root                  'home#home'
 
   get    'login'   => 'sessions#new'
   post   'login'   => 'sessions#create'
@@ -24,11 +24,12 @@ Rails.application.routes.draw do
   # AUTOCOMPLETE
   get 'autocomplete/autocomplete_subject_title'
   get 'autocomplete/autocomplete_position_title'
+  get 'autocomplete/autocomplete_public_figure_name'
 
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
   get 'mode_demploi',         to: 'static_pages#mode_demploi',  as: 'mode_demploi'
-    get 'error',              to: 'static_pages#error',  as: 'error'
+  get 'error',                to: 'static_pages#error',  as: 'error'
 
   # HOMEPAGE
   get 'home'   => 'home#home'
