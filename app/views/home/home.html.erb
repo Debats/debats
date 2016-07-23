@@ -8,9 +8,8 @@
     <br><br><br><br><br><br>
     </div>
 </div>
-</div>
-
-<div class="container subjects-index col-md-8" style="margin-bottom:20px; margin-top: 20px; border-right: 1px solid #ccc;">
+<div class="col-md-1"></div>
+<div class="subjects-index col-md-7 col-centered" style="margin-bottom:20px; margin-top: 20px; border-right: 1px solid #ccc;">
 
 <h1>Sujets d'actualité</h1>
 
@@ -18,7 +17,7 @@
   <tbody>
 
    
-      <ul id="subject" style="list-style-type: none;">
+      <ul id="subject">
           <% # render @subjects %> 
       <li>
         <% @subjects.each do |subject| %>
@@ -32,22 +31,19 @@
       </td>
 
 
-      <td style="width:50%; text-align:center;vertical-align:middle;">
+      <td  style="width:50%; text-align:center;vertical-align:middle;">
       <% subject.associated_public_figures.sample(5).each do |public_figure| %>
 
         <div class="thumbpersonalities" style="background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat;  background-size:cover;
   background-position: center center;"></div>
       <% end %>
-
-    <p class="seemore">
-      <h6><%= link_to "Voir plus de personnalités", subject %></h6>
-    </p> 
       </td> 
-         </tr>
-
-            
-
-         </tr>
+      <td>
+        <div class="seemore">
+        <%= link_to "Voir plus de personnalités", subject %>
+        </div> 
+      </td>
+     </tr>
         </li>
  
         <% end %> 
@@ -59,7 +55,7 @@
 
 
 
-<div class="col-md-4" style="text-align:right;">
+<div class="col-md-3 col-centered" style="text-align:right;">
   <div id="last-statements">
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
@@ -78,4 +74,6 @@
       <% end %>
     </ul>
 </div>
+</div>
+<div class="col-md-1"></div>
 </div>
