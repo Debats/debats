@@ -1,8 +1,9 @@
 class Statement < ActiveRecord::Base
   belongs_to :public_figure
   belongs_to :position
+  has_one :subject, through: :position
   has_many :evidences
-  has_many :arguments
+  has_many :argument_in_statements
 
   validates_presence_of :position_id
   validates_presence_of :public_figure_id

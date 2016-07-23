@@ -1,5 +1,7 @@
 class PublicFigure < ActiveRecord::Base
   has_many :statements, dependent: :destroy
+  has_many :positions, through: :statements, source: :position
+  has_many :subjects, through: :positions, source: :subject
   mount_uploader :picture, PictureUploader
 
   ## VALIDATION

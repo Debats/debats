@@ -1,5 +1,6 @@
 class SubjectsController < ApplicationController
   before_action :find_subject, only: :show
+  before_action :auth_to_create, only: :create
   before_action :auth_to_destroy, only: :destroy
   before_action :auth_to_update, only: :update
 
@@ -9,7 +10,6 @@ class SubjectsController < ApplicationController
   end
 
   def show
-    @subject = Subject.find(params[:id])
     @new_position = @subject.positions.build
     respond_to do |format|
       format.html
@@ -60,24 +60,26 @@ class SubjectsController < ApplicationController
     end
 
     def auth_to_update
-      if !current_user
-        store_location
-        flash[:danger] = "Vous devez être identifié pour éditer un sujet"
-        redirect_to login_url
-      elsif ! allowed_to? :edit_subject
+      redirect_not_logged_with_message "Vous devez être identifié pour éditer un sujet"
+      if ! allowed_to? :edit_minor_subject
+        flash[:danger] = "Vous n'avez pas assez de réputation pour éditer un sujet"
+        redirect_to(Subject.find(params[:id]))
+      end
+    end
+
+    def auth_to_create
+      redirect_not_logged_with_message "Vous devez être identifié pour créer un sujet"
+      if ! allowed_to? :edit_minor_subject
         flash[:danger] = "Vous n'avez pas assez de réputation pour éditer un sujet"
         redirect_to(Subject.find(params[:id]))
       end
     end
 
     def auth_to_destroy
-      if !current_user
-        store_location
-        flash[:danger] = "Vous devez être identifié pour supprimer un sujet"
-        redirect_to login_url
-      elsif ! allowed_to? :delete_minor_subject
-        flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
-        redirect_to(Subject.find(params[:id]))
+      redirect_not_logged_with_message "Vous devez être identifié pour supprimer un sujet"
+      if ! allowed_to? :delete_minor_subject
+          flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
+          redirect_to(Subject.find(params[:id]))
       end
     end
 

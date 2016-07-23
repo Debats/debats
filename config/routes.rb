@@ -17,12 +17,14 @@ Rails.application.routes.draw do
     end
   end
   resources :public_figures,      path:'personnalites'
-  resources :positions,                                     only: [:create, :destroy]
-  resources :statements,                                    only: [:create, :destroy]
+  resources :positions,                                     only: [:create, :update, :destroy]
+  resources :statements,                                    only: [:create, :update, :destroy]
+  resources :arguments,                                     only: [:create, :update, :destroy]
 
   # AUTOCOMPLETE
   get 'autocomplete/autocomplete_subject_title'
   get 'autocomplete/autocomplete_position_title'
+  get 'autocomplete/autocomplete_public_figure_name'
 
   get 'a-propos',             to: 'static_pages#a_propos',      as: 'a_propos'
   get 'contact',              to: 'static_pages#contact',       as: 'contact'
