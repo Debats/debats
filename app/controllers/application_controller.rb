@@ -10,7 +10,7 @@ class ApplicationController < ActionController::Base
 
   def respond_modal_with(*args, &blk) #TODO blk ?
     options = args.extract_options!
-    options[:responder] = ModalResponder
+    options[:responder] = Responders::ModalResponder
     respond_with *args, options, &blk
   end
 
