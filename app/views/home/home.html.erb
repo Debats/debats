@@ -27,7 +27,7 @@
 
       <td style="width:50%; border: none; text-transform:uppercase;">
         
-        <h2 class="subjects-title" style="color:#333333 !important;"><%= link_to subject.title, subject %></h2>
+        <h2 class="subjects-title" style="a:link { color:#333333 !important; }"><%= link_to subject.title, subject %></h2>
         <h6 style="color:#f21e40 !important;"><%= pluralize(subject.positions.count, 'positions') %></h6>
         <h6 style="color:#f21e40 !important;"><%= pluralize(subject.statements.count, 'prise de position') %></h6>
       </td>
