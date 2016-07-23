@@ -153,12 +153,12 @@ ul {
  border-right: 1px solid #ccc; 
 }
 
-.morelink a:link, .morelink a:visited {
+ a.morelink:link,  a.morelink:visited {
   color:#f21e40 !important;
   text-decoration:none !important;
 }
 
-.morelink a:hover, .morelink a:visited:hover {
+ a.morelink:hover,  a.morelink:visited:hover {
   color:#f21e40 !important;
   text-decoration:none !important;
 }
