@@ -1,0 +1,50 @@
+<% provide(:title, "Recenser une prise de position") %>
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_for(
+            @new_statement,
+            remote: request.xhr?,
+            html: {
+                data: { modal: true },
+                multipart:true
+            }) do |f| %>
+        <%= render "shared/error_messages", object: f.object %>
+
+        <%= f.fields_for @new_statement.evidences.build do |e| %>
+
+            <%= e.label :url, "Lien internet ..." %>
+            <%= e.text_field :url, placeholder: "http://" %>
+            <%= e.label :file, "... ou pièce jointe" %>
+            <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
+            <%= e.label :title, "Intitulé de la preuve" %>
+            <%= e.text_field :title, placeholder: "Explicitez la référence" %>
+            <%= e.label :fact_date, "Date des faits" %>
+            <%= e.text_field :fact_date, placeholder: "jj/mm/yyyy", class: "Datepicker" %>
+
+        <% end %>
+
+        <% # ---------- Sélection de la personnalité -------------------- # %>
+
+        <%= f.collection_select :public_figure, PublicFigure.all, :id, :name %>
+
+        <% # ---------- Sélection du sujet -------------------- # %>
+        <%= label_tag "Sujet" %>
+        <%= autocomplete_field_tag 'Subject', '',
+                                   autocomplete_autocomplete_subject_title_path,
+                                   id_element: '#statement_subject_id',
+                                   class: "Autocomplete"
+        %>
+        <%= f.hidden_field :subject_id, value: "",
+                           data: {
+                               dynamic_selectable_url: subjects_positions_path(':subject_id', format: :json),
+                               dynamic_selectable_target: '#statement_position_id'
+                           }
+        %>
+
+        <%= f.label :position_id, "Position prise" %>
+        <%= f.select :position_id, {} %>
+
+        <%= f.submit "Recenser", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>

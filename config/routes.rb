@@ -18,7 +18,7 @@ Rails.application.routes.draw do
   end
   resources :public_figures,      path:'personnalites'
   resources :positions,                                     only: [:create, :update, :destroy]
-  resources :statements,                                    only: [:create, :update, :destroy]
+  resources :statements,                                    only: [:new, :create, :update, :destroy]
   resources :arguments,                                     only: [:create, :update, :destroy]
 
   # AUTOCOMPLETE

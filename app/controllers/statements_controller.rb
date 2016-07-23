@@ -1,6 +1,11 @@
 class StatementsController < ApplicationController
-
+  respond_to :html, :json
   before_action :logged_in_user, only: [:create, :update, :destroy]
+
+  def new
+    @new_statement = Statement.new
+    respond_modal_with @new_statement
+  end
 
   def create
     @position = Position.find_by_id(statement_params[:position_id])
@@ -10,7 +15,7 @@ class StatementsController < ApplicationController
       @statement = @position.statements.build(statement_params)
       @evidence = @statement.evidences.build(statement_evidence_params)
 
-      if ( @evidence.valid? && @statement.valid?  )
+      if @evidence.valid? && @statement.valid?
         if @statement.save && @evidence.save
           flash[:success] = "Prise de position et preuve enregistrées !"
         else

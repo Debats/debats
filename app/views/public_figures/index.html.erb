@@ -3,6 +3,8 @@
 <h1>Les Personnalités récentes
   <%= link_to "Ajouter", new_public_figure_path, class: "btn btn-primary" if allowed_to?(:add_personality) %>
 </h1>
+<h2>Test</h2>
+<p><%= link_to 'test modal', new_statement_path, data: { modal: true } %> </p>
 <div class="public-figures-index col-md-8" >
 
   <%= render @public_figures %>
