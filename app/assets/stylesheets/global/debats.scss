@@ -112,12 +112,12 @@ h6.count {
   text-transform: lowercase;
 }
 
-a.seemore:link, a.seemore:visited {
+.seemore a:link, .seemore a:visited {
   color:#f21e40 !important;
   text-decoration:none !important;
 }
 
-a.seemore:hover, a.seemore:visited:hover {
+.seemore a:hover, .seemore a:visited:hover {
   color:#f21e40 !important;
   text-decoration:none !important;
 }
