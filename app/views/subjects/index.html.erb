@@ -1,6 +1,6 @@
 <% provide(:title, "Sujets") %>
 
-<h1>Les derniers sujets <%= link_to "Référencer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to?(:add_subject) %></h1>
+<h1>Les sujets <%= link_to "Référencer un sujet", new_subject_path, class: "btn btn-primary" if  allowed_to?(:add_subject) %></h1>
 
 
 <div class="subjects-index col-md-8" style="margin-bottom:20px; margin-top: 20px; border-right: 1px solid #ccc;">
