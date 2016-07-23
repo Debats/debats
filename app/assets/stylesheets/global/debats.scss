@@ -104,11 +104,14 @@ a:hover, a:visited:hover
   width: 40px;
   -webkit-border-radius: 50%;
   border-radius: 50%;
-  background-size:cover;
-  background-position: center center;
   float:right;
   margin-right:15px;
 }
 h6.count {
   color:#f21e40 !important;
+}
+
+a.seemore {
+  color:#f21e40 !important;
+  text-decoration:none;
 }

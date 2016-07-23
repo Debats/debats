@@ -36,10 +36,11 @@
       <td style="width:50%; text-align:center;vertical-align:middle;">
       <% subject.associated_public_figures.sample(5).each do |public_figure| %>
 
-        <div class="thumbpersonalities" style="background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat;"></div>
+        <div class="thumbpersonalities" style="background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat;  background-size:cover;
+  background-position: center center;"></div>
       <% end %> 
 
-      <div>
+      <div class="seemore">
 
       <%= link_to "Voir plus de personnalités", subject %>
       
