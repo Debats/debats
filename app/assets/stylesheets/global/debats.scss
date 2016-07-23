@@ -83,23 +83,12 @@ div#last-statements {
   overflow:hidden;}
 }
 
-a:link {
+a:link, a:visited {
   color: #333333;
-  text-decoration:none;
+  text-decoration: none;
 }
-
-a:hover {
+a:hover, a:visited:hover
+  {
   color: #333333;
-  text-decoration:none;
-
-}
-
-a:active {
-  color: #333333;
-  text-decoration:none;
-}
-
-a:visited {
-  color: #333333;
-  text-decoration:none;
+  text-decoration: none;
 }

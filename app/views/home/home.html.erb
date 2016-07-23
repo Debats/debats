@@ -27,9 +27,9 @@
 
       <td style="width:50%; border: none; text-transform:uppercase;">
         
-        <h2 class="subjects-title" style="a:link { color:#333333 !important; }"><%= link_to subject.title, subject %></h2>
-        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.positions.count, 'positions') %></h6>
-        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.statements.count, 'prise de position') %></h6>
+        <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.positions.count, 'personnalité') %></h6>
+        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.statements.count, 'prise') %>  de position</h6>
       </td>
 
 
@@ -38,6 +38,9 @@
 
         <div style="height:40px; width: 40px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:right; margin-right:15px;"></div>
       <% end %> 
+
+      <div><%= link_to "Voir plus de personnalités", subject %></div>
+
       </td>
 
       
