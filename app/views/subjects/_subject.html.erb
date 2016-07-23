@@ -10,7 +10,9 @@
       <td style="width:33%; border: none;">
         
         <h2 class="subjects-title" style="color:#333333 !important;"><%= link_to subject.title, subject %></h2>
-        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.positions.count, 'positions') %></h6>
+        <h6 style="color:#f21e40 !important;"><%= pluralize(subject.positions.count, 'position') %></h6>
+        <h6 class="count"><%= pluralize(subject.associated_public_figures.count, 'personnalité') %></h6>
+
         <h6 style="color:#f21e40 !important;"><%= pluralize(subject.statements.count, 'prise de position') %></h6>
       </td>
 
