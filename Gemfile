@@ -80,4 +80,4 @@ group :production, :staging do
   gem 'puma'
 end
 
-ruby '2.2.4'
+ruby '2.1.8'
