@@ -114,8 +114,9 @@ h6.count {
 }
 
 .seemore {
-  vertical-align:middle;
-  text-align:center;
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
 }
 
 .seemore a:link, .seemore a:visited {
@@ -128,9 +129,6 @@ h6.count {
   text-decoration:none !important;
 }
 
-.seemore {
-  float:right;
-}
 
 ul {
   list-style-type: none;
