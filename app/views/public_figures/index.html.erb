@@ -1,6 +1,6 @@
 <% provide(:title, "Personnalités") %>
 
-<h1>Les Personnalités récentes
+<h1>Les personnalités
     <%= link_to "Référencer une personnalité", new_public_figure_path, class: "btn btn-primary" if allowed_to?(:add_personality) %>
 </h1>
 <div class="public-figures-index col-md-8" >
