@@ -19,6 +19,9 @@
 //= require best_in_place.purr
 //= require autocomplete-rails
 //= require bootstrap
+//= require react
+//= require react_ujs
+//= require components
 //= require_tree .
 //= require turbolinks
 //= require jquery.jtruncate

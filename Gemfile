@@ -41,6 +41,7 @@ gem 'net-ssh'
 
 ######## UI #######
 gem 'jquery-ui-rails'             # JQuery UI
+gem 'react-rails'                 # React.JS
 gem 'rails-jquery-autocomplete'   # Rails JQuery Autocomplete
 gem 'sass-rails', '~> 5.0'        # Use SCSS for stylesheets
 gem 'bootstrap-sass'              # Boostrap with SASS
@@ -79,4 +80,4 @@ group :production, :staging do
   gem 'puma'
 end
 
-ruby '2.1.5'
+ruby '2.2.4'

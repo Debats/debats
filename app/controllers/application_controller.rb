@@ -8,6 +8,12 @@ class ApplicationController < ActionController::Base
 
   before_action :set_locale
 
+  def respond_modal_with(*args, &blk) #TODO blk ?
+    options = args.extract_options!
+    options[:responder] = ModalResponder
+    respond_with *args, options, &blk
+  end
+
   private
 
     # Before Filters

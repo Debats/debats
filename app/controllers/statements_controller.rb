@@ -1,4 +1,5 @@
 class StatementsController < ApplicationController
+
   before_action :logged_in_user, only: [:create, :update, :destroy]
 
   def create
