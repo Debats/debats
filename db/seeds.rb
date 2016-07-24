@@ -6,6 +6,14 @@ User.create!(name:  "Jalil Arfaoui",
              activated: true,
              activated_at: Time.zone.now)
 
+User.create!(name:  "Nadia Arfaoui",
+             email: "nadia@arfaoui.net",
+             password:              "9738Debats",
+             password_confirmation: "9738Debats",
+             reputation: 1000000,
+             activated: true,
+             activated_at: Time.zone.now)
+
 hollande    = PublicFigure.create!(name: "François Hollande", presentation: "Notre cher président")
 marisol     = PublicFigure.create!(name: "Marisol Touraine", presentation: "Toute reine")
 segolene    = PublicFigure.create!(name: "Ségolène Royal", presentation: "Ségo")

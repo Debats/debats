@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160207032220) do
+ActiveRecord::Schema.define(version: 20160724165746) do
 
   create_table "argument_in_statements", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -23,6 +23,7 @@ ActiveRecord::Schema.define(version: 20160207032220) do
     t.string   "description"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
+    t.integer  "subject_id"
   end
 
   create_table "evidences", force: :cascade do |t|
