@@ -17,8 +17,8 @@
     <h2>Les positions </h2><%= pluralize(@subject.positions.count, 'positions') %>
 
     <% if @subject.positions.any? %>
-        <ul class="Positions">
-
+        <ul class="Positions"><p>Description position</p>
+        
 	<%= render partial: "position", collection:@subject.positions, as: :position %>
 	
 	
