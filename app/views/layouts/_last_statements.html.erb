@@ -2,6 +2,7 @@
     <h2>Les dernières prises de positions</h2>
     <ul id="last-statements">
       <% # render @latest_statements %>
+       <% if @latest_statements %>
       <% @latest_statements.each do |statement| %>
           <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
             <% if statement.public_figure.picture? %>
@@ -13,6 +14,7 @@
             dans le débat sur
             <strong><%= link_to statement.position.subject.title, statement.position.subject %></strong></div>
           </li>
+      <% end %>
       <% end %>
     </ul>
 </div>

@@ -164,9 +164,7 @@ ul {
 }
 
 .publicfigurehead {
-  width: 33%;
-  float: left;
-  display: block;
+  display: inline-block;
 }
 
 .publicfigurethumb {
@@ -177,7 +175,5 @@ ul {
 }
 
 .publicfiguredescription {
-  width: 67%;
-  float: right;
   display: inline-block;
 }
