@@ -20,6 +20,4 @@
 
 /public/uploads
 db/schema.rb
-*.lock
-Gemfile.lock
 db/seeds.rb

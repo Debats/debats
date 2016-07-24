@@ -1,19 +1,17 @@
-<div class="container-fluid" style="width:100vw; position:relative; margin-left:-50vw;left:50%;">
 <% provide(:title, "Personnalités") %>
-<div class="col-md-1"></div>
-
-
-<div class="col-md-7">
-<h1>Les Personnalités
-
-    <%= link_to "Référencer une personnalité", new_public_figure_path, class: "btn btn-primary" if allowed_to?(:add_personality) %>
-</h1>
-<div class="public-figures-index">
-
-  <%= render @public_figures %>
-</div></div>
-<div class="col-md-3">
-<%= render 'layouts/last_statements' %>
-<%= will_paginate %></div>
-<div class="col-md-1"></div>
+<div class="container-fluid" style="width:100vw; position:relative; margin-left:-50vw;left:50%;">
+    <div class="col-md-7 col-md-offset-1">
+        <h1>Les Personnalités
+            <%= link_to "Référencer une personnalité", new_public_figure_path, class: "btn btn-primary", data: { modal: true } if allowed_to?(:add_personality) %>
+        </h1>
+        <p><%= link_to "Test : modal d'ajout", new_statement_path, data: { modal: true } %> </p>
+        <div class="public-figures-index">
+            <%= render @public_figures %>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <%= render 'layouts/last_statements' %>
+        <%= will_paginate %>
+    </div>
+    <div class="col-md-1"></div>
 </div>

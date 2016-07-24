@@ -32,7 +32,7 @@ class SubjectsController < ApplicationController
   end
 
   def update
-    @subject = Subject.find(params[:id])
+    @subject = Subject.find(params[:subject_id])
     respond_to do |format|
       if @subject.update(subject_params)
           grant_reputation_for!(:edited_subject)
@@ -46,7 +46,7 @@ class SubjectsController < ApplicationController
   end
 
   def destroy
-    subject = Subject.find(params[:id])
+    subject = Subject.find(params[:subject_id])
     title = subject.title
     subject.destroy
     flash[:success] = "Sujet \"#{title}\" supprimé"
@@ -63,7 +63,7 @@ class SubjectsController < ApplicationController
       redirect_not_logged_with_message "Vous devez être identifié pour éditer un sujet"
       if ! allowed_to? :edit_minor_subject
         flash[:danger] = "Vous n'avez pas assez de réputation pour éditer un sujet"
-        redirect_to(Subject.find(params[:id]))
+        redirect_to(Subject.find(params[:subject_id]))
       end
     end
 
@@ -71,7 +71,7 @@ class SubjectsController < ApplicationController
       redirect_not_logged_with_message "Vous devez être identifié pour créer un sujet"
       if ! allowed_to? :edit_minor_subject
         flash[:danger] = "Vous n'avez pas assez de réputation pour éditer un sujet"
-        redirect_to(Subject.find(params[:id]))
+        redirect_to(Subject.find(params[:subject_id]))
       end
     end
 
@@ -79,12 +79,12 @@ class SubjectsController < ApplicationController
       redirect_not_logged_with_message "Vous devez être identifié pour supprimer un sujet"
       if ! allowed_to? :delete_minor_subject
           flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer un sujet"
-          redirect_to(Subject.find(params[:id]))
+          redirect_to(Subject.find(params[:subject_id]))
       end
     end
 
     def find_subject
-      @subject = Subject.find params[:id]
+      @subject = Subject.find params[:subject_id]
       if request.path != subject_path(@subject)             # If old URL
         redirect_to @subject, status: :moved_permanently    # Redirect to new URL
       end

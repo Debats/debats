@@ -11,14 +11,19 @@ Rails.application.routes.draw do
   resources :account_activations, path: 'activation',       only: [:edit]
   resources :password_resets,                               only: [:new, :create, :edit, :update]
 
-  resources :subjects,            path: 'sujets' do
+  resources :subjects,            path: 's', param: :subject_id do
     member do
       resources :positions,       as: 'subjects_positions', only: [:index]
+      resources :statements,      as: 'subjects_statements'
     end
   end
-  resources :public_figures,      path:'personnalites'
+  resources :public_figures,      path:'p', param: :public_figure_id do
+    member do
+      resources :statements,      as: 'public_figures_statements'
+    end
+  end
   resources :positions,                                     only: [:create, :update, :destroy]
-  resources :statements,                                    only: [:create, :update, :destroy]
+  resources :statements,                                    only: [:new, :create, :update, :destroy]
   resources :arguments,                                     only: [:create, :update, :destroy]
 
   # AUTOCOMPLETE
