@@ -8,7 +8,7 @@
 
 <div class="publicfigurehead">
 <% if @public_figure.picture? %>
-  <div style="background: url('<%= @public_figure.picture.url%>') 50% 50% no-repeat; background-size:cover;background-position: center center;"></div>
+  <div style="background: url('<%= @public_figure.picture.url%>') 50% 50% no-repeat; background-size:cover;background-position: center center;" class="publicfigurethumb"></div>
 <% end %>
 </div>
 
@@ -38,7 +38,9 @@
 <div class="row">
 <div class="col-md-1"></div>
 
-<div class="col-md-5"></div>
+<div class="col-md-5">
+  <h1>SUJETS ACTIFS <%= t('statements_count', count: @public_figure.statements.count) %></h1>
+</div>
 <div class="col-md-5">
 <section class="Statements">
 
