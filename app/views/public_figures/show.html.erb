@@ -76,7 +76,24 @@
 </section>
 </div>
 <div class="col-md-3">
-        <%= render 'layouts/last_statements' %>
+  <div id="last-statements">
+    <h2>Les dernières prises de position</h2>
+    <ul id="last-statements">
+      <% # render @latest_statements %>
+      <% @latest_statements.each do |statement| %>
+          <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
+            <% if statement.public_figure.picture? %>
+     <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+        <% end %>
+            <div class="public-figure-text"><strong>
+            <%= link_to statement.public_figure.name, statement.public_figure %></strong>&nbsp; s'est déclaré pour
+            "<strong><%= statement.position.title %></strong>"
+            dans le débat sur
+            <strong><%= link_to statement.position.subject.title, statement.position.subject %></strong></div>
+          </li>
+      <% end %>
+    </ul>
+</div>
 </div>
 
 <div class="col-md-1"></div>
