@@ -21,7 +21,7 @@
   <% end %>
 </h1>
 <div class="publicfiguredescription">
-
+<p class="figure-presentation-text"><%= @public_figure.presentation %></p>
 </div>
 
 <% if allowed_to? :delete_minor_personality %>
@@ -31,7 +31,6 @@
                       class: "btn btn-primary btn-danger" %>
 <% end %>
 
-<p class="figure-presentation-text"><%= @public_figure.presentation %></p>
 </div>
 </div>
 </div>
@@ -42,7 +41,7 @@
 <div class="col-md-1"></div>
 
 <div class="col-md-5">
-  <h1>SUJETS ACTIFS <%= t('statements_count', count: @public_figure.statements.count) %></h1>
+  <h1><%= t('statements_count', count: @public_figure.statements.count) %></h1>
 </div>
 <div class="col-md-5">
 <section class="Statements">
