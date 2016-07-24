@@ -163,13 +163,18 @@ ul {
   text-decoration:none !important;
 }
 
-publicfigurehead {
+.publicfigurehead {
   width: 33%;
   float: left;
-  display: inline-block;
+  display: block;
+  height:150px; 
+  width: 150px; 
+  -webkit-border-radius: 50%; 
+  border-radius: 50%; 
+
 }
 
-publicfiguredescription {
+.publicfiguredescription {
   width: 67%;
   float: right;
   display: inline-block;
