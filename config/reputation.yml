@@ -39,7 +39,9 @@ defaults: &defaults
     delete_position: moderator
     edit_argument: moderator # ==> Includes description 
     edit_subject: moderator # ==> Includes description 
-    edit_personality: moderator # ==> Includes description 
+    edit_personality: moderator # ==> Includes description
+    edit_minor_personality: moderator # ==> Includes description 
+ 
 
     ## Founder
     delete_major_subject: founder 
