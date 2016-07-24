@@ -1,4 +1,5 @@
 class PublicFiguresController < ApplicationController
+  respond_to :html, :json
   before_action :find_public_figure, only: :show
   before_action :check_reputation_to_destroy, only: :destroy
   before_action :check_reputation_to_add, only: [:new, :create]
@@ -10,18 +11,19 @@ class PublicFiguresController < ApplicationController
   end
 
   def show
-    @public_figure = PublicFigure.find(params[:id])
+    @public_figure = PublicFigure.find(params[:public_figure_id])
     @new_statement = @public_figure.statements.build
   end
 
   def new
     @public_figure = PublicFigure.new
+    respond_modal_with @public_figure
   end
 
   def create
     @public_figure = PublicFigure.new(public_figure_params)
     if @public_figure.save
-      flash[:success] = "Personnalité \"#{@public_figure.name}\" créé ! "
+      flash[:success] = "Personnalité \"#{@public_figure.name}\" référencée ! "
       redirect_to @public_figure
     else
       render "new"
@@ -29,7 +31,7 @@ class PublicFiguresController < ApplicationController
   end
 
   def destroy
-    public_figure = PublicFigure.find(params[:id])
+    public_figure = PublicFigure.find(params[:public_figure_id])
     name = public_figure.name
     public_figure.destroy  #TODO Mark deleted instead of really deleting record
     flash[:success] = "\"#{name}\" supprimé"
@@ -49,7 +51,7 @@ class PublicFiguresController < ApplicationController
       redirect_to login_url
     elsif !allowed_to? :delete_personality
       flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
-      redirect_to(PublicFigure.find(params[:id]))
+      redirect_to(PublicFigure.find(params[:public_figure_id]))
     end
   end
 
@@ -65,7 +67,7 @@ class PublicFiguresController < ApplicationController
   end
 
   def find_public_figure
-    @public_figure = PublicFigure.find params[:id]
+    @public_figure = PublicFigure.find params[:public_figure_id]
     if request.path != public_figure_path(@public_figure)       # If old URL
       redirect_to @public_figure, status: :moved_permanently    # Redirect to new URL
     end

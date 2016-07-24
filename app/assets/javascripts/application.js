@@ -24,3 +24,4 @@
 //= require jquery.jtruncate
 //= require bootstrap-datepicker
 //= require bootstrap-datepicker/locales/bootstrap-datepicker.fr
+//= require fuelux

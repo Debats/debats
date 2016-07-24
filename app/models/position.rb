@@ -9,8 +9,8 @@ class Position < ActiveRecord::Base
   private
 
   def at_least_one_statement
-    if statements.size < 1
-      errors.add("Il faut au moins une prise de position pour cette position")
+    if statements.length < 1
+      errors.add(:statements, "Il faut au moins une prise de position pour cette position")
     end
   end
 
