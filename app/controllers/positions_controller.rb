@@ -16,7 +16,7 @@ class PositionsController < ApplicationController
   end
 
   def index
-    @positions = Position.where(subject_id: params[:id]).order(:title).all
+    @positions = Position.where(subject_id: params[:subject_id]).order(:title).all
 
     respond_to do |format|
       format.json { render json: @positions }
