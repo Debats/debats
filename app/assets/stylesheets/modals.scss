@@ -1,3 +1,14 @@
 .fuelux .modal .wizard > .actions {
   position: inherit;
 }
+.modal-content {
+    background-color: #fff;
+    border: 1px solid #f21e40;
+    border-radius: 0px;
+    box-shadow: 0px 0px rgba(0, 0, 0, 0.5);
+}
+
+.form-control {
+    border: 1px solid #ccc;
+    border-radius: 0px;
+}
