@@ -12,6 +12,7 @@
 
 <p class="SubjectPresentationText"><%= best_in_place_if allowed_to?(:edit_subject), @subject, :presentation, as: :textarea  %></p>
 
+
 <section class="Positions">
 
     <h2>Les positions </h2><%= pluralize(@subject.positions.count, 'positions') %>
@@ -20,10 +21,7 @@
         <ul class="Positions">
         
 	<%= render partial: "position", collection:@subject.positions, as: :position %>
-    <span class="PositionDescription"><%=position.description%></span>
-    <span class="PositionStatements"><%= render position.statements %></span>
-
-	
+    	
           <% if logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
               <li id="new-position">
                 <%= form_for(@new_position) do |f| %>
