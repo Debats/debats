@@ -12,7 +12,7 @@
 <% end %>
 </div>
 
-<div class="publicfiguredescription">
+<div>
 <h1 id="PublicFigureTitle">
 <% if allowed_to? :edit_minor_personality %>
   <%= best_in_place @public_figure, :name %>
@@ -20,6 +20,8 @@
   <%= @public_figure.name %>
   <% end %>
 </h1>
+<div class="publicfiguredescription">
+
 </div>
 
 <% if allowed_to? :delete_minor_personality %>
@@ -30,6 +32,7 @@
 <% end %>
 
 <p class="figure-presentation-text"><%= @public_figure.presentation %></p>
+</div>
 </div>
 </div>
 <!-- END bloc description de la personnalité -->
