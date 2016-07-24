@@ -38,4 +38,12 @@ class Subject < ActiveRecord::Base
       end
     end
 
+  def major?
+    created_at > 1.week.ago || statements.size > 5
+  end
+
+  def minor?
+    !major?
+  end
+
 end
