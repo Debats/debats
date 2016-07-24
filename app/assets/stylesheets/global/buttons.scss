@@ -2,12 +2,18 @@
     background-color: #fff; /* White */
     font-family: 'Gotham-Bold', sans-serif;
     border: 1px solid #ccc;
-    color: white;
-    padding: 15px 32px;
+    color: #ccc;
+    padding: 6px 12px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 16px;
+    font-size: 12px;
     letter-spacing: 1px;
     text-transform: uppercase;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+}
+.btn.btn-primary-custom:hover {
+    background-color: #4CAF50; /* Green */
+    color: white;
 }
