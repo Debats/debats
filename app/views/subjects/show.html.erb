@@ -17,10 +17,12 @@
     <h2>Les positions </h2><%= pluralize(@subject.positions.count, 'positions') %>
 
     <% if @subject.positions.any? %>
-        <ul class="Positions"><p>Description position</p>
+        <ul class="Positions">
         
 	<%= render partial: "position", collection:@subject.positions, as: :position %>
-	
+    <span class="PositionDescription"><%=position.description%></span>
+    <span class="PositionStatements"><%= render position.statements %></span>
+
 	
           <% if logged_in? && allowed_to?(:add_position) && allowed_to?(:add_statement) %>
               <li id="new-position">
