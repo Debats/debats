@@ -48,8 +48,8 @@ gem 'rails-jquery-autocomplete'   # Rails JQuery Autocomplete
 gem 'sass-rails', '~> 5.0'        # Use SCSS for stylesheets
 gem 'bootstrap-sass'              # Boostrap with SASS
 gem 'bootstrap-datepicker-rails'  # Date picker
+gem 'fuelux-rails-sass'           # Fuel UX components
 gem 'best_in_place'               # in-place editing
-
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

@@ -3,7 +3,15 @@ class StatementsController < ApplicationController
   before_action :logged_in_user, only: [:create, :update, :destroy]
 
   def new
-    @new_statement = Statement.new
+    if params.include? :subject_id
+      @subject = Subject.find params[:subject_id]
+      @new_statement = @subject.statements.build
+    elsif params.include? :public_figure_id
+      @public_figure = PublicFigure.find params[:public_figure_id]
+      @new_statement = @public_figure.statements.build
+    else
+      @new_statement = Statement.new
+    end
     respond_modal_with @new_statement
   end
 

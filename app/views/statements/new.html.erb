@@ -1,50 +1,95 @@
 <% provide(:title, "Recenser une prise de position") %>
+<p><%= @subject.title if @subject %></p>
+<p><%= @public_figure.name if @public_figure %></p>
 <div class="row">
-  <div class="col-md-6 col-md-offset-3">
-    <%= form_for(
-            @new_statement,
-            remote: request.xhr?,
-            html: {
-                data: { modal: true },
-                multipart:true
-            }) do |f| %>
-        <%= render "shared/error_messages", object: f.object %>
+    <div class="col-xs-10 col-xs-offset-1" >
+        <div class="wizard" data-initialize="wizard" id="myWizard">
 
-        <%= f.fields_for @new_statement.evidences.build do |e| %>
+                    <div class="steps-container">
+                    <ul class="steps">
+                      <li data-step="1" data-name="public_figure" class="active">
+                        Personnalité
+                        <span class="chevron"></span>
+                      </li>
+                      <li data-step="2">
+                        Sujet
+                        <span class="chevron"></span>
+                      </li>
+                      <li data-step="3" data-name="template">
+                        Position
+                        <span class="chevron"></span>
+                      </li>
+                      <li data-step="4" data-name="template">
+                        Prise de position
+                        <span class="chevron"></span>
+                      </li>
+                    </ul>
+                    </div>
 
-            <%= e.label :url, "Lien internet ..." %>
-            <%= e.text_field :url, placeholder: "http://" %>
-            <%= e.label :file, "... ou pièce jointe" %>
-            <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
-            <%= e.label :title, "Intitulé de la preuve" %>
-            <%= e.text_field :title, placeholder: "Explicitez la référence" %>
-            <%= e.label :fact_date, "Date des faits" %>
-            <%= e.text_field :fact_date, placeholder: "jj/mm/yyyy", class: "Datepicker" %>
 
-        <% end %>
+                        <%= form_for(
+                                @new_statement,
+                                remote: request.xhr?,
+                                html: {
+                                    data: { modal: true },
+                                    :id => "addStatementModal",
+                                    multipart:true
+                                }) do |f| %>
+                            <%= render "shared/error_messages", object: f.object %>
 
-        <% # ---------- Sélection de la personnalité -------------------- # %>
+                <div class="step-content">
+                    <div class="step-pane active sample-pane alert" data-step="1">
+                      <h4>De qui parlons-nous ?</h4>
+                      <%= f.collection_select :public_figure, PublicFigure.all, :id, :name %>
+                    </div>
+                    <div class="step-pane sample-pane bg-info alert" data-step="2">
+                      <h4>Quel est le sujet qui fait débat ?</h4>
+                      <%= label_tag "Sujet" %>
+                        <%= autocomplete_field_tag 'Subject', '',
+                                                   autocomplete_autocomplete_subject_title_path,
+                                                   id_element: '#statement_subject_id',
+                                                   class: "Autocomplete"
+                        %>
+                        <%= f.hidden_field :subject_id, value: "",
+                                           data: {
+                                               dynamic_selectable_url: subjects_positions_path(':subject_id', format: :json),
+                                               dynamic_selectable_target: '#statement_position_id'
+                                           }
+                        %>
+                    </div>
+                    <div class="step-pane sample-pane bg-danger alert" data-step="3">
+                      <h4>Quelle position a été prise ?</h4>
+                      <%= f.label :position_id, "Position prise" %>
+                      <%= f.select :position_id, {} %>
+                    </div>
+                    <div class="step-pane sample-pane bg-danger alert" data-step="4">
+                      <h4>Donnez-nous quelques détails : </h4>
+                      <%= f.fields_for @new_statement.evidences.build do |e| %>
 
-        <%= f.collection_select :public_figure, PublicFigure.all, :id, :name %>
+                          <%= e.label :url, "Lien internet ..." %>
+                          <%= e.text_field :url, placeholder: "http://" %>
+                          <%= e.label :file, "... ou pièce jointe" %>
+                          <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
+                          <%= e.label :title, "Intitulé de la preuve" %>
+                          <%= e.text_field :title, placeholder: "Explicitez la référence" %>
+                          <%= e.label :fact_date, "Date des faits" %>
+                          <%= e.text_field :fact_date, placeholder: "jj/mm/yyyy", class: "Datepicker" %>
 
-        <% # ---------- Sélection du sujet -------------------- # %>
-        <%= label_tag "Sujet" %>
-        <%= autocomplete_field_tag 'Subject', '',
-                                   autocomplete_autocomplete_subject_title_path,
-                                   id_element: '#statement_subject_id',
-                                   class: "Autocomplete"
-        %>
-        <%= f.hidden_field :subject_id, value: "",
-                           data: {
-                               dynamic_selectable_url: subjects_positions_path(':subject_id', format: :json),
-                               dynamic_selectable_target: '#statement_position_id'
-                           }
-        %>
+                      <% end %>
+                    </div>
+                </div>
 
-        <%= f.label :position_id, "Position prise" %>
-        <%= f.select :position_id, {} %>
+                        <% end %>
 
-        <%= f.submit "Recenser", class: "btn btn-primary" %>
-    <% end %>
-  </div>
+                    <div class="actions">
+                    <button type="button" class="btn btn-default btn-prev">
+                        <span class="glyphicon glyphicon-arrow-left"></span>Revenir
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next" data-last="Enregistrer">Suivant
+                        <span class="glyphicon glyphicon-arrow-right"></span>
+                    </button>
+                    </div>
+
+        </div>
+    </div>
 </div>
