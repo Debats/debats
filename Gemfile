@@ -73,6 +73,7 @@ end
 group :test do
   gem 'minitest-reporters'
   gem 'mini_backtrace'
+  gem 'listen', '~> 2.10.1'
   gem 'guard'
   gem 'guard-minitest'
 end
