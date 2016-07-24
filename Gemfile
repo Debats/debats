@@ -64,6 +64,7 @@ end
 
 group :development do
   gem 'faker'
+  gem 'ruby-debug-ide'
 end
 
 group :test do
