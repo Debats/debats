@@ -13,6 +13,7 @@ class PublicFiguresController < ApplicationController
   def show
     @public_figure = PublicFigure.find(params[:public_figure_id])
     @new_statement = @public_figure.statements.build
+    @latest_statements = Statement.latest
   end
 
   def new
