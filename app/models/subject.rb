@@ -30,6 +30,14 @@ class Subject < ActiveRecord::Base
         .uniq                                             # Dedup
   end
 
+  def major?
+    created_at > 1.week.ago || statements.size > 5
+  end
+
+  def minor?
+    !major?
+  end
+
   private
 
     def picture_size
@@ -38,12 +46,5 @@ class Subject < ActiveRecord::Base
       end
     end
 
-  def major?
-    created_at > 1.week.ago || statements.size > 5
-  end
-
-  def minor?
-    !major?
-  end
 
 end

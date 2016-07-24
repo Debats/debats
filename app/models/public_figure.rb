@@ -26,20 +26,20 @@ class PublicFigure < ActiveRecord::Base
         .uniq                                 # dedupe
   end
 
-  private
-
-  def picture_size
-    if picture.size > 5.megabytes
-      errors.add(:picture, "L'image ne doit pas dépasser 5 Mo")
-    end
-  end
-
   def major?
     created_at > 1.week.ago || statements.size > 2
   end
 
   def minor?
     !major?
+  end
+
+  private
+
+  def picture_size
+    if picture.size > 5.megabytes
+      errors.add(:picture, "L'image ne doit pas dépasser 5 Mo")
+    end
   end
 
 end
