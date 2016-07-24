@@ -40,13 +40,13 @@
 <div class="row">
 <div class="col-md-1"></div>
 
-<div class="col-md-5">
+<div class="col-md-3">
   <h1><%= t('statements_count', count: @public_figure.statements.count) %></h1>
 </div>
-<div class="col-md-5">
+<div class="col-md-3">
 <section class="Statements">
 
-  <h2><%=t "The_statements" %></h2><%= t('statements_count', count: @public_figure.statements.count) %>
+  <h2>LES SUJETS ACTIFS</h2><%= t('statements_count', count: @public_figure.statements.count) %>
   <% if @public_figure.statements.any? %>
 
       <ul class="Subjects">
@@ -65,7 +65,19 @@
 
       </ul>
 
-      <% #= render partial: "statement", collection:@public_figure.statements.select { |s| s.id }, as: :statement %>
+
+
+</section>
+</div>
+<div class="col-md-3">Ils Débattent aussi sur les sujets</div>
+
+<div class="col-md-1"></div>
+</div>
+<!-- END bloc content -->
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+            <% #= render partial: "statement", collection:@public_figure.statements.select { |s| s.id }, as: :statement %>
 
         <% if logged_in? && allowed_to?(:add_statement) %>
             <li id="new-statement">
@@ -78,7 +90,7 @@
                      <%= e.label :url, "Lien internet ..." %>
                       <%= e.text_field :url, placeholder: "http://" %>
                       <%= e.label :file, "... ou pièce jointe" %>
-                      <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav' %>
+                      <%= e.file_field :file, accept: 'image/jpeg,image/gif,image/png,application/pdf,audio/mpeg3,audio/x-mpeg3,video/avi,video/quicktime,audio/wav', class: 'btn btn-primary' %>
                       <%= e.label :title, "Intitulé de la preuve" %>
                       <%= e.text_field :title, placeholder: "Explicitez la référence" %>
                       <%= e.label :fact_date, "Date des faits" %>
@@ -100,7 +112,7 @@
 
                   <%= f.label :position_id, "Position prise" %>
                   <%= f.select :position_id, {} %>
-				  
+          
                   <%= f.submit "Ajouter", class: "btn btn-primary" %>
 
               <% end %>
@@ -109,12 +121,8 @@
         <% end %>
 
   <% end %>
-
-</section>
+  </div>
 </div>
-<div class="col-md-1"></div>
-</div>
-<!-- END bloc content -->
 
 <script type="text/javascript">
     $(document).ready(function() {
