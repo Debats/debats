@@ -34,4 +34,12 @@ class PublicFigure < ActiveRecord::Base
     end
   end
 
+  def major?
+    PublicFigure.created_at > 1.week.ago || PublicFigure.statements.size > 2
+  end
+
+  def minor?
+    !major?
+  end
+
 end

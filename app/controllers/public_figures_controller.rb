@@ -50,9 +50,13 @@ class PublicFiguresController < ApplicationController
       store_location
       flash[:danger] = "Vous devez être identifié pour supprimer une personnalité"
       redirect_to login_url
-    elsif !allowed_to? :delete_personality
-      flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
-      redirect_to(PublicFigure.find(params[:public_figure_id]))
+    else
+      @public_figure = PublicFigure.new(public_figure_params)
+      if @public_figure.major? && !allowed_to?(:delete_major_personality) ||
+          @public_figure.minor? && !allowed_to?(:delete_minor_personality)
+        flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
+        redirect_to(PublicFigure.find(params[:public_figure_id]))
+      end
     end
   end
 
