@@ -5,9 +5,8 @@ class Statement < ActiveRecord::Base
   has_many :evidences
   has_many :argument_in_statements
 
-  validates_presence_of :position_id
-  validates_presence_of :public_figure_id
-  validates_uniqueness_of :argument_id, scope: :position_id
+  validates_presence_of :position
+  validates_presence_of :public_figure
   validate :at_least_one_evidence
 
   class << self
