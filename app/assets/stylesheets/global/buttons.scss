@@ -1,10 +1,20 @@
-.btn-primary-custom {
-    border-radius: 0px;
-    padding: 4px 8px;
-    font-size: 8px;
+.btn.btn-primary {
+    background-color: #fff; /* White */
+    font-family: 'Gotham-Bold', sans-serif;
+    border: 1px solid #ccc;
+    color: #ccc;
+    padding: 6px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
 }
-.btn-primary-custom {
-    color: #e63c14;
-    background-color: #fff;
-    border-color: #e63c14;
+.btn.btn-primary:hover {
+    background-color: #f21e40; /* Red débats */
+    border: 1px solid #f21e40;
+    color: white;
 }
