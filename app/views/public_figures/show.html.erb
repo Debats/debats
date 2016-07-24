@@ -47,40 +47,42 @@
 <div class="row">
 <div class="col-md-1"></div>
 
-<div class="col-md-3">
-  <h1><%= t('statements_count', count: @public_figure.statements.count) %></h1>
-</div>
-<div class="col-md-4">
-<section class="Statements">
-
-  <h2><%= t('statements_count', count: @public_figure.statements.count) %>
-  <% if @public_figure.statements.any? %></h2>
-
-      <ul class="Subjects">
-
-        <% @public_figure.associated_subjects.each do |subject| %>
-
-          <%= subject.title %>
-
-            <ul>
+<div class="col-md-7">
+  <table class="table">
+    <tbody>
+      <tr>
+        <td><h1>Sujets Actifs</h1></td>
+        <td><h1><%= t('statements_count', count: @public_figure.statements.count) %></h1></td>
+      </tr>
+      <% if @public_figure.statements.any? %>
+      <ul class="subjects">
+      <% @public_figure.associated_subjects.each do |subject| %>
+       <li> 
+        <tr>
+          <td>
+              <%= subject.title %>
+          </td>
+          <td>
               <% subject.get_positions_for_public_figure(@public_figure).each do |position| %>
                 <%= position.title %>
               <% end %>
-            </ul>
-
+          </td>
+        </tr>
+        </li>
         <% end %>
-
       </ul>
+      <% end %>
 
-
-
-</section>
+    </tbody>
+  </table>
 </div>
+
+
+
 <div class="col-md-3">
   <div id="last-statements">
     <h2>Les dernières prises de position</h2>
     <ul id="last-statements">
-      <% # render @latest_statements %>
       <% @latest_statements.each do |statement| %>
           <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
             <% if statement.public_figure.picture? %>
@@ -146,7 +148,6 @@
             </li>
         <% end %>
 
-  <% end %>
   </div>
 </div>
 
