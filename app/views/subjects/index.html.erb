@@ -3,8 +3,7 @@
 <div class="col-md-1"></div>
 <div class="col-md-7">
 <h1>Les sujets </h1>
-    <%= link_to "Référencer un sujet", new_subject_path, class: "btn btn-primary-custom" if  allowed_to?(:add_subject) %>
-
+<%= link_to "Référencer un sujet", new_subject_path, class: "btn btn-primary-custom" if  allowed_to?(:add_subject) %>
 
 <div class="subjects-index" style="margin-bottom:20px; margin-top: 20px; border-right: 1px solid #ccc;">
 
