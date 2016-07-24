@@ -9,7 +9,7 @@ $ ->
       $(modal_holder_selector).html(data).
       find(modal_selector).modal()
       wizard = $(".wizard").wizard()
-      wizard.on 'finished', (e, data) ->
+      wizard.on 'finished.fu.wizard', (e, data) ->
         $("#addStatementModal").submit()
     false
 
