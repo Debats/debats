@@ -35,7 +35,7 @@ class PublicFigure < ActiveRecord::Base
   end
 
   def major?
-    PublicFigure.created_at > 1.week.ago || PublicFigure.statements.size > 2
+    created_at > 1.week.ago || statements.size > 2
   end
 
   def minor?
