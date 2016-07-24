@@ -1,11 +1,13 @@
 .btn-primary-custom {
-    background-color: #4CAF50; /* Green */
+    background-color: #fff; /* White */
     font-family: 'Gotham-Bold', sans-serif;
-    border: none;
+    border: 1px solid rgba(182, 182, 182, 0.97);
     color: white;
     padding: 15px 32px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
     font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
