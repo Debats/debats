@@ -5,8 +5,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const CONSTANTS = require('./constants');
 const APP_ROOT = CONSTANTS.APP_ROOT;
-const APP_PATH = CONSTANTS.APP_PATH;
-const APP_NAME = CONSTANTS.APP_NAME;
 const SRC_FOLDER = CONSTANTS.SRC_FOLDER;
 
 const args = require('yargs').argv;
