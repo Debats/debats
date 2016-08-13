@@ -1,0 +1,4 @@
+# Added by Jalil Arfaoui
+# Because ESLint doesn't play well with Chai's parenthesis-less assertions (this.shoud.be.true) and runs into no-unused-expressions :
+**/*.spec.js
+# We could use dirty-chai but I'm not sure it's for the best
