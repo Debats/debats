@@ -1,8 +1,6 @@
-var webpackConfig = require('./webpack/webpack.config');
-webpackConfig.entry = {};
+const webpackConfig = require('./webpack/webpack.base.config');
 
-module.exports = function (config) {
-    'use strict';
+const karmaConfig = function (config) {
     config.set({
 
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -10,7 +8,7 @@ module.exports = function (config) {
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: ['mocha','chai-things','chai-immutable','chai', 'sinon', 'sinon-chai'],
+        frameworks: ['mocha', 'chai-things', 'chai-immutable', 'chai', 'sinon', 'sinon-chai'],
 
 
         // list of files / patterns to load in the browser
@@ -89,6 +87,8 @@ module.exports = function (config) {
 
         // Concurrency level
         // how many browser should be started simultaneous
-        concurrency: Infinity
-    })
-}
+        concurrency: Infinity,
+    });
+};
+
+module.exports = karmaConfig;
