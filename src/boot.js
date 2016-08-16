@@ -1,0 +1,12 @@
+import moment from 'moment';
+
+const locale = 'fr';
+
+moment.locale(locale);
+
+// Install ImmutableDevTools
+if (process.env.NODE_ENV !== 'production') { // DEBUG/DEV MODE
+    const Immutable = require('immutable');
+    const installDevTools = require('immutable-devtools').default;
+    installDevTools(Immutable);
+}

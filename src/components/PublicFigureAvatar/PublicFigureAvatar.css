@@ -1,0 +1,11 @@
+.wrapper {
+    height:50px;
+    width: 50px;
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+    background: 50% 50% no-repeat;
+    background-size:cover;
+    background-position: center center;
+    float:left;
+    margin-right:15px;
+}
