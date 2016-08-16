@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const config = require('./webpack.base.config');
 
 const path = require('path');
@@ -13,34 +14,36 @@ const env = 'development';
 process.env.BABEL_ENV = env;
 process.env.NODE_ENV = env;
 
-const outputPath = path.resolve(APP_ROOT + '/build/dev-server');
+const outputPath = path.resolve(`${APP_ROOT}/build/dev-server`);
 
-const copy_config = [
-    {context: SRC_FOLDER + '/static', from: '**/*', to: outputPath},
-    {from: 'mocks', to: outputPath + '/fake-api'},
+const copyConfig = [
+    { context: `${SRC_FOLDER}/static`, from: '**/*', to: outputPath },
+    { from: 'mocks', to: `${outputPath}/fake-api` },
 ];
 
 config.plugins.push(new webpack.DefinePlugin({ 'process.env.NODE_ENV': '"development"' }));
 config.plugins.push(new webpack.NamedModulesPlugin());
-config.plugins.push(new CopyWebpackPlugin(copy_config));
+config.plugins.push(new CopyWebpackPlugin(copyConfig));
 config.output.path = outputPath;
 config.devtool = 'source-map';
 config.cache = true;
 config.debug = true;
 
-var devServerAPIUrl, devServerRewrite;
+let devServerAPIUrl;
+let devServerRewrite;
+
 if (args.proxy) {
     if (args.mockAPI) {
         devServerAPIUrl = 'http://localhost:3000';
-        devServerRewrite = function(req) {
-            req.url = req.url
+        devServerRewrite = function rewrite(req) {
+            req.url = req.url                               // eslint-disable-line no-param-reassign
                     .replace(/\/api\//, '/fake-api/')       // Local mocks as API
                     .split('?')[0];                         // strip query string if exists
-            if (req.method === "POST") req.method = 'GET';  // Change to GET only
+            if (req.method === 'POST') req.method = 'GET';  // eslint-disable-line no-param-reassign
         };
     }
     if (args.prodAPI) devServerAPIUrl = 'http://api.débats.co';
-};
+}
 
 config.devServer = {
     quiet: false,

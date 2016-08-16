@@ -2,8 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin')
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+// const CompressionPlugin = require('compression-webpack-plugin')
+// const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const postcssProcessors = require('./postcss-processors');
 
@@ -18,7 +18,11 @@ const SRC_FOLDER = CONSTANTS.SRC_FOLDER;
 const plugins = [];
 plugins.push(new webpack.NoErrorsPlugin());                                 // No assets emitted with errors
 plugins.push(new ExtractTextPlugin('[name].[contenthash].css', { allChunks: false }));  // Extract CSS to external style.css file
-plugins.push(new HtmlWebpackPlugin({ template: SRC_FOLDER + '/index.html', inject: false, filename: 'index.html' }));
+plugins.push(new HtmlWebpackPlugin({
+    template: `${SRC_FOLDER}/index.html`,
+    inject: true,
+    filename: 'index.html',
+}));
 
 
 module.exports = {
@@ -27,11 +31,11 @@ module.exports = {
             react: path.resolve(APP_ROOT, 'node_modules/react'),
         },
         modulesDirectories: ['src', 'web_modules', 'node_modules'],
-        extensions: ["", ".js", ".jsx"]
+        extensions: ['', '.js', '.jsx'],
     },
-    entry: APP_PATH + ('/index.js'),
+    entry: `${APP_PATH}/index.js`,
     output: {
-        filename: APP_NAME + '.[name].[hash].js',
+        filename: `${APP_NAME}.[name].[hash].js`,
     },
     externals: {
         TweenLite: 'TweenLite',
@@ -43,7 +47,7 @@ module.exports = {
     module: {
         loaders: [
             {
-                test: /\.js$/,
+                test: /\.jsx?$/,
                 loader: 'babel-loader',
                 exclude: /node_modules/,
             },
@@ -67,5 +71,5 @@ module.exports = {
             },
         ],
     },
-    postcss: webpack => postcssProcessors(webpack),
-}
+    postcss: wp => postcssProcessors(wp),
+};

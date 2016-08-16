@@ -12,13 +12,14 @@ const postcssHide = require('postcss-hide');
 
 const CONSTANTS = require('./constants');
 
-const makeMap = path => {
+const makeMap = aPath => {
     try {
-        return webpackPostcssTools.makeVarMap(path);
+        return webpackPostcssTools.makeVarMap(aPath);
     } catch (e) {
-        console.log(path + ' not found.');
+        // console.log(`${aPath} not found.`);
         process.exit(1);
     }
+    return null;
 };
 
 const map = makeMap('./src/styles/_constants.css');
