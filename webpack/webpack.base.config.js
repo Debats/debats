@@ -53,17 +53,32 @@ module.exports = {
             },
             {
                 test: /\.css$/,
-                loader: 'style-loader!css-loader?modules&localIdentName=[name]__[local]___[hash:base64:5]&importLoaders=1!postcss-loader',
+                loader: 'style-loader'
+                + '!css-loader'
+                    + '?modules&localIdentName=[name]__[local]___[hash:base64:5]'
+                    + '&importLoaders=1'
+                + '!postcss-loader',
                 exclude: /node_modules/,
             },
             {
                 test: /\.(png|svg|gif|jpeg|jpg)$/,
                 include: APP_PATH,
-                loader: 'file-loader?name=images/[name].[ext]',
+                loader: 'file?name=images/[name].[ext]',
             },
             {
                 test: /\.(eot|woff|ttf)$/,
+                include: APP_PATH,
                 loader: 'file-loader?name=fonts/[name].[ext]',
+            },
+            {
+                test: /\.(svg|woff2?)$/,
+                exclude: APP_PATH,
+                loader: "url?limit=10000"
+            },
+            {
+                test: /\.(ttf|eot)$/,
+                exclude: APP_PATH,
+                loader: "file"
             },
             {
                 test: /\.json$/,

@@ -1,0 +1,40 @@
+.btn.btn-primary {
+    background-color: #fff; /* White */
+    font-family: 'Gotham-Bold', sans-serif;
+    border: 1px solid #ccc;
+    color: #ccc;
+    padding: 6px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+}
+.btn.btn-primary:hover {
+    background-color: #f21e40; /* Red débats */
+    border: 1px solid #f21e40;
+    color: white;
+}
+.btn.btn-danger {
+    background-color: #fff; /* White */
+    font-family: 'Gotham-Bold', sans-serif;
+    border: 1px solid #ccc;
+    color: #ccc;
+    padding: 6px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+}
+.btn.btn-danger:hover {
+    background-color: #000; /* Black */
+    border: 1px solid #000;
+    color: white;
+}

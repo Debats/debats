@@ -1,0 +1,11 @@
+.container {
+    width:100vw;
+    position:relative;
+    margin-left:-50vw;
+    left:50%;
+}
+
+.row {
+    background-size:cover;
+    background-position: center center;
+}

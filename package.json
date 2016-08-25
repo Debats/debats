@@ -4,7 +4,8 @@
   "description": "Front for Débats.co website",
   "author": "Jalil Arfaoui",
   "scripts": {
-    "dev-local": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --mockAPI --port 3000 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
+    "dev-mock": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --mockAPI --port 3030 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
+    "dev-local": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --localAPI --port 3030 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
     "build-dev": "./node_modules/.bin/webpack --config webpack/webpack.build.dev.config.js --progress --colors",
     "build-prod": "./node_modules/.bin/webpack --config webpack/webpack.config.js --production --progress --colors",
     "build-stats": "./node_modules/.bin/webpack --config webpack/webpack.config.js --production --json > stats.json",
@@ -18,15 +19,19 @@
     "setup-test": "node selenium-download.js"
   },
   "dependencies": {
+    "bootstrap-loader": "^1.2.0-beta.1",
+    "bootstrap-sass": "^3.3.7",
     "classnames": "^2.2.1",
     "immutable": "^3.7.5",
     "moment": "^2.11.2",
     "node-polyglot": "^2.0.0",
+    "node-sass": "^3.8.0",
     "ramda": "^0.21.0",
     "react": "^15.2.0",
     "react-addons-css-transition-group": "^15.2.0",
     "react-addons-shallow-compare": "^15.2.0",
     "react-addons-transition-group": "^15.2.0",
+    "react-bootstrap": "^0.30.3",
     "react-click-outside": "^2.1.0",
     "react-css-modules": "^3.7.6",
     "react-dom": "^15.2.0",
@@ -35,11 +40,16 @@
     "react-pure-render": "^1.0.2",
     "react-redux": "^4.0.0",
     "react-router": "^2.4.0",
+    "react-router-bootstrap": "^0.23.1",
     "react-router-redux": "~4.0.0",
     "redux": "^3.0.4",
     "redux-immutable": "^3.0.6",
+    "redux-json-api": "^1.4.4",
     "reselect": "^2.5.1",
-    "scroll-behavior": "^0.3.4"
+    "resolve-url-loader": "^1.6.0",
+    "sass-loader": "^4.0.0",
+    "scroll-behavior": "^0.3.4",
+    "url-loader": "^0.5.7"
   },
   "devDependencies": {
     "babel-cli": "<6.3.0",

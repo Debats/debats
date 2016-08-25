@@ -34,11 +34,20 @@ let devServerRewrite;
 
 if (args.proxy) {
     if (args.mockAPI) {
-        devServerAPIUrl = 'http://localhost:3000';
+        devServerAPIUrl = 'http://localhost:3030';
         devServerRewrite = function rewrite(req) {
             req.url = req.url                               // eslint-disable-line no-param-reassign
-                    .replace(/\/api\//, '/fake-api/')       // Local mocks as API
-                    .split('?')[0];                         // strip query string if exists
+                .replace(/\/api\//, '/fake-api/')       // Local mocks as API
+                .split('?')[0];                         // strip query string if exists
+            if (req.method === 'POST') req.method = 'GET';  // eslint-disable-line no-param-reassign
+        };
+    }
+    if (args.localAPI) {
+        devServerAPIUrl = 'http://localhost:3030';
+        devServerRewrite = function rewrite(req) {
+            req.url = req.url                               // eslint-disable-line no-param-reassign
+                .replace(/\/api\//, '/fake-api/')       // Local mocks as API
+                .split('?')[0];                         // strip query string if exists
             if (req.method === 'POST') req.method = 'GET';  // eslint-disable-line no-param-reassign
         };
     }

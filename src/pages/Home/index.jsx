@@ -1,18 +1,19 @@
 import React from 'react';
+import CSSModules from 'react-css-modules';
 import HomeSubjects from './HomeSubjects';
 import LastStatements from 'components/LastStatements';
 import bgSrc from './images/intro-bg.jpg';
+import HomeStyle from './HomeStyle.css';
 
 const Home = () => (
-    <div
-        className="container-fluid"
-        style="width:100vw; position:relative; margin-left:-50vw;left:50%;"
-    >
-        <div
-            className="row"
-            style={`background:url('${bgSrc}') %>');background-size:cover;background-position: center center;`}
-        >
-            <div style="font-color:white !important;text-align: center;vertical-align: middle;">
+    <div className="container-fluid" styleName="container">
+        <div className="row" styleName="row" style={{ backgroundImage: `url(${bgSrc})` }}>
+            <div style={{
+                fontColor:'white !important',
+                textAlign: 'center',
+                verticalAlign: 'middle'
+            }}
+            >
                 <br /><br /><br /><br /><br /><br />
                     <h5>Bienvenue sur Débats.co</h5><br />
                     <div id="white">
@@ -33,11 +34,11 @@ const Home = () => (
                 </tbody>
             </table>
         </div>
-        <div className="col-md-3 col-centered" style="text-align:right;">
+        <div className="col-md-3 col-centered" style={{ textAlign: 'right' }} >
             <LastStatements />
         </div>
         <div className="col-md-1"></div>
     </div>
 );
 
-export default Home;
+export default CSSModules(Home, HomeStyle);

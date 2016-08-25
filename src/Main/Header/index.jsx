@@ -1,24 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router';
+import CSSModules from 'react-css-modules';
 import paths from 'constants/paths';
 import logoImg from './images/logo_header.png';
+import HeaderStyle from './HeaderStyle.css';
 import ConnectedUserMenu from './';
 
 const renderUserMenu = (isConnected) => (
     isConnected
     ? <ConnectedUserMenu />
     : [
-        <li><Link to="#">Connexion></Link></li>,  /* modal ! */
-        <li><Link to="#">Inscription</Link></li>, /* modal ! */
+        <li key="login"><Link to="#">Connexion</Link></li>,  /* modal ! */
+        <li key="signup"><Link to="#">Inscription</Link></li>, /* modal ! */
     ]
 );
 
 const Header = () => (
-    <header className="navbar navbar-fixed-top navbar-custom">
+    <header className="navbar navbar-fixed-top" styleName="navbar">
         <div className="container-fluid">
             <div className="col-md-1"></div>
             <div className="col-md-2">
-                <Link to={paths.root} id="logo">
+                <Link to={paths.root} styleName="logo">
                     <img src={logoImg} />
                 </Link>
             </div>
@@ -37,4 +39,4 @@ const Header = () => (
     </header>
 );
 
-export default Header;
+export default CSSModules(Header, HeaderStyle);

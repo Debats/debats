@@ -1,3 +1,4 @@
+require('bootstrap-loader');
 import moment from 'moment';
 
 const locale = 'fr';
