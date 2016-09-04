@@ -10,6 +10,11 @@ export function* fetchEntityIfNeeded() {
     const response = yield call(getStatements);
     // Success / Error actions
     yield put({ type: actionsTypes.ENTITY_READ, data: response.data });
+
+    // Temporary calling all the stuff
+    const Sresponse = yield call(getSubjects);
+    // Success / Error actions
+    yield put({ type: actionsTypes.ENTITY_READ, data: Sresponse.data });
 }
 
 export function* watchEntityAccess() {
