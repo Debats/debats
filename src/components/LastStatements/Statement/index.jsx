@@ -4,7 +4,7 @@ import paths from 'constants/paths';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 
 const Statement = ({ statement }) => (
-    <li id={`statement-${statement.id}`} style="margin-bottom: 20px;">
+    <li id={`statement-${statement.id}`} style={{ marginBottom: "20px;" }}>
         <PublicFigureAvatar publicFigure={statement.publicFigure} />
         <div className="public-figure-text">
             <strong>
