@@ -1,5 +1,5 @@
 import { values, pipe, not, is, toPairs, lensPath, assoc, over, map, when,
-    path, of, compose, dissoc, isNil, first } from 'ramda';
+    path, of, compose, dissoc, isNil, first, curry } from 'ramda';
 import { log, withConsole, warn } from 'helpers/debug';
 import { createSelector } from 'reselect';
 import { enrichEntityReference } from './entities';
@@ -19,31 +19,21 @@ const getRelationshipsPairs = statement => toPairs(statement.relationships);
 
 const overPublicFigures = over(lensPath(['relationships', 'public-figure']));
 
-const injectPublicFigures = allPublicFigures => statement => assoc('publicFigure',
-    compose(
-        enrichEntityReference(allPublicFigures),
-        when(is(Array), first),
-        path(['relationships', 'public-figure', 'data'])
-    )(statement),
-    statement
+const enrichWithOne = curry(
+    (propertyName, relationshipName, fromCollection, entity) => assoc(
+        propertyName,
+        compose(
+            enrichEntityReference(fromCollection),
+            when(is(Array), first),
+            path(['relationships', relationshipName, 'data'])
+        )(entity),
+        entity
+    )
 );
 
-const injectPositions = allPositions => statement => assoc('position',
-    compose(
-        enrichEntityReference(allPositions),
-        when(is(Array), first),
-        path(['relationships', 'position', 'data'])
-    )(statement),
-    statement
-);
-const injectSubjects = allSubjects => statement => assoc('subject',
-    compose(
-        enrichEntityReference(allSubjects),
-        when(is(Array), first),
-        path(['relationships', 'subject', 'data'])
-    )(statement),
-    statement
-);
+const injectPublicFigure = enrichWithOne('publicFigure', 'public-figure');
+const injectPosition = enrichWithOne('position', 'position');
+const injectSubject = enrichWithOne('subject', 'subject');
 
 export const getLatestStatements = createSelector(
     getStatements,
@@ -54,9 +44,9 @@ export const getLatestStatements = createSelector(
         compose(
             values,
             map(pipe(
-                injectPublicFigures(allPublicFigures),
-                injectSubjects(allSubjects),
-                injectPositions(allPositions),
+                injectPublicFigure(allPublicFigures),
+                injectSubject(allSubjects),
+                injectPosition(allPositions),
                 dissoc('relationthips'),
             ))
         )
