@@ -1,4 +1,7 @@
 import axios from 'axios';
+import Config from 'Config';
 
-export const getSubjects = () => axios.get('http://localhost:3000/subjects');
-export const getStatements = () => axios.get('http://localhost:3000/statements');
+const endpoint = Config.api.debats.endpointHost + Config.api.debats.endpointPath;
+
+export const getSubjects = () => axios.get(`${endpoint}subjects`);
+export const getStatements = () => axios.get(`${endpoint}statements`);
