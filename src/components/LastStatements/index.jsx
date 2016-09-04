@@ -1,21 +1,35 @@
-import React, { PropTypes } from 'react';
-import { map } from 'ramda';
+import React, { PropTypes, Component } from 'react';
+import CSSModules from 'react-css-modules';
 import Statement from './Statement';
+import LastStatementsStyle from './LastStatements.css';
+import connector from './connector';
 
-const renderStatements = (statements) => (
-    map(s => <Statement statement={s} />, statements)
-);
+class LastStatements extends Component {
+    static propTypes = {
+        statements: PropTypes.arrayOf(PropTypes.object),
+        onAccess: PropTypes.func.isRequired,
+    };
 
-const LastStatements = ({ statements }) => (
-    <div id="last-statements">
-        <h2>Les dernières prises de positions</h2>
-        <ul id="last-statements">
-            {renderStatements(statements)};
-        </ul>
-    </div>
-);
-LastStatements.propTypes = {
-    statements: PropTypes.arrayOf(PropTypes.object),
-};
+    componentWillMount() {
+        this.props.onAccess();
+    }
 
-export default LastStatements;
+    renderStatements = () => this.props.statements.map(
+        s => <Statement statement={s} />
+    );
+
+    render() {
+        if (!this.props.statements) return <span>loading last statements ...</span>;
+
+        return (
+            <div styleName="wrapper">
+                <h2>Les dernières prises de positions</h2>
+                <ul styleName="wrapper">
+                    { this.renderStatements() };
+                </ul>
+            </div>
+        );
+    }
+}
+
+export default CSSModules(connector(LastStatements), LastStatementsStyle);

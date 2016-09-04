@@ -73,20 +73,3 @@ p {
   line-height: 1.7em;
   text-align: justify;
 }
-
-#white {
-  font-family: 'Gotham-Book', sans-serif;
-  font-size: 1.1em;
-  line-height: 1.7em;
-  text-align: center;
-  color: #FFFFFF;
-  text-shadow: 0px 0px 30px rgba(0, 115, 162, 1);
-}
-
-#last-statements {
-  font-family: 'Gotham-Book', sans-serif;
-  font-size: 1.0em;
-  line-height: 1.4em;
-  list-style-type: none;
-  text-align: justify;
-}

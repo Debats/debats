@@ -1,12 +1,20 @@
-import React, { PropTypes } from 'react';
+import React, { PropTypes, Component } from 'react';
 import HomeSubject from './HomeSubject';
-import { map } from 'ramda';
 
-const renderSubjects = map(s => <HomeSubject subject={s} />);
+class HomeSubjects extends Component {
 
-const HomeSubjects = ({ subjects }) => (renderSubjects(subjects));
-HomeSubject.propTypes = {
-    subjects: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
+    static propTypes = {
+        subjects: PropTypes.arrayOf(PropTypes.object).isRequired,
+    }
+
+    render() {
+        if (!this.props.subjects) return <span>loading subjects ...</span>;
+
+        return this.props.subjects.map(
+            s => <HomeSubject subject={s} />
+        );
+    }
+
+}
 
 export default HomeSubjects;

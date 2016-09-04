@@ -1,4 +1,4 @@
-export default {
+    export default {
     root: '/',
     subjects: '/s',
     publicFigures: '/p',

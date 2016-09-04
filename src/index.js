@@ -44,7 +44,7 @@ const loadApplication = (DOMElementId) => {
         module.hot.accept('./root/index.jsx', () => {
             // If you use Webpack 2 in ES modules mode, you can
             // use <App /> here rather than require() a <NextApp />.
-            const NextApp = require('./root/index').Root;
+            const NextApp = require('./root/index').default;
 
             ReactDOM.render(
                 <AppContainer>

@@ -16,7 +16,7 @@ const Home = () => (
             >
                 <br /><br /><br /><br /><br /><br />
                     <h5>Bienvenue sur Débats.co</h5><br />
-                    <div id="white">
+                    <div styleName="introduction">
                         Débats est un projet francophone et participatif, ayant pour objectif <br />
                         d’offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.
                     </div>
