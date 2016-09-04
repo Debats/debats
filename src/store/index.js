@@ -2,10 +2,9 @@ import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
 import createSagaMiddleware from 'redux-saga';
 import { routerReducer } from 'react-router-redux';
 import { map } from 'ramda';
-import { reducer as apiReducer }from 'redux-json-api';
 import { isClientSide } from 'helpers/env';
 import rootSaga from './sagas';
-// import entities from './reducers/entities';
+import entities from './reducers/entities';
 
 // INITIAL STATE
 const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
@@ -13,7 +12,7 @@ const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
 // REDUCERS
 const reducer = combineReducers({
     routing: routerReducer,
-    api: apiReducer,
+    entities
 });
 
 // MIDDLEWARE
