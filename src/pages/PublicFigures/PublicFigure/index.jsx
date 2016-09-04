@@ -20,7 +20,7 @@ const PublicFigure = ({ publicFigure }) => (
                 <td style= {{ width: "33%;" }}>
 
                     <h2 className="figure-title" style={{ color: "#333333 !important;" }}>
-                        <Link to={paths.getFor.subject(publicFigure)}>
+                        <Link to="{paths.getFor.subject(publicFigure)}">
                             {publicFigure.name}
                         </Link>
                     </h2>
@@ -36,7 +36,6 @@ const PublicFigure = ({ publicFigure }) => (
 </tbody>
 </table>
 );
-
 
 PublicFigure.propTypes = {
     publicFigure: PropTypes.object.isRequired
