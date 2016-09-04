@@ -22,7 +22,7 @@ const HomeSubject = ({ subject, t }) => (
                     </Link>
                 </h2>
                 <h6 className="count">
-                    {t('public_figure', subject.associatedPublicFigures.length)}
+                    {t('public_figure', subject.publicFigures.length)}
                 </h6>
             </td>
             <td style="width:50%; text-align:center;vertical-align:middle;">

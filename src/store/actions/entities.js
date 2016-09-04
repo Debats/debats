@@ -7,9 +7,9 @@ export const onLastStatementsAccess = () => ({
     listType: 'latest',
 });
 
-export const onHotestSubjectsAccess = () => ({
+export const onHottestSubjectsAccess = () => ({
     type: actionsTypes.ENTITY_ACCESS,
     accessType: 'list',
     entityType: 'subjects',
-    listType: 'hotest',
+    listType: 'hottest',
 });
