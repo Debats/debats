@@ -9,15 +9,17 @@ import ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 import { useRouterHistory, match } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
+import { setAccessToken, setEndpointHost, setEndpointPath } from 'redux-json-api';
 import createHashHistory from 'history/lib/createHashHistory';
 import createMemoryHistory from 'history/lib/createMemoryHistory';
+import Config from 'Config';
 import { isClientSide } from 'helpers/env';
 // import useScroll from 'scroll-behavior/lib/useScrollToTop';
 
 // Styles
 import 'styles/_main.css';
 // Redux
-import { store } from './state';    // Redux store
+import { store } from './store';    // Redux store
 import Root from './root';          // App root (Router, Provider, Hot reload ...
 import routes from './routes';      // React-router routes
 
@@ -27,15 +29,17 @@ const createHistory = isClientSide() ? createHashHistory : createMemoryHistory;
 const browserHistory = useRouterHistory(createHistory)();
 const history = syncHistoryWithStore(browserHistory, store);
 
+// Setup API
+store.dispatch(setEndpointHost(Config.api.debats.endpointHost));
+store.dispatch(setEndpointPath('/'));
+
 // Init app function
 const loadApplication = (DOMElementId) => {
     const DOMElement = document.getElementById(DOMElementId);
 
     match({ history, routes, location }, () => {
         ReactDOM.render(
-            <AppContainer>
-                <Root store={store} history={history} />
-            </AppContainer>,
+                <Root store={store} history={history} />,
             DOMElement
         );
     });

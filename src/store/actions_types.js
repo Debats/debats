@@ -1,0 +1,4 @@
+export default {
+    ENTITY_ACCESS: 'ENTITY_ACCESS',
+    ENTITY_READ: 'ENTITY_READ'
+};

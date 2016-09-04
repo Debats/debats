@@ -1,17 +1,23 @@
 import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
+import createSagaMiddleware from 'redux-saga';
 import { routerReducer } from 'react-router-redux';
 import { map } from 'ramda';
 import { isClientSide } from 'helpers/env';
+import rootSaga from './sagas';
+import entities from './reducers/entities';
+
 // INITIAL STATE
 const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
 
 // REDUCERS
 const reducer = combineReducers({
     routing: routerReducer,
+    entities
 });
 
 // MIDDLEWARE
-const middlewares = [];
+const sagaMiddleware = createSagaMiddleware();
+const middlewares = [sagaMiddleware];
 if (isClientSide() && process.env.NODE_ENV !== 'production') {
     middlewares.push(require('redux-logger')({
         stateTransformer: map(state => ((state && state.toJS) ? state.toJS() : state)),
@@ -31,5 +37,7 @@ const store = createStore(
         window.devToolsExtension ? window.devToolsExtension() : f => f,
     )
 );
+
+sagaMiddleware.run(rootSaga);
 
 export { store };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, IndexRoute } from 'react-router';
-import { store } from 'state/index';
+import { store } from 'store/index';
 
 // Main Page
 import Main from 'Main/index';
