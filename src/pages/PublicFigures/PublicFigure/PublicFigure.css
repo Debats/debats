@@ -1,0 +1,11 @@
+.presentationWrapper {
+    width:67%;
+    text-align:center;
+    vertical-align:top;
+    padding-top:20px;
+    border:none;
+}
+
+.presentation {
+    font-size:13px !important;
+}
