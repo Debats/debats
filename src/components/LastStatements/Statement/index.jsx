@@ -15,8 +15,8 @@ const Statement = ({ statement }) => (
             &nbsp; s'est déclaré pour
             "<strong>{statement.position.title}</strong>"
             dans le débat sur
-            <strong><Link to={paths.getFor.subject(statement.position.subject)}>
-                {statement.position.subject.title}
+            <strong><Link to={paths.getFor.subject(statement.subject)}>
+                {statement.subject.title}
             </Link></strong>
         </div>
     </li>
