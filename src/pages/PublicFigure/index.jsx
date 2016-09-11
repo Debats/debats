@@ -1,4 +1,4 @@
-// import React, { PropTypes } from 'react';
+import React, { PropTypes } from 'react';
 import paths from 'constants/paths';
 import { Link } from 'react-router';
 import React, { PropTypes } from 'react';

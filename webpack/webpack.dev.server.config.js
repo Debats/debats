@@ -31,8 +31,8 @@ config.debug = true;
 
 config.externals.Config = JSON.stringify(require('../config/dev.config.json'));
 
-let devServerAPIUrl;
-let devServerRewrite;
+var devServerAPIUrl;
+var devServerRewrite;
 
 if (args.proxy) {
     if (args.mockAPI) {
@@ -44,15 +44,14 @@ if (args.proxy) {
             if (req.method === 'POST') req.method = 'GET';  // eslint-disable-line no-param-reassign
         };
     }
-    if (args.localAPI) devServerAPIUrl = 'http://localhost:3000';
     if (args.prodAPI) devServerAPIUrl = 'http://api.débats.co';
 }
 
 config.devServer = {
     quiet: false,
-        stats: { colors: true },
+    stats: { colors: true },
     outputPath,
-        proxy: {
+    proxy: {
         '/api/*': {
             target: devServerAPIUrl,
             rewrite: devServerRewrite,

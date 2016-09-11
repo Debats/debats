@@ -2,10 +2,7 @@
   "api": {
     "debats": {
       "endpointHost": "http://localhost:3000",
-      "endpointPath": "/",
-      "paths": {
-        "statements": "statements"
-      }
+      "endpointPath": "/"
     }
   }
 }

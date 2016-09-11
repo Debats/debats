@@ -1,20 +1,30 @@
 import React, { PropTypes, Component } from 'react';
 import HomeSubject from './HomeSubject';
+import connector from './connectors';
 
 class HomeSubjects extends Component {
 
     static propTypes = {
         subjects: PropTypes.arrayOf(PropTypes.object).isRequired,
+        onAccess: PropTypes.func.isRequired,
+    }
+
+    componentWillMount() {
+        this.props.onAccess();
     }
 
     render() {
         if (!this.props.subjects) return <span>loading subjects ...</span>;
 
-        return this.props.subjects.map(
-            s => <HomeSubject subject={s} />
+        return (
+            <div> {/* TODO Bootstrap */}
+                {this.props.subjects.map(
+                    s => <HomeSubject subject={s} />
+                )}
+            </div>
         );
     }
 
 }
 
-export default HomeSubjects;
+export default connector(HomeSubjects);

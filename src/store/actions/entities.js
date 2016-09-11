@@ -6,3 +6,10 @@ export const onLastStatementsAccess = () => ({
     entityType: 'statements',
     listType: 'latest',
 });
+
+export const onHottestSubjectsAccess = () => ({
+    type: actionsTypes.ENTITY_ACCESS,
+    accessType: 'list',
+    entityType: 'subjects',
+    listType: 'hottest',
+});
