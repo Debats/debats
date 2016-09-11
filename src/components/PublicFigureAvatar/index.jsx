@@ -12,3 +12,4 @@ PublicFigureAvatar.propTypes = {
 };
 
 export default cssModules(PublicFigureAvatar, styles);
+
