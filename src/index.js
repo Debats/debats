@@ -39,7 +39,9 @@ const loadApplication = (DOMElementId) => {
 
     match({ history, routes, location }, () => {
         ReactDOM.render(
-                <Root store={store} history={history} />,
+            <AppContainer>
+                <Root store={store} history={history} />
+            </AppContainer>,
             DOMElement
         );
     });
