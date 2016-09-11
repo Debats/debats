@@ -1,4 +1,9 @@
-import { pipe } from 'ramda';
+import { pipe, always } from 'ramda';
+
+const print = message => x => {
+    if (!!message) console.warn(message);
+    return x;
+};
 
 const printWithPrefix = (prefix) => (x) => {
     console.warn('-------------------------------');
@@ -9,7 +14,7 @@ const printWithPrefix = (prefix) => (x) => {
 const printBefore = printWithPrefix('BEFORE');
 const printAfter = printWithPrefix('AFTER');
 
-export const withConsole = (f) => pipe(printBefore, f, printAfter);
+export const withConsole = (f, message) => pipe(printBefore, print(message), f, printAfter);
 
 export const log = x => { console.log(x); return x; }; /* eslint no-console: 0 */
 export const warn = x => { console.warn(x); return x; }; /* eslint no-console: 0 */
