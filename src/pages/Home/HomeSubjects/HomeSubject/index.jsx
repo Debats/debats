@@ -9,7 +9,7 @@ import PublicFigureAvatar from 'components/PublicFigureAvatar';
 const PublicFigureAvatarMapper = pf => <PublicFigureAvatar publicFigure={pf} />;
 const renderAssociatedPublicFigures = compose(
     map(PublicFigureAvatarMapper),
-    withConsole(take(5)),
+    take(5),
     prop('remarquablePublicFigures'),
 );
 
