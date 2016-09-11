@@ -6,6 +6,11 @@ class HomeSubjects extends Component {
 
     static propTypes = {
         subjects: PropTypes.arrayOf(PropTypes.object).isRequired,
+        onAccess: PropTypes.func.isRequired,
+    }
+
+    componentWillMount() {
+        this.props.onAccess();
     }
 
     render() {
