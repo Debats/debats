@@ -31,5 +31,24 @@ export default (
                 }}
             />
         </Route>
+        <Route path="p" name="publicFigures">
+            <IndexRoute
+                name="publicFigures.index"
+                getComponent={(nextState, done) => {
+                    require.ensure([], require => {
+                        done(null, require('pages/PublicFigures').default);
+                    }, 'publicFigures.index');
+                }}
+            />
+            <Route
+                name="publicFigures.page"
+                path=":publicFigureSlug"
+                getComponent={(nextState, done) => {
+                    require.ensure([], require => {
+                        done(null, require('pages/publicFigure').default);
+                    }, 'publicFigures.page');
+                }}
+            />
+        </Route>
     </Route>
 );

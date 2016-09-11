@@ -1,13 +1,12 @@
 import React, { PropTypes } from 'react';
-import paths from 'constants/paths';
+import paths from '../../../constants/paths';
 import { Link } from 'react-router';
-import React, { PropTypes } from 'react';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 import AssociatedSubjects from 'components/AssociatedSubjects';
 import PublicFigureStyle from './PublicFigure.css';
 import cssModules from 'react-css-modules';
 
-const PublicFigure = ({ publicFigure }) => (
+const PublicFigureInList = ({ publicFigure }) => (
     <table className="table">
         <tbody>
         <ul id="subject">
@@ -17,9 +16,9 @@ const PublicFigure = ({ publicFigure }) => (
                     <td>
                         <PublicFigureAvatar publicFigure={publicFigure} />
                     </td>
-                <td style= {{ width: "33%;" }}>
+                <td style= {{ width: "33%" }}>
 
-                    <h2 className="figure-title" style={{ color: "#333333 !important;" }}>
+                    <h2 className="figure-title" style={{ color: "#333333 !important" }}>
                         <Link to="{paths.getFor.subject(publicFigure)}">
                             {publicFigure.name}
                         </Link>
@@ -37,11 +36,11 @@ const PublicFigure = ({ publicFigure }) => (
 </table>
 );
 
-PublicFigure.propTypes = {
+PublicFigureInList.propTypes = {
     publicFigure: PropTypes.object.isRequired
 };
 
-export default cssModules(PublicFigure, PublicFigureStyle);
+export default cssModules(PublicFigureInList, PublicFigureStyle);
 
 /*
 <script type="text/javascript">

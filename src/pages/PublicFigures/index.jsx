@@ -1,19 +1,23 @@
-// import React, { PropTypes } from 'react';
 import React, { PropTypes, Component } from 'react';
-import PublicFigure from './PublicFigure';
+import PublicFigureInList from './PublicFigureInList';
+import connect from './connector';
 
 class PublicFigures extends Component {
 
     static propTypes = {
-        PublicFigures: PropTypes.arrayOf(PropTypes.object).isRequired,
+        publicFigures: PropTypes.arrayOf(PropTypes.object).isRequired,
+        onAccess: PropTypes.func.isRequired,
     }
 
+    componentWillMount() {
+        this.props.onAccess();
+    }
 
     render() {
-        if (!this.props.PublicFigures) return <span>loading public figures ...</span>;
+        if (!this.props.publicFigures) return <span>loading public figures ...</span>;
 
-        const renderChilds = () => this.props.PublicFigures.map(
-            pf => <PublicFigure publicFigure={pf} />
+        const renderChilds = () => this.props.publicFigures.map(
+            pf => <PublicFigureInList publicFigure={pf} />
         );
 
         return (
@@ -22,4 +26,4 @@ class PublicFigures extends Component {
     }
 }
 
-export default PublicFigures;
+export default connect(PublicFigures);

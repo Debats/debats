@@ -13,3 +13,10 @@ export const onHottestSubjectsAccess = () => ({
     entityType: 'subjects',
     listType: 'hottest',
 });
+
+export const onPublicFiguresListAccess = () => ({
+    type: actionsTypes.ENTITY_ACCESS,
+    accessType: 'list',
+    entityType: 'publicFigures',
+    listType: 'all',
+});
