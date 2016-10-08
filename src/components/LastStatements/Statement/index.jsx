@@ -2,11 +2,13 @@ import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 import paths from 'constants/paths';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
+import cssModules from 'react-css-modules';
+import style from './Statement.css';
 
 const Statement = ({ statement }) => (
-    <li id={`statement-${statement.id}`} style={{ marginBottom: "20px;" }}>
+    <li id={`statement-${statement.id}`} styleName="wrapper" >
         <PublicFigureAvatar publicFigure={statement.publicFigure} />
-        <div className="public-figure-text">
+        <div styleName="public-figure-text">
             <strong>
                 <Link to={paths.getFor.publicFigure(statement.publicFigure)}>
                     {statement.publicFigure.name}
@@ -28,4 +30,4 @@ Statement.propTypes = {
     }).isRequired,
 };
 
-export default Statement;
+export default cssModules(Statement, style);
