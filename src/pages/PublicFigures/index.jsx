@@ -1,6 +1,7 @@
 import React, { PropTypes, Component } from 'react';
 import PublicFigureInList from './PublicFigureInList';
 import connect from './connector';
+import LastStatements from 'components/LastStatements';
 
 class PublicFigures extends Component {
 
@@ -21,7 +22,14 @@ class PublicFigures extends Component {
         );
 
         return (
-            <div>{renderChilds()}</div>
+            <div>
+                <div className="col-md-9">
+                    {renderChilds()}
+                </div>
+                <div className="col-md-3">
+                    <LastStatements />
+                </div>
+            </div>
         );
     }
 }
