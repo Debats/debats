@@ -66,20 +66,6 @@ statements {
   list-style-type: none;
 }
 
-div#last-statements {
-  float:right;
-  margin-right:10px;
-  .public-figure-little-image {
-    width: 50px;
-    height: 50px;
-  border-radius: 50%;
-  float:left; 
-  margin-right:15px;
-  }
-  .public-figure-text {
-  overflow:hidden;}
-}
-
 a:link, a:visited {
   color: #333333;
   text-decoration: none;
@@ -127,11 +113,6 @@ h6.count {
 
 ul {
   list-style-type: none;
-}
-
-#last-statements h2 {
-  font-weight:bold;
-  text-align:center;
 }
 
 .subjects-home {

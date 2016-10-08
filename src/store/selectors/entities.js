@@ -1,7 +1,14 @@
-import { curry, assoc, compose, when, take, path, is, map } from 'ramda';
+import { curry, assoc, compose, when, take, path, is, map, isNil, always, values } from 'ramda';
+export const getSubjects = state => values(state.entities.subjects);
+export const getPositions = state => values(state.entities.positions);
+export const getStatements = state => values(state.entities.statements);
+export const getPublicFigures = state => values(state.entities['public-figures']);
+
 
 const getEntityByRef = curry(
-    (sourceEntities, entityReference) => sourceEntities[entityReference.id]
+    (sourceEntities, entityReference) => compose(
+        when(isNil, always(entityReference)) // Entity not fetched yet, return reference object
+    )(sourceEntities[entityReference.id])
 );
 
 

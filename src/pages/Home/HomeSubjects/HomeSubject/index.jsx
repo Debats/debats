@@ -2,7 +2,6 @@ import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 import { translate } from 'react-polyglot';
 import { map, compose, take, prop } from 'ramda';
-import { warn, withConsole } from 'helpers/debug';
 import paths from 'constants/paths';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 

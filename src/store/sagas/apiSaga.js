@@ -12,6 +12,12 @@ const getApiCallFor = (entityType, entityRequest) => {
                 case 'hottest': return getSubjects;
                 default: return identity;
             }
+        case 'publicFigures':
+            switch (entityRequest) {
+                case 'hottest': return getSubjects;
+                case 'all': return getSubjects;
+                default: return identity;
+            }
         default: return identity;
     }
 };
@@ -19,7 +25,9 @@ const getApiCallFor = (entityType, entityRequest) => {
 export function* fetchEntityIfNeeded(action) {
     // Test Do we have to call API
 
-    const apiCall = getApiCallFor(action.entityType, ( action.accessType === 'list' ? action.listType : action.accessedId ));
+    const apiCall = getApiCallFor(action.entityType, (
+        action.accessType === 'list' ? action.listType : action.accessedId
+    ));
 
     // Call API
     const response = yield call(apiCall);

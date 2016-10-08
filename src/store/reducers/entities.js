@@ -1,6 +1,6 @@
 import actionsType from '../actions_types';
-import { pipe, map, compose, indexBy, prop, when, not, is, groupBy, of, merge, dissoc, assoc, toPairs, always, reduce } from 'ramda';
-
+import { pipe, map, compose, indexBy, prop, when, not, is, groupBy, of, merge, dissoc, assoc, toPairs,
+    always, reduce, replace, toUpper, fromPairs, over, lensProp } from 'ramda';
 const initialState = {};
 
 // Ramda Shortcuts
@@ -23,11 +23,27 @@ const mergeAttributes = entityWithAttributes => compose(
     getAttributesPair,
 )(entityWithAttributes);
 
+const overAttributes = over(lensProp('attributes'));
+
+const toCamelCase = replace(
+    /-[a-z]/g,
+    compose(replace('-', ''), toUpper)
+);
+
+const toCamelCaseAttributes = overAttributes(pipe(
+    toPairs,
+    map(
+        ([k, v]) => ([toCamelCase(k), v])
+    ),
+    fromPairs,
+));
+
 const indexAndGroup = pipe(
     when(isNotArray, of),
     map(compose(
         dissoc('attributes'),
         mergeAttributes,
+        toCamelCaseAttributes,
     )),
     groupBy(getType),
     map(indexBy(getId))

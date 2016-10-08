@@ -1,11 +1,7 @@
 import { values, pipe, compose, map, dissoc } from 'ramda';
 import { createSelector } from 'reselect';
 import { whenNotNil } from 'helpers/ramda-ext';
-import { enrichWithRelationships } from './entities';
-import { getPublicFigures } from './publicFigures';
-import { getPositions } from './positions';
-
-export const getSubjects = state => state.entities.subjects;
+import { enrichWithRelationships, getPublicFigures, getPositions, getSubjects } from './entities';
 
 export const getHomeSubjects = state => values(getSubjects(state));
 

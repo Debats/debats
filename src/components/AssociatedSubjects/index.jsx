@@ -10,7 +10,7 @@ const getText = nb => {
 };
 
 const AssociatedSubjects = ({ publicFigure }) => (
-    <h6 style={{ color: "#f21e40 !important" }}>{getText(publicFigure.subjects.length)}</h6>
+    <h6 style={{ color: "#f21e40 !important" }}>{getText(publicFigure.nbActiveSubjects)}</h6>
 );
 
 AssociatedSubjects.propTypes = {
