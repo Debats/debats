@@ -2,7 +2,7 @@ import React, { PropTypes, Component } from 'react';
 import CSSModules from 'react-css-modules';
 import Statement from './Statement';
 import LastStatementsStyle from './LastStatements.css';
-import connector from './connector';
+import connect from './connector';
 
 class LastStatements extends Component {
     static propTypes = {
@@ -23,7 +23,7 @@ class LastStatements extends Component {
 
         return (
             <div styleName="wrapper">
-                <h2>Les dernières prises de positions</h2>
+                <h2 styleName="title">Les dernières prises de positions</h2>
                 <ul styleName="wrapper">
                     { this.renderStatements() };
                 </ul>
@@ -32,4 +32,4 @@ class LastStatements extends Component {
     }
 }
 
-export default CSSModules(connector(LastStatements), LastStatementsStyle);
+export default connect(CSSModules(LastStatements, LastStatementsStyle));
