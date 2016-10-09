@@ -35,6 +35,7 @@
     "react-addons-shallow-compare": "^15.3.2",
     "react-addons-transition-group": "^15.3.2",
     "react-bootstrap": "^0.30.3",
+    "react-bootstrap-typeahead": "^0.9.4",
     "react-click-outside": "^2.1.0",
     "react-css-modules": "^3.7.6",
     "react-dom": "^15.3.2",
