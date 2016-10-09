@@ -1,4 +1,4 @@
-#public_figure div {
+:global #public_figure div {
 	height: 150px;
 	width: 100px;
 	-webkit-border-radius: 50%;
@@ -7,7 +7,7 @@
   	background-repeat:no-repeat;
 }
 
-h1 {
+:global h1 {
   font-family: 'Gotham-Bold', sans-serif;
   font-size: 1.5em !important   ;
   letter-spacing: 1px;
@@ -20,7 +20,7 @@ h1 {
   }
 }
 
-h2 {
+:global h2 {
   font-family: 'Gotham-Book', sans-serif;
   font-size: 1.2em;
   letter-spacing: 1px;
@@ -35,17 +35,17 @@ h2 {
   }
 }
 
-p {
+:global p {
   font-family: 'Gotham-Book', sans-serif;
   font-size: 1.1em;
   line-height: 1.7em;
 }
-.btn {
+:global .btn {
     border-radius: 0px;
     padding: 4px 8px;
     font-size: 12px;
 }
-.btn-primary {
+:global .btn-primary {
     color: #616161;
     background-color: #fff;
     border-color: #ededea;

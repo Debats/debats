@@ -1,6 +1,5 @@
 /* typography */
 
-@import "_variables.css";
 @font-face {
   font-family: 'Gotham-Book';
   src:url('./fonts/Gotham-Book.woff') format('woff');

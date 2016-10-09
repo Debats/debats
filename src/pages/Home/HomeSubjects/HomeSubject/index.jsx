@@ -1,11 +1,10 @@
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
-import { translate } from 'react-polyglot';
 import { map, compose, take, prop } from 'ramda';
 import paths from 'constants/paths';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 
-const PublicFigureAvatarMapper = pf => <PublicFigureAvatar publicFigure={pf} />;
+const PublicFigureAvatarMapper = pf => <PublicFigureAvatar key={pf.id} publicFigure={pf} />;
 const renderAssociatedPublicFigures = compose(
     map(PublicFigureAvatarMapper),
     take(5),
@@ -22,7 +21,7 @@ const HomeSubject = ({ subject }) => (
                     </Link>
                 </h2>
                 <h6 className="count">
-                    {translate('public_figure', subject.remarquablePublicFigures.length)}
+                    {`${subject.remarquablePublicFigures.length} personnalités`}
                 </h6>
             </td>
             <td style={{ width:'50%', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -39,9 +38,8 @@ const HomeSubject = ({ subject }) => (
 HomeSubject.propTypes = {
     subject: PropTypes.shape({
         title: PropTypes.string.isRequired,
-        associatedPublicFigures: PropTypes.arrayOf(PropTypes.object).isRequired,
+        remarquablePublicFigures: PropTypes.arrayOf(PropTypes.object).isRequired,
     }).isRequired,
-    t: PropTypes.func.isRequired,
 };
 
-export default translate()(HomeSubject);
+export default (HomeSubject);

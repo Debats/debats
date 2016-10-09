@@ -1,10 +1,10 @@
 /* sidebar */
 
-aside {
-  section.user_info {
+:global aside {
+:global section.user_info {
     margin-top: 20px;
   }
-  section {
+:global section {
     padding: 10px 0;
     margin-top: 20px;
     &:first-child {
@@ -26,11 +26,11 @@ aside {
   }
 }
 
-.gravatar {
+:global .gravatar {
   float: left;
   margin-right: 10px;
 }
 
-.gravatar_edit {
+:global .gravatar_edit {
   margin-top: 15px;
 }

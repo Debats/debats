@@ -1,4 +1,4 @@
-.alert.alert-danger {
+:global .alert.alert-danger {
     background-color: #fde4de;
     border-color: #ccc;
     color: #f21e40;

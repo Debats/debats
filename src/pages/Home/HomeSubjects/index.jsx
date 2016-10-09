@@ -19,7 +19,7 @@ class HomeSubjects extends Component {
         return (
             <div> {/* TODO Bootstrap */}
                 {this.props.subjects.map(
-                    s => <HomeSubject subject={s} />
+                    s => <HomeSubject key={s.id} subject={s} />
                 )}
             </div>
         );
