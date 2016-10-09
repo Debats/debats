@@ -9,7 +9,6 @@ import ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 import { useRouterHistory, match } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
-import { setAccessToken, setEndpointHost, setEndpointPath } from 'redux-json-api';
 import createHashHistory from 'history/lib/createHashHistory';
 import createMemoryHistory from 'history/lib/createMemoryHistory';
 import Config from 'Config';
@@ -28,10 +27,6 @@ const createHistory = isClientSide() ? createHashHistory : createMemoryHistory;
 // const browserHistory = useScroll(useRouterHistory(createHistory))();
 const browserHistory = useRouterHistory(createHistory)();
 const history = syncHistoryWithStore(browserHistory, store);
-
-// Setup API
-store.dispatch(setEndpointHost(Config.api.debats.endpointHost));
-store.dispatch(setEndpointPath('/'));
 
 // Init app function
 const loadApplication = (DOMElementId) => {
