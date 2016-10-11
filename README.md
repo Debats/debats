@@ -34,6 +34,6 @@ rails db:seed
 
 #### Launch server
 ```shell
-rails server # /usr/local/bin/rails server (macOS)
+rails server
 ```
 > server launched on port 3000
