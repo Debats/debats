@@ -1,26 +1,29 @@
 # HOW TO INSTALL
 
-#### Dependencies
+### Dependencies
 
 ###### Windows
-- Install [Ruby](https://www.ruby-lang.org/fr/downloads/) (>= 2.0.0)
-- Install et init [Ruby Devkit](http://rubyinstaller.org/add-ons/devkit/) (Windows)
+- Install [Ruby](https://www.ruby-lang.org/fr/downloads/) (2.2.4)
+- Install et init [Ruby Devkit](http://rubyinstaller.org/add-ons/devkit/)
 
 ###### macOs
 ```shell
+# from terminal
 brew update
-brew install rbenv ruby-build
+brew install rbenv ruby-build postgresql # for libpq-fe
+xcode-select --install # click, click, click
 echo 'eval $(rbenv init -)' >> $HOME/.zshrc # assuming you're on zsh
 source ~/.zshrc
-brew install postgresql # for libpq-fe
-xcode-select --install # click, click, click
 ```
 
-#### Project Init
+### Project Init
 ```shell
+# from terminal
 git clone https://github.com/Tiqa/debats-api.git
-git checkout -b feat/api_mode origin/feat/api_mode
 cd debats-api
+git checkout -b feat/api_mode origin/feat/api_mode
+rbenv install 2.2.4
+rbenv local 2.2.4 # or rbenv global 2.2.4
 gem install bundler
 gem install pg
 #gem install nokogiri
@@ -32,7 +35,7 @@ rails db:migrate
 rails db:seed
 ```
 
-#### Launch server
+### Launch server
 ```shell
 rails server
 ```
