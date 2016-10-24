@@ -16,7 +16,9 @@
     "lint-fix": "eslint src --fix",
     "test": "karma start",
     "e2e-test": "./node_modules/.bin/nightwatch",
-    "setup-test": "node selenium-download.js"
+    "setup-test": "node selenium-download.js",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "dependencies": {
     "axios": "^0.14.0",
@@ -119,6 +121,7 @@
     "stylelint": "^6.6.0",
     "webpack": "1.12.10",
     "webpack-dev-server": "^1.14.1",
-    "webpack-postcss-tools": "^1.1.1"
+    "webpack-postcss-tools": "^1.1.1",
+    "@kadira/storybook": "^2.5.2"
   }
 }
