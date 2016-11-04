@@ -3,6 +3,11 @@ const APP_PATH = CONSTANTS.APP_PATH;
 
 const loaders = [
     {
+        test: /\.jsx?$/,
+        loader: 'babel-loader',
+        exclude: /node_modules/,
+    },
+    {
         test: /\.css$/,
         loader: 'style-loader'
         + '!css-loader'

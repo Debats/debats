@@ -38,11 +38,6 @@ module.exports = {
     plugins,
     module: {
         loaders: [
-            {
-                test: /\.jsx?$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
-            },
             ...loaders,
         ],
     },
