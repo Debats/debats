@@ -14,17 +14,17 @@ const renderAssociatedPublicFigures = compose(
 const HomeSubject = ({ subject }) => (
     <li>
         <tr>
-            <td style={{ width:'50%', border: 'none', textTransform: 'uppercase' }}>
+            <td style={{ width: '50%', border: 'none', textTransform: 'uppercase' }}>
                 <h2 className="subjects-title">
                     <Link to={paths.getFor.subject(subject)}>
                         {subject.title}
                     </Link>
                 </h2>
                 <h6 className="count">
-                    {`${subject.remarquablePublicFigures.length} personnalités`}
+                    {`${subject.remarquablePublicFigures.length} personnalité(s)`}
                 </h6>
             </td>
-            <td style={{ width:'50%', textAlign: 'center', verticalAlign: 'middle' }}>
+            <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'middle' }}>
                 {renderAssociatedPublicFigures(subject)}
             </td>
             <td className="seemore">
