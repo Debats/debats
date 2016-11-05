@@ -1,4 +1,4 @@
-div#subject-list {
+:global div#subject-list {
   float:left;
   margin-right:10px;
 }

@@ -2,7 +2,6 @@
 @import './_constants.css';
 @import './typo.css';
 @import './_mixins.css';
-@import './_variables.css';
 @import './alerts.css';
 @import './buttons.css';
 @import './debats.css';
@@ -16,3 +15,4 @@
 @import './static_pages.css';
 @import './subjects.css';
 @import './users.css';
+@import './typeahead.css';

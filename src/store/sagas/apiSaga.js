@@ -2,7 +2,7 @@ import { identity } from 'ramda';
 import actionsTypes from '../actions_types';
 import { takeEvery } from 'redux-saga';
 import { call, put } from 'redux-saga/effects';
-import { getSubjects, getStatements } from 'api/debats';
+import { getSubjects, getStatements, getPositions } from 'api/debats';
 
 const getApiCallFor = (entityType, entityRequest) => {
     switch (entityType) {
@@ -22,7 +22,7 @@ const getApiCallFor = (entityType, entityRequest) => {
     }
 };
 
-export function* fetchEntityIfNeeded(action) {
+function* fetchEntityIfNeeded(action) {
     // Test Do we have to call API
 
     const apiCall = getApiCallFor(action.entityType, (
@@ -40,4 +40,20 @@ export function* fetchEntityIfNeeded(action) {
 
 export function* watchEntityAccess() {
     yield* takeEvery(actionsTypes.ENTITY_ACCESS, fetchEntityIfNeeded);
+}
+
+function* fetchPositionsOfSubject(action) {
+    if (!!action.id) {
+        // Call API
+        const response = yield call(getPositions, action.id);
+
+        // Error actions
+
+        // Success actions
+        yield put({ type: actionsTypes.ENTITY_READ, data: response.data });
+    }
+}
+
+export function* watchSubjectSelection() {
+    yield* takeEvery(actionsTypes.ADD_STATEMENT_SUBJECT_SELECTION, fetchPositionsOfSubject);
 }

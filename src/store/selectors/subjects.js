@@ -1,7 +1,9 @@
-import { values, pipe, compose, map, dissoc } from 'ramda';
+import { values, pipe, compose, map, dissoc, propEq } from 'ramda';
 import { createSelector } from 'reselect';
 import { whenNotNil } from 'helpers/ramda-ext';
 import { enrichWithRelationships, getPublicFigures, getPositions, getSubjects } from './entities';
+
+import { withConsole } from 'helpers/debug';
 
 export const getHomeSubjects = state => values(getSubjects(state));
 
@@ -20,8 +22,20 @@ export const getHomeSubjectsWithRelations = createSelector(
             map(pipe(
                 injectRemarquablePublicFigures(allPublicFigures),
                 injectPositions(allPositions),
-                dissoc('relationthips'),
+                dissoc('relationships'),
             ))
         )
     )(homeSubjects)
+);
+
+export const getSubject = (state, props) => createSelector(
+    getSubjects,
+    getPositions,
+    getPublicFigures,
+    (allSubjects, allPositions, allPublicFigures) => pipe(
+        find(propEq('id', props.subjectId)),
+        injectRemarquablePublicFigures(allPublicFigures),
+        injectPositions(allPositions),
+        dissoc('relationthips'),
+    )(allSubjects)
 );

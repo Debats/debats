@@ -1,7 +1,4 @@
-
-$gray-medium-light: #eaeaea;
-
-.debug_dump {
+:global .debug_dump {
   clear: both;
   float: left;
   width: 100%;

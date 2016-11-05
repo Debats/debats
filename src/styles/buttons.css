@@ -1,4 +1,4 @@
-.btn.btn-primary {
+:global .btn.btn-primary {
     background-color: #fff; /* White */
     font-family: 'Gotham-Bold', sans-serif;
     border: 1px solid #ccc;
@@ -13,12 +13,12 @@
     -webkit-transition-duration: 0.4s; /* Safari */
     transition-duration: 0.4s;
 }
-.btn.btn-primary:hover {
+:global .btn.btn-primary:hover {
     background-color: #f21e40; /* Red débats */
     border: 1px solid #f21e40;
     color: white;
 }
-.btn.btn-danger {
+:global .btn.btn-danger {
     background-color: #fff; /* White */
     font-family: 'Gotham-Bold', sans-serif;
     border: 1px solid #ccc;
@@ -33,7 +33,7 @@
     -webkit-transition-duration: 0.4s; /* Safari */
     transition-duration: 0.4s;
 }
-.btn.btn-danger:hover {
+:global .btn.btn-danger:hover {
     background-color: #000; /* Black */
     border: 1px solid #000;
     color: white;

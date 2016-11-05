@@ -1,0 +1,6 @@
+@import 'react-bootstrap-typeahead/css/Token.css';
+@import 'react-bootstrap-typeahead/css/Typeahead.css';
+
+:global(.bootstrap-typeahead-input-hint.form-control) {
+    padding-top: 15px;
+}

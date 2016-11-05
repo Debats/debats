@@ -1,14 +1,20 @@
-import { curry, assoc, compose, when, take, path, is, map, isNil, always, values } from 'ramda';
+import { curry, assoc, compose, when, take, path, is, map, isNil, always, values, propEq, ifElse, pipe, find } from 'ramda';
 export const getSubjects = state => values(state.entities.subjects);
 export const getPositions = state => values(state.entities.positions);
 export const getStatements = state => values(state.entities.statements);
 export const getPublicFigures = state => values(state.entities['public-figures']);
 
+import { withConsole, warn } from 'helpers/debug';
 
 const getEntityByRef = curry(
-    (sourceEntities, entityReference) => compose(
-        when(isNil, always(entityReference)) // Entity not fetched yet, return reference object
-    )(sourceEntities[entityReference.id])
+    (sourceEntities, entityReference) => ifElse(
+        isNil,
+        always(entityReference),                  // No source entities yet, return reference object
+        pipe(
+            find(propEq('id', entityReference.id)),
+            when(isNil, always(entityReference)), // Entity not fetched yet, return reference object
+        ),
+    )(sourceEntities)
 );
 
 
@@ -22,7 +28,7 @@ export const enrichWithRelationship = curry(
         compose(
             getEntityByRef(fromCollection),
             when(is(Array), take(1)),
-            path(['relationships', relationshipName, 'data'])
+            path(['relationships', relationshipName, 'data']),
         )(entity),
         entity
     )

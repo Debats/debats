@@ -5,6 +5,7 @@ import paths from 'constants/paths';
 import logoImg from './images/logo_header.png';
 import HeaderStyle from './HeaderStyle.css';
 import ConnectedUserMenu from './';
+import AddStatementButton from 'components/AddStatementButton';
 
 const renderUserMenu = (isConnected) => (
     isConnected
@@ -27,6 +28,7 @@ const Header = () => (
             <div className="col-md-8">
                 <nav>
                     <ul className="nav navbar-nav navbar-right">
+                        <li><AddStatementButton /></li>
                         <li><Link to={paths.subjects}>Sujets</Link></li>
                         <li><Link to={paths.publicFigures}>Personnalités</Link></li>
                         <li><Link to={paths.manual}>Mode d'emploi</Link></li>
