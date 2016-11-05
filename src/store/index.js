@@ -4,7 +4,7 @@ import { routerReducer } from 'react-router-redux';
 import { map } from 'ramda';
 import { isClientSide } from 'helpers/env';
 import rootSaga from './sagas';
-import entities from './reducers/entities';
+import { entitiesReducer, addStatementReducer } from './reducers';
 
 // INITIAL STATE
 const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
@@ -12,7 +12,8 @@ const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
 // REDUCERS
 const reducer = combineReducers({
     routing: routerReducer,
-    entities
+    entities: entitiesReducer,
+    addStatement: addStatementReducer,
 });
 
 // MIDDLEWARE

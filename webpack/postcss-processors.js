@@ -28,11 +28,7 @@ module.exports = webpack => [
     postcssMixins({
         mixinsDir: path.join(CONSTANTS.APP_PATH, 'style', 'mixins'),
     }),
-    atImport({
-        addDependencyTo: webpack,
-        root: CONSTANTS.APP_PATH,
-        path: ['style', 'web_modules'],
-    }),
+    atImport(),
     postcssShortPosition(),
     postcssAssets(),
     postcssColorFunction(),

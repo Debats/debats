@@ -1,13 +1,13 @@
 /* footer */
 
-footer {
+:global footer {
   clear:left;
   margin-top: 55px;
   padding-top: 5px;
   border-top: 1px solid #eaeaea;
   color: #777;
 
-  a {
+:global a {
     color: #555;
 	font-family: 'Gotham-Book', sans-serif;
     &:hover {
@@ -16,14 +16,14 @@ footer {
     }
   }
 
-  small {
+:global small {
     float: left;
   }
 
-  ul {
+:global ul {
     float: right;
     list-style: none;
-    li {
+:global li {
       float: left;
       margin-left: 15px;
     }

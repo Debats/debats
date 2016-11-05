@@ -15,7 +15,7 @@ class LastStatements extends Component {
     }
 
     renderStatements = () => this.props.statements.map(
-        s => <Statement statement={s} />
+        (s, i) => <Statement key={i} statement={s} />
     );
 
     render() {
