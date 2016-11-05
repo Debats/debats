@@ -1,9 +1,9 @@
 import React from 'react';
-import CSSModules from 'react-css-modules';
+import cssModules from 'react-css-modules';
 import HomeSubjects from './HomeSubjects';
 import LastStatements from 'components/LastStatements';
 import bgSrc from './images/intro-bg.jpg';
-import HomeStyle from './HomeStyle.css';
+import styles from './Home.css';
 
 const Home = () => (
     <div className="container-fluid" styleName="container">
@@ -41,4 +41,4 @@ const Home = () => (
     </div>
 );
 
-export default CSSModules(Home, HomeStyle);
+export default cssModules(Home, styles);
