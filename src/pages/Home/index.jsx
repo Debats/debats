@@ -7,21 +7,14 @@ import styles from './Home.css';
 
 const Home = () => (
     <div className="container-fluid" styleName="container">
-        <div className="row" styleName="row" style={{ backgroundImage: `url(${bgSrc})` }}>
-            <div style={{
-                fontColor:'white !important',
-                textAlign: 'center',
-                verticalAlign: 'middle'
-            }}
-            >
-                <br /><br /><br /><br /><br /><br />
-                    <h5>Bienvenue sur Débats.co</h5><br />
-                    <div styleName="introduction">
-                        Débats est un projet francophone et participatif, ayant pour objectif <br />
-                        d’offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.
-                    </div>
-                    <br /><br /><br /><br /><br /><br />
+        <div className="row" styleName="background-title" style={{ backgroundImage: `url(${bgSrc})` }}>
+          <div styleName="title-mask">
+            <h5 >Bienvenue sur Débats.co</h5>
+            <div styleName="introduction">
+                <span>Débats est un projet francophone et participatif, ayant pour objectif </span>
+                <span>d’offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.</span>
             </div>
+          </div>
         </div>
         <div className="col-md-1"></div>
         <div className="subjects-index col-md-7 subjects-home">
