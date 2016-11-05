@@ -29,11 +29,7 @@ module.exports = {
         filename: `${APP_NAME}.[name].[hash].js`,
     },
     plugins,
-    module: {
-        loaders: [
-            ...loaders,
-        ],
-    },
+    module: { loaders },
     externals: {
         TweenLite: 'TweenLite',
     },
