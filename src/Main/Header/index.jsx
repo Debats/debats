@@ -1,44 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router';
-import CSSModules from 'react-css-modules';
+import { Navbar, Nav, NavItem } from 'react-bootstrap';
+import cssModules from 'react-css-modules';
 import paths from 'constants/paths';
 import logoImg from './images/logo_header.png';
-import HeaderStyle from './HeaderStyle.css';
+import styles from './Header.css';
 import ConnectedUserMenu from './';
-import AddStatementButton from 'components/AddStatementButton';
 
 const renderUserMenu = (isConnected) => (
     isConnected
     ? <ConnectedUserMenu />
     : [
-        <li key="login"><Link to="#">Connexion</Link></li>,  /* modal ! */
-        <li key="signup"><Link to="#">Inscription</Link></li>, /* modal ! */
+        <li><Link to="#">Connexion</Link></li>,  /* modal ! */
+        <li><Link to="#">Inscription</Link></li>, /* modal ! */
     ]
 );
 
 const Header = () => (
-    <header className="navbar navbar-fixed-top" styleName="navbar">
-        <div className="container-fluid">
-            <div className="col-md-1"></div>
-            <div className="col-md-2">
+    <Navbar bsStyle="custom" fixedTop collapseOnSelect>
+        <Navbar.Header>
+            <Navbar.Brand>
                 <Link to={paths.root} styleName="logo">
                     <img src={logoImg} />
                 </Link>
-            </div>
-            <div className="col-md-8">
-                <nav>
-                    <ul className="nav navbar-nav navbar-right">
-                        <li><AddStatementButton /></li>
-                        <li><Link to={paths.subjects}>Sujets</Link></li>
-                        <li><Link to={paths.publicFigures}>Personnalités</Link></li>
-                        <li><Link to={paths.manual}>Mode d'emploi</Link></li>
-                        {renderUserMenu()}
-                    </ul>
-                </nav>
-            </div>
-            <div className="col-md-1"></div>
-        </div>
-    </header>
+            </Navbar.Brand>
+            <Navbar.Toggle />
+        </Navbar.Header>
+        <Navbar.Collapse>
+            <Nav pullRight>
+                <NavItem href={paths.subjects}>Sujets</NavItem>
+                <NavItem href={paths.publicFigures}>Personnalités</NavItem>
+                <NavItem href={paths.manual}>Mode d'emploi</NavItem>
+                {renderUserMenu()}
+            </Nav>
+        </Navbar.Collapse>
+    </Navbar>
 );
 
-export default CSSModules(Header, HeaderStyle);
+export default cssModules(Header, styles);
