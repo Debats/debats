@@ -16,9 +16,9 @@ const PublicFigureInList = ({ publicFigure }) => (
                     <td>
                         <PublicFigureAvatar publicFigure={publicFigure} />
                     </td>
-                <td style= {{ width: "33%" }}>
+                <td style= {{ width: '33%' }}>
 
-                    <h2 className="figure-title" style={{ color: "#333333 !important" }}>
+                    <h2 className="figure-title" style={{ color: '#333333 !important' }}>
                         <Link to={paths.getFor.subject(publicFigure)}>
                             {publicFigure.name}
                         </Link>
@@ -27,7 +27,9 @@ const PublicFigureInList = ({ publicFigure }) => (
             </td>
 
             <td styleName="presentationWrapper">
-                <p className="figure-presentation-text" styleName="presentation"> {publicFigure.presentation}</p>
+                <p className="figure-presentation-text" styleName="presentation">
+                    {publicFigure.presentation}
+                </p>
             </td>
         </tr>
         </li>
@@ -37,7 +39,7 @@ const PublicFigureInList = ({ publicFigure }) => (
 );
 
 PublicFigureInList.propTypes = {
-    publicFigure: PropTypes.object.isRequired
+    publicFigure: PropTypes.object.isRequired,
 };
 
 export default cssModules(PublicFigureInList, PublicFigureStyle);
