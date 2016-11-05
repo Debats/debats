@@ -1,4 +1,4 @@
-const config = require('./webpack.base.config');
+const config = require('./webpack.bundle.config');
 const webpack = require('webpack');
 
 const path = require('path');
