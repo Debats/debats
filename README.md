@@ -12,7 +12,7 @@
 brew update
 brew install rbenv ruby-build postgresql # for libpq-fe
 xcode-select --install # click, click, click
-echo 'eval $(rbenv init -)' >> $HOME/.zshrc # assuming you're on zsh
+echo 'eval "$(rbenv init -)"' >> $HOME/.zshrc # assuming you're on zsh
 source ~/.zshrc
 ```
 
@@ -29,6 +29,8 @@ gem install pg
 #gem install nokogiri
 bundler config build.nokogiri --use-system-libraries # macOS issue
 bundler install
+sudo gem install rails # on macOs
+rbenv rehash
 rails db:drop
 rails db:create
 rails db:migrate
