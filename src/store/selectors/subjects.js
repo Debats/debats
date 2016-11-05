@@ -22,7 +22,7 @@ export const getHomeSubjectsWithRelations = createSelector(
             map(pipe(
                 injectRemarquablePublicFigures(allPublicFigures),
                 injectPositions(allPositions),
-                dissoc('relationthips'),
+                dissoc('relationships'),
             ))
         )
     )(homeSubjects)
