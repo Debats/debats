@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const postcssProcessors = require('./postcss-processors');
@@ -15,7 +14,6 @@ const SRC_FOLDER = CONSTANTS.SRC_FOLDER;
 const plugins = [];
 
 plugins.push(new webpack.NoErrorsPlugin()); // No assets emitted with errors
-plugins.push(new ExtractTextPlugin('[name].[contenthash].css', { allChunks: false })); // Extract CSS to external style.css file
 plugins.push(new HtmlWebpackPlugin({
     template: `${SRC_FOLDER}/index.html`,
     inject: true,
