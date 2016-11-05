@@ -1,7 +1,7 @@
 import React from 'react';
 // eslint-disable-next-line no-unused-vars
 import { storiesOf, action, linkTo } from '@kadira/storybook';
-import PublicFigureAvatar from './index.jsx';
+import PublicFigureAvatar from './';
 
 storiesOf('PublicFigureAvatar', module)
     .add('pony avatar', () => (
