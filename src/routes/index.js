@@ -22,7 +22,7 @@ export default (
             }}
         />
         <Route
-            path="a-propos"
+            path="about"
             name="about"
             getComponent={(nextState, done) => {
                 require.ensure([], require => {
@@ -31,7 +31,7 @@ export default (
             }}
         />
         <Route
-            path="mode-d-emploi"
+            path="guide"
             name="guide"
             getComponent={(nextState, done) => {
                 require.ensure([], require => {
