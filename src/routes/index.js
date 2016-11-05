@@ -12,6 +12,33 @@ export default (
                 }, 'home');
             }}
         />
+        <Route
+            path="contact"
+            name="contact"
+            getComponent={(nextState, done) => {
+                require.ensure([], require => {
+                    done(null, require('pages/Contact').default);
+                }, 'contact');
+            }}
+        />
+        <Route
+            path="about"
+            name="about"
+            getComponent={(nextState, done) => {
+                require.ensure([], require => {
+                    done(null, require('pages/About').default);
+                }, 'about');
+            }}
+        />
+        <Route
+            path="guide"
+            name="guide"
+            getComponent={(nextState, done) => {
+                require.ensure([], require => {
+                    done(null, require('pages/Guide').default);
+                }, 'guide');
+            }}
+        />
         <Route path="s" name="subjects">
             <IndexRoute
                 name="subjects.index"
