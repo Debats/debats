@@ -1,20 +1,36 @@
 .container {
-    width:100vw;
-    position:relative;
-    margin-left:-50vw;
-    left:50%;
+    width: 100vw;
+    position: relative;
+    margin-left: -50vw;
+    left: 50%;
 }
 
-.row {
-    background-size:cover;
-    background-position: center center;
+.background-title {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    height: 400px;
+    text-align: center;
+
+    & .title-mask {
+        font-color: white;
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        text-align: center;
+        transform: translateY(-50%);
+        padding: 0 1rem;
+    }
 }
 
 .introduction {
-    font-family: 'Gotham-Book', sans-serif;
-    font-size: 1.1em;
-    line-height: 1.7em;
-    text-align: center;
-    color: #FFFFFF;
-    text-shadow: 0px 0px 30px rgba(0, 115, 162, 1);
+    & > span {
+        display: block;
+        font-family: 'Gotham-Book', sans-serif;
+        font-size: 1.1em;
+        line-height: 1.7em;
+        text-align: center;
+        color: #FFFFFF;
+        text-shadow: 0px 0px 30px #0073a2;
+    }
 }
