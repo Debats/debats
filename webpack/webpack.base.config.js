@@ -1,13 +1,12 @@
-const path = require('path');
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const postcssProcessors = require('./postcss-processors');
 const loaders = require('./loaders');
+const resolve = require('./resolve');
 
 const CONSTANTS = require('./constants');
-const APP_ROOT = CONSTANTS.APP_ROOT;
 const APP_PATH = CONSTANTS.APP_PATH;
 const APP_NAME = CONSTANTS.APP_NAME;
 const SRC_FOLDER = CONSTANTS.SRC_FOLDER;
@@ -24,13 +23,7 @@ plugins.push(new HtmlWebpackPlugin({
 }));
 
 module.exports = {
-    resolve: {
-        alias: {
-            react: path.resolve(APP_ROOT, 'node_modules/react'),
-        },
-        modulesDirectories: ['src', 'web_modules', 'node_modules'],
-        extensions: ['', '.js', '.jsx'],
-    },
+    resolve,
     entry: `${APP_PATH}/index.js`,
     output: {
         filename: `${APP_NAME}.[name].[hash].js`,
