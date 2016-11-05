@@ -55,6 +55,7 @@
     "url-loader": "^0.5.7"
   },
   "devDependencies": {
+    "@kadira/react-storybook-addon-info": "^3.3.0",
     "@kadira/storybook": "^2.5.2",
     "@kadira/storybook-addon-knobs": "^1.4.1",
     "babel-cli": "<6.3.0",
