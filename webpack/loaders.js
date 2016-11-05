@@ -14,7 +14,7 @@ const loaders = [
         + '?modules&localIdentName=[name]__[local]___[hash:base64:5]'
         + '&importLoaders=1'
         + '!postcss-loader',
-        exclude: /node_modules/,
+        exclude: /storybook-readme/,
     },
     {
         test: /\.(png|svg|gif|jpeg|jpg)$/,
@@ -39,6 +39,10 @@ const loaders = [
     {
         test: /\.json$/,
         loader: 'json',
+    },
+    {
+        test: /\.md$/,
+        loader: 'raw',
     },
 ];
 
