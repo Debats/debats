@@ -1,5 +1,5 @@
 const webpack = require('webpack');
-const config = require('./webpack.base.config');
+const config = require('./webpack.bundle.config');
 
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
