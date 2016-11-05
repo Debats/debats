@@ -43,7 +43,7 @@
     "__DEVELOPMENT__": false
   },
   "rules": {
-    "max-len": ["error", 120, { "ignoreComments": true }],
+    "max-len": [0],
     "new-cap": ["warn", {"capIsNewExceptions": [
         "Immutable",
         "Map",
