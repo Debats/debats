@@ -21,7 +21,7 @@ const HomeSubject = ({ subject }) => (
                     </Link>
                 </h2>
                 <h6 className="count">
-                    {`${subject.remarquablePublicFigures.length} personnalités`}
+                    {`${subject.remarquablePublicFigures.length} personnalité(s)`}
                 </h6>
             </td>
             <td style={{ width:'50%', textAlign: 'center', verticalAlign: 'middle' }}>
