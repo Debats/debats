@@ -8,13 +8,16 @@ const loaders = [
         exclude: /node_modules/,
     },
     {
-        test: /\.css$/,
+        test: /src.+\.css$/,
         loader: 'style-loader'
         + '!css-loader'
         + '?modules&localIdentName=[name]__[local]___[hash:base64:5]'
         + '&importLoaders=1'
         + '!postcss-loader',
-        exclude: /storybook-readme/,
+    },
+    {
+        test: /node_modules.*\.css$/,
+        loader: 'style!css',
     },
     {
         test: /\.(png|svg|gif|jpeg|jpg)$/,
