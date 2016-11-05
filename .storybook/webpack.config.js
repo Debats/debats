@@ -1,15 +1,3 @@
-const loaders = require('../webpack/loaders.js');
-const postcssProcessors = require('../webpack/postcss-processors');
+const webpack = require('../webpack/webpack.base.config.js');
 
-module.exports = {
-    module: {
-        loaders,
-    },
-    externals: {
-        TweenLite: 'TweenLite',
-    },
-    node: {
-        fs: 'empty',
-    },
-    postcss: wp => postcssProcessors(wp),
-};
+module.exports = webpack;
