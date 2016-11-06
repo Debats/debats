@@ -2,8 +2,6 @@ import { createSelector } from 'reselect';
 import { prop, propEq, find, pipe, dissoc, when, not, isNil, compose } from 'ramda';
 import { getPublicFigures, getSubjects, getPositions, enrichWithRelationships } from './entities';
 
-import { withConsole } from 'helpers/debug';
-
 const isNotNil = compose(not, isNil);
 
 const getAddState = state => state.addStatement;

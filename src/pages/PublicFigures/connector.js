@@ -3,11 +3,11 @@ import { getPublicFiguresWithRelations } from 'store/selectors';
 import { onPublicFiguresListAccess } from 'store/actions/entities';
 
 const mapStateToProps = state => ({
-    publicFigures: getPublicFiguresWithRelations(state),
+  publicFigures: getPublicFiguresWithRelations(state),
 });
 
 const mapDispatchToProps = dispatch => ({
-    onAccess: () => dispatch(onPublicFiguresListAccess()),
+  onAccess: () => dispatch(onPublicFiguresListAccess()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps);

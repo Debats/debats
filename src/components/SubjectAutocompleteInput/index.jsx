@@ -8,34 +8,34 @@ import { withConsole } from 'helpers/debug';
 
 class SubjectAutocompleteInput extends Component {
 
-    static propTypes = {
-        selected: PropTypes.object, // selected public figure entity
-        onSelection: PropTypes.func.isRequired,
-    };
+  static propTypes = {
+    selected: PropTypes.object, // selected public figure entity
+    onSelection: PropTypes.func.isRequired,
+  };
 
-    state = {
-        suggestions: [],
-    }
+  state = {
+    suggestions: [],
+  }
 
-    loadSuggestions = (typed) => {
-        if (!!this.props.selected) this.props.onSelection(null);
-        if (!!typed.length)
-            getSubjectsAutocomplete(typed)
+  loadSuggestions = (typed) => {
+    if (!!this.props.selected) this.props.onSelection(null);
+    if (!!typed.length) {
+      getSubjectsAutocomplete(typed)
                 .then((response) => {
-                    this.setState({
-                        suggestions: flattenAttributes(response.data.data),
-                    });
-                });
-    };
+                  this.setState({
+                    suggestions: flattenAttributes(response.data.data),
+                  });
+                }); }
+  };
 
-    renderMenuItemChildren = (typeaheadProps, subject) => (
-        <div>
-            <p>{subject.title} </p>
-            <small>{take(100)(subject.presentation)}</small>
-        </div>
+  renderMenuItemChildren = (typeaheadProps, subject) => (
+    <div>
+      <p>{subject.title} </p>
+      <small>{take(100)(subject.presentation)}</small>
+    </div>
     );
 
-    onSelection = (subject) => this.props.onSelection(
+  onSelection = subject => this.props.onSelection(
         compose(
             ifElse(
                 compose(not, isNil),
@@ -46,23 +46,23 @@ class SubjectAutocompleteInput extends Component {
         )(subject)
     );
 
-    render() {
-        return (
-            <Typeahead
-                name="subject"
-                options={this.state.suggestions}
-                selected={of(this.props.selected)}
-                emptyLabel="Aucun sujet correspondante"
-                labelKey="title"
-                minLength={3}
-                allowNew
-                newSelectionPrefix="Ajouter "
-                onChange={this.onSelection}
-                onInputChange={this.loadSuggestions}
-                renderMenuItemChildren={this.renderMenuItemChildren}
-            />
-        );
-    }
+  render() {
+    return (
+      <Typeahead
+          name="subject"
+          options={this.state.suggestions}
+          selected={of(this.props.selected)}
+          emptyLabel="Aucun sujet correspondante"
+          labelKey="title"
+          minLength={3}
+          allowNew
+          newSelectionPrefix="Ajouter "
+          onChange={this.onSelection}
+          onInputChange={this.loadSuggestions}
+          renderMenuItemChildren={this.renderMenuItemChildren}
+      />
+    );
+  }
 
 }
 

@@ -2,7 +2,7 @@ import { values, pipe, map, compose, dissoc } from 'ramda';
 import { createSelector } from 'reselect';
 import { whenNotNil } from 'helpers/ramda-ext';
 import {
-    enrichWithRelationship, getPublicFigures, getPositions, getSubjects, getStatements
+    enrichWithRelationship, getPublicFigures, getPositions, getSubjects, getStatements,
 } from './entities';
 
 const injectPublicFigure = enrichWithRelationship('publicFigure', 'public-figure');

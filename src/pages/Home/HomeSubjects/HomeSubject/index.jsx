@@ -12,34 +12,34 @@ const renderAssociatedPublicFigures = compose(
 );
 
 const HomeSubject = ({ subject }) => (
-    <li>
-        <tr>
-            <td style={{ width: '50%', border: 'none', textTransform: 'uppercase' }}>
-                <h2 className="subjects-title">
-                    <Link to={paths.getFor.subject(subject)}>
-                        {subject.title}
-                    </Link>
-                </h2>
-                <h6 className="count">
-                    {`${subject.remarquablePublicFigures.length} personnalité(s)`}
-                </h6>
-            </td>
-            <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'middle' }}>
-                {renderAssociatedPublicFigures(subject)}
-            </td>
-            <td className="seemore">
-                <div>
-                    <Link to={paths.getFor.subject(subject)}>Voir plus de personnalités</Link>
-                </div>
-            </td>
-        </tr>
-    </li>
+  <li>
+    <tr>
+      <td style={{ width: '50%', border: 'none', textTransform: 'uppercase' }}>
+        <h2 className="subjects-title">
+          <Link to={paths.getFor.subject(subject)}>
+            {subject.title}
+          </Link>
+        </h2>
+        <h6 className="count">
+          {`${subject.remarquablePublicFigures.length} personnalité(s)`}
+        </h6>
+      </td>
+      <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'middle' }}>
+        {renderAssociatedPublicFigures(subject)}
+      </td>
+      <td className="seemore">
+        <div>
+          <Link to={paths.getFor.subject(subject)}>Voir plus de personnalités</Link>
+        </div>
+      </td>
+    </tr>
+  </li>
 );
 HomeSubject.propTypes = {
-    subject: PropTypes.shape({
-        title: PropTypes.string.isRequired,
-        remarquablePublicFigures: PropTypes.arrayOf(PropTypes.object).isRequired,
-    }).isRequired,
+  subject: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    remarquablePublicFigures: PropTypes.arrayOf(PropTypes.object).isRequired,
+  }).isRequired,
 };
 
 export default (HomeSubject);

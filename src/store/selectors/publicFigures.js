@@ -1,4 +1,4 @@
-import { values, pipe, compose, map, dissoc, prop } from 'ramda';
+import { values, pipe, compose, map, dissoc } from 'ramda';
 import { whenNotNil } from 'helpers/ramda-ext';
 import { createSelector } from 'reselect';
 import { enrichWithRelationships, getSubjects, getPublicFigures } from './entities';

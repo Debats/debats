@@ -1,9 +1,6 @@
 import 'react-hot-loader/patch'; // https://github.com/gaearon/redux-devtools/commit/64f58b7010a1b2a71ad16716eb37ac1031f93915
 import 'babel-polyfill';
 
-// First boot side effects
-import './boot.js';
-
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
@@ -11,12 +8,15 @@ import { useRouterHistory, match } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 import createHashHistory from 'history/lib/createHashHistory';
 import createMemoryHistory from 'history/lib/createMemoryHistory';
-import Config from 'Config';
 import { isClientSide } from 'helpers/env';
 // import useScroll from 'scroll-behavior/lib/useScrollToTop';
 
 // Styles
 import 'styles/_main.css';
+
+// First boot side effects
+import './boot.js';
+
 // Redux
 import { store } from './store';    // Redux store
 import Root from './root';          // App root (Router, Provider, Hot reload ...
@@ -30,31 +30,31 @@ const history = syncHistoryWithStore(browserHistory, store);
 
 // Init app function
 const loadApplication = (DOMElementId) => {
-    const DOMElement = document.getElementById(DOMElementId);
+  const DOMElement = document.getElementById(DOMElementId);
 
-    match({ history, routes, location }, () => {
-        ReactDOM.render(
-            <AppContainer>
-                <Root store={store} history={history} />
-            </AppContainer>,
+  match({ history, routes }, () => {
+    ReactDOM.render(
+      <AppContainer>
+        <Root store={store} history={history} />
+      </AppContainer>,
             DOMElement
         );
-    });
+  });
 
-    if (module.hot) {
-        module.hot.accept('./root/index.jsx', () => {
+  if (module.hot) {
+    module.hot.accept('./root/index.jsx', () => {
             // If you use Webpack 2 in ES modules mode, you can
             // use <App /> here rather than require() a <NextApp />.
-            const NextApp = require('./root/index').default;
+      const NextApp = require('./root/index').default;
 
-            ReactDOM.render(
-                <AppContainer>
-                    <NextApp store={store} history={history} />
-                </AppContainer>,
-                DOMElement
-            );
-        });
-    }
+      ReactDOM.render(
+        <AppContainer>
+          <NextApp store={store} history={history} />
+        </AppContainer>,
+        DOMElement
+      );
+    });
+  }
 };
 
 export { store, history };

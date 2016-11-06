@@ -16,11 +16,11 @@ stories.addWithInfo(
     'Description of the story',
     withReadme(README,
         () => (
-            <PublicFigureAvatar publicFigure={{ picture: { url: text('image url', 'http://tinyurl.com/jucz8b9') } }} />
+          <PublicFigureAvatar publicFigure={{ picture: { url: text('image url', 'http://tinyurl.com/jucz8b9') } }} />
         )
     )
 );
 
 stories.add('jake avatar', () => (
-    <PublicFigureAvatar publicFigure={{ picture: { url: 'http://tinyurl.com/jb286jq' } }} />
+  <PublicFigureAvatar publicFigure={{ picture: { url: 'http://tinyurl.com/jb286jq' } }} />
 ));

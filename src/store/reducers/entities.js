@@ -1,7 +1,8 @@
-import actionsType from '../actions_types';
 import { map, compose, prop, merge, assoc, not, isNil, pipe, when } from 'ramda';
-const initialState = {};
 import { indexAndGroup } from 'api/jsonApiParser';
+import actionsType from '../actions_types';
+
+const initialState = {};
 
 const isNotNil = compose(not, isNil);
 
@@ -28,8 +29,8 @@ const saveData = data => compose(
 )(data);
 
 export const entitiesReducer = (state = initialState, action) => {
-    switch (action.type) {
-        case actionsType.ENTITY_READ: return merge(state, saveData(action.data));
-        default: return state;
-    }
+  switch (action.type) {
+    case actionsType.ENTITY_READ: return merge(state, saveData(action.data));
+    default: return state;
+  }
 };

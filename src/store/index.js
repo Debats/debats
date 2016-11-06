@@ -11,22 +11,22 @@ const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
 
 // REDUCERS
 const reducer = combineReducers({
-    routing: routerReducer,
-    entities: entitiesReducer,
-    addStatement: addStatementReducer,
+  routing: routerReducer,
+  entities: entitiesReducer,
+  addStatement: addStatementReducer,
 });
 
 // MIDDLEWARE
 const sagaMiddleware = createSagaMiddleware();
 const middlewares = [sagaMiddleware];
 if (isClientSide() && process.env.NODE_ENV !== 'production') {
-    middlewares.push(require('redux-logger')({
-        stateTransformer: map(state => ((state && state.toJS) ? state.toJS() : state)),
-        timestamp: true,
-        duration: true,
-        collapsed: true,
-        predicate: (getState, action) => action.type !== 'APP_LOG',
-    }));
+  middlewares.push(require('redux-logger')({
+    stateTransformer: map(state => ((state && state.toJS) ? state.toJS() : state)),
+    timestamp: true,
+    duration: true,
+    collapsed: true,
+    predicate: (getState, action) => action.type !== 'APP_LOG',
+  }));
 }
 
 // STORE

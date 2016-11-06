@@ -1,10 +1,10 @@
 import { curry, assoc, compose, when, take, path, is, map, isNil, always, values, propEq, ifElse, pipe, find } from 'ramda';
+
 export const getSubjects = state => values(state.entities.subjects);
 export const getPositions = state => values(state.entities.positions);
 export const getStatements = state => values(state.entities.statements);
 export const getPublicFigures = state => values(state.entities['public-figures']);
 
-import { withConsole, warn } from 'helpers/debug';
 
 const getEntityByRef = curry(
     (sourceEntities, entityReference) => ifElse(
