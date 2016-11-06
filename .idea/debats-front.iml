@@ -10,14 +10,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="debats-front node_modules" level="project" />
     <orderEntry type="library" name="bootstrap-DefinitelyTyped" level="application" />
-    <orderEntry type="library" name="react-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="react-bootstrap-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="react-css-modules-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="react-relay-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="react" level="application" />
     <orderEntry type="library" name="react-dom" level="application" />
-    <orderEntry type="library" name="redux-DefinitelyTyped" level="application" />
   </component>
 </module>
