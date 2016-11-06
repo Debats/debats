@@ -1,10 +1,20 @@
 import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
 import createSagaMiddleware from 'redux-saga';
-import { routerReducer } from 'react-router-redux';
+import { routerReducer, routerMiddleware } from 'react-router-redux';
 import { map } from 'ramda';
 import { isClientSide } from 'helpers/env';
 import rootSaga from './sagas';
 import { entitiesReducer, addStatementReducer } from './reducers';
+
+import { useRouterHistory } from 'react-router';
+import { syncHistoryWithStore } from 'react-router-redux';
+import createHashHistory from 'history/lib/createHashHistory';
+import createMemoryHistory from 'history/lib/createMemoryHistory';
+
+// Build history
+const createHistory = isClientSide() ? createHashHistory : createMemoryHistory;
+// const browserHistory = useScroll(useRouterHistory(createHistory))();
+const browserHistory = useRouterHistory(createHistory)();
 
 // INITIAL STATE
 const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
@@ -18,7 +28,7 @@ const reducer = combineReducers({
 
 // MIDDLEWARE
 const sagaMiddleware = createSagaMiddleware();
-const middlewares = [sagaMiddleware];
+const middlewares = [routerMiddleware(browserHistory), sagaMiddleware];
 if (isClientSide() && process.env.NODE_ENV !== 'production') {
     middlewares.push(require('redux-logger')({
         stateTransformer: map(state => ((state && state.toJS) ? state.toJS() : state)),
@@ -38,7 +48,8 @@ const store = createStore(
         window.devToolsExtension ? window.devToolsExtension() : f => f,
     )
 );
+const history = syncHistoryWithStore(browserHistory, store);
 
 sagaMiddleware.run(rootSaga);
 
-export { store };
+export { store, history };
