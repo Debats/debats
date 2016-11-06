@@ -1,2 +1,2 @@
-import '../src/components/general/Identity/stories.js';
-import '../src/components/PublicFigureAvatar/stories.js';
+import '../src/components/Identity/stories';
+import '../src/components/PublicFigureAvatar/stories';
