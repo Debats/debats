@@ -158,18 +158,18 @@ class AddStatementModal extends Component {
                 onClick={this.nextStep}
                 bsStyle="primary"
               >
-                            Confirmer
-                        </Button>
-                    }
+                Confirmer
+              </Button>
+            }
             {step === steps.SUMMARY &&
               <Button
                 onClick={onValidate}
                 disabled={!isValidationReady}
                 bsStyle="success"
               >
-                            Valider
-                        </Button>
-                    }
+                Valider
+              </Button>
+            }
           </Modal.Footer>
 
         </Modal>
