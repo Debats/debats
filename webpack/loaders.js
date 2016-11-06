@@ -17,7 +17,9 @@ const loaders = [
     },
     {
         test: /node_modules.*\.css$/,
-        loader: 'style!css',
+        loader: 'style-loader'
+        + '!css-loader'
+        + '!postcss-loader',
     },
     {
         test: /\.(png|svg|gif|jpeg|jpg)$/,
