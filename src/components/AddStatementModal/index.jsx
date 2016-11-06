@@ -1,6 +1,8 @@
 import React, { PropTypes, Component } from 'react';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
-import { identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, is } from 'ramda';
+import {
+    identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, head
+} from 'ramda';
 import './AddStatementModal.css';
 import PublicFigureStep from './PublicFigureStep';
 import SubjectStep from './SubjectStep';
@@ -93,7 +95,7 @@ class AddStatementModal extends Component {
     onPosition = position => this.setState({ position });
     onDate = date => this.setState({ date });
     onEvidenceUrl = evidenceUrl => this.setState({ evidenceUrl });
-    onEvidenceFile = evidenceFile => this.setState({ evidenceFile });
+    onEvidenceFiles = evidenceFiles => this.setState({ evidenceFile: head(evidenceFiles) });
     onQuote = quote => this.setState({ quote });
     onNote = note => this.setState({ note });
     onAddTag = tag => this.setState({ tags: append(tag, this.state.tags) });
@@ -151,11 +153,11 @@ class AddStatementModal extends Component {
             this.setState({ step: this.firstIncompleteStep() });
         else if (this.state.step < steps.SUMMARY)
             this.setState({ step: this.state.step + 1 });
-    }
+    };
 
     previousStep = () => {
         this.setState({ step: this.state.step - 1 });
-    }
+    };
 
     canGoNext = () => {
         switch (this.state.step) {
@@ -193,7 +195,7 @@ class AddStatementModal extends Component {
                     evidenceUrl={this.state.evidenceUrl}
                     onUpdateEvidenceUrl={this.onEvidenceUrl}
                     evidenceFile={this.state.evidenceFile}
-                    onUpdateEvidenceFil={this.onEvidenceFile}
+                    onUpdateEvidenceFiles={this.onEvidenceFiles}
                 />
             );
             case steps.SUMMARY: return (

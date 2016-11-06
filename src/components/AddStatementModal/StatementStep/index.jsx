@@ -3,6 +3,7 @@ import { cond, always, not, isNil, T, compose } from 'ramda';
 import { FormGroup, ControlLabel, FormControl, Well, HelpBlock } from 'react-bootstrap';
 import DatePicker from '../../../../../../react-bootstrap-moment-date-picker/src/index'; // not working properly yet
 import { isValidEvidenceUrl } from 'validations/statements';
+import Dropzone from 'react-dropzone';
 
 const FieldGroup = ({ id, label, help, validationState, ...props }) => (
     <FormGroup controlId={id} validationState={validationState}>
@@ -22,7 +23,7 @@ const getEvidenceUrlValidationState = cond([
 
 const StatementStep = ({
     evidenceUrl, onUpdateEvidenceUrl,
-    evidenceFile, onUpdateEvidenceFile,
+    evidenceFile, onUpdateEvidenceFiles,
 }) => (
     <Well>
         <h4>Donnez-nous quelques détails : </h4>
@@ -38,8 +39,44 @@ const StatementStep = ({
             onChange={event => onUpdateEvidenceUrl(event.target.value)}
         />
 
-        <FieldGroup id="evidenceFile" label="... ou pièce jointe" type="file" help="Un PDF, une image, ..." />
-        <FieldGroup id="evidenteName" label="Nom de la source" type="text" help="20h de TF1" />
+        <Dropzone
+            accept="application/pdf,image/*,audio/*,video/*"
+            onDrop={onUpdateEvidenceFiles}
+            multiple={false}
+            maxSize={10000000}
+            style = {{ /* TODO : Inline style refacto (embedded ? module ? global ?) */
+                width: 500,
+                height: 70,
+                borderWidth: 2,
+                borderColor: '#666',
+                borderStyle: 'dashed',
+                borderRadius: 5,
+            }}
+            activeStyle = {{
+                borderStyle: 'solid',
+                backgroundColor: '#eee',
+            }}
+            rejectStyle = {{
+                borderStyle: 'solid',
+                backgroundColor: '#ffdddd',
+            }}
+        >
+            {!evidenceFile &&
+                <span>
+                    ... ou une pièce jointe : Déposez vos fichiers ici !
+                </span>
+            }
+            {!!evidenceFile && <img height="64px" src={evidenceFile.preview} /> }
+            {/* TODO file type icon instead of preview if not image type */ }
+        </Dropzone>
+
+        <FieldGroup
+            id="evidenteName"
+            label="Nom de la source"
+            type="text"
+            help="20h de TF1"
+        />
+
         <FieldGroup id="quote" label="Citation exacte" type="text" help="'Je souhaite défendre un truc'" />
         <FormGroup controlId="statementDate">
             <ControlLabel>Date des faits</ControlLabel>
