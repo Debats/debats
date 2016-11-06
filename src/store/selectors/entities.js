@@ -7,12 +7,12 @@ export const getPublicFigures = state => values(state.entities['public-figures']
 
 
 const getEntityByRef = curry(
-    (sourceEntities, entityReference) => ifElse(
-        isNil,
-        always(entityReference),                  // No source entities yet, return reference object
-        pipe(
-            find(propEq('id', entityReference.id)),
-            when(isNil, always(entityReference)), // Entity not fetched yet, return reference object
+  (sourceEntities, entityReference) => ifElse(
+    isNil,
+    always(entityReference),                  // No source entities yet, return reference object
+    pipe(
+      find(propEq('id', entityReference.id)),
+      when(isNil, always(entityReference)), // Entity not fetched yet, return reference object
         ),
     )(sourceEntities)
 );
@@ -23,14 +23,14 @@ const getEntityByRef = curry(
  * const injectPublicFigure = enrichWithRelationship('publicFigure', 'public-figure');
  */
 export const enrichWithRelationship = curry(
-    (propertyName, relationshipName, fromCollection, entity) => assoc(
-        propertyName,
-        compose(
-            getEntityByRef(fromCollection),
-            when(is(Array), take(1)),
-            path(['relationships', relationshipName, 'data']),
+  (propertyName, relationshipName, fromCollection, entity) => assoc(
+    propertyName,
+    compose(
+      getEntityByRef(fromCollection),
+      when(is(Array), take(1)),
+      path(['relationships', relationshipName, 'data']),
         )(entity),
-        entity
+    entity
     )
 );
 
@@ -41,13 +41,13 @@ export const enrichWithRelationship = curry(
  *        = enrichWithRelationships('remarquablePublicFigures', 'remarquable-public-figures');
  */
 export const enrichWithRelationships = curry(
-    (propertyName, relationshipName, fromCollection, entity) => assoc(
-        propertyName,
-        compose(
-            map(getEntityByRef(fromCollection)),
-            path(['relationships', relationshipName, 'data'])
+  (propertyName, relationshipName, fromCollection, entity) => assoc(
+    propertyName,
+    compose(
+      map(getEntityByRef(fromCollection)),
+      path(['relationships', relationshipName, 'data'])
         )(entity),
-        entity
+    entity
     )
 );
 

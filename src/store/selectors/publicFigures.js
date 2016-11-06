@@ -8,14 +8,14 @@ import { enrichWithRelationships, getSubjects, getPublicFigures } from './entiti
 const injectSubjects = enrichWithRelationships('subjects', 'subjects');
 
 export const getPublicFiguresWithRelations = createSelector(
-    getPublicFigures,
-    getSubjects,
-    (publicFigures, allSubjects) => whenNotNil(
-        compose(
-            values,
-            map(pipe(
+  getPublicFigures,
+  getSubjects,
+  (publicFigures, allSubjects) => whenNotNil(
+    compose(
+      values,
+      map(pipe(
                 // injectSubjects(allSubjects),
-                dissoc('relationthips'),
+        dissoc('relationthips'),
             ))
         )
     )(publicFigures)

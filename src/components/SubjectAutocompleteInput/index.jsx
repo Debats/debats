@@ -16,13 +16,13 @@ class SubjectAutocompleteInput extends Component {
   }
 
   onSelection = subject => this.props.onSelection(
-        compose(
-            ifElse(
-                compose(not, isNil),
-                prop('id'),
-                always(null)
+    compose(
+      ifElse(
+        compose(not, isNil),
+        prop('id'),
+        always(null)
             ),
-            head
+      head
         )(subject)
     );
 
@@ -30,11 +30,11 @@ class SubjectAutocompleteInput extends Component {
     if (this.props.selected) this.props.onSelection(null);
     if (typed.length) {
       getSubjectsAutocomplete(typed)
-                .then((response) => {
-                  this.setState({
-                    suggestions: flattenAttributes(response.data.data),
-                  });
-                }); }
+        .then((response) => {
+          this.setState({
+            suggestions: flattenAttributes(response.data.data),
+          });
+        }); }
   };
 
   renderMenuItemChildren = (typeaheadProps, subject) => (

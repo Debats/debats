@@ -23,8 +23,8 @@ const isStatementComplete = allPass([
   compose(not, isNil, prop('quote')),
   compose(not, isNil, prop('statementDate')),
   either(
-        compose(not, isNil, prop('evidenceUrl')),
-        compose(not, isNil, prop('evidenceFile')),
+    compose(not, isNil, prop('evidenceUrl')),
+    compose(not, isNil, prop('evidenceFile')),
     ),
 ]);
 

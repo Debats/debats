@@ -40,11 +40,11 @@ if (isClientSide() && process.env.NODE_ENV !== 'production') {
 
 // STORE
 const store = createStore(
-    reducer,
-    initialState,
-    compose(
-        applyMiddleware(...middlewares),
-        window.devToolsExtension ? window.devToolsExtension() : f => f,
+  reducer,
+  initialState,
+  compose(
+    applyMiddleware(...middlewares),
+    window.devToolsExtension ? window.devToolsExtension() : f => f,
     )
 );
 const history = syncHistoryWithStore(browserHistory, store);

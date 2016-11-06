@@ -7,25 +7,25 @@ const initialState = {};
 const isNotNil = compose(not, isNil);
 
 export const indexAndGroupMainData = compose(
-    indexAndGroup,
-    map(assoc('fetched', true)),
-    prop('data')
+  indexAndGroup,
+  map(assoc('fetched', true)),
+  prop('data')
 );
 
 const indexAndGroupIncludedData = pipe(
-    prop('included'),
-    when(
-        isNotNil,
-        compose(
-            indexAndGroup,
-            map(assoc('fetched', true)),
+  prop('included'),
+  when(
+    isNotNil,
+    compose(
+      indexAndGroup,
+      map(assoc('fetched', true)),
         )
     ),
 );
 
 const saveData = data => compose(
-    merge(indexAndGroupIncludedData(data)),
-    indexAndGroupMainData,
+  merge(indexAndGroupIncludedData(data)),
+  indexAndGroupMainData,
 )(data);
 
 export const entitiesReducer = (state = initialState, action) => {

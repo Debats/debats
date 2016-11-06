@@ -13,11 +13,11 @@ const stories = storiesOf('PublicFigureAvatar', module);
 stories.addDecorator(withKnobs);
 
 stories.addWithInfo(
-    'pony avatar',
-    'Description of the story',
-    withReadme(README,
-        () => (
-          <PublicFigureAvatar publicFigure={{ picture: { url: text('image url', 'http://tinyurl.com/jucz8b9') } }} />
+  'pony avatar',
+  'Description of the story',
+  withReadme(README,
+    () => (
+      <PublicFigureAvatar publicFigure={{ picture: { url: text('image url', 'http://tinyurl.com/jucz8b9') } }} />
         )
     )
 );

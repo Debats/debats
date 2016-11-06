@@ -27,7 +27,7 @@ function* fetchEntityIfNeeded(action) {
     // Test Do we have to call API
 
   const apiCall = getApiCallFor(action.entityType, (
-        action.accessType === 'list' ? action.listType : action.accessedId
+    action.accessType === 'list' ? action.listType : action.accessedId
     ));
 
     // Call API

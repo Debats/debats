@@ -17,12 +17,12 @@ class PublicFigureAutocompleteInput extends Component {
   }
 
   onSelection = pf => this.props.onSelection(
-        compose(
-            when(
-                compose(not, isNil),
-                prop('id')
+    compose(
+      when(
+        compose(not, isNil),
+        prop('id')
             ),
-            head
+      head
         )(pf)
     );
 
@@ -30,11 +30,11 @@ class PublicFigureAutocompleteInput extends Component {
     if (this.props.selected) this.props.onSelection(null);
     if (typed.length) {
       getPublicFiguresAutocomplete(typed)
-                .then((response) => {
-                  this.setState({
-                    suggestions: flattenAttributes(response.data.data),
-                  });
-                }); }
+        .then((response) => {
+          this.setState({
+            suggestions: flattenAttributes(response.data.data),
+          });
+        }); }
   };
 
   renderMenuItemChildren = (typeaheadProps, publicFigure) => (

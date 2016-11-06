@@ -11,9 +11,9 @@ const stories = storiesOf('Header', module);
 stories.addDecorator(withKnobs);
 
 stories.addWithInfo(
-    'default header',
-    'Description of the story',
-    () => (
-      <Header />
+  'default header',
+  'Description of the story',
+  () => (
+    <Header />
     )
 );

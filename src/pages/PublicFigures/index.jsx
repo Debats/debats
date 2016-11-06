@@ -19,7 +19,7 @@ class PublicFigures extends Component {
     if (!this.props.publicFigures) return <span>loading public figures ...</span>;
 
     const renderChilds = () => this.props.publicFigures.map(
-            pf => <PublicFigureInList key={pf.id} publicFigure={pf} />
+      pf => <PublicFigureInList key={pf.id} publicFigure={pf} />
         );
 
     return (

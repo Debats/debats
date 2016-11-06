@@ -10,18 +10,18 @@ const injectPosition = enrichWithRelationship('position', 'position');
 const injectSubject = enrichWithRelationship('subject', 'subject');
 
 export const getLatestStatements = createSelector(
-    getStatements,
-    getPublicFigures,
-    getPositions,
-    getSubjects,
-    (allStatements, allPublicFigures, allPositions, allSubjects) => whenNotNil(
-        compose(
-            values,
-            map(pipe(
-                injectPublicFigure(allPublicFigures),
-                injectSubject(allSubjects),
-                injectPosition(allPositions),
-                dissoc('relationthips'),
+  getStatements,
+  getPublicFigures,
+  getPositions,
+  getSubjects,
+  (allStatements, allPublicFigures, allPositions, allSubjects) => whenNotNil(
+    compose(
+      values,
+      map(pipe(
+        injectPublicFigure(allPublicFigures),
+        injectSubject(allSubjects),
+        injectPosition(allPositions),
+        dissoc('relationthips'),
             ))
         )
     )(allStatements)

@@ -6,9 +6,9 @@ import PublicFigureAvatar from 'components/PublicFigureAvatar';
 
 const PublicFigureAvatarMapper = pf => <PublicFigureAvatar key={pf.id} publicFigure={pf} />;
 const renderAssociatedPublicFigures = compose(
-    map(PublicFigureAvatarMapper),
-    take(5),
-    prop('remarquablePublicFigures'),
+  map(PublicFigureAvatarMapper),
+  take(5),
+  prop('remarquablePublicFigures'),
 );
 
 const HomeSubject = ({ subject }) => (

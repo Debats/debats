@@ -26,7 +26,7 @@ const loadApplication = (DOMElementId) => {
       <AppContainer>
         <Root store={store} history={history} />
       </AppContainer>,
-            DOMElement
+      DOMElement
         );
   });
 
