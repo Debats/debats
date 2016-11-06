@@ -44,16 +44,7 @@ class SubjectAutocompleteInput extends Component {
         </div>
     );
 
-    onSelection = (subject) => this.props.onSelection(
-        compose(
-            ifElse(
-                compose(not, isNil),
-                prop('id'),
-                always(null)
-            ),
-            head
-        )(subject)
-    );
+    onSelection = compose(this.props.onSelection, head);
 
     render() {
         return (
