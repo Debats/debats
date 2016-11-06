@@ -41,7 +41,7 @@
   "rules": {
     "max-len": [0],
     "new-cap": ["warn", {"capIsNewExceptions": [
-        "Moment",
+        "Moment"
     ]}],
     "comma-dangle": ["warn", "always-multiline"], // disallow or enforce trailing commas
     "curly": ["warn", "multi-or-nest"], // specify curly brace conventions for all control statements
@@ -62,15 +62,15 @@
     "react/jsx-indent-props": ["warn", 2],
     "react/forbid-prop-types": [0],
     "react/no-unescaped-entities": [0],
-    "react/no-unused-prop-types": [0], # because broken
+    "react/no-unused-prop-types": [0], // because broken
     "react/sort-comp": [1, {
-      order: [
-        'static-methods',
-        'lifecycle',
-        '/^on.+$/',
-        'everything-else',
-        '/^render.+$/',
-        'render'
+      "order": [
+        "static-methods",
+        "lifecycle",
+        "/^on.+$/",
+        "everything-else",
+        "/^render.+$/",
+        "render"
       ]
     }]
   }
