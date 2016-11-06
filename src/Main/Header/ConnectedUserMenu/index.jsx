@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/href-no-hash */
+
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 import paths from 'constants/paths';
@@ -11,7 +13,7 @@ const ConnectedUserMenu = ({ user, onLogOut }) => (
     <ul className="dropdown-menu">
       <li><Link to={paths.getFor.user(user)}>Profil</Link></li>
       <li className="divider" />
-      <li><a onClick={onLogOut}>Déconnexion</a></li>
+      <li><a href="#" onClick={onLogOut}>Déconnexion</a></li>
     </ul>
   </li>
 );
