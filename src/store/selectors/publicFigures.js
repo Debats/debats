@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { values, pipe, compose, map, dissoc } from 'ramda';
 import { whenNotNil } from 'helpers/ramda-ext';
 import { createSelector } from 'reselect';

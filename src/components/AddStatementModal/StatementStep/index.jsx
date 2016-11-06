@@ -19,16 +19,16 @@ const StatementStep = ({
     <h4>Donnez-nous quelques détails : </h4>
 
     <FieldGroup
-        id="evidenceUrl"
-        label="Lien internet ..."
-        type="text"
-        placeholder="http://"
-        help="Un article en ligne, une vidéo, ..."
-        value={evidenceUrl}
-        validationState={isValidEvidenceUrl(evidenceUrl)
+      id="evidenceUrl"
+      label="Lien internet ..."
+      type="text"
+      placeholder="http://"
+      help="Un article en ligne, une vidéo, ..."
+      value={evidenceUrl}
+      validationState={isValidEvidenceUrl(evidenceUrl)
                 ? 'success'
                 : (!!evidenceUrl && !!evidenceUrl.length ? 'error' : undefined)}
-        onChange={event => onUpdateEvidenceUrl(event.target.value)}
+      onChange={event => onUpdateEvidenceUrl(event.target.value)}
     />
 
     <FieldGroup id="evidenceFile" label="... ou pièce jointe" type="file" help="Un PDF, une image, ..." />

@@ -4,12 +4,12 @@ import styles from './PublicFigureAvatar.css';
 
 const PublicFigureAvatar = ({ publicFigure }) => (
   <div
-      styleName="wrapper"
-      style={{
-        backgroundImage: !!publicFigure.picture
+    styleName="wrapper"
+    style={{
+      backgroundImage: publicFigure.picture
                 ? `url(${publicFigure.picture.url})`
                 : undefined,
-      }}
+    }}
   />
 );
 PublicFigureAvatar.propTypes = {

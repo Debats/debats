@@ -1,7 +1,8 @@
 import React, { PropTypes, Component } from 'react';
+
+import LastStatements from 'components/LastStatements';
 import PublicFigureInList from './PublicFigureInList';
 import connect from './connector';
-import LastStatements from 'components/LastStatements';
 
 class PublicFigures extends Component {
 

@@ -14,9 +14,9 @@ class AddStatementButton extends Component {
     return (
       <div>
         <Button
-            bsStyle="primary"
-            bsSize="xsmall"
-            onClick={this.open}
+          bsStyle="primary"
+          bsSize="xsmall"
+          onClick={this.open}
         >
                     Nouvelle prise de position
                 </Button>

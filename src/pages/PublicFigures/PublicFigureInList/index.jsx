@@ -1,10 +1,12 @@
 import React, { PropTypes } from 'react';
-import paths from '../../../constants/paths';
+import cssModules from 'react-css-modules';
 import { Link } from 'react-router';
+
+import paths from 'constants/paths';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 import AssociatedSubjects from 'components/AssociatedSubjects';
+
 import PublicFigureStyle from './PublicFigure.css';
-import cssModules from 'react-css-modules';
 
 const PublicFigureInList = ({ publicFigure }) => (
   <table className="table">
@@ -43,13 +45,3 @@ PublicFigureInList.propTypes = {
 };
 
 export default cssModules(PublicFigureInList, PublicFigureStyle);
-
-/*
-<script type="text/javascript">
-    $(document).ready(function() {
-
-    $(".figure-presentation-text").shorten();
-
-});
-</script>
-    */

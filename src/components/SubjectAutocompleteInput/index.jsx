@@ -1,10 +1,8 @@
 import React, { Component, PropTypes } from 'react';
-import { head, of, take, compose, when, prop, not, isNil, ifElse, always } from 'ramda';
+import { head, of, take, compose, prop, not, isNil, ifElse, always } from 'ramda';
 import Typeahead from 'react-bootstrap-typeahead';
 import { getSubjectsAutocomplete } from 'api/debats';
 import { flattenAttributes } from 'api/jsonApiParser';
-
-import { withConsole } from 'helpers/debug';
 
 class SubjectAutocompleteInput extends Component {
 
@@ -17,9 +15,20 @@ class SubjectAutocompleteInput extends Component {
     suggestions: [],
   }
 
+  onSelection = subject => this.props.onSelection(
+        compose(
+            ifElse(
+                compose(not, isNil),
+                prop('id'),
+                always(null)
+            ),
+            head
+        )(subject)
+    );
+
   loadSuggestions = (typed) => {
-    if (!!this.props.selected) this.props.onSelection(null);
-    if (!!typed.length) {
+    if (this.props.selected) this.props.onSelection(null);
+    if (typed.length) {
       getSubjectsAutocomplete(typed)
                 .then((response) => {
                   this.setState({
@@ -35,31 +44,20 @@ class SubjectAutocompleteInput extends Component {
     </div>
     );
 
-  onSelection = subject => this.props.onSelection(
-        compose(
-            ifElse(
-                compose(not, isNil),
-                prop('id'),
-                always(null)
-            ),
-            head
-        )(subject)
-    );
-
   render() {
     return (
       <Typeahead
-          name="subject"
-          options={this.state.suggestions}
-          selected={of(this.props.selected)}
-          emptyLabel="Aucun sujet correspondante"
-          labelKey="title"
-          minLength={3}
-          allowNew
-          newSelectionPrefix="Ajouter "
-          onChange={this.onSelection}
-          onInputChange={this.loadSuggestions}
-          renderMenuItemChildren={this.renderMenuItemChildren}
+        name="subject"
+        options={this.state.suggestions}
+        selected={of(this.props.selected)}
+        emptyLabel="Aucun sujet correspondante"
+        labelKey="title"
+        minLength={3}
+        allowNew
+        newSelectionPrefix="Ajouter "
+        onChange={this.onSelection}
+        onInputChange={this.loadSuggestions}
+        renderMenuItemChildren={this.renderMenuItemChildren}
       />
     );
   }

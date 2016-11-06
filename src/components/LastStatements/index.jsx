@@ -1,5 +1,5 @@
 import React, { PropTypes, Component } from 'react';
-import CSSModules from 'react-css-modules';
+import cssModules from 'react-css-modules';
 import Statement from './Statement';
 import LastStatementsStyle from './LastStatements.css';
 import connect from './connector';
@@ -26,10 +26,10 @@ class LastStatements extends Component {
         <h2 styleName="title">Les dernières prises de positions</h2>
         <ul styleName="wrapper">
           { this.renderStatements() };
-                </ul>
+        </ul>
       </div>
     );
   }
 }
 
-export default connect(CSSModules(LastStatements, LastStatementsStyle));
+export default connect(cssModules(LastStatements, LastStatementsStyle));

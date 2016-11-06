@@ -4,10 +4,10 @@ import { FormGroup, ControlLabel, FormControl, Well, Button } from 'react-bootst
 const renderButtons = (allPositions, selectedPosition, onSelection) => (
     allPositions.map(position => (
       <Button
-          block
-          active={selectedPosition && position.id === selectedPosition.id}
-          key={position.id}
-          onClick={() => onSelection(position)}
+        block
+        active={selectedPosition && position.id === selectedPosition.id}
+        key={position.id}
+        onClick={() => onSelection(position)}
       >
         {position.title}
       </Button>

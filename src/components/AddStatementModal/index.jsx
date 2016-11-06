@@ -96,29 +96,29 @@ class AddStatementModal extends Component {
     switch (this.state.step) {
       case steps.PUBLIC_FIGURE: return (
         <PublicFigureStep
-            selected={this.props.selectedPublicFigure}
-            onSelection={this.props.onPublicFigureSelection}
+          selected={this.props.selectedPublicFigure}
+          onSelection={this.props.onPublicFigureSelection}
         />
       );
       case steps.SUBJECT: return (
         <SubjectStep
-            selected={this.props.selectedSubject}
-            onSelection={this.props.onSubjectSelection}
+          selected={this.props.selectedSubject}
+          onSelection={this.props.onSubjectSelection}
         />
       );
       case steps.POSITION: return (
         <PositionStep
-            subject={this.props.selectedSubject}
-            selected={this.props.selectedPosition}
-            onSelection={this.props.onPositionSelection}
+          subject={this.props.selectedSubject}
+          selected={this.props.selectedPosition}
+          onSelection={this.props.onPositionSelection}
         />
       );
       case steps.STATEMENT: return (
         <StatementStep
-            evidenceUrl={this.props.evidenceUrl}
-            onUpdateEvidenceUrl={this.props.onUpdateEvidenceUrl}
-            evidenceFile={this.props.evidenceFile}
-            onUpdateEvidenceFil={this.props.onUpdateEvidenceFil}
+          evidenceUrl={this.props.evidenceUrl}
+          onUpdateEvidenceUrl={this.props.onUpdateEvidenceUrl}
+          evidenceFile={this.props.evidenceFile}
+          onUpdateEvidenceFil={this.props.onUpdateEvidenceFil}
         />
       );
       case steps.SUMMARY: return (
@@ -155,17 +155,17 @@ class AddStatementModal extends Component {
               <Button onClick={this.previousStep}>Revenir</Button>}
             {step !== steps.SUMMARY &&
               <Button
-                  onClick={this.nextStep}
-                  bsStyle="primary"
+                onClick={this.nextStep}
+                bsStyle="primary"
               >
                             Confirmer
                         </Button>
                     }
             {step === steps.SUMMARY &&
               <Button
-                  onClick={onValidate}
-                  disabled={!isValidationReady}
-                  bsStyle="success"
+                onClick={onValidate}
+                disabled={!isValidationReady}
+                bsStyle="success"
               >
                             Valider
                         </Button>

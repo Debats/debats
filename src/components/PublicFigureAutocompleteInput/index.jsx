@@ -16,9 +16,19 @@ class PublicFigureAutocompleteInput extends Component {
     suggestions: [],
   }
 
+  onSelection = pf => this.props.onSelection(
+        compose(
+            when(
+                compose(not, isNil),
+                prop('id')
+            ),
+            head
+        )(pf)
+    );
+
   loadSuggestions = (typed) => {
-    if (!!this.props.selected) this.props.onSelection(null);
-    if (!!typed.length) {
+    if (this.props.selected) this.props.onSelection(null);
+    if (typed.length) {
       getPublicFiguresAutocomplete(typed)
                 .then((response) => {
                   this.setState({
@@ -32,32 +42,22 @@ class PublicFigureAutocompleteInput extends Component {
       <PublicFigureAvatar publicFigure={publicFigure} />
       <span>{publicFigure.name}</span>
     </div>
-    );
-
-  onSelection = pf => this.props.onSelection(
-        compose(
-            when(
-                compose(not, isNil),
-                prop('id')
-            ),
-            head
-        )(pf)
-    );
+  );
 
   render() {
     return (
       <Typeahead
-          name="publicFigure"
-          options={this.state.suggestions}
-          selected={of(this.props.selected)}
-          emptyLabel="Aucune personnalité correspondante"
-          labelKey="name"
-          minLength={3}
-          allowNew
-          newSelectionPrefix="Ajouter "
-          onChange={this.onSelection}
-          onInputChange={this.loadSuggestions}
-          renderMenuItemChildren={this.renderMenuItemChildren}
+        name="publicFigure"
+        options={this.state.suggestions}
+        selected={of(this.props.selected)}
+        emptyLabel="Aucune personnalité correspondante"
+        labelKey="name"
+        minLength={3}
+        allowNew
+        newSelectionPrefix="Ajouter "
+        onChange={this.onSelection}
+        onInputChange={this.loadSuggestions}
+        renderMenuItemChildren={this.renderMenuItemChildren}
       />
     );
   }
