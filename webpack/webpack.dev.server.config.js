@@ -29,8 +29,6 @@ config.devtool = 'source-map';
 config.cache = true;
 config.debug = true;
 
-config.externals.Config = JSON.stringify(require('../config/dev.config.json'));
-
 var devServerAPIUrl;
 var devServerRewrite;
 

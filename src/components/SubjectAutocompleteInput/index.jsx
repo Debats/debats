@@ -1,10 +1,19 @@
 import React, { Component, PropTypes } from 'react';
-import { head, of, take, compose, when, prop, not, isNil, ifElse, always } from 'ramda';
+import { head, of, take, compose, when, prop, not, isNil, ifElse, always, map, pipe } from 'ramda';
 import Typeahead from 'react-bootstrap-typeahead';
 import { getSubjectsAutocomplete } from 'api/debats';
 import { flattenAttributes } from 'api/jsonApiParser';
+import { enrichWithRelationships } from 'store/selectors/entities';
 
 import { withConsole } from 'helpers/debug';
+
+const parseSubjects = raw => pipe(
+    flattenAttributes,
+    map(
+        enrichWithRelationships('positions', 'positions', flattenAttributes(raw.included))
+    )
+)(raw.data);
+
 
 class SubjectAutocompleteInput extends Component {
 
@@ -15,7 +24,7 @@ class SubjectAutocompleteInput extends Component {
 
     state = {
         suggestions: [],
-    }
+    };
 
     loadSuggestions = (typed) => {
         if (!!this.props.selected) this.props.onSelection(null);
@@ -23,7 +32,7 @@ class SubjectAutocompleteInput extends Component {
             getSubjectsAutocomplete(typed)
                 .then((response) => {
                     this.setState({
-                        suggestions: flattenAttributes(response.data.data),
+                        suggestions: parseSubjects(response.data),
                     });
                 });
     };
@@ -35,16 +44,7 @@ class SubjectAutocompleteInput extends Component {
         </div>
     );
 
-    onSelection = (subject) => this.props.onSelection(
-        compose(
-            ifElse(
-                compose(not, isNil),
-                prop('id'),
-                always(null)
-            ),
-            head
-        )(subject)
-    );
+    onSelection = compose(this.props.onSelection, head);
 
     render() {
         return (
