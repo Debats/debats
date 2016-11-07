@@ -11,14 +11,16 @@ const loaders = [
   {
     test: /src.+\.css$/,
     loader: 'style-loader'
-        + '!css-loader'
-        + '?modules&localIdentName=[name]__[local]___[hash:base64:5]'
-        + '&importLoaders=1'
-        + '!postcss-loader',
+    + '!css-loader'
+    + '?modules&localIdentName=[name]__[local]___[hash:base64:5]'
+    + '&importLoaders=1'
+    + '!postcss-loader',
   },
   {
     test: /node_modules.*\.css$/,
-    loader: 'style!css',
+    loader: 'style-loader'
+    + '!css-loader'
+    + '!postcss-loader',
   },
   {
     test: /\.(png|svg|gif|jpeg|jpg)$/,

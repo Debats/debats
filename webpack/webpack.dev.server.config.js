@@ -30,10 +30,8 @@ config.devtool = 'source-map';
 config.cache = true;
 config.debug = true;
 
-config.externals.Config = JSON.stringify(require('../config/dev.config.json'));
-
-let devServerAPIUrl;
-let devServerRewrite;
+var devServerAPIUrl;
+var devServerRewrite;
 
 if (args.proxy) {
   if (args.mockAPI) {

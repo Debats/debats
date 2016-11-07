@@ -10,14 +10,15 @@ const plugins = [];
 plugins.push(new webpack.NoErrorsPlugin()); // No assets emitted with errors
 
 module.exports = {
-  resolve,
-  plugins,
-  module: { loaders },
-  externals: {
-    TweenLite: 'TweenLite',
-  },
-  node: {
-    fs: 'empty',
-  },
-  postcss: wp => postcssProcessors(wp),
+    resolve,
+    plugins,
+    module: { loaders },
+    externals: {
+        Config: JSON.stringify(require('../config/dev.config.json')),
+        TweenLite: 'TweenLite',
+    },
+    node: {
+        fs: 'empty',
+    },
+    postcss: wp => postcssProcessors(wp),
 };

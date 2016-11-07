@@ -1,8 +1,8 @@
-import React, { Component, PropTypes } from 'react';
-import { head, of, compose, when, prop, not, isNil } from 'ramda';
+import React, {Component, PropTypes} from 'react';
+import {head, of, compose, when, prop, not, isNil} from 'ramda';
 import Typeahead from 'react-bootstrap-typeahead';
-import { getPublicFiguresAutocomplete } from 'api/debats';
-import { flattenAttributes } from 'api/jsonApiParser';
+import {getPublicFiguresAutocomplete} from 'api/debats';
+import {flattenAttributes} from 'api/jsonApiParser';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 
 class PublicFigureAutocompleteInput extends Component {
@@ -14,17 +14,29 @@ class PublicFigureAutocompleteInput extends Component {
 
   state = {
     suggestions: [],
-  }
+  };
 
-  onSelection = pf => this.props.onSelection(
-    compose(
-      when(
-        compose(not, isNil),
-        prop('id')
-            ),
-      head
-        )(pf)
-    );
+  loadSuggestions = (typed) => {
+    if (!!this.props.selected)
+      this.props.onSelection(null);
+    if (!!typed.length) {
+      getPublicFiguresAutocomplete(typed)
+        .then((response) => {
+          this.setState({
+            suggestions: flattenAttributes(response.data.data),
+          });
+        });
+    }
+  };
+
+  renderMenuItemChildren = (typeaheadProps, publicFigure) => (
+    <div>
+      <PublicFigureAvatar publicFigure={publicFigure}/>
+      <span>{publicFigure.name}</span>
+    </div>
+  );
+
+  onSelection = compose(this.props.onSelection, head);
 
   loadSuggestions = (typed) => {
     if (this.props.selected) this.props.onSelection(null);
@@ -34,12 +46,13 @@ class PublicFigureAutocompleteInput extends Component {
           this.setState({
             suggestions: flattenAttributes(response.data.data),
           });
-        }); }
+        });
+    }
   };
 
   renderMenuItemChildren = (typeaheadProps, publicFigure) => (
     <div>
-      <PublicFigureAvatar publicFigure={publicFigure} />
+      <PublicFigureAvatar publicFigure={publicFigure}/>
       <span>{publicFigure.name}</span>
     </div>
   );
