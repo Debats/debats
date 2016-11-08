@@ -64,11 +64,11 @@ const StatementStep = ({
       }}
     >
       {!evidenceFile &&
-      <span>
-                    ... ou une pièce jointe : Déposez vos fichiers ici !
-                </span>
+        <span>
+                      ... ou une pièce jointe : Déposez vos fichiers ici !
+        </span>
       }
-      {!!evidenceFile && <img height="64px" src={evidenceFile.preview}/> }
+      {!!evidenceFile && <img height="64px" src={evidenceFile.preview} /> }
       {/* TODO file type icon instead of preview if not image type */ }
     </Dropzone>
 
