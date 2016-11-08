@@ -52,6 +52,10 @@ class AddStatementModal extends Component {
     this.autoDetectStep();
   }
 
+  getSelectedPublicFigure = () => (this.props.publicFigure || this.state.publicFigure);
+  getSelectedSubject = () => (this.props.subject || this.state.subject);
+  getSelectedPosition = () => (this.props.position || this.state.position);
+
   autoDetectStep = () => {
     if (!this.isPublicFigureComplete())
       this.setState({step: steps.PUBLIC_FIGURE});
@@ -64,10 +68,6 @@ class AddStatementModal extends Component {
     else
       this.setState({step: steps.SUMMARY});
   };
-
-  getSelectedPublicFigure = () => (this.props.publicFigure || this.state.publicFigure);
-  getSelectedSubject = () => (this.props.subject || this.state.subject);
-  getSelectedPosition = () => (this.props.position || this.state.position);
 
   isPublicFigureComplete = () => ifElse(
     isNil,
