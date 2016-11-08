@@ -22,12 +22,17 @@ const steps = {
   SUMMARY: 5,
 };
 
+const { bool, func, shape, number, string, arrayOf } = PropTypes;
+
 class AddStatementModal extends Component {
 
   static propTypes = {
-    show: PropTypes.bool,
-    onHide: PropTypes.func.isRequired,
-    onValidate: PropTypes.func.isRequired,
+    show: bool,
+    onHide: func.isRequired,
+    onValidate: func.isRequired,
+    publicFigure: shape({ id: number, name: string }),
+    subject: shape({ id: number, title: string, position: arrayOf(shape({ id: number, title: string })) }),
+    position: number,
   };
 
   state = {
