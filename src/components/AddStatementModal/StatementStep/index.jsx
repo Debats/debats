@@ -79,7 +79,7 @@ const StatementStep = ({
       help="20h de TF1"
       value={evidenceSource}
       validationState={evidenceSource && evidenceSource.length >= 3}
-      onChange={onUpdateEvidenceSource}
+      onChange={event => onUpdateEvidenceSource(event.target.value)}
     />
 
     <FieldGroup id="quote" label="Citation exacte" type="text" help="'Je souhaite défendre un truc'"/>
