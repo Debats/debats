@@ -56,13 +56,13 @@
     ]}],
     "comma-dangle": ["warn", "always-multiline"], // disallow or enforce trailing commas
     "curly": ["warn", "multi-or-nest"], // specify curly brace conventions for all control statements
-    "indent": ["warn", 4, {"SwitchCase": 1}], // this option sets a specific tab width for your code (off by default)
+    "indent": ["warn", 2, {"SwitchCase": 1}], // this option sets a specific tab width for your code (off by default)
     "brace-style": ["warn", "1tbs", { "allowSingleLine": true }], // enforce one true brace style (off by default)
     "key-spacing": ["warn", {"beforeColon": false, "afterColon": true}], // enforces spacing between keys and values in object literal properties
     "quotes": ["warn", "single", "avoid-escape"], // specify whether double or single quotes should be used
     "keyword-spacing": ["warn", {"before": true, "after": true}], // require a space after certain keywords (off by default)
     // React
     //"computed-property-spacing": ["warn", "never"], // disallow spaces inside computed properties
-    "react/jsx-indent-props": ["warn", 4]
+    "react/jsx-indent-props": ["warn", 2]
   }
 }
