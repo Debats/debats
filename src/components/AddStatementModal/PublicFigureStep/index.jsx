@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react';
 import { FormGroup, ControlLabel, FormControl, Well } from 'react-bootstrap';
 import PublicFigureAutocompleteInput from 'components/PublicFigureAutocompleteInput';
-import NewPublicFigureForm from './NewPublicFigureForm';
+import AddPublicFigureForm from './AddPublicFigureForm';
 
 const PublicFigureStep = ({ selected, onSelection }) => (
     <Well>
@@ -13,7 +13,7 @@ const PublicFigureStep = ({ selected, onSelection }) => (
             onSelection={onSelection}
           />}
         {selected && selected.customOption &&
-          <NewPublicFigureForm
+          <AddPublicFigureForm
             publicFigure={selected}
             onChange={onSelection}
             onCancel={() => onSelection(null)}

@@ -36,7 +36,7 @@ const injectIsComplete = publicFigure => assoc(
   publicFigure
 );
 
-const NewPublicFigureForm = ({ publicFigure, onChange, onCancel }) => {
+const AddPublicFigureForm = ({ publicFigure, onChange, onCancel }) => {
   const onChangeField = curry(
     (field, event) => onChange(
       pipe(
@@ -128,7 +128,7 @@ const NewPublicFigureForm = ({ publicFigure, onChange, onCancel }) => {
     </Well>
   );
 };
-NewPublicFigureForm.propTypes = {
+AddPublicFigureForm.propTypes = {
   publicFigure: PropTypes.shape({
     name: PropTypes.string.isRequired,
     presentation: PropTypes.string,
@@ -140,4 +140,4 @@ NewPublicFigureForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-export default NewPublicFigureForm;
+export default AddPublicFigureForm;
