@@ -14,3 +14,4 @@ export const getPublicFiguresAutocomplete = typed => get(`autocomplete/public_fi
 export const getSubjectsAutocomplete = typed => get(`autocomplete/subject/${typed}`);
 export const getPositions = subjectId => get(`subjects/${subjectId}/positions`);
 
+export const postStatement = statement => post('statements', statement);
