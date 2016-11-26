@@ -40,17 +40,18 @@ class PublicFigureStep extends Component {
     this.setState({
       showForm: false,
     });
-    this.autoCompleteInput.focus();
+    // this.autoCompleteInput.focus(); FIXME ==> JAR : Does not work because undefined when needed.
   };
 
   render() {
+    console.log('jarfaoui', 'render', this.autoCompleteInput);
     return (
       <Well>
         <FormGroup controlId="publicFigureSelect" validationState={!!this.props.selected ? 'success' : undefined}>
           <ControlLabel>De qui parlons-nous ?</ControlLabel>
           {!this.state.showForm &&
             <PublicFigureAutocompleteInput
-              ref={ref => this.autoCompleteInput = ref}
+              ref={r => {this.autoCompleteInput = r}}
               selected={this.props.selected}
               onSelection={this.onAutoCompleteSelection}
             />}
