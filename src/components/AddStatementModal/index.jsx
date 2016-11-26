@@ -3,6 +3,7 @@ import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import {
   identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, head, cond, T, propEq,
 } from 'ramda';
+import moment from 'moment';
 import './AddStatementModal.css';
 import PublicFigureStep from './PublicFigureStep';
 import SubjectStep from './SubjectStep';
@@ -43,9 +44,9 @@ class AddStatementModal extends Component {
     date: null,
     evidenceUrl: null,
     evidenceFile: null,
-    evidenceSource: null,
+    evidenceSource: '',
     quote: '',
-    note: null,
+    note: '',
     tags: [],
   };
 
@@ -87,12 +88,17 @@ class AddStatementModal extends Component {
 
   isPositionComplete = () => test(/^\d$/, this.getSelectedPosition());
 
-  isStatementComplete = () => (this.isEvidenceValid() && this.isQuoteValid());
+  isStatementComplete = () => (
+    this.isEvidenceValid()
+    && this.isQuoteValid()
+    && this.isDateValid()
+  );
 
   isEvidenceValid = () => this.isEvidenceUrlValid() || this.isEvidenceFileValid();
   isEvidenceUrlValid = () => isValidEvidenceUrl(this.state.evidenceUrl);
   isEvidenceFileValid = () => true;
   isQuoteValid = () => trim(this.state.quote).length > QUOTE_MIN_CHARS;
+  isDateValid = () => this.state.date && this.state.date.isValid() && this.state.date.isSameOrBefore(moment(), 'day');
 
   onSubject = subject => this.setState({ subject });
   onPublicFigure = publicFigure => this.setState({ publicFigure });
@@ -210,18 +216,32 @@ class AddStatementModal extends Component {
       case steps.STATEMENT:
         return (
           <StatementStep
-            evidenceUrl={this.state.evidenceUrl}
+            evidenceUrl={this.state.evidenceUrl ? this.state.evidenceUrl : ''}
             evidenceFile={this.state.evidenceFile}
             evidenceSource={this.state.evidenceSource}
+            quote={this.state.quote}
+            date={this.state.date}
             onUpdateEvidenceUrl={this.onEvidenceUrl}
             onUpdateEvidenceFiles={this.onEvidenceFiles}
             onUpdateEvidenceSource={this.onEvidenceSource}
+            onUpdateQuote={this.onQuote}
+            onUpdateDate={this.onDate}
           />
         );
       case steps.SUMMARY:
       default:
         return (
-          <SummaryStep />
+          <SummaryStep
+            publicFigure={this.getSelectedPublicFigure()}
+            subject={this.getSelectedSubject()}
+            position={this.getSelectedPosition()}
+            evidenceUrl={this.state.evidenceUrl}
+            evidenceFile={this.state.evidenceFile}
+            evidenceSource={this.state.evidenceSource}
+            quote={this.state.quote}
+            date={this.state.date}
+            note={this.state.note}
+          />
         );
     }
   };
