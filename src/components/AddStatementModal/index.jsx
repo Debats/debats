@@ -122,14 +122,16 @@ class AddStatementModal extends Component {
     if (this.state.step === steps.POSITION)
       return (!this.isStatementComplete());
     return false;
-  }
+  };
 
-  hasIncompleteStep = () => !(
+  isComplete = () => (
     this.isPublicFigureComplete()
     && this.isSubjectComplete()
     && this.isPositionComplete()
     && this.isStatementComplete()
   );
+
+  hasIncompleteStep = () => !this.isComplete();
 
   isCurrentStepBefore = otherStep => this.state.step < otherStep;
 
@@ -231,7 +233,6 @@ class AddStatementModal extends Component {
       show,
       onHide,
       onValidate,
-      isValidationReady
     } = this.props;
     const { step } = this.state;
 
@@ -264,7 +265,7 @@ class AddStatementModal extends Component {
             {step === steps.SUMMARY &&
             <Button
               onClick={onValidate}
-              disabled={!isValidationReady}
+              disabled={!this.isComplete()}
               bsStyle="success"
             >
               Valider
