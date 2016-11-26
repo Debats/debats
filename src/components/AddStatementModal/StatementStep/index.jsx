@@ -1,7 +1,7 @@
 import React, {PropTypes} from 'react';
 import {cond, always, not, isNil, T, compose} from 'ramda';
 import {FormGroup, ControlLabel, FormControl, Well, HelpBlock} from 'react-bootstrap';
-import DatePicker from '../../../../../../react-bootstrap-moment-date-picker/src/index'; // not working properly yet
+//import DatePicker from '../../../../../../react-bootstrap-moment-date-picker/src/index'; // not working properly yet
 import {isValidEvidenceUrl} from 'validations/statements';
 import Dropzone from 'react-dropzone';
 

@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react';
 import { FormGroup, ControlLabel, FormControl, Well, HelpBlock } from 'react-bootstrap';
-import DatePicker from '../../../../../../react-bootstrap-moment-date-picker/src/index';
+// import DatePicker from '../../../../../../react-bootstrap-moment-date-picker/src/index';
 
 const SummaryStep = ({}) => (
     <Well>
