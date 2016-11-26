@@ -1,20 +1,19 @@
 import React, { PropTypes } from 'react';
-import { cond, always, not, isNil, T, compose, assoc, curry, pipe, allPass, prop, test, either, isEmpty } from 'ramda';
+import { cond, always, T, compose, assoc, curry, pipe, allPass, prop, test, either, isEmpty } from 'ramda';
 import { Well, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import FieldGroup from 'components/FieldGroup';
 import { urlRegex } from 'validations/generic';
+import { isNotEmpty } from 'helpers/ramda-ext';
 
 const isValidName = test(/[\w ]{5,}/);               // At least 5 letters
 const isValidPresentation = test(/(\w ?){15,}/);     // At least 15 letters
 const isValidWikipediaUrl = test(urlRegex);
 const isValidSiteUrl = test(urlRegex);
 
-const isNotNil = compose(not, isNil);
-
 const getFieldValidationState = isValidFunc => cond([
   [isValidFunc, always('success')],
-  [isNotNil, always('error')],
+  [isNotEmpty, always('error')],
   [T, always(null)],
 ]);
 
