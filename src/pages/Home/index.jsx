@@ -4,9 +4,11 @@ import HomeSubjects from './HomeSubjects';
 import LastStatements from 'components/LastStatements';
 import bgSrc from './images/intro-bg.jpg';
 import styles from './Home.css';
+import AddStatementButton from 'components/AddStatementButton';
 
 const Home = () => (
     <div className="container-fluid" styleName="container">
+      <AddStatementButton />
         <div className="row" styleName="background-title" style={{ backgroundImage: `url(${bgSrc})` }}>
           <div styleName="title-mask">
             <h5 >Bienvenue sur Débats.co</h5>
