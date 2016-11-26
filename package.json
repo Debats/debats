@@ -4,8 +4,8 @@
   "description": "Front for Débats.co website",
   "author": "Jalil Arfaoui",
   "scripts": {
-    "dev-mock": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --mockAPI --port 3030 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
-    "dev-local": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --localAPI --port 3030 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
+    "dev-mock": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --mockAPI --port 80 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
+    "dev-local": "./node_modules/.bin/webpack-dev-server --config webpack/webpack.dev.server.config.js --inline --proxy --localAPI --port 80 --host 0.0.0.0 --progress --colors --hot --content-base build/dev",
     "build-dev": "./node_modules/.bin/webpack --config webpack/webpack.build.dev.config.js --progress --colors",
     "build-prod": "./node_modules/.bin/webpack --config webpack/webpack.config.js --production --progress --colors",
     "build-stats": "./node_modules/.bin/webpack --config webpack/webpack.config.js --production --json > stats.json",
