@@ -21,10 +21,15 @@ const steps = {
   SUMMARY: 5,
 };
 
-const { bool, func, shape, number, string, arrayOf } = PropTypes;
+const { bool, func, shape, number, string, arrayOf, oneOfType } = PropTypes;
 
 const isCustom = propEq('customOption', true);
 const isComplete = propEq('isComplete', true);
+const isEntityComplete = cond([
+  [isNil, always(false)],
+  [isCustom, isComplete],
+  [T, always(true)],
+]);
 
 class AddStatementModal extends Component {
 
@@ -32,9 +37,20 @@ class AddStatementModal extends Component {
     show: bool,
     onHide: func.isRequired,
     onValidate: func.isRequired,
-    publicFigure: shape({ id: number, name: string }),
-    subject: shape({ id: number, title: string, position: arrayOf(shape({ id: number, title: string })) }),
-    position: number,
+    publicFigure: shape({
+      id: oneOfType([string, number]).isRequired,
+      name: string,
+    }),
+    subject: shape({
+      id: oneOfType([string, number]).isRequired,
+      title: string,
+      position: arrayOf(shape({ id: number, title: string })),
+    }),
+    position: shape({
+      id: oneOfType([string, number]).isRequired,
+      title: string.isRequired,
+      description: string,
+    }),
   };
 
   state = {
@@ -71,22 +87,9 @@ class AddStatementModal extends Component {
       this.setState({ step: steps.SUMMARY });
   };
 
-  isPublicFigureComplete = () => cond([
-    [isNil, always(false)],
-    [isCustom, isComplete],
-    [T, always(true)],
-  ])(this.getSelectedPublicFigure());
-
-  isSubjectComplete = () => ifElse(
-    isNil,
-    always(false),
-    allPass([
-      compose(test(/^\d$/), prop('id')),
-      // other props control
-    ])
-  )(this.getSelectedSubject());
-
-  isPositionComplete = () => test(/^\d$/, this.getSelectedPosition());
+  isPublicFigureComplete = () => isEntityComplete(this.getSelectedPublicFigure());
+  isSubjectComplete = () => isEntityComplete(this.getSelectedSubject());
+  isPositionComplete = () => isEntityComplete(this.getSelectedPosition());
 
   isStatementComplete = () => (
     this.isEvidenceValid()

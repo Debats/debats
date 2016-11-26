@@ -21,6 +21,21 @@ stories.addWithInfo(
 );
 
 stories.addWithInfo(
+  'with publicFigue',
+  'Starts at step 2',
+  withReadme('README',
+    () => (
+      <AddStatementModal
+        show={boolean('show', true)}
+        onHide={action('onHide')}
+        onValidate={action('onValidate')}
+        publicFigure={{ id: 1, name: 'Ambroise Croizat' }}
+      />
+    )
+  )
+);
+
+stories.addWithInfo(
   'with publicFigue, subject and position given',
   'Starts at step 4',
   withReadme('README',
