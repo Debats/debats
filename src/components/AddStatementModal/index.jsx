@@ -1,7 +1,7 @@
-import React, {PropTypes, Component} from 'react';
-import {Modal, Button, ProgressBar} from 'react-bootstrap';
+import React, { PropTypes, Component } from 'react';
+import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import {
-  identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, head
+  identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, head, cond, T, propEq,
 } from 'ramda';
 import './AddStatementModal.css';
 import PublicFigureStep from './PublicFigureStep';
@@ -9,10 +9,8 @@ import SubjectStep from './SubjectStep';
 import PositionStep from './PositionStep';
 import StatementStep from './StatementStep';
 import SummaryStep from './SummaryStep';
-import {QUOTE_MIN_CHARS} from 'constants/limits';
-import {isValidEvidenceUrl} from 'validations/statements';
-
-import {withConsole} from 'helpers/debug';
+import { QUOTE_MIN_CHARS } from 'constants/limits';
+import { isValidEvidenceUrl } from 'validations/statements';
 
 const steps = {
   PUBLIC_FIGURE: 1,
@@ -23,6 +21,9 @@ const steps = {
 };
 
 const { bool, func, shape, number, string, arrayOf } = PropTypes;
+
+const isCustom = propEq('customOption', true);
+const isComplete = propEq('isComplete', true);
 
 class AddStatementModal extends Component {
 
@@ -69,14 +70,11 @@ class AddStatementModal extends Component {
       this.setState({ step: steps.SUMMARY });
   };
 
-  isPublicFigureComplete = () => ifElse(
-    isNil,
-    always(false),
-    allPass([
-      compose(test(/^\d$/), prop('id')),
-      // other props control
-    ])
-  )(this.getSelectedPublicFigure());
+  isPublicFigureComplete = () => cond([
+    [isNil, always(false)],
+    [isCustom, isComplete],
+    [T, always(true)],
+  ])(this.getSelectedPublicFigure());
 
   isSubjectComplete = () => ifElse(
     isNil,
