@@ -2,15 +2,17 @@ import React, { PropTypes, Component } from 'react';
 import { always, cond, T } from 'ramda';
 import moment from 'moment';
 import FieldGroup from 'components/FieldGroup';
-import { isNotNil } from 'helpers/ramda-ext';
+import { isNotEmpty } from 'helpers/ramda-ext';
+
+const dateFormat = 'DD/MM/YYYY';
 
 const isValidDate = date => {
-  const m = moment(date, 'DD-MM-YYYY', true);
+  const m = moment(date, dateFormat, true);
   return m.isValid() && m.isSameOrBefore(moment(), 'day');
 };
 const getFieldValidationState = isValidFunc => cond([
   [isValidFunc, always('success')],
-  [isNotNil, always('error')],
+  [isNotEmpty, always('error')],
   [T, always(null)],
 ]);
 
@@ -29,9 +31,10 @@ class DateField extends Component {
 
   onChange = event => {
     const typed = event.target.value;
+    const m = moment(typed, dateFormat, true);
     this.setState({ typed });
-    if (isValidDate(typed) && !moment(typed).isSame(this.props.selected, 'day'))
-      this.props.onChange(moment(typed));
+    if (isValidDate(typed) && !m.isSame(this.props.selected, 'day'))
+      this.props.onChange(m);
     else if (!isValidDate(typed))
       this.props.onChange(null);
   };
@@ -44,8 +47,8 @@ class DateField extends Component {
         type="text"
         placeholder="jj/mm/aaaa"
         help="Explication"
-        value={this.state.typed || this.props.selected ? this.props.selected.format('DD/MM/YYYY') : ''}
-        validationState={getFieldValidationState(isValidDate)(this.props.selected)}
+        value={this.state.typed || (this.props.selected ? this.props.selected.format(dateFormat) : '')}
+        validationState={getFieldValidationState(isValidDate)(this.state.typed)}
         onChange={this.onChange}
       />
     );
