@@ -41,19 +41,3 @@ function* fetchEntityIfNeeded(action) {
 export function* watchEntityAccess() {
     yield* takeEvery(actionsTypes.ENTITY_ACCESS, fetchEntityIfNeeded);
 }
-
-function* fetchPositionsOfSubject(action) {
-    if (!!action.id) {
-        // Call API
-        const response = yield call(getPositions, action.id);
-
-        // Error actions
-
-        // Success actions
-        yield put({ type: actionsTypes.ENTITY_READ, data: response.data });
-    }
-}
-
-export function* watchSubjectSelection() {
-    yield* takeEvery(actionsTypes.ADD_STATEMENT_SUBJECT_SELECTION, fetchPositionsOfSubject);
-}
