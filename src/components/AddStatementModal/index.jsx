@@ -103,7 +103,7 @@ class AddStatementModal extends Component {
   isQuoteValid = () => trim(this.state.quote).length > QUOTE_MIN_CHARS;
   isDateValid = () => this.state.date && this.state.date.isValid() && this.state.date.isSameOrBefore(moment(), 'day');
 
-  onSubject = subject => this.setState({ subject });
+  onSubject = subject => this.setState({ subject, position: null });
   onPublicFigure = publicFigure => this.setState({ publicFigure });
   onPosition = position => this.setState({ position });
   onDate = date => this.setState({ date });

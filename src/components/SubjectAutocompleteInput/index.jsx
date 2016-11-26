@@ -4,8 +4,7 @@ import Typeahead from 'react-bootstrap-typeahead';
 import { getSubjectsAutocomplete } from 'api/debats';
 import { flattenAttributes } from 'api/jsonApiParser';
 import { enrichWithRelationships } from 'store/selectors/entities';
-
-import { withConsole } from 'helpers/debug';
+import { makeCancelable } from 'helpers/promises';
 
 const parseSubjects = raw => pipe(
     flattenAttributes,
@@ -26,15 +25,27 @@ class SubjectAutocompleteInput extends Component {
         suggestions: [],
     };
 
+    componentWillUnmount() {
+      if (this.currentFetch)
+        this.currentFetch.cancel();
+    }
+
     loadSuggestions = (typed) => {
-        if (!!this.props.selected) this.props.onSelection(null);
-        if (!!typed.length)
-            getSubjectsAutocomplete(typed)
-                .then((response) => {
-                    this.setState({
-                        suggestions: parseSubjects(response.data),
-                    });
-                });
+      if (this.props.selected)
+        this.props.onSelection(null);
+      if (typed.length) {
+        if (this.currentFetch)
+          this.currentFetch.cancel();
+
+        this.currentFetch = makeCancelable(getSubjectsAutocomplete(typed));
+        this.currentFetch.promise
+          .then((response) => {
+            this.setState({
+              suggestions: parseSubjects(response.data),
+            });
+          })
+        ;
+      }
     };
 
     renderMenuItemChildren = (typeaheadProps, subject) => (
