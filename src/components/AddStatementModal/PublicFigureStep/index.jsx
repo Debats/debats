@@ -30,7 +30,6 @@ class PublicFigureStep extends Component {
   };
 
   showAddForm = selection => {
-    console.log('jarfaoui', selection);
     this.setState({
       showForm: true,
       name: selection.name,
