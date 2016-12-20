@@ -4,18 +4,19 @@ import cssModules from 'react-css-modules';
 import { Navbar, Nav, NavItem } from 'react-bootstrap';
 import { LinkContainer, IndexLinkContainer } from 'react-router-bootstrap';
 
+import paths from 'constants/paths';
+
 import ConnectedUserMenu from './';
 
-import paths from 'constants/paths';
 import logoImg from './images/logo_header.png';
 import styles from './Header.css';
 
-const renderUserMenu = (isConnected) => (
+const renderUserMenu = isConnected => (
   isConnected
   ? <ConnectedUserMenu />
   : [
-      <li><a>Connexion</a></li>,  /* modal ! */
-      <li><a>Inscription</a></li>, /* modal ! */
+    <li><a>Connexion</a></li>,  /* modal ! */
+    <li><a>Inscription</a></li>, /* modal ! */
   ]
 );
 
@@ -25,7 +26,7 @@ const Header = () => (
       <Navbar.Brand>
         <IndexLinkContainer to="/" styleName="logo">
           <NavItem>
-            <img src={logoImg} />
+            <img alt="Brand Logo" src={logoImg} />
           </NavItem>
         </IndexLinkContainer>
       </Navbar.Brand>

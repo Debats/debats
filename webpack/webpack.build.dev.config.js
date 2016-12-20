@@ -5,6 +5,7 @@ const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const CONSTANTS = require('./constants');
+
 const APP_ROOT = CONSTANTS.APP_ROOT;
 const SRC_FOLDER = CONSTANTS.SRC_FOLDER;
 

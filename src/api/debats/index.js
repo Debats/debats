@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { curry } from 'ramda';
 import axios from 'axios';
 import Config from 'Config';
@@ -13,4 +15,3 @@ export const getStatements = () => get('statements');
 export const getPublicFiguresAutocomplete = typed => get(`autocomplete/public_figure/${typed}`);
 export const getSubjectsAutocomplete = typed => get(`autocomplete/subject/${typed}`);
 export const getPositions = subjectId => get(`subjects/${subjectId}/positions`);
-

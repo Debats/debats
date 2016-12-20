@@ -122,7 +122,7 @@ class AddStatementModal extends Component {
     if (this.state.step === steps.POSITION)
       return (!this.isStatementComplete());
     return false;
-  }
+  };
 
   hasIncompleteStep = () => !(
     this.isPublicFigureComplete()
