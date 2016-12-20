@@ -13,7 +13,6 @@ const parseSubjects = raw => pipe(
     )
 )(raw.data);
 
-
 class SubjectAutocompleteInput extends Component {
 
     static propTypes = {
@@ -57,23 +56,41 @@ class SubjectAutocompleteInput extends Component {
 
     onSelection = compose(this.props.onSelection, head);
 
-    render() {
-        return (
-            <Typeahead
-                name="subject"
-                options={this.state.suggestions}
-                selected={of(this.props.selected)}
-                emptyLabel="Aucun sujet correspondante"
-                labelKey="title"
-                minLength={3}
-                allowNew
-                newSelectionPrefix="Ajouter "
-                onChange={this.onSelection}
-                onInputChange={this.loadSuggestions}
-                renderMenuItemChildren={this.renderMenuItemChildren}
-            />
-        );
-    }
+  loadSuggestions = (typed) => {
+    if (this.props.selected) this.props.onSelection(null);
+    if (typed.length) {
+      getSubjectsAutocomplete(typed)
+        .then((response) => {
+          this.setState({
+            suggestions: flattenAttributes(response.data.data),
+          });
+        }); }
+  };
+
+  renderMenuItemChildren = (typeaheadProps, subject) => (
+    <div>
+      <p>{subject.title} </p>
+      <small>{take(100)(subject.presentation)}</small>
+    </div>
+    );
+
+  render() {
+    return (
+      <Typeahead
+        name="subject"
+        options={this.state.suggestions}
+        selected={of(this.props.selected)}
+        emptyLabel="Aucun sujet correspondante"
+        labelKey="title"
+        minLength={3}
+        allowNew
+        newSelectionPrefix="Ajouter "
+        onChange={this.onSelection}
+        onInputChange={this.loadSuggestions}
+        renderMenuItemChildren={this.renderMenuItemChildren}
+      />
+    );
+  }
 
 }
 

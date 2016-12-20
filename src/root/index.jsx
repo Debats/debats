@@ -4,14 +4,14 @@ import { Router } from 'react-router';
 import routes from '../routes';
 
 const Root = ({ store, history }) => (
-    <Provider store={store}>
-        <Router history={history} routes={routes} />
-    </Provider>
+  <Provider store={store}>
+    <Router history={history} routes={routes} />
+  </Provider>
 );
 
 Root.propTypes = {
-    store: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired,
+  store: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 export default Root;

@@ -1,3 +1,3 @@
 import { urlRegex } from './generic';
 
-export const isValidEvidenceUrl = (tested) => urlRegex.test(tested);
+export const isValidEvidenceUrl = tested => urlRegex.test(tested);

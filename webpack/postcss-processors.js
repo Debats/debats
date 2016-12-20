@@ -12,35 +12,36 @@ const postcssHide = require('postcss-hide');
 
 const CONSTANTS = require('./constants');
 
-const makeMap = aPath => {
-    try {
-        return webpackPostcssTools.makeVarMap(aPath);
-    } catch (e) {
+const makeMap = (aPath) => {
+  try {
+    return webpackPostcssTools.makeVarMap(aPath);
+  } catch (e) {
         // console.log(`${aPath} not found.`);
-        process.exit(1);
-    }
-    return null;
+    process.exit(1);
+  }
+  return null;
 };
 
 const map = makeMap('./src/styles/_constants.css');
 
+// eslint-disable-next-line no-unused-vars
 module.exports = webpack => [
-    postcssMixins({
-        mixinsDir: path.join(CONSTANTS.APP_PATH, 'style', 'mixins'),
-    }),
-    atImport(),
-    postcssShortPosition(),
-    postcssAssets(),
-    postcssColorFunction(),
-    postcssNext({
-        features: {
-            customProperties: {
-                variables: map.vars,
-                warnings: false,
-            },
-        },
-    }),
-    lost(),
-    postcssInlineSVG(),
-    postcssHide(),
+  postcssMixins({
+    mixinsDir: path.join(CONSTANTS.APP_PATH, 'style', 'mixins'),
+  }),
+  atImport(),
+  postcssShortPosition(),
+  postcssAssets(),
+  postcssColorFunction(),
+  postcssNext({
+    features: {
+      customProperties: {
+        variables: map.vars,
+        warnings: false,
+      },
+    },
+  }),
+  lost(),
+  postcssInlineSVG(),
+  postcssHide(),
 ];
