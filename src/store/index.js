@@ -8,7 +8,7 @@ import createHashHistory from 'history/lib/createHashHistory';
 import createMemoryHistory from 'history/lib/createMemoryHistory';
 
 import rootSaga from './sagas';
-import { entitiesReducer, addStatementReducer } from './reducers';
+import { entitiesReducer } from './reducers';
 
 // Build history
 const createHistory = isClientSide() ? createHashHistory : createMemoryHistory;
@@ -22,7 +22,6 @@ const initialState = isClientSide() ? window.__INITIAL_STATE__ : {};
 const reducer = combineReducers({
   routing: routerReducer,
   entities: entitiesReducer,
-  addStatement: addStatementReducer,
 });
 
 // MIDDLEWARE

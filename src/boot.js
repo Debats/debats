@@ -2,7 +2,7 @@ import moment from 'moment';
 import 'bootstrap-loader';
 
 const locale = 'fr';
-
+moment.locale(locale);
 moment.locale(locale, {
   calendar : {
     lastDay : '[Hier]',

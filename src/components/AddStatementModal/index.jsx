@@ -285,7 +285,7 @@ class AddStatementModal extends Component {
             }
             {step === steps.SUMMARY &&
             <Button
-              onClick={onValidate}
+              onClick={() => onValidate(this.state)}
               disabled={!this.isComplete()}
               bsStyle="success"
             >

@@ -1,11 +1,16 @@
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import { Button } from 'react-bootstrap';
 import AddStatementModal from 'components/AddStatementModal';
+import connect from './connector';
 
 class AddStatementButton extends Component {
+  static propTypes = {
+    onValidate: PropTypes.func.isRequired,
+  };
+
   state = {
     showModal: false,
-  }
+  };
 
   close = () => this.setState({ showModal: false });
   open = () => this.setState({ showModal: true });
@@ -18,12 +23,12 @@ class AddStatementButton extends Component {
           bsSize="xsmall"
           onClick={this.open}
         >
-                    Nouvelle prise de position
-                </Button>
-        <AddStatementModal show={this.state.showModal} onHide={this.close} />
+          Nouvelle prise de position
+        </Button>
+        <AddStatementModal show={this.state.showModal} onHide={this.close} onValidate={this.props.onValidate} />
       </div>
     );
   }
 }
 
-export default AddStatementButton;
+export default connect(AddStatementButton);

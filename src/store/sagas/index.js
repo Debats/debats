@@ -1,9 +1,9 @@
-import { watchEntityAccess, watchSubjectSelection } from './apiSaga';
-
+import { watchEntityAccess } from './apiSaga';
+import { watchStatementValidation } from './postStatement';
 
 export default function* rootSaga() {
   yield [
     watchEntityAccess(),
-    watchSubjectSelection(),
+    watchStatementValidation(),
   ];
 }
