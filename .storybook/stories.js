@@ -1,3 +1,4 @@
+/* eslint-disable import/imports-first */
 import jquery from 'jquery';
 global.$ = jquery;
 global.jQuery = jquery;

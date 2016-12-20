@@ -14,45 +14,45 @@ const getId = prop('id');
 const getAttributesPair = objectWithAttributes => toPairs(objectWithAttributes.attributes);
 
 const mergeAttributes = entityWithAttributes => compose(
-    reduce(
-        (entity, attributePair) => (assoc(attributePair[0], attributePair[1], entity)),
-        entityWithAttributes
+  reduce(
+    (entity, attributePair) => (assoc(attributePair[0], attributePair[1], entity)),
+    entityWithAttributes
     ),
-    getAttributesPair,
+  getAttributesPair,
 )(entityWithAttributes);
 
 const overAttributes = over(lensProp('attributes'));
 
 const toCamelCase = replace(
-    /-[a-z]/g,
-    compose(replace('-', ''), toUpper)
+  /-[a-z]/g,
+  compose(replace('-', ''), toUpper)
 );
 
 const toCamelCaseAttributes = overAttributes(pipe(
-    toPairs,
-    map(
-        ([k, v]) => ([toCamelCase(k), v])
+  toPairs,
+  map(
+    ([k, v]) => ([toCamelCase(k), v])
     ),
-    fromPairs,
+  fromPairs,
 ));
 
 export const flattenAttributes = pipe(
-    map(pipe(
-        toCamelCaseAttributes,
-        mergeAttributes,
-        dissoc('attributes'),
+  map(pipe(
+    toCamelCaseAttributes,
+    mergeAttributes,
+    dissoc('attributes'),
     )),
 );
 
 export const index = pipe(
-    when(isNotArray, of),
-    flattenAttributes,
-    map(indexBy(getId))
+  when(isNotArray, of),
+  flattenAttributes,
+  map(indexBy(getId))
 );
 
 export const indexAndGroup = pipe(
-    when(isNotArray, of),
-    flattenAttributes,
-    groupBy(getType),
-    map(indexBy(getId))
+  when(isNotArray, of),
+  flattenAttributes,
+  groupBy(getType),
+  map(indexBy(getId))
 );
