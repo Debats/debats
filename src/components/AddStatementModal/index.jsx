@@ -22,12 +22,17 @@ const steps = {
   SUMMARY: 5,
 };
 
+const { bool, func, shape, number, string, arrayOf } = PropTypes;
+
 class AddStatementModal extends Component {
 
   static propTypes = {
-    show: PropTypes.bool,
-    onHide: PropTypes.func.isRequired,
-    onValidate: PropTypes.func.isRequired,
+    show: bool,
+    onHide: func.isRequired,
+    onValidate: func.isRequired,
+    publicFigure: shape({ id: number, name: string }),
+    subject: shape({ id: number, title: string, position: arrayOf(shape({ id: number, title: string })) }),
+    position: number,
   };
 
   state = {
@@ -47,22 +52,22 @@ class AddStatementModal extends Component {
     this.autoDetectStep();
   }
 
-  autoDetectStep = () => {
-    if (!this.isPublicFigureComplete())
-      this.setState({step: steps.PUBLIC_FIGURE});
-    else if (!this.isSubjectComplete())
-      this.setState({step: steps.SUBJECT});
-    else if (!this.isPositionComplete())
-      this.setState({step: steps.POSITION});
-    else if (!this.isStatementComplete())
-      this.setState({step: steps.STATEMENT});
-    else
-      this.setState({step: steps.SUMMARY});
-  };
-
   getSelectedPublicFigure = () => (this.props.publicFigure || this.state.publicFigure);
   getSelectedSubject = () => (this.props.subject || this.state.subject);
   getSelectedPosition = () => (this.props.position || this.state.position);
+
+  autoDetectStep = () => {
+    if (!this.isPublicFigureComplete())
+      this.setState({ step: steps.PUBLIC_FIGURE });
+    else if (!this.isSubjectComplete())
+      this.setState({ step: steps.SUBJECT });
+    else if (!this.isPositionComplete())
+      this.setState({ step: steps.POSITION });
+    else if (!this.isStatementComplete())
+      this.setState({ step: steps.STATEMENT });
+    else
+      this.setState({ step: steps.SUMMARY });
+  };
 
   isPublicFigureComplete = () => ifElse(
     isNil,
@@ -91,17 +96,17 @@ class AddStatementModal extends Component {
   isEvidenceFileValid = () => true;
   isQuoteValid = () => trim(this.state.quote).length > QUOTE_MIN_CHARS;
 
-  onSubject = subject => this.setState({subject});
-  onPublicFigure = publicFigure => this.setState({publicFigure});
-  onPosition = position => this.setState({position});
-  onDate = date => this.setState({date});
-  onEvidenceUrl = evidenceUrl => this.setState({evidenceUrl});
-  onEvidenceFiles = evidenceFiles => this.setState({evidenceFile: head(evidenceFiles)});
-  onEvidenceSource = source => this.setState({evidenceSource: source});
-  onQuote = quote => this.setState({quote});
-  onNote = note => this.setState({note});
-  onAddTag = tag => this.setState({tags: append(tag, this.state.tags)});
-  onRemoveTag = tag => this.setState({tags: reject(equals(tag), this.state.tags)});
+  onSubject = subject => this.setState({ subject });
+  onPublicFigure = publicFigure => this.setState({ publicFigure });
+  onPosition = position => this.setState({ position });
+  onDate = date => this.setState({ date });
+  onEvidenceUrl = evidenceUrl => this.setState({ evidenceUrl });
+  onEvidenceFiles = evidenceFiles => this.setState({ evidenceFile: head(evidenceFiles) });
+  onEvidenceSource = source => this.setState({ evidenceSource: source });
+  onQuote = quote => this.setState({ quote });
+  onNote = note => this.setState({ note });
+  onAddTag = tag => this.setState({ tags: append(tag, this.state.tags) });
+  onRemoveTag = tag => this.setState({ tags: reject(equals(tag), this.state.tags) });
 
   /* const isPublicFigureStep = compose(equals(steps.PUBLIC_FIGURE), prop('step'));
    const isSubjectStep = compose(equals(steps.SUBJECT), prop('step'));
@@ -129,36 +134,38 @@ class AddStatementModal extends Component {
   isCurrentStepBefore = otherStep => this.state.step < otherStep;
 
   firstIncompleteStepAfterCurrent = () => {
-    if (!this.props.selectedSubject && this.isCurrentStepBefore(steps.SUBJECT))
+    if (!this.isSubjectComplete() && this.isCurrentStepBefore(steps.SUBJECT))
       return steps.SUBJECT;
-    else if (!this.props.selectedPosition && this.isCurrentStepBefore(steps.POSITION))
+    else if (!this.isPositionComplete() && this.isCurrentStepBefore(steps.POSITION))
       return steps.POSITION;
-    else if (!this.props.isStatementComplete && this.isCurrentStepBefore(steps.STATEMENT))
+    else if (!this.isStatementComplete() && this.isCurrentStepBefore(steps.STATEMENT))
       return steps.STATEMENT;
     return steps.SUMMARY;
   };
 
   firstIncompleteStep = () => {
-    if (!this.props.selectedSubject)
+    if (!this.isPublicFigureComplete())
+      return steps.PUBLIC_FIGURE;
+    if (!this.isSubjectComplete())
       return steps.SUBJECT;
-    else if (!this.props.selectedPosition)
+    else if (!this.isPositionComplete())
       return steps.POSITION;
-    else if (!this.props.isStatementComplete)
+    else if (!this.isStatementComplete())
       return steps.STATEMENT;
     return steps.SUMMARY;
   };
 
   nextStep = () => {
     if (this.hasIncompleteStepAfterCurrent())
-      this.setState({step: this.firstIncompleteStepAfterCurrent()});
+      this.setState({ step: this.firstIncompleteStepAfterCurrent() });
     else if (this.hasIncompleteStep())
-      this.setState({step: this.firstIncompleteStep()});
+      this.setState({ step: this.firstIncompleteStep() });
     else if (this.state.step < steps.SUMMARY)
-      this.setState({step: this.state.step + 1});
+      this.setState({ step: this.state.step + 1 });
   };
 
   previousStep = () => {
-    this.setState({step: this.state.step - 1});
+    this.setState({ step: this.state.step - 1 });
   };
 
   canGoNext = () => {
@@ -212,11 +219,12 @@ class AddStatementModal extends Component {
           />
         );
       case steps.SUMMARY:
+      default:
         return (
           <SummaryStep />
         );
     }
-  }
+  };
 
   render() {
     const {
@@ -225,7 +233,7 @@ class AddStatementModal extends Component {
       onValidate,
       isValidationReady
     } = this.props;
-    const {step} = this.state;
+    const { step } = this.state;
 
     return (
       <div className="static-modal">
@@ -236,7 +244,7 @@ class AddStatementModal extends Component {
           </Modal.Header>
 
           <Modal.Body>
-            <ProgressBar max={5} now={step}/>
+            <ProgressBar max={5} now={step} />
             {this.renderStepContent()}
           </Modal.Body>
 

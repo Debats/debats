@@ -64,11 +64,11 @@ const StatementStep = ({
       }}
     >
       {!evidenceFile &&
-      <span>
-                    ... ou une pièce jointe : Déposez vos fichiers ici !
-                </span>
+        <span>
+                      ... ou une pièce jointe : Déposez vos fichiers ici !
+        </span>
       }
-      {!!evidenceFile && <img height="64px" src={evidenceFile.preview}/> }
+      {!!evidenceFile && <img height="64px" src={evidenceFile.preview} /> }
       {/* TODO file type icon instead of preview if not image type */ }
     </Dropzone>
 
@@ -79,7 +79,7 @@ const StatementStep = ({
       help="20h de TF1"
       value={evidenceSource}
       validationState={evidenceSource && evidenceSource.length >= 3}
-      onChange={onUpdateEvidenceSource}
+      onChange={event => onUpdateEvidenceSource(event.target.value)}
     />
 
     <FieldGroup id="quote" label="Citation exacte" type="text" help="'Je souhaite défendre un truc'"/>
