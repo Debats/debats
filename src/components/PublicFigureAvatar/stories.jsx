@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
-// eslint-disable-next-line no-unused-vars
+
 import { storiesOf, action, linkTo } from '@kadira/storybook';
 import { withKnobs, text, boolean, number } from '@kadira/storybook-addon-knobs';
 import withReadme from 'storybook-readme/with-readme';
@@ -12,15 +13,15 @@ const stories = storiesOf('PublicFigureAvatar', module);
 stories.addDecorator(withKnobs);
 
 stories.addWithInfo(
-    'pony avatar',
-    'Description of the story',
-    withReadme(README,
-        () => (
-            <PublicFigureAvatar publicFigure={{ picture: { url: text('image url', 'http://tinyurl.com/jucz8b9') } }} />
+  'pony avatar',
+  'Description of the story',
+  withReadme(README,
+    () => (
+      <PublicFigureAvatar publicFigure={{ picture: { url: text('image url', 'http://tinyurl.com/jucz8b9') } }} />
         )
     )
 );
 
 stories.add('jake avatar', () => (
-    <PublicFigureAvatar publicFigure={{ picture: { url: 'http://tinyurl.com/jb286jq' } }} />
+  <PublicFigureAvatar publicFigure={{ picture: { url: 'http://tinyurl.com/jb286jq' } }} />
 ));

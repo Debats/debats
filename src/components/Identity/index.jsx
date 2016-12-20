@@ -5,7 +5,7 @@ import React, { PropTypes } from 'react';
 
 const Identity = ({ children }) => <div>{children}</div>;
 Identity.propTypes = {
-    children: PropTypes.node,
+  children: PropTypes.node,
 };
 
 export default Identity;

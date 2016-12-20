@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import { storiesOf, action, linkTo } from '@kadira/storybook';
 import Identity from './';

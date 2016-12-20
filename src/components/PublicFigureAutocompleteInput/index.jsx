@@ -1,8 +1,8 @@
-import React, { Component, PropTypes } from 'react';
-import { head, of, compose, when, prop, not, isNil } from 'ramda';
+import React, {Component, PropTypes} from 'react';
+import {head, of, compose, when, prop, not, isNil} from 'ramda';
 import Typeahead from 'react-bootstrap-typeahead';
-import { getPublicFiguresAutocomplete } from 'api/debats';
-import { flattenAttributes } from 'api/jsonApiParser';
+import {getPublicFiguresAutocomplete} from 'api/debats';
+import {flattenAttributes} from 'api/jsonApiParser';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
 import { makeCancelable } from 'helpers/promises';
 
