@@ -3,11 +3,11 @@ import { getHomeSubjectsWithRelations } from 'store/selectors';
 import { onHottestSubjectsAccess } from 'store/actions/entities';
 
 const mapStateToProps = state => ({
-    subjects: getHomeSubjectsWithRelations(state),
+  subjects: getHomeSubjectsWithRelations(state),
 });
 
 const mapDispatchToProps = dispatch => ({
-    onAccess: () => dispatch(onHottestSubjectsAccess()),
+  onAccess: () => dispatch(onHottestSubjectsAccess()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps);

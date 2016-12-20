@@ -1,4 +1,6 @@
-import { values, pipe, compose, map, dissoc, prop } from 'ramda';
+/* eslint-disable no-unused-vars */
+
+import { values, pipe, compose, map, dissoc } from 'ramda';
 import { whenNotNil } from 'helpers/ramda-ext';
 import { createSelector } from 'reselect';
 import { enrichWithRelationships, getSubjects, getPublicFigures } from './entities';
@@ -6,14 +8,14 @@ import { enrichWithRelationships, getSubjects, getPublicFigures } from './entiti
 const injectSubjects = enrichWithRelationships('subjects', 'subjects');
 
 export const getPublicFiguresWithRelations = createSelector(
-    getPublicFigures,
-    getSubjects,
-    (publicFigures, allSubjects) => whenNotNil(
-        compose(
-            values,
-            map(pipe(
+  getPublicFigures,
+  getSubjects,
+  (publicFigures, allSubjects) => whenNotNil(
+    compose(
+      values,
+      map(pipe(
                 // injectSubjects(allSubjects),
-                dissoc('relationthips'),
+        dissoc('relationthips'),
             ))
         )
     )(publicFigures)

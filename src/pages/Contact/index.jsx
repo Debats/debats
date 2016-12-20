@@ -13,12 +13,12 @@ const Contact = () => (
       <ul className="list-inline banner-social-buttons">
         <li>
           <a href="mailto:contact@debats.co" className="btn btn-default btn-lg">
-            <i className="fa fa-envelope-o fa-fw"></i><span className="network-name">&nbsp;Courriel</span>
+            <i className="fa fa-envelope-o fa-fw" /><span className="network-name">&nbsp;Courriel</span>
           </a>
         </li>
         <li>
           <a href="https://twitter.com/debatsco" className="btn btn-default btn-lg">
-            <i className="fa fa-twitter fa-fw"></i> <span className="network-name">Twitter</span>
+            <i className="fa fa-twitter fa-fw" /> <span className="network-name">Twitter</span>
           </a>
         </li>
       </ul>
