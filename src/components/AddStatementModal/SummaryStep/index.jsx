@@ -1,8 +1,6 @@
 import React, { PropTypes } from 'react';
-import moment from 'moment';
 import { propEq, prop, compose, find } from 'ramda';
 import { Well } from 'react-bootstrap';
-import { warn, withConsole } from 'helpers/debug';
 
 const getPositionInSubject = (position, subject) => compose(
   find(po => propEq('id', position, po)),
@@ -20,7 +18,7 @@ const SummaryStep = ({
             sur <a>{evidenceSource}</a> (<a>{evidenceUrl}</a>), &nbsp;
             <a>{publicFigure.name}</a> a déclaré&nbsp;
             <a>'{quote}'</a>,&nbsp;
-            prenant ainsi position en faveur de <a>{getPositionInSubject(position, subject).title}</a>&nbsp;
+            prenant ainsi position en faveur de <a>{position.title}</a>&nbsp;
             concernant <a>{subject.title}</a>.
         </blockquote>
         C'est tout bon ?
