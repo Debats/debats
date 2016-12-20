@@ -5,7 +5,6 @@ import AddSubjectFrom from './AddSubjectForm';
 
 const SubjectStep = ({ selected, onSelection }) => (
   <Well>
-<<<<<<< HEAD
     <FormGroup controlId="subjectSelect" validationState={selected && !selected.customOption ? 'success' : undefined}>
       <ControlLabel>Quel est le sujet qui fait débat ?</ControlLabel>
       {(!selected || !selected.customOption) &&
@@ -17,11 +16,6 @@ const SubjectStep = ({ selected, onSelection }) => (
         onChange={onSelection}
         onCancel={() => onSelection(null)}
       />}
-=======
-    <FormGroup controlId="subjectSelect" validationState={!!selected ? 'success' : undefined}>
-      <ControlLabel>Quel est le sujet qui fait débat ?</ControlLabel>
-      <SubjectAutocompleteInput selected={selected} onSelection={onSelection} />
->>>>>>> master
     </FormGroup>
   </Well>
 );
