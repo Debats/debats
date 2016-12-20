@@ -1,30 +1,28 @@
-import React, {PropTypes} from 'react';
-import {cond, always, not, isNil, T, compose} from 'ramda';
-import {FormGroup, ControlLabel, FormControl, Well, HelpBlock} from 'react-bootstrap';
-import DatePicker from '../../../../../../react-bootstrap-moment-date-picker/src/index'; // not working properly yet
-import {isValidEvidenceUrl} from 'validations/statements';
+import React, { PropTypes } from 'react';
+import { cond, always, T, test } from 'ramda';
+import { isNotEmpty } from 'helpers/ramda-ext';
+import DateField from './DateField';
+import { Well } from 'react-bootstrap';
+import { isValidEvidenceUrl } from 'validations/statements';
 import Dropzone from 'react-dropzone';
+import FieldGroup from 'components/FieldGroup';
 
-const FieldGroup = ({id, label, help, validationState, ...props}) => (
-  <FormGroup controlId={id} validationState={validationState}>
-    <ControlLabel>{label}</ControlLabel>
-    <FormControl {...props} />
-    {help && <HelpBlock>{help}</HelpBlock>}
-  </FormGroup>
-);
+const isValidQuote = test(/(\w ?){15,}/);
 
-const isNotNil = compose(not, isNil);
+const getFieldValidationState = isValidFunc => cond([
+  [isValidFunc, always('success')],
+  [isNotEmpty, always('error')],
+  [T, always(null)],
+]);
 
-const getEvidenceUrlValidationState = cond([
-  [isValidEvidenceUrl, always('success')],
-  [isNotNil, always('error')],
-  [T, always(undefined)],
-])
+const getEvidenceUrlValidationState = getFieldValidationState(isValidEvidenceUrl);
 
 const StatementStep = ({
   evidenceUrl, onUpdateEvidenceUrl,
   evidenceFile, onUpdateEvidenceFiles,
   evidenceSource, onUpdateEvidenceSource,
+  quote, onUpdateQuote,
+  date, onUpdateDate,
 }) => (
   <Well>
     <h4>Donnez-nous quelques détails : </h4>
@@ -78,18 +76,37 @@ const StatementStep = ({
       type="text"
       help="20h de TF1"
       value={evidenceSource}
-      validationState={evidenceSource && evidenceSource.length >= 3}
+      validationState={(evidenceSource && evidenceSource.length >= 3) ? 'success' : null}
       onChange={event => onUpdateEvidenceSource(event.target.value)}
     />
 
-    <FieldGroup id="quote" label="Citation exacte" type="text" help="'Je souhaite défendre un truc'"/>
-    <FormGroup controlId="statementDate">
-      <ControlLabel>Date des faits</ControlLabel>
-      { /* Not working properly yet <DatePicker placeholder="jj/mm/aaaa" /> */}
-      <FormControl type="text" placeholder="jj/mm/aaaa"/>
-      <HelpBlock>Explication</HelpBlock>
-    </FormGroup>
+    <FieldGroup
+      id="quote"
+      label="Citation exacte"
+      type="text"
+      help="'Je souhaite défendre un truc'"
+      value={quote}
+      validationState={getFieldValidationState(isValidQuote)(quote)}
+      onChange={event => onUpdateQuote(event.target.value)}
+    />
+
+    <DateField
+      selected={date}
+      onChange={onUpdateDate}
+    />
   </Well>
 );
+StatementStep.propTypes = {
+  evidenceUrl: PropTypes.string,
+  evidenceFile: PropTypes.string,
+  evidenceSource: PropTypes.string,
+  quote: PropTypes.string,
+  date: PropTypes.string,
+  onUpdateEvidenceUrl: PropTypes.func.isRequired,
+  onUpdateEvidenceFiles: PropTypes.func.isRequired,
+  onUpdateEvidenceSource: PropTypes.func.isRequired,
+  onUpdateQuote: PropTypes.func.isRequired,
+  onUpdateDate: PropTypes.func.isRequired,
+};
 
 export default StatementStep;

@@ -1,3 +1,3 @@
-export const isValidEvidenceUrl = tested => (
-    /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(tested)
-);
+import { urlRegex } from './generic';
+
+export const isValidEvidenceUrl = tested => urlRegex.test(tested);

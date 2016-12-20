@@ -1,18 +1,17 @@
-import React, {PropTypes, Component} from 'react';
-import {Modal, Button, ProgressBar} from 'react-bootstrap';
+import React, { PropTypes, Component } from 'react';
+import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import {
-  identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, head
+  identity, append, reject, equals, trim, allPass, prop, compose, test, ifElse, isNil, always, head, cond, T, propEq,
 } from 'ramda';
+import moment from 'moment';
 import './AddStatementModal.css';
 import PublicFigureStep from './PublicFigureStep';
 import SubjectStep from './SubjectStep';
 import PositionStep from './PositionStep';
 import StatementStep from './StatementStep';
 import SummaryStep from './SummaryStep';
-import {QUOTE_MIN_CHARS} from 'constants/limits';
-import {isValidEvidenceUrl} from 'validations/statements';
-
-import {withConsole} from 'helpers/debug';
+import { QUOTE_MIN_CHARS } from 'constants/limits';
+import { isValidEvidenceUrl } from 'validations/statements';
 
 const steps = {
   PUBLIC_FIGURE: 1,
@@ -22,7 +21,15 @@ const steps = {
   SUMMARY: 5,
 };
 
-const { bool, func, shape, number, string, arrayOf } = PropTypes;
+const { bool, func, shape, number, string, arrayOf, oneOfType } = PropTypes;
+
+const isCustom = propEq('customOption', true);
+const isComplete = propEq('isComplete', true);
+const isEntityComplete = cond([
+  [isNil, always(false)],
+  [isCustom, isComplete],
+  [T, always(true)],
+]);
 
 class AddStatementModal extends Component {
 
@@ -30,9 +37,20 @@ class AddStatementModal extends Component {
     show: bool,
     onHide: func.isRequired,
     onValidate: func.isRequired,
-    publicFigure: shape({ id: number, name: string }),
-    subject: shape({ id: number, title: string, position: arrayOf(shape({ id: number, title: string })) }),
-    position: number,
+    publicFigure: shape({
+      id: oneOfType([string, number]).isRequired,
+      name: string,
+    }),
+    subject: shape({
+      id: oneOfType([string, number]).isRequired,
+      title: string,
+      position: arrayOf(shape({ id: number, title: string })),
+    }),
+    position: shape({
+      id: oneOfType([string, number]).isRequired,
+      title: string.isRequired,
+      description: string,
+    }),
   };
 
   state = {
@@ -42,9 +60,9 @@ class AddStatementModal extends Component {
     date: null,
     evidenceUrl: null,
     evidenceFile: null,
-    evidenceSource: null,
+    evidenceSource: '',
     quote: '',
-    note: null,
+    note: '',
     tags: [],
   };
 
@@ -69,32 +87,21 @@ class AddStatementModal extends Component {
       this.setState({ step: steps.SUMMARY });
   };
 
-  isPublicFigureComplete = () => ifElse(
-    isNil,
-    always(false),
-    allPass([
-      compose(test(/^\d$/), prop('id')),
-      // other props control
-    ])
-  )(this.getSelectedPublicFigure());
+  isPublicFigureComplete = () => isEntityComplete(this.getSelectedPublicFigure());
+  isSubjectComplete = () => isEntityComplete(this.getSelectedSubject());
+  isPositionComplete = () => isEntityComplete(this.getSelectedPosition());
 
-  isSubjectComplete = () => ifElse(
-    isNil,
-    always(false),
-    allPass([
-      compose(test(/^\d$/), prop('id')),
-      // other props control
-    ])
-  )(this.getSelectedSubject());
-
-  isPositionComplete = () => test(/^\d$/, this.getSelectedPosition());
-
-  isStatementComplete = () => (this.isEvidenceValid() && this.isQuoteValid());
+  isStatementComplete = () => (
+    this.isEvidenceValid()
+    && this.isQuoteValid()
+    && this.isDateValid()
+  );
 
   isEvidenceValid = () => this.isEvidenceUrlValid() || this.isEvidenceFileValid();
   isEvidenceUrlValid = () => isValidEvidenceUrl(this.state.evidenceUrl);
   isEvidenceFileValid = () => true;
   isQuoteValid = () => trim(this.state.quote).length > QUOTE_MIN_CHARS;
+  isDateValid = () => this.state.date && this.state.date.isValid() && this.state.date.isSameOrBefore(moment(), 'day');
 
   onSubject = subject => this.setState({ subject });
   onPublicFigure = publicFigure => this.setState({ publicFigure });
@@ -124,12 +131,14 @@ class AddStatementModal extends Component {
     return false;
   };
 
-  hasIncompleteStep = () => !(
+  isComplete = () => (
     this.isPublicFigureComplete()
     && this.isSubjectComplete()
     && this.isPositionComplete()
     && this.isStatementComplete()
   );
+
+  hasIncompleteStep = () => !this.isComplete();
 
   isCurrentStepBefore = otherStep => this.state.step < otherStep;
 
@@ -210,18 +219,32 @@ class AddStatementModal extends Component {
       case steps.STATEMENT:
         return (
           <StatementStep
-            evidenceUrl={this.state.evidenceUrl}
+            evidenceUrl={this.state.evidenceUrl ? this.state.evidenceUrl : ''}
             evidenceFile={this.state.evidenceFile}
             evidenceSource={this.state.evidenceSource}
+            quote={this.state.quote}
+            date={this.state.date}
             onUpdateEvidenceUrl={this.onEvidenceUrl}
             onUpdateEvidenceFiles={this.onEvidenceFiles}
             onUpdateEvidenceSource={this.onEvidenceSource}
+            onUpdateQuote={this.onQuote}
+            onUpdateDate={this.onDate}
           />
         );
       case steps.SUMMARY:
       default:
         return (
-          <SummaryStep />
+          <SummaryStep
+            publicFigure={this.getSelectedPublicFigure()}
+            subject={this.getSelectedSubject()}
+            position={this.getSelectedPosition()}
+            evidenceUrl={this.state.evidenceUrl}
+            evidenceFile={this.state.evidenceFile}
+            evidenceSource={this.state.evidenceSource}
+            quote={this.state.quote}
+            date={this.state.date}
+            note={this.state.note}
+          />
         );
     }
   };
@@ -231,7 +254,6 @@ class AddStatementModal extends Component {
       show,
       onHide,
       onValidate,
-      isValidationReady
     } = this.props;
     const { step } = this.state;
 
@@ -264,7 +286,7 @@ class AddStatementModal extends Component {
             {step === steps.SUMMARY &&
             <Button
               onClick={onValidate}
-              disabled={!isValidationReady}
+              disabled={!this.isComplete()}
               bsStyle="success"
             >
               Valider

@@ -4,6 +4,7 @@ import Typeahead from 'react-bootstrap-typeahead';
 import {getPublicFiguresAutocomplete} from 'api/debats';
 import {flattenAttributes} from 'api/jsonApiParser';
 import PublicFigureAvatar from 'components/PublicFigureAvatar';
+import { makeCancelable } from 'helpers/promises';
 
 class PublicFigureAutocompleteInput extends Component {
 
@@ -16,16 +17,30 @@ class PublicFigureAutocompleteInput extends Component {
     suggestions: [],
   };
 
+  componentWillUnmount() {
+    if (this.currentFetch)
+      this.currentFetch.cancel();
+  }
+
+  focus = () => {
+    this.typeahead.focus();
+  };
+
   loadSuggestions = (typed) => {
-    if (!!this.props.selected)
+    if (this.props.selected)
       this.props.onSelection(null);
-    if (!!typed.length) {
-      getPublicFiguresAutocomplete(typed)
+    if (typed.length) {
+      if (this.currentFetch)
+        this.currentFetch.cancel();
+
+      this.currentFetch = makeCancelable(getPublicFiguresAutocomplete(typed));
+      this.currentFetch.promise
         .then((response) => {
           this.setState({
             suggestions: flattenAttributes(response.data.data),
           });
-        });
+        })
+      ;
     }
   };
 
@@ -38,28 +53,10 @@ class PublicFigureAutocompleteInput extends Component {
 
   onSelection = compose(this.props.onSelection, head);
 
-  loadSuggestions = (typed) => {
-    if (this.props.selected) this.props.onSelection(null);
-    if (typed.length) {
-      getPublicFiguresAutocomplete(typed)
-        .then((response) => {
-          this.setState({
-            suggestions: flattenAttributes(response.data.data),
-          });
-        });
-    }
-  };
-
-  renderMenuItemChildren = (typeaheadProps, publicFigure) => (
-    <div>
-      <PublicFigureAvatar publicFigure={publicFigure}/>
-      <span>{publicFigure.name}</span>
-    </div>
-  );
-
   render() {
     return (
       <Typeahead
+        ref={ref => this.typeahead = ref}
         name="publicFigure"
         options={this.state.suggestions}
         selected={of(this.props.selected)}
