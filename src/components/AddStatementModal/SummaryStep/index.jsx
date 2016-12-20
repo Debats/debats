@@ -2,6 +2,12 @@ import React, { PropTypes } from 'react';
 import { propEq, prop, compose, find } from 'ramda';
 import { Well } from 'react-bootstrap';
 
+const getPositionInSubject = (position, subject) => compose(
+  find(po => propEq('id', position, po)),
+  prop('positions'),
+)(subject);
+
+
 const SummaryStep = ({
   publicFigure, subject, position, date, evidenceUrl, evidenceFile, evidenceSource, quote, note, tags,
 }) => (
