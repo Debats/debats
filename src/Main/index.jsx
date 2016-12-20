@@ -5,18 +5,18 @@ import Footer from './Footer';
 import GoogleAnalytics from './GoogleAnalytics';
 
 const Main = ({ children }) => (
-    <div className="container-fluid">
-        <Header />
-        <FlashMessages />
-        <div className="main-content">
-            {children}
-        </div>
-        <Footer />
-        <GoogleAnalytics />
+  <div className="container-fluid">
+    <Header />
+    <FlashMessages />
+    <div className="main-content">
+      {children}
     </div>
+    <Footer />
+    <GoogleAnalytics />
+  </div>
 );
 Main.propTypes = {
-    children: PropTypes.node,
+  children: PropTypes.node,
 };
 
 export default Main;

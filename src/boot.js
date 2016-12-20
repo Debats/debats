@@ -1,5 +1,5 @@
-require('bootstrap-loader');
 import moment from 'moment';
+import 'bootstrap-loader';
 
 const locale = 'fr';
 moment.locale(locale);
@@ -16,7 +16,8 @@ moment.locale(locale, {
 
 // Install ImmutableDevTools
 if (process.env.NODE_ENV !== 'production') { // DEBUG/DEV MODE
-    const Immutable = require('immutable');
-    const installDevTools = require('immutable-devtools').default;
-    installDevTools(Immutable);
+  const Immutable = require('immutable');
+  const installDevTools = require('immutable-devtools').default;
+
+  installDevTools(Immutable);
 }
