@@ -8,7 +8,7 @@ const PublicFigureAvatarMapper = pf => <PublicFigureAvatar key={pf.id} publicFig
 const renderAssociatedPublicFigures = compose(
   map(PublicFigureAvatarMapper),
   take(5),
-  prop('remarquablePublicFigures'),
+  prop('publicFigures'),
 );
 
 const HomeSubject = ({ subject }) => (
@@ -21,7 +21,7 @@ const HomeSubject = ({ subject }) => (
           </Link>
         </h2>
         <h6 className="count">
-          {`${subject.remarquablePublicFigures.length} personnalité(s)`}
+          {`${subject.publicFigures.length} personnalité(s)`}
         </h6>
       </td>
       <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'middle' }}>
