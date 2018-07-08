@@ -1,0 +1,12 @@
+#service: debats-db
+endpoint: http://localhost:4467
+#stage: dev
+datamodel: datamodel.graphql
+# secret: marx2018
+
+#cluster: local
+
+hooks:
+  post-deploy:
+    - graphql get-schema --project database
+    - graphql prepare

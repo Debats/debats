@@ -1,0 +1,89 @@
+type User {
+    id: ID! @unique
+    name: String!
+    email: String! @unique
+    password: String!
+}
+
+type PublicFigure {
+    id: ID! @unique
+    name: String! @unique
+    wikipediaUrl: String! @unique
+    slug: String! @unique
+    statements: [Statement!]!
+    history: [UserAction!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    createdBy: User @relation(name: "PublicFigureCreatedByUser")
+    updatedBy: User @relation(name: "PublicFigureUpdatedByUser")
+}
+
+type Subject {
+    id: ID! @unique
+    title: String! @unique
+    slug: String! @unique
+    description: String! @unique
+    positions: [Position!]!
+    arguments: [Argument!]!
+    history: [UserAction!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    createdBy: User @relation(name: "SubjectCreatedByUser")
+    updatedBy: User @relation(name: "SubjectUpdatedByUser")
+}
+
+type Position {
+    id: ID! @unique
+    title: String!
+    description: String!
+    subject: Subject!
+    statements: [Statement!]!
+    history: [UserAction!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    createdBy: User @relation(name: "PositionCreatedByUser")
+    updatedBy: User @relation(name: "PositionUpdatedByUser")
+}
+
+type Argument {
+    id: ID! @unique
+    title: String!
+    description: String!
+    subject: Subject!
+    statements: [Statement!]!
+    history: [UserAction!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    createdBy: User @relation(name: "ArgumentCreatedByUser")
+    updatedBy: User @relation(name: "ArgumentUpdatedByUser")
+}
+
+type Statement {
+    id: ID! @unique
+    publicFigure: PublicFigure!
+    position: Position!
+    evidenceSource: String!
+    evidenceUrl: String
+    quote: String!
+    date: DateTime!
+    node: String!
+    arguments: [Argument!]!
+    history: [UserAction!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    createdBy: User @relation(name: "StatementCreatedByUser")
+    updatedBy: User @relation(name: "StatementUpdatedByUser")
+}
+
+#union Content = PublicFigure | Subject | Argument | Position | Statement
+#
+enum UserActionType {
+    CREATE
+}
+
+type UserAction {
+    id: ID! @unique
+    user: User!
+    actionType: UserActionType!
+#    content: Content
+}

@@ -1,0 +1,46 @@
+# import SubjectSubscriptionPayload, PublicFigure, Statement from "./database/generated/prisma.graphql"
+
+type Query {
+    subject(id: ID!): Subject
+    subjects(filter: String, last: Int, skip: Int): [Subject!]!
+    positions(subjectId: ID!): [Position!]!
+    statements(filter: String): [Statement!]!
+}
+
+type Mutation {
+    signup(email: String!, password: String!, name: String!): AuthPayload
+    login(email: String!, password: String!): AuthPayload
+    newSubject(title: String!, description: String!): Subject!
+}
+
+type Subscription {
+    newSubject: SubjectSubscriptionPayload
+}
+
+type AuthPayload {
+    token: String!
+    user: User!
+}
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    createdSubjects: [Subject!]!
+}
+
+type Subject {
+    id: ID!
+    title: String!
+    slug: String!
+    description: String!
+    positions: [Position!]!
+    arguments: [Argument!]!
+    history: [UserAction!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    createdBy: User
+    updatedBy: User
+
+    publicFigures: [PublicFigure!]!
+}
