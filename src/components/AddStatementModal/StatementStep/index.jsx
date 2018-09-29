@@ -3,7 +3,7 @@ import { cond, always, T, test } from 'ramda';
 import { isNotEmpty } from 'helpers/ramda-ext';
 import DateField from './DateField';
 import { Well } from 'react-bootstrap';
-import { isValidEvidenceUrl } from 'validations/statements';
+import { isValidEvidenceUrl } from 'domain/statements';
 import Dropzone from 'react-dropzone';
 import FieldGroup from 'components/FieldGroup';
 

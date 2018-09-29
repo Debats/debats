@@ -11,7 +11,7 @@ import PositionStep from './PositionStep';
 import StatementStep from './StatementStep';
 import SummaryStep from './SummaryStep';
 import { QUOTE_MIN_CHARS } from 'constants/limits';
-import { isValidEvidenceUrl } from 'validations/statements';
+import { isValidEvidenceUrl } from 'domain/statements';
 
 const steps = {
   PUBLIC_FIGURE: 1,

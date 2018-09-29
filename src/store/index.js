@@ -1,7 +1,6 @@
 import { createStore, applyMiddleware, combineReducers, compose } from 'redux'
 import { routerReducer, routerMiddleware, syncHistoryWithStore } from 'react-router-redux'
 import { map } from 'ramda'
-import { isClientSide } from 'helpers/env'
 import { useRouterHistory } from 'react-router'
 import createHashHistory from 'history/lib/createHashHistory'
 import createMemoryHistory from 'history/lib/createMemoryHistory'
@@ -9,12 +8,9 @@ import createMemoryHistory from 'history/lib/createMemoryHistory'
 import { entitiesReducer } from './reducers'
 
 // Build history
-const createHistory = isClientSide() ? createHashHistory : createMemoryHistory
+const createHistory = createHashHistory
 // const browserHistory = useScroll(useRouterHistory(createHistory))();
 const browserHistory = useRouterHistory(createHistory)()
-
-// INITIAL STATE
-const initialState = isClientSide() ? window.__INITIAL_STATE__ : {}
 
 // REDUCERS
 const reducer = combineReducers({
@@ -24,7 +20,7 @@ const reducer = combineReducers({
 
 // MIDDLEWARE
 const middlewares = [routerMiddleware(browserHistory)]
-if (isClientSide() && process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   middlewares.push(require('redux-logger')({
     stateTransformer: map(state => ((state && state.toJS) ? state.toJS() : state)),
     timestamp: true,
@@ -37,7 +33,7 @@ if (isClientSide() && process.env.NODE_ENV !== 'production') {
 // STORE
 const store = createStore(
   reducer,
-  initialState,
+  {},
   compose(
     applyMiddleware(...middlewares),
     window.devToolsExtension ? window.devToolsExtension() : f => f

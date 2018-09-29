@@ -28,7 +28,7 @@ const loaders = [
     loader: 'file?name=images/[name].[ext]',
   },
   {
-    test: /\.(eot|woff|ttf)$/,
+    test: /\.(eot|woff|woff2|ttf)$/,
     include: APP_PATH,
     loader: 'file-loader?name=fonts/[name].[ext]',
   },

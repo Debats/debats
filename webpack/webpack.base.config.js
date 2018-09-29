@@ -14,7 +14,6 @@ module.exports = {
     plugins,
     module: { loaders },
     externals: {
-        Config: JSON.stringify(require('../config/dev.config.json')),
         TweenLite: 'TweenLite',
     },
     node: {

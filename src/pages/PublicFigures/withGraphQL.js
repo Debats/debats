@@ -3,21 +3,16 @@ import { graphql } from 'react-apollo'
 
 const query = gql`
   query {
-      subjects (last: 20) {
+      publicFigures (last: 20) {
           id
-          title
+          name
           slug
-          publicFigures {
-              id
-              name,
-              slug
-          }
       }
   }
 `
 
 const options = {
-  props: ({ data }) => ({ lastSubjects: data.subjects })
+  props: ({ data }) => ({ publicFigures: data.publicFigures })
 }
 
 export default graphql(query, options)

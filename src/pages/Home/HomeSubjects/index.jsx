@@ -1,24 +1,18 @@
-import React, { PropTypes, Component } from 'react'
+import React from 'react'
 import HomeSubject from './HomeSubject'
 import withGraphQL from './withGraphQL'
 
-class HomeSubjects extends Component {
-  static propTypes = {
-    lastSubjects: PropTypes.arrayOf(PropTypes.object).isRequired
-  }
-
-  render () {
-    console.log('props', this.props)
-    if (!this.props.lastSubjects) return <span>loading subjects ...</span>
-
-    return (
-      <div> {/* TODO Bootstrap */}
-        {this.props.lastSubjects.map(
-          s => <HomeSubject key={s.id} subject={s} />
-        )}
+export default withGraphQL(
+  ({ lastSubjects }) => <Choose>
+    <When condition={lastSubjects}>
+      <div>
+        <For each='subject' of={lastSubjects}>
+          <HomeSubject key={subject.id} subject={subject} />
+        </For>
       </div>
-    )
-  }
-}
-
-export default withGraphQL(HomeSubjects)
+    </When>
+    <Otherwise>
+      <span>loading subjects ...</span>
+    </Otherwise>
+  </Choose>
+)

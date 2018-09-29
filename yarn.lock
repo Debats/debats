@@ -800,7 +800,7 @@ babel-core@<6.3.0:
     slash "^1.0.0"
     source-map "^0.5.0"
 
-babel-core@^6.0.0, babel-core@^6.11.4, babel-core@^6.2.4, babel-core@^6.24.1, babel-core@^6.26.0:
+babel-core@^6.0.0, babel-core@^6.1.2, babel-core@^6.11.4, babel-core@^6.2.4, babel-core@^6.24.1, babel-core@^6.26.0:
   version "6.26.3"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-6.26.3.tgz#b2e2f09e342d0f0c88e2f02e067794125e75c207"
   dependencies:
@@ -1025,6 +1025,13 @@ babel-plugin-jest-hoist@^16.0.0:
   version "16.0.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-jest-hoist/-/babel-plugin-jest-hoist-16.0.0.tgz#b58ca3f770982a7e7c25b5614b2e57e9dafc6e76"
 
+babel-plugin-jsx-control-statements@^3.2.8:
+  version "3.2.8"
+  resolved "https://registry.yarnpkg.com/babel-plugin-jsx-control-statements/-/babel-plugin-jsx-control-statements-3.2.8.tgz#6d2c265d51e82518b03cbbec3a57bd37ef955c7e"
+  dependencies:
+    babel-core "^6.1.2"
+    babel-plugin-syntax-jsx "^6.1.18"
+
 babel-plugin-ramda@^1.1.6:
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-ramda/-/babel-plugin-ramda-1.6.1.tgz#600efdcc2fe85620a6619cbccbd491f8699272e8"
@@ -1084,7 +1091,7 @@ babel-plugin-syntax-function-bind@^6.8.0:
   version "6.13.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-function-bind/-/babel-plugin-syntax-function-bind-6.13.0.tgz#48c495f177bdf31a981e732f55adc0bdd2601f46"
 
-babel-plugin-syntax-jsx@^6.2.4, babel-plugin-syntax-jsx@^6.3.13, babel-plugin-syntax-jsx@^6.8.0:
+babel-plugin-syntax-jsx@^6.1.18, babel-plugin-syntax-jsx@^6.2.4, babel-plugin-syntax-jsx@^6.3.13, babel-plugin-syntax-jsx@^6.8.0:
   version "6.18.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-jsx/-/babel-plugin-syntax-jsx-6.18.0.tgz#0af32a9a6e13ca7a3fd5069e62d7b0f58d0d8946"
 

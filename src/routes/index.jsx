@@ -70,10 +70,10 @@ export default (
       />
       <Route
         name="publicFigures.page"
-        path=":publicFigureSlug"
+        path=":slug"
         getComponent={(nextState, done) => {
           require.ensure([], (require) => {
-            done(null, require('pages/publicFigure').default);
+            done(null, require('pages/PublicFigure').default);
           }, 'publicFigures.page');
         }}
       />
