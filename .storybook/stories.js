@@ -1,10 +1,4 @@
 /* eslint-disable import/imports-first */
-import jquery from 'jquery';
-global.$ = jquery;
-global.jQuery = jquery;
-
-require('bootstrap-loader');
-
 import moment from 'moment';
 moment.locale('fr');
 moment.locale('fr', {
@@ -21,7 +15,7 @@ moment.locale('fr', {
 
 import '../src/styles/typo.css';
 
-import '../src/components/general/Identity/stories';
+import '../src/Main/Header/stories.jsx';
+import '../src/components/Identity/stories';
 import '../src/components/PublicFigureAvatar/stories';
-import '../src/Main/Header/stories.js';
 import '../src/components/AddStatementModal/stories';
