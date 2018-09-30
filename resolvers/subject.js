@@ -6,7 +6,7 @@ module.exports = {
     console.log('root', subject)
     const positionsWithPublicFigures = await context.db.query.positions(
       { where: { subject: { id: subject.id } } },
-      `{ statements { publicFigure { id name } } }`
+      `{ statements { publicFigure { id name slug } } }`
     )
     const publicFigures = pipe(
       pluck('statements'),

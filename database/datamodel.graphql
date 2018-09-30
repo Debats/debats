@@ -8,6 +8,7 @@ type User {
 type PublicFigure {
     id: ID! @unique
     name: String! @unique
+    presentation: String!
     wikipediaUrl: String! @unique
     slug: String! @unique
     statements: [Statement!]!

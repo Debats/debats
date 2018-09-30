@@ -14,8 +14,10 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.4",
     "graphql": "^0.13.2",
+    "graphql-cli": "^2.16.5",
     "graphql-yoga": "^1.14.10",
     "jsonwebtoken": "^8.3.0",
+    "prisma": "^1.13.7",
     "prisma-binding": "^2.1.0",
     "ramda": "^0.25.0"
   },

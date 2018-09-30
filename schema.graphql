@@ -5,6 +5,8 @@ type Query {
     subjects(filter: String, last: Int, skip: Int): [Subject!]!
     positions(subjectId: ID!): [Position!]!
     statements(filter: String): [Statement!]!
+    publicFigures(filter: String, last: Int, skip: Int): [PublicFigure!]!
+    publicFigure(id: ID, slug: String): PublicFigure
 }
 
 type Mutation {
