@@ -1,0 +1,64 @@
+mutation {
+    john: createUser (data: {name: "John Doe", email: "john@doe.fr", password: "doedoe"}) {id}
+    chuck: createUser (data: {name: "Chuck Norris", email: "chuck.is@everywhere", password: "godislame"}) {id}
+
+    hollande: createPublicFigure (data: {
+        name: "François Hollande",
+        presentation: """François Hollande, né le 12 août 1954 à Rouen en Seine-Inférieure, est un homme d&#39;État français. Depuis le 15 mai 2012, il est le 24e président de la République française.
+        Magistrat à la Cour des comptes, et avocat pendant quelques mois entre 1996 et 1997, il est premier secrétaire du Parti socialiste de 1997 à 2008, pendant la troisième cohabitation puis dans l&#39;opposition. Maire de Tulle de 2001 à 2008, il est député de la première circonscription de la Corrèze de 1988 à 1993 et de nouveau de 1997 à 2012, et préside le conseil général de la Corrèze de 2008 à 2012.
+        Désigné candidat du PS et du PRG à l&#39;élection présidentielle de 2012 à l&#39;issue d&#39;une primaire, il emporte le second tour avec 51,64 % des voix face au président sortant, Nicolas Sarkozy, le 6 mai 2012. Il prend ses fonctions de 24e président de la République française le 15 mai 2012.
+        """,
+        wikipediaUrl: "https://fr.wikipedia.org/wiki/Fran%C3%A7ois_Hollande",
+        slug: "francois-hollande",
+        createdBy: { connect: { email: "chuck.is@everywhere" } }
+    }) { id }
+    sarkozy: createPublicFigure (data: {
+        name: "Nicolas Sarkozy",
+        presentation: "Ancien président",
+        wikipediaUrl: "https://fr.wikipedia.org/wiki/Nicolas_Sarkozy",
+        slug: "nicolas-sarkozy",
+        createdBy: { connect: { email: "chuck.is@everywhere" } }
+    }) { id }
+    lepen: createPublicFigure (data: {
+        name: "Marine Le Pen",
+        presentation: "La présidente",
+        wikipediaUrl: "https://fr.wikipedia.org/wiki/Marine_Le_Pen",
+        slug: "marine-le-pen",
+        createdBy: { connect: { email: "chuck.is@everywhere" } }
+    }) { id }
+    lordon: createPublicFigure (data: {
+        name: "Frédéric Lordon",
+        presentation: "Débordement général",
+        wikipediaUrl: "https://fr.wikipedia.org/wiki/Fr%C3%A9d%C3%A9ric_Lordon",
+        slug: "frederic-lordon",
+        createdBy: { connect: { email: "chuck.is@everywhere" } }
+    }) { id }
+
+    histoire: createSubject( data: {
+        title: "Enseignement de l'Histoire de France"
+        slug: "enseignement-de-l-histoire-de-france",
+        description: "Depuis les années 1970, et comme pour toutes les nations, la vision nationaliste de l'histoire est remise en cause par de nombreux historiens et qualifiée de roman national (Pierre Nora), mythe national (Suzanne Citron), mythologie nationale (Roger Garaudy). Selon les historiens qui ont étudié la construction des histoires nationales le choix d'y inclure ou d'en exclure des personnages, des peuples et des événements ainsi que le point de vue selon lequel ils sont présentés est systématiquement biaisé (voire déformé) vers la légitimité de tout ce qui va dans le sens de l'éternité de la Nation dans ses limites au moins actuelles et l'illégitimité ou l'inexistence de tout ce qui la mettrait en cause.",
+        positions: { create: [
+            {
+                title: "Ordre chronologique",
+                description: "dans le sens du temps qui et que ne revient pas",
+                statements: { create: [
+                    {
+                        evidenceSource: "TF1",
+                        evidenceUrl: "http://www.tf1.fr",
+                        quote: "Dieu est mort",
+                        node: "node",
+                        date: "2018-04-04",
+                        publicFigure: { connect: { slug: "nicolas-sarkozy" }},
+                        arguments: {create: {
+                            title: "Sinon il serait vivint",
+                            description: "Ehhh oui",
+                            subject: { connect: { slug: "enseignement-de-l-histoire-de-france" }}
+                        }}
+                    }
+                ]}
+            }
+        ]},
+        createdBy: { connect: { email: "chuck.is@everywhere" }}
+    }) { id }
+}
