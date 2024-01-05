@@ -1,0 +1,18 @@
+<%= provide(:title, @user.name) %>
+<div class="row">
+  <div class="col-md-1"></div>
+  <aside class="col-md-4">
+    <section class="user_info">
+        <h1>
+          <%= gravatar_for @user, {size:160} %>
+          <%= @user.name %>
+        </h1>
+        <h2>
+          <p>Points de réputation : <%= @user.reputation %> </p>
+        </h2>
+
+      <%= link_to "Modifier", edit_user_path(@user), class: "btn btn-primary" %>
+      </p>
+    </section>
+  </aside>
+</div>

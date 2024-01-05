@@ -1,0 +1,15 @@
+{
+  "env": {
+    "es6": true,
+    "browser": true,
+    "mocha": true
+  },
+  "parser": "babel-eslint",
+  "plugins": ["react", "jsx-control-statements", "flowtype"],
+  "extends": [
+    "plugin:jsx-control-statements/recommended",
+    "plugin:flowtype/recommended",
+    "standard",
+    "standard-jsx"
+  ]
+}

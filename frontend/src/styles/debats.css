@@ -1,0 +1,156 @@
+
+/* Universal */
+
+:global body {
+  padding-top: 60px;
+}
+
+
+:global section {
+  overflow: auto;
+}
+
+:global textarea {
+  resize: vertical;
+}
+
+:global .center {
+  text-align: center;
+  h1 {
+    margin-bottom: 10px;
+  }
+}
+
+:global div.main-content {
+  min-height: 300px;
+  /* margin-top: 30px; */
+}
+
+/* forms */
+
+:global input, :global textarea, :global select, :global .uneditable-input {
+  border: 1px solid #bbb;
+  width: 100%;
+  margin-bottom: 15px;
+  @include box_sizing;
+}
+
+:global input {
+  height: auto !important;
+}
+
+:global #error_explanation {
+  color: red;
+  ul {
+    color: red;
+    margin: 0 0 30px 0;
+  }
+}
+
+:global .field_with_errors {
+  @extend .has-error;
+  .form-control {
+    color: $state-danger-text;
+  }
+}
+:global .checkbox {
+  margin-top: -10px;
+  margin-bottom: 10px;
+  span {
+    margin-left: 20px;
+    font-weight: normal;
+  }
+}
+
+:global statements {
+  list-style-type: none;
+}
+
+:global a:link, :global a:visited {
+  color: #333333;
+  text-decoration: none;
+}
+:global a:hover, :global a:visited:hover
+  {
+  color: #333333;
+  text-decoration: none;
+}
+
+:global .morepersonalities {
+  color:#f21e40 !important;
+  vertical-align:middle;
+  text-align:center;
+  margin-right:15px;
+}
+
+:global .thumbpersonalities {
+  height:40px;
+  width: 40px;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+  float:right;
+  margin-right:15px;
+}
+:global h6.count {
+  color:#f21e40 !important;
+  text-transform: lowercase;
+}
+
+:global .table>tbody>tr>td.seemore {
+    vertical-align: middle;
+}
+
+:global .seemore a:link, :global .seemore a:visited {
+  color:#f21e40 !important;
+  text-decoration:none !important;
+}
+
+:global .seemore a:hover, :global .seemore a:visited:hover {
+  color:#f21e40 !important;
+  text-decoration:none !important;
+}
+
+:global ul {
+  list-style-type: none;
+}
+
+:global .subjects-home {
+  margin-bottom:20px;
+  margin-top: 20px;
+  border-right: 1px solid #ccc;
+  padding-right: 20px;
+}
+
+:global .subjects-index {
+  padding-right: 20px;
+}
+
+:global .public-figures-index {
+ padding-right: 20px;
+ border-right: 1px solid #ccc; 
+}
+
+:global a.morelink:link,  :global a.morelink:visited {
+  color:#f21e40 !important;
+  text-decoration:none !important;
+}
+
+:global a.morelink:hover,  :global a.morelink:visited:hover {
+  color:#f21e40 !important;
+  text-decoration:none !important;
+}
+
+:global .publicfigurehead {
+  display: inline-block;
+}
+
+:global .publicfigurethumb {
+  height:120px; 
+  width: 120px; 
+  -webkit-border-radius: 50%; 
+  border-radius: 50%; 
+}
+
+:global .publicfiguredescription {
+  display: inline-block;
+}

@@ -1,0 +1,15 @@
+[ignore]
+
+[include]
+
+[libs]
+
+[lints]
+
+[options]
+module.name_mapper='^components' ->'<PROJECT_ROOT>/src/components'
+module.name_mapper='^domain' ->'<PROJECT_ROOT>/src/domain'
+module.name_mapper='^store' ->'<PROJECT_ROOT>/src/store'
+module.name_mapper='^types' ->'<PROJECT_ROOT>/src/types'
+
+[strict]

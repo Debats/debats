@@ -1,0 +1,25 @@
+Jalil:
+  name: Jalil Example
+  email: jalil@example.com
+  password_digest: <%= User.digest('password') %>
+  reputation: 1000000
+  activated: true
+  activated_at: <%= Time.zone.now %>
+
+Mehdi:
+  name: Mehdi Example
+  email: mehdi@example.com
+  password_digest: <%= User.digest('password') %>
+  reputation: 999
+  activated: true
+  activated_at: <%= Time.zone.now %>
+
+JohnDoe:
+  name: John Doe
+  email: john.doe@example.com
+  password_digest: <%= User.digest('password') %>
+  reputation: 0
+  activated: true
+  activated_at: <%= Time.zone.now %>
+
+

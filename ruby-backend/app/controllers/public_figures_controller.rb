@@ -1,0 +1,81 @@
+class PublicFiguresController < ApplicationController
+  respond_to :html, :json
+  before_action :find_public_figure, only: :show
+  before_action :check_reputation_to_destroy, only: :destroy
+  before_action :check_reputation_to_add, only: [:new, :create]
+
+
+  def index
+    @public_figures = PublicFigure.paginate(page: params[:page])
+    @latest_statements = Statement.latest
+  end
+
+  def show
+    @public_figure = PublicFigure.find(params[:public_figure_id])
+    @new_statement = @public_figure.statements.build
+    @latest_statements = Statement.latest
+  end
+
+  def new
+    @public_figure = PublicFigure.new
+    respond_modal_with @public_figure
+  end
+
+  def create
+    @public_figure = PublicFigure.new(public_figure_params)
+    if @public_figure.save
+      flash[:success] = "Personnalité \"#{@public_figure.name}\" référencée ! "
+      redirect_to @public_figure
+    else
+      render "new"
+    end
+  end
+
+  def destroy
+    public_figure = PublicFigure.find(params[:public_figure_id])
+    name = public_figure.name
+    public_figure.destroy  #TODO Mark deleted instead of really deleting record
+    flash[:success] = "\"#{name}\" supprimé"
+    redirect_to public_figures_url
+  end
+
+  private
+
+  def public_figure_params
+    params.require(:public_figure).permit(:name, :presentation, :picture)
+  end
+
+  def check_reputation_to_destroy
+    if !current_user
+      store_location
+      flash[:danger] = "Vous devez être identifié pour supprimer une personnalité"
+      redirect_to login_url
+    else
+      @public_figure = PublicFigure.find(params[:public_figure_id])
+      if @public_figure.major? && !allowed_to?(:delete_major_personality) ||
+          @public_figure.minor? && !allowed_to?(:delete_minor_personality)
+        flash[:danger] = "Vous n'avez pas assez de réputation pour supprimer une personnalité"
+        redirect_to(PublicFigure.find(params[:public_figure_id]))
+      end
+    end
+  end
+
+  def check_reputation_to_add
+    if !current_user
+      store_location
+      flash[:danger] = "Vous devez être identifié pour ajouter une personnalité"
+      redirect_to login_url
+    elsif !allowed_to? :add_personality
+      flash[:danger] = "Vous n'avez pas assez de réputation pour ajouter une personnalité"
+      redirect_to public_figures_url
+    end
+  end
+
+  def find_public_figure
+    @public_figure = PublicFigure.find params[:public_figure_id]
+    if request.path != public_figure_path(@public_figure)       # If old URL
+      redirect_to @public_figure, status: :moved_permanently    # Redirect to new URL
+    end
+  end
+
+end

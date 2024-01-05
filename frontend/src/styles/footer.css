@@ -1,0 +1,32 @@
+/* footer */
+
+:global footer {
+  clear:left;
+  margin-top: 55px;
+  padding-top: 5px;
+  border-top: 1px solid #eaeaea;
+  color: #777;
+
+:global a {
+    color: #555;
+	font-family: 'Gotham-Book', sans-serif;
+    &:hover {
+    color: #222;
+	font-family: 'Gotham-Book', sans-serif;
+    }
+  }
+
+:global small {
+    float: left;
+  }
+
+:global ul {
+    float: right;
+    list-style: none;
+:global li {
+      float: left;
+      margin-left: 15px;
+    }
+  }
+}
+

@@ -1,0 +1,5 @@
+Position = Avis sur un sujet, dont on est d'accord ou pas
+Prises de Positions, avec date, personnalité et preuves
+Répertoire des personnalités avec nombre de positions
+Preuve = Lien et/ou pièce jointe + date, liée à une prise de position
+lien (vérifié?) personnalité <> user

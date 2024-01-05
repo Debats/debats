@@ -1,0 +1,28 @@
+mort_naturelle_kahn:
+  position: mort_naturelle
+  public_figure: kahn
+
+pour_mec:
+  position: pour
+  public_figure: mec
+
+suicide_assiste_autre:
+  position: suicide_assiste
+  public_figure: autre
+
+droit_nouveau_valls:
+  position: droit_nouveau
+  public_figure: valls
+
+droit_nouveau_segolene:
+  position: droit_nouveau
+  public_figure: segolene
+
+droit_nouveau_hollande:
+  position: droit_nouveau
+  public_figure: hollande
+
+leonetti_toto:
+  position: leonetti
+  public_figure: toto
+

@@ -1,0 +1,28 @@
+:global h1 {
+  text-align: left;
+  font-size: 2.5em;
+}
+
+:global h2 {
+  text-align: left;
+}
+
+:global img.subject-main-image {
+  float: right;
+  margin-right: 10px;
+  margin: 10px;
+}
+
+:global p.subject-presentation-text {
+  margin: 10px;
+  text-align: justify;
+}
+
+:global div.subjects-index {
+:global ul li {
+
+  }
+:global img.subject-main-image {
+    float:left;
+  }
+}

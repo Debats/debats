@@ -1,0 +1,159 @@
+import React from 'react';
+import cssModules from 'react-css-modules';
+import styles from './Guide.css';
+
+const Guide = () => (
+  <div>
+    <div className="col-md-1" />
+    <div className="col-md-10">
+      <h1>Mode d'emploi</h1>
+
+      <h2>Panel de discussion</h2>
+
+      <p>
+                La confiance
+                La plateforme Débats.co est basée sur la confiance. C’est-à-dire que le contenu est systématiquement considéré comme a priori valide, mais peut être retiré en cas de signalement. Plusieurs motifs peuvent pousser les autres membres à signaler votre contenu :
+                Le contenu ne respecte pas les règles de rédaction
+                Le contenu manque d’une source de référence adéquate
+                Le contenu pré-existe autrepart sur la plateforme
+            </p>
+
+      <h2>Comment éviter d’être signalé ?</h2>
+
+      <div className="panel-group" id="accordion">
+
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h2 className="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                Débats.co, qu’est-ce que c’est ?</a>
+            </h2>
+          </div>
+          <div id="collapse1" className="panel-collapse collapse">
+            <div className="panel-body">
+              <p>
+                                Débats.co n’est pas un site de débats.
+                                <br />
+                                Débats.co a pour objectif de référencer et cartographier les positions prises par des personnalités publiques au cours des débats qui font controverse en France. Ainsi, les contributeurs ne sont pas appelés à donner leur avis mais plutôt à rechercher, collecter et recenser les positions exprimées sur un sujet particulier.
+                                Nous invitons les contributeurs de Débats.co à lire ce mode d’emploi et à s’y référer en cas de doute lors de l’utilisation du site.
+                            </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h2 className="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">Comment fonctionne Débats.co ?</a>
+            </h2>
+          </div>
+          <div id="collapse2" className="panel-collapse collapse">
+            <div className="panel-body">
+              <p>
+                                Le premier usage de Débats.co consiste à consulter la plateforme, en explorant les différents sujets enregistrés et le positionnement des personnalités publiques au sein de ces sujets.
+                                Le deuxième usage consiste à contribuer à la plateforme en y apportant le contenu nécessaire pour une synthèse des différents sujets et prises de positions.
+                                <br />
+                                Dans les deux cas, il est important de bien comprendre la structure du site. Sur Débats.co, l’information est articulée autour de plusieurs éléments :
+                            </p>
+              <ul id="reputation">
+                <li>Le sujet</li>
+                <li>La position</li>
+                <li>La personnalité</li>
+                <li>La prise de position</li>
+                <li>L’argument</li>
+                <li>La source</li>
+              </ul>
+              <p>
+                                Chaque <b>sujet</b> comporte au moins deux <b>positions</b>. Une <b>position</b> peut être "prise" par plusieurs <b>personnalités</b>. A chaque <b>prise de position</b> sont attachés une <b>personnalité</b> et un ensemble d’<b>arguments</b>. Pour que la <b>prise de position</b> puisse être recensée, elle doit être justifiée par au moins une <b>source</b>.
+                                <br />
+                                En somme, pour qu’un <b>sujet</b> puisse être référencé, il est nécessaire d'y recenser au moins une <b>prise de position</b> par au moins une <b>personnalité</b> dans chacune des <b>positions</b>.
+                            </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h2 className="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                Qu'est-ce qu'une source ?</a>
+            </h2>
+          </div>
+          <div id="collapse5" className="panel-collapse collapse">
+            <div className="panel-body">
+              <p>
+                                Une <b>source</b> est un élément permettant d’appuyer une prise de position. La source peut être constituée à partir de toute référence audio, vidéo, article, ou livre dont la diffusion est, ou a été, publique.
+                                Il sera demandé au contributeur de retranscrire la citation qui soutient le propos en question, la date à laquelle ce propos a été tenu, et, si possible, de fournir un lien qui permet d'y accéder directement.
+                            </p>
+            </div>
+          </div>
+        </div>
+
+
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h2 className="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">Comment référencer et recenser un contenu de qualité ?</a>
+            </h2>
+          </div>
+          <div id="collapse3" className="panel-collapse collapse">
+            <div className="panel-body">
+              <p>
+                <b>
+                                    Préexistence d'un contenu :
+                                </b>
+                <br />
+                                Tout d'abord, le contributeur peut se demander si le contenu qu'il s'apprête à référencer existe déjà.
+                                Lorsqu'il référence un nouveau sujet, il peut vérifier si celui-ci est déjà traité, ou partiellement traité, dans un autre sujet : auquel cas, il pourra enrichir ou modifier le débat déjà existant.
+                                <br />
+                                Lors du recensement d'une prise de position, l'exercice est similaire : il pourra vérifier la pré-existence d'une prise de position pour la personnalité en question, et l'enrichir avec de nouvelles sources le cas échant. Les arguments, matérialisés sur Débats.co par des tags, peuvent être infinis. Le formulaire vous suggérera néanmoins les tags proposés par d'autres utilisateurs.
+                                <br />
+                <br />
+                <b>
+                                    Notoriété et véracité :
+                                </b>
+                <br />
+                                Il est nécessaire pour le contributeur de se demander si le contenu est suffisamment important, fiable et pertinent pour être référencé ou recensé sur Débats.co. Basé sur une logique collaborative, le site comporte plusieurs mécanismes d'autorégulation, permettant d’éviter la publication de contenu considérés comme fallacieux ou hors-sujet. Chaque entrée, notamment lors du référencement d’une nouvelle personnalité ou d’un nouveau sujet, sont soumis à l'approbation des utilisateurs expérimentés de la plateforme.
+                                <br />
+                <br />
+
+                <b>Neutralité et cohérence du point de vue</b>
+                <br />
+                                Parler de "cohérence" lorsque l'on tente de référencer des sujets controversées est presque en soi contradictoire. Débats.co a néanmoins comme volonté de tendre un maximum vers l'objectivité.
+                                <br />
+                                Afin de s'en rapprocher, il est nécessaire pour chaque utilisateur de se demander comment exprimer de façon objective l’intitulé des sujets ou les positions des personnalités. Dans un premier temps, et pour simplifier cette démarche "objective", les sujets ainsi que les pages de personnalités peuvent être référencées directement depuis la base de données de Wikipedia. Il suffira donc, après la composition des premières lettres de l'intitulé de la personnalité ou du sujet, de sélectionner l'élément correspondant.
+                                <br />
+                                Lors de la recension d'une prise d'une position ensuite, il est important d'attacher à la source une citation qui justifie la prise de position. La citation doit être isolée, entre guillemets, ne pas être modifiée, et se suffir à elle-même pour être comprise (ne pas être sortie d'un contexte qui peut altérer sa compréhensioin). Pour être valide dans le cadre d’un sujet, un argument doit être explicitement mobilisé par la personnalité publique et répondre à la problématique initiale du débat.
+                                <br />
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h2 className="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">Comment avoir accès à toutes les fonctions de Débats.co ?</a>
+            </h2>
+          </div>
+          <div id="collapse4" className="panel-collapse collapse">
+            <div className="panel-body">
+              <p>
+                                La contribution au site est simple. Toutefois, avant de pouvoir accéder à toutes les fonctions de référencement, de recension et de modification, une phase d’apprentissage est nécessaire. Pour apprendre, il faut s’exercer. Ainsi, pour chaque contribution au site, un nombre de points est attribué à l’utilisateur. L’accumulation de ces points lui donne progressivement accès aux fonctionnalités les plus puissantes de Débats.co. Le signalement par d'autres utilisateurs de la violation des principes inscrits dans ce mode d'emploi peut entraîner la perte de points. Ainsi 5 status existent sur Débats.co :
+                            </p>
+              <ul id="reputation">
+                <li><b>Le Métèque</b> : Son score est neutre. Il vient d'arriver sur la plateforme, et doit encore faire ses preuves. Il peut soumettre des arguments et des sources. </li>
+                <li><b>L'Eloquent</b> : Son score est positif, il peut ajouter de nouvelles personnalités, de nouveau sujets, mais également suggérer l'approbation ou le rejet de modifications proposées par d'autres utilisateurs. Par défaut, tous les membres fondateurs inscrits lors de la bêta de Débats.co sont considérés comme Eloquents.</li>
+                <li><b>L'Idéaliste</b> : Son score est élevé, il peut instantanément supprimer la plupart des modifications faites par d'autres utilisateurs.</li>
+                <li><b>Le Sophiste</b> : son score est négatif, il a tout autant de droits que le nouvel arrivant, mais part avec autant de points de retard pour redevenir Métèque. </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div className="col-md-1" />
+  </div>
+);
+
+export default cssModules(Guide, styles);

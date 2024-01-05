@@ -1,0 +1,28 @@
+class Statement < ActiveRecord::Base
+  belongs_to :public_figure
+  belongs_to :position
+  has_one :subject, through: :position
+  has_many :evidences
+  has_many :argument_in_statements
+
+  validates_presence_of :position
+  validates_presence_of :public_figure
+  validate :at_least_one_evidence
+
+  class << self
+
+    def latest
+      Statement.order(id: :desc).limit(5)
+    end
+
+  end
+
+  private
+
+    def at_least_one_evidence
+      if evidences.reject(&:marked_for_destruction?).size < 1
+        errors.add(:evidences, "Il faut au moins une preuve de cette prise de position")
+      end
+    end
+
+end
