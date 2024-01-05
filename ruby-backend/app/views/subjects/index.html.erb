@@ -1,0 +1,21 @@
+<% provide(:title, "Sujets") %>
+
+<div class="col-md-1"></div>
+<div class="col-md-7">
+<h1>Les sujets </h1>
+<%= link_to "Référencer un sujet", new_subject_path, class: "btn btn-primary", data: { modal: true } if  allowed_to?(:add_subject) %>
+
+<div class="subjects-index" style="margin-bottom:20px; margin-top: 20px; border-right: 1px solid #ccc;">
+
+
+<%= render @subjects %>
+<%= will_paginate %>
+</div></div>
+
+<div class="col-md-3">
+<%= render 'layouts/last_statements' %>
+</div>
+<div class="col-md-1"></div>
+
+
+<% # = react_component 'MultiAddForm', mode:'AddSubject'  %>

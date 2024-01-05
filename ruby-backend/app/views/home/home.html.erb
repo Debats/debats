@@ -1,0 +1,79 @@
+<div class="container-fluid" style="width:100vw; position:relative; margin-left:-50vw;left:50%;">
+<div class="row" style="background:url('<%= asset_path('intro-bg.jpg') %>');background-size:cover;background-position: center center;">
+    <div style="font-color:white !important;text-align: center;vertical-align: middle;">
+    <br><br><br><br><br><br>
+    <h5>Bienvenue sur Débats.co</h5><br>
+    <div id="white">Débats est un projet francophone et participatif, ayant pour objectif <br>
+        d’offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.</div>
+    <br><br><br><br><br><br>
+    </div>
+</div>
+<div class="col-md-1"></div>
+<div class="subjects-index col-md-7 subjects-home">
+
+<h1>Sujets d'actualité</h1>
+
+<table class="table">
+  <tbody>
+
+   
+      <ul id="subject">
+          <% # render @subjects %> 
+      <li>
+        <% @subjects.each do |subject| %>
+
+       <tr>
+
+      <td style="width:50%; border: none; text-transform:uppercase;">
+        
+        <h2 class="subjects-title"><%= link_to subject.title, subject %></h2>
+        <h6 class="count"><%= pluralize(subject.associated_public_figures.count, 'personnalité') %></h6>
+      </td>
+
+
+      <td  style="width:50%; text-align:center;vertical-align:middle;">
+      <% subject.associated_public_figures.sample(5).each do |public_figure| %>
+
+        <div class="thumbpersonalities" style="background: url('<%= public_figure.picture.url %>') 50% 50% no-repeat;  background-size:cover;
+  background-position: center center;"></div>
+      <% end %>
+      </td> 
+      <td class="seemore">
+        <div>
+        <%= link_to "Voir plus de personnalités", subject %>
+        </div> 
+      </td>
+     </tr>
+        </li>
+ 
+        <% end %> 
+    </ul>
+
+  </tbody>
+</table>
+</div>
+
+
+
+<div class="col-md-3 col-centered" style="text-align:right;">
+  <div id="last-statements">
+    <h2>Les dernières prises de position</h2>
+    <ul id="last-statements">
+      <% # render @latest_statements %>
+      <% @latest_statements.each do |statement| %>
+          <li id="statement-<%= statement.id %>" style="margin-bottom: 20px;">
+            <% if statement.public_figure.picture? %>
+     <div style="height:50px; width: 50px; -webkit-border-radius: 50%; border-radius: 50%; background: url('<%= statement.public_figure.picture.url %>') 50% 50% no-repeat; background-size:cover; background-position: center center; float:left; margin-right:15px;"></div>
+        <% end %>
+            <div class="public-figure-text"><strong>
+            <%= link_to statement.public_figure.name, statement.public_figure %></strong>&nbsp; s'est déclaré pour
+            "<strong><%= statement.position.title %></strong>"
+            dans le débat sur
+            <strong><%= link_to statement.position.subject.title, statement.position.subject %></strong></div>
+          </li>
+      <% end %>
+    </ul>
+</div>
+</div>
+<div class="col-md-1"></div>
+</div>

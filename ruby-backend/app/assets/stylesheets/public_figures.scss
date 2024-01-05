@@ -1,0 +1,55 @@
+// Place all the styles related to the public-figures controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+#public_figure div {
+	height: 150px;
+	width: 100px;
+	-webkit-border-radius: 50%;
+	border-radius: 50%;
+	 background-size:cover;
+  	background-repeat:no-repeat;
+}
+
+h1 {
+  font-family: 'Gotham-Bold', sans-serif;
+  font-size: 1.5em !important   ;
+  letter-spacing: 1px;
+  margin-bottom: 30px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #f21e40;
+  &:active {
+    color: #222;
+  }
+}
+
+h2 {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.2em;
+  letter-spacing: 1px;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: normal;
+  color: lightgray;
+  text-transform: uppercase;
+  color: #f21e40;
+  &:active {
+    color: #222;
+  }
+}
+
+p {
+  font-family: 'Gotham-Book', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.7em;
+}
+.btn {
+    border-radius: 0px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+.btn-primary {
+    color: #616161;
+    background-color: #fff;
+    border-color: #ededea;
+}
