@@ -1,77 +1,66 @@
-import React, {Component, PropTypes} from 'react';
-import {head, of, compose, when, prop, not, isNil} from 'ramda';
-import Typeahead from 'react-bootstrap-typeahead';
-import {getPublicFiguresAutocomplete} from 'api/debats';
-import {flattenAttributes} from 'api/jsonApiParser';
-import PublicFigureAvatar from 'components/PublicFigureAvatar';
-import { makeCancelable } from 'helpers/promises';
+// @flow
+import React from 'react'
+import Autocomplete from 'react-autocomplete'
+import { ApolloConsumer } from 'react-apollo'
+import { compose, prop, path } from 'ramda'
+import PublicFigureAvatar from 'components/PublicFigureAvatar'
+import query from './query'
 
-class PublicFigureAutocompleteInput extends Component {
+type PublicFigure = {
+  id: string,
+  name: string,
+  presentation: string,
+  slug: string
+}
 
-  static propTypes = {
-    selected: PropTypes.object, // selected public figure entity
-    onSelection: PropTypes.func.isRequired,
-  };
+type Props = {|
+  +selected: ?PublicFigure,
+  +onSelection: PublicFigure => void
+|}
 
+type State = {|
+  loading: boolean,
+  suggestions: [PublicFigure],
+  typed: string
+|}
+
+class PublicFigureAutocompleteInput extends React.Component<Props, State> {
   state = {
-    suggestions: [],
-  };
-
-  componentWillUnmount() {
-    if (this.currentFetch)
-      this.currentFetch.cancel();
+    loading: false,
+    typed: this.props.selected ? this.props.selected.name : '',
+    suggestions: []
   }
 
-  focus = () => {
-    this.typeahead.focus();
-  };
+  onTyped = async (typed: string, client) => {
+    this.setState({ loading: true, typed })
+    const { data: { suggestions } } = await client.query({
+      query,
+      variables: { typed }
+    })
+    this.setState({ suggestions, loading: false })
+  }
 
-  loadSuggestions = (typed) => {
-    if (this.props.selected)
-      this.props.onSelection(null);
-    if (typed.length) {
-      if (this.currentFetch)
-        this.currentFetch.cancel();
-
-      this.currentFetch = makeCancelable(getPublicFiguresAutocomplete(typed));
-      this.currentFetch.promise
-        .then((response) => {
-          this.setState({
-            suggestions: flattenAttributes(response.data.data),
-          });
-        })
-      ;
-    }
-  };
-
-  renderMenuItemChildren = (typeaheadProps, publicFigure) => (
-    <div>
-      <PublicFigureAvatar publicFigure={publicFigure}/>
-      <span>{publicFigure.name}</span>
-    </div>
-  );
-
-  onSelection = compose(this.props.onSelection, head);
-
-  render() {
+  render () {
     return (
-      <Typeahead
-        ref={ref => this.typeahead = ref}
-        name="publicFigure"
-        options={this.state.suggestions}
-        selected={of(this.props.selected)}
-        emptyLabel="Aucune personnalité correspondante"
-        labelKey="name"
-        minLength={3}
-        allowNew
-        newSelectionPrefix="Ajouter "
-        onChange={this.onSelection}
-        onInputChange={this.loadSuggestions}
-        renderMenuItemChildren={this.renderMenuItemChildren}
-      />
-    );
+      <ApolloConsumer>
+        {client => (
+          <Autocomplete
+            getItemValue={prop('name')}
+            items={this.state.suggestions}
+            renderItem={(publicFigure, isHighlighted) =>
+              <div style={{ background: isHighlighted ? 'lightgray' : 'white' }}>
+                <PublicFigureAvatar publicFigure={publicFigure} />
+                <span>{publicFigure.name}</span>
+              </div>
+            }
+            value={this.state.typed}
+            onChange={(event, value) => this.onTyped(value, client)}
+            onSelect={this.props.onSelection}
+          />
+        )}
+      </ApolloConsumer>
+    )
   }
-
 }
 
 export default PublicFigureAutocompleteInput;
