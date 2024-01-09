@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { head, of, take, compose, when, prop, not, isNil, ifElse, always, map, pipe } from 'ramda';
 import Typeahead from 'react-bootstrap-typeahead';
-import { getSubjectsAutocomplete } from 'api/debats';
+import { getSubjectsAutocomplete } from 'api/debats_api';
 import { flattenAttributes } from 'api/jsonApiParser';
 import { enrichWithRelationships } from 'store/selectors/entities';
 import { makeCancelable } from 'helpers/promises';

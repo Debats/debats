@@ -3,7 +3,7 @@ import { ApolloProvider } from 'react-apollo'
 import { Provider } from 'react-redux'
 import { Router } from 'react-router'
 import routes from '../routes'
-import { apolloClient } from '../api/debats'
+import { apolloClient } from '../api/debats_api'
 
 const Root = ({ store, history }) => (
   <ApolloProvider client={apolloClient}>
