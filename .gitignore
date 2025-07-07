@@ -5,3 +5,4 @@
 # Next.js
 .next
 /node_modules
+/.direnv
