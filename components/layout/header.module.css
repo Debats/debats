@@ -1,0 +1,115 @@
+.header {
+  background-color: white;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 30px;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logoSection {
+  flex: 0 0 auto;
+}
+
+.logo {
+  height: auto;
+  width: auto;
+  max-height: 40px;
+}
+
+.nav {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+  margin: 0 40px;
+}
+
+.navLink {
+  color: var(--debats-red);
+  text-decoration: none;
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 0.3s ease;
+}
+
+.navLink:hover {
+  color: #d11635;
+}
+
+.authSection {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.authLink {
+  color: var(--debats-red);
+  text-decoration: none;
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.authLink:hover {
+  color: #d11635;
+}
+
+.signupBtn {
+  background-color: var(--debats-red);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.signupBtn:hover {
+  background-color: #d11635;
+}
+
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .nav {
+    gap: 40px;
+    margin: 0;
+  }
+  
+  .authSection {
+    gap: 15px;
+  }
+}

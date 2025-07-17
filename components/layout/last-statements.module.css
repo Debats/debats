@@ -1,0 +1,58 @@
+.lastStatements {
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.1em;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+  text-align: left;
+  font-weight: bold;
+  color: var(--debats-red);
+  text-transform: uppercase;
+}
+
+.statementsList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.statementItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  gap: 15px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #008B8B;
+  flex-shrink: 0;
+}
+
+.statementContent {
+  flex: 1;
+}
+
+.publicFigureText {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  line-height: 1.4em;
+  color: var(--text-dark);
+}
+
+.publicFigureText strong {
+  font-weight: bold;
+}
+
+.publicFigureText a {
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.publicFigureText a:hover {
+  color: var(--debats-red);
+}

@@ -1,0 +1,45 @@
+import Link from 'next/link'
+import styles from './footer.module.css'
+
+export default function Footer() {
+  return (
+    <footer className={styles.footer}>
+      <div className={styles.container}>
+        <div className={styles.legal}>
+          <small className={styles.legalText}>
+            <a href="#" className={styles.legalLink}>Crédits</a>
+            <span className={styles.separator}>|</span>
+            <a href="#" className={styles.legalLink}>Mentions Légales</a>
+          </small>
+        </div>
+        
+        <div className={styles.navigation}>
+          <nav>
+            <ul className={styles.navList}>
+              <li className={styles.navItem}>
+                <Link href="/a-propos" className={styles.navLink}>
+                  À propos
+                </Link>
+              </li>
+              <li className={styles.navItem}>
+                <Link href="/contact" className={styles.navLink}>
+                  Contact
+                </Link>
+              </li>
+              <li className={styles.navItem}>
+                <a 
+                  href="https://twitter.com/debatsco" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={styles.externalLink}
+                >
+                  Twitter
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </footer>
+  )
+}
