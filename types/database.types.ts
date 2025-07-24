@@ -214,39 +214,39 @@ export type Database = {
       public_figures: {
         Row: {
           created_at: string | null
-          created_by: string | null
+          created_by: string
           id: string
           name: string
-          picture_url: string | null
+          picture_url: string
           presentation: string
           slug: string
           updated_at: string | null
           website_url: string | null
-          wikipedia_url: string | null
+          wikipedia_url: string
         }
         Insert: {
           created_at?: string | null
-          created_by?: string | null
+          created_by: string
           id?: string
           name: string
-          picture_url?: string | null
+          picture_url: string
           presentation: string
           slug: string
           updated_at?: string | null
           website_url?: string | null
-          wikipedia_url?: string | null
+          wikipedia_url: string
         }
         Update: {
           created_at?: string | null
-          created_by?: string | null
+          created_by?: string
           id?: string
           name?: string
-          picture_url?: string | null
+          picture_url?: string
           presentation?: string
           slug?: string
           updated_at?: string | null
           website_url?: string | null
-          wikipedia_url?: string | null
+          wikipedia_url?: string
         }
         Relationships: [
           {
@@ -265,6 +265,7 @@ export type Database = {
           id: string
           position_id: string
           public_figure_id: string
+          taken_at: string
           updated_at: string | null
         }
         Insert: {
@@ -273,6 +274,7 @@ export type Database = {
           id?: string
           position_id: string
           public_figure_id: string
+          taken_at?: string
           updated_at?: string | null
         }
         Update: {
@@ -281,6 +283,7 @@ export type Database = {
           id?: string
           position_id?: string
           public_figure_id?: string
+          taken_at?: string
           updated_at?: string | null
         }
         Relationships: [

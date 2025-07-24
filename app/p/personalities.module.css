@@ -1,0 +1,185 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 30px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 60px;
+  margin-top: 40px;
+}
+
+.mainContent {
+}
+
+.pageTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.8em;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--debats-red);
+  font-weight: bold;
+  margin-top: 0;
+}
+
+.personalitiesIndex {
+}
+
+.personalityItem {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 40px;
+  align-items: start;
+  margin-bottom: 50px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.personalityItem:last-child {
+  border-bottom: none;
+}
+
+.personalityInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.personalityAvatar {
+  margin-bottom: 15px;
+}
+
+.avatarImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f0f0f0;
+}
+
+.personalityName {
+  font-family: var(--font-gotham-book);
+  font-size: 1.1em;
+  margin-bottom: 15px;
+  font-weight: normal;
+  color: var(--text-dark);
+  margin-top: 0;
+}
+
+.personalityName a {
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.personalityName a:hover {
+  color: var(--debats-red);
+}
+
+.personalityMeta {
+  margin-bottom: 10px;
+}
+
+.personalityCategory {
+  font-family: var(--font-gotham-book);
+  font-style: italic;
+  font-size: 0.9em;
+  color: var(--text-light);
+}
+
+.counters {
+}
+
+.countItem {
+  color: var(--debats-red);
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+  margin: 8px 0;
+  display: block;
+}
+
+.personalityPresentation {
+}
+
+.presentationLabel {
+  font-family: var(--font-gotham-book);
+  font-style: italic;
+  font-weight: bold;
+  margin-bottom: 15px;
+  display: block;
+  color: var(--text-dark);
+}
+
+.presentationText {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6em;
+  text-align: justify;
+  color: var(--text-dark);
+}
+
+.seeMore {
+  display: flex;
+  align-items: center;
+}
+
+.seeMoreLink {
+  color: var(--debats-red);
+  text-decoration: none;
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+}
+
+.seeMoreLink:hover {
+  color: #d11635;
+}
+
+.sidebar {
+}
+
+.errorContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 30px;
+}
+
+.errorTitle {
+  color: var(--debats-red);
+  font-family: var(--font-gotham-bold);
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+
+.errorMessage {
+  font-family: var(--font-gotham-book);
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.errorDetail {
+  font-size: 0.9em;
+  color: var(--text-light);
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 0 20px;
+  }
+  
+  .pageTitle {
+    font-size: 1.5em;
+  }
+  
+  .personalityItem {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .avatarImage {
+    width: 60px;
+    height: 60px;
+  }
+}

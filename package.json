@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
+    "bcrypt": "^6.0.0",
     "date-fns": "^4.1.0",
     "effect": "^3.16.12",
     "next": "^15.3.5",

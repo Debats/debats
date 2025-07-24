@@ -1,5 +1,6 @@
 import { pipe } from 'effect'
 import * as S from 'effect/Schema'
+import { Option } from 'effect'
 import { isAfter, subDays } from 'date-fns/fp'
 
 export const PublicFigureId = S.String.pipe(S.brand('PublicFigureId'))
@@ -23,10 +24,10 @@ export const PublicFigure = S.Struct({
   name: PublicFigureName,
   slug: PublicFigureSlug,
   presentation: S.String.pipe(S.minLength(10)),
-  wikipediaUrl: S.optional(S.String),
-  websiteUrl: S.optional(S.String),
-  pictureUrl: S.optional(S.String),
-  createdBy: S.optional(S.String),
+  wikipediaUrl: S.String, // Obligatoire : critère de notoriété
+  websiteUrl: S.Option(S.String), // Optionnel avec Option
+  pictureUrl: S.String, // Obligatoire : nécessaire pour l'UX
+  createdBy: S.String, // Obligatoire : traçabilité
   createdAt: S.Date,
   updatedAt: S.Date
 })
@@ -48,10 +49,10 @@ export const generateSlug = (name: string): PublicFigureSlug =>
 export const createPublicFigure = (params: {
   name: string
   presentation: string
-  wikipediaUrl?: string
+  wikipediaUrl: string
   websiteUrl?: string
-  pictureUrl?: string
-  createdBy?: string
+  pictureUrl: string
+  createdBy: string
 }): PublicFigure => {
   const now = new Date()
   
@@ -61,7 +62,7 @@ export const createPublicFigure = (params: {
     slug: generateSlug(params.name),
     presentation: params.presentation,
     wikipediaUrl: params.wikipediaUrl,
-    websiteUrl: params.websiteUrl,
+    websiteUrl: params.websiteUrl ? Option.some(params.websiteUrl) : Option.none(),
     pictureUrl: params.pictureUrl,
     createdBy: params.createdBy,
     createdAt: now,

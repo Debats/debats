@@ -66,7 +66,7 @@ Users (Contributeurs)
 
 - **Subject** : Les sujets de débat (ex: "Immigration", "Écologie", "Retraites")
 - **Position** : Les différentes positions possibles sur un sujet
-- **PublicFigure** : Les personnalités publiques (politiques, intellectuels, etc.)
+- **PublicFigure** : Les personnalités publiques (politiques, intellectuels, etc.) - **Critère de notoriété : toute personnalité doit avoir une page Wikipedia valide**
 - **Statement** : Les prises de position concrètes d'une personnalité sur une position
 - **Evidence** : Les preuves et sources (citations, articles, vidéos, discours)
 - **Argument** : Les arguments développés pour défendre une position
