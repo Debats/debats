@@ -1,11 +1,23 @@
-import type { Subject } from '../entities/subject'
-import type { SubjectStats } from '../value-objects/subject-stats'
+import { Effect } from "effect"
+import { Subject } from "../entities/subject"
+import { SubjectStats } from "../value-objects/subject-stats"
+
+export class DatabaseError extends Error {
+  readonly _tag = "DatabaseError"
+}
 
 export interface SubjectRepository {
-  findAll(): Promise<Subject[]>
-  findById(id: string): Promise<Subject | null>
-  findBySlug(slug: string): Promise<Subject | null>
-  save(subject: Subject): Promise<Subject>
-  delete(id: string): Promise<void>
-  getStats(subjectId: string): Promise<SubjectStats>
+  findAll(): Effect.Effect<Subject[], DatabaseError>
+
+  findBySlug(slug: string): Effect.Effect<Subject | null, DatabaseError>
+
+  findById(id: string): Effect.Effect<Subject | null, DatabaseError>
+
+  create(subject: Subject): Effect.Effect<Subject, DatabaseError>
+
+  update(subject: Subject): Effect.Effect<Subject, DatabaseError>
+
+  delete(id: string): Effect.Effect<void, DatabaseError>
+
+  getStats(subjectId: string): Effect.Effect<SubjectStats, DatabaseError>
 }

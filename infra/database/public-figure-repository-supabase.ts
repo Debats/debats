@@ -22,7 +22,6 @@ export const publicFigureRepositorySupabase: PublicFigureRepository = {
           name: figure.name,
           slug: figure.slug,
           presentation: figure.presentation,
-          pictureUrl: figure.picture_url,
           websiteUrl: figure.website_url ? Option.some(figure.website_url) : Option.none(),
           wikipediaUrl: figure.wikipedia_url,
           createdAt: new Date(figure.created_at),
@@ -52,7 +51,6 @@ export const publicFigureRepositorySupabase: PublicFigureRepository = {
           name: data.name,
           slug: data.slug,
           presentation: data.presentation,
-          pictureUrl: data.picture_url,
           websiteUrl: data.website_url ? Option.some(data.website_url) : Option.none(),
           wikipediaUrl: data.wikipedia_url,
           createdAt: new Date(data.created_at),
@@ -71,18 +69,17 @@ export const publicFigureRepositorySupabase: PublicFigureRepository = {
           .select("*")
           .eq("id", id)
           .single()
-        
+
         if (error) {
           if (error.code === "PGRST116") return null
           throw error
         }
-        
+
         return PublicFigure.make({
           id: data.id,
           name: data.name,
           slug: data.slug,
           presentation: data.presentation,
-          pictureUrl: data.picture_url,
           websiteUrl: data.website_url ? Option.some(data.website_url) : Option.none(),
           wikipediaUrl: data.wikipedia_url,
           createdAt: new Date(data.created_at),
@@ -103,22 +100,20 @@ export const publicFigureRepositorySupabase: PublicFigureRepository = {
             name: publicFigure.name,
             slug: publicFigure.slug,
             presentation: publicFigure.presentation,
-            picture_url: publicFigure.pictureUrl,
             website_url: Option.isSome(publicFigure.websiteUrl) ? publicFigure.websiteUrl.value : null,
             wikipedia_url: publicFigure.wikipediaUrl,
             created_by: publicFigure.createdBy
           })
           .select()
           .single()
-        
+
         if (error) throw error
-        
+
         return PublicFigure.make({
           id: data.id,
           name: data.name,
           slug: data.slug,
           presentation: data.presentation,
-          pictureUrl: data.picture_url,
           websiteUrl: data.website_url ? Option.some(data.website_url) : Option.none(),
           wikipediaUrl: data.wikipedia_url,
           createdAt: new Date(data.created_at),
@@ -138,22 +133,20 @@ export const publicFigureRepositorySupabase: PublicFigureRepository = {
             name: publicFigure.name,
             slug: publicFigure.slug,
             presentation: publicFigure.presentation,
-            picture_url: publicFigure.pictureUrl,
             website_url: Option.isSome(publicFigure.websiteUrl) ? publicFigure.websiteUrl.value : null,
             wikipedia_url: publicFigure.wikipediaUrl
           })
           .eq("id", publicFigure.id)
           .select()
           .single()
-        
+
         if (error) throw error
-        
+
         return PublicFigure.make({
           id: data.id,
           name: data.name,
           slug: data.slug,
           presentation: data.presentation,
-          pictureUrl: data.picture_url,
           websiteUrl: data.website_url ? Option.some(data.website_url) : Option.none(),
           wikipediaUrl: data.wikipedia_url,
           createdAt: new Date(data.created_at),

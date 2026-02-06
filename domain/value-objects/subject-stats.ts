@@ -1,4 +1,4 @@
-import { Schema as S } from '@effect/schema'
+import * as S from 'effect/Schema'
 
 export const SubjectStats = S.Struct({
   subjectId: S.String,

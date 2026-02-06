@@ -26,7 +26,6 @@ export const PublicFigure = S.Struct({
   presentation: S.String.pipe(S.minLength(10)),
   wikipediaUrl: S.String, // Obligatoire : critère de notoriété
   websiteUrl: S.Option(S.String), // Optionnel avec Option
-  pictureUrl: S.String, // Obligatoire : nécessaire pour l'UX
   createdBy: S.String, // Obligatoire : traçabilité
   createdAt: S.Date,
   updatedAt: S.Date
@@ -51,11 +50,10 @@ export const createPublicFigure = (params: {
   presentation: string
   wikipediaUrl: string
   websiteUrl?: string
-  pictureUrl: string
   createdBy: string
 }): PublicFigure => {
   const now = new Date()
-  
+
   return PublicFigure.make({
     id: PublicFigureId.make(crypto.randomUUID()),
     name: PublicFigureName.make(params.name),
@@ -63,7 +61,6 @@ export const createPublicFigure = (params: {
     presentation: params.presentation,
     wikipediaUrl: params.wikipediaUrl,
     websiteUrl: params.websiteUrl ? Option.some(params.websiteUrl) : Option.none(),
-    pictureUrl: params.pictureUrl,
     createdBy: params.createdBy,
     createdAt: now,
     updatedAt: now

@@ -63,14 +63,14 @@ INSERT INTO subjects (title, slug, presentation, problem, picture_url) VALUES
 );
 
 -- Insertion des personnalités publiques
-INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url, picture_url, created_by) VALUES
+-- Les avatars sont dans Supabase Storage avec convention {slug}.jpg
+INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url, created_by) VALUES
 (
   'François Hollande',
   'francois-hollande',
   'Homme politique français, président de la République française de 2012 à 2017. Membre du Parti socialiste.',
   'https://fr.wikipedia.org/wiki/François_Hollande',
   'https://www.parti-socialiste.fr',
-  'https://example.com/hollande.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -79,7 +79,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Homme politique franco-espagnol, Premier ministre français de 2014 à 2016 sous la présidence de François Hollande.',
   'https://fr.wikipedia.org/wiki/Manuel_Valls',
   'https://manuelvalls.fr',
-  'https://example.com/valls.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -88,7 +87,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Médecin généticien, essayiste et dirigeant français. Président de la Ligue nationale contre le cancer. Expert reconnu en bioéthique.',
   'https://fr.wikipedia.org/wiki/Axel_Kahn',
   NULL,
-  'https://example.com/kahn.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -97,7 +95,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Femme politique française, ministre des Affaires sociales et de la Santé de 2012 à 2017 sous François Hollande.',
   'https://fr.wikipedia.org/wiki/Marisol_Touraine',
   NULL,
-  'https://example.com/touraine.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -106,7 +103,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Femme politique française, candidate à l''élection présidentielle de 2007, ministre de l''Environnement de 2014 à 2017.',
   'https://fr.wikipedia.org/wiki/Ségolène_Royal',
   'https://segolene-royal.com',
-  'https://example.com/royal.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -115,7 +111,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Homme politique français, président de la République française de 2007 à 2012. Président des Républicains.',
   'https://fr.wikipedia.org/wiki/Nicolas_Sarkozy',
   'https://www.republicains.fr',
-  'https://example.com/sarkozy.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -124,7 +119,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Femme politique française, présidente du Rassemblement national depuis 2011. Candidate à l''élection présidentielle en 2012, 2017 et 2022.',
   'https://fr.wikipedia.org/wiki/Marine_Le_Pen',
   'https://rassemblementnational.fr',
-  'https://example.com/lepen.jpg',
   '00000000-0000-0000-0000-000000000001'
 ),
 (
@@ -133,7 +127,6 @@ INSERT INTO public_figures (name, slug, presentation, wikipedia_url, website_url
   'Économiste, philosophe et essayiste français. Directeur de recherche au CNRS. Critique du néolibéralisme.',
   'https://fr.wikipedia.org/wiki/Frédéric_Lordon',
   'https://blog.mondediplo.net/2008-07-15-Frederic-Lordon',
-  'https://example.com/lordon.jpg',
   '00000000-0000-0000-0000-000000000001'
 );
 

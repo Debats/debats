@@ -28,11 +28,11 @@
 
 .personalityItem {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
-  gap: 40px;
+  grid-template-columns: auto 1fr auto;
+  gap: 30px;
   align-items: start;
-  margin-bottom: 50px;
-  padding-bottom: 40px;
+  margin-bottom: 40px;
+  padding-bottom: 30px;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -40,31 +40,45 @@
   border-bottom: none;
 }
 
-.personalityInfo {
+.personalityIdentity {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 150px;
 }
 
 .personalityAvatar {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .avatarImage {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #f0f0f0;
+}
+
+.avatarPlaceholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-gotham-bold);
+  font-size: 2.5em;
+  color: #888;
 }
 
 .personalityName {
   font-family: var(--font-gotham-book);
-  font-size: 1.1em;
-  margin-bottom: 15px;
+  font-size: 1em;
+  margin-bottom: 5px;
   font-weight: normal;
   color: var(--text-dark);
   margin-top: 0;
+  text-transform: uppercase;
 }
 
 .personalityName a {
@@ -76,17 +90,6 @@
   color: var(--debats-red);
 }
 
-.personalityMeta {
-  margin-bottom: 10px;
-}
-
-.personalityCategory {
-  font-family: var(--font-gotham-book);
-  font-style: italic;
-  font-size: 0.9em;
-  color: var(--text-light);
-}
-
 .counters {
 }
 
@@ -94,7 +97,6 @@
   color: var(--debats-red);
   font-family: var(--font-gotham-book);
   font-size: 0.85em;
-  margin: 8px 0;
   display: block;
 }
 
@@ -102,8 +104,7 @@
 }
 
 .presentationLabel {
-  font-family: var(--font-gotham-book);
-  font-style: italic;
+  font-family: var(--font-gotham-bold);
   font-weight: bold;
   margin-bottom: 15px;
   display: block;
@@ -116,11 +117,13 @@
   line-height: 1.6em;
   text-align: justify;
   color: var(--text-dark);
+  margin: 0;
 }
 
 .seeMore {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 30px;
 }
 
 .seeMoreLink {
@@ -128,6 +131,7 @@
   text-decoration: none;
   font-family: var(--font-gotham-book);
   font-size: 0.85em;
+  white-space: nowrap;
 }
 
 .seeMoreLink:hover {
@@ -168,18 +172,33 @@
     gap: 30px;
     padding: 0 20px;
   }
-  
+
   .pageTitle {
     font-size: 1.5em;
   }
-  
+
   .personalityItem {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
+  .personalityIdentity {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    min-width: auto;
+  }
+
+  .personalityAvatar {
+    margin-bottom: 0;
+  }
+
   .avatarImage {
     width: 60px;
     height: 60px;
+  }
+
+  .seeMore {
+    padding-top: 0;
   }
 }

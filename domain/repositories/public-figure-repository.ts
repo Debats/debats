@@ -1,4 +1,4 @@
-import { Effect } from "effect"
+import { Context, Effect } from "effect"
 import { PublicFigure } from "../entities/public-figure"
 import { PublicFigureStats } from "../value-objects/public-figure-stats"
 
@@ -21,4 +21,6 @@ export interface PublicFigureRepository {
 
   getStats(publicFigureId: string): Effect.Effect<PublicFigureStats, DatabaseError>
 }
+
+export const PublicFigureRepository = Context.GenericTag<PublicFigureRepository>("PublicFigureRepository")
 
