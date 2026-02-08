@@ -27,7 +27,7 @@ export default function Header() {
               Personnalités
             </Link>
             <Link href="/guide" className={styles.navLink}>
-              Mode d'emploi
+              Mode d&apos;emploi
             </Link>
           </nav>
 

@@ -37,7 +37,7 @@ export default function LastStatements() {
             <div className={styles.avatar}></div>
             <div className={styles.statementContent}>
               <div className={styles.publicFigureText}>
-                <strong>{statement.publicFigureName}</strong> s'est déclarée pour <strong>{statement.position}</strong> dans le débat sur <strong>{statement.subject}</strong>
+                <strong>{statement.publicFigureName}</strong> s&apos;est déclarée pour <strong>{statement.position}</strong> dans le débat sur <strong>{statement.subject}</strong>
               </div>
             </div>
           </li>
