@@ -41,10 +41,10 @@ Le projet a été initié en 2014 et a connu plusieurs itérations technologique
 - **Localisation** : `debats-elixir/`
 - **Objectif** : Performance et fiabilité
 
-### 5. Monorepo Nx (actuel)
-- **Stack** : Next.js + TypeScript + Nx
+### 5. Next.js Standalone (actuel)
+- **Stack** : Next.js 15 + TypeScript + Supabase + Effect TS
 - **État** : En cours de développement
-- **Localisation** : `apps/web/`
+- **Localisation** : racine du projet
 - **Objectif** : Consolidation et première version exploitable
 
 ## Modèle de données
@@ -74,30 +74,51 @@ Users (Contributeurs)
 
 ## Architecture technique actuelle
 
-### Applications
-- `apps/web/` : Application Next.js principale
-- `apps/web-e2e/` : Tests end-to-end avec Playwright
+### Stack
+- **Frontend/Backend** : Next.js 15 (App Router)
+- **Base de données** : PostgreSQL via Supabase
+- **Authentification** : Supabase Auth
+- **Domain** : Effect TS + Effect Schema
+- **Styling** : CSS Modules
 
-### Projets legacy
-- `ruby-backend/` : Application Rails originale (référence pour les fonctionnalités)
-- `frontend/` : Interface React (référence pour l'UX)
-- `api/` : API GraphQL (référence pour le schéma de données)
-- `debats-elixir/` : Version Phoenix (référence pour les modèles)
+### Structure
+```
+├── app/              # Next.js App Router
+├── domain/           # Logique métier (entités, services, règles)
+├── infra/            # Infrastructure (Supabase, APIs)
+├── components/       # Composants React réutilisables
+├── supabase/         # Migrations et seeds
+└── types/            # Types générés
+```
+
+### Projets legacy (référence)
+- `ruby-backend/` : Application Rails originale
+- `debats-elixir/` : Version Phoenix abandonnée
 
 ## Développement
 
 ### Prérequis
-- Node.js 18+
-- pnpm
+- Node.js 20+
+- Docker (pour Supabase local)
+- Nix + direnv (recommandé)
 
 ### Installation
 ```bash
-pnpm install
+npm install
+supabase start
+supabase db reset  # Applique migrations + seeds
+```
+
+### Variables d'environnement
+Créer un fichier `.env.local` :
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<clé anon locale>
 ```
 
 ### Lancement du développement
 ```bash
-pnpm dev
+npm run dev
 ```
 
 ## Feuille de route

@@ -92,7 +92,7 @@ supabase status
 supabase logs --follow
 ```
 
-#### Déploiement (futur)
+#### Déploiement
 ```bash
 # Lier à un projet Supabase cloud
 supabase link --project-ref <project-id>
@@ -100,9 +100,52 @@ supabase link --project-ref <project-id>
 # Pousser les migrations vers le cloud
 supabase db push
 
+# Pousser migrations + seeds vers le cloud
+supabase db push --include-seed
+
 # Récupérer les migrations depuis le cloud
 supabase db pull
 ```
+
+## Configuration des clés API Supabase
+
+### Types de clés
+
+Supabase utilise deux types de clés API :
+
+| Type | Format | Usage |
+|------|--------|-------|
+| **Publishable** | `sb_publishable_...` | Client-side (navigateur, apps mobiles) |
+| **Secret** | `sb_secret_...` | Server-side uniquement (jamais exposée) |
+
+> **Note** : Les clés `anon` et `service_role` sont **legacy** et seront supprimées. Utilisez les nouvelles clés Publishable/Secret.
+
+### Variables d'environnement
+
+```env
+# Client-side (exposée dans le bundle JS)
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxxxx
+
+# Server-side uniquement (JAMAIS dans NEXT_PUBLIC_*)
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxx
+```
+
+### Sécurité
+
+- La clé **Publishable** est sécurisée par les Row Level Security (RLS) policies
+- Ne jamais exposer la clé **Secret** côté client
+- Les deux types de clés fonctionnent de manière identique avec le SDK Supabase
+
+### Migration depuis les clés legacy
+
+Si vous avez un projet existant avec les clés `anon`/`service_role` :
+1. Aller dans Dashboard → Settings → API
+2. Copier les nouvelles clés Publishable/Secret
+3. Remplacer dans vos variables d'environnement
+4. Les deux systèmes fonctionnent en parallèle pendant la transition
+
+Référence : [Understanding API keys | Supabase Docs](https://supabase.com/docs/guides/api/api-keys)
 
 ### URLs locales importantes
 - **API**: http://127.0.0.1:54321
