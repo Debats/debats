@@ -44,7 +44,7 @@ export const subjectRepositorySupabase: SubjectRepository = {
         if (error) throw error
         return data.map(mapRowToEntity)
       },
-      catch: (error) => new DatabaseError(`Failed to fetch subjects: ${error}`),
+      catch: (error) => new DatabaseError(`Failed to fetch subjects: ${error instanceof Error ? error.message : JSON.stringify(error)}`),
     }),
 
   findById: (id: string) =>

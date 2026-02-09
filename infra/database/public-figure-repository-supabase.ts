@@ -29,7 +29,7 @@ export const publicFigureRepositorySupabase: PublicFigureRepository = {
           createdBy: figure.created_by
         }))
       },
-      catch: (error) => new DatabaseError(`Failed to fetch public figures: ${error}`)
+      catch: (error) => new DatabaseError(`Failed to fetch public figures: ${error instanceof Error ? error.message : JSON.stringify(error)}`)
     }),
 
   findBySlug: (slug: string) =>
