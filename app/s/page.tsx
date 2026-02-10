@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Effect } from "effect"
 import { subjectRepositorySupabase } from "../../infra/database/subject-repository-supabase"
 import LastStatements from "../../components/layout/last-statements"
+import ErrorDisplay from "../../components/layout/ErrorDisplay"
 import styles from "./subjects.module.css"
 
 export default async function SubjectsPage() {
@@ -77,13 +78,11 @@ export default async function SubjectsPage() {
     )
   } catch (error) {
     return (
-      <div className={styles.errorContainer}>
-        <h1 className={styles.errorTitle}>Erreur</h1>
-        <p className={styles.errorMessage}>Impossible de charger les sujets.</p>
-        <p className={styles.errorDetail}>
-          Erreur : {error instanceof Error ? error.message : "Erreur inconnue"}
-        </p>
-      </div>
+      <ErrorDisplay
+        title="Erreur"
+        message="Impossible de charger les sujets."
+        detail={error instanceof Error ? error.message : "Erreur inconnue"}
+      />
     )
   }
 }
