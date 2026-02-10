@@ -1,0 +1,140 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 30px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 60px;
+  margin-top: 40px;
+}
+
+.mainContent {
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.8em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  margin: 0 0 15px 0;
+}
+
+.presentation {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6em;
+  color: var(--text-dark);
+  text-align: justify;
+  margin: 0 0 10px 0;
+}
+
+.problem {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6em;
+  color: var(--text-light);
+  font-style: italic;
+  margin: 0;
+}
+
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.2em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dark);
+  margin: 0 0 30px 0;
+}
+
+.count {
+  color: var(--debats-red);
+}
+
+.countDetail {
+  font-family: var(--font-gotham-book);
+  font-size: 0.75em;
+  color: var(--text-light);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.emptyMessage {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  color: var(--text-light);
+}
+
+.positionsList {
+}
+
+.positionItem {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.positionItem:last-child {
+  border-bottom: none;
+}
+
+.positionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1em;
+  font-style: italic;
+  color: var(--text-dark);
+  margin: 0 0 10px 0;
+}
+
+.positionDescription {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6em;
+  color: var(--text-dark);
+  text-align: justify;
+  margin: 0 0 15px 0;
+}
+
+.viewArguments {
+  color: var(--debats-red);
+  text-decoration: none;
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.viewArguments:hover {
+  text-decoration: underline;
+}
+
+.figuresRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.figureLink {
+  display: block;
+  opacity: 0.85;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.figureLink:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.sidebar {
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 0 20px;
+  }
+}

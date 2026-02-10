@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { Effect } from "effect"
 import { publicFigureRepositorySupabase } from "../../infra/database/public-figure-repository-supabase"
+import FigureAvatar from "../../components/figures/FigureAvatar"
+import ErrorDisplay from "../../components/layout/ErrorDisplay"
 import LastStatements from "../../components/layout/last-statements"
 import styles from "./personalities.module.css"
 
@@ -32,11 +34,7 @@ export default async function PersonalitiesPage() {
                 <div key={figure.id} className={styles.personalityItem}>
                   <div className={styles.personalityIdentity}>
                     <div className={styles.personalityAvatar}>
-                      <img
-                        src={`/avatars/${figure.slug}.jpg`}
-                        alt={figure.name}
-                        className={styles.avatarImage}
-                      />
+                      <FigureAvatar slug={figure.slug} name={figure.name} />
                     </div>
                     <h3 className={styles.personalityName}>
                       <Link href={`/p/${figure.slug}`}>{figure.name}</Link>
@@ -80,15 +78,11 @@ export default async function PersonalitiesPage() {
     )
   } catch (error) {
     return (
-      <div className={styles.errorContainer}>
-        <h1 className={styles.errorTitle}>Erreur</h1>
-        <p className={styles.errorMessage}>
-          Impossible de charger les personnalités.
-        </p>
-        <p className={styles.errorDetail}>
-          Erreur : {error instanceof Error ? error.message : "Erreur inconnue"}
-        </p>
-      </div>
+      <ErrorDisplay
+        title="Erreur"
+        message="Impossible de charger les personnalités."
+        detail={error instanceof Error ? error.message : "Erreur inconnue"}
+      />
     )
   }
 }

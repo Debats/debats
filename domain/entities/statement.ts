@@ -7,6 +7,7 @@ export const Statement = S.Struct({
   id: StatementId,
   publicFigureId: S.String,
   positionId: S.String,
+  takenAt: S.optional(S.Date),
   createdBy: S.optional(S.String),
   createdAt: S.Date,
   updatedAt: S.Date

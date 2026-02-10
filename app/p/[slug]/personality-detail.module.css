@@ -1,0 +1,156 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 30px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 60px;
+  margin-top: 40px;
+}
+
+.mainContent {
+}
+
+.header {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 40px;
+  align-items: flex-start;
+}
+
+.headerInfo {
+}
+
+.name {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.8em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+}
+
+.presentation {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6em;
+  color: var(--text-dark);
+  text-align: justify;
+  margin: 0 0 10px 0;
+}
+
+.wikiLink {
+  color: var(--debats-red);
+  text-decoration: none;
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+}
+
+.wikiLink:hover {
+  text-decoration: underline;
+}
+
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.2em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dark);
+  margin: 0 0 30px 0;
+}
+
+.count {
+  color: var(--debats-red);
+}
+
+.emptyMessage {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  color: var(--text-light);
+}
+
+.subjectsList {
+}
+
+.subjectItem {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.subjectItem:last-child {
+  border-bottom: none;
+}
+
+.subjectContext {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--text-light);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.subjectContext:hover {
+  color: var(--debats-red);
+}
+
+.positionBlock {
+  margin-top: 10px;
+}
+
+.positionLabel {
+  font-family: var(--font-gotham-book);
+  font-style: normal;
+  color: var(--text-light);
+}
+
+.positionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.95em;
+  font-style: italic;
+  color: var(--text-dark);
+  margin: 0 0 10px 0;
+}
+
+.positionDescription {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6em;
+  color: var(--text-dark);
+  text-align: justify;
+  margin: 0 0 10px 0;
+}
+
+.viewArguments {
+  color: var(--debats-red);
+  text-decoration: none;
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+}
+
+.viewArguments:hover {
+  text-decoration: underline;
+}
+
+.sidebar {
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 0 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .presentation {
+    text-align: center;
+  }
+}
