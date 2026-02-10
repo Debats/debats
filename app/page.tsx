@@ -4,8 +4,10 @@ import { subjectRepositorySupabase } from "../infra/database/subject-repository-
 import { statementRepositorySupabase } from "../infra/database/statement-repository-supabase"
 import { StatementWithFigure } from "../domain/repositories/statement-repository"
 import FigureAvatar from "../components/figures/FigureAvatar"
-import LastStatements from "../components/layout/last-statements"
+import ContentWithSidebar from "../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../components/layout/ErrorDisplay"
+import SubjectCounters from "../components/subjects/SubjectCounters"
+import SubjectTitle from "../components/subjects/SubjectTitle"
 import styles from "./home.module.css"
 
 export default async function HomePage() {
@@ -38,67 +40,50 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className={styles.container}>
-          <div className={styles.mainContent}>
-            <h2 className={styles.sectionTitle}>Sujets d&apos;actualité</h2>
+        <ContentWithSidebar>
+          <h2 className={styles.sectionTitle}>Sujets d&apos;actualité</h2>
 
-            {subjectsWithData.length === 0 ? (
-              <p className={styles.emptyMessage}>Aucun sujet pour le moment.</p>
-            ) : (
-              subjectsWithData.map(({ subject, stats, figures }) => (
-                <div key={subject.id} className={styles.subjectItem}>
-                  <h3 className={styles.subjectTitle}>
-                    <Link href={`/subjects/${subject.slug}`}>
-                      {subject.title}
-                    </Link>
-                  </h3>
+          {subjectsWithData.length === 0 ? (
+            <p className={styles.emptyMessage}>Aucun sujet pour le moment.</p>
+          ) : (
+            subjectsWithData.map(({ subject, stats, figures }) => (
+              <div key={subject.id} className={styles.subjectItem}>
+                <SubjectTitle slug={subject.slug} title={subject.title} />
 
-                  <div className={styles.counters}>
-                    <span className={styles.countItem}>
-                      {stats.publicFiguresCount} personnalité
-                      {stats.publicFiguresCount !== 1 ? "s" : ""} active
-                      {stats.publicFiguresCount !== 1 ? "s" : ""}
-                    </span>
-                    <span className={styles.countItem}>
-                      {stats.positionsCount} position
-                      {stats.positionsCount !== 1 ? "s" : ""}
-                    </span>
+                <SubjectCounters
+                  positionsCount={stats.positionsCount}
+                  publicFiguresCount={stats.publicFiguresCount}
+                />
+
+                {figures.length > 0 && (
+                  <div className={styles.avatarsRow}>
+                    {figures.map((figure) => (
+                      <Link
+                        key={figure.id}
+                        href={`/p/${figure.slug}`}
+                        className={styles.avatarLink}
+                        title={figure.name}
+                      >
+                        <FigureAvatar
+                          slug={figure.slug}
+                          name={figure.name}
+                          size={40}
+                        />
+                      </Link>
+                    ))}
                   </div>
+                )}
 
-                  {figures.length > 0 && (
-                    <div className={styles.avatarsRow}>
-                      {figures.map((figure) => (
-                        <Link
-                          key={figure.id}
-                          href={`/p/${figure.slug}`}
-                          className={styles.avatarLink}
-                          title={figure.name}
-                        >
-                          <FigureAvatar
-                            slug={figure.slug}
-                            name={figure.name}
-                            size={40}
-                          />
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-
-                  <Link
-                    href={`/subjects/${subject.slug}`}
-                    className={styles.seeMoreLink}
-                  >
-                    Voir plus de personnalités
-                  </Link>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className={styles.sidebar}>
-            <LastStatements />
-          </div>
-        </div>
+                <Link
+                  href={`/subjects/${subject.slug}`}
+                  className={styles.seeMoreLink}
+                >
+                  Voir plus de personnalités
+                </Link>
+              </div>
+            ))
+          )}
+        </ContentWithSidebar>
       </>
     )
   } catch (error) {

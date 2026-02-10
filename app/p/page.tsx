@@ -2,8 +2,8 @@ import Link from "next/link"
 import { Effect } from "effect"
 import { publicFigureRepositorySupabase } from "../../infra/database/public-figure-repository-supabase"
 import FigureAvatar from "../../components/figures/FigureAvatar"
+import ContentWithSidebar from "../../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../../components/layout/ErrorDisplay"
-import LastStatements from "../../components/layout/last-statements"
 import styles from "./personalities.module.css"
 
 export default async function PersonalitiesPage() {
@@ -22,59 +22,53 @@ export default async function PersonalitiesPage() {
     )
 
     return (
-      <div className={styles.container}>
-        <div className={styles.mainContent}>
-          <h1 className={styles.pageTitle}>LES PERSONNALITÉS RÉCENTES</h1>
+      <ContentWithSidebar topMargin>
+        <h1 className={styles.pageTitle}>LES PERSONNALITÉS RÉCENTES</h1>
 
-          <div className={styles.personalitiesIndex}>
-            {publicFiguresWithStats.length === 0 ? (
-              <p>Aucune personnalité pour le moment.</p>
-            ) : (
-              publicFiguresWithStats.map(({ figure, stats }) => (
-                <div key={figure.id} className={styles.personalityItem}>
-                  <div className={styles.personalityIdentity}>
-                    <div className={styles.personalityAvatar}>
-                      <FigureAvatar slug={figure.slug} name={figure.name} />
-                    </div>
-                    <h3 className={styles.personalityName}>
-                      <Link href={`/p/${figure.slug}`}>{figure.name}</Link>
-                    </h3>
-                    <div className={styles.counters}>
-                      <span className={styles.countItem}>
-                        {stats.subjectsCount} sujet
-                        {stats.subjectsCount !== 1 ? "s" : ""} actif
-                        {stats.subjectsCount !== 1 ? "s" : ""}
-                      </span>
-                    </div>
+        <div className={styles.personalitiesIndex}>
+          {publicFiguresWithStats.length === 0 ? (
+            <p>Aucune personnalité pour le moment.</p>
+          ) : (
+            publicFiguresWithStats.map(({ figure, stats }) => (
+              <div key={figure.id} className={styles.personalityItem}>
+                <div className={styles.personalityIdentity}>
+                  <div className={styles.personalityAvatar}>
+                    <FigureAvatar slug={figure.slug} name={figure.name} />
                   </div>
-
-                  <div className={styles.personalityPresentation}>
-                    <span className={styles.presentationLabel}>
-                      Homme Politique
+                  <h3 className={styles.personalityName}>
+                    <Link href={`/p/${figure.slug}`}>{figure.name}</Link>
+                  </h3>
+                  <div className={styles.counters}>
+                    <span className={styles.countItem}>
+                      {stats.subjectsCount} sujet
+                      {stats.subjectsCount !== 1 ? "s" : ""} actif
+                      {stats.subjectsCount !== 1 ? "s" : ""}
                     </span>
-                    <p className={styles.presentationText}>
-                      {figure.presentation}
-                    </p>
-                  </div>
-
-                  <div className={styles.seeMore}>
-                    <Link
-                      href={`/p/${figure.slug}`}
-                      className={styles.seeMoreLink}
-                    >
-                      Voir les sujets actifs
-                    </Link>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
 
-        <div className={styles.sidebar}>
-          <LastStatements />
+                <div className={styles.personalityPresentation}>
+                  <span className={styles.presentationLabel}>
+                    Homme Politique
+                  </span>
+                  <p className={styles.presentationText}>
+                    {figure.presentation}
+                  </p>
+                </div>
+
+                <div className={styles.seeMore}>
+                  <Link
+                    href={`/p/${figure.slug}`}
+                    className={styles.seeMoreLink}
+                  >
+                    Voir les sujets actifs
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      </div>
+      </ContentWithSidebar>
     )
   } catch (error) {
     return (

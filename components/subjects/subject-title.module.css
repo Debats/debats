@@ -1,0 +1,18 @@
+.subjectTitle {
+  font-family: var(--font-gotham-book);
+  font-size: 1.1em;
+  margin: 0 0 10px;
+  font-weight: normal;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+.subjectTitle a {
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.subjectTitle a:hover {
+  color: var(--debats-red);
+}

@@ -1,0 +1,62 @@
+.section {
+  border-bottom: 1px solid #f0f0f0;
+  display: block;
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.summary {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.1em;
+  color: var(--text-dark);
+  cursor: pointer;
+  padding: 20px 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.indicator {
+  color: var(--debats-red);
+  font-size: 1.4em;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.body {
+  padding: 0 0 25px;
+  font-family: var(--font-gotham-book);
+  font-size: 0.95em;
+  line-height: 1.7em;
+  color: var(--text-dark);
+}
+
+.body p {
+  margin: 0 0 15px;
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+.body ul {
+  padding-left: 25px;
+  margin: 10px 0 15px;
+}
+
+.body li {
+  margin-bottom: 8px;
+  line-height: 1.6em;
+}
+
+.body b {
+  font-family: var(--font-gotham-bold);
+}

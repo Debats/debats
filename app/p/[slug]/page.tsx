@@ -5,8 +5,8 @@ import { publicFigureRepositorySupabase } from "../../../infra/database/public-f
 import { statementRepositorySupabase } from "../../../infra/database/statement-repository-supabase"
 import { StatementWithDetails } from "../../../domain/repositories/statement-repository"
 import FigureAvatar from "../../../components/figures/FigureAvatar"
+import ContentWithSidebar from "../../../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../../../components/layout/ErrorDisplay"
-import LastStatements from "../../../components/layout/last-statements"
 import styles from "./personality-detail.module.css"
 
 interface PageProps {
@@ -44,60 +44,54 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
     const subjects = Object.values(subjectsMap)
 
     return (
-      <div className={styles.container}>
-        <div className={styles.mainContent}>
-          <header className={styles.header}>
-            <FigureAvatar slug={figure.slug} name={figure.name} size={120} />
-            <div className={styles.headerInfo}>
-              <h1 className={styles.name}>{figure.name}</h1>
-              <p className={styles.presentation}>{figure.presentation}</p>
-              {figure.wikipediaUrl && (
-                <a
-                  href={figure.wikipediaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.wikiLink}
-                >
-                  Voir sur Wikipedia
-                </a>
-              )}
-            </div>
-          </header>
-
-          <section>
-            <h2 className={styles.sectionTitle}>
-              PRISES DE POSITION <span className={styles.count}>{statements.length}</span>
-            </h2>
-
-            {subjects.length === 0 ? (
-              <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
-            ) : (
-              <div className={styles.subjectsList}>
-                {subjects.map(({ subject, positions }) => (
-                  <div key={subject.id} className={styles.subjectItem}>
-                    <Link href={`/subjects/${subject.slug}`} className={styles.subjectContext}>
-                      {subject.title}
-                    </Link>
-                    {positions.map(({ statement, position }) => (
-                      <div key={statement.id} className={styles.positionBlock}>
-                        <h3 className={styles.positionTitle}>
-                          <span className={styles.positionLabel}>Sa position :</span> {position.title}
-                        </h3>
-                        <p className={styles.positionDescription}>{position.description}</p>
-                        <a href="#" className={styles.viewArguments}>Voir les arguments</a>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
+      <ContentWithSidebar topMargin>
+        <header className={styles.header}>
+          <FigureAvatar slug={figure.slug} name={figure.name} size={120} />
+          <div className={styles.headerInfo}>
+            <h1 className={styles.name}>{figure.name}</h1>
+            <p className={styles.presentation}>{figure.presentation}</p>
+            {figure.wikipediaUrl && (
+              <a
+                href={figure.wikipediaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.wikiLink}
+              >
+                Voir sur Wikipedia
+              </a>
             )}
-          </section>
-        </div>
+          </div>
+        </header>
 
-        <aside className={styles.sidebar}>
-          <LastStatements />
-        </aside>
-      </div>
+        <section>
+          <h2 className={styles.sectionTitle}>
+            PRISES DE POSITION <span className={styles.count}>{statements.length}</span>
+          </h2>
+
+          {subjects.length === 0 ? (
+            <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
+          ) : (
+            <div className={styles.subjectsList}>
+              {subjects.map(({ subject, positions }) => (
+                <div key={subject.id} className={styles.subjectItem}>
+                  <Link href={`/subjects/${subject.slug}`} className={styles.subjectContext}>
+                    {subject.title}
+                  </Link>
+                  {positions.map(({ statement, position }) => (
+                    <div key={statement.id} className={styles.positionBlock}>
+                      <h3 className={styles.positionTitle}>
+                        <span className={styles.positionLabel}>Sa position :</span> {position.title}
+                      </h3>
+                      <p className={styles.positionDescription}>{position.description}</p>
+                      <a href="#" className={styles.viewArguments}>Voir les arguments</a>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </ContentWithSidebar>
     )
   } catch (error) {
     return (

@@ -5,8 +5,8 @@ import { subjectRepositorySupabase } from "../../../infra/database/subject-repos
 import { statementRepositorySupabase } from "../../../infra/database/statement-repository-supabase"
 import { StatementWithFigure } from "../../../domain/repositories/statement-repository"
 import FigureAvatar from "../../../components/figures/FigureAvatar"
+import ContentWithSidebar from "../../../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../../../components/layout/ErrorDisplay"
-import LastStatements from "../../../components/layout/last-statements"
 import styles from "./subject-detail.module.css"
 
 interface PageProps {
@@ -46,58 +46,52 @@ export default async function SubjectDetailPage({ params }: PageProps) {
     const uniqueFigures = new Set(statements.map(s => s.publicFigure.id))
 
     return (
-      <div className={styles.container}>
-        <div className={styles.mainContent}>
-          <header className={styles.header}>
-            <h1 className={styles.title}>{subject.title}</h1>
-            <p className={styles.presentation}>{subject.presentation}</p>
-            <p className={styles.problem}>{subject.problem}</p>
-          </header>
+      <ContentWithSidebar topMargin>
+        <header className={styles.header}>
+          <h1 className={styles.title}>{subject.title}</h1>
+          <p className={styles.presentation}>{subject.presentation}</p>
+          <p className={styles.problem}>{subject.problem}</p>
+        </header>
 
-          <section>
-            <h2 className={styles.sectionTitle}>
-              POSITIONS <span className={styles.count}>{positions.length}</span>
-              {" "}<span className={styles.countDetail}>
-                ({uniqueFigures.size} personnalité{uniqueFigures.size !== 1 ? "s" : ""})
-              </span>
-            </h2>
+        <section>
+          <h2 className={styles.sectionTitle}>
+            POSITIONS <span className={styles.count}>{positions.length}</span>
+            {" "}<span className={styles.countDetail}>
+              ({uniqueFigures.size} personnalité{uniqueFigures.size !== 1 ? "s" : ""})
+            </span>
+          </h2>
 
-            {positions.length === 0 ? (
-              <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
-            ) : (
-              <div className={styles.positionsList}>
-                {positions.map(({ position, figures }) => (
-                  <div key={position.id} className={styles.positionItem}>
-                    <h3 className={styles.positionTitle}>{position.title}</h3>
-                    <p className={styles.positionDescription}>{position.description}</p>
-                    <a href="#" className={styles.viewArguments}>Voir les arguments</a>
-                    <div className={styles.figuresRow}>
-                      {figures.map(({ statement, publicFigure }) => (
-                        <Link
-                          key={statement.id}
-                          href={`/p/${publicFigure.slug}`}
-                          title={publicFigure.name}
-                          className={styles.figureLink}
-                        >
-                          <FigureAvatar
-                            slug={publicFigure.slug}
-                            name={publicFigure.name}
-                            size={40}
-                          />
-                        </Link>
-                      ))}
-                    </div>
+          {positions.length === 0 ? (
+            <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
+          ) : (
+            <div className={styles.positionsList}>
+              {positions.map(({ position, figures }) => (
+                <div key={position.id} className={styles.positionItem}>
+                  <h3 className={styles.positionTitle}>{position.title}</h3>
+                  <p className={styles.positionDescription}>{position.description}</p>
+                  <a href="#" className={styles.viewArguments}>Voir les arguments</a>
+                  <div className={styles.figuresRow}>
+                    {figures.map(({ statement, publicFigure }) => (
+                      <Link
+                        key={statement.id}
+                        href={`/p/${publicFigure.slug}`}
+                        title={publicFigure.name}
+                        className={styles.figureLink}
+                      >
+                        <FigureAvatar
+                          slug={publicFigure.slug}
+                          name={publicFigure.name}
+                          size={40}
+                        />
+                      </Link>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
-        <aside className={styles.sidebar}>
-          <LastStatements />
-        </aside>
-      </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </ContentWithSidebar>
     )
   } catch (error) {
     return (

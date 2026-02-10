@@ -1,8 +1,10 @@
 import Link from "next/link"
 import { Effect } from "effect"
 import { subjectRepositorySupabase } from "../../infra/database/subject-repository-supabase"
-import LastStatements from "../../components/layout/last-statements"
+import ContentWithSidebar from "../../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../../components/layout/ErrorDisplay"
+import SubjectCounters from "../../components/subjects/SubjectCounters"
+import SubjectTitle from "../../components/subjects/SubjectTitle"
 import styles from "./subjects.module.css"
 
 export default async function SubjectsPage() {
@@ -19,62 +21,45 @@ export default async function SubjectsPage() {
     )
 
     return (
-      <div className={styles.container}>
-        <div className={styles.mainContent}>
-          <h1 className={styles.pageTitle}>LES DERNIERS SUJETS</h1>
+      <ContentWithSidebar>
+        <h1 className={styles.pageTitle}>LES DERNIERS SUJETS</h1>
 
-          <div className={styles.subjectsIndex}>
-            {subjectsWithStats.length === 0 ? (
-              <p>Aucun sujet pour le moment.</p>
-            ) : (
-              subjectsWithStats.map(({ subject, stats }) => (
-                <div key={subject.id} className={styles.subjectItem}>
-                  <div className={styles.subjectInfo}>
-                    <h2 className={styles.subjectTitle}>
-                      <Link href={`/subjects/${subject.slug}`}>
-                        {subject.title}
-                      </Link>
-                    </h2>
-                    <div className={styles.counters}>
-                      <span className={styles.countItem}>
-                        {stats.positionsCount} position
-                        {stats.positionsCount !== 1 ? "s" : ""}
-                      </span>
-                      <span className={styles.countItem}>
-                        {stats.publicFiguresCount} personnalité
-                        {stats.publicFiguresCount !== 1 ? "s" : ""} active
-                        {stats.publicFiguresCount !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className={styles.subjectPresentation}>
-                    <span className={styles.presentationLabel}>
-                      Résumé du sujet
-                    </span>
-                    <p className={styles.presentationText}>
-                      {subject.presentation}
-                    </p>
-                  </div>
-
-                  <div className={styles.seeMore}>
-                    <Link
-                      href={`/subjects/${subject.slug}`}
-                      className={styles.seeMoreLink}
-                    >
-                      Voir les positions
-                    </Link>
-                  </div>
+        <div className={styles.subjectsIndex}>
+          {subjectsWithStats.length === 0 ? (
+            <p>Aucun sujet pour le moment.</p>
+          ) : (
+            subjectsWithStats.map(({ subject, stats }) => (
+              <div key={subject.id} className={styles.subjectItem}>
+                <div className={styles.subjectInfo}>
+                  <SubjectTitle slug={subject.slug} title={subject.title} as="h2" />
+                  <SubjectCounters
+                    positionsCount={stats.positionsCount}
+                    publicFiguresCount={stats.publicFiguresCount}
+                  />
                 </div>
-              ))
-            )}
-          </div>
-        </div>
 
-        <div className={styles.sidebar}>
-          <LastStatements />
+                <div className={styles.subjectPresentation}>
+                  <span className={styles.presentationLabel}>
+                    Résumé du sujet
+                  </span>
+                  <p className={styles.presentationText}>
+                    {subject.presentation}
+                  </p>
+                </div>
+
+                <div className={styles.seeMore}>
+                  <Link
+                    href={`/subjects/${subject.slug}`}
+                    className={styles.seeMoreLink}
+                  >
+                    Voir les positions
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      </div>
+      </ContentWithSidebar>
     )
   } catch (error) {
     return (

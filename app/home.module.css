@@ -26,19 +26,7 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-/* Main layout: content + sidebar */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 30px;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 60px;
-}
-
-.mainContent {
-}
-
+/* Section title */
 .sectionTitle {
   font-family: var(--font-gotham-bold);
   font-size: 1.8em;
@@ -60,37 +48,6 @@
 
 .subjectItem:last-child {
   border-bottom: none;
-}
-
-.subjectTitle {
-  font-family: var(--font-gotham-book);
-  font-size: 1.1em;
-  margin: 0 0 10px;
-  font-weight: normal;
-  color: var(--text-dark);
-  text-transform: uppercase;
-  line-height: 1.3;
-}
-
-.subjectTitle a {
-  color: var(--text-dark);
-  text-decoration: none;
-}
-
-.subjectTitle a:hover {
-  color: var(--debats-red);
-}
-
-.counters {
-  margin-bottom: 12px;
-}
-
-.countItem {
-  color: var(--debats-red);
-  font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  margin: 4px 0;
-  display: block;
 }
 
 /* Avatars row */
@@ -123,9 +80,6 @@
   color: #d11635;
 }
 
-.sidebar {
-}
-
 .emptyMessage {
   font-family: var(--font-gotham-book);
   color: var(--text-light);
@@ -144,12 +98,6 @@
 
   .heroSubtitle {
     font-size: 0.9em;
-  }
-
-  .container {
-    grid-template-columns: 1fr;
-    gap: 30px;
-    padding: 0 20px;
   }
 
   .sectionTitle {
