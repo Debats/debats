@@ -46,43 +46,53 @@ export default function AProposPage() {
           Dans un monde de plus en plus complexe, les discours simplistes sont
           légion. Régulièrement, des controverses se construisent sur la base
           d&apos;arguments à peine vérifiés, ou simplement invérifiables.
+          C&apos;est ainsi que semblent se développer des idées confuses et des
+          discussions stériles.
         </p>
 
         <p>
           L&apos;intelligibilité du débat public et son accessibilité par tous
           ceux qui aspirent à y participer déterminent la qualité de notre
-          système démocratique.
+          système démocratique. Or, aujourd&apos;hui, aucun outil, simple
+          d&apos;utilisation, ne permet d&apos;accéder à la pluralité des idées
+          de celles et ceux qui font le choix de s&apos;exprimer publiquement.
+          Prendre connaissance de leurs arguments, comprendre ce qu&apos;ils
+          prétendent ou ce qu&apos;ils laissent entendre est un véritable
+          parcours du combattant. Nous cédons ainsi régulièrement à la facilité,
+          en accordant une valeur démesurée à des postures démagogiques ou en
+          laissant à d&apos;autres le soin de les produire.
         </p>
 
         <p>
-          Or, aujourd&apos;hui, aucun outil, simple d&apos;utilisation, ne
-          permet d&apos;accéder à la pluralité des idées de celles et ceux qui
-          font le choix de s&apos;exprimer publiquement.
-        </p>
-
-        <p>
-          Les blogs, les tweets, les journaux télévisés, les discours ou les
-          livres sont un trésor démocratique laissé en jachère, une réserve
-          politique fertile jusqu&apos;ici largement sous-exploitée.
+          Pourtant, les ressources sont là, sous nos yeux, elles existent ! Les
+          blogs, les tweets, les journaux télévisés, les discours ou les livres
+          sont un trésor démocratique laissé en jachère, une réserve politique
+          fertile jusqu&apos;ici largement sous-exploitée. Ces traces essaimées
+          tout autour de nous constituent une des clés pour y voir plus clair.
         </p>
 
         <p>
           L&apos;ambition de <em>Débats</em> est simple : recenser, sur chaque
           grand thème qui fait débat, les prises de position de celles et ceux
-          qui décident de s&apos;engager.
+          qui décident de s&apos;engager. Cartographier l&apos;évolution de leur
+          pensée, de leurs opinions, des combats qu&apos;ils ont menés. Donner à
+          voir la constance, la progression ou l&apos;incohérence d&apos;un
+          engagement dans le temps.
         </p>
 
         <p>
           Rédigé par des volontaires sur une plateforme en ligne, et
           fonctionnant sur le principe du wiki, <em>Débats</em> a pour objectif
           d&apos;offrir un contenu libre, impartial et vérifiable des prises de
-          position.
+          position de celles et ceux qui participent aux débats publics.
         </p>
 
         <p className={styles.highlight}>
           Face à ce que nous considérons comme un dévoiement démocratique, nous
           partageons une conviction : l&apos;information est notre première
-          arme.
+          arme. Redonner à l&apos;engagement la crédibilité et la valeur qui
+          doivent être les siennes : voilà la raison d&apos;être
+          de <em>Débats</em>.
         </p>
       </div>
     </>
