@@ -27,7 +27,7 @@ export default async function LastStatements() {
                 <Link href={`/p/${statement.publicFigureSlug}`}>
                   <strong>{statement.publicFigureName}</strong>
                 </Link>{' '}
-                s&apos;est déclaré(e) <strong>{statement.positionTitle}</strong> dans le débat{' '}
+                s&apos;est déclaré(e) pour <strong>{statement.positionTitle}</strong> dans le débat{' '}
                 <Link href={`/subjects/${statement.subjectSlug}`}>
                   <strong>{statement.subjectTitle}</strong>
                 </Link>
