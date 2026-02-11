@@ -9,7 +9,7 @@ export default function Footer() {
           <small className={styles.legalText}>
             <Link href="/credits" className={styles.legalLink}>Crédits</Link>
             <span className={styles.separator}>|</span>
-            <a href="#" className={styles.legalLink}>Mentions Légales</a>
+            <Link href="/mentions-legales" className={styles.legalLink}>Mentions légales</Link>
           </small>
         </div>
         

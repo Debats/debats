@@ -17,38 +17,6 @@
   margin: 0 0 20px;
 }
 
-.contributors {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.contributor {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.contributorName {
-  font-family: var(--font-gotham-bold);
-  font-size: 15px;
-  color: var(--text-dark);
-  text-decoration: none;
-}
-
-a.contributorName:hover {
-  color: var(--debats-red);
-}
-
-.contributorRole {
-  font-family: var(--font-open-sans);
-  font-size: 14px;
-  color: var(--text-light);
-}
-
 .text {
   font-family: var(--font-open-sans);
   font-size: 15px;

@@ -53,7 +53,7 @@ export default function CreditsPage() {
           proviennent de sources libres de droits ou sont utilisées dans le
           cadre du droit à l&apos;information. Si vous êtes titulaire de
           droits sur une image et souhaitez sa modification ou son retrait,
-          contactez-nous à contact@debats.co.
+          contactez-nous à <a href="mailto:contact@debats.co">contact@debats.co</a>.
         </p>
       </section>
 

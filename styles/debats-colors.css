@@ -71,6 +71,16 @@ a[target="_blank"]::after {
   content: " \2197";
   font-size: 0.8em;
   color: var(--text-light);
+  display: inline-block;
+  text-decoration: none;
+}
+
+a[href^="mailto:"]::after {
+  content: " \2709";
+  font-size: 0.9em;
+  color: var(--text-light);
+  display: inline-block;
+  text-decoration: none;
 }
 
 .count {
