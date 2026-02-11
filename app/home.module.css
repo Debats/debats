@@ -1,7 +1,8 @@
 /* Hero banner */
 .hero {
-  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
-    url("/images/intro-bg.jpg") center 30% / cover no-repeat;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+    url('/images/intro-bg.jpg') center 30% / cover no-repeat;
   text-align: center;
   padding: 60px 30px;
   margin-bottom: 40px;

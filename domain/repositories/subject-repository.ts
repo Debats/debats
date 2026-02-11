@@ -1,9 +1,9 @@
-import { Effect } from "effect"
-import { Subject } from "../entities/subject"
-import { SubjectStats } from "../value-objects/subject-stats"
+import { Effect } from 'effect'
+import { Subject } from '../entities/subject'
+import { SubjectStats } from '../value-objects/subject-stats'
 
 export class DatabaseError extends Error {
-  readonly _tag = "DatabaseError"
+  readonly _tag = 'DatabaseError'
 }
 
 export interface SubjectRepository {

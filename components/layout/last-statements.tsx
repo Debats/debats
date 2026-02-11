@@ -7,9 +7,7 @@ import styles from './last-statements.module.css'
 
 export default async function LastStatements() {
   const statementRepo = createStatementRepository(supabase)
-  const statements = await Effect.runPromise(
-    statementRepo.findLatest(5)
-  )
+  const statements = await Effect.runPromise(statementRepo.findLatest(5))
 
   if (statements.length === 0) return null
 
@@ -17,7 +15,7 @@ export default async function LastStatements() {
     <div className={styles.lastStatements}>
       <h2 className={styles.title}>LES DERNIÈRES PRISES DE POSITION</h2>
       <ul className={styles.statementsList}>
-        {statements.map(statement => (
+        {statements.map((statement) => (
           <li key={statement.statementId} className={styles.statementItem}>
             <FigureAvatar
               slug={statement.publicFigureSlug}
@@ -28,10 +26,8 @@ export default async function LastStatements() {
               <div className={styles.publicFigureText}>
                 <Link href={`/p/${statement.publicFigureSlug}`}>
                   <strong>{statement.publicFigureName}</strong>
-                </Link>
-                {' '}s&apos;est déclaré(e){' '}
-                <strong>{statement.positionTitle}</strong>
-                {' '}dans le débat{' '}
+                </Link>{' '}
+                s&apos;est déclaré(e) <strong>{statement.positionTitle}</strong> dans le débat{' '}
                 <Link href={`/subjects/${statement.subjectSlug}`}>
                   <strong>{statement.subjectTitle}</strong>
                 </Link>

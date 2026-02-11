@@ -1,15 +1,15 @@
-import Link from "next/link"
-import { Effect } from "effect"
-import { supabase } from "../infra/supabase/ssg"
-import { createSubjectRepository } from "../infra/database/subject-repository-supabase"
-import { createStatementRepository } from "../infra/database/statement-repository-supabase"
-import { StatementWithFigure } from "../domain/repositories/statement-repository"
-import FigureAvatar from "../components/figures/FigureAvatar"
-import ContentWithSidebar from "../components/layout/ContentWithSidebar"
-import ErrorDisplay from "../components/layout/ErrorDisplay"
-import SubjectCounters from "../components/subjects/SubjectCounters"
-import SubjectTitle from "../components/subjects/SubjectTitle"
-import styles from "./home.module.css"
+import Link from 'next/link'
+import { Effect } from 'effect'
+import { supabase } from '../infra/supabase/ssg'
+import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
+import { createStatementRepository } from '../infra/database/statement-repository-supabase'
+import { StatementWithFigure } from '../domain/repositories/statement-repository'
+import FigureAvatar from '../components/figures/FigureAvatar'
+import ContentWithSidebar from '../components/layout/ContentWithSidebar'
+import ErrorDisplay from '../components/layout/ErrorDisplay'
+import SubjectCounters from '../components/subjects/SubjectCounters'
+import SubjectTitle from '../components/subjects/SubjectTitle'
+import styles from './home.module.css'
 
 export default async function HomePage() {
   try {
@@ -20,17 +20,15 @@ export default async function HomePage() {
 
     const subjectsWithData = await Promise.all(
       subjects.map(async (subject) => {
-        const stats = await Effect.runPromise(
-          subjectRepo.getStats(subject.id)
-        )
+        const stats = await Effect.runPromise(subjectRepo.getStats(subject.id))
         const statementsWithFigures = await Effect.runPromise(
-          statementRepo.findBySubjectWithFigures(subject.id)
+          statementRepo.findBySubjectWithFigures(subject.id),
         )
 
         const uniqueFigures = deduplicateFigures(statementsWithFigures)
 
         return { subject, stats, figures: uniqueFigures }
-      })
+      }),
     )
 
     return (
@@ -38,9 +36,8 @@ export default async function HomePage() {
         <div className={styles.hero}>
           <h1 className={styles.heroTitle}>Bienvenue sur Débats</h1>
           <p className={styles.heroSubtitle}>
-            Débats est un projet participatif et collaboratif qui a pour objectif
-            d&apos;offrir une synthèse ouverte, impartiale et vérifiable des sujets
-            clivants de notre société.
+            Débats est un projet participatif et collaboratif qui a pour objectif d&apos;offrir une
+            synthèse ouverte, impartiale et vérifiable des sujets clivants de notre société.
           </p>
         </div>
 
@@ -68,20 +65,13 @@ export default async function HomePage() {
                         className={styles.avatarLink}
                         title={figure.name}
                       >
-                        <FigureAvatar
-                          slug={figure.slug}
-                          name={figure.name}
-                          size={40}
-                        />
+                        <FigureAvatar slug={figure.slug} name={figure.name} size={40} />
                       </Link>
                     ))}
                   </div>
                 )}
 
-                <Link
-                  href={`/subjects/${subject.slug}`}
-                  className={styles.seeMoreLink}
-                >
+                <Link href={`/subjects/${subject.slug}`} className={styles.seeMoreLink}>
                   Voir plus de personnalités
                 </Link>
               </div>
@@ -95,7 +85,7 @@ export default async function HomePage() {
       <ErrorDisplay
         title="Erreur"
         message="Impossible de charger la page d'accueil."
-        detail={error instanceof Error ? error.message : "Erreur inconnue"}
+        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
       />
     )
   }

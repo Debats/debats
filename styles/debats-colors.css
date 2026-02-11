@@ -1,13 +1,13 @@
 :root {
   --debats-red: #f21e40;
-  
+
   --text-dark: #333333;
   --text-light: #777777;
-  
+
   --border-light: #cccccc;
   --bg-light: #ffffff;
   --bg-gray: #eaeaea;
-  
+
   --font-gotham-book: 'Gotham-Book', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-gotham-bold: 'Gotham-Bold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-open-sans: 'Open Sans', sans-serif;
@@ -47,7 +47,7 @@ a:visited {
   text-decoration: none;
 }
 
-a:hover, 
+a:hover,
 a:visited:hover {
   color: var(--text-dark);
   text-decoration: none;
@@ -67,16 +67,16 @@ a.morelink:hover,
   text-decoration: none !important;
 }
 
-a[target="_blank"]::after {
-  content: " \2197";
+a[target='_blank']::after {
+  content: ' \2197';
   font-size: 0.8em;
   color: var(--text-light);
   display: inline-block;
   text-decoration: none;
 }
 
-a[href^="mailto:"]::after {
-  content: " \2709";
+a[href^='mailto:']::after {
+  content: ' \2709';
   font-size: 0.9em;
   color: var(--text-light);
   display: inline-block;

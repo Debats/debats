@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { Effect } from "effect"
-import { supabase } from "../../infra/supabase/ssg"
-import { createSubjectRepository } from "../../infra/database/subject-repository-supabase"
-import ContentWithSidebar from "../../components/layout/ContentWithSidebar"
-import ErrorDisplay from "../../components/layout/ErrorDisplay"
-import SubjectCounters from "../../components/subjects/SubjectCounters"
-import SubjectTitle from "../../components/subjects/SubjectTitle"
-import styles from "./subjects.module.css"
+import Link from 'next/link'
+import { Effect } from 'effect'
+import { supabase } from '../../infra/supabase/ssg'
+import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
+import ErrorDisplay from '../../components/layout/ErrorDisplay'
+import SubjectCounters from '../../components/subjects/SubjectCounters'
+import SubjectTitle from '../../components/subjects/SubjectTitle'
+import styles from './subjects.module.css'
 
 export default async function SubjectsPage() {
   try {
@@ -16,11 +16,9 @@ export default async function SubjectsPage() {
 
     const subjectsWithStats = await Promise.all(
       subjects.map(async (subject) => {
-        const stats = await Effect.runPromise(
-          subjectRepo.getStats(subject.id)
-        )
+        const stats = await Effect.runPromise(subjectRepo.getStats(subject.id))
         return { subject, stats }
-      })
+      }),
     )
 
     return (
@@ -42,19 +40,12 @@ export default async function SubjectsPage() {
                 </div>
 
                 <div className={styles.subjectPresentation}>
-                  <span className={styles.presentationLabel}>
-                    Résumé du sujet
-                  </span>
-                  <p className={styles.presentationText}>
-                    {subject.presentation}
-                  </p>
+                  <span className={styles.presentationLabel}>Résumé du sujet</span>
+                  <p className={styles.presentationText}>{subject.presentation}</p>
                 </div>
 
                 <div className={styles.seeMore}>
-                  <Link
-                    href={`/subjects/${subject.slug}`}
-                    className={styles.seeMoreLink}
-                  >
+                  <Link href={`/subjects/${subject.slug}`} className={styles.seeMoreLink}>
                     Voir les positions
                   </Link>
                 </div>
@@ -69,7 +60,7 @@ export default async function SubjectsPage() {
       <ErrorDisplay
         title="Erreur"
         message="Impossible de charger les sujets."
-        detail={error instanceof Error ? error.message : "Erreur inconnue"}
+        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
       />
     )
   }

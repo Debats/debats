@@ -6,7 +6,7 @@ export type PositionId = S.Schema.Type<typeof PositionId>
 export const PositionTitle = S.String.pipe(
   S.minLength(3),
   S.maxLength(255),
-  S.brand('PositionTitle')
+  S.brand('PositionTitle'),
 )
 export type PositionTitle = S.Schema.Type<typeof PositionTitle>
 
@@ -17,7 +17,7 @@ export const Position = S.Struct({
   subjectId: S.String,
   createdBy: S.optional(S.String),
   createdAt: S.Date,
-  updatedAt: S.Date
+  updatedAt: S.Date,
 })
 
 export type Position = S.Schema.Type<typeof Position>
@@ -29,7 +29,7 @@ export const createPosition = (params: {
   createdBy?: string
 }): Position => {
   const now = new Date()
-  
+
   return Position.make({
     id: PositionId.make(crypto.randomUUID()),
     title: PositionTitle.make(params.title),
@@ -37,24 +37,21 @@ export const createPosition = (params: {
     subjectId: params.subjectId,
     createdBy: params.createdBy,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   })
 }
 
-export const updatePositionTitle = (
-  position: Position,
-  newTitle: string
-): Position => ({
+export const updatePositionTitle = (position: Position, newTitle: string): Position => ({
   ...position,
   title: PositionTitle.make(newTitle),
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })
 
 export const updatePositionDescription = (
   position: Position,
-  newDescription: string
+  newDescription: string,
 ): Position => ({
   ...position,
   description: newDescription,
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })

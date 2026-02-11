@@ -3,7 +3,8 @@ import styles from './inscription.module.css'
 
 export const metadata = {
   title: 'Inscription - Débats.co',
-  description: 'Les inscriptions ne sont pas encore ouvertes. Devenez membre-fondateur en vous inscrivant à la newsletter.',
+  description:
+    'Les inscriptions ne sont pas encore ouvertes. Devenez membre-fondateur en vous inscrivant à la newsletter.',
 }
 
 export default function InscriptionPage() {
@@ -11,8 +12,8 @@ export default function InscriptionPage() {
     <div className={styles.page}>
       <h1 className={styles.title}>Patience !</h1>
       <p className={styles.subtitle}>
-        Le site Débats n&apos;est pas encore ouvert au public.
-        Inscrivez-vous pour être informé de l&apos;ouverture et devenir membre-fondateur.
+        Le site Débats n&apos;est pas encore ouvert au public. Inscrivez-vous pour être informé de
+        l&apos;ouverture et devenir membre-fondateur.
       </p>
 
       <div className={styles.brevoForm} dangerouslySetInnerHTML={{ __html: brevoFormHtml }} />
@@ -22,10 +23,7 @@ export default function InscriptionPage() {
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: brevoScript }}
       />
-      <Script
-        src="https://sibforms.com/forms/end-form/build/main.js"
-        strategy="afterInteractive"
-      />
+      <Script src="https://sibforms.com/forms/end-form/build/main.js" strategy="afterInteractive" />
     </div>
   )
 }

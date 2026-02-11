@@ -107,7 +107,9 @@
 .figureLink {
   display: block;
   opacity: 0.85;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .figureLink:hover {

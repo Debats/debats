@@ -7,15 +7,11 @@ export type SubjectId = S.Schema.Type<typeof SubjectId>
 
 export const SubjectSlug = S.String.pipe(
   S.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  S.brand('SubjectSlug')
+  S.brand('SubjectSlug'),
 )
 export type SubjectSlug = S.Schema.Type<typeof SubjectSlug>
 
-export const SubjectTitle = S.String.pipe(
-  S.minLength(3),
-  S.maxLength(100),
-  S.brand('SubjectTitle')
-)
+export const SubjectTitle = S.String.pipe(S.minLength(3), S.maxLength(100), S.brand('SubjectTitle'))
 export type SubjectTitle = S.Schema.Type<typeof SubjectTitle>
 
 export const Subject = S.Struct({
@@ -27,7 +23,7 @@ export const Subject = S.Struct({
   pictureUrl: S.optional(S.String),
   createdBy: S.optional(S.String),
   createdAt: S.Date,
-  updatedAt: S.Date
+  updatedAt: S.Date,
 })
 
 export type Subject = S.Schema.Type<typeof Subject>
@@ -41,7 +37,7 @@ export const generateSlug = (title: string): SubjectSlug =>
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, ''),
-    SubjectSlug.make
+    SubjectSlug.make,
   )
 
 export const createSubject = (params: {
@@ -52,7 +48,7 @@ export const createSubject = (params: {
   createdBy?: string
 }): Subject => {
   const now = new Date()
-  
+
   return Subject.make({
     id: SubjectId.make(crypto.randomUUID()),
     title: SubjectTitle.make(params.title),
@@ -62,7 +58,7 @@ export const createSubject = (params: {
     pictureUrl: params.pictureUrl,
     createdBy: params.createdBy,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   })
 }
 
@@ -71,21 +67,15 @@ export const isMajorSubject = (subject: Subject, statementCount = 0): boolean =>
   return isAfter(oneWeekAgo)(subject.createdAt) || statementCount > 5
 }
 
-export const updateSubjectTitle = (
-  subject: Subject,
-  newTitle: string
-): Subject => ({
+export const updateSubjectTitle = (subject: Subject, newTitle: string): Subject => ({
   ...subject,
   title: SubjectTitle.make(newTitle),
   slug: generateSlug(newTitle),
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })
 
-export const updateSubjectPresentation = (
-  subject: Subject,
-  newPresentation: string
-): Subject => ({
+export const updateSubjectPresentation = (subject: Subject, newPresentation: string): Subject => ({
   ...subject,
   presentation: newPresentation,
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })

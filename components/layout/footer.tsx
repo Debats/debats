@@ -7,12 +7,16 @@ export default function Footer() {
       <div className={styles.container}>
         <div className={styles.legal}>
           <small className={styles.legalText}>
-            <Link href="/credits" className={styles.legalLink}>Crédits</Link>
+            <Link href="/credits" className={styles.legalLink}>
+              Crédits
+            </Link>
             <span className={styles.separator}>|</span>
-            <Link href="/mentions-legales" className={styles.legalLink}>Mentions légales</Link>
+            <Link href="/mentions-legales" className={styles.legalLink}>
+              Mentions légales
+            </Link>
           </small>
         </div>
-        
+
         <div className={styles.navigation}>
           <nav>
             <ul className={styles.navList}>
@@ -27,9 +31,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li className={styles.navItem}>
-                <a 
-                  href="https://twitter.com/debatsco" 
-                  target="_blank" 
+                <a
+                  href="https://twitter.com/debatsco"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className={styles.externalLink}
                 >

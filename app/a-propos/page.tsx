@@ -1,9 +1,9 @@
-import Image from "next/image"
-import { Metadata } from "next"
-import styles from "./a-propos.module.css"
+import Image from 'next/image'
+import { Metadata } from 'next'
+import styles from './a-propos.module.css'
 
 export const metadata: Metadata = {
-  title: "À propos - Débats.co",
+  title: 'À propos - Débats.co',
   description:
     "Débats est un projet francophone et participatif, ayant pour objectif d'offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.",
 }
@@ -23,7 +23,13 @@ export default function AProposPage() {
           />
         </h1>
         <a href="#accroche" className={styles.scrollIndicator} aria-label="Défiler vers le bas">
-          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="60"
+            height="60"
+            viewBox="0 0 60 60"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <circle cx="30" cy="30" r="29" stroke="white" strokeWidth="1.5" />
             <path d="M20 24l10 8 10-8" stroke="white" strokeWidth="1.5" fill="none" />
             <path d="M20 32l10 8 10-8" stroke="white" strokeWidth="1.5" fill="none" />
@@ -33,9 +39,9 @@ export default function AProposPage() {
 
       <div id="accroche" className={styles.accroche}>
         <p>
-          <em>Débats</em> est un projet francophone et participatif, ayant pour
-          objectif d&apos;offrir une synthèse ouverte, impartiale et vérifiable,
-          des sujets clivants de notre société.
+          <em>Débats</em> est un projet francophone et participatif, ayant pour objectif
+          d&apos;offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre
+          société.
         </p>
       </div>
 
@@ -43,56 +49,49 @@ export default function AProposPage() {
         <h2 className={styles.manifesteTitle}>Pourquoi Débats ?</h2>
 
         <p>
-          Dans un monde de plus en plus complexe, les discours simplistes sont
-          légion. Régulièrement, des controverses se construisent sur la base
-          d&apos;arguments à peine vérifiés, ou simplement invérifiables.
-          C&apos;est ainsi que semblent se développer des idées confuses et des
-          discussions stériles.
+          Dans un monde de plus en plus complexe, les discours simplistes sont légion.
+          Régulièrement, des controverses se construisent sur la base d&apos;arguments à peine
+          vérifiés, ou simplement invérifiables. C&apos;est ainsi que semblent se développer des
+          idées confuses et des discussions stériles.
         </p>
 
         <p>
-          L&apos;intelligibilité du débat public et son accessibilité par tous
-          ceux qui aspirent à y participer déterminent la qualité de notre
-          système démocratique. Or, aujourd&apos;hui, aucun outil, simple
-          d&apos;utilisation, ne permet d&apos;accéder à la pluralité des idées
-          de celles et ceux qui font le choix de s&apos;exprimer publiquement.
-          Prendre connaissance de leurs arguments, comprendre ce qu&apos;ils
-          prétendent ou ce qu&apos;ils laissent entendre est un véritable
-          parcours du combattant. Nous cédons ainsi régulièrement à la facilité,
-          en accordant une valeur démesurée à des postures démagogiques ou en
-          laissant à d&apos;autres le soin de les produire.
+          L&apos;intelligibilité du débat public et son accessibilité par tous ceux qui aspirent à y
+          participer déterminent la qualité de notre système démocratique. Or, aujourd&apos;hui,
+          aucun outil, simple d&apos;utilisation, ne permet d&apos;accéder à la pluralité des idées
+          de celles et ceux qui font le choix de s&apos;exprimer publiquement. Prendre connaissance
+          de leurs arguments, comprendre ce qu&apos;ils prétendent ou ce qu&apos;ils laissent
+          entendre est un véritable parcours du combattant. Nous cédons ainsi régulièrement à la
+          facilité, en accordant une valeur démesurée à des postures démagogiques ou en laissant à
+          d&apos;autres le soin de les produire.
         </p>
 
         <p>
-          Pourtant, les ressources sont là, sous nos yeux, elles existent ! Les
-          blogs, les tweets, les journaux télévisés, les discours ou les livres
-          sont un trésor démocratique laissé en jachère, une réserve politique
-          fertile jusqu&apos;ici largement sous-exploitée. Ces traces essaimées
-          tout autour de nous constituent une des clés pour y voir plus clair.
+          Pourtant, les ressources sont là, sous nos yeux, elles existent ! Les blogs, les tweets,
+          les journaux télévisés, les discours ou les livres sont un trésor démocratique laissé en
+          jachère, une réserve politique fertile jusqu&apos;ici largement sous-exploitée. Ces traces
+          essaimées tout autour de nous constituent une des clés pour y voir plus clair.
         </p>
 
         <p>
-          L&apos;ambition de <em>Débats</em> est simple : recenser, sur chaque
-          grand thème qui fait débat, les prises de position de celles et ceux
-          qui décident de s&apos;engager. Cartographier l&apos;évolution de leur
-          pensée, de leurs opinions, des combats qu&apos;ils ont menés. Donner à
-          voir la constance, la progression ou l&apos;incohérence d&apos;un
+          L&apos;ambition de <em>Débats</em> est simple : recenser, sur chaque grand thème qui fait
+          débat, les prises de position de celles et ceux qui décident de s&apos;engager.
+          Cartographier l&apos;évolution de leur pensée, de leurs opinions, des combats qu&apos;ils
+          ont menés. Donner à voir la constance, la progression ou l&apos;incohérence d&apos;un
           engagement dans le temps.
         </p>
 
         <p>
-          Rédigé par des volontaires sur une plateforme en ligne, et
-          fonctionnant sur le principe du wiki, <em>Débats</em> a pour objectif
-          d&apos;offrir un contenu libre, impartial et vérifiable des prises de
-          position de celles et ceux qui participent aux débats publics.
+          Rédigé par des volontaires sur une plateforme en ligne, et fonctionnant sur le principe du
+          wiki, <em>Débats</em> a pour objectif d&apos;offrir un contenu libre, impartial et
+          vérifiable des prises de position de celles et ceux qui participent aux débats publics.
         </p>
 
         <p className={styles.highlight}>
-          Face à ce que nous considérons comme un dévoiement démocratique, nous
-          partageons une conviction : l&apos;information est notre première
-          arme. Redonner à l&apos;engagement la crédibilité et la valeur qui
-          doivent être les siennes : voilà la raison d&apos;être
-          de <em>Débats</em>.
+          Face à ce que nous considérons comme un dévoiement démocratique, nous partageons une
+          conviction : l&apos;information est notre première arme. Redonner à l&apos;engagement la
+          crédibilité et la valeur qui doivent être les siennes : voilà la raison d&apos;être de{' '}
+          <em>Débats</em>.
         </p>
       </div>
     </>

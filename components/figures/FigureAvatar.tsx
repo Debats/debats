@@ -1,4 +1,4 @@
-import styles from "./figure-avatar.module.css"
+import styles from './figure-avatar.module.css'
 
 interface FigureAvatarProps {
   slug: string

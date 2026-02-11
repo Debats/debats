@@ -1,27 +1,23 @@
-import Link from "next/link"
-import { Effect } from "effect"
-import { supabase } from "../../infra/supabase/ssg"
-import { createPublicFigureRepository } from "../../infra/database/public-figure-repository-supabase"
-import FigureAvatar from "../../components/figures/FigureAvatar"
-import ContentWithSidebar from "../../components/layout/ContentWithSidebar"
-import ErrorDisplay from "../../components/layout/ErrorDisplay"
-import styles from "./personalities.module.css"
+import Link from 'next/link'
+import { Effect } from 'effect'
+import { supabase } from '../../infra/supabase/ssg'
+import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import FigureAvatar from '../../components/figures/FigureAvatar'
+import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
+import ErrorDisplay from '../../components/layout/ErrorDisplay'
+import styles from './personalities.module.css'
 
 export default async function PersonalitiesPage() {
   try {
     const publicFigureRepo = createPublicFigureRepository(supabase)
 
-    const publicFigures = await Effect.runPromise(
-      publicFigureRepo.findAll()
-    )
+    const publicFigures = await Effect.runPromise(publicFigureRepo.findAll())
 
     const publicFiguresWithStats = await Promise.all(
       publicFigures.map(async (figure) => {
-        const stats = await Effect.runPromise(
-          publicFigureRepo.getStats(figure.id)
-        )
+        const stats = await Effect.runPromise(publicFigureRepo.getStats(figure.id))
         return { figure, stats }
-      })
+      }),
     )
 
     return (
@@ -44,26 +40,19 @@ export default async function PersonalitiesPage() {
                   <div className={styles.counters}>
                     <span className={styles.countItem}>
                       {stats.subjectsCount} sujet
-                      {stats.subjectsCount !== 1 ? "s" : ""} actif
-                      {stats.subjectsCount !== 1 ? "s" : ""}
+                      {stats.subjectsCount !== 1 ? 's' : ''} actif
+                      {stats.subjectsCount !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
 
                 <div className={styles.personalityPresentation}>
-                  <span className={styles.presentationLabel}>
-                    Homme Politique
-                  </span>
-                  <p className={styles.presentationText}>
-                    {figure.presentation}
-                  </p>
+                  <span className={styles.presentationLabel}>Homme Politique</span>
+                  <p className={styles.presentationText}>{figure.presentation}</p>
                 </div>
 
                 <div className={styles.seeMore}>
-                  <Link
-                    href={`/p/${figure.slug}`}
-                    className={styles.seeMoreLink}
-                  >
+                  <Link href={`/p/${figure.slug}`} className={styles.seeMoreLink}>
                     Voir les sujets actifs
                   </Link>
                 </div>
@@ -78,7 +67,7 @@ export default async function PersonalitiesPage() {
       <ErrorDisplay
         title="Erreur"
         message="Impossible de charger les personnalités."
-        detail={error instanceof Error ? error.message : "Erreur inconnue"}
+        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
       />
     )
   }

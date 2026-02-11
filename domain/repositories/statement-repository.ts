@@ -1,11 +1,11 @@
-import { Context, Effect } from "effect"
-import { Statement, Evidence, LatestStatement } from "../entities/statement"
-import { Position } from "../entities/position"
-import { Subject } from "../entities/subject"
-import { PublicFigure } from "../entities/public-figure"
+import { Context, Effect } from 'effect'
+import { Statement, Evidence, LatestStatement } from '../entities/statement'
+import { Position } from '../entities/position'
+import { Subject } from '../entities/subject'
+import { PublicFigure } from '../entities/public-figure'
 
 export class DatabaseError extends Error {
-  readonly _tag = "DatabaseError"
+  readonly _tag = 'DatabaseError'
 }
 
 /**
@@ -36,7 +36,9 @@ export interface StatementRepository {
   /**
    * Get all statements for a public figure with position and subject details
    */
-  findByPublicFigureWithDetails(publicFigureId: string): Effect.Effect<StatementWithDetails[], DatabaseError>
+  findByPublicFigureWithDetails(
+    publicFigureId: string,
+  ): Effect.Effect<StatementWithDetails[], DatabaseError>
 
   /**
    * Get all statements for a subject with position and public figure details
@@ -55,4 +57,4 @@ export interface StatementRepository {
   getEvidences(statementId: string): Effect.Effect<Evidence[], DatabaseError>
 }
 
-export const StatementRepository = Context.GenericTag<StatementRepository>("StatementRepository")
+export const StatementRepository = Context.GenericTag<StatementRepository>('StatementRepository')

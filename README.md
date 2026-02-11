@@ -18,30 +18,35 @@ Débats est un projet francophone et participatif qui vise à créer une platefo
 Le projet a été initié en 2014 et a connu plusieurs itérations technologiques :
 
 ### 1. Ruby Backend (2014-2018)
+
 - **Stack** : Ruby on Rails fullstack
 - **État** : Version la plus aboutie avec modèle de données complet
 - **Localisation** : `ruby-backend/`
 - **Fonctionnalités** : CRUD complet, authentification, upload d'images
 
 ### 2. Frontend React (2018-2019)
+
 - **Stack** : React + Redux + GraphQL
 - **État** : Interface utilisateur moderne mais incomplète
 - **Localisation** : `frontend/`
 - **Objectif** : Moderniser l'interface utilisateur
 
 ### 3. API GraphQL (2019-2020)
+
 - **Stack** : Node.js + GraphQL + Prisma
 - **État** : API moderne mais non finalisée
 - **Localisation** : `api/`
 - **Objectif** : Remplacer le backend Ruby par une API moderne
 
 ### 4. Elixir Phoenix (2020-2021)
+
 - **Stack** : Elixir + Phoenix + PostgreSQL
 - **État** : Refonte complète mais abandonnée
 - **Localisation** : `debats-elixir/`
 - **Objectif** : Performance et fiabilité
 
 ### 5. Next.js Standalone (actuel)
+
 - **Stack** : Next.js 15 + TypeScript + Supabase + Effect TS
 - **État** : En cours de développement
 - **Localisation** : racine du projet
@@ -75,6 +80,7 @@ Users (Contributeurs)
 ## Architecture technique actuelle
 
 ### Stack
+
 - **Frontend/Backend** : Next.js 15 (App Router)
 - **Base de données** : PostgreSQL via Supabase
 - **Authentification** : Supabase Auth
@@ -82,6 +88,7 @@ Users (Contributeurs)
 - **Styling** : CSS Modules
 
 ### Structure
+
 ```
 ├── app/              # Next.js App Router
 ├── domain/           # Logique métier (entités, services, règles)
@@ -92,17 +99,20 @@ Users (Contributeurs)
 ```
 
 ### Projets legacy (référence)
+
 - `ruby-backend/` : Application Rails originale
 - `debats-elixir/` : Version Phoenix abandonnée
 
 ## Développement
 
 ### Prérequis
+
 - Node.js 20+
 - Docker (pour Supabase local)
 - Nix + direnv (recommandé)
 
 ### Installation
+
 ```bash
 npm install
 supabase start
@@ -110,13 +120,16 @@ supabase db reset  # Applique migrations + seeds
 ```
 
 ### Variables d'environnement
+
 Créer un fichier `.env.local` :
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<clé anon locale>
 ```
 
 ### Lancement du développement
+
 ```bash
 npm run dev
 ```
@@ -124,18 +137,21 @@ npm run dev
 ## Feuille de route
 
 ### Phase 1 : MVP
+
 - [ ] Consolidation du modèle de données
 - [ ] Interface de base pour consulter sujets et positions
 - [ ] Authentification simple
 - [ ] CRUD basique pour les entités principales
 
 ### Phase 2 : Fonctionnalités collaboratives
+
 - [ ] Système de contribution et modération
 - [ ] Historique des modifications
 - [ ] Système de réputation des contributeurs
 - [ ] Interface d'administration
 
 ### Phase 3 : Fonctionnalités avancées
+
 - [ ] Recherche et filtres avancés
 - [ ] API publique
 - [ ] Export de données

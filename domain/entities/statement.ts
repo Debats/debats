@@ -10,7 +10,7 @@ export const Statement = S.Struct({
   takenAt: S.optional(S.Date),
   createdBy: S.optional(S.String),
   createdAt: S.Date,
-  updatedAt: S.Date
+  updatedAt: S.Date,
 })
 
 export type Statement = S.Schema.Type<typeof Statement>
@@ -27,7 +27,7 @@ export const Evidence = S.Struct({
   factDate: S.Date,
   createdBy: S.optional(S.String),
   createdAt: S.Date,
-  updatedAt: S.Date
+  updatedAt: S.Date,
 })
 
 export type Evidence = S.Schema.Type<typeof Evidence>
@@ -38,14 +38,14 @@ export const createStatement = (params: {
   createdBy?: string
 }): Statement => {
   const now = new Date()
-  
+
   return Statement.make({
     id: StatementId.make(crypto.randomUUID()),
     publicFigureId: params.publicFigureId,
     positionId: params.positionId,
     createdBy: params.createdBy,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   })
 }
 
@@ -58,7 +58,7 @@ export const createEvidence = (params: {
   createdBy?: string
 }): Evidence => {
   const now = new Date()
-  
+
   return Evidence.make({
     id: EvidenceId.make(crypto.randomUUID()),
     statementId: params.statementId,
@@ -68,12 +68,12 @@ export const createEvidence = (params: {
     factDate: params.factDate,
     createdBy: params.createdBy,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   })
 }
 
 export const isStatementValid = (statement: Statement, evidences: Evidence[]): boolean => {
-  return evidences.filter(evidence => evidence.statementId === statement.id).length >= 1
+  return evidences.filter((evidence) => evidence.statementId === statement.id).length >= 1
 }
 
 export const updateEvidence = (
@@ -83,11 +83,11 @@ export const updateEvidence = (
     sourceUrl?: string
     quote?: string
     factDate?: Date
-  }
+  },
 ): Evidence => ({
   ...evidence,
   ...params,
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })
 
 /**

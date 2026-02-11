@@ -1,9 +1,9 @@
-import { Context, Effect } from "effect"
-import { PublicFigure } from "../entities/public-figure"
-import { PublicFigureStats } from "../value-objects/public-figure-stats"
+import { Context, Effect } from 'effect'
+import { PublicFigure } from '../entities/public-figure'
+import { PublicFigureStats } from '../value-objects/public-figure-stats'
 
 export class DatabaseError extends Error {
-  readonly _tag = "DatabaseError"
+  readonly _tag = 'DatabaseError'
 }
 
 export interface PublicFigureRepository {
@@ -22,5 +22,5 @@ export interface PublicFigureRepository {
   getStats(publicFigureId: string): Effect.Effect<PublicFigureStats, DatabaseError>
 }
 
-export const PublicFigureRepository = Context.GenericTag<PublicFigureRepository>("PublicFigureRepository")
-
+export const PublicFigureRepository =
+  Context.GenericTag<PublicFigureRepository>('PublicFigureRepository')

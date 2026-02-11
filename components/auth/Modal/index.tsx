@@ -14,7 +14,7 @@ export default function Modal({ onClose, children }: ModalProps) {
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     },
-    [onClose]
+    [onClose],
   )
 
   useEffect(() => {
@@ -35,6 +35,6 @@ export default function Modal({ onClose, children }: ModalProps) {
         {children}
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

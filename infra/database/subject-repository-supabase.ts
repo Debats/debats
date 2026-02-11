@@ -1,11 +1,11 @@
-import {Effect} from "effect"
-import {SupabaseClient} from "@supabase/supabase-js"
-import {Subject, SubjectId, SubjectTitle, SubjectSlug} from "../../domain/entities/subject"
-import {SubjectStats} from "../../domain/value-objects/subject-stats"
-import {DatabaseError, SubjectRepository} from "../../domain/repositories/subject-repository"
-import {Database} from "../../types/database.types"
+import { Effect } from 'effect'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
+import { SubjectStats } from '../../domain/value-objects/subject-stats'
+import { DatabaseError, SubjectRepository } from '../../domain/repositories/subject-repository'
+import { Database } from '../../types/database.types'
 
-type SubjectRow = Database["public"]["Tables"]["subjects"]["Row"]
+type SubjectRow = Database['public']['Tables']['subjects']['Row']
 
 const mapRowToEntity = (row: SubjectRow) =>
   Subject.make({
@@ -38,27 +38,26 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
-            .from("subjects")
-            .select("*")
-            .order("created_at", { ascending: false })
+            .from('subjects')
+            .select('*')
+            .order('created_at', { ascending: false })
 
           if (error) throw error
           return data.map(mapRowToEntity)
         },
-        catch: (error) => new DatabaseError(`Failed to fetch subjects: ${error instanceof Error ? error.message : JSON.stringify(error)}`),
+        catch: (error) =>
+          new DatabaseError(
+            `Failed to fetch subjects: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+          ),
       }),
 
     findById: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from("subjects")
-            .select("*")
-            .eq("id", id)
-            .single()
+          const { data, error } = await supabase.from('subjects').select('*').eq('id', id).single()
 
           if (error) {
-            if (error.code === "PGRST116") return null
+            if (error.code === 'PGRST116') return null
             throw error
           }
           return mapRowToEntity(data)
@@ -70,13 +69,13 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
-            .from("subjects")
-            .select("*")
-            .eq("slug", slug)
+            .from('subjects')
+            .select('*')
+            .eq('slug', slug)
             .single()
 
           if (error) {
-            if (error.code === "PGRST116") return null
+            if (error.code === 'PGRST116') return null
             throw error
           }
           return mapRowToEntity(data)
@@ -88,11 +87,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
       Effect.tryPromise({
         try: async () => {
           const row = mapEntityToInsert(subject)
-          const { data, error } = await supabase
-            .from("subjects")
-            .insert(row)
-            .select()
-            .single()
+          const { data, error } = await supabase.from('subjects').insert(row).select().single()
 
           if (error) throw error
           return mapRowToEntity(data)
@@ -105,9 +100,9 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         try: async () => {
           const row = mapEntityToInsert(subject)
           const { data, error } = await supabase
-            .from("subjects")
+            .from('subjects')
             .update(row)
-            .eq("id", subject.id)
+            .eq('id', subject.id)
             .select()
             .single()
 
@@ -120,7 +115,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     delete: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase.from("subjects").delete().eq("id", id)
+          const { error } = await supabase.from('subjects').delete().eq('id', id)
 
           if (error) throw error
         },
@@ -131,33 +126,31 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
       Effect.tryPromise({
         try: async () => {
           const { count: positionsCount, error: positionsError } = await supabase
-            .from("positions")
-            .select("*", { count: "exact", head: true })
-            .eq("subject_id", subjectId)
+            .from('positions')
+            .select('*', { count: 'exact', head: true })
+            .eq('subject_id', subjectId)
 
           if (positionsError) throw positionsError
 
           const { data: publicFiguresData, error: figuresError } = await supabase
-            .from("statements")
+            .from('statements')
             .select(
               `
             public_figure_id,
             positions!inner(subject_id)
-          `
+          `,
             )
-            .eq("positions.subject_id", subjectId)
+            .eq('positions.subject_id', subjectId)
 
           if (figuresError) throw figuresError
 
-          const uniquePublicFigures = new Set(
-            publicFiguresData.map((s) => s.public_figure_id)
-          )
+          const uniquePublicFigures = new Set(publicFiguresData.map((s) => s.public_figure_id))
           const publicFiguresCount = uniquePublicFigures.size
 
           const { count: statementsCount, error: statementsError } = await supabase
-            .from("statements")
-            .select("*, positions!inner(subject_id)", { count: "exact", head: true })
-            .eq("positions.subject_id", subjectId)
+            .from('statements')
+            .select('*, positions!inner(subject_id)', { count: 'exact', head: true })
+            .eq('positions.subject_id', subjectId)
 
           if (statementsError) throw statementsError
 

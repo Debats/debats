@@ -8,14 +8,14 @@ export type PublicFigureId = S.Schema.Type<typeof PublicFigureId>
 
 export const PublicFigureSlug = S.String.pipe(
   S.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  S.brand('PublicFigureSlug')
+  S.brand('PublicFigureSlug'),
 )
 export type PublicFigureSlug = S.Schema.Type<typeof PublicFigureSlug>
 
 export const PublicFigureName = S.String.pipe(
   S.minLength(2),
   S.maxLength(100),
-  S.brand('PublicFigureName')
+  S.brand('PublicFigureName'),
 )
 export type PublicFigureName = S.Schema.Type<typeof PublicFigureName>
 
@@ -28,7 +28,7 @@ export const PublicFigure = S.Struct({
   websiteUrl: S.Option(S.String), // Optionnel avec Option
   createdBy: S.String, // Obligatoire : traçabilité
   createdAt: S.Date,
-  updatedAt: S.Date
+  updatedAt: S.Date,
 })
 
 export type PublicFigure = S.Schema.Type<typeof PublicFigure>
@@ -42,7 +42,7 @@ export const generateSlug = (name: string): PublicFigureSlug =>
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, ''),
-    PublicFigureSlug.make
+    PublicFigureSlug.make,
   )
 
 export const createPublicFigure = (params: {
@@ -63,7 +63,7 @@ export const createPublicFigure = (params: {
     websiteUrl: params.websiteUrl ? Option.some(params.websiteUrl) : Option.none(),
     createdBy: params.createdBy,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   })
 }
 
@@ -72,21 +72,18 @@ export const isMajorPublicFigure = (figure: PublicFigure, statementCount = 0): b
   return isAfter(oneWeekAgo)(figure.createdAt) || statementCount > 2
 }
 
-export const updatePublicFigureName = (
-  figure: PublicFigure,
-  newName: string
-): PublicFigure => ({
+export const updatePublicFigureName = (figure: PublicFigure, newName: string): PublicFigure => ({
   ...figure,
   name: PublicFigureName.make(newName),
   slug: generateSlug(newName),
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })
 
 export const updatePublicFigurePresentation = (
   figure: PublicFigure,
-  newPresentation: string
+  newPresentation: string,
 ): PublicFigure => ({
   ...figure,
   presentation: newPresentation,
-  updatedAt: new Date()
+  updatedAt: new Date(),
 })

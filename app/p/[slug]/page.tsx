@@ -1,30 +1,39 @@
-import Link from "next/link"
-import { notFound } from "next/navigation"
-import { Effect } from "effect"
-import { supabase } from "../../../infra/supabase/ssg"
-import { createPublicFigureRepository } from "../../../infra/database/public-figure-repository-supabase"
-import { createStatementRepository } from "../../../infra/database/statement-repository-supabase"
-import { StatementWithDetails } from "../../../domain/repositories/statement-repository"
-import FigureAvatar from "../../../components/figures/FigureAvatar"
-import ContentWithSidebar from "../../../components/layout/ContentWithSidebar"
-import ErrorDisplay from "../../../components/layout/ErrorDisplay"
-import styles from "./personality-detail.module.css"
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { Effect } from 'effect'
+import { supabase } from '../../../infra/supabase/ssg'
+import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
+import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
+import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
+import FigureAvatar from '../../../components/figures/FigureAvatar'
+import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
+import ErrorDisplay from '../../../components/layout/ErrorDisplay'
+import styles from './personality-detail.module.css'
 
 interface PageProps {
   params: Promise<{ slug: string }>
 }
 
 function groupBySubject(statements: StatementWithDetails[]) {
-  return statements.reduce((acc, { statement, position, subject }) => {
-    if (!acc[subject.id]) {
-      acc[subject.id] = { subject, positions: [] }
-    }
-    acc[subject.id].positions.push({ statement, position })
-    return acc
-  }, {} as Record<string, {
-    subject: StatementWithDetails["subject"]
-    positions: { statement: StatementWithDetails["statement"]; position: StatementWithDetails["position"] }[]
-  }>)
+  return statements.reduce(
+    (acc, { statement, position, subject }) => {
+      if (!acc[subject.id]) {
+        acc[subject.id] = { subject, positions: [] }
+      }
+      acc[subject.id].positions.push({ statement, position })
+      return acc
+    },
+    {} as Record<
+      string,
+      {
+        subject: StatementWithDetails['subject']
+        positions: {
+          statement: StatementWithDetails['statement']
+          position: StatementWithDetails['position']
+        }[]
+      }
+    >,
+  )
 }
 
 export default async function PersonalityDetailPage({ params }: PageProps) {
@@ -34,14 +43,12 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
     const publicFigureRepo = createPublicFigureRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 
-    const figure = await Effect.runPromise(
-      publicFigureRepo.findBySlug(slug)
-    )
+    const figure = await Effect.runPromise(publicFigureRepo.findBySlug(slug))
 
     if (!figure) notFound()
 
     const statements = await Effect.runPromise(
-      statementRepo.findByPublicFigureWithDetails(figure.id)
+      statementRepo.findByPublicFigureWithDetails(figure.id),
     )
 
     const subjectsMap = groupBySubject(statements)
@@ -87,7 +94,9 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
                         <span className={styles.positionLabel}>Sa position :</span> {position.title}
                       </h3>
                       <p className={styles.positionDescription}>{position.description}</p>
-                      <a href="#" className={styles.viewArguments}>Voir les arguments</a>
+                      <a href="#" className={styles.viewArguments}>
+                        Voir les arguments
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -102,7 +111,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
       <ErrorDisplay
         title="Erreur"
         message="Impossible de charger la personnalité."
-        detail={error instanceof Error ? error.message : "Erreur inconnue"}
+        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
       />
     )
   }

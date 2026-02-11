@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { 
-  createSubject, 
-  isMajorSubject, 
-  updateSubjectTitle, 
-  updateSubjectPresentation, 
-  generateSlug 
+import {
+  createSubject,
+  isMajorSubject,
+  updateSubjectTitle,
+  updateSubjectPresentation,
+  generateSlug,
 } from '../subject'
 
 describe('Subject Entity', () => {
@@ -12,14 +12,14 @@ describe('Subject Entity', () => {
     it('should create a valid subject with generated slug', () => {
       const subject = createSubject({
         title: 'Immigration en France',
-        presentation: 'Débat sur les politiques d\'immigration française',
-        problem: 'Quelle approche adopter pour l\'immigration ?'
+        presentation: "Débat sur les politiques d'immigration française",
+        problem: "Quelle approche adopter pour l'immigration ?",
       })
-      
+
       expect(subject.slug).toBe('immigration-en-france')
       expect(subject.title).toBe('Immigration en France')
-      expect(subject.presentation).toBe('Débat sur les politiques d\'immigration française')
-      expect(subject.problem).toBe('Quelle approche adopter pour l\'immigration ?')
+      expect(subject.presentation).toBe("Débat sur les politiques d'immigration française")
+      expect(subject.problem).toBe("Quelle approche adopter pour l'immigration ?")
       expect(subject.id).toBeTruthy()
       expect(subject.createdAt).toBeInstanceOf(Date)
       expect(subject.updatedAt).toBeInstanceOf(Date)
@@ -29,9 +29,9 @@ describe('Subject Entity', () => {
       const subject = createSubject({
         title: 'Écologie & Développement Durable',
         presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length'
+        problem: 'Test problem with minimum length',
       })
-      
+
       expect(subject.slug).toBe('ecologie-developpement-durable')
     })
 
@@ -41,9 +41,9 @@ describe('Subject Entity', () => {
         presentation: 'Test presentation with minimum length',
         problem: 'Test problem with minimum length',
         pictureUrl: 'https://example.com/image.jpg',
-        createdBy: 'user-123'
+        createdBy: 'user-123',
       })
-      
+
       expect(subject.pictureUrl).toBe('https://example.com/image.jpg')
       expect(subject.createdBy).toBe('user-123')
     })
@@ -68,9 +68,9 @@ describe('Subject Entity', () => {
       const subject = createSubject({
         title: 'Recent Subject',
         presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length'
+        problem: 'Test problem with minimum length',
       })
-      
+
       expect(isMajorSubject(subject, 0)).toBe(true)
     })
 
@@ -78,14 +78,14 @@ describe('Subject Entity', () => {
       const subject = createSubject({
         title: 'Old Subject',
         presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length'
+        problem: 'Test problem with minimum length',
       })
-      
+
       const oldSubject = {
         ...subject,
-        createdAt: new Date('2020-01-01')
+        createdAt: new Date('2020-01-01'),
       }
-      
+
       expect(isMajorSubject(oldSubject, 6)).toBe(true)
     })
 
@@ -93,14 +93,14 @@ describe('Subject Entity', () => {
       const subject = createSubject({
         title: 'Old Subject',
         presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length'
+        problem: 'Test problem with minimum length',
       })
-      
+
       const oldSubject = {
         ...subject,
-        createdAt: new Date('2020-01-01')
+        createdAt: new Date('2020-01-01'),
       }
-      
+
       expect(isMajorSubject(oldSubject, 2)).toBe(false)
     })
   })
@@ -110,11 +110,11 @@ describe('Subject Entity', () => {
       const original = createSubject({
         title: 'Original Title',
         presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length'
+        problem: 'Test problem with minimum length',
       })
-      
+
       const updated = updateSubjectTitle(original, 'New Title')
-      
+
       expect(updated.title).toBe('New Title')
       expect(updated.slug).toBe('new-title')
       expect(updated.presentation).toBe(original.presentation)
@@ -130,11 +130,11 @@ describe('Subject Entity', () => {
       const original = createSubject({
         title: 'Test Title',
         presentation: 'Original presentation with minimum length',
-        problem: 'Test problem with minimum length'
+        problem: 'Test problem with minimum length',
       })
-      
+
       const updated = updateSubjectPresentation(original, 'New presentation with updated content')
-      
+
       expect(updated.presentation).toBe('New presentation with updated content')
       expect(updated.title).toBe(original.title)
       expect(updated.slug).toBe(original.slug)

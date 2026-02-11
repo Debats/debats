@@ -3,6 +3,7 @@
 ## Architecture
 
 ### Structure du projet
+
 - **Domain-Driven Design (DDD)** avec Clean Architecture
 - **TypeScript** pour le typage fort
 - **Next.js** pour le fullstack
@@ -10,6 +11,7 @@
 - **Tailwind CSS** + CSS Modules pour le styling
 
 ### Organisation des dossiers
+
 ```
 ├── app/              # Next.js app router
 ├── domain/           # Logique métier (entités, services, règles)
@@ -22,11 +24,13 @@
 ## Développement local
 
 ### Prérequis
+
 - Node.js 18+
 - Docker (pour Supabase local)
 - npm ou pnpm
 
 ### Installation
+
 ```bash
 # Installer les dépendances
 npm install
@@ -38,6 +42,7 @@ npm install -g supabase
 ### Commandes Supabase essentielles
 
 #### Démarrage et arrêt
+
 ```bash
 # Démarrer l'environnement local (PostgreSQL + Auth + API)
 supabase start
@@ -51,6 +56,7 @@ supabase start
 ```
 
 #### Migrations
+
 ```bash
 # Créer une nouvelle migration
 supabase migration new nom_de_la_migration
@@ -66,6 +72,7 @@ supabase migration repair --status applied
 ```
 
 #### Base de données
+
 ```bash
 # Accéder à psql
 supabase db proxy
@@ -81,6 +88,7 @@ supabase gen types typescript --local > types/database.types.ts
 ```
 
 #### Développement
+
 ```bash
 # Voir toutes les URLs locales
 supabase status
@@ -93,6 +101,7 @@ supabase logs --follow
 ```
 
 #### Déploiement
+
 ```bash
 # Lier à un projet Supabase cloud
 supabase link --project-ref <project-id>
@@ -113,10 +122,10 @@ supabase db pull
 
 Supabase utilise deux types de clés API :
 
-| Type | Format | Usage |
-|------|--------|-------|
-| **Publishable** | `sb_publishable_...` | Client-side (navigateur, apps mobiles) |
-| **Secret** | `sb_secret_...` | Server-side uniquement (jamais exposée) |
+| Type            | Format               | Usage                                   |
+| --------------- | -------------------- | --------------------------------------- |
+| **Publishable** | `sb_publishable_...` | Client-side (navigateur, apps mobiles)  |
+| **Secret**      | `sb_secret_...`      | Server-side uniquement (jamais exposée) |
 
 > **Note** : Les clés `anon` et `service_role` sont **legacy** et seront supprimées. Utilisez les nouvelles clés Publishable/Secret.
 
@@ -140,6 +149,7 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxx
 ### Migration depuis les clés legacy
 
 Si vous avez un projet existant avec les clés `anon`/`service_role` :
+
 1. Aller dans Dashboard → Settings → API
 2. Copier les nouvelles clés Publishable/Secret
 3. Remplacer dans vos variables d'environnement
@@ -148,6 +158,7 @@ Si vous avez un projet existant avec les clés `anon`/`service_role` :
 Référence : [Understanding API keys | Supabase Docs](https://supabase.com/docs/guides/api/api-keys)
 
 ### URLs locales importantes
+
 - **API**: http://127.0.0.1:54321
 - **DB**: postgresql://postgres:postgres@127.0.0.1:54322/postgres
 - **Studio**: http://127.0.0.1:54323
@@ -156,6 +167,7 @@ Référence : [Understanding API keys | Supabase Docs](https://supabase.com/docs
 ## Workflow de développement
 
 ### 1. Créer une fonctionnalité
+
 1. Commencer par le domain (entités, règles métier)
 2. Créer la migration si nécessaire
 3. Générer les types TypeScript
@@ -163,11 +175,13 @@ Référence : [Understanding API keys | Supabase Docs](https://supabase.com/docs
 5. Créer l'interface utilisateur
 
 ### 2. Conventions de code
+
 - **Nommage**: camelCase pour les variables, PascalCase pour les types/classes
 - **Tests**: Écrire les tests d'abord (TDD)
 - **Commits**: Messages descriptifs en français
 
 ### 3. Avant de commiter
+
 ```bash
 # Lancer les tests
 npm test
@@ -182,17 +196,20 @@ npm run format
 ## Règles métier importantes
 
 ### Système de réputation
+
 - Nouveaux utilisateurs: 0 points
 - Créer un sujet: minimum 50 points requis
 - Éditer un sujet: minimum 100 points requis
 - Modération: réservée aux utilisateurs de confiance
 
 ### Prises de position
+
 - Une personnalité = une position par sujet
 - Toute prise de position doit avoir au moins une preuve
 - Les preuves doivent être sourcées et datées
 
 ## Ressources
+
 - [Documentation Next.js](https://nextjs.org/docs)
 - [Documentation Supabase](https://supabase.com/docs)
 - [Documentation TypeScript](https://www.typescriptlang.org/docs)

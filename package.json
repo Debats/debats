@@ -8,9 +8,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "seed:content": "tsx scripts/seed-content.ts"
+    "seed:content": "node --env-file=.env.local --import tsx scripts/seed-content.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -34,6 +36,8 @@
     "eslint": "~8.48.0",
     "eslint-config-next": "13.4.4",
     "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
     "typescript": "~5.2.2",
     "vitest": "^3.2.4"
   }
