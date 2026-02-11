@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Effect } from "effect"
-import { subjectRepositorySupabase } from "../../infra/database/subject-repository-supabase"
+import { supabase } from "../../infra/supabase/ssg"
+import { createSubjectRepository } from "../../infra/database/subject-repository-supabase"
 import ContentWithSidebar from "../../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../../components/layout/ErrorDisplay"
 import SubjectCounters from "../../components/subjects/SubjectCounters"
@@ -9,12 +10,14 @@ import styles from "./subjects.module.css"
 
 export default async function SubjectsPage() {
   try {
-    const subjects = await Effect.runPromise(subjectRepositorySupabase.findAll())
+    const subjectRepo = createSubjectRepository(supabase)
+
+    const subjects = await Effect.runPromise(subjectRepo.findAll())
 
     const subjectsWithStats = await Promise.all(
       subjects.map(async (subject) => {
         const stats = await Effect.runPromise(
-          subjectRepositorySupabase.getStats(subject.id)
+          subjectRepo.getStats(subject.id)
         )
         return { subject, stats }
       })

@@ -1,12 +1,14 @@
 import { Effect } from 'effect'
 import Link from 'next/link'
-import { statementRepositorySupabase } from '../../infra/database/statement-repository-supabase'
+import { supabase } from '../../infra/supabase/ssg'
+import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import FigureAvatar from '../figures/FigureAvatar'
 import styles from './last-statements.module.css'
 
 export default async function LastStatements() {
+  const statementRepo = createStatementRepository(supabase)
   const statements = await Effect.runPromise(
-    statementRepositorySupabase.findLatest(5)
+    statementRepo.findLatest(5)
   )
 
   if (statements.length === 0) return null

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Effect } from "effect"
-import { publicFigureRepositorySupabase } from "../../infra/database/public-figure-repository-supabase"
+import { supabase } from "../../infra/supabase/ssg"
+import { createPublicFigureRepository } from "../../infra/database/public-figure-repository-supabase"
 import FigureAvatar from "../../components/figures/FigureAvatar"
 import ContentWithSidebar from "../../components/layout/ContentWithSidebar"
 import ErrorDisplay from "../../components/layout/ErrorDisplay"
@@ -8,14 +9,16 @@ import styles from "./personalities.module.css"
 
 export default async function PersonalitiesPage() {
   try {
+    const publicFigureRepo = createPublicFigureRepository(supabase)
+
     const publicFigures = await Effect.runPromise(
-      publicFigureRepositorySupabase.findAll()
+      publicFigureRepo.findAll()
     )
 
     const publicFiguresWithStats = await Promise.all(
       publicFigures.map(async (figure) => {
         const stats = await Effect.runPromise(
-          publicFigureRepositorySupabase.getStats(figure.id)
+          publicFigureRepo.getStats(figure.id)
         )
         return { figure, stats }
       })

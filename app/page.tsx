@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { Effect } from "effect"
-import { subjectRepositorySupabase } from "../infra/database/subject-repository-supabase"
-import { statementRepositorySupabase } from "../infra/database/statement-repository-supabase"
+import { supabase } from "../infra/supabase/ssg"
+import { createSubjectRepository } from "../infra/database/subject-repository-supabase"
+import { createStatementRepository } from "../infra/database/statement-repository-supabase"
 import { StatementWithFigure } from "../domain/repositories/statement-repository"
 import FigureAvatar from "../components/figures/FigureAvatar"
 import ContentWithSidebar from "../components/layout/ContentWithSidebar"
@@ -12,15 +13,18 @@ import styles from "./home.module.css"
 
 export default async function HomePage() {
   try {
-    const subjects = await Effect.runPromise(subjectRepositorySupabase.findAll())
+    const subjectRepo = createSubjectRepository(supabase)
+    const statementRepo = createStatementRepository(supabase)
+
+    const subjects = await Effect.runPromise(subjectRepo.findAll())
 
     const subjectsWithData = await Promise.all(
       subjects.map(async (subject) => {
         const stats = await Effect.runPromise(
-          subjectRepositorySupabase.getStats(subject.id)
+          subjectRepo.getStats(subject.id)
         )
         const statementsWithFigures = await Effect.runPromise(
-          statementRepositorySupabase.findBySubjectWithFigures(subject.id)
+          statementRepo.findBySubjectWithFigures(subject.id)
         )
 
         const uniqueFigures = deduplicateFigures(statementsWithFigures)

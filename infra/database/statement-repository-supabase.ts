@@ -1,5 +1,5 @@
 import { Effect, Option } from "effect"
-import { supabase } from "./supabase"
+import { SupabaseClient } from "@supabase/supabase-js"
 import { Statement, StatementId, Evidence, EvidenceId, LatestStatement } from "../../domain/entities/statement"
 import { Position, PositionId, PositionTitle } from "../../domain/entities/position"
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from "../../domain/entities/subject"
@@ -11,7 +11,8 @@ import {
   StatementWithFigure
 } from "../../domain/repositories/statement-repository"
 
-export const statementRepositorySupabase: StatementRepository = {
+export function createStatementRepository(supabase: SupabaseClient): StatementRepository {
+  return {
   findById: (id: string) =>
     Effect.tryPromise({
       try: async () => {
@@ -355,4 +356,5 @@ export const statementRepositorySupabase: StatementRepository = {
       },
       catch: (error) => new DatabaseError(`Failed to fetch evidences: ${error instanceof Error ? error.message : JSON.stringify(error)}`)
     })
+  }
 }

@@ -1,8 +1,9 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Effect } from "effect"
-import { publicFigureRepositorySupabase } from "../../../infra/database/public-figure-repository-supabase"
-import { statementRepositorySupabase } from "../../../infra/database/statement-repository-supabase"
+import { supabase } from "../../../infra/supabase/ssg"
+import { createPublicFigureRepository } from "../../../infra/database/public-figure-repository-supabase"
+import { createStatementRepository } from "../../../infra/database/statement-repository-supabase"
 import { StatementWithDetails } from "../../../domain/repositories/statement-repository"
 import FigureAvatar from "../../../components/figures/FigureAvatar"
 import ContentWithSidebar from "../../../components/layout/ContentWithSidebar"
@@ -30,14 +31,17 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
+    const publicFigureRepo = createPublicFigureRepository(supabase)
+    const statementRepo = createStatementRepository(supabase)
+
     const figure = await Effect.runPromise(
-      publicFigureRepositorySupabase.findBySlug(slug)
+      publicFigureRepo.findBySlug(slug)
     )
 
     if (!figure) notFound()
 
     const statements = await Effect.runPromise(
-      statementRepositorySupabase.findByPublicFigureWithDetails(figure.id)
+      statementRepo.findByPublicFigureWithDetails(figure.id)
     )
 
     const subjectsMap = groupBySubject(statements)

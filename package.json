@@ -9,9 +9,11 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "seed:content": "tsx scripts/seed-content.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.50.3",
     "bcrypt": "^6.0.0",
     "date-fns": "^4.1.0",

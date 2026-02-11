@@ -1,8 +1,9 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Effect } from "effect"
-import { subjectRepositorySupabase } from "../../../infra/database/subject-repository-supabase"
-import { statementRepositorySupabase } from "../../../infra/database/statement-repository-supabase"
+import { supabase } from "../../../infra/supabase/ssg"
+import { createSubjectRepository } from "../../../infra/database/subject-repository-supabase"
+import { createStatementRepository } from "../../../infra/database/statement-repository-supabase"
 import { StatementWithFigure } from "../../../domain/repositories/statement-repository"
 import FigureAvatar from "../../../components/figures/FigureAvatar"
 import ContentWithSidebar from "../../../components/layout/ContentWithSidebar"
@@ -30,14 +31,17 @@ export default async function SubjectDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
+    const subjectRepo = createSubjectRepository(supabase)
+    const statementRepo = createStatementRepository(supabase)
+
     const subject = await Effect.runPromise(
-      subjectRepositorySupabase.findBySlug(slug)
+      subjectRepo.findBySlug(slug)
     )
 
     if (!subject) notFound()
 
     const statements = await Effect.runPromise(
-      statementRepositorySupabase.findBySubjectWithFigures(subject.id)
+      statementRepo.findBySubjectWithFigures(subject.id)
     )
 
     const positionsMap = groupByPosition(statements)
