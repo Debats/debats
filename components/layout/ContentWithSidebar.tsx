@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import LastStatements from "./last-statements"
 import styles from "./content-with-sidebar.module.css"
 
@@ -17,7 +18,9 @@ export default function ContentWithSidebar({ children, topMargin }: ContentWithS
         {children}
       </div>
       <aside className={styles.sidebar}>
-        <LastStatements />
+        <Suspense fallback={null}>
+          <LastStatements />
+        </Suspense>
       </aside>
     </div>
   )

@@ -1,5 +1,5 @@
 import { Context, Effect } from "effect"
-import { Statement, Evidence } from "../entities/statement"
+import { Statement, Evidence, LatestStatement } from "../entities/statement"
 import { Position } from "../entities/position"
 import { Subject } from "../entities/subject"
 import { PublicFigure } from "../entities/public-figure"
@@ -42,6 +42,11 @@ export interface StatementRepository {
    * Get all statements for a subject with position and public figure details
    */
   findBySubjectWithFigures(subjectId: string): Effect.Effect<StatementWithFigure[], DatabaseError>
+
+  /**
+   * Get the N most recent statements with summary data for the sidebar
+   */
+  findLatest(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
 
   create(statement: Statement): Effect.Effect<Statement, DatabaseError>
 

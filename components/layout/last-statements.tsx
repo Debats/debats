@@ -1,43 +1,38 @@
+import { Effect } from 'effect'
+import Link from 'next/link'
+import { statementRepositorySupabase } from '../../infra/database/statement-repository-supabase'
+import FigureAvatar from '../figures/FigureAvatar'
 import styles from './last-statements.module.css'
 
-export default function LastStatements() {
-  const statements = [
-    {
-      id: '1',
-      publicFigureName: 'Marine Le Pen',
-      position: 'Sortie de l\'Europe',
-      subject: 'Sortie de la zone Euro'
-    },
-    {
-      id: '2', 
-      publicFigureName: 'Marine Le Pen',
-      position: 'Sortie de l\'Europe',
-      subject: 'Sortie de la zone Euro'
-    },
-    {
-      id: '3',
-      publicFigureName: 'Marine Le Pen', 
-      position: 'Sortie de l\'Europe',
-      subject: 'Sortie de la zone Euro'
-    },
-    {
-      id: '4',
-      publicFigureName: 'Marine Le Pen',
-      position: 'Sortie de l\'Europe', 
-      subject: 'Sortie de la zone Euro'
-    }
-  ]
-  
+export default async function LastStatements() {
+  const statements = await Effect.runPromise(
+    statementRepositorySupabase.findLatest(5)
+  )
+
+  if (statements.length === 0) return null
+
   return (
     <div className={styles.lastStatements}>
       <h2 className={styles.title}>LES DERNIÈRES PRISES DE POSITION</h2>
       <ul className={styles.statementsList}>
         {statements.map(statement => (
-          <li key={statement.id} className={styles.statementItem}>
-            <div className={styles.avatar}></div>
+          <li key={statement.statementId} className={styles.statementItem}>
+            <FigureAvatar
+              slug={statement.publicFigureSlug}
+              name={statement.publicFigureName}
+              size={50}
+            />
             <div className={styles.statementContent}>
               <div className={styles.publicFigureText}>
-                <strong>{statement.publicFigureName}</strong> s&apos;est déclarée pour <strong>{statement.position}</strong> dans le débat sur <strong>{statement.subject}</strong>
+                <Link href={`/p/${statement.publicFigureSlug}`}>
+                  <strong>{statement.publicFigureName}</strong>
+                </Link>
+                {' '}s&apos;est déclaré(e){' '}
+                <strong>{statement.positionTitle}</strong>
+                {' '}dans le débat{' '}
+                <Link href={`/subjects/${statement.subjectSlug}`}>
+                  <strong>{statement.subjectTitle}</strong>
+                </Link>
               </div>
             </div>
           </li>

@@ -1,6 +1,6 @@
 import { Effect, Option } from "effect"
 import { supabase } from "./supabase"
-import { Statement, StatementId, Evidence, EvidenceId } from "../../domain/entities/statement"
+import { Statement, StatementId, Evidence, EvidenceId, LatestStatement } from "../../domain/entities/statement"
 import { Position, PositionId, PositionTitle } from "../../domain/entities/position"
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from "../../domain/entities/subject"
 import { PublicFigure, PublicFigureId, PublicFigureName, PublicFigureSlug } from "../../domain/entities/public-figure"
@@ -241,6 +241,52 @@ export const statementRepositorySupabase: StatementRepository = {
           })
       },
       catch: (error) => new DatabaseError(`Failed to fetch statements with figures: ${error instanceof Error ? error.message : JSON.stringify(error)}`)
+    }),
+
+  findLatest: (limit: number) =>
+    Effect.tryPromise({
+      try: async () => {
+        const { data, error } = await supabase
+          .from("statements")
+          .select(`
+            id,
+            created_at,
+            positions (
+              title,
+              subjects (
+                title,
+                slug
+              )
+            ),
+            public_figures (
+              name,
+              slug
+            )
+          `)
+          .order("created_at", { ascending: false })
+          .limit(limit)
+
+        if (error) throw error
+
+        return data
+          .filter(row => row.positions && row.public_figures)
+          .map(row => {
+            const pos = row.positions as any
+            const subj = pos.subjects as any
+            const fig = row.public_figures as any
+
+            return {
+              statementId: row.id,
+              publicFigureName: fig.name,
+              publicFigureSlug: fig.slug,
+              positionTitle: pos.title,
+              subjectTitle: subj.title,
+              subjectSlug: subj.slug,
+              createdAt: new Date(row.created_at)
+            } as LatestStatement
+          })
+      },
+      catch: (error) => new DatabaseError(`Failed to fetch latest statements: ${error instanceof Error ? error.message : JSON.stringify(error)}`)
     }),
 
   create: (statement: Statement) =>

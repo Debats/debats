@@ -89,3 +89,16 @@ export const updateEvidence = (
   ...params,
   updatedAt: new Date()
 })
+
+/**
+ * Lightweight projection for the "latest statements" sidebar
+ */
+export interface LatestStatement {
+  statementId: string
+  publicFigureName: string
+  publicFigureSlug: string
+  positionTitle: string
+  subjectTitle: string
+  subjectSlug: string
+  createdAt: Date
+}
