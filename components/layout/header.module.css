@@ -13,9 +13,11 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 30px;
+  display: flex;
+  align-items: center;
 }
 
-.content {
+.topBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,6 +31,32 @@
   height: auto;
   width: auto;
   max-height: 40px;
+}
+
+/* Burger - hidden on desktop */
+.burger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.burgerLine {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--debats-red);
+}
+
+/* Menu - always visible on desktop */
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
 }
 
 .nav {
@@ -54,14 +82,35 @@
   color: #d11635;
 }
 
-@media (max-width: 768px) {
-  .content {
+@media (max-width: 1024px) {
+  .container {
+    flex-wrap: wrap;
+  }
+
+  .topBar {
+    width: 100%;
+  }
+
+  .burger {
+    display: flex;
+  }
+
+  .menu {
+    display: none;
     flex-direction: column;
-    gap: 15px;
+    width: 100%;
+    gap: 20px;
+    padding-top: 20px;
+  }
+
+  .menuOpen {
+    display: flex;
   }
 
   .nav {
-    gap: 40px;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
     margin: 0;
   }
 }

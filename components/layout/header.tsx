@@ -1,15 +1,22 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import AuthSection from '../auth/AuthSection'
 import styles from './header.module.css'
 
 export default function Header() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const closeMenu = () => setMenuOpen(false)
+
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        <div className={styles.content}>
+        <div className={styles.topBar}>
           <div className={styles.logoSection}>
-            <Link href="/">
+            <Link href="/" onClick={closeMenu}>
               <Image
                 src="/images/header.png"
                 alt="Débats.co"
@@ -20,14 +27,27 @@ export default function Header() {
             </Link>
           </div>
 
+          <button
+            className={styles.burger}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={menuOpen}
+          >
+            <span className={styles.burgerLine} />
+            <span className={styles.burgerLine} />
+            <span className={styles.burgerLine} />
+          </button>
+        </div>
+
+        <div className={`${styles.menu} ${menuOpen ? styles.menuOpen : ''}`}>
           <nav className={styles.nav}>
-            <Link href="/s" className={styles.navLink}>
+            <Link href="/s" className={styles.navLink} onClick={closeMenu}>
               Sujets
             </Link>
-            <Link href="/p" className={styles.navLink}>
+            <Link href="/p" className={styles.navLink} onClick={closeMenu}>
               Personnalités
             </Link>
-            <Link href="/guide" className={styles.navLink}>
+            <Link href="/guide" className={styles.navLink} onClick={closeMenu}>
               Mode d&apos;emploi
             </Link>
           </nav>
