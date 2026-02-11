@@ -10,7 +10,8 @@ import SubjectTitle from '../../components/subjects/SubjectTitle'
 import styles from './subjects.module.css'
 
 export const metadata: Metadata = {
-  title: 'Sujets - Débats.co',
+  title: 'Sujets',
+  description: 'Tous les sujets de débat référencés sur Débats.co avec les positions et personnalités associées.',
 }
 
 export default async function SubjectsPage() {

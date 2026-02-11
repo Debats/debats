@@ -3,7 +3,7 @@ import PageTitle from '../../components/ui/PageTitle'
 import styles from './credits.module.css'
 
 export const metadata: Metadata = {
-  title: 'Crédits - Débats.co',
+  title: 'Crédits',
   description: 'Les personnes et technologies derrière Débats.co.',
 }
 

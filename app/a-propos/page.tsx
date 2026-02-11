@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 import styles from './a-propos.module.css'
 
 export const metadata: Metadata = {
-  title: 'À propos - Débats.co',
+  title: 'À propos',
   description:
     "Débats est un projet francophone et participatif, ayant pour objectif d'offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre société.",
 }

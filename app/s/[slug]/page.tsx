@@ -21,10 +21,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const supabase = await createServerSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
-    if (!subject) return { title: 'Sujet introuvable - Débats.co' }
-    return { title: `${subject.title} - Débats.co` }
+    if (!subject) return { title: 'Sujet introuvable' }
+    return {
+      title: subject.title,
+      description: subject.presentation,
+      openGraph: {
+        title: subject.title,
+        description: subject.presentation,
+        type: 'article',
+        url: `/s/${slug}`,
+      },
+    }
   } catch {
-    return { title: 'Sujet - Débats.co' }
+    return { title: 'Sujet' }
   }
 }
 

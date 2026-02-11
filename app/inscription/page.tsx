@@ -2,7 +2,7 @@ import Script from 'next/script'
 import styles from './inscription.module.css'
 
 export const metadata = {
-  title: 'Inscription - Débats.co',
+  title: 'Inscription',
   description:
     'Les inscriptions ne sont pas encore ouvertes. Devenez membre-fondateur en vous inscrivant à la newsletter.',
 }

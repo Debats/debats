@@ -21,10 +21,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const supabase = await createServerSupabaseClient()
     const publicFigureRepo = createPublicFigureRepository(supabase)
     const figure = await Effect.runPromise(publicFigureRepo.findBySlug(slug))
-    if (!figure) return { title: 'Personnalité introuvable - Débats.co' }
-    return { title: `${figure.name} - Débats.co` }
+    if (!figure) return { title: 'Personnalité introuvable' }
+    const description = figure.presentation
+      ? `${figure.name} - ${figure.presentation}`
+      : `Positions et prises de position de ${figure.name} sur les sujets de société.`
+    return {
+      title: figure.name,
+      description,
+      openGraph: {
+        title: figure.name,
+        description,
+        type: 'profile',
+        url: `/p/${slug}`,
+      },
+    }
   } catch {
-    return { title: 'Personnalité - Débats.co' }
+    return { title: 'Personnalité' }
   }
 }
 

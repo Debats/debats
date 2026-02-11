@@ -4,7 +4,9 @@ import AccordionSection from '../../components/ui/AccordionSection'
 import styles from './guide.module.css'
 
 export const metadata: Metadata = {
-  title: "Mode d'emploi - Débats.co",
+  title: "Mode d'emploi",
+  description:
+    "Comment fonctionne Débats.co ? Guide d'utilisation de la plateforme collaborative de cartographie des positions publiques.",
 }
 
 export default function GuidePage() {

@@ -6,10 +6,26 @@ import { StyledComponentsRegistry } from './registry'
 import Header from '../components/layout/header'
 import Footer from '../components/layout/footer'
 
-export const metadata = {
-  title: 'Débats.co - Synthèse des débats de société',
-  description:
-    'Une synthèse ouverte, impartiale et vérifiable des sujets clivants de notre société.',
+import { Metadata } from 'next'
+
+const siteDescription =
+  'Une synthèse ouverte, impartiale et vérifiable des sujets clivants de notre société.'
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://debats.co'),
+  title: {
+    default: 'Débats.co - Synthèse des débats de société',
+    template: '%s - Débats.co',
+  },
+  description: siteDescription,
+  openGraph: {
+    siteName: 'Débats.co',
+    locale: 'fr_FR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

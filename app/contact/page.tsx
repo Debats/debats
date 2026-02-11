@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button'
 import styles from './contact.module.css'
 
 export const metadata: Metadata = {
-  title: 'Contact - Débats.co',
+  title: 'Contact',
   description: "Contactez l'équipe Débats.co par email ou sur les réseaux sociaux.",
 }
 

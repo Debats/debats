@@ -3,7 +3,7 @@ import PageTitle from '../../components/ui/PageTitle'
 import styles from './mentions-legales.module.css'
 
 export const metadata: Metadata = {
-  title: 'Mentions légales - Débats.co',
+  title: 'Mentions légales',
   description: 'Mentions légales du site Débats.co.',
 }
 
