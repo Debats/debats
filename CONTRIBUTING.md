@@ -134,10 +134,10 @@ Supabase utilise deux types de clés API :
 ```env
 # Client-side (exposée dans le bundle JS)
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxxxx
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx
 
 # Server-side uniquement (JAMAIS dans NEXT_PUBLIC_*)
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxx
+SUPABASE_SECRET_KEY=sb_secret_xxxxx
 ```
 
 ### Sécurité

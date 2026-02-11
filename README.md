@@ -125,7 +125,7 @@ Créer un fichier `.env.local` :
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<clé anon locale>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<clé publishable locale>
 ```
 
 ### Lancement du développement
