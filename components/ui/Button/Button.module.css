@@ -12,6 +12,10 @@
   text-align: center;
 }
 
+.button::after {
+  content: none !important;
+}
+
 .primary {
   background-color: var(--debats-red);
   color: white;
@@ -19,8 +23,14 @@
   border-radius: 4px;
 }
 
+.primary:link,
+.primary:visited {
+  color: white;
+}
+
 .primary:hover {
   background-color: #d11635;
+  color: white;
 }
 
 .link {
