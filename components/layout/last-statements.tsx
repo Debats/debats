@@ -29,7 +29,7 @@ export default async function LastStatements() {
                   <strong>{statement.publicFigureName}</strong>
                 </Link>{' '}
                 s&apos;est déclaré(e) pour <strong>{statement.positionTitle}</strong> dans le débat{' '}
-                <Link href={`/subjects/${statement.subjectSlug}`}>
+                <Link href={`/s/${statement.subjectSlug}`}>
                   <strong>{statement.subjectTitle}</strong>
                 </Link>
               </div>

@@ -46,7 +46,7 @@ export default async function SubjectsPage() {
                 </div>
 
                 <div className={styles.seeMore}>
-                  <Link href={`/subjects/${subject.slug}`} className={styles.seeMoreLink}>
+                  <Link href={`/s/${subject.slug}`} className={styles.seeMoreLink}>
                     Voir les positions
                   </Link>
                 </div>

@@ -10,7 +10,7 @@ interface SubjectTitleProps {
 export default function SubjectTitle({ slug, title, as: Tag = 'h3' }: SubjectTitleProps) {
   return (
     <Tag className={styles.subjectTitle}>
-      <Link href={`/subjects/${slug}`}>{title}</Link>
+      <Link href={`/s/${slug}`}>{title}</Link>
     </Tag>
   )
 }

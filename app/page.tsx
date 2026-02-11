@@ -72,7 +72,7 @@ export default async function HomePage() {
                   </div>
                 )}
 
-                <Link href={`/subjects/${subject.slug}`} className={styles.seeMoreLink}>
+                <Link href={`/s/${subject.slug}`} className={styles.seeMoreLink}>
                   Voir plus de personnalités
                 </Link>
               </div>
