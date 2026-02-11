@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { supabase } from '../../infra/supabase/ssg'
+import { createServerSupabaseClient } from '../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../components/layout/ErrorDisplay'
@@ -10,6 +10,7 @@ import styles from './subjects.module.css'
 
 export default async function SubjectsPage() {
   try {
+    const supabase = await createServerSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
 
     const subjects = await Effect.runPromise(subjectRepo.findAll())

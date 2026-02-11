@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { supabase } from '../../../infra/supabase/ssg'
+import { createServerSupabaseClient } from '../../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithFigure } from '../../../domain/repositories/statement-repository'
@@ -40,6 +40,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
+    const supabase = await createServerSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 

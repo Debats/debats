@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts"
+    "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts",
+    "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

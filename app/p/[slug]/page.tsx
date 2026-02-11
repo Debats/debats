@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { supabase } from '../../../infra/supabase/ssg'
+import { createServerSupabaseClient } from '../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
@@ -40,6 +40,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
+    const supabase = await createServerSupabaseClient()
     const publicFigureRepo = createPublicFigureRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 

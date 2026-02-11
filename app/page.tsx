@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { supabase } from '../infra/supabase/ssg'
+import { createServerSupabaseClient } from '../infra/supabase/ssr'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../infra/database/statement-repository-supabase'
 import { StatementWithFigure } from '../domain/repositories/statement-repository'
@@ -13,6 +13,7 @@ import styles from './home.module.css'
 
 export default async function HomePage() {
   try {
+    const supabase = await createServerSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 
