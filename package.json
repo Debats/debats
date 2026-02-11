@@ -21,6 +21,7 @@
     "date-fns": "^4.1.0",
     "effect": "^3.16.12",
     "next": "^15.3.5",
+    "next-plausible": "^3.12.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "styled-components": "5.3.6"
