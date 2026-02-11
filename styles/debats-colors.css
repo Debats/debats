@@ -67,6 +67,12 @@ a.morelink:hover,
   text-decoration: none !important;
 }
 
+a[target="_blank"]::after {
+  content: " \2197";
+  font-size: 0.8em;
+  color: var(--text-light);
+}
+
 .count {
   color: var(--debats-red) !important;
   text-transform: lowercase;
