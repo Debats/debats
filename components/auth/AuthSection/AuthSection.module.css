@@ -1,0 +1,34 @@
+.section {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.signupLink,
+.signupLink:link,
+.signupLink:visited {
+  background-color: var(--debats-red);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+
+.signupLink:hover {
+  background-color: #d11635;
+}
+
+@media (max-width: 768px) {
+  .section {
+    gap: 15px;
+  }
+}

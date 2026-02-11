@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import AuthSection from '../auth/AuthSection'
 import styles from './header.module.css'
 
 export default function Header() {
@@ -9,10 +10,10 @@ export default function Header() {
         <div className={styles.content}>
           <div className={styles.logoSection}>
             <Link href="/">
-              <Image 
-                src="/images/header.png" 
-                alt="Débats.co" 
-                width={125} 
+              <Image
+                src="/images/header.png"
+                alt="Débats.co"
+                width={125}
                 height={42}
                 className={styles.logo}
               />
@@ -31,14 +32,7 @@ export default function Header() {
             </Link>
           </nav>
 
-          <div className={styles.authSection}>
-            <button className={styles.authLink}>
-              Connexion
-            </button>
-            <button className={styles.signupBtn}>
-              Inscription
-            </button>
-          </div>
+          <AuthSection />
         </div>
       </div>
     </header>

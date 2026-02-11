@@ -1,0 +1,34 @@
+.button {
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.primary {
+  background-color: var(--debats-red);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 4px;
+}
+
+.primary:hover {
+  background-color: #d11635;
+}
+
+.link {
+  background: none;
+  color: var(--debats-red);
+  padding: 0;
+}
+
+.link:hover {
+  color: #d11635;
+}

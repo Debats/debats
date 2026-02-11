@@ -1,0 +1,26 @@
+.page {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 2em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 16px;
+}
+
+.subtitle {
+  font-size: 1.1em;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin: 0 0 40px;
+}
+
+.brevoForm {
+  border-radius: 8px;
+  overflow: hidden;
+}

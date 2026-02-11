@@ -54,62 +54,14 @@
   color: #d11635;
 }
 
-.authSection {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.authLink {
-  color: var(--debats-red);
-  text-decoration: none;
-  font-family: var(--font-gotham-bold);
-  font-size: 14px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.authLink:hover {
-  color: #d11635;
-}
-
-.signupBtn {
-  background-color: var(--debats-red);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  font-family: var(--font-gotham-bold);
-  font-size: 14px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.signupBtn:hover {
-  background-color: #d11635;
-}
-
 @media (max-width: 768px) {
   .content {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .nav {
     gap: 40px;
     margin: 0;
-  }
-  
-  .authSection {
-    gap: 15px;
   }
 }
