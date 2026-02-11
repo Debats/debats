@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
@@ -12,6 +13,19 @@ import styles from './personality-detail.module.css'
 
 interface PageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  try {
+    const supabase = await createServerSupabaseClient()
+    const publicFigureRepo = createPublicFigureRepository(supabase)
+    const figure = await Effect.runPromise(publicFigureRepo.findBySlug(slug))
+    if (!figure) return { title: 'Personnalité introuvable - Débats.co' }
+    return { title: `${figure.name} - Débats.co` }
+  } catch {
+    return { title: 'Personnalité - Débats.co' }
+  }
 }
 
 function groupBySubject(statements: StatementWithDetails[]) {

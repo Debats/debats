@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
 import { createServerSupabaseClient } from '../../infra/supabase/ssr'
@@ -7,6 +8,10 @@ import ErrorDisplay from '../../components/layout/ErrorDisplay'
 import SubjectCounters from '../../components/subjects/SubjectCounters'
 import SubjectTitle from '../../components/subjects/SubjectTitle'
 import styles from './subjects.module.css'
+
+export const metadata: Metadata = {
+  title: 'Sujets - Débats.co',
+}
 
 export default async function SubjectsPage() {
   try {

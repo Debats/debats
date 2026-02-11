@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
 import { createServerSupabaseClient } from '../../infra/supabase/ssr'
@@ -6,6 +7,10 @@ import FigureAvatar from '../../components/figures/FigureAvatar'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../components/layout/ErrorDisplay'
 import styles from './personalities.module.css'
+
+export const metadata: Metadata = {
+  title: 'Personnalités - Débats.co',
+}
 
 export default async function PersonalitiesPage() {
   try {

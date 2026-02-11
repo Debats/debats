@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
@@ -12,6 +13,19 @@ import styles from './subject-detail.module.css'
 
 interface PageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  try {
+    const supabase = await createServerSupabaseClient()
+    const subjectRepo = createSubjectRepository(supabase)
+    const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
+    if (!subject) return { title: 'Sujet introuvable - Débats.co' }
+    return { title: `${subject.title} - Débats.co` }
+  } catch {
+    return { title: 'Sujet - Débats.co' }
+  }
 }
 
 function groupByPosition(statements: StatementWithFigure[]) {
