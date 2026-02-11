@@ -198,9 +198,8 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
 
           const uniqueSubjects = new Set(
             subjectsData
-              .filter((s) => s.positions && Array.isArray(s.positions))
-              .flatMap((s) => s.positions as { subject_id: string }[])
-              .map((p) => p.subject_id),
+              .filter((s) => s.positions && !Array.isArray(s.positions))
+              .map((s) => (s.positions as { subject_id: string }).subject_id),
           )
           const subjectsCount = uniqueSubjects.size
 
