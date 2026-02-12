@@ -10,3 +10,19 @@
   flex-direction: column;
   gap: 16px;
 }
+
+.signupHint {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+.signupHint a {
+  color: var(--debats-red);
+  text-decoration: underline;
+}
+
+.signupHint a:hover {
+  color: #d11635;
+}

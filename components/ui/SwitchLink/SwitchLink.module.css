@@ -1,0 +1,20 @@
+.container {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+.link {
+  background: none;
+  border: none;
+  color: var(--debats-red);
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.link:hover {
+  color: #d11635;
+}

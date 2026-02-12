@@ -3,6 +3,7 @@ import styles from './TextField.module.css'
 interface TextFieldProps {
   label: string
   id: string
+  name?: string
   type?: 'text' | 'email' | 'password'
   required?: boolean
   autoComplete?: string
@@ -12,6 +13,7 @@ interface TextFieldProps {
 export default function TextField({
   label,
   id,
+  name,
   type = 'text',
   required = false,
   autoComplete,
@@ -25,6 +27,7 @@ export default function TextField({
       <input
         className={styles.input}
         id={id}
+        name={name}
         type={type}
         required={required}
         autoComplete={autoComplete}

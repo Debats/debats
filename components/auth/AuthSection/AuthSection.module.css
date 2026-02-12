@@ -5,6 +5,12 @@
   gap: 20px;
 }
 
+.userName {
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
 .signupLink,
 .signupLink:link,
 .signupLink:visited {

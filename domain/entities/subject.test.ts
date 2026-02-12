@@ -5,7 +5,7 @@ import {
   updateSubjectTitle,
   updateSubjectPresentation,
   generateSlug,
-} from '../subject'
+} from './subject'
 
 describe('Subject Entity', () => {
   describe('createSubject', () => {

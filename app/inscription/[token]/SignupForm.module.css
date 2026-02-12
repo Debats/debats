@@ -1,0 +1,26 @@
+.page {
+  max-width: 440px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 2em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 24px;
+}
+
+.text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-dark);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

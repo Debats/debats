@@ -24,7 +24,7 @@ INSERT INTO auth.users (
   '00000000-0000-0000-0000-000000000000',
   'authenticated',
   'authenticated',
-  'jalil@debats.co',
+  'jalil@arfaoui.net',
   '$2b$10$Ecf7RaaBNpLNwiIMYP2Ow.GD0iIQbOM/udZerrOa56WG05SwqlmKa',
   NOW(),
   NOW(),

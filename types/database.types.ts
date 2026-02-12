@@ -103,7 +103,7 @@ export type Database = {
             foreignKeyName: "arguments_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
           {
@@ -114,6 +114,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contributors: {
+        Row: {
+          created_at: string | null
+          id: string
+          reputation: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          reputation?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reputation?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       evidences: {
         Row: {
@@ -154,7 +175,7 @@ export type Database = {
             foreignKeyName: "evidences_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
           {
@@ -199,7 +220,7 @@ export type Database = {
             foreignKeyName: "positions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
           {
@@ -217,7 +238,6 @@ export type Database = {
           created_by: string
           id: string
           name: string
-          picture_url: string
           presentation: string
           slug: string
           updated_at: string | null
@@ -229,7 +249,6 @@ export type Database = {
           created_by: string
           id?: string
           name: string
-          picture_url: string
           presentation: string
           slug: string
           updated_at?: string | null
@@ -241,7 +260,6 @@ export type Database = {
           created_by?: string
           id?: string
           name?: string
-          picture_url?: string
           presentation?: string
           slug?: string
           updated_at?: string | null
@@ -253,7 +271,7 @@ export type Database = {
             foreignKeyName: "public_figures_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
         ]
@@ -291,7 +309,7 @@ export type Database = {
             foreignKeyName: "statements_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
           {
@@ -349,34 +367,10 @@ export type Database = {
             foreignKeyName: "subjects_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_profiles: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          reputation: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          name: string
-          reputation?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          reputation?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
     }
     Views: {

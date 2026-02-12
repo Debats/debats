@@ -1,0 +1,18 @@
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 24px;
+  color: var(--text-dark);
+  margin: 0 0 24px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.successText {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-dark);
+}
