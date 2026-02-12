@@ -131,10 +131,29 @@ max_frequency = "1s"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+[auth.email.template.confirmation]
+subject = "Confirmez votre inscription sur Débats.co"
+content_path = "./supabase/templates/confirm.html"
+
+[auth.email.template.recovery]
+subject = "Réinitialisation de votre mot de passe — Débats.co"
+content_path = "./supabase/templates/reset-password.html"
+
+[auth.email.template.email_change]
+subject = "Changement d'adresse e-mail — Débats.co"
+content_path = "./supabase/templates/change-email.html"
+
+[auth.email.template.invite]
+subject = "Vous êtes invité·e sur Débats.co"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.magic_link]
+subject = "Votre lien de connexion — Débats.co"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.reauthentication]
+subject = "Code de vérification — Débats.co"
+content_path = "./supabase/templates/reauthentication.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
