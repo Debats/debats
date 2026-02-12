@@ -27,9 +27,11 @@ export default async function PersonalitiesPage() {
       }),
     )
 
+    publicFiguresWithStats.sort((a, b) => b.stats.subjectsCount - a.stats.subjectsCount)
+
     return (
       <ContentWithSidebar topMargin>
-        <h1 className={styles.pageTitle}>LES PERSONNALITÉS RÉCENTES</h1>
+        <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
 
         <div className={styles.personalitiesIndex}>
           {publicFiguresWithStats.length === 0 ? (
