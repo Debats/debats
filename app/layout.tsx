@@ -24,9 +24,11 @@ export const metadata: Metadata = {
     siteName: 'Débats.co',
     locale: 'fr_FR',
     type: 'website',
+    images: ['/images/logo.png'],
   },
   twitter: {
     card: 'summary',
+    images: ['/images/logo.png'],
   },
 }
 
