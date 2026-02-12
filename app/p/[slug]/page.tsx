@@ -79,7 +79,11 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
     )
 
     const subjectsMap = groupBySubject(statements)
-    const subjects = Object.values(subjectsMap)
+    const subjects = Object.values(subjectsMap).sort((a, b) => {
+      const latestA = Math.max(...a.positions.map((p) => p.statement.createdAt.getTime()))
+      const latestB = Math.max(...b.positions.map((p) => p.statement.createdAt.getTime()))
+      return latestB - latestA
+    })
 
     return (
       <ContentWithSidebar topMargin>
