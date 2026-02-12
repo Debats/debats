@@ -14,5 +14,5 @@ export default async function SecretSignupPage({ params }: { params: Promise<{ t
     redirect('/inscription')
   }
 
-  return <SignupForm />
+  return <SignupForm token={token} />
 }

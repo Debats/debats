@@ -1,15 +1,17 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '../../../infra/supabase/browser'
+import { signup } from './actions'
 import TextField from '../../../components/ui/TextField'
 import Button from '../../../components/ui/Button'
 import FormError from '../../../components/ui/FormError'
 import styles from './SignupForm.module.css'
 
-export default function SignupForm() {
-  const router = useRouter()
+interface SignupFormProps {
+  token: string
+}
+
+export default function SignupForm({ token }: SignupFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -20,35 +22,10 @@ export default function SignupForm() {
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const name = formData.get('name') as string
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const passwordConfirmation = formData.get('password_confirmation') as string
+    const result = await signup(token, formData)
 
-    if (password !== passwordConfirmation) {
-      setError('Les mots de passe ne correspondent pas.')
-      setLoading(false)
-      return
-    }
-
-    if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères.')
-      setLoading(false)
-      return
-    }
-
-    const supabase = createBrowserSupabaseClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    })
-
-    if (error) {
-      setError(error.message)
+    if (!result.success) {
+      setError(result.error)
       setLoading(false)
       return
     }
