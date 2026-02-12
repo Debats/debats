@@ -33,6 +33,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description,
         type: 'profile',
         url: `/p/${slug}`,
+        images: [`/avatars/${slug}.jpg`],
+      },
+      twitter: {
+        card: 'summary',
+        title: figure.name,
+        description,
+        images: [`/avatars/${slug}.jpg`],
       },
     }
   } catch {
