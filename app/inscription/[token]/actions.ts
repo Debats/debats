@@ -1,5 +1,6 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createServerSupabaseClient } from '../../../infra/supabase/ssr'
 
 type SignupResult =
@@ -25,12 +26,16 @@ export async function signup(token: string, formData: FormData): Promise<SignupR
     return { success: false, error: 'Le mot de passe doit contenir au moins 8 caractères.' }
   }
 
+  const headersList = await headers()
+  const origin = headersList.get('origin') || headersList.get('referer')?.replace(/\/[^/]*$/, '') || ''
+
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { name },
+      emailRedirectTo: `${origin}/api/auth/callback`,
     },
   })
 
