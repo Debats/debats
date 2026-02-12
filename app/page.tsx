@@ -27,7 +27,9 @@ export default async function HomePage() {
         )
 
         const uniqueFigures = deduplicateFigures(statementsWithFigures)
-        const latestStatementDate = latestDate(statementsWithFigures.map((s) => s.statement.createdAt))
+        const latestStatementDate = latestDate(
+          statementsWithFigures.map((s) => s.statement.takenAt || s.statement.createdAt),
+        )
 
         return { subject, stats, figures: uniqueFigures, latestStatementDate }
       }),
