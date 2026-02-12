@@ -1,0 +1,30 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background-color: #fef2f2;
+  border-bottom: 2px solid #f21e40;
+  color: #991b1b;
+}
+
+.message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.dismiss {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #991b1b;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.dismiss:hover {
+  color: #f21e40;
+}

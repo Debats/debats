@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import './global.css'
 import '../styles/debats-colors.css'
 import '../styles/layout.css'
@@ -5,6 +6,7 @@ import PlausibleProvider from 'next-plausible'
 import { StyledComponentsRegistry } from './registry'
 import Header from '../components/layout/header'
 import Footer from '../components/layout/footer'
+import AuthErrorBanner from '../components/layout/AuthErrorBanner'
 
 import { Metadata } from 'next'
 
@@ -36,6 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <StyledComponentsRegistry>
             <div className="layout-container">
               <Header />
+              <Suspense>
+                <AuthErrorBanner />
+              </Suspense>
               <main className="main-content">
                 <div className="page-content">{children}</div>
               </main>

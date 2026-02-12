@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
 import { createServerSupabaseClient } from '../../../../infra/supabase/ssr'
 
 function getOrigin(request: Request): string {
@@ -14,30 +13,47 @@ function getOrigin(request: Request): string {
   return new URL(request.url).origin
 }
 
+function redirectWithError(origin: string, message: string) {
+  return NextResponse.redirect(`${origin}/?auth_error=${encodeURIComponent(message)}`)
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const origin = getOrigin(request)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
 
-  if (code) {
-    const supabase = await createServerSupabaseClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+  if (!code) {
+    return redirectWithError(origin, 'Code d\u2019authentification manquant.')
+  }
 
-      if (user) {
-        await supabase.from('contributors').upsert(
-          { id: user.id, reputation: 0 },
-          { onConflict: 'id' },
-        )
-      }
+  const supabase = await createServerSupabaseClient()
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
-      return NextResponse.redirect(`${origin}${next}`)
+  if (exchangeError) {
+    return redirectWithError(
+      origin,
+      `Le lien de confirmation a expiré ou est invalide. (${exchangeError.message})`,
+    )
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (user) {
+    const { error: upsertError } = await supabase.from('contributors').upsert(
+      { id: user.id, reputation: 0 },
+      { onConflict: 'id' },
+    )
+
+    if (upsertError) {
+      return redirectWithError(
+        origin,
+        `Erreur lors de la création du profil contributeur. (${upsertError.message})`,
+      )
     }
   }
 
-  return NextResponse.redirect(`${origin}/?auth_error=true`)
+  return NextResponse.redirect(`${origin}${next}`)
 }
