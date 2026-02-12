@@ -56,7 +56,6 @@ export default async function PersonalitiesPage() {
                 </div>
 
                 <div className={styles.personalityPresentation}>
-                  <span className={styles.presentationLabel}>Homme Politique</span>
                   <p className={styles.presentationText}>{figure.presentation}</p>
                 </div>
 
