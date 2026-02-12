@@ -6,6 +6,24 @@ export class DatabaseError extends Error {
   readonly _tag = 'DatabaseError'
 }
 
+/**
+ * Read model for the homepage: subject with pre-aggregated stats and figures.
+ */
+export interface SubjectActivitySummary {
+  id: string
+  title: string
+  slug: string
+  presentation: string
+  problem: string
+  pictureUrl?: string
+  createdAt: Date
+  latestStatementAt: Date | null
+  positionsCount: number
+  statementsCount: number
+  publicFiguresCount: number
+  figures: Array<{ id: string; name: string; slug: string }>
+}
+
 export interface SubjectRepository {
   findAll(): Effect.Effect<Subject[], DatabaseError>
 
@@ -20,4 +38,8 @@ export interface SubjectRepository {
   delete(id: string): Effect.Effect<void, DatabaseError>
 
   getStats(subjectId: string): Effect.Effect<SubjectStats, DatabaseError>
+
+  findSummariesByActivity(
+    limit: number,
+  ): Effect.Effect<SubjectActivitySummary[], DatabaseError>
 }

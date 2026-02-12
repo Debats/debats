@@ -2,7 +2,11 @@ import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import { SubjectStats } from '../../domain/value-objects/subject-stats'
-import { DatabaseError, SubjectRepository } from '../../domain/repositories/subject-repository'
+import {
+  DatabaseError,
+  SubjectActivitySummary,
+  SubjectRepository,
+} from '../../domain/repositories/subject-repository'
 import { Database } from '../../types/database.types'
 
 type SubjectRow = Database['public']['Tables']['subjects']['Row']
@@ -162,6 +166,44 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           })
         },
         catch: (error) => new DatabaseError(`Failed to get stats: ${error}`),
+      }),
+
+    findSummariesByActivity: (limit: number) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('subject_activity_summary')
+            .select('*')
+            .order('latest_statement_at', { ascending: false, nullsFirst: false })
+            .limit(limit)
+
+          if (error) throw error
+
+          return data.map(
+            (row): SubjectActivitySummary => ({
+              id: row.id,
+              title: row.title,
+              slug: row.slug,
+              presentation: row.presentation,
+              problem: row.problem,
+              pictureUrl: row.picture_url ?? undefined,
+              createdAt: new Date(row.created_at!),
+              latestStatementAt: row.latest_statement_at
+                ? new Date(row.latest_statement_at)
+                : null,
+              positionsCount: row.positions_count ?? 0,
+              statementsCount: row.statements_count ?? 0,
+              publicFiguresCount: row.public_figures_count ?? 0,
+              figures: Array.isArray(row.figures)
+                ? (row.figures as Array<{ id: string; name: string; slug: string }>)
+                : [],
+            }),
+          )
+        },
+        catch: (error) =>
+          new DatabaseError(
+            `Failed to fetch subject summaries: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+          ),
       }),
   }
 }
