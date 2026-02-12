@@ -27,10 +27,17 @@ export default async function HomePage() {
         )
 
         const uniqueFigures = deduplicateFigures(statementsWithFigures)
+        const latestStatementDate = latestDate(statementsWithFigures.map((s) => s.statement.createdAt))
 
-        return { subject, stats, figures: uniqueFigures }
+        return { subject, stats, figures: uniqueFigures, latestStatementDate }
       }),
     )
+
+    subjectsWithData.sort((a, b) => {
+      const dateA = a.latestStatementDate ?? a.subject.createdAt
+      const dateB = b.latestStatementDate ?? b.subject.createdAt
+      return dateB.getTime() - dateA.getTime()
+    })
 
     return (
       <>
@@ -90,6 +97,11 @@ export default async function HomePage() {
       />
     )
   }
+}
+
+function latestDate(dates: Date[]): Date | undefined {
+  if (dates.length === 0) return undefined
+  return dates.reduce((latest, d) => (d > latest ? d : latest))
 }
 
 function deduplicateFigures(statements: StatementWithFigure[]) {
