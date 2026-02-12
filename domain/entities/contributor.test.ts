@@ -2,12 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   ContributorId,
   createContributor,
-  canCreateSubject,
-  canEdit,
+  contributorCanPerform,
+  contributorRank,
   addReputation,
-  MIN_REPUTATION_CREATE_SUBJECT,
-  MIN_REPUTATION_EDIT,
 } from './contributor'
+import { Rank } from '../reputation/permissions'
 
 describe('Contributor Entity', () => {
   describe('ContributorId', () => {
@@ -24,15 +23,6 @@ describe('Contributor Entity', () => {
       })
 
       expect(contributor.reputation).toBe(0)
-    })
-
-    it('should reject negative values', () => {
-      expect(() =>
-        createContributor({
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          reputation: -1,
-        }),
-      ).toThrow()
     })
   })
 
@@ -58,43 +48,47 @@ describe('Contributor Entity', () => {
     })
   })
 
-  describe('canCreateSubject', () => {
-    it('should return false when reputation is below threshold', () => {
-      const contributor = createContributor({
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        reputation: MIN_REPUTATION_CREATE_SUBJECT - 1,
-      })
-
-      expect(canCreateSubject(contributor)).toBe(false)
+  describe('contributorRank', () => {
+    it('should return Métèque for a new contributor', () => {
+      const contributor = createContributor({ id: 'abc' })
+      expect(contributorRank(contributor)).toBe(Rank.Meteque)
     })
 
-    it('should return true when reputation meets threshold', () => {
-      const contributor = createContributor({
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        reputation: MIN_REPUTATION_CREATE_SUBJECT,
-      })
+    it('should return Éloquent for a contributor with 1000+ reputation', () => {
+      const contributor = createContributor({ id: 'abc', reputation: 1000 })
+      expect(contributorRank(contributor)).toBe(Rank.Eloquent)
+    })
 
-      expect(canCreateSubject(contributor)).toBe(true)
+    it('should return Sophiste for a contributor with negative reputation', () => {
+      const contributor = createContributor({ id: 'abc', reputation: -100 })
+      expect(contributorRank(contributor)).toBe(Rank.Sophiste)
     })
   })
 
-  describe('canEdit', () => {
-    it('should return false when reputation is below threshold', () => {
-      const contributor = createContributor({
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        reputation: MIN_REPUTATION_EDIT - 1,
-      })
-
-      expect(canEdit(contributor)).toBe(false)
+  describe('contributorCanPerform', () => {
+    it('should allow a new contributor to add a statement', () => {
+      const contributor = createContributor({ id: 'abc' })
+      expect(contributorCanPerform(contributor, 'add_statement')).toBe(true)
     })
 
-    it('should return true when reputation meets threshold', () => {
-      const contributor = createContributor({
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        reputation: MIN_REPUTATION_EDIT,
-      })
+    it('should deny a new contributor from adding a subject', () => {
+      const contributor = createContributor({ id: 'abc', reputation: 999 })
+      expect(contributorCanPerform(contributor, 'add_subject')).toBe(false)
+    })
 
-      expect(canEdit(contributor)).toBe(true)
+    it('should allow an Éloquent contributor to add a subject', () => {
+      const contributor = createContributor({ id: 'abc', reputation: 1000 })
+      expect(contributorCanPerform(contributor, 'add_subject')).toBe(true)
+    })
+
+    it('should deny an Éloquent contributor from editing a subject', () => {
+      const contributor = createContributor({ id: 'abc', reputation: 9999 })
+      expect(contributorCanPerform(contributor, 'edit_subject')).toBe(false)
+    })
+
+    it('should allow an Idéaliste contributor to edit a subject', () => {
+      const contributor = createContributor({ id: 'abc', reputation: 10000 })
+      expect(contributorCanPerform(contributor, 'edit_subject')).toBe(true)
     })
   })
 
@@ -111,7 +105,7 @@ describe('Contributor Entity', () => {
       expect(updated.updatedAt).not.toBe(contributor.updatedAt)
     })
 
-    it('should not decrease reputation below 0', () => {
+    it('should allow negative reputation', () => {
       const contributor = createContributor({
         id: '550e8400-e29b-41d4-a716-446655440000',
         reputation: 10,
@@ -119,7 +113,7 @@ describe('Contributor Entity', () => {
 
       const updated = addReputation(contributor, -20)
 
-      expect(updated.reputation).toBe(0)
+      expect(updated.reputation).toBe(-10)
     })
   })
 })
