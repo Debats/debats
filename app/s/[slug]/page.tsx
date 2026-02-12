@@ -74,7 +74,9 @@ export default async function SubjectDetailPage({ params }: PageProps) {
     const statements = await Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id))
 
     const positionsMap = groupByPosition(statements)
-    const positions = Object.values(positionsMap)
+    const positions = Object.values(positionsMap).sort(
+      (a, b) => b.figures.length - a.figures.length,
+    )
 
     const uniqueFigures = new Set(statements.map((s) => s.publicFigure.id))
 
