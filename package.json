@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "migrate": "supabase link --project-ref $SUPABASE_PROJECT_ID && supabase db push",
     "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts",
     "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts"
   },
@@ -37,6 +38,7 @@
     "eslint-config-next": "^15.5.12",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.8.1",
+    "supabase": "^2.76.8",
     "tsx": "^4.21.0",
     "typescript": "~5.2.2",
     "vitest": "^3.2.4"
