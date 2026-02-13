@@ -29,6 +29,10 @@ export const metadata: Metadata = {
     card: 'summary',
     images: ['/images/logo.png'],
   },
+  other: {
+    'tdm:reservation': '1',
+    'tdm:policy': 'https://debats.co/mentions-legales',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
