@@ -9,6 +9,8 @@ interface TextFieldProps {
   autoComplete?: string
   placeholder?: string
   defaultValue?: string
+  value?: string
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   error?: string
 }
 
@@ -21,6 +23,8 @@ export default function TextField({
   autoComplete,
   placeholder,
   defaultValue,
+  value,
+  onChange,
   error,
 }: TextFieldProps) {
   return (
@@ -37,6 +41,8 @@ export default function TextField({
         autoComplete={autoComplete}
         placeholder={placeholder}
         defaultValue={defaultValue}
+        value={value}
+        onChange={onChange}
       />
       {error && <span className={styles.error}>{error}</span>}
     </div>

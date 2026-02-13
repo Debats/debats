@@ -9,11 +9,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
     findById: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('positions')
-            .select('*')
-            .eq('id', id)
-            .single()
+          const { data, error } = await supabase.from('positions').select('*').eq('id', id).single()
 
           if (error) {
             if (error.code === 'PGRST116') return null
@@ -62,6 +58,39 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
         catch: (error) =>
           new DatabaseError(
             `Failed to fetch positions: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+          ),
+      }),
+
+    create: (position: Position) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('positions')
+            .insert({
+              id: position.id,
+              title: position.title,
+              description: position.description,
+              subject_id: position.subjectId,
+              created_by: position.createdBy ?? null,
+            })
+            .select()
+            .single()
+
+          if (error) throw error
+
+          return Position.make({
+            id: PositionId.make(data.id),
+            title: PositionTitle.make(data.title),
+            description: data.description,
+            subjectId: data.subject_id,
+            createdBy: data.created_by ?? undefined,
+            createdAt: new Date(data.created_at),
+            updatedAt: new Date(data.updated_at),
+          })
+        },
+        catch: (error) =>
+          new DatabaseError(
+            `Failed to create position: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
           ),
       }),
   }

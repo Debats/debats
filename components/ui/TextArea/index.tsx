@@ -8,6 +8,8 @@ interface TextAreaProps {
   placeholder?: string
   rows?: number
   defaultValue?: string
+  value?: string
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   error?: string
 }
 
@@ -19,6 +21,8 @@ export default function TextArea({
   placeholder,
   rows = 5,
   defaultValue,
+  value,
+  onChange,
   error,
 }: TextAreaProps) {
   return (
@@ -34,6 +38,8 @@ export default function TextArea({
         placeholder={placeholder}
         rows={rows}
         defaultValue={defaultValue}
+        value={value}
+        onChange={onChange}
       />
       {error && <span className={styles.error}>{error}</span>}
     </div>
