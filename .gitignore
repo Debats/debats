@@ -8,3 +8,12 @@
 /.direnv
 /.env.local
 /.env.production
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# IDE
+.idea/
+
+# AI tools
+.claude
