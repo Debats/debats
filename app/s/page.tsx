@@ -11,7 +11,8 @@ import styles from './subjects.module.css'
 
 export const metadata: Metadata = {
   title: 'Sujets',
-  description: 'Tous les sujets de débat référencés sur Débats.co avec les positions et personnalités associées.',
+  description:
+    'Tous les sujets de débat référencés sur Débats.co avec les positions et personnalités associées.',
 }
 
 export default async function SubjectsPage() {

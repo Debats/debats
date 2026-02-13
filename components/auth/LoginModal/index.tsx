@@ -45,7 +45,14 @@ export default function LoginModal({ onClose }: LoginModalProps) {
       {error && <FormError message={error} />}
 
       <form className={styles.form} onSubmit={handleSubmit}>
-        <TextField label="Courriel" id="login-email" name="email" type="email" required autoComplete="email" />
+        <TextField
+          label="Courriel"
+          id="login-email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+        />
         <TextField
           label="Mot de passe"
           id="login-password"

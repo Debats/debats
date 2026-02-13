@@ -80,8 +80,22 @@ export default function SignupModal({ onClose, onSwitchToLogin }: SignupModalPro
       {error && <FormError message={error} />}
 
       <form className={styles.form} onSubmit={handleSubmit}>
-        <TextField label="Nom" id="signup-name" name="name" type="text" required autoComplete="name" />
-        <TextField label="Courriel" id="signup-email" name="email" type="email" required autoComplete="email" />
+        <TextField
+          label="Nom"
+          id="signup-name"
+          name="name"
+          type="text"
+          required
+          autoComplete="name"
+        />
+        <TextField
+          label="Courriel"
+          id="signup-email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+        />
         <TextField
           label="Mot de passe"
           id="signup-password"

@@ -188,9 +188,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
               problem: row.problem,
               pictureUrl: row.picture_url ?? undefined,
               createdAt: new Date(row.created_at!),
-              latestStatementAt: row.latest_statement_at
-                ? new Date(row.latest_statement_at)
-                : null,
+              latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
               positionsCount: row.positions_count ?? 0,
               statementsCount: row.statements_count ?? 0,
               publicFiguresCount: row.public_figures_count ?? 0,

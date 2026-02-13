@@ -10,7 +10,8 @@ import styles from './personalities.module.css'
 
 export const metadata: Metadata = {
   title: 'Personnalités',
-  description: 'Les personnalités publiques référencées sur Débats.co et leurs prises de position sur les sujets de société.',
+  description:
+    'Les personnalités publiques référencées sur Débats.co et leurs prises de position sur les sujets de société.',
 }
 
 export default async function PersonalitiesPage() {

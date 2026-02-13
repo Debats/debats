@@ -15,10 +15,7 @@ export const Contributor = S.Struct({
 
 export type Contributor = S.Schema.Type<typeof Contributor>
 
-export const createContributor = (params: {
-  id: string
-  reputation?: number
-}): Contributor => {
+export const createContributor = (params: { id: string; reputation?: number }): Contributor => {
   const now = new Date()
 
   return Contributor.make({
@@ -32,8 +29,7 @@ export const createContributor = (params: {
 export const contributorCanPerform = (contributor: Contributor, action: Action): boolean =>
   canPerform(contributor.reputation, action)
 
-export const contributorRank = (contributor: Contributor) =>
-  getRank(contributor.reputation)
+export const contributorRank = (contributor: Contributor) => getRank(contributor.reputation)
 
 export const addReputation = (contributor: Contributor, amount: number): Contributor => ({
   ...contributor,

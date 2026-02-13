@@ -46,11 +46,7 @@ describe('Reputation System', () => {
 
   describe('canPerform', () => {
     describe('actions available to Sophiste and Meteque (new users)', () => {
-      const newUserActions: Action[] = [
-        'add_statement',
-        'add_evidence',
-        'add_position',
-      ]
+      const newUserActions: Action[] = ['add_statement', 'add_evidence', 'add_position']
 
       for (const action of newUserActions) {
         it(`should allow ${action} for Sophiste (-400)`, () => {
@@ -115,10 +111,7 @@ describe('Reputation System', () => {
     })
 
     describe('actions requiring Fondateur rank (1000000+)', () => {
-      const fondateurActions: Action[] = [
-        'delete_major_subject',
-        'delete_major_personality',
-      ]
+      const fondateurActions: Action[] = ['delete_major_subject', 'delete_major_personality']
 
       for (const action of fondateurActions) {
         it(`should deny ${action} for Idealiste (999999)`, () => {

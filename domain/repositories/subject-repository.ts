@@ -39,7 +39,5 @@ export interface SubjectRepository {
 
   getStats(subjectId: string): Effect.Effect<SubjectStats, DatabaseError>
 
-  findSummariesByActivity(
-    limit: number,
-  ): Effect.Effect<SubjectActivitySummary[], DatabaseError>
+  findSummariesByActivity(limit: number): Effect.Effect<SubjectActivitySummary[], DatabaseError>
 }

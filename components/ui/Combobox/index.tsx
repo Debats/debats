@@ -101,11 +101,7 @@ export default function Combobox({
         {label}
       </label>
       <div className={styles.inputWrapper}>
-        <input
-          className={styles.input}
-          {...inputProps}
-          required={required}
-        />
+        <input className={styles.input} {...inputProps} required={required} />
         <input type="hidden" name={name} value={selectedId} />
       </div>
       <ul className={styles.menu} {...getMenuProps()}>

@@ -23,11 +23,7 @@ interface AddStatementFormProps {
   positions: PositionOption[]
 }
 
-export default function AddStatementForm({
-  subjectId,
-  slug,
-  positions,
-}: AddStatementFormProps) {
+export default function AddStatementForm({ subjectId, slug, positions }: AddStatementFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
@@ -77,12 +73,7 @@ export default function AddStatementForm({
         <label className={styles.selectLabel} htmlFor="positionId">
           Position
         </label>
-        <select
-          className={styles.select}
-          id="positionId"
-          name="positionId"
-          required
-        >
+        <select className={styles.select} id="positionId" name="positionId" required>
           <option value="">Sélectionner une position</option>
           {positions.map((position) => (
             <option key={position.id} value={position.id}>
@@ -122,16 +113,8 @@ export default function AddStatementForm({
         <label className={styles.dateLabel} htmlFor="factDate">
           Date du fait
         </label>
-        <input
-          className={styles.dateInput}
-          id="factDate"
-          name="factDate"
-          type="date"
-          required
-        />
-        {fieldErrors?.factDate && (
-          <span className={styles.fieldError}>{fieldErrors.factDate}</span>
-        )}
+        <input className={styles.dateInput} id="factDate" name="factDate" type="date" required />
+        {fieldErrors?.factDate && <span className={styles.fieldError}>{fieldErrors.factDate}</span>}
       </div>
 
       <div className={styles.actions}>
