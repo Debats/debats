@@ -1,41 +1,38 @@
-import styles from './TextField.module.css'
+import styles from './TextArea.module.css'
 
-interface TextFieldProps {
+interface TextAreaProps {
   label: string
   id: string
   name?: string
-  type?: 'text' | 'email' | 'password'
   required?: boolean
-  autoComplete?: string
   placeholder?: string
+  rows?: number
   defaultValue?: string
   error?: string
 }
 
-export default function TextField({
+export default function TextArea({
   label,
   id,
   name,
-  type = 'text',
   required = false,
-  autoComplete,
   placeholder,
+  rows = 5,
   defaultValue,
   error,
-}: TextFieldProps) {
+}: TextAreaProps) {
   return (
     <div className={styles.field}>
       <label className={styles.label} htmlFor={id}>
         {label}
       </label>
-      <input
-        className={`${styles.input} ${error ? styles.inputError : ''}`}
+      <textarea
+        className={`${styles.textarea} ${error ? styles.textareaError : ''}`}
         id={id}
         name={name}
-        type={type}
         required={required}
-        autoComplete={autoComplete}
         placeholder={placeholder}
+        rows={rows}
         defaultValue={defaultValue}
       />
       {error && <span className={styles.error}>{error}</span>}

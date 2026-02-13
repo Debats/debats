@@ -35,6 +35,38 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
           ),
       }),
 
+    searchByName: (query: string, limit = 10) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('public_figures')
+            .select('*')
+            .ilike('name', `%${query}%`)
+            .order('name')
+            .limit(limit)
+
+          if (error) throw error
+
+          return data.map((figure) =>
+            PublicFigure.make({
+              id: figure.id,
+              name: figure.name,
+              slug: figure.slug,
+              presentation: figure.presentation,
+              websiteUrl: figure.website_url ? Option.some(figure.website_url) : Option.none(),
+              wikipediaUrl: figure.wikipedia_url,
+              createdAt: new Date(figure.created_at),
+              updatedAt: new Date(figure.updated_at),
+              createdBy: figure.created_by,
+            }),
+          )
+        },
+        catch: (error) =>
+          new DatabaseError(
+            `Failed to search public figures: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+          ),
+      }),
+
     findBySlug: (slug: string) =>
       Effect.tryPromise({
         try: async () => {

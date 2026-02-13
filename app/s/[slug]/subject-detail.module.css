@@ -28,6 +28,10 @@
   margin: 0;
 }
 
+.addAction {
+  margin-top: 20px;
+}
+
 .sectionTitle {
   font-family: var(--font-gotham-bold);
   font-size: 1.2em;

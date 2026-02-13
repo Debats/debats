@@ -2,11 +2,13 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createServerSupabaseClient } from '../../../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithFigure } from '../../../domain/repositories/statement-repository'
+import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
+import Button from '../../../components/ui/Button'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../components/layout/ErrorDisplay'
 import styles from './subject-detail.module.css'
@@ -18,7 +20,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
     if (!subject) return { title: 'Sujet introuvable' }
@@ -63,7 +65,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 
@@ -71,7 +73,10 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
     if (!subject) notFound()
 
-    const statements = await Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id))
+    const [statements, contributor] = await Promise.all([
+      Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+      getAuthenticatedContributor(),
+    ])
 
     const positionsMap = groupByPosition(statements)
     const positions = Object.values(positionsMap).sort(
@@ -86,6 +91,11 @@ export default async function SubjectDetailPage({ params }: PageProps) {
           <h1 className={styles.title}>{subject.title}</h1>
           <p className={styles.presentation}>{subject.presentation}</p>
           <p className={styles.problem}>{subject.problem}</p>
+          {contributor && (
+            <div className={styles.addAction}>
+              <Button href={`/s/${slug}/ajouter`}>Ajouter une prise de position</Button>
+            </div>
+          )}
         </header>
 
         <section>

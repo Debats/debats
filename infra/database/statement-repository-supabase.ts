@@ -363,6 +363,43 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
           ),
       }),
 
+    createEvidence: (evidence: Evidence) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('evidences')
+            .insert({
+              id: evidence.id,
+              statement_id: evidence.statementId,
+              source_name: evidence.sourceName,
+              source_url: evidence.sourceUrl,
+              quote: evidence.quote,
+              fact_date: evidence.factDate.toISOString().split('T')[0],
+              created_by: evidence.createdBy,
+            })
+            .select()
+            .single()
+
+          if (error) throw error
+
+          return Evidence.make({
+            id: EvidenceId.make(data.id),
+            statementId: data.statement_id,
+            sourceName: data.source_name,
+            sourceUrl: data.source_url ?? undefined,
+            quote: data.quote,
+            factDate: new Date(data.fact_date),
+            createdBy: data.created_by ?? undefined,
+            createdAt: new Date(data.created_at),
+            updatedAt: new Date(data.updated_at),
+          })
+        },
+        catch: (error) =>
+          new DatabaseError(
+            `Failed to create evidence: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+          ),
+      }),
+
     delete: (id: string) =>
       Effect.tryPromise({
         try: async () => {

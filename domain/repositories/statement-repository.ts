@@ -52,6 +52,8 @@ export interface StatementRepository {
 
   create(statement: Statement): Effect.Effect<Statement, DatabaseError>
 
+  createEvidence(evidence: Evidence): Effect.Effect<Evidence, DatabaseError>
+
   delete(id: string): Effect.Effect<void, DatabaseError>
 
   getEvidences(statementId: string): Effect.Effect<Evidence[], DatabaseError>

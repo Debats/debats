@@ -12,20 +12,21 @@
   letter-spacing: 0.5px;
 }
 
-.input {
+.textarea {
   padding: 10px 12px;
   border: 1px solid var(--border-light);
   border-radius: 4px;
   font-size: 15px;
   font-family: inherit;
+  resize: vertical;
 }
 
-.input:focus {
+.textarea:focus {
   outline: none;
   border-color: var(--debats-red);
 }
 
-.inputError {
+.textareaError {
   border-color: #d32f2f;
 }
 

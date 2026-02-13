@@ -1,0 +1,37 @@
+.header {
+  margin-bottom: 30px;
+}
+
+.backLink {
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+  color: var(--debats-red);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.8em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+}
+
+.subtitle {
+  font-family: var(--font-gotham-book);
+  font-size: 1em;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.emptyMessage {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  color: var(--text-light);
+}

@@ -9,6 +9,8 @@ export class DatabaseError extends Error {
 export interface PublicFigureRepository {
   findAll(): Effect.Effect<PublicFigure[], DatabaseError>
 
+  searchByName(query: string, limit?: number): Effect.Effect<PublicFigure[], DatabaseError>
+
   findBySlug(slug: string): Effect.Effect<PublicFigure | null, DatabaseError>
 
   findById(id: string): Effect.Effect<PublicFigure | null, DatabaseError>
