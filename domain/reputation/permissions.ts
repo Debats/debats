@@ -67,10 +67,13 @@ const RANK_ORDER: Rank[] = [
   Rank.Fondateur,
 ]
 
+export function requiredRank(action: Action): Rank {
+  return ACTIONS[action]
+}
+
 export function canPerform(reputation: number, action: Action): boolean {
   const userRank = getRank(reputation)
-  const requiredRank = ACTIONS[action]
-  return RANK_ORDER.indexOf(userRank) >= RANK_ORDER.indexOf(requiredRank)
+  return RANK_ORDER.indexOf(userRank) >= RANK_ORDER.indexOf(requiredRank(action))
 }
 
 // Barème de points

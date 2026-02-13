@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createServerSupabaseClient } from '../../../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
@@ -18,7 +18,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const publicFigureRepo = createPublicFigureRepository(supabase)
     const figure = await Effect.runPromise(publicFigureRepo.findBySlug(slug))
     if (!figure) return { title: 'Personnalité introuvable' }
@@ -73,7 +73,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const publicFigureRepo = createPublicFigureRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 

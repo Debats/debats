@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   Rank,
   getRank,
+  requiredRank,
   canPerform,
   reputationReward,
   Action,
@@ -128,6 +129,24 @@ describe('Reputation System', () => {
           expect(canPerform(1000000, action)).toBe(true)
         })
       }
+    })
+  })
+
+  describe('requiredRank', () => {
+    it('should return Sophiste for add_statement', () => {
+      expect(requiredRank('add_statement')).toBe(Rank.Sophiste)
+    })
+
+    it('should return Eloquent for add_subject', () => {
+      expect(requiredRank('add_subject')).toBe(Rank.Eloquent)
+    })
+
+    it('should return Idealiste for edit_subject', () => {
+      expect(requiredRank('edit_subject')).toBe(Rank.Idealiste)
+    })
+
+    it('should return Fondateur for delete_major_subject', () => {
+      expect(requiredRank('delete_major_subject')).toBe(Rank.Fondateur)
     })
   })
 

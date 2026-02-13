@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '../../../../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../../../../infra/supabase/ssr'
 
 function getOrigin(request: Request): string {
   const headersList = request.headers
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     return redirectWithError(origin, 'Code d\u2019authentification manquant.')
   }
 
-  const supabase = await createServerSupabaseClient()
+  const supabase = await createSSRSupabaseClient()
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
   if (exchangeError) {

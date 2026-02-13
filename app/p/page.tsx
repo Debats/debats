@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { createServerSupabaseClient } from '../../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import FigureAvatar from '../../components/figures/FigureAvatar'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function PersonalitiesPage() {
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const publicFigureRepo = createPublicFigureRepository(supabase)
 
     const publicFigures = await Effect.runPromise(publicFigureRepo.findAll())

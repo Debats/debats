@@ -1,7 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createServerSupabaseClient } from '../../../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 
 type SignupResult =
   | { success: true }
@@ -29,7 +29,7 @@ export async function signup(token: string, formData: FormData): Promise<SignupR
   const headersList = await headers()
   const origin = headersList.get('origin') || headersList.get('referer')?.replace(/\/[^/]*$/, '') || ''
 
-  const supabase = await createServerSupabaseClient()
+  const supabase = await createSSRSupabaseClient()
   const { error } = await supabase.auth.signUp({
     email,
     password,

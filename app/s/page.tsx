@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { createServerSupabaseClient } from '../../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../components/layout/ErrorDisplay'
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function SubjectsPage() {
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
 
     const subjects = await Effect.runPromise(subjectRepo.findAll())

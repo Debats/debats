@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { createServerSupabaseClient } from '../infra/supabase/ssr'
+import { createSSRSupabaseClient } from '../infra/supabase/ssr'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
 import FigureAvatar from '../components/figures/FigureAvatar'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
@@ -13,7 +13,7 @@ const HOMEPAGE_SUBJECTS_LIMIT = 20
 
 export default async function HomePage() {
   try {
-    const supabase = await createServerSupabaseClient()
+    const supabase = await createSSRSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
 
     const subjects = await Effect.runPromise(
