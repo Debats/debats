@@ -24,15 +24,13 @@
     "effect": "^3.16.12",
     "next": "^15.3.5",
     "next-plausible": "^3.12.5",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "styled-components": "5.3.6"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@types/node": "18.16.9",
-    "@types/react": "18.2.33",
-    "@types/react-dom": "18.2.14",
-    "@types/styled-components": "5.1.26",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitest/ui": "^3.2.4",
     "eslint": "~8.48.0",
     "eslint-config-next": "^15.5.12",
