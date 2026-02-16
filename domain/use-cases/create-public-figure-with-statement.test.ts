@@ -88,6 +88,10 @@ const fakeReputationRepo = {
   addReputation: () => Effect.succeed(undefined as void),
 }
 
+const fakeWikipediaValidator = {
+  validatePage: async () => ({ exists: true, isBiography: true }),
+}
+
 const validParams = {
   name: 'Jean Dupont',
   presentation: 'Un personnage public suffisamment connu pour apparaître.',
@@ -104,6 +108,7 @@ const validParams = {
   subjectRepo: fakeSubjectRepo,
   publicFigureRepo: fakePublicFigureRepo,
   reputationRepo: fakeReputationRepo,
+  wikipediaValidator: fakeWikipediaValidator,
 }
 
 describe('createPublicFigureWithStatementUseCase', () => {
@@ -280,6 +285,56 @@ describe('createPublicFigureWithStatementUseCase', () => {
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
       expect(result.left).toContain('position')
+    }
+  })
+
+  it('should fail with field error when fact date is in the future', async () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const futureDate = tomorrow.toISOString().slice(0, 10)
+
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      factDate: futureDate,
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.factDate).toBeDefined()
+      expect(result.left.factDate).toContain('future')
+    }
+  })
+
+  it('should fail when Wikipedia page does not exist', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaValidator: {
+        validatePage: async () => ({ exists: false, isBiography: false }),
+      },
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.wikipediaUrl).toBeDefined()
+      expect(result.left.wikipediaUrl).toContain('existe pas')
+    }
+  })
+
+  it('should fail when Wikipedia page is not a biography', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaValidator: {
+        validatePage: async () => ({ exists: true, isBiography: false }),
+      },
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.wikipediaUrl).toBeDefined()
+      expect(result.left.wikipediaUrl).toContain('biographi')
     }
   })
 

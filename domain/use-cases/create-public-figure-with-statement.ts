@@ -10,6 +10,7 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { WikipediaValidator } from '../services/wikipedia-validator'
 
 const CreatePublicFigureWithStatementInput = S.Struct({
   name: S.String.pipe(S.minLength(2), S.maxLength(100)),
@@ -40,6 +41,7 @@ type CreatePublicFigureWithStatementParams = {
   subjectRepo: SubjectRepository
   publicFigureRepo: PublicFigureRepository
   reputationRepo: ReputationRepository
+  wikipediaValidator: WikipediaValidator
 }
 
 export type FieldErrors = Record<string, string>
@@ -64,6 +66,7 @@ export async function createPublicFigureWithStatementUseCase(
     subjectRepo,
     publicFigureRepo,
     reputationRepo,
+    wikipediaValidator,
   } = params
 
   if (!contributor) {
@@ -106,6 +109,25 @@ export async function createPublicFigureWithStatementUseCase(
       }
     }
     return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const parsedDate = new Date(factDate)
+  if (parsedDate > today) {
+    return Either.left({ factDate: 'La date du fait ne peut pas être dans le future.' })
+  }
+
+  const wikiResult = await wikipediaValidator.validatePage(wikipediaUrl)
+  if (!wikiResult.exists) {
+    return Either.left({
+      wikipediaUrl: 'La page Wikipedia n\u2019existe pas.',
+    })
+  }
+  if (!wikiResult.isBiography) {
+    return Either.left({
+      wikipediaUrl: 'La page Wikipedia ne correspond pas à une biographie.',
+    })
   }
 
   const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
