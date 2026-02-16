@@ -11,6 +11,7 @@ import {
   createPublicFigureWithStatementUseCase,
   FieldErrors,
 } from '../../domain/use-cases/create-public-figure-with-statement'
+import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
@@ -41,6 +42,7 @@ export async function createPublicFigureWithStatementAction(
     subjectRepo: createSubjectRepository(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
+    wikipediaValidator: createWikipediaValidator(),
   })
 
   if (Either.isLeft(result)) {
