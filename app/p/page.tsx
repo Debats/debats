@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { Effect } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
+import { canPerform } from '../../domain/reputation/permissions'
+import Button from '../../components/ui/Button'
 import FigureAvatar from '../../components/figures/FigureAvatar'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../components/layout/ErrorDisplay'
@@ -19,6 +22,11 @@ export default async function PersonalitiesPage() {
     const supabase = await createSSRSupabaseClient()
     const publicFigureRepo = createPublicFigureRepository(supabase)
 
+    const contributor = await getAuthenticatedContributor()
+    const canAddPersonality = contributor
+      ? canPerform(contributor.reputation, 'add_personality')
+      : false
+
     const publicFigures = await Effect.runPromise(publicFigureRepo.findAll())
 
     const publicFiguresWithStats = await Promise.all(
@@ -32,7 +40,14 @@ export default async function PersonalitiesPage() {
 
     return (
       <ContentWithSidebar topMargin>
-        <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
+          {canAddPersonality && (
+            <Button href="/p/ajouter" size="small">
+              Ajouter une personnalité
+            </Button>
+          )}
+        </div>
 
         <div className={styles.personalitiesIndex}>
           {publicFiguresWithStats.length === 0 ? (

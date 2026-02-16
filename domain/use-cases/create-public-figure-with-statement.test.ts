@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Option } from 'effect'
-import { createPositionWithStatementUseCase } from './create-position-with-statement'
+import { createPublicFigureWithStatementUseCase } from './create-public-figure-with-statement'
 import { Position, PositionId, PositionTitle } from '../entities/position'
 import { Statement, Evidence } from '../entities/statement'
 import {
@@ -21,14 +21,11 @@ const fakeSubject = Subject.make({
   updatedAt: new Date(),
 })
 
-const fakePublicFigure = PublicFigure.make({
-  id: PublicFigureId.make('figure-1'),
-  name: PublicFigureName.make('Jean Dupont'),
-  slug: PublicFigureSlug.make('jean-dupont'),
-  presentation: 'Un personnage public suffisamment connu.',
-  wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
-  websiteUrl: Option.none(),
-  createdBy: 'someone',
+const fakePosition = Position.make({
+  id: PositionId.make('position-1'),
+  title: PositionTitle.make('Pour l\u2019interdiction'),
+  description: 'Les SUV devraient être interdits dans les centres-villes.',
+  subjectId: 'subject-1',
   createdAt: new Date(),
   updatedAt: new Date(),
 })
@@ -47,8 +44,8 @@ const fakeStatementRepo = {
 }
 
 const fakePositionRepo = {
-  findById: () => Effect.succeed(null as Position | null),
-  findBySubjectId: () => Effect.succeed([] as Position[]),
+  findById: () => Effect.succeed(fakePosition as Position | null),
+  findBySubjectId: () => Effect.succeed([fakePosition] as Position[]),
   create: (p: Position) => Effect.succeed(p),
 }
 
@@ -70,10 +67,10 @@ const fakeSubjectRepo = {
 }
 
 const fakePublicFigureRepo = {
-  findAll: () => Effect.succeed([fakePublicFigure]),
+  findAll: () => Effect.succeed([]),
+  findBySlug: () => Effect.succeed(null as PublicFigure | null),
+  findById: () => Effect.succeed(null as PublicFigure | null),
   searchByName: () => Effect.succeed([]),
-  findBySlug: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
-  findById: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
   create: (f: PublicFigure) => Effect.succeed(f),
   update: (f: PublicFigure) => Effect.succeed(f),
   delete: () => Effect.succeed(undefined as void),
@@ -92,10 +89,12 @@ const fakeReputationRepo = {
 }
 
 const validParams = {
+  name: 'Jean Dupont',
+  presentation: 'Un personnage public suffisamment connu pour apparaître.',
+  wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
+  websiteUrl: '',
   subjectId: 'subject-1',
-  publicFigureId: 'figure-1',
-  title: 'Pour l\u2019interdiction',
-  description: 'Les SUV devraient être interdits dans les centres-villes.',
+  positionId: 'position-1',
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
   quote: 'Une citation suffisamment longue pour être valide.',
@@ -107,9 +106,9 @@ const validParams = {
   reputationRepo: fakeReputationRepo,
 }
 
-describe('createPositionWithStatementUseCase', () => {
+describe('createPublicFigureWithStatementUseCase', () => {
   it('should fail when contributor is null (not authenticated)', async () => {
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
       contributor: null,
     })
@@ -120,36 +119,61 @@ describe('createPositionWithStatementUseCase', () => {
     }
   })
 
-  it('should fail with field error when position title is too short', async () => {
-    const result = await createPositionWithStatementUseCase({
+  it('should fail when reputation is insufficient (< 1000)', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      title: 'Ab',
+      contributor: { id: 'abc', reputation: 999 },
     })
 
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.title).toBeDefined()
+    if (Either.isLeft(result)) {
+      expect(result.left).toContain('Éloquent')
     }
   })
 
-  it('should fail with field error when position description is too short', async () => {
-    const result = await createPositionWithStatementUseCase({
+  it('should fail with field error when name is too short', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      description: 'Court',
+      contributor: { id: 'abc', reputation: 1000 },
+      name: 'A',
     })
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.description).toBeDefined()
+      expect(result.left.name).toBeDefined()
+    }
+  })
+
+  it('should fail with field error when presentation is too short', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      presentation: 'Court',
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.presentation).toBeDefined()
+    }
+  })
+
+  it('should fail with field error when Wikipedia URL is invalid', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaUrl: 'https://google.com',
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.wikipediaUrl).toBeDefined()
     }
   })
 
   it('should fail with field error when quote is too short', async () => {
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: { id: 'abc', reputation: 1000 },
       quote: 'Court',
     })
 
@@ -160,9 +184,9 @@ describe('createPositionWithStatementUseCase', () => {
   })
 
   it('should fail with field error when source name is empty', async () => {
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: { id: 'abc', reputation: 1000 },
       sourceName: '',
     })
 
@@ -173,9 +197,9 @@ describe('createPositionWithStatementUseCase', () => {
   })
 
   it('should fail with field error when fact date is invalid', async () => {
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: { id: 'abc', reputation: 1000 },
       factDate: 'pas-une-date',
     })
 
@@ -186,28 +210,30 @@ describe('createPositionWithStatementUseCase', () => {
   })
 
   it('should fail with multiple field errors across both steps', async () => {
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      title: 'Ab',
-      description: 'Court',
+      contributor: { id: 'abc', reputation: 1000 },
+      name: 'A',
+      presentation: 'Court',
+      wikipediaUrl: 'invalid',
       quote: 'Court',
       sourceName: '',
     })
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.title).toBeDefined()
-      expect(result.left.description).toBeDefined()
+      expect(result.left.name).toBeDefined()
+      expect(result.left.presentation).toBeDefined()
+      expect(result.left.wikipediaUrl).toBeDefined()
       expect(result.left.quote).toBeDefined()
       expect(result.left.sourceName).toBeDefined()
     }
   })
 
   it('should fail when subject is not found', async () => {
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: { id: 'abc', reputation: 1000 },
       subjectRepo: {
         ...fakeSubjectRepo,
         findById: () => Effect.succeed(null),
@@ -220,36 +246,57 @@ describe('createPositionWithStatementUseCase', () => {
     }
   })
 
-  it('should fail when public figure is not found', async () => {
-    const result = await createPositionWithStatementUseCase({
+  it('should fail when position is not found', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      publicFigureRepo: {
-        ...fakePublicFigureRepo,
+      contributor: { id: 'abc', reputation: 1000 },
+      positionRepo: {
+        ...fakePositionRepo,
         findById: () => Effect.succeed(null),
       },
     })
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
-      expect(result.left).toContain('personnalité')
+      expect(result.left).toContain('position')
     }
   })
 
-  it('should create position, statement, evidence and award 100 pts on success', async () => {
+  it('should fail when position does not belong to subject', async () => {
+    const wrongPosition = Position.make({
+      ...fakePosition,
+      subjectId: 'other-subject',
+    })
+
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      positionRepo: {
+        ...fakePositionRepo,
+        findById: () => Effect.succeed(wrongPosition),
+      },
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result)) {
+      expect(result.left).toContain('position')
+    }
+  })
+
+  it('should create public figure, statement, evidence and award 100 pts on success', async () => {
     let totalReputationAdded = 0
-    let createdPosition: Position | null = null
+    let createdFigure: PublicFigure | null = null
     let createdStatement: Statement | null = null
     let createdEvidence: Evidence | null = null
 
-    const result = await createPositionWithStatementUseCase({
+    const result = await createPublicFigureWithStatementUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      positionRepo: {
-        ...fakePositionRepo,
-        create: (p: Position) => {
-          createdPosition = p
-          return Effect.succeed(p)
+      contributor: { id: 'abc', reputation: 1000 },
+      publicFigureRepo: {
+        ...fakePublicFigureRepo,
+        create: (f: PublicFigure) => {
+          createdFigure = f
+          return Effect.succeed(f)
         },
       },
       statementRepo: {
@@ -264,7 +311,7 @@ describe('createPositionWithStatementUseCase', () => {
         },
       },
       reputationRepo: {
-        getReputation: () => Effect.succeed(0),
+        getReputation: () => Effect.succeed(1000),
         addReputation: (_id, amount) => {
           totalReputationAdded += amount
           return Effect.succeed(undefined as void)
@@ -274,15 +321,15 @@ describe('createPositionWithStatementUseCase', () => {
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
-      expect(result.right.title).toBe('Pour l\u2019interdiction')
-      expect(result.right.subjectId).toBe('subject-1')
+      expect(result.right.name).toBe('Jean Dupont')
+      expect(result.right.wikipediaUrl).toBe('https://fr.wikipedia.org/wiki/Jean_Dupont')
       expect(result.right.createdBy).toBe('abc')
     }
 
-    expect(createdPosition).not.toBeNull()
+    expect(createdFigure).not.toBeNull()
     expect(createdStatement).not.toBeNull()
-    expect(createdStatement!.positionId).toBe(createdPosition!.id)
-    expect(createdStatement!.publicFigureId).toBe('figure-1')
+    expect(createdStatement!.publicFigureId).toBe(createdFigure!.id)
+    expect(createdStatement!.positionId).toBe('position-1')
     expect(createdEvidence).not.toBeNull()
     expect(createdEvidence!.statementId).toBe(createdStatement!.id)
     expect(createdEvidence!.sourceName).toBe('Le Monde')

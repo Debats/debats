@@ -48,10 +48,12 @@ const fakeStatementRepo = {
 const fakePositionRepo = {
   findById: () => Effect.succeed(fakePosition as Position | null),
   findBySubjectId: () => Effect.succeed([fakePosition]),
+  create: (p: Position) => Effect.succeed(p),
 }
 
 const fakePublicFigureRepo = {
   findAll: () => Effect.succeed([fakePublicFigure]),
+  searchByName: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
   findById: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
   create: (f: PublicFigure) => Effect.succeed(f),

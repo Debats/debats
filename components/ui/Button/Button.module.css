@@ -35,6 +35,12 @@
   color: white;
 }
 
+.small {
+  font-size: 11px;
+  padding: 8px 14px;
+  letter-spacing: 0.5px;
+}
+
 .link {
   background: none;
   color: var(--debats-red);
