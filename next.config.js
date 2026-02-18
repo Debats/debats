@@ -1,4 +1,5 @@
 const { withPlausibleProxy } = require('next-plausible')
+const { withSentryConfig } = require('@sentry/nextjs')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -22,4 +23,9 @@ const nextConfig = {
   },
 }
 
-module.exports = withPlausibleProxy()(nextConfig)
+module.exports = withSentryConfig(withPlausibleProxy()(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+})
