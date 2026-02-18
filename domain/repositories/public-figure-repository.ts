@@ -15,6 +15,8 @@ export interface PublicFigureRepository {
 
   findById(id: string): Effect.Effect<PublicFigure | null, DatabaseError>
 
+  findByWikipediaUrl(url: string): Effect.Effect<PublicFigure | null, DatabaseError>
+
   create(publicFigure: PublicFigure): Effect.Effect<PublicFigure, DatabaseError>
 
   update(publicFigure: PublicFigure): Effect.Effect<PublicFigure, DatabaseError>

@@ -125,6 +125,36 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
         catch: (error) => new DatabaseError(`Failed to fetch public figure: ${error}`),
       }),
 
+    findByWikipediaUrl: (url: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('public_figures')
+            .select('*')
+            .eq('wikipedia_url', url)
+            .single()
+
+          if (error) {
+            if (error.code === 'PGRST116') return null
+            throw error
+          }
+
+          return PublicFigure.make({
+            id: data.id,
+            name: data.name,
+            slug: data.slug,
+            presentation: data.presentation,
+            websiteUrl: data.website_url ? Option.some(data.website_url) : Option.none(),
+            wikipediaUrl: data.wikipedia_url,
+            createdAt: new Date(data.created_at),
+            updatedAt: new Date(data.updated_at),
+            createdBy: data.created_by,
+          })
+        },
+        catch: (error) =>
+          new DatabaseError(`Failed to fetch public figure by Wikipedia URL: ${error}`),
+      }),
+
     create: (publicFigure: PublicFigure) =>
       Effect.tryPromise({
         try: async () => {

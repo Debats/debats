@@ -1,0 +1,122 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 20px;
+  margin: 0;
+}
+
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+}
+
+.sectionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hint {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  color: var(--text-light);
+  font-style: italic;
+  margin: 0;
+}
+
+.selectField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selectLabel {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.selectInput {
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 15px;
+  font-family: inherit;
+  background: white;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: var(--debats-red);
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dateLabel {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dateInput {
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: var(--debats-red);
+}
+
+.fileField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileLabel {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fileInput {
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.fieldError {
+  font-size: 13px;
+  color: #d32f2f;
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-top: 10px;
+}
