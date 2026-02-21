@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600,600italic');
+
 :root {
   --debats-red: #f21e40;
 
@@ -26,8 +28,6 @@
   font-weight: bold;
   font-style: normal;
 }
-
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600,600italic');
 
 html {
   height: 100%;

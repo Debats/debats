@@ -7,3 +7,5 @@ debats-elixir
 frontend
 ruby-backend
 api
+.clever.json
+next-env.d.ts
