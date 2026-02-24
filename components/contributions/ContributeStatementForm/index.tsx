@@ -17,6 +17,8 @@ import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import styles from './ContributeStatementForm.module.css'
 
+const MAX_PHOTO_SIZE = 30 * 1024 * 1024 // 30 Mo
+
 interface ContributeStatementFormProps {
   canAddPersonality: boolean
   canAddSubject: boolean
@@ -111,11 +113,16 @@ export default function ContributeStatementForm({
 
       // Public figure
       if (creatingNewFigure) {
+        const photoFile = photoInputRef.current?.files?.[0]
+        if (photoFile && photoFile.size > MAX_PHOTO_SIZE) {
+          setFieldErrors({ 'newPublicFigure.photo': 'La photo ne doit pas dépasser 30 Mo.' })
+          setIsPending(false)
+          return
+        }
         formData.set('new_publicFigure_name', newFigureName)
         formData.set('new_publicFigure_presentation', newFigurePresentation)
         formData.set('new_publicFigure_wikipediaUrl', newFigureWikipediaUrl)
         formData.set('new_publicFigure_websiteUrl', newFigureWebsiteUrl)
-        const photoFile = photoInputRef.current?.files?.[0]
         if (photoFile) {
           formData.set('new_publicFigure_photo', photoFile)
         }
@@ -147,19 +154,27 @@ export default function ContributeStatementForm({
       formData.set('quote', getFieldValue(form, 'quote'))
       formData.set('factDate', getFieldValue(form, 'factDate'))
 
-      const result: ActionResult = await contributeStatementAction(formData)
+      try {
+        const result: ActionResult = await contributeStatementAction(formData)
 
-      setIsPending(false)
-
-      if (!result.success) {
-        if (result.error) {
-          setError(result.error)
+        if (!result.success) {
+          if (result.error) {
+            setError(result.error)
+          }
+          if (result.fieldErrors) {
+            setFieldErrors(result.fieldErrors)
+          }
+        } else {
+          router.push(`/s/${result.subjectSlug}`)
         }
-        if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors)
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('Body exceeded')) {
+          setError('Le fichier envoyé est trop volumineux. Réduisez la taille de la photo.')
+        } else {
+          setError('Une erreur inattendue est survenue. Veuillez réessayer.')
         }
-      } else {
-        router.push(`/s/${result.subjectSlug}`)
+      } finally {
+        setIsPending(false)
       }
     },
     [

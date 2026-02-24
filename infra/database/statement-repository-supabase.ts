@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import {
@@ -21,6 +22,12 @@ import {
   StatementWithDetails,
   StatementWithFigure,
 } from '../../domain/repositories/statement-repository'
+
+function dbError(message: string, error: unknown): DatabaseError {
+  const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
+  Sentry.captureException(error, { extra: { message } })
+  return new DatabaseError(msg)
+}
 
 export function createStatementRepository(supabase: SupabaseClient): StatementRepository {
   return {
@@ -48,10 +55,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
             updatedAt: new Date(data.updated_at),
           })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch statement: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch statement', error),
       }),
 
     findByPublicFigureId: (publicFigureId: string) =>
@@ -76,10 +80,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch statements: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch statements', error),
       }),
 
     findByPositionId: (positionId: string) =>
@@ -104,10 +105,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch statements: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch statements', error),
       }),
 
     findByPublicFigureWithDetails: (publicFigureId: string) =>
@@ -189,10 +187,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
               } as StatementWithDetails
             })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch statements with details: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch statements with details', error),
       }),
 
     findBySubjectWithFigures: (subjectId: string) =>
@@ -274,10 +269,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
               } as StatementWithFigure
             })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch statements with figures: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch statements with figures', error),
       }),
 
     findLatest: (limit: number) =>
@@ -325,10 +317,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
               } as LatestStatement
             })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch latest statements: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch latest statements', error),
       }),
 
     create: (statement: Statement) =>
@@ -357,10 +346,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
             updatedAt: new Date(data.updated_at),
           })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to create statement: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to create statement', error),
       }),
 
     createEvidence: (evidence: Evidence) =>
@@ -394,10 +380,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
             updatedAt: new Date(data.updated_at),
           })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to create evidence: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to create evidence', error),
       }),
 
     delete: (id: string) =>
@@ -407,10 +390,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
 
           if (error) throw error
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to delete statement: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to delete statement', error),
       }),
 
     getEvidences: (statementId: string) =>
@@ -437,10 +417,7 @@ export function createStatementRepository(supabase: SupabaseClient): StatementRe
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch evidences: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch evidences', error),
       }),
   }
 }

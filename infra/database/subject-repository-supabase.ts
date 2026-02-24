@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
@@ -8,6 +9,12 @@ import {
   SubjectRepository,
 } from '../../domain/repositories/subject-repository'
 import { Database } from '../../types/database.types'
+
+function dbError(message: string, error: unknown): DatabaseError {
+  const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
+  Sentry.captureException(error, { extra: { message } })
+  return new DatabaseError(msg)
+}
 
 type SubjectRow = Database['public']['Tables']['subjects']['Row']
 
@@ -49,10 +56,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           if (error) throw error
           return data.map(mapRowToEntity)
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch subjects: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch subjects', error),
       }),
 
     findById: (id: string) =>
@@ -66,7 +70,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           }
           return mapRowToEntity(data)
         },
-        catch: (error) => new DatabaseError(`Failed to fetch subject: ${error}`),
+        catch: (error) => dbError('Failed to fetch subject', error),
       }),
 
     findBySlug: (slug: string) =>
@@ -84,7 +88,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           }
           return mapRowToEntity(data)
         },
-        catch: (error) => new DatabaseError(`Failed to fetch subject: ${error}`),
+        catch: (error) => dbError('Failed to fetch subject', error),
       }),
 
     create: (subject: Subject) =>
@@ -96,7 +100,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           if (error) throw error
           return mapRowToEntity(data)
         },
-        catch: (error) => new DatabaseError(`Failed to create subject: ${error}`),
+        catch: (error) => dbError('Failed to create subject', error),
       }),
 
     update: (subject: Subject) =>
@@ -113,7 +117,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           if (error) throw error
           return mapRowToEntity(data)
         },
-        catch: (error) => new DatabaseError(`Failed to update subject: ${error}`),
+        catch: (error) => dbError('Failed to update subject', error),
       }),
 
     delete: (id: string) =>
@@ -123,7 +127,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
 
           if (error) throw error
         },
-        catch: (error) => new DatabaseError(`Failed to delete subject: ${error}`),
+        catch: (error) => dbError('Failed to delete subject', error),
       }),
 
     getStats: (subjectId: string) =>
@@ -165,7 +169,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
             statementsCount: statementsCount || 0,
           })
         },
-        catch: (error) => new DatabaseError(`Failed to get stats: ${error}`),
+        catch: (error) => dbError('Failed to get stats', error),
       }),
 
     findSummariesByActivity: (limit: number) =>
@@ -198,10 +202,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch subject summaries: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch subject summaries', error),
       }),
   }
 }

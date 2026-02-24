@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { PublicFigure } from '../../domain/entities/public-figure'
@@ -5,6 +6,12 @@ import {
   DatabaseError,
   PublicFigureRepository,
 } from '../../domain/repositories/public-figure-repository'
+
+function dbError(message: string, error: unknown): DatabaseError {
+  const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
+  Sentry.captureException(error, { extra: { message } })
+  return new DatabaseError(msg)
+}
 
 export function createPublicFigureRepository(supabase: SupabaseClient): PublicFigureRepository {
   return {
@@ -29,10 +36,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch public figures: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch public figures', error),
       }),
 
     searchByName: (query: string, limit = 10) =>
@@ -61,10 +65,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to search public figures: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to search public figures', error),
       }),
 
     findBySlug: (slug: string) =>
@@ -93,7 +94,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             createdBy: data.created_by,
           })
         },
-        catch: (error) => new DatabaseError(`Failed to fetch public figure: ${error}`),
+        catch: (error) => dbError('Failed to fetch public figure', error),
       }),
 
     findById: (id: string) =>
@@ -122,7 +123,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             createdBy: data.created_by,
           })
         },
-        catch: (error) => new DatabaseError(`Failed to fetch public figure: ${error}`),
+        catch: (error) => dbError('Failed to fetch public figure', error),
       }),
 
     findByWikipediaUrl: (url: string) =>
@@ -151,8 +152,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             createdBy: data.created_by,
           })
         },
-        catch: (error) =>
-          new DatabaseError(`Failed to fetch public figure by Wikipedia URL: ${error}`),
+        catch: (error) => dbError('Failed to fetch public figure by Wikipedia URL', error),
       }),
 
     create: (publicFigure: PublicFigure) =>
@@ -188,7 +188,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             createdBy: data.created_by,
           })
         },
-        catch: (error) => new DatabaseError(`Failed to create public figure: ${error}`),
+        catch: (error) => dbError('Failed to create public figure', error),
       }),
 
     update: (publicFigure: PublicFigure) =>
@@ -223,7 +223,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             createdBy: data.created_by,
           })
         },
-        catch: (error) => new DatabaseError(`Failed to update public figure: ${error}`),
+        catch: (error) => dbError('Failed to update public figure', error),
       }),
 
     delete: (id: string) =>
@@ -233,7 +233,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
 
           if (error) throw error
         },
-        catch: (error) => new DatabaseError(`Failed to delete public figure: ${error}`),
+        catch: (error) => dbError('Failed to delete public figure', error),
       }),
 
     getStats: (publicFigureId: string) =>
@@ -271,7 +271,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             subjectsCount,
           }
         },
-        catch: (error) => new DatabaseError(`Failed to get public figure stats: ${error}`),
+        catch: (error) => dbError('Failed to get public figure stats', error),
       }),
   }
 }

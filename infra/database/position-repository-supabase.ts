@@ -1,8 +1,15 @@
+import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Position, PositionId, PositionTitle } from '../../domain/entities/position'
 import { DatabaseError } from '../../domain/repositories/subject-repository'
 import { PositionRepository } from '../../domain/repositories/position-repository'
+
+function dbError(message: string, error: unknown): DatabaseError {
+  const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
+  Sentry.captureException(error, { extra: { message } })
+  return new DatabaseError(msg)
+}
 
 export function createPositionRepository(supabase: SupabaseClient): PositionRepository {
   return {
@@ -26,10 +33,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             updatedAt: new Date(data.updated_at),
           })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch position: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch position', error),
       }),
 
     findBySubjectId: (subjectId: string) =>
@@ -55,10 +59,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             }),
           )
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to fetch positions: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to fetch positions', error),
       }),
 
     create: (position: Position) =>
@@ -88,10 +89,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             updatedAt: new Date(data.updated_at),
           })
         },
-        catch: (error) =>
-          new DatabaseError(
-            `Failed to create position: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
-          ),
+        catch: (error) => dbError('Failed to create position', error),
       }),
   }
 }

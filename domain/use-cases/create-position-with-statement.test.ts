@@ -74,6 +74,7 @@ const fakePublicFigureRepo = {
   searchByName: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
   findById: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
+  findByWikipediaUrl: () => Effect.succeed(null as PublicFigure | null),
   create: (f: PublicFigure) => Effect.succeed(f),
   update: (f: PublicFigure) => Effect.succeed(f),
   delete: () => Effect.succeed(undefined as void),

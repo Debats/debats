@@ -1,8 +1,10 @@
 'use server'
 
 import * as Sentry from '@sentry/nextjs'
+import sharp from 'sharp'
 import { Either } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
@@ -47,11 +49,16 @@ export async function contributeStatementAction(formData: FormData): Promise<Act
   if (isCreatingNewFigure && photoFile && photoFile.size > 0) {
     const slug = generateSlug(newPublicFigureName)
     const storagePath = `${slug}.jpg`
-    const buffer = Buffer.from(await photoFile.arrayBuffer())
-    const { error: uploadError } = await supabase.storage
+    const rawBuffer = Buffer.from(await photoFile.arrayBuffer())
+    const resizedBuffer = await sharp(rawBuffer)
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer()
+    const admin = createAdminSupabaseClient()
+    const { error: uploadError } = await admin.storage
       .from('avatars')
-      .upload(storagePath, buffer, {
-        contentType: photoFile.type,
+      .upload(storagePath, resizedBuffer, {
+        contentType: 'image/jpeg',
         upsert: true,
       })
 

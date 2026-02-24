@@ -3,6 +3,11 @@ const { withSentryConfig } = require('@sentry/nextjs')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '30mb',
+    },
+  },
   async redirects() {
     return [
       {

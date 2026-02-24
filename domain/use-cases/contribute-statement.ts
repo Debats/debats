@@ -2,6 +2,7 @@ import { Either } from 'effect'
 import * as S from 'effect/Schema'
 import { Effect } from 'effect'
 import { ArrayFormatter } from 'effect/ParseResult'
+import { format, isFuture, parseISO } from 'date-fns'
 import { createPublicFigure, PublicFigure } from '../entities/public-figure'
 import { createSubject, Subject } from '../entities/subject'
 import { createPosition, Position } from '../entities/position'
@@ -222,15 +223,10 @@ export async function contributeStatementUseCase(
     return Either.left(fieldErrors)
   }
 
-  // 5. Validate fact date not in future (string comparison avoids timezone issues)
-  const now = new Date()
-  const todayStr = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('-')
-  if (factDate > todayStr) {
-    return Either.left({ factDate: 'La date du fait ne peut pas être dans le future.' })
+  // 5. Validate fact date not in future
+  const parsedFactDate = parseISO(factDate)
+  if (isFuture(parsedFactDate)) {
+    return Either.left({ factDate: 'La date du fait ne peut pas être dans le futur.' })
   }
 
   // 6. Resolve public figure

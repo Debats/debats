@@ -1,7 +1,14 @@
+import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { DatabaseError } from '../../domain/repositories/subject-repository'
 import { ReputationRepository } from '../../domain/repositories/reputation-repository'
+
+function dbError(message: string, error: unknown): DatabaseError {
+  const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
+  Sentry.captureException(error, { extra: { message } })
+  return new DatabaseError(msg)
+}
 
 export function createReputationRepository(supabase: SupabaseClient): ReputationRepository {
   return {
@@ -17,7 +24,7 @@ export function createReputationRepository(supabase: SupabaseClient): Reputation
           if (error) throw error
           return data.reputation
         },
-        catch: (error) => new DatabaseError(`Failed to get reputation: ${error}`),
+        catch: (error) => dbError('Failed to get reputation', error),
       }),
 
     addReputation: (contributorId: string, amount: number) =>
@@ -38,7 +45,7 @@ export function createReputationRepository(supabase: SupabaseClient): Reputation
 
           if (updateError) throw updateError
         },
-        catch: (error) => new DatabaseError(`Failed to update reputation: ${error}`),
+        catch: (error) => dbError('Failed to update reputation', error),
       }),
   }
 }

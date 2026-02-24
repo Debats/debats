@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { Effect } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
+import { canPerform } from '../../domain/reputation/permissions'
+import Button from '../../components/ui/Button'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../components/layout/ErrorDisplay'
 import SubjectCounters from '../../components/subjects/SubjectCounters'
@@ -20,6 +23,9 @@ export default async function SubjectsPage() {
     const supabase = await createSSRSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
 
+    const contributor = await getAuthenticatedContributor()
+    const canAddSubject = contributor ? canPerform(contributor.reputation, 'add_subject') : false
+
     const subjects = await Effect.runPromise(subjectRepo.findAll())
 
     const subjectsWithStats = await Promise.all(
@@ -31,7 +37,14 @@ export default async function SubjectsPage() {
 
     return (
       <ContentWithSidebar>
-        <h1 className={styles.pageTitle}>LES DERNIERS SUJETS</h1>
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>LES DERNIERS SUJETS</h1>
+          {canAddSubject && (
+            <Button href="/nouvelle-prise-de-position" size="small">
+              Ajouter un sujet
+            </Button>
+          )}
+        </div>
 
         <div className={styles.subjectsIndex}>
           {subjectsWithStats.length === 0 ? (
