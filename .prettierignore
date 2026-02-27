@@ -8,4 +8,5 @@ frontend
 ruby-backend
 api
 .clever.json
+.mcp.json
 next-env.d.ts

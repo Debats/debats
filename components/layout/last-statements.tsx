@@ -14,7 +14,10 @@ export default async function LastStatements() {
   return (
     <>
       <StatementList title="LES DERNIÈRES PRISES DE POSITION" statements={latestTaken} />
-      <StatementList title="LES DERNIÈRES PRISES DE POSITION AJOUTÉES" statements={latestReported} />
+      <StatementList
+        title="LES DERNIÈRES PRISES DE POSITION AJOUTÉES"
+        statements={latestReported}
+      />
     </>
   )
 }

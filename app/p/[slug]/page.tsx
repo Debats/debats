@@ -6,7 +6,9 @@ import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
+import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
+import Button from '../../../components/ui/Button'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../components/layout/ErrorDisplay'
 import styles from './personality-detail.module.css'
@@ -81,9 +83,10 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
 
     if (!figure) notFound()
 
-    const statements = await Effect.runPromise(
-      statementRepo.findByPublicFigureWithDetails(figure.id),
-    )
+    const [statements, contributor] = await Promise.all([
+      Effect.runPromise(statementRepo.findByPublicFigureWithDetails(figure.id)),
+      getAuthenticatedContributor(),
+    ])
 
     const subjectsMap = groupBySubject(statements)
     const subjects = Object.values(subjectsMap).sort((a, b) => {
@@ -110,6 +113,15 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
               </a>
             )}
           </div>
+          {contributor && (
+            <div>
+              <Button
+                href={`/nouvelle-prise-de-position?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`}
+              >
+                Ajouter une prise de position
+              </Button>
+            </div>
+          )}
         </header>
 
         <section>

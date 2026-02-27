@@ -19,6 +19,7 @@ interface ComboboxProps {
   onSearch: (query: string) => Promise<ComboboxItem[]>
   onSelect?: (id: string) => void
   debounceMs?: number
+  initialItem?: ComboboxItem
 }
 
 export default function Combobox({
@@ -31,11 +32,14 @@ export default function Combobox({
   onSearch,
   onSelect,
   debounceMs = 300,
+  initialItem,
 }: ComboboxProps) {
   const [items, setItems] = useState<ComboboxItem[]>([])
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedId, setSelectedId] = useState(initialItem?.id ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
 
   const updateValidity = useCallback(
     (hasSelection: boolean) => {
@@ -66,10 +70,17 @@ export default function Combobox({
   )
 
   useEffect(() => {
-    updateValidity(false)
+    if (initialItem) {
+      updateValidity(true)
+      if (onSelectRef.current) onSelectRef.current(initialItem.id)
+    } else {
+      updateValidity(false)
+    }
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
+    // initialItem is only needed at mount; onSelectRef is a stable ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateValidity])
 
   const {
@@ -82,6 +93,7 @@ export default function Combobox({
     selectedItem,
   } = useCombobox({
     items,
+    initialSelectedItem: initialItem ?? null,
     itemToString: (item) => (item ? item.label : ''),
     onInputValueChange: ({ inputValue, type }) => {
       if (type === '__input_change__') {

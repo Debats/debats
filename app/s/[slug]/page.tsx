@@ -93,7 +93,11 @@ export default async function SubjectDetailPage({ params }: PageProps) {
           <p className={styles.problem}>{subject.problem}</p>
           {contributor && (
             <div className={styles.addAction}>
-              <Button href="/nouvelle-prise-de-position">Ajouter une prise de position</Button>
+              <Button
+                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
+              >
+                Ajouter une prise de position
+              </Button>
             </div>
           )}
         </header>

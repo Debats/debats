@@ -23,12 +23,16 @@ interface ContributeStatementFormProps {
   canAddPersonality: boolean
   canAddSubject: boolean
   canAddPosition: boolean
+  initialFigure?: { id: string; name: string }
+  initialSubject?: { id: string; title: string }
 }
 
 export default function ContributeStatementForm({
   canAddPersonality,
   canAddSubject,
   canAddPosition,
+  initialFigure,
+  initialSubject,
 }: ContributeStatementFormProps) {
   const router = useRouter()
 
@@ -38,8 +42,8 @@ export default function ContributeStatementForm({
   const [creatingNewPosition, setCreatingNewPosition] = useState(false)
 
   // Existing entity selections
-  const [selectedFigureId, setSelectedFigureId] = useState('')
-  const [selectedSubjectId, setSelectedSubjectId] = useState('')
+  const [selectedFigureId, setSelectedFigureId] = useState(initialFigure?.id ?? '')
+  const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
 
   // New figure fields
@@ -215,6 +219,9 @@ export default function ContributeStatementForm({
               placeholder="Tapez un nom..."
               onSearch={handleSearchFigures}
               onSelect={setSelectedFigureId}
+              initialItem={
+                initialFigure ? { id: initialFigure.id, label: initialFigure.name } : undefined
+              }
             />
             {canAddPersonality && (
               <Button
@@ -305,7 +312,10 @@ export default function ContributeStatementForm({
               required={!creatingNewSubject}
               placeholder="Tapez un sujet..."
               onSearch={handleSearchSubjects}
-              onSelect={(id) => setSelectedSubjectId(id)}
+              onSelect={setSelectedSubjectId}
+              initialItem={
+                initialSubject ? { id: initialSubject.id, label: initialSubject.title } : undefined
+              }
             />
             {canAddSubject && (
               <Button

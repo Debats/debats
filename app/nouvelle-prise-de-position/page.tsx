@@ -11,12 +11,26 @@ export const metadata: Metadata = {
   description: 'Ajouter une prise de position sourcée sur Débats.co.',
 }
 
-export default async function NouvellePositionPage() {
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function NouvellePositionPage({ searchParams }: PageProps) {
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor) {
     redirect('/')
   }
+
+  const params = await searchParams
+  const figureId = typeof params.figureId === 'string' ? params.figureId : undefined
+  const figureName = typeof params.figureName === 'string' ? params.figureName : undefined
+  const subjectId = typeof params.subjectId === 'string' ? params.subjectId : undefined
+  const subjectTitle = typeof params.subjectTitle === 'string' ? params.subjectTitle : undefined
+
+  const initialFigure = figureId && figureName ? { id: figureId, name: figureName } : undefined
+  const initialSubject =
+    subjectId && subjectTitle ? { id: subjectId, title: subjectTitle } : undefined
 
   const canAddPersonality = canPerform(contributor.reputation, 'add_personality')
   const canAddSubject = canPerform(contributor.reputation, 'add_subject')
@@ -34,6 +48,8 @@ export default async function NouvellePositionPage() {
           canAddPersonality={canAddPersonality}
           canAddSubject={canAddSubject}
           canAddPosition={canAddPosition}
+          initialFigure={initialFigure}
+          initialSubject={initialSubject}
         />
       </div>
     </ContentWithSidebar>

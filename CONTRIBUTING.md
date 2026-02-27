@@ -204,7 +204,7 @@ npm run format
 
 ### Prises de position
 
-- Une personnalité = une position par sujet
+- Une personnalité peut changer de position sur un sujet au fil du temps ; chaque prise de position est datée
 - Toute prise de position doit avoir au moins une preuve
 - Les preuves doivent être sourcées et datées
 
