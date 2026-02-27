@@ -39,6 +39,7 @@ const fakeStatementRepo = {
   findByPublicFigureWithDetails: () => Effect.succeed([]),
   findBySubjectWithFigures: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),
+  findLatestReported: () => Effect.succeed([]),
   delete: () => Effect.succeed(undefined as void),
   getEvidences: () => Effect.succeed([]),
 }

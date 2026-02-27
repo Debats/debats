@@ -100,5 +100,5 @@ export interface LatestStatement {
   positionTitle: string
   subjectTitle: string
   subjectSlug: string
-  createdAt: Date
+  takenAt: Date
 }

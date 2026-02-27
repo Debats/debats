@@ -46,9 +46,14 @@ export interface StatementRepository {
   findBySubjectWithFigures(subjectId: string): Effect.Effect<StatementWithFigure[], DatabaseError>
 
   /**
-   * Get the N most recent statements with summary data for the sidebar
+   * Get the N most recent statements by taken_at date
    */
   findLatest(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
+
+  /**
+   * Get the N most recently reported statements by created_at date
+   */
+  findLatestReported(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
 
   create(statement: Statement): Effect.Effect<Statement, DatabaseError>
 
