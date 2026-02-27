@@ -9,11 +9,13 @@ export async function getAuthenticatedContributor() {
 
   if (!user) return null
 
-  const { data: contributor } = await supabase
+  const { data } = await supabase
     .from('contributors')
     .select('id, reputation')
     .eq('id', user.id)
     .single()
 
-  return contributor
+  if (!data) return null
+
+  return { id: data.id, reputation: data.reputation ?? 0 }
 }
