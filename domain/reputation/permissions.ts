@@ -31,6 +31,7 @@ const ACTIONS = {
   add_argument: Rank.Eloquent,
   add_subject: Rank.Eloquent,
   add_personality: Rank.Eloquent,
+  invite_user: Rank.Eloquent,
   approve_subject: Rank.Eloquent,
   approve_personality: Rank.Eloquent,
   approve_evidence: Rank.Eloquent,
@@ -111,6 +112,9 @@ const REWARDS = {
   argument_rejected: -100,
   position_rejected: -100,
   argument_to_statement_link_rejected: -100,
+
+  // Invitations
+  invitation_accepted: 50,
 
   // Spéciaux
   founder: 1000000,

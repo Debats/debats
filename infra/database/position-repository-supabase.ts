@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Position, PositionId, PositionTitle } from '../../domain/entities/position'
-import { DatabaseError } from '../../domain/repositories/subject-repository'
+import { DatabaseError } from '../../domain/repositories/errors'
 import { PositionRepository } from '../../domain/repositories/position-repository'
 
 function dbError(message: string, error: unknown): DatabaseError {

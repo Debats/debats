@@ -14,7 +14,7 @@ function getOrigin(request: Request): string {
 }
 
 function redirectWithError(origin: string, message: string) {
-  return NextResponse.redirect(`${origin}/?auth_error=${encodeURIComponent(message)}`)
+  return NextResponse.redirect(`${origin}/?notice=${encodeURIComponent(message)}`)
 }
 
 export async function GET(request: Request) {
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
   if (user) {
     const { error: upsertError } = await supabase.from('contributors').upsert(
       { id: user.id, reputation: 0 },
-      { onConflict: 'id' },
+      { onConflict: 'id', ignoreDuplicates: true },
     )
 
     if (upsertError) {

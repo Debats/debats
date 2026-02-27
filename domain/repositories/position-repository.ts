@@ -1,6 +1,6 @@
 import { Effect } from 'effect'
 import { Position } from '../entities/position'
-import { DatabaseError } from './subject-repository'
+import { DatabaseError } from './errors'
 
 export interface PositionRepository {
   findById(id: string): Effect.Effect<Position | null, DatabaseError>

@@ -31,6 +31,9 @@ export default function AuthSection() {
     return (
       <div className={styles.section}>
         <span className={styles.userName}>{displayName}</span>
+        <Link href="/inviter" className={styles.inviteLink}>
+          Inviter
+        </Link>
         <Button
           variant="link"
           onClick={async () => {

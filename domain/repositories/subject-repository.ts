@@ -1,10 +1,7 @@
 import { Effect } from 'effect'
 import { Subject } from '../entities/subject'
 import { SubjectStats } from '../value-objects/subject-stats'
-
-export class DatabaseError extends Error {
-  readonly _tag = 'DatabaseError'
-}
+import { DatabaseError } from './errors'
 
 /**
  * Read model for the homepage: subject with pre-aggregated stats and figures.

@@ -64,6 +64,7 @@ describe('Reputation System', () => {
         'add_argument',
         'add_subject',
         'add_personality',
+        'invite_user',
         'approve_subject',
         'approve_personality',
         'approve_evidence',
@@ -182,6 +183,10 @@ describe('Reputation System', () => {
 
     it('should return -100 for statement_rejected', () => {
       expect(reputationReward('statement_rejected')).toBe(-100)
+    })
+
+    it('should return 50 for invitation_accepted', () => {
+      expect(reputationReward('invitation_accepted')).toBe(50)
     })
   })
 })

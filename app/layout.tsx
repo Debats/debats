@@ -5,7 +5,7 @@ import '../styles/layout.css'
 import PlausibleProvider from 'next-plausible'
 import Header from '../components/layout/header'
 import Footer from '../components/layout/footer'
-import AuthErrorBanner from '../components/layout/AuthErrorBanner'
+import NoticeBanner from '../components/layout/NoticeBanner'
 
 import { Metadata } from 'next'
 
@@ -42,10 +42,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PlausibleProvider domain="debats.co">
           <div className="layout-container">
             <Header />
-            <Suspense>
-              <AuthErrorBanner />
-            </Suspense>
             <main className="main-content">
+              <Suspense>
+                <NoticeBanner />
+              </Suspense>
               <div className="page-content">{children}</div>
             </main>
             <Footer />

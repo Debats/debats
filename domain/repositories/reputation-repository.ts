@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { DatabaseError } from './subject-repository'
+import { DatabaseError } from './errors'
 
 export interface ReputationRepository {
   getReputation(contributorId: string): Effect.Effect<number, DatabaseError>

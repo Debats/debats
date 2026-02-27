@@ -33,6 +33,19 @@
   background-color: #d11635;
 }
 
+.inviteLink,
+.inviteLink:link,
+.inviteLink:visited {
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.inviteLink:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .section {
     gap: 15px;

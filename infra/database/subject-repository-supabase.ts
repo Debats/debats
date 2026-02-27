@@ -3,8 +3,8 @@ import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import { SubjectStats } from '../../domain/value-objects/subject-stats'
+import { DatabaseError } from '../../domain/repositories/errors'
 import {
-  DatabaseError,
   SubjectActivitySummary,
   SubjectRepository,
 } from '../../domain/repositories/subject-repository'
