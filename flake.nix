@@ -3,9 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nixpkgs-unstable }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
@@ -14,11 +15,13 @@
       devShells = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; };
+          unstable = import nixpkgs-unstable { inherit system; };
         in
         {
           default = pkgs.mkShell {
-            nativeBuildInputs = with pkgs; [
-              nodejs_22 supabase-cli
+            nativeBuildInputs = [
+              pkgs.nodejs_22
+              unstable.supabase-cli
             ];
 
             shellHook = ''
