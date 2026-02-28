@@ -1,0 +1,68 @@
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.reputation {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  color: var(--text-dark);
+  background-color: #f8f8f8;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 32px;
+}
+
+.intro {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-dark);
+  margin-bottom: 32px;
+}
+
+.intro a {
+  color: var(--debats-red);
+  text-decoration: underline;
+}
+
+.intro a:hover {
+  color: #d11635;
+}
+
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 18px;
+  color: var(--text-dark);
+  margin: 0 0 16px;
+}
+
+.steps {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-dark);
+  padding-left: 20px;
+  margin: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guideLinkWrapper {
+  margin: 0 0 32px;
+}
+
+.guideLink,
+.guideLink:link,
+.guideLink:visited {
+  font-family: var(--font-gotham-bold);
+  font-size: 15px;
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.guideLink:hover {
+  text-decoration: underline;
+}

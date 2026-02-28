@@ -47,8 +47,8 @@ export default function Header() {
             <Link href="/p" className={styles.navLink} onClick={closeMenu}>
               Personnalités
             </Link>
-            <Link href="/guide" className={styles.navLink} onClick={closeMenu}>
-              Mode d&apos;emploi
+            <Link href="/contribuer" className={styles.navLink} onClick={closeMenu}>
+              Contribuer
             </Link>
           </nav>
 
