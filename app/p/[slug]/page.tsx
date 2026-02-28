@@ -6,6 +6,7 @@ import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
+import { Evidence } from '../../../domain/entities/statement'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
 import Button from '../../../components/ui/Button'
@@ -51,11 +52,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 function groupBySubject(statements: StatementWithDetails[]) {
   return statements.reduce(
-    (acc, { statement, position, subject }) => {
+    (acc, { statement, position, subject, evidences }) => {
       if (!acc[subject.id]) {
         acc[subject.id] = { subject, positions: [] }
       }
-      acc[subject.id].positions.push({ statement, position })
+      acc[subject.id].positions.push({ statement, position, evidences })
       return acc
     },
     {} as Record<
@@ -65,6 +66,7 @@ function groupBySubject(statements: StatementWithDetails[]) {
         positions: {
           statement: StatementWithDetails['statement']
           position: StatementWithDetails['position']
+          evidences: Evidence[]
         }[]
       }
     >,
@@ -138,15 +140,32 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
                   <Link href={`/s/${subject.slug}`} className={styles.subjectContext}>
                     {subject.title}
                   </Link>
-                  {positions.map(({ statement, position }) => (
+                  {positions.map(({ statement, position, evidences }) => (
                     <div key={statement.id} className={styles.positionBlock}>
                       <h3 className={styles.positionTitle}>
                         <span className={styles.positionLabel}>Sa position :</span> {position.title}
                       </h3>
-                      <p className={styles.positionDescription}>{position.description}</p>
-                      <a href="#" className={styles.viewArguments}>
-                        Voir les arguments
-                      </a>
+                      {evidences.length > 0 && (
+                        <>
+                          <blockquote className={styles.quote}>
+                            {evidences[0].quote}
+                          </blockquote>
+                          {evidences[0].sourceUrl ? (
+                            <a
+                              href={evidences[0].sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.sourceLink}
+                            >
+                              Source : {evidences[0].sourceName}
+                            </a>
+                          ) : (
+                            <span className={styles.sourceLink}>
+                              Source : {evidences[0].sourceName}
+                            </span>
+                          )}
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

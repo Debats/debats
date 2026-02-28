@@ -142,6 +142,17 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
                 created_at,
                 updated_at
               )
+            ),
+            evidences (
+              id,
+              statement_id,
+              source_name,
+              source_url,
+              quote,
+              fact_date,
+              created_by,
+              created_at,
+              updated_at
             )
           `,
             )
@@ -179,6 +190,19 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               createdAt: new Date(row.positions.subjects.created_at!),
               updatedAt: new Date(row.positions.subjects.updated_at!),
             }),
+            evidences: (row.evidences ?? []).map((ev) =>
+              Evidence.make({
+                id: EvidenceId.make(ev.id),
+                statementId: ev.statement_id,
+                sourceName: ev.source_name,
+                sourceUrl: ev.source_url ?? undefined,
+                quote: ev.quote,
+                factDate: new Date(ev.fact_date),
+                createdBy: ev.created_by ?? undefined,
+                createdAt: new Date(ev.created_at!),
+                updatedAt: new Date(ev.updated_at!),
+              }),
+            ),
           }))
         },
         catch: (error) => dbError('Failed to fetch statements with details', error),
