@@ -118,7 +118,13 @@ export async function createStatementUseCase(
   await Effect.runPromise(statementRepo.createEvidence(evidence))
 
   await Effect.runPromise(
-    reputationRepo.addReputation(contributor.id, reputationReward('added_statement_validated')),
+    reputationRepo.recordEvent({
+      contributorId: contributor.id,
+      action: 'added_statement_validated',
+      amount: reputationReward('added_statement_validated'),
+      relatedEntityType: 'statement',
+      relatedEntityId: created.id,
+    }),
   )
 
   return Either.right(created)

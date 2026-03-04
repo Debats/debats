@@ -37,11 +37,25 @@ export async function acceptInvitationUseCase(
 
   const inviteeInitialReputation = Math.floor(inviterReputation / 2)
   if (inviteeInitialReputation > 0) {
-    await Effect.runPromise(reputationRepo.addReputation(inviteeId, inviteeInitialReputation))
+    await Effect.runPromise(
+      reputationRepo.recordEvent({
+        contributorId: inviteeId,
+        action: 'invitation_bonus',
+        amount: inviteeInitialReputation,
+        relatedEntityType: 'invitation',
+        relatedEntityId: invitation.id,
+      }),
+    )
   }
 
   await Effect.runPromise(
-    reputationRepo.addReputation(invitation.inviterId, reputationReward('invitation_accepted')),
+    reputationRepo.recordEvent({
+      contributorId: invitation.inviterId,
+      action: 'invitation_accepted',
+      amount: reputationReward('invitation_accepted'),
+      relatedEntityType: 'invitation',
+      relatedEntityId: invitation.id,
+    }),
   )
 
   return Either.right(undefined)

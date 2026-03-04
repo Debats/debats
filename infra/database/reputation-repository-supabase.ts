@@ -3,6 +3,11 @@ import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { ReputationRepository } from '../../domain/repositories/reputation-repository'
+import {
+  type ReputationEvent,
+  type RelatedEntityType,
+} from '../../domain/entities/reputation-event'
+import { type RewardableAction } from '../../domain/reputation/permissions'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -27,25 +32,46 @@ export function createReputationRepository(supabase: SupabaseClient): Reputation
         catch: (error) => dbError('Failed to get reputation', error),
       }),
 
-    addReputation: (contributorId: string, amount: number) =>
+    recordEvent: (event) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error: fetchError } = await supabase
-            .from('contributors')
-            .select('reputation')
-            .eq('id', contributorId)
-            .single()
+          const { error } = await supabase.from('reputation_events').insert({
+            contributor_id: event.contributorId,
+            action: event.action,
+            amount: event.amount,
+            related_entity_type: event.relatedEntityType ?? null,
+            related_entity_id: event.relatedEntityId ?? null,
+          })
 
-          if (fetchError) throw fetchError
-
-          const { error: updateError } = await supabase
-            .from('contributors')
-            .update({ reputation: data.reputation + amount })
-            .eq('id', contributorId)
-
-          if (updateError) throw updateError
+          if (error) throw error
         },
-        catch: (error) => dbError('Failed to update reputation', error),
+        catch: (error) => dbError('Failed to record reputation event', error),
+      }),
+
+    getHistory: (contributorId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('reputation_events')
+            .select('*')
+            .eq('contributor_id', contributorId)
+            .order('created_at', { ascending: false })
+
+          if (error) throw error
+
+          return data.map(
+            (row): ReputationEvent => ({
+              id: row.id,
+              contributorId: row.contributor_id,
+              action: row.action as RewardableAction,
+              amount: row.amount,
+              relatedEntityType: (row.related_entity_type as RelatedEntityType) ?? undefined,
+              relatedEntityId: row.related_entity_id ?? undefined,
+              createdAt: new Date(row.created_at),
+            }),
+          )
+        },
+        catch: (error) => dbError('Failed to get reputation history', error),
       }),
   }
 }

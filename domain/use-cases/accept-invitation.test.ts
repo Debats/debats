@@ -19,7 +19,8 @@ const fakeInvitationRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(2000),
-  addReputation: () => Effect.succeed(undefined as void),
+  recordEvent: () => Effect.succeed(undefined as void),
+  getHistory: () => Effect.succeed([]),
 }
 
 const fakeContributorRepo = {
@@ -91,20 +92,21 @@ describe('acceptInvitationUseCase', () => {
   })
 
   it('should initialize invitee reputation to half of inviter reputation', async () => {
-    let inviteeReputation = 0
+    let inviteeAmount = 0
 
     await acceptInvitationUseCase({
       ...baseParams,
       reputationRepo: {
         getReputation: () => Effect.succeed(2000),
-        addReputation: (id, amount) => {
-          if (id === 'invitee-uuid') inviteeReputation = amount
+        recordEvent: (event) => {
+          if (event.contributorId === 'invitee-uuid') inviteeAmount = event.amount
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 
-    expect(inviteeReputation).toBe(1000)
+    expect(inviteeAmount).toBe(1000)
   })
 
   it('should reward inviter with 50 points', async () => {
@@ -114,10 +116,11 @@ describe('acceptInvitationUseCase', () => {
       ...baseParams,
       reputationRepo: {
         getReputation: () => Effect.succeed(2000),
-        addReputation: (id, amount) => {
-          if (id === 'inviter-uuid') inviterReward = amount
+        recordEvent: (event) => {
+          if (event.contributorId === 'inviter-uuid') inviterReward = event.amount
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 
@@ -147,20 +150,21 @@ describe('acceptInvitationUseCase', () => {
   })
 
   it('should not give negative reputation to invitee when inviter has 0', async () => {
-    let inviteeReputation = -1
+    let inviteeAmount = -1
 
     await acceptInvitationUseCase({
       ...baseParams,
       reputationRepo: {
         getReputation: () => Effect.succeed(0),
-        addReputation: (id, amount) => {
-          if (id === 'invitee-uuid') inviteeReputation = amount
+        recordEvent: (event) => {
+          if (event.contributorId === 'invitee-uuid') inviteeAmount = event.amount
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 
-    // inviteeReputation should stay -1 (never called)
-    expect(inviteeReputation).toBe(-1)
+    // inviteeAmount should stay -1 (never called for invitee)
+    expect(inviteeAmount).toBe(-1)
   })
 })

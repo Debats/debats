@@ -29,7 +29,8 @@ const fakeSubjectRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
-  addReputation: () => Effect.succeed(undefined as void),
+  recordEvent: () => Effect.succeed(undefined as void),
+  getHistory: () => Effect.succeed([]),
 }
 
 describe('deleteSubjectUseCase', () => {

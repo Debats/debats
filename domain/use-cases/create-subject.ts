@@ -55,7 +55,13 @@ export async function createSubjectUseCase(
   const created = await Effect.runPromise(subjectRepo.create(subject))
 
   await Effect.runPromise(
-    reputationRepo.addReputation(contributor.id, reputationReward('added_subject')),
+    reputationRepo.recordEvent({
+      contributorId: contributor.id,
+      action: 'added_subject',
+      amount: reputationReward('added_subject'),
+      relatedEntityType: 'subject',
+      relatedEntityId: created.id,
+    }),
   )
 
   return Either.right(created)

@@ -17,7 +17,8 @@ const fakeSubjectRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
-  addReputation: () => Effect.succeed(undefined as void),
+  recordEvent: () => Effect.succeed(undefined as void),
+  getHistory: () => Effect.succeed([]),
 }
 
 const validParams = {
@@ -74,17 +75,18 @@ describe('createSubjectUseCase', () => {
   })
 
   it('should create subject and award reputation on success', async () => {
-    let reputationAdded = 0
+    let recordedEvent: { action: string; amount: number } | null = null
 
     const result = await createSubjectUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 1000 },
       reputationRepo: {
         getReputation: () => Effect.succeed(1000),
-        addReputation: (_id, amount) => {
-          reputationAdded = amount
+        recordEvent: (event) => {
+          recordedEvent = { action: event.action, amount: event.amount }
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 
@@ -93,6 +95,6 @@ describe('createSubjectUseCase', () => {
       expect(result.right.title).toBe('Un sujet valide')
       expect(result.right.createdBy).toBe('abc')
     }
-    expect(reputationAdded).toBe(50)
+    expect(recordedEvent).toEqual({ action: 'added_subject', amount: 50 })
   })
 })

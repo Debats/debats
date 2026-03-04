@@ -174,10 +174,22 @@ export async function createPublicFigureWithStatementUseCase(
   await Effect.runPromise(statementRepo.createEvidence(evidence))
 
   await Effect.runPromise(
-    reputationRepo.addReputation(contributor.id, reputationReward('added_personality_validated')),
+    reputationRepo.recordEvent({
+      contributorId: contributor.id,
+      action: 'added_personality_validated',
+      amount: reputationReward('added_personality_validated'),
+      relatedEntityType: 'public_figure',
+      relatedEntityId: createdFigure.id,
+    }),
   )
   await Effect.runPromise(
-    reputationRepo.addReputation(contributor.id, reputationReward('added_statement_validated')),
+    reputationRepo.recordEvent({
+      contributorId: contributor.id,
+      action: 'added_statement_validated',
+      amount: reputationReward('added_statement_validated'),
+      relatedEntityType: 'statement',
+      relatedEntityId: statement.id,
+    }),
   )
 
   return Either.right(createdFigure)

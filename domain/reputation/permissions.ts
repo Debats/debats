@@ -114,6 +114,7 @@ const REWARDS = {
   argument_to_statement_link_rejected: -100,
 
   // Invitations
+  invitation_bonus: 0, // variable: floor(inviterReputation / 2)
   invitation_accepted: 50,
 
   // Spéciaux

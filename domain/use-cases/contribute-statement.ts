@@ -348,24 +348,48 @@ export async function contributeStatementUseCase(
   // 10. Award reputation
   if (newPublicFigure) {
     await Effect.runPromise(
-      reputationRepo.addReputation(contributor.id, reputationReward('added_personality_validated')),
+      reputationRepo.recordEvent({
+        contributorId: contributor.id,
+        action: 'added_personality_validated',
+        amount: reputationReward('added_personality_validated'),
+        relatedEntityType: 'public_figure',
+        relatedEntityId: resolvedFigureId,
+      }),
     )
   }
 
   if (newSubject) {
     await Effect.runPromise(
-      reputationRepo.addReputation(contributor.id, reputationReward('added_subject')),
+      reputationRepo.recordEvent({
+        contributorId: contributor.id,
+        action: 'added_subject',
+        amount: reputationReward('added_subject'),
+        relatedEntityType: 'subject',
+        relatedEntityId: resolvedSubjectId,
+      }),
     )
   }
 
   if (newPosition) {
     await Effect.runPromise(
-      reputationRepo.addReputation(contributor.id, reputationReward('added_position_validated')),
+      reputationRepo.recordEvent({
+        contributorId: contributor.id,
+        action: 'added_position_validated',
+        amount: reputationReward('added_position_validated'),
+        relatedEntityType: 'position',
+        relatedEntityId: resolvedPositionId,
+      }),
     )
   }
 
   await Effect.runPromise(
-    reputationRepo.addReputation(contributor.id, reputationReward('added_statement_validated')),
+    reputationRepo.recordEvent({
+      contributorId: contributor.id,
+      action: 'added_statement_validated',
+      amount: reputationReward('added_statement_validated'),
+      relatedEntityType: 'statement',
+      relatedEntityId: statement.id,
+    }),
   )
 
   return Either.right({

@@ -87,7 +87,8 @@ const fakePublicFigureRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
-  addReputation: () => Effect.succeed(undefined as void),
+  recordEvent: () => Effect.succeed(undefined as void),
+  getHistory: () => Effect.succeed([]),
 }
 
 const fakeWikipediaValidator = {
@@ -369,10 +370,11 @@ describe('createPublicFigureWithStatementUseCase', () => {
       },
       reputationRepo: {
         getReputation: () => Effect.succeed(1000),
-        addReputation: (_id, amount) => {
-          totalReputationAdded += amount
+        recordEvent: (event) => {
+          totalReputationAdded += event.amount
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 

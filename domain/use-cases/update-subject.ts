@@ -65,7 +65,13 @@ export async function updateSubjectUseCase(
   const saved = await Effect.runPromise(subjectRepo.update(updated))
 
   await Effect.runPromise(
-    reputationRepo.addReputation(contributor.id, reputationReward('edited_subject')),
+    reputationRepo.recordEvent({
+      contributorId: contributor.id,
+      action: 'edited_subject',
+      amount: reputationReward('edited_subject'),
+      relatedEntityType: 'subject',
+      relatedEntityId: saved.id,
+    }),
   )
 
   return Either.right(saved)

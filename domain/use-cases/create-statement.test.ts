@@ -67,7 +67,8 @@ const fakePublicFigureRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
-  addReputation: () => Effect.succeed(undefined as void),
+  recordEvent: () => Effect.succeed(undefined as void),
+  getHistory: () => Effect.succeed([]),
 }
 
 const validParams = {
@@ -211,10 +212,11 @@ describe('createStatementUseCase', () => {
       },
       reputationRepo: {
         getReputation: () => Effect.succeed(0),
-        addReputation: (_id, amount) => {
-          reputationAdded = amount
+        recordEvent: (event) => {
+          reputationAdded = event.amount
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 

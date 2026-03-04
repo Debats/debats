@@ -24,7 +24,8 @@ const fakeSubjectRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
-  addReputation: () => Effect.succeed(undefined as void),
+  recordEvent: () => Effect.succeed(undefined as void),
+  getHistory: () => Effect.succeed([]),
 }
 
 const validParams = {
@@ -92,10 +93,11 @@ describe('updateSubjectUseCase', () => {
       contributor: { id: 'abc', reputation: 10000 },
       reputationRepo: {
         getReputation: () => Effect.succeed(10000),
-        addReputation: (_id, amount) => {
-          reputationAdded = amount
+        recordEvent: (event) => {
+          reputationAdded = event.amount
           return Effect.succeed(undefined as void)
         },
+        getHistory: () => Effect.succeed([]),
       },
     })
 
