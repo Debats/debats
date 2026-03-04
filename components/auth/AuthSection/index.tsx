@@ -31,6 +31,9 @@ export default function AuthSection() {
     return (
       <div className={styles.section}>
         <span className={styles.userName}>{displayName}</span>
+        <Link href="/reputation" className={styles.inviteLink}>
+          Réputation
+        </Link>
         <Link href="/inviter" className={styles.inviteLink}>
           Inviter
         </Link>

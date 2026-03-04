@@ -1,0 +1,100 @@
+.header {
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 2em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 16px;
+}
+
+.summary {
+  display: flex;
+  gap: 32px;
+  align-items: baseline;
+}
+
+.score {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.8em;
+  color: var(--text-dark);
+}
+
+.rank {
+  font-family: var(--font-gotham-book);
+  font-size: 1.1em;
+  color: var(--text-light);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.event {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.event:last-child {
+  border-bottom: none;
+}
+
+.date {
+  flex: 0 0 100px;
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.label {
+  flex: 1;
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.amount {
+  flex: 0 0 auto;
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  text-align: right;
+}
+
+.positive {
+  color: #2ecc71;
+}
+
+.negative {
+  color: var(--debats-red);
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  color: var(--text-light);
+  padding: 40px 0;
+}
+
+@media (max-width: 768px) {
+  .summary {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .event {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .date {
+    flex: 0 0 auto;
+  }
+}
