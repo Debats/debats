@@ -1,0 +1,122 @@
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 2em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 32px;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.identityInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.displayName {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.2em;
+  color: var(--text-dark);
+}
+
+.email {
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.reputationCard {
+  background: var(--bg-light, #fafafa);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.reputationHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.reputationScore {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.score {
+  font-family: var(--font-gotham-bold);
+  font-size: 2em;
+  color: var(--text-dark);
+}
+
+.scoreLabel {
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.rank {
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.progressBar {
+  height: 6px;
+  background: var(--border-light);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--debats-red);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progressLabel {
+  font-family: var(--font-gotham-book);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.historyLink {
+  display: inline-block;
+  margin-top: 16px;
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.historyLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .identity {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .reputationHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

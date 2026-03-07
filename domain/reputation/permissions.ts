@@ -12,6 +12,14 @@ const RANK_THRESHOLDS = {
   [Rank.Fondateur]: 1000000,
 } as const
 
+export function getNextRankThreshold(reputation: number): number | null {
+  if (reputation < 0) return 0
+  if (reputation < RANK_THRESHOLDS[Rank.Eloquent]) return RANK_THRESHOLDS[Rank.Eloquent]
+  if (reputation < RANK_THRESHOLDS[Rank.Idealiste]) return RANK_THRESHOLDS[Rank.Idealiste]
+  if (reputation < RANK_THRESHOLDS[Rank.Fondateur]) return RANK_THRESHOLDS[Rank.Fondateur]
+  return null
+}
+
 export function getRank(reputation: number): Rank {
   if (reputation < 0) return Rank.Sophiste
   if (reputation >= RANK_THRESHOLDS[Rank.Fondateur]) return Rank.Fondateur

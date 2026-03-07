@@ -17,5 +17,10 @@ export async function getAuthenticatedContributor() {
 
   if (!data) return null
 
-  return { id: data.id, reputation: data.reputation ?? 0 }
+  return {
+    id: data.id,
+    reputation: data.reputation ?? 0,
+    name: (user.user_metadata?.name as string) ?? null,
+    email: user.email ?? null,
+  }
 }

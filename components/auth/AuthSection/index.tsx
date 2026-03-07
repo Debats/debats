@@ -30,12 +30,8 @@ export default function AuthSection() {
     const displayName = user.user_metadata?.name || user.email
     return (
       <div className={styles.section}>
-        <span className={styles.userName}>{displayName}</span>
-        <Link href="/reputation" className={styles.inviteLink}>
-          Réputation
-        </Link>
-        <Link href="/inviter" className={styles.inviteLink}>
-          Inviter
+        <Link href="/me" className={styles.userName}>
+          {displayName}
         </Link>
         <Button
           variant="link"
