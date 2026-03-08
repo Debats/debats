@@ -147,9 +147,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
                       </h3>
                       {evidences.length > 0 && (
                         <>
-                          <blockquote className={styles.quote}>
-                            {evidences[0].quote}
-                          </blockquote>
+                          <blockquote className={styles.quote}>{evidences[0].quote}</blockquote>
                           {evidences[0].sourceUrl ? (
                             <a
                               href={evidences[0].sourceUrl}

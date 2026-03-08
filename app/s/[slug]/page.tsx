@@ -6,8 +6,11 @@ import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithFigure } from '../../../domain/repositories/statement-repository'
+import { isMajorSubject } from '../../../domain/entities/subject'
+import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
+import SubjectActions from '../../../components/subjects/SubjectActions'
 import Button from '../../../components/ui/Button'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../components/layout/ErrorDisplay'
@@ -73,8 +76,9 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
     if (!subject) notFound()
 
-    const [statements, contributor] = await Promise.all([
+    const [statements, stats, contributor] = await Promise.all([
       Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+      Effect.runPromise(subjectRepo.getStats(subject.id)),
       getAuthenticatedContributor(),
     ])
 
@@ -85,6 +89,12 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
     const uniqueFigures = new Set(statements.map((s) => s.publicFigure.id))
 
+    const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_subject')
+    const major = isMajorSubject(subject, stats.statementsCount)
+    const canDelete =
+      !!contributor &&
+      canPerform(contributor.reputation, major ? 'delete_major_subject' : 'delete_minor_subject')
+
     return (
       <ContentWithSidebar topMargin>
         <header className={styles.header}>
@@ -92,12 +102,18 @@ export default async function SubjectDetailPage({ params }: PageProps) {
           <p className={styles.presentation}>{subject.presentation}</p>
           <p className={styles.problem}>{subject.problem}</p>
           {contributor && (
-            <div className={styles.addAction}>
+            <div className={styles.headerActions}>
               <Button
                 href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
               >
                 Ajouter une prise de position
               </Button>
+              <SubjectActions
+                subjectId={subject.id}
+                subjectSlug={subject.slug}
+                canEdit={canEdit}
+                canDelete={canDelete}
+              />
             </div>
           )}
         </header>

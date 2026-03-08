@@ -115,7 +115,7 @@ export async function contributeStatementAction(formData: FormData): Promise<Act
     positionRepo: createPositionRepository(supabase),
     statementRepo: createStatementRepository(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
+    reputationRepo: createReputationRepository(createAdminSupabaseClient()),
     wikipediaValidator: createWikipediaValidator(),
   })
 

@@ -2,6 +2,7 @@
 
 import { Either } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createSubjectUseCase } from '../../domain/use-cases/create-subject'
@@ -19,7 +20,7 @@ export async function createSubjectAction(formData: FormData): Promise<ActionRes
     presentation: String(formData.get('presentation') ?? ''),
     problem: String(formData.get('problem') ?? ''),
     subjectRepo: createSubjectRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
+    reputationRepo: createReputationRepository(createAdminSupabaseClient()),
   })
 
   if (Either.isLeft(result)) {

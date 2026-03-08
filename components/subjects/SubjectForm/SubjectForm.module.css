@@ -1,0 +1,58 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide {
+  background-color: #f8f6f0;
+  border-left: 3px solid #e0dcd3;
+  padding: 10px 14px;
+  border-radius: 0 4px 4px 0;
+  margin-top: 4px;
+}
+
+.guideTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+
+.guideText {
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #777;
+  margin: 0;
+}
+
+.guideExample {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0 0 0;
+}
+
+.guideGood {
+  color: #4a8c5c;
+}
+
+.guideBad {
+  color: #c0392b;
+  text-decoration: line-through;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-top: 10px;
+}

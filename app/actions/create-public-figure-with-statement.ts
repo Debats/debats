@@ -2,6 +2,7 @@
 
 import { Either } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
@@ -41,7 +42,7 @@ export async function createPublicFigureWithStatementAction(
     statementRepo: createStatementRepository(supabase),
     subjectRepo: createSubjectRepository(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
+    reputationRepo: createReputationRepository(createAdminSupabaseClient()),
     wikipediaValidator: createWikipediaValidator(),
   })
 

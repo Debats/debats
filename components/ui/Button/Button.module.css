@@ -8,10 +8,15 @@
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
-  border: none;
+  box-sizing: border-box;
+  border: 1px solid transparent;
   text-decoration: none;
-  display: inline-block;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  line-height: 1;
+  border-radius: 4px;
 }
 
 .button::after {
@@ -21,8 +26,6 @@
 .primary {
   background-color: var(--debats-red);
   color: white;
-  padding: 12px 20px;
-  border-radius: 4px;
 }
 
 .primary:link,
@@ -41,10 +44,37 @@
   letter-spacing: 0.5px;
 }
 
+.secondary {
+  background: none;
+  color: var(--text-dark);
+  border: 1px solid var(--border-light);
+}
+
+.secondary:link,
+.secondary:visited {
+  color: var(--text-dark);
+}
+
+.secondary:hover {
+  border-color: var(--debats-red);
+  color: var(--debats-red);
+}
+
+.danger {
+  background-color: #c0392b;
+  color: white;
+}
+
+.danger:hover {
+  background-color: #a93226;
+  color: white;
+}
+
 .link {
   background: none;
   color: var(--debats-red);
   padding: 0;
+  border: none;
 }
 
 .link:hover {

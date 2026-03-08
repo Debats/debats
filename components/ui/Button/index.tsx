@@ -1,7 +1,7 @@
 import styles from './Button.module.css'
 
 interface ButtonBaseProps {
-  variant?: 'primary' | 'link'
+  variant?: 'primary' | 'secondary' | 'danger' | 'link'
   size?: 'default' | 'small'
   children: React.ReactNode
 }
@@ -10,6 +10,7 @@ interface ButtonAsButton extends ButtonBaseProps {
   href?: undefined
   type?: 'button' | 'submit'
   onClick?: () => void
+  disabled?: boolean
   target?: undefined
   rel?: undefined
 }
@@ -18,6 +19,7 @@ interface ButtonAsLink extends ButtonBaseProps {
   href: string
   type?: undefined
   onClick?: undefined
+  disabled?: undefined
   target?: string
   rel?: string
 }
@@ -30,6 +32,7 @@ export default function Button({
   href,
   type = 'button',
   onClick,
+  disabled,
   target,
   rel,
   children,
@@ -45,7 +48,7 @@ export default function Button({
   }
 
   return (
-    <button className={className} type={type} onClick={onClick}>
+    <button className={className} type={type} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   )
