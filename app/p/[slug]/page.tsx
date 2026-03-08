@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Effect } from 'effect'
+import { Effect, Option } from 'effect'
 import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
@@ -104,9 +104,9 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
           <div className={styles.headerInfo}>
             <h1 className={styles.name}>{figure.name}</h1>
             <p className={styles.presentation}>{figure.presentation}</p>
-            {figure.wikipediaUrl && (
+            {Option.isSome(figure.wikipediaUrl) && (
               <a
-                href={figure.wikipediaUrl}
+                href={figure.wikipediaUrl.value}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.wikiLink}

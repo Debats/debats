@@ -300,38 +300,79 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          notoriety_sources: string[] | null
           presentation: string
           slug: string
           updated_at: string | null
           website_url: string | null
-          wikipedia_url: string
+          wikipedia_url: string | null
         }
         Insert: {
           created_at?: string | null
           created_by: string
           id?: string
           name: string
+          notoriety_sources?: string[] | null
           presentation: string
           slug: string
           updated_at?: string | null
           website_url?: string | null
-          wikipedia_url: string
+          wikipedia_url?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string
           id?: string
           name?: string
+          notoriety_sources?: string[] | null
           presentation?: string
           slug?: string
           updated_at?: string | null
           website_url?: string | null
-          wikipedia_url?: string
+          wikipedia_url?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "public_figures_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reputation_events: {
+        Row: {
+          action: string
+          amount: number
+          contributor_id: string
+          created_at: string | null
+          id: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+        }
+        Insert: {
+          action: string
+          amount: number
+          contributor_id: string
+          created_at?: string | null
+          id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number
+          contributor_id?: string
+          created_at?: string | null
+          id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reputation_events_contributor_id_fkey"
+            columns: ["contributor_id"]
             isOneToOne: false
             referencedRelation: "contributors"
             referencedColumns: ["id"]

@@ -381,7 +381,9 @@ describe('createPublicFigureWithStatementUseCase', () => {
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
       expect(result.right.name).toBe('Jean Dupont')
-      expect(result.right.wikipediaUrl).toBe('https://fr.wikipedia.org/wiki/Jean_Dupont')
+      expect(Option.getOrNull(result.right.wikipediaUrl)).toBe(
+        'https://fr.wikipedia.org/wiki/Jean_Dupont',
+      )
       expect(result.right.createdBy).toBe('abc')
     }
 

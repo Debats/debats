@@ -237,6 +237,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               slug,
               presentation,
               wikipedia_url,
+              notoriety_sources,
               website_url,
               created_by,
               created_at,
@@ -272,10 +273,9 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               name: PublicFigureName.make(row.public_figures.name),
               slug: PublicFigureSlug.make(row.public_figures.slug),
               presentation: row.public_figures.presentation,
-              wikipediaUrl: row.public_figures.wikipedia_url,
-              websiteUrl: row.public_figures.website_url
-                ? Option.some(row.public_figures.website_url)
-                : Option.none(),
+              wikipediaUrl: Option.fromNullable(row.public_figures.wikipedia_url),
+              notorietySources: row.public_figures.notoriety_sources ?? [],
+              websiteUrl: Option.fromNullable(row.public_figures.website_url),
               createdBy: row.public_figures.created_by,
               createdAt: new Date(row.public_figures.created_at!),
               updatedAt: new Date(row.public_figures.updated_at!),

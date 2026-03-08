@@ -24,8 +24,9 @@ export const PublicFigure = S.Struct({
   name: PublicFigureName,
   slug: PublicFigureSlug,
   presentation: S.String.pipe(S.minLength(10)),
-  wikipediaUrl: S.String, // Obligatoire : critère de notoriété
-  websiteUrl: S.Option(S.String), // Optionnel avec Option
+  wikipediaUrl: S.Option(S.String),
+  notorietySources: S.Array(S.String),
+  websiteUrl: S.Option(S.String),
   createdBy: S.String, // Obligatoire : traçabilité
   createdAt: S.Date,
   updatedAt: S.Date,
@@ -48,7 +49,8 @@ export const generateSlug = (name: string): PublicFigureSlug =>
 export const createPublicFigure = (params: {
   name: string
   presentation: string
-  wikipediaUrl: string
+  wikipediaUrl?: string
+  notorietySources?: string[]
   websiteUrl?: string
   createdBy: string
 }): PublicFigure => {
@@ -59,7 +61,8 @@ export const createPublicFigure = (params: {
     name: PublicFigureName.make(params.name),
     slug: generateSlug(params.name),
     presentation: params.presentation,
-    wikipediaUrl: params.wikipediaUrl,
+    wikipediaUrl: params.wikipediaUrl ? Option.some(params.wikipediaUrl) : Option.none(),
+    notorietySources: params.notorietySources ?? [],
     websiteUrl: params.websiteUrl ? Option.some(params.websiteUrl) : Option.none(),
     createdBy: params.createdBy,
     createdAt: now,
