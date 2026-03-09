@@ -7,6 +7,7 @@ import { createPublicFigureRepository } from '../../infra/database/public-figure
 export interface PublicFigureSearchResult {
   id: string
   name: string
+  slug: string
 }
 
 export async function searchPublicFigures(query: string): Promise<PublicFigureSearchResult[]> {
@@ -17,5 +18,5 @@ export async function searchPublicFigures(query: string): Promise<PublicFigureSe
 
   const figures = await Effect.runPromise(repo.searchByName(query, 10))
 
-  return figures.map((f) => ({ id: f.id, name: f.name }))
+  return figures.map((f) => ({ id: f.id, name: f.name, slug: f.slug }))
 }

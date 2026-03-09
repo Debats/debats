@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { PublicFigure } from '../../domain/entities/public-figure'
+import { PublicFigureActivitySummary } from '../../domain/value-objects/public-figure-activity-summary'
 import {
   DatabaseError,
   PublicFigureRepository,
@@ -277,6 +278,58 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
           }
         },
         catch: (error) => dbError('Failed to get public figure stats', error),
+      }),
+
+    findSummariesByActivity: (limit: number, orderBy = 'latest_statement_at' as const) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('v_public_figure_activity_summary')
+            .select('*')
+            .order(orderBy, { ascending: false, nullsFirst: false })
+            .limit(limit)
+
+          if (error) throw error
+
+          return data.map(
+            (row): PublicFigureActivitySummary => ({
+              id: row.id,
+              name: row.name,
+              slug: row.slug,
+              presentation: row.presentation,
+              statementsCount: row.statements_count ?? 0,
+              subjectsCount: row.subjects_count ?? 0,
+              latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
+            }),
+          )
+        },
+        catch: (error) => dbError('Failed to fetch public figure summaries', error),
+      }),
+
+    findByLetter: (letter: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('v_public_figure_activity_summary')
+            .select('*')
+            .ilike('name', `${letter}%`)
+            .order('name')
+
+          if (error) throw error
+
+          return data.map(
+            (row): PublicFigureActivitySummary => ({
+              id: row.id,
+              name: row.name,
+              slug: row.slug,
+              presentation: row.presentation,
+              statementsCount: row.statements_count ?? 0,
+              subjectsCount: row.subjects_count ?? 0,
+              latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
+            }),
+          )
+        },
+        catch: (error) => dbError('Failed to fetch public figures by letter', error),
       }),
   }
 }

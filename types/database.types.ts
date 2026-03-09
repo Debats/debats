@@ -110,14 +110,14 @@ export type Database = {
             foreignKeyName: "arguments_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
-            referencedRelation: "subject_activity_summary"
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "arguments_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
-            referencedRelation: "subjects"
+            referencedRelation: "v_subject_activity_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -282,14 +282,14 @@ export type Database = {
             foreignKeyName: "positions_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
-            referencedRelation: "subject_activity_summary"
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "positions_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
-            referencedRelation: "subjects"
+            referencedRelation: "v_subject_activity_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -429,6 +429,13 @@ export type Database = {
             referencedRelation: "public_figures"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "statements_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "v_public_figure_activity_summary"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subjects: {
@@ -477,7 +484,19 @@ export type Database = {
       }
     }
     Views: {
-      subject_activity_summary: {
+      v_public_figure_activity_summary: {
+        Row: {
+          id: string | null
+          latest_statement_at: string | null
+          name: string | null
+          presentation: string | null
+          slug: string | null
+          statements_count: number | null
+          subjects_count: number | null
+        }
+        Relationships: []
+      }
+      v_subject_activity_summary: {
         Row: {
           created_at: string | null
           created_by: string | null

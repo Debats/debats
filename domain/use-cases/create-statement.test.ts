@@ -64,6 +64,8 @@ const fakePublicFigureRepo = {
   delete: () => Effect.succeed(undefined as void),
   getStats: () =>
     Effect.succeed({ publicFigureId: '', subjectsCount: 0, positionsCount: 0, statementsCount: 0 }),
+  findSummariesByActivity: () => Effect.succeed([]),
+  findByLetter: () => Effect.succeed([]),
 }
 
 const fakeReputationRepo = {

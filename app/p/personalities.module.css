@@ -17,123 +17,174 @@
   margin-top: 0;
 }
 
-.personalitiesIndex {
+/* Sections */
+
+.section {
+  margin-bottom: 50px;
 }
 
-.personalityItem {
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.1em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--debats-red);
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 24px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--debats-red);
+}
+
+/* Figure card grid (top actives) */
+
+.figureGrid {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 30px;
-  align-items: start;
-  margin-bottom: 40px;
-  padding-bottom: 30px;
-  border-bottom: 1px solid #f0f0f0;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
 }
 
-.personalityItem:last-child {
-  border-bottom: none;
-}
-
-.personalityIdentity {
+.figureCard {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  min-width: 150px;
+  align-items: center;
+  text-decoration: none;
+  text-align: center;
+  padding: 16px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
 }
 
-.personalityAvatar {
-  margin-bottom: 12px;
+.figureCard:hover {
+  background-color: #fafafa;
 }
 
-.personalityName {
+.figureName {
   font-family: var(--font-gotham-book);
-  font-size: 1em;
-  margin-bottom: 5px;
-  font-weight: normal;
+  font-size: 0.9em;
   color: var(--text-dark);
-  margin-top: 0;
+  margin: 10px 0 4px;
+  font-weight: normal;
   text-transform: uppercase;
 }
 
-.personalityName a {
+.figureCard:hover .figureName {
+  color: var(--debats-red);
+}
+
+.figureStat {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--debats-red);
+}
+
+/* Figure row list (activité récente, index A-Z) */
+
+.recentList,
+.letterResults {
+  display: flex;
+  flex-direction: column;
+}
+
+.figureRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.figureRow:last-child {
+  border-bottom: none;
+}
+
+.figureRowInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.figureRowName {
+  font-family: var(--font-gotham-book);
+  font-size: 0.95em;
   color: var(--text-dark);
   text-decoration: none;
+  text-transform: uppercase;
 }
 
-.personalityName a:hover {
+.figureRowName:hover {
   color: var(--debats-red);
 }
 
-.counters {
-}
-
-.countItem {
-  color: var(--debats-red);
+.figureRowStat {
   font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  display: block;
+  font-size: 0.8em;
+  color: var(--debats-red);
 }
 
-.personalityPresentation {
+/* Alphabet bar */
+
+.alphabetBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 24px;
 }
 
-.presentationLabel {
+.letterLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   font-family: var(--font-gotham-bold);
+  font-size: 0.9em;
   font-weight: bold;
-  margin-bottom: 15px;
-  display: block;
   color: var(--text-dark);
+  text-decoration: none;
+  border-radius: 4px;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
-.presentationText {
+.letterLink:hover {
+  background-color: #fafafa;
+  color: var(--debats-red);
+}
+
+.letterActive {
+  background-color: var(--debats-red);
+  color: white;
+}
+
+.letterActive:hover {
+  background-color: var(--debats-red);
+  color: white;
+}
+
+.noResults {
   font-family: var(--font-gotham-book);
   font-size: 0.9em;
-  line-height: 1.6em;
-  text-align: justify;
-  color: var(--text-dark);
-  margin: 0;
+  color: #999;
+  padding: 16px 0;
 }
 
-.seeMore {
-  display: flex;
-  align-items: flex-start;
-  padding-top: 30px;
-}
-
-.seeMoreLink {
-  color: var(--debats-red);
-  text-decoration: none;
-  font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  white-space: nowrap;
-}
-
-.seeMoreLink:hover {
-  color: #d11635;
-}
+/* Responsive */
 
 @media (max-width: 768px) {
   .pageTitle {
     font-size: 1.5em;
   }
 
-  .personalityItem {
-    grid-template-columns: 1fr;
-    gap: 20px;
+  .figureGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 
-  .personalityIdentity {
-    flex-direction: row;
-    align-items: center;
-    gap: 15px;
-    min-width: auto;
-  }
-
-  .personalityAvatar {
-    margin-bottom: 0;
-  }
-
-  .seeMore {
-    padding-top: 0;
+  .letterLink {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85em;
   }
 }

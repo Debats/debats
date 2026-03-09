@@ -97,6 +97,8 @@ const fakePublicFigureRepo = {
       positionsCount: 0,
       statementsCount: 0,
     }),
+  findSummariesByActivity: () => Effect.succeed([]),
+  findByLetter: () => Effect.succeed([]),
 }
 
 const fakeReputationRepo = {

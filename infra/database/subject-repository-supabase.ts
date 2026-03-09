@@ -176,7 +176,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
-            .from('subject_activity_summary')
+            .from('v_subject_activity_summary')
             .select('*')
             .order('latest_statement_at', { ascending: false, nullsFirst: false })
             .limit(limit)

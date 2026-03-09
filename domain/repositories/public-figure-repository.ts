@@ -1,5 +1,6 @@
 import { Context, Effect } from 'effect'
 import { PublicFigure } from '../entities/public-figure'
+import { PublicFigureActivitySummary } from '../value-objects/public-figure-activity-summary'
 import { PublicFigureStats } from '../value-objects/public-figure-stats'
 
 export class DatabaseError extends Error {
@@ -24,6 +25,13 @@ export interface PublicFigureRepository {
   delete(id: string): Effect.Effect<void, DatabaseError>
 
   getStats(publicFigureId: string): Effect.Effect<PublicFigureStats, DatabaseError>
+
+  findSummariesByActivity(
+    limit: number,
+    orderBy?: 'subjects_count' | 'latest_statement_at',
+  ): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
+
+  findByLetter(letter: string): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
 }
 
 export const PublicFigureRepository =
