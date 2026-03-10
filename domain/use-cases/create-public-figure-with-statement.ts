@@ -15,7 +15,6 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 const CreatePublicFigureWithStatementInput = S.Struct({
   name: S.String.pipe(S.minLength(2), S.maxLength(100)),
   presentation: S.String.pipe(S.minLength(10)),
-  wikipediaUrl: S.String.pipe(S.pattern(/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/)),
   sourceName: S.String.pipe(S.minLength(1)),
   sourceUrl: S.optional(S.String),
   quote: S.String.pipe(S.minLength(10)),
@@ -30,6 +29,7 @@ type CreatePublicFigureWithStatementParams = {
   presentation: string
   wikipediaUrl: string
   websiteUrl: string
+  notorietySources: string[]
   subjectId: string
   positionId: string
   sourceName: string
@@ -53,8 +53,8 @@ export async function createPublicFigureWithStatementUseCase(
     contributor,
     name,
     presentation,
-    wikipediaUrl,
     websiteUrl,
+    notorietySources,
     subjectId,
     positionId,
     sourceName,
@@ -68,6 +68,7 @@ export async function createPublicFigureWithStatementUseCase(
     reputationRepo,
     wikipediaValidator,
   } = params
+  const wikipediaUrl = params.wikipediaUrl.trim()
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -81,25 +82,22 @@ export async function createPublicFigureWithStatementUseCase(
   const decoded = S.decodeUnknownEither(CreatePublicFigureWithStatementInput, { errors: 'all' })({
     name,
     presentation,
-    wikipediaUrl,
     sourceName,
     sourceUrl: sourceUrl || undefined,
     quote,
     factDate,
   })
 
+  const fieldErrors: FieldErrors = {}
+
   if (Either.isLeft(decoded)) {
     const issues = ArrayFormatter.formatErrorSync(decoded.left)
-    const fieldErrors: FieldErrors = {}
     for (const issue of issues) {
       const field = issue.path.join('.')
       if (field === 'name') {
         fieldErrors.name = 'Le nom doit faire entre 2 et 100 caractères.'
       } else if (field === 'presentation') {
         fieldErrors.presentation = 'La présentation doit faire au moins 10 caractères.'
-      } else if (field === 'wikipediaUrl') {
-        fieldErrors.wikipediaUrl =
-          'L\u2019URL Wikipedia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).'
       } else if (field === 'sourceName') {
         fieldErrors.sourceName = 'Le nom de la source est requis.'
       } else if (field === 'quote') {
@@ -108,7 +106,23 @@ export async function createPublicFigureWithStatementUseCase(
         fieldErrors.factDate = 'La date du fait est invalide (format attendu : AAAA-MM-JJ).'
       }
     }
-    return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
+  }
+
+  if (wikipediaUrl) {
+    if (!/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/.test(wikipediaUrl)) {
+      fieldErrors.wikipediaUrl =
+        'L\u2019URL Wikipedia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).'
+    }
+  } else {
+    const urlPattern = /^https?:\/\/.+/
+    if (notorietySources.length < 2 || !notorietySources.every((url) => urlPattern.test(url))) {
+      fieldErrors.notorietySources =
+        'Sans page Wikipedia, au moins 2 sources de notoriété (URLs valides) sont requises.'
+    }
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return Either.left(fieldErrors)
   }
 
   const today = new Date()
@@ -118,16 +132,18 @@ export async function createPublicFigureWithStatementUseCase(
     return Either.left({ factDate: 'La date du fait ne peut pas être dans le future.' })
   }
 
-  const wikiResult = await wikipediaValidator.validatePage(wikipediaUrl)
-  if (!wikiResult.exists) {
-    return Either.left({
-      wikipediaUrl: 'La page Wikipedia n\u2019existe pas.',
-    })
-  }
-  if (!wikiResult.isBiography) {
-    return Either.left({
-      wikipediaUrl: 'La page Wikipedia ne correspond pas à une biographie.',
-    })
+  if (wikipediaUrl) {
+    const wikiResult = await wikipediaValidator.validatePage(wikipediaUrl)
+    if (!wikiResult.exists) {
+      return Either.left({
+        wikipediaUrl: 'La page Wikipedia n\u2019existe pas.',
+      })
+    }
+    if (!wikiResult.isBiography) {
+      return Either.left({
+        wikipediaUrl: 'La page Wikipedia ne correspond pas à une biographie.',
+      })
+    }
   }
 
   const subject = await Effect.runPromise(subjectRepo.findById(subjectId))

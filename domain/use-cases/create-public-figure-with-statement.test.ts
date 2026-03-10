@@ -102,6 +102,7 @@ const validParams = {
   presentation: 'Un personnage public suffisamment connu pour apparaître.',
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   websiteUrl: '',
+  notorietySources: [] as string[],
   subjectId: 'subject-1',
   positionId: 'position-1',
   sourceName: 'Le Monde',
@@ -114,6 +115,15 @@ const validParams = {
   publicFigureRepo: fakePublicFigureRepo,
   reputationRepo: fakeReputationRepo,
   wikipediaValidator: fakeWikipediaValidator,
+}
+
+const validParamsWithoutWikipedia = {
+  ...validParams,
+  wikipediaUrl: '',
+  notorietySources: [
+    'https://lemonde.fr/article-notoriete',
+    'https://liberation.fr/article-notoriete',
+  ],
 }
 
 describe('createPublicFigureWithStatementUseCase', () => {
@@ -340,6 +350,114 @@ describe('createPublicFigureWithStatementUseCase', () => {
     if (Either.isLeft(result) && typeof result.left !== 'string') {
       expect(result.left.wikipediaUrl).toBeDefined()
       expect(result.left.wikipediaUrl).toContain('biographi')
+    }
+  })
+
+  it('should fail with field error when no Wikipedia and no notoriety sources', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaUrl: '',
+      notorietySources: [],
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.notorietySources).toBeDefined()
+    }
+  })
+
+  it('should fail with field error when no Wikipedia and only 1 notoriety source', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaUrl: '',
+      notorietySources: ['https://lemonde.fr/article'],
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.notorietySources).toBeDefined()
+    }
+  })
+
+  it('should succeed when no Wikipedia but 2 valid notoriety sources', async () => {
+    const throwingWikipediaValidator = {
+      validatePage: async () => {
+        throw new Error('Wikipedia validator should not be called')
+      },
+    }
+
+    let createdFigure: PublicFigure | null = null
+
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParamsWithoutWikipedia,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaValidator: throwingWikipediaValidator,
+      publicFigureRepo: {
+        ...fakePublicFigureRepo,
+        create: (f: PublicFigure) => {
+          createdFigure = f
+          return Effect.succeed(f)
+        },
+      },
+      reputationRepo: {
+        ...fakeReputationRepo,
+        recordEvent: () => Effect.succeed(undefined as void),
+      },
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) {
+      expect(Option.isNone(result.right.wikipediaUrl)).toBe(true)
+    }
+    expect(createdFigure).not.toBeNull()
+  })
+
+  it('should fail with field error when no Wikipedia and notoriety sources are invalid URLs', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaUrl: '',
+      notorietySources: ['pas-une-url', 'aussi-invalide'],
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.notorietySources).toBeDefined()
+    }
+  })
+
+  it('should fail with field error when no Wikipedia and mix of valid/invalid notoriety sources', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      wikipediaUrl: '',
+      notorietySources: ['https://lemonde.fr/article', 'pas-une-url'],
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result) && typeof result.left !== 'string') {
+      expect(result.left.notorietySources).toBeDefined()
+    }
+  })
+
+  it('should succeed with valid Wikipedia and no notoriety sources', async () => {
+    const result = await createPublicFigureWithStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      notorietySources: [],
+      reputationRepo: {
+        ...fakeReputationRepo,
+        recordEvent: () => Effect.succeed(undefined as void),
+      },
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) {
+      expect(Option.getOrNull(result.right.wikipediaUrl)).toBe(
+        'https://fr.wikipedia.org/wiki/Jean_Dupont',
+      )
     }
   })
 

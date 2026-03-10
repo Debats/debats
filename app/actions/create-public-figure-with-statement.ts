@@ -26,12 +26,18 @@ export async function createPublicFigureWithStatementAction(
   const supabase = await createSSRSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
+  const notorietySources = formData
+    .getAll('notorietySources')
+    .map((v) => String(v))
+    .filter((v) => v.length > 0)
+
   const result = await createPublicFigureWithStatementUseCase({
     contributor,
     name: String(formData.get('name') ?? ''),
     presentation: String(formData.get('presentation') ?? ''),
     wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
+    notorietySources,
     subjectId: String(formData.get('subjectId') ?? ''),
     positionId: String(formData.get('positionId') ?? ''),
     sourceName: String(formData.get('sourceName') ?? ''),

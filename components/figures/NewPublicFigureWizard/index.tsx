@@ -28,6 +28,8 @@ export default function NewPublicFigureWizard() {
   const [presentation, setPresentation] = useState('')
   const [wikipediaUrl, setWikipediaUrl] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
+  const [notorietySource1, setNotorietySource1] = useState('')
+  const [notorietySource2, setNotorietySource2] = useState('')
 
   // Step 2 fields
   const [selectedSubjectId, setSelectedSubjectId] = useState('')
@@ -62,10 +64,23 @@ export default function NewPublicFigureWizard() {
     if (presentation.length < 10) {
       stepErrors.presentation = 'La présentation doit faire au moins 10 caractères.'
     }
-    if (!/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/.test(wikipediaUrl)) {
-      stepErrors.wikipediaUrl =
-        'L\u2019URL Wikipedia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).'
+
+    const trimmedWikipedia = wikipediaUrl.trim()
+    if (trimmedWikipedia) {
+      if (!/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/.test(trimmedWikipedia)) {
+        stepErrors.wikipediaUrl =
+          'L\u2019URL Wikipedia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).'
+      }
+    } else {
+      const urlPattern = /^https?:\/\/.+/
+      const s1 = notorietySource1.trim()
+      const s2 = notorietySource2.trim()
+      if (!s1 || !s2 || !urlPattern.test(s1) || !urlPattern.test(s2)) {
+        stepErrors.notorietySources =
+          'Sans page Wikipedia, deux sources de notoriété (URLs valides) sont requises.'
+      }
     }
+
     if (Object.keys(stepErrors).length > 0) {
       setFieldErrors(stepErrors)
       return
@@ -73,7 +88,7 @@ export default function NewPublicFigureWizard() {
     setFieldErrors(undefined)
     setError(undefined)
     setCurrentStep(2)
-  }, [name, presentation, wikipediaUrl])
+  }, [name, presentation, wikipediaUrl, notorietySource1, notorietySource2])
 
   const handlePreviousStep = useCallback(() => {
     setCurrentStep(1)
@@ -102,6 +117,12 @@ export default function NewPublicFigureWizard() {
       formData.set('presentation', presentation)
       formData.set('wikipediaUrl', wikipediaUrl)
       formData.set('websiteUrl', websiteUrl)
+
+      const s1 = notorietySource1.trim()
+      const s2 = notorietySource2.trim()
+      if (s1) formData.append('notorietySources', s1)
+      if (s2) formData.append('notorietySources', s2)
+
       formData.set('subjectId', selectedSubjectId)
       formData.set('positionId', selectedPositionId)
       formData.set(
@@ -150,7 +171,8 @@ export default function NewPublicFigureWizard() {
           if (
             result.fieldErrors.name ||
             result.fieldErrors.presentation ||
-            result.fieldErrors.wikipediaUrl
+            result.fieldErrors.wikipediaUrl ||
+            result.fieldErrors.notorietySources
           ) {
             setCurrentStep(1)
           }
@@ -159,8 +181,20 @@ export default function NewPublicFigureWizard() {
         router.push(`/p/${result.slug}`)
       }
     },
-    [name, presentation, wikipediaUrl, websiteUrl, selectedSubjectId, selectedPositionId, router],
+    [
+      name,
+      presentation,
+      wikipediaUrl,
+      websiteUrl,
+      notorietySource1,
+      notorietySource2,
+      selectedSubjectId,
+      selectedPositionId,
+      router,
+    ],
   )
+
+  const showNotorietySources = !wikipediaUrl.trim()
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
@@ -179,48 +213,120 @@ export default function NewPublicFigureWizard() {
 
       {currentStep === 1 && (
         <div className={styles.stepContent}>
-          <TextField
-            label="Nom"
-            id="name"
-            name="name"
-            required
-            placeholder="ex : Albert Camus, Simone Veil..."
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={fieldErrors?.name}
-          />
+          <div className={styles.fieldGroup}>
+            <TextField
+              label="Nom"
+              id="name"
+              name="name"
+              required
+              placeholder="ex : Albert Camus, Simone Veil..."
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              error={fieldErrors?.name}
+            />
+            <div className={styles.guide}>
+              <p className={styles.guideTitle}>Conseil</p>
+              <p className={styles.guideText}>
+                Le nom complet tel qu&apos;il est communément connu. Pas de titre (Dr, M., Mme).
+              </p>
+              <p className={styles.guideExample}>
+                <span className={styles.guideGood}>Simone Veil</span>{' '}
+                <span className={styles.guideBad}>Mme Simone Veil</span>
+              </p>
+            </div>
+          </div>
 
-          <TextArea
-            label="Présentation"
-            id="presentation"
-            name="presentation"
-            required
-            placeholder="Courte présentation de la personnalité (min. 10 caractères)"
-            rows={4}
-            value={presentation}
-            onChange={(e) => setPresentation(e.target.value)}
-            error={fieldErrors?.presentation}
-          />
+          <div className={styles.fieldGroup}>
+            <TextArea
+              label="Présentation"
+              id="presentation"
+              name="presentation"
+              required
+              placeholder="Courte présentation de la personnalité (min. 10 caractères)"
+              rows={4}
+              value={presentation}
+              onChange={(e) => setPresentation(e.target.value)}
+              error={fieldErrors?.presentation}
+            />
+            <div className={styles.guide}>
+              <p className={styles.guideTitle}>Conseil</p>
+              <p className={styles.guideText}>
+                Décrivez brièvement qui est cette personne : fonction, rôle, domaine
+                d&apos;activité. Restez factuel et neutre, sans jugement de valeur.
+              </p>
+            </div>
+          </div>
 
-          <TextField
-            label="URL Wikipedia"
-            id="wikipediaUrl"
-            name="wikipediaUrl"
-            required
-            placeholder="https://fr.wikipedia.org/wiki/..."
-            value={wikipediaUrl}
-            onChange={(e) => setWikipediaUrl(e.target.value)}
-            error={fieldErrors?.wikipediaUrl}
-          />
+          <div className={styles.fieldGroup}>
+            <TextField
+              label="URL Wikipedia (optionnel)"
+              id="wikipediaUrl"
+              name="wikipediaUrl"
+              placeholder="https://fr.wikipedia.org/wiki/..."
+              value={wikipediaUrl}
+              onChange={(e) => setWikipediaUrl(e.target.value)}
+              error={fieldErrors?.wikipediaUrl}
+            />
+            <div className={styles.guide}>
+              <p className={styles.guideTitle}>Conseil</p>
+              <p className={styles.guideText}>
+                La page Wikipedia de la personnalité, si elle en a une. Seules les pages
+                fr.wikipedia.org et en.wikipedia.org sont acceptées.
+              </p>
+            </div>
+          </div>
 
-          <TextField
-            label="Site web (optionnel)"
-            id="websiteUrl"
-            name="websiteUrl"
-            placeholder="https://..."
-            value={websiteUrl}
-            onChange={(e) => setWebsiteUrl(e.target.value)}
-          />
+          {showNotorietySources && (
+            <div className={styles.notorietySection}>
+              <p className={styles.notorietyTitle}>Sources de notoriété</p>
+              <div className={styles.guide}>
+                <p className={styles.guideTitle}>Pourquoi ?</p>
+                <p className={styles.guideText}>
+                  Sans page Wikipedia, la personnalité doit justifier de sa notoriété par au moins
+                  deux publications dans des sources indépendantes et fiables (article de presse,
+                  page institutionnelle, rapport officiel...).
+                </p>
+              </div>
+              <TextField
+                label="Source de notoriété 1"
+                id="notorietySource1"
+                name="notorietySources"
+                required
+                placeholder="https://lemonde.fr/..."
+                value={notorietySource1}
+                onChange={(e) => setNotorietySource1(e.target.value)}
+              />
+              <TextField
+                label="Source de notoriété 2"
+                id="notorietySource2"
+                name="notorietySources"
+                required
+                placeholder="https://liberation.fr/..."
+                value={notorietySource2}
+                onChange={(e) => setNotorietySource2(e.target.value)}
+              />
+              {fieldErrors?.notorietySources && (
+                <span className={styles.fieldError}>{fieldErrors.notorietySources}</span>
+              )}
+            </div>
+          )}
+
+          <div className={styles.fieldGroup}>
+            <TextField
+              label="Site web (optionnel)"
+              id="websiteUrl"
+              name="websiteUrl"
+              placeholder="https://..."
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+            />
+            <div className={styles.guide}>
+              <p className={styles.guideTitle}>Conseil</p>
+              <p className={styles.guideText}>
+                Le site officiel de la personnalité, s&apos;il existe.
+              </p>
+            </div>
+          </div>
 
           <div className={styles.actions}>
             <Button type="button" onClick={handleNextStep}>
