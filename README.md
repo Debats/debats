@@ -47,7 +47,7 @@ Le projet a été initié en 2014 et a connu plusieurs itérations technologique
 
 ### 5. Next.js Standalone (actuel)
 
-- **Stack** : Next.js 15 + TypeScript + Supabase + Effect TS
+- **Stack** : Next.js 16 + TypeScript + Supabase + Effect TS
 - **État** : En cours de développement
 - **Localisation** : racine du projet
 - **Objectif** : Consolidation et première version exploitable
@@ -64,38 +64,44 @@ Subject (Sujet)
         ├── Evidence (Preuves/Sources)
         └── Arguments
 
-Users (Contributeurs)
+Contributors (Contributeurs)
 ```
 
 ### Entités principales
 
 - **Subject** : Les sujets de débat (ex: "Immigration", "Écologie", "Retraites")
 - **Position** : Les différentes positions possibles sur un sujet
-- **PublicFigure** : Les personnalités publiques (politiques, intellectuels, etc.) - **Critère de notoriété : toute personnalité doit avoir une page Wikipedia valide**
+- **PublicFigure** : Les personnalités publiques (politiques, intellectuels, dirigeants d'institutions, porte-paroles d'organisations, etc.) - **Critère de notoriété : la personnalité doit avoir fait l'objet d'au moins deux publications dans des sources indépendantes et fiables** (inspiré des [critères d'admissibilité Wikipedia](https://fr.wikipedia.org/wiki/Wikip%C3%A9dia:Notori%C3%A9t%C3%A9_des_personnes)). La page Wikipedia n'est pas obligatoire.
 - **Statement** : Les prises de position concrètes d'une personnalité sur une position
 - **Evidence** : Les preuves et sources (citations, articles, vidéos, discours)
 - **Argument** : Les arguments développés pour défendre une position
-- **User** : Les utilisateurs contributeurs de la plateforme
+- **Contributor** : Les utilisateurs contributeurs de la plateforme
 
 ## Architecture technique actuelle
 
 ### Stack
 
-- **Frontend/Backend** : Next.js 15 (App Router)
+- **Frontend/Backend** : Next.js 16 (App Router)
 - **Base de données** : PostgreSQL via Supabase
 - **Authentification** : Supabase Auth
 - **Domain** : Effect TS + Effect Schema
 - **Styling** : CSS Modules
+- **Tests** : Vitest
+- **Monitoring** : Sentry + Plausible
 
 ### Structure
 
 ```
-├── app/              # Next.js App Router
-├── domain/           # Logique métier (entités, services, règles)
-├── infra/            # Infrastructure (Supabase, APIs)
+├── app/              # Next.js App Router (pages et Server Actions)
+├── domain/           # Logique métier (entités, services, règles, use cases)
+├── infra/            # Infrastructure (Supabase, Wikipedia API)
 ├── components/       # Composants React réutilisables
+├── hooks/            # React hooks
+├── styles/           # CSS Modules et design system
 ├── supabase/         # Migrations et seeds
-└── types/            # Types générés
+├── types/            # Types générés (database.types.ts)
+├── docs/             # Documentation et maquettes de référence
+└── public/           # Assets statiques (polices, images)
 ```
 
 ### Projets legacy (référence)
@@ -107,47 +113,87 @@ Users (Contributeurs)
 
 ### Prérequis
 
-- Node.js 20+
+- Node.js 22+
 - Docker (pour Supabase local)
-- Nix + direnv (recommandé)
+- [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
 
 ### Installation
 
 ```bash
 npm install
 supabase start
-supabase db reset  # Applique migrations + seeds
+supabase migration up  # Applique les migrations
 ```
+
+> **Attention** : `supabase db reset` détruit toutes les données locales. Préférer `supabase migration up` pour appliquer les migrations de manière incrémentale.
 
 ### Variables d'environnement
 
-Créer un fichier `.env.local` :
+Copier `.env.example` vers `.env.local` et renseigner les valeurs :
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<clé publishable locale>
+```bash
+cp .env.example .env.local
 ```
 
-### Lancement du développement
+Les variables essentielles pour le développement local :
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:64321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<clé affichée par supabase start>
+SUPABASE_SECRET_KEY=<clé affichée par supabase start>
+SIGNUP_SECRET_TOKEN=<token pour l'inscription par invitation>
+```
+
+Voir `.env.example` pour la liste complète des variables.
+
+### Lancement
 
 ```bash
 npm run dev
 ```
 
+### Commandes utiles
+
+```bash
+npm run dev           # Serveur de développement
+npm test              # Tests (Vitest)
+npm run lint          # Linting (ESLint)
+npm run format        # Formatage (Prettier)
+npm run typecheck     # Vérification des types
+npm run check         # Lint + format + typecheck + build (à lancer avant chaque commit)
+```
+
+### Supabase local
+
+```bash
+supabase start        # Démarrer l'environnement local
+supabase stop         # Arrêter l'environnement
+supabase migration up # Appliquer les migrations
+
+# Générer les types TypeScript après chaque migration
+supabase gen types typescript --local > types/database.types.ts
+```
+
+Les URLs locales sont configurées sur le port **64321** (voir `supabase/config.toml`) :
+
+- **API** : http://127.0.0.1:64321
+- **Studio** : http://127.0.0.1:64323
+- **Inbucket** (emails) : http://127.0.0.1:64324
+
 ## Feuille de route
 
 ### Phase 1 : MVP
 
-- [ ] Consolidation du modèle de données
-- [ ] Interface de base pour consulter sujets et positions
-- [ ] Authentification simple
-- [ ] CRUD basique pour les entités principales
+- [x] Consolidation du modèle de données
+- [x] Interface de consultation des sujets et positions
+- [x] Authentification Supabase (inscription par invitation)
+- [x] CRUD sujets, personnalités, positions, prises de position
+- [x] Système de réputation des contributeurs
 
 ### Phase 2 : Fonctionnalités collaboratives
 
-- [ ] Système de contribution et modération
+- [ ] Système de modération
 - [ ] Historique des modifications
-- [ ] Système de réputation des contributeurs
 - [ ] Interface d'administration
 
 ### Phase 3 : Fonctionnalités avancées

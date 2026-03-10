@@ -8,7 +8,7 @@
 - **TypeScript** pour le typage fort
 - **Next.js** pour le fullstack
 - **Supabase** pour la persistence (PostgreSQL + Auth)
-- **Tailwind CSS** + CSS Modules pour le styling
+- **CSS Modules** pour le styling
 
 ### Organisation des dossiers
 
@@ -25,18 +25,15 @@
 
 ### Prérequis
 
-- Node.js 18+
+- Node.js 22+
 - Docker (pour Supabase local)
-- npm ou pnpm
+- [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
 
 ### Installation
 
 ```bash
 # Installer les dépendances
 npm install
-
-# Installer la CLI Supabase globalement
-npm install -g supabase
 ```
 
 ### Commandes Supabase essentielles
@@ -61,8 +58,8 @@ supabase start
 # Créer une nouvelle migration
 supabase migration new nom_de_la_migration
 
-# Appliquer les migrations
-supabase db reset
+# Appliquer les migrations (incrémental, préserve les données)
+supabase migration up
 
 # Voir le statut des migrations
 supabase migration list
@@ -70,6 +67,8 @@ supabase migration list
 # Réparer une migration échouée
 supabase migration repair --status applied
 ```
+
+> **Attention** : `supabase db reset` détruit toutes les données locales et recrée la base depuis zéro. Préférer `supabase migration up` pour le développement courant.
 
 #### Base de données
 
@@ -94,7 +93,7 @@ supabase gen types typescript --local > types/database.types.ts
 supabase status
 
 # Accéder au Studio (interface admin)
-# Ouvrir http://127.0.0.1:54323
+# Ouvrir http://127.0.0.1:64323
 
 # Voir les logs en temps réel
 supabase logs --follow
@@ -159,10 +158,12 @@ Référence : [Understanding API keys | Supabase Docs](https://supabase.com/docs
 
 ### URLs locales importantes
 
-- **API**: http://127.0.0.1:54321
-- **DB**: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-- **Studio**: http://127.0.0.1:54323
-- **Inbucket** (emails): http://127.0.0.1:54324
+Les ports sont configurés dans `supabase/config.toml` :
+
+- **API**: http://127.0.0.1:64321
+- **DB**: postgresql://postgres:postgres@127.0.0.1:64322/postgres
+- **Studio**: http://127.0.0.1:64323
+- **Inbucket** (emails): http://127.0.0.1:64324
 
 ## Workflow de développement
 
@@ -183,14 +184,17 @@ Référence : [Understanding API keys | Supabase Docs](https://supabase.com/docs
 ### 3. Avant de commiter
 
 ```bash
-# Lancer les tests
-npm test
+# Vérification complète (lint + format + typecheck + build)
+npm run check
+```
 
-# Vérifier le linting
-npm run lint
+Commandes individuelles disponibles :
 
-# Formater le code
-npm run format
+```bash
+npm test              # Tests (Vitest)
+npm run lint          # Linting (ESLint)
+npm run format        # Formatage (Prettier)
+npm run typecheck     # Vérification des types
 ```
 
 ## Règles métier importantes
@@ -202,11 +206,18 @@ npm run format
 - Éditer un sujet: minimum 100 points requis
 - Modération: réservée aux utilisateurs de confiance
 
+### Personnalités publiques
+
+- **Critère de notoriété** : une personnalité doit avoir fait l'objet d'au moins deux publications dans des sources indépendantes et fiables (presse, institution, rapport officiel…), inspiré des [critères d'admissibilité Wikipedia](https://fr.wikipedia.org/wiki/Wikip%C3%A9dia:Notori%C3%A9t%C3%A9_des_personnes)
+- La page Wikipedia n'est pas obligatoire mais reste un enrichissement recommandé
+- Sans page Wikipedia, le contributeur doit fournir au moins 2 URLs de sources indépendantes attestant de la notoriété
+
 ### Prises de position
 
 - Une personnalité peut changer de position sur un sujet au fil du temps ; chaque prise de position est datée
 - Toute prise de position doit avoir au moins une preuve
 - Les preuves doivent être sourcées et datées
+- Une preuve (evidence) doit pointer vers une source publiquement accessible et vérifiable : source primaire (tweet officiel, communiqué, discours filmé) ou source tierce (article de presse, interview, audition parlementaire)
 
 ## Ressources
 

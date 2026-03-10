@@ -96,12 +96,14 @@ export default function GuidePage() {
         </p>
         <p>
           Il est nécessaire pour le contributeur de se demander si le contenu est suffisamment
-          important, fiable et pertinent pour être référencé ou recensé sur Débats.co. Basé sur une
-          logique collaborative, le site comporte plusieurs mécanismes d&apos;autorégulation,
-          permettant d&apos;éviter la publication de contenu considérés comme fallacieux ou
-          hors-sujet. Chaque entrée, notamment lors du référencement d&apos;une nouvelle
-          personnalité ou d&apos;un nouveau sujet, sont soumis à l&apos;approbation des utilisateurs
-          expérimentés de la plateforme.
+          important, fiable et pertinent pour être référencé ou recensé sur Débats.co. Pour les
+          personnalités, le critère de notoriété est inspiré des critères d&apos;admissibilité de
+          Wikipedia : une personnalité doit avoir fait l&apos;objet d&apos;au moins deux
+          publications dans des sources indépendantes et fiables (article de presse, page
+          institutionnelle, rapport officiel…). Avoir une page Wikipedia n&apos;est pas obligatoire,
+          mais reste un enrichissement recommandé. Ce critère permet d&apos;inclure des
+          personnalités locales ou sectorielles (dirigeant·es d&apos;institution, porte-paroles
+          d&apos;ONG, élu·es locaux…) dès lors que leur notoriété est vérifiable.
         </p>
         <p>
           <b>Neutralité et cohérence du point de vue</b>
@@ -114,11 +116,7 @@ export default function GuidePage() {
         <p>
           Afin de s&apos;en rapprocher, il est nécessaire pour chaque utilisateur de se demander
           comment exprimer de façon objective l&apos;intitulé des sujets ou les positions des
-          personnalités. Dans un premier temps, et pour simplifier cette démarche
-          &quot;objective&quot;, les sujets ainsi que les pages de personnalités peuvent être
-          référencées directement depuis la base de données de Wikipedia. Il suffira donc, après la
-          composition des premières lettres de l&apos;intitulé de la personnalité ou du sujet, de
-          sélectionner l&apos;élément correspondant.
+          personnalités.
         </p>
         <p>
           Lors de la recension d&apos;une prise d&apos;une position ensuite, il est important
