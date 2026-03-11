@@ -3,13 +3,17 @@
 import { useState, useCallback, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
+import { FieldErrors } from '../../../domain/use-cases/create-subject'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
-import styles from './SubjectForm.module.css'
+import styles from '../../ui/form-with-guide.module.css'
 
-type SubmitResult = { success: true; slug: string } | { success: false; error: string }
+type SubmitResult =
+  | { success: true; slug: string; title?: string }
+  | { success: false; error: string; fieldErrors?: undefined }
+  | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
 interface SubjectFormProps {
   onSubmit: (formData: FormData) => Promise<SubmitResult>
@@ -19,6 +23,7 @@ interface SubjectFormProps {
   initialTitle?: string
   initialPresentation?: string
   initialProblem?: string
+  onSuccess?: (result: { slug: string; title: string }) => void
 }
 
 export default function SubjectForm({
@@ -29,18 +34,21 @@ export default function SubjectForm({
   initialTitle = '',
   initialPresentation = '',
   initialProblem = '',
+  onSuccess,
 }: SubjectFormProps) {
   const router = useRouter()
   const [title, setTitle] = useState(initialTitle)
   const [presentation, setPresentation] = useState(initialPresentation)
   const [problem, setProblem] = useState(initialProblem)
   const [error, setError] = useState<string>()
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
   const [isPending, setIsPending] = useState(false)
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
       setError(undefined)
+      setFieldErrors(undefined)
       setIsPending(true)
 
       const formData = new FormData()
@@ -52,7 +60,15 @@ export default function SubjectForm({
         const result = await onSubmit(formData)
 
         if (!result.success) {
-          setError(result.error)
+          if (result.error) {
+            setError(result.error)
+          }
+          if (result.fieldErrors) {
+            setFieldErrors(result.fieldErrors)
+          }
+          setIsPending(false)
+        } else if (onSuccess) {
+          onSuccess({ slug: result.slug, title: result.title ?? title })
           setIsPending(false)
         } else {
           router.push(`/s/${result.slug}`)
@@ -63,7 +79,7 @@ export default function SubjectForm({
         setIsPending(false)
       }
     },
-    [title, presentation, problem, onSubmit, router],
+    [title, presentation, problem, onSubmit, onSuccess, router],
   )
 
   return (
@@ -79,6 +95,7 @@ export default function SubjectForm({
           placeholder="ex : L'énergie nucléaire, Le revenu universel..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          error={fieldErrors?.title}
         />
         <div className={styles.guide}>
           <p className={styles.guideTitle}>Guide de nommage</p>
@@ -106,6 +123,7 @@ export default function SubjectForm({
           rows={4}
           value={presentation}
           onChange={(e) => setPresentation(e.target.value)}
+          error={fieldErrors?.presentation}
         />
         <div className={styles.guide}>
           <p className={styles.guideTitle}>Conseils</p>
@@ -126,6 +144,7 @@ export default function SubjectForm({
           rows={4}
           value={problem}
           onChange={(e) => setProblem(e.target.value)}
+          error={fieldErrors?.problem}
         />
         <div className={styles.guide}>
           <p className={styles.guideTitle}>Conseils</p>

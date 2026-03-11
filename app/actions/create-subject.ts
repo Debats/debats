@@ -5,10 +5,13 @@ import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
-import { createSubjectUseCase } from '../../domain/use-cases/create-subject'
+import { createSubjectUseCase, FieldErrors } from '../../domain/use-cases/create-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
-export type ActionResult = { success: true; slug: string } | { success: false; error: string }
+export type ActionResult =
+  | { success: true; slug: string; title: string }
+  | { success: false; error: string; fieldErrors?: undefined }
+  | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
 export async function createSubjectAction(formData: FormData): Promise<ActionResult> {
   const supabase = await createSSRSupabaseClient()
@@ -24,8 +27,12 @@ export async function createSubjectAction(formData: FormData): Promise<ActionRes
   })
 
   if (Either.isLeft(result)) {
-    return { success: false, error: result.left }
+    const err = result.left
+    if (typeof err === 'string') {
+      return { success: false, error: err }
+    }
+    return { success: false, fieldErrors: err }
   }
 
-  return { success: true, slug: result.right.slug }
+  return { success: true, slug: result.right.slug, title: result.right.title }
 }

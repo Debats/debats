@@ -1,10 +1,12 @@
 import { Either } from 'effect'
 import * as S from 'effect/Schema'
 import { Effect } from 'effect'
+import { ArrayFormatter } from 'effect/ParseResult'
 import { createSubject, SubjectTitle, Subject } from '../entities/subject'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { ContributorIdentity, FieldErrors } from './types'
 
 const CreateSubjectInput = S.Struct({
   title: SubjectTitle,
@@ -12,10 +14,8 @@ const CreateSubjectInput = S.Struct({
   problem: S.String.pipe(S.minLength(10)),
 })
 
-type Contributor = { id: string; reputation: number }
-
 type CreateSubjectParams = {
-  contributor: Contributor | null
+  contributor: ContributorIdentity | null
   title: string
   presentation: string
   problem: string
@@ -23,9 +23,11 @@ type CreateSubjectParams = {
   reputationRepo: ReputationRepository
 }
 
+export type { FieldErrors }
+
 export async function createSubjectUseCase(
   params: CreateSubjectParams,
-): Promise<Either.Either<Subject, string>> {
+): Promise<Either.Either<Subject, string | FieldErrors>> {
   const { contributor, title, presentation, problem, subjectRepo, reputationRepo } = params
 
   if (!contributor) {
@@ -37,10 +39,26 @@ export async function createSubjectUseCase(
     return Either.left(`Vous devez être ${rank} pour créer un sujet.`)
   }
 
-  const decoded = S.decodeUnknownEither(CreateSubjectInput)({ title, presentation, problem })
+  const decoded = S.decodeUnknownEither(CreateSubjectInput, { errors: 'all' })({
+    title,
+    presentation,
+    problem,
+  })
 
   if (Either.isLeft(decoded)) {
-    return Either.left('Données invalides. Vérifiez les champs du formulaire.')
+    const issues = ArrayFormatter.formatErrorSync(decoded.left)
+    const fieldErrors: FieldErrors = {}
+    for (const issue of issues) {
+      const field = issue.path.join('.')
+      if (field === 'title') {
+        fieldErrors.title = 'Le titre doit faire entre 3 et 100 caractères.'
+      } else if (field === 'presentation') {
+        fieldErrors.presentation = 'La présentation doit faire au moins 10 caractères.'
+      } else if (field === 'problem') {
+        fieldErrors.problem = 'La problématique doit faire au moins 10 caractères.'
+      }
+    }
+    return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
   }
 
   const input = decoded.right
