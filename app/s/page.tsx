@@ -40,7 +40,7 @@ export default async function SubjectsPage() {
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>LES DERNIERS SUJETS</h1>
           {canAddSubject && (
-            <Button href="/nouvelle-prise-de-position" size="small">
+            <Button href="/s/ajouter" size="small">
               Ajouter un sujet
             </Button>
           )}

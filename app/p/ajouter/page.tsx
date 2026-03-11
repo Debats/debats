@@ -4,13 +4,12 @@ import { redirect } from 'next/navigation'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
-import NewPublicFigureWizard from '../../../components/figures/NewPublicFigureWizard'
+import NewPublicFigureForm from '../../../components/figures/NewPublicFigureForm'
 import styles from './ajouter.module.css'
 
 export const metadata: Metadata = {
   title: 'Ajouter une personnalité',
-  description:
-    'Ajouter une personnalité publique avec sa première prise de position sur Débats.co.',
+  description: 'Ajouter une personnalité publique sur Débats.co.',
 }
 
 export default async function AddPublicFigurePage() {
@@ -27,12 +26,10 @@ export default async function AddPublicFigurePage() {
           &larr; Retour aux personnalités
         </Link>
         <h1 className={styles.title}>Nouvelle personnalité</h1>
-        <p className={styles.subtitle}>
-          Ajouter une personnalité publique avec sa première prise de position
-        </p>
+        <p className={styles.subtitle}>Ajouter une personnalité publique</p>
       </header>
 
-      <NewPublicFigureWizard />
+      <NewPublicFigureForm />
     </ContentWithSidebar>
   )
 }

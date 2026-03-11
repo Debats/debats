@@ -1,9 +1,11 @@
 import { Metadata } from 'next'
+import { Effect } from 'effect'
 import { redirect } from 'next/navigation'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
-import { canPerform } from '../../domain/reputation/permissions'
+import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
-import ContributeStatementForm from '../../components/contributions/ContributeStatementForm'
+import NewStatementForm from '../../components/statements/NewStatementForm'
 import styles from './nouvelle-prise-de-position.module.css'
 
 export const metadata: Metadata = {
@@ -29,12 +31,13 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
   const subjectTitle = typeof params.subjectTitle === 'string' ? params.subjectTitle : undefined
 
   const initialFigure = figureId && figureName ? { id: figureId, name: figureName } : undefined
-  const initialSubject =
-    subjectId && subjectTitle ? { id: subjectId, title: subjectTitle } : undefined
-
-  const canAddPersonality = canPerform(contributor.reputation, 'add_personality')
-  const canAddSubject = canPerform(contributor.reputation, 'add_subject')
-  const canAddPosition = canPerform(contributor.reputation, 'add_position')
+  let initialSubject: { id: string; title: string; slug?: string } | undefined
+  if (subjectId && subjectTitle) {
+    const supabase = await createSSRSupabaseClient()
+    const subjectRepo = createSubjectRepository(supabase)
+    const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
+    initialSubject = { id: subjectId, title: subjectTitle, slug: subject?.slug }
+  }
 
   return (
     <ContentWithSidebar topMargin>
@@ -44,13 +47,7 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
           Ajoutez une prise de position sourcée d&apos;une personnalité publique sur un sujet de
           débat.
         </p>
-        <ContributeStatementForm
-          canAddPersonality={canAddPersonality}
-          canAddSubject={canAddSubject}
-          canAddPosition={canAddPosition}
-          initialFigure={initialFigure}
-          initialSubject={initialSubject}
-        />
+        <NewStatementForm initialFigure={initialFigure} initialSubject={initialSubject} />
       </div>
     </ContentWithSidebar>
   )

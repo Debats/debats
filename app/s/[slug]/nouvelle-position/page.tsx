@@ -6,7 +6,7 @@ import { createSSRSupabaseClient } from '../../../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../../../infra/database/subject-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
-import NewPositionWizard from '../../../../components/positions/NewPositionWizard'
+import NewPositionForm from '../../../../components/positions/NewPositionForm'
 import ErrorDisplay from '../../../../components/layout/ErrorDisplay'
 import styles from './nouvelle-position.module.css'
 
@@ -54,7 +54,7 @@ export default async function NewPositionPage({ params }: PageProps) {
           <p className={styles.subtitle}>Proposer une nouvelle position</p>
         </header>
 
-        <NewPositionWizard subjectId={subject.id} slug={slug} />
+        <NewPositionForm subjectId={subject.id} subjectSlug={slug} subjectTitle={subject.title} />
       </ContentWithSidebar>
     )
   } catch (error) {

@@ -26,14 +26,6 @@
   gap: 16px;
 }
 
-.hint {
-  font-family: var(--font-gotham-book);
-  font-size: 0.9em;
-  color: var(--text-light);
-  font-style: italic;
-  margin: 0;
-}
-
 .selectField {
   display: flex;
   flex-direction: column;
@@ -89,29 +81,26 @@
   border-color: var(--debats-red);
 }
 
-.fileField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.fileLabel {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.fileInput {
-  font-size: 15px;
-  font-family: inherit;
-}
-
 .fieldError {
   font-size: 13px;
   color: #d32f2f;
   margin-top: 4px;
+}
+
+.guidance {
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.guidanceLink {
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.guidanceLink:hover {
+  text-decoration: underline;
 }
 
 .actions {

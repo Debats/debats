@@ -1,55 +1,44 @@
 'use server'
 
-import { Either } from 'effect'
+import { Either, Effect } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
-import {
-  createPublicFigureWithStatementUseCase,
-  FieldErrors,
-} from '../../domain/use-cases/create-public-figure-with-statement'
-import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
+import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
-  | { success: true; slug: string }
+  | { success: true; subjectSlug: string; figureSlug: string }
   | { success: false; error: string; fieldErrors?: undefined }
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
-export async function createPublicFigureWithStatementAction(
-  formData: FormData,
-): Promise<ActionResult> {
+export async function addStatementAction(formData: FormData): Promise<ActionResult> {
   const supabase = await createSSRSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const notorietySources = formData
-    .getAll('notorietySources')
-    .map((v) => String(v))
-    .filter((v) => v.length > 0)
+  const subjectId = String(formData.get('subjectId') ?? '')
+  const publicFigureId = String(formData.get('publicFigureId') ?? '')
 
-  const result = await createPublicFigureWithStatementUseCase({
+  const publicFigureRepo = createPublicFigureRepository(supabase)
+  const subjectRepo = createSubjectRepository(supabase)
+
+  const result = await createStatementUseCase({
     contributor,
-    name: String(formData.get('name') ?? ''),
-    presentation: String(formData.get('presentation') ?? ''),
-    wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
-    websiteUrl: String(formData.get('websiteUrl') ?? ''),
-    notorietySources,
-    subjectId: String(formData.get('subjectId') ?? ''),
+    subjectId,
+    publicFigureId,
     positionId: String(formData.get('positionId') ?? ''),
     sourceName: String(formData.get('sourceName') ?? ''),
     sourceUrl: String(formData.get('sourceUrl') ?? ''),
     quote: String(formData.get('quote') ?? ''),
     factDate: String(formData.get('factDate') ?? ''),
-    positionRepo: createPositionRepository(supabase),
     statementRepo: createStatementRepository(supabase),
-    subjectRepo: createSubjectRepository(supabase),
-    publicFigureRepo: createPublicFigureRepository(supabase),
+    positionRepo: createPositionRepository(supabase),
+    publicFigureRepo,
     reputationRepo: createReputationRepository(createAdminSupabaseClient()),
-    wikipediaValidator: createWikipediaValidator(),
   })
 
   if (Either.isLeft(result)) {
@@ -60,5 +49,12 @@ export async function createPublicFigureWithStatementAction(
     return { success: false, fieldErrors: err }
   }
 
-  return { success: true, slug: result.right.slug }
+  const figure = await Effect.runPromise(publicFigureRepo.findById(publicFigureId))
+  const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
+
+  return {
+    success: true,
+    subjectSlug: subject?.slug ?? '',
+    figureSlug: figure?.slug ?? '',
+  }
 }

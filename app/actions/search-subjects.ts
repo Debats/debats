@@ -7,6 +7,7 @@ import { createSubjectRepository } from '../../infra/database/subject-repository
 export interface SubjectSearchResult {
   id: string
   title: string
+  slug: string
 }
 
 export async function searchSubjects(query: string): Promise<SubjectSearchResult[]> {
@@ -20,5 +21,5 @@ export async function searchSubjects(query: string): Promise<SubjectSearchResult
   return subjects
     .filter((s) => s.title.toLowerCase().includes(query.toLowerCase()))
     .slice(0, 10)
-    .map((s) => ({ id: s.id, title: s.title }))
+    .map((s) => ({ id: s.id, title: s.title, slug: s.slug }))
 }

@@ -89,6 +89,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
     const uniqueFigures = new Set(statements.map((s) => s.publicFigure.id))
 
+    const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
     const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_subject')
     const major = isMajorSubject(subject, stats.statementsCount)
     const canDelete =
@@ -108,6 +109,11 @@ export default async function SubjectDetailPage({ params }: PageProps) {
               >
                 Ajouter une prise de position
               </Button>
+              {canAddPosition && (
+                <Button href={`/s/${slug}/nouvelle-position`} variant="secondary">
+                  Ajouter une position
+                </Button>
+              )}
               <SubjectActions
                 subjectId={subject.id}
                 subjectSlug={subject.slug}

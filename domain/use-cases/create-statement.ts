@@ -8,6 +8,7 @@ import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { ContributorIdentity, FieldErrors } from './types'
 
 const CreateStatementInput = S.Struct({
   sourceName: S.String.pipe(S.minLength(1)),
@@ -16,10 +17,8 @@ const CreateStatementInput = S.Struct({
   factDate: S.String.pipe(S.pattern(/^\d{4}-\d{2}-\d{2}$/)),
 })
 
-type Contributor = { id: string; reputation: number }
-
 type CreateStatementParams = {
-  contributor: Contributor | null
+  contributor: ContributorIdentity | null
   subjectId: string
   publicFigureId: string
   positionId: string
@@ -33,7 +32,7 @@ type CreateStatementParams = {
   reputationRepo: ReputationRepository
 }
 
-export type FieldErrors = Record<string, string>
+export type { FieldErrors }
 
 export async function createStatementUseCase(
   params: CreateStatementParams,

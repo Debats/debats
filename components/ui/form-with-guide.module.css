@@ -50,6 +50,12 @@
   text-decoration: line-through;
 }
 
+.fieldError {
+  font-size: 13px;
+  color: #d32f2f;
+  margin-top: 4px;
+}
+
 .actions {
   display: flex;
   gap: 15px;

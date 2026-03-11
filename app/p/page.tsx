@@ -86,7 +86,7 @@ export default async function PersonalitiesPage({ searchParams }: PageProps) {
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
           {canAddPersonality && (
-            <Button href="/nouvelle-prise-de-position" size="small">
+            <Button href="/p/ajouter" size="small">
               Ajouter une personnalité
             </Button>
           )}
