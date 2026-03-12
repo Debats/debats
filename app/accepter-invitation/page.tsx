@@ -8,9 +8,9 @@ export const metadata = {
 export default async function AcceptInvitationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token_hash?: string; type?: string }>
+  searchParams: Promise<{ token_hash?: string; type?: string; email?: string }>
 }) {
-  const { token_hash, type } = await searchParams
+  const { token_hash, type, email } = await searchParams
 
   if (!token_hash || type !== 'invite') {
     return (
@@ -21,5 +21,5 @@ export default async function AcceptInvitationPage({
     )
   }
 
-  return <AcceptInvitationForm tokenHash={token_hash} />
+  return <AcceptInvitationForm tokenHash={token_hash} email={email} />
 }

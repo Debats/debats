@@ -1,15 +1,18 @@
 'use server'
 
 import * as Sentry from '@sentry/nextjs'
-import { Either } from 'effect'
+import { Effect, Either } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createInvitationRepository } from '../../infra/database/invitation-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createContributorRepository } from '../../infra/database/contributor-repository-supabase'
 import { acceptInvitationUseCase } from '../../domain/use-cases/accept-invitation'
+import { validateResendInvitation } from '../../domain/use-cases/resend-invitation'
 
-type AcceptInvitationResult = { success: true } | { success: false; error: string }
+type AcceptInvitationResult =
+  | { success: true }
+  | { success: false; error: string; tokenExpired?: boolean }
 
 export async function acceptInvitation(
   tokenHash: string,
@@ -38,6 +41,7 @@ export async function acceptInvitation(
       success: false,
       error:
         'Le lien d\u2019invitation a expiré ou est invalide. Demandez une nouvelle invitation.',
+      tokenExpired: true,
     }
   }
 
@@ -87,4 +91,29 @@ export async function acceptInvitation(
   }
 
   return { success: true }
+}
+
+type ResendResult = { success: true } | { success: false; error: string }
+
+export async function resendInvitationLink(email: string): Promise<ResendResult> {
+  const admin = createAdminSupabaseClient()
+  const invitationRepo = createInvitationRepository(admin)
+
+  const result = await Effect.runPromise(
+    validateResendInvitation({ email, invitationRepo }).pipe(
+      Effect.flatMap((invitation) =>
+        Effect.promise(() =>
+          admin.auth.admin.inviteUserByEmail(email, { data: { name: invitation.inviteeName } }),
+        ),
+      ),
+      Effect.flatMap(({ error }) =>
+        error
+          ? Effect.fail(`Erreur lors du renvoi de l'invitation : ${error.message}`)
+          : Effect.void,
+      ),
+      Effect.either,
+    ),
+  )
+
+  return Either.isLeft(result) ? { success: false, error: result.left } : { success: true }
 }
