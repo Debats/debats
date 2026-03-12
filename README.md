@@ -163,6 +163,17 @@ npm run typecheck     # Vérification des types
 npm run check         # Lint + format + typecheck + build (à lancer avant chaque commit)
 ```
 
+### Configuration de production
+
+La configuration auth de production (URLs, templates email, rate limits…) est gérée par un script dédié, **pas** par `supabase config push` (qui écraserait la prod avec les valeurs locales).
+
+```bash
+npm run supabase:config:push            # Affiche le diff et demande confirmation
+npm run supabase:config:push -- --yes   # Push sans confirmation
+```
+
+Le script lit les credentials depuis `.env.production` et les templates email depuis `supabase/templates/`. La config est déclarée en dur dans `scripts/push-prod-auth-config.ts` pour être auditable dans le diff git.
+
 ### Supabase local
 
 ```bash

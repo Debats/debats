@@ -88,6 +88,9 @@ file_size_limit = "5MiB"
 allowed_mime_types = ["image/png", "image/jpeg"]
 objects_path = "./seed-data/avatars"
 
+# ⚠️  Ce fichier configure le Supabase LOCAL uniquement.
+# La config auth de production est gérée par scripts/push-prod-auth-config.ts
+# Ne JAMAIS utiliser `supabase config push` — ça écraserait la prod avec ces valeurs locales.
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used

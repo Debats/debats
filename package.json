@@ -16,7 +16,8 @@
     "test:ui": "vitest --ui",
     "migrate": "supabase link --project-ref $SUPABASE_PROJECT_ID && supabase db push",
     "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts",
-    "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts"
+    "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts",
+    "supabase:config:push": "node --env-file=.env.production --import tsx scripts/push-prod-auth-config.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.39.0",

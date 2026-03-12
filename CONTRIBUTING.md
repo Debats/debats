@@ -115,6 +115,29 @@ supabase db push --include-seed
 supabase db pull
 ```
 
+#### Configuration auth de production
+
+> **Ne jamais utiliser `supabase config push`** — cela écraserait la production avec les valeurs locales (localhost, pas de confirmation email, rate limit 1s…).
+
+La config auth de production est gérée par `scripts/push-prod-auth-config.ts`, qui pousse des valeurs explicites via l'API Management Supabase :
+
+```bash
+# Affiche le diff remote vs local et demande confirmation
+npm run supabase:config:push
+
+# Push sans confirmation (CI/CD)
+npm run supabase:config:push -- --yes
+```
+
+Le script :
+
+1. Lit `SUPABASE_ACCESS_TOKEN` et `SUPABASE_PROJECT_ID` depuis `.env.production`
+2. Lit les templates email depuis `supabase/templates/*.html`
+3. Compare la config remote avec la config attendue (diff)
+4. Pousse les changements et vérifie le résultat
+
+Pour modifier la config de production, éditer les valeurs dans `scripts/push-prod-auth-config.ts` et relancer le script.
+
 ## Configuration des clés API Supabase
 
 ### Types de clés
