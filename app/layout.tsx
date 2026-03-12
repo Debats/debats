@@ -7,10 +7,17 @@ import Header from '../components/layout/header'
 import Footer from '../components/layout/footer'
 import NoticeBanner from '../components/layout/NoticeBanner'
 
-import { Metadata } from 'next'
+import { Metadata, Viewport } from 'next'
 
 const siteDescription =
   'Une synthèse ouverte, impartiale et vérifiable des sujets clivants de notre société.'
+
+// Source de vérité CSS : --debats-red dans styles/debats-colors.css
+const DEBATS_RED = '#f21e40'
+
+export const viewport: Viewport = {
+  themeColor: DEBATS_RED,
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://debats.co'),
@@ -19,6 +26,12 @@ export const metadata: Metadata = {
     template: '%s - Débats.co',
   },
   description: siteDescription,
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Débats',
+  },
   openGraph: {
     siteName: 'Débats.co',
     locale: 'fr_FR',
@@ -28,6 +41,13 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary',
     images: ['/images/logo.png'],
+  },
+  icons: {
+    icon: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/icons/apple-touch-icon.png',
   },
   other: {
     'tdm:reservation': '1',
