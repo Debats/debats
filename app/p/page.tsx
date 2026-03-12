@@ -131,6 +131,7 @@ export default async function PersonalitiesPage({ searchParams }: PageProps) {
               <Link
                 key={l}
                 href={`/p?lettre=${l}`}
+                scroll={false}
                 className={`${styles.letterLink} ${lettre === l ? styles.letterActive : ''}`}
               >
                 {l}
