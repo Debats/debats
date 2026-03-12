@@ -7,6 +7,47 @@ export const metadata: Metadata = {
   description: 'Les personnes et technologies derrière Débats.co.',
 }
 
+const contributors = [
+  { name: 'Marwann Al Saadi', url: 'https://marwann.com/', role: 'Développement, contenu' },
+  {
+    name: 'Jalil Arfaoui',
+    url: 'https://jalil.arfaoui.net/',
+    role: 'Conception, développement, architecture',
+  },
+  { name: 'Mehdi Arfaoui', url: 'https://mehdi.arfaoui.net/', role: 'Développement, design' },
+  {
+    name: 'Benjamin Filliol',
+    url: 'https://www.linkedin.com/in/benjamin-filliol/',
+    role: 'Développement, contenu',
+  },
+  {
+    name: 'Quentin Lafay',
+    url: 'https://fr.wikipedia.org/wiki/Quentin_Lafay',
+    role: 'Conception, stratégie, contenu',
+  },
+  {
+    name: 'Hugo Vergès',
+    url: 'mailto:hugo.verges@gmail.com',
+    role: 'Conception, stratégie, contenu',
+  },
+]
+
+function Contributor({ name, url, role }: { name: string; url: string; role: string }) {
+  const isExternal = !url.startsWith('mailto:')
+  return (
+    <li className={styles.contributor}>
+      <a
+        href={url}
+        className={styles.contributorName}
+        {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      >
+        {name}
+      </a>
+      <span className={styles.contributorRole}>{role}</span>
+    </li>
+  )
+}
+
 export default function CreditsPage() {
   return (
     <div className={styles.container}>
@@ -15,61 +56,9 @@ export default function CreditsPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Contributeurs</h2>
         <ul className={styles.contributors}>
-          <li className={styles.contributor}>
-            <a
-              href="https://marwann.com/"
-              className={styles.contributorName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Marwann Al Saadi
-            </a>
-            <span className={styles.contributorRole}>Développement, contenu</span>
-          </li>
-          <li className={styles.contributor}>
-            <a
-              href="https://jalil.arfaoui.net/"
-              className={styles.contributorName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Jalil Arfaoui
-            </a>
-            <span className={styles.contributorRole}>Conception, développement, architecture</span>
-          </li>
-          <li className={styles.contributor}>
-            <a
-              href="https://mehdi.arfaoui.net/"
-              className={styles.contributorName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Mehdi Arfaoui
-            </a>
-            <span className={styles.contributorRole}>Développement, design</span>
-          </li>
-          <li className={styles.contributor}>
-            <a
-              href="https://www.linkedin.com/in/benjamin-filliol/"
-              className={styles.contributorName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Benjamin Filliol
-            </a>
-            <span className={styles.contributorRole}>Développement, contenu</span>
-          </li>
-          <li className={styles.contributor}>
-            <a
-              href="https://fr.wikipedia.org/wiki/Quentin_Lafay"
-              className={styles.contributorName}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Quentin Lafay
-            </a>
-            <span className={styles.contributorRole}>Conception, stratégie, contenu</span>
-          </li>
+          {contributors.map((c) => (
+            <Contributor key={c.name} {...c} />
+          ))}
         </ul>
       </section>
 
