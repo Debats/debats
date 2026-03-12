@@ -173,6 +173,11 @@
 /* Responsive */
 
 @media (max-width: 768px) {
+  .pageHeader {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
   .pageTitle {
     font-size: 1.5em;
   }
@@ -180,6 +185,14 @@
   .figureGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+  }
+
+  .figureCard {
+    min-width: 0;
+  }
+
+  .figureName {
+    word-break: break-word;
   }
 
   .letterLink {
