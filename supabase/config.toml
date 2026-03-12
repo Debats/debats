@@ -121,6 +121,9 @@ enable_confirmations = false
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1s"
+# Durée de validité des liens email (invitation, confirmation, reset…) en secondes.
+# Défaut Supabase : 3600 (1h). Max autorisé : 86400 (24h).
+otp_expiry = 86400
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
