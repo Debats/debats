@@ -48,6 +48,9 @@ export async function inviteUserAction(formData: FormData): Promise<InviteAction
   })
 
   if (inviteError) {
+    Sentry.captureException(inviteError, {
+      extra: { email, invitationId: invitation.id, errorStatus: inviteError.status },
+    })
     await Effect.runPromise(invitationRepo.deleteById(invitation.id)).catch((deleteError) =>
       Sentry.captureException(deleteError, {
         extra: { invitationId: invitation.id, originalError: inviteError.message },
@@ -55,7 +58,9 @@ export async function inviteUserAction(formData: FormData): Promise<InviteAction
     )
     return {
       success: false,
-      error: `Erreur lors de l'envoi de l'invitation : ${inviteError.message}`,
+      error: inviteError.message
+        ? `Erreur lors de l'envoi de l'invitation : ${inviteError.message}`
+        : "Erreur lors de l'envoi de l'invitation. Veuillez réessayer.",
     }
   }
 
