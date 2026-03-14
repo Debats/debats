@@ -6,6 +6,8 @@
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .modal {
@@ -13,8 +15,15 @@
   border-radius: 8px;
   padding: 40px;
   max-width: 440px;
-  width: 90%;
+  width: 100%;
   position: relative;
+  margin: auto;
+}
+
+@media (max-width: 600px) {
+  .modal {
+    padding: 24px 20px 32px;
+  }
 }
 
 .closeButton {

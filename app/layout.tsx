@@ -6,6 +6,7 @@ import PlausibleProvider from 'next-plausible'
 import Header from '../components/layout/header'
 import Footer from '../components/layout/footer'
 import NoticeBanner from '../components/layout/NoticeBanner'
+import FeedbackWidget from '../components/feedback/FeedbackWidget'
 
 import { Metadata, Viewport } from 'next'
 
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="page-content">{children}</div>
             </main>
             <Footer />
+            <FeedbackWidget />
           </div>
         </PlausibleProvider>
       </body>

@@ -6,11 +6,13 @@
   composes: label from '../form-field.module.css';
 }
 
-.input {
+.select {
   composes: control from '../form-field.module.css';
+  background-color: white;
+  cursor: pointer;
 }
 
-.inputError {
+.selectError {
   composes: controlError from '../form-field.module.css';
 }
 

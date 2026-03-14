@@ -1,0 +1,35 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control {
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.control:focus {
+  outline: none;
+  border-color: var(--debats-red);
+}
+
+.controlError {
+  border-color: #d32f2f;
+}
+
+.error {
+  font-size: 13px;
+  color: #d32f2f;
+}
