@@ -1,0 +1,177 @@
+.breadcrumb {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 25px;
+}
+
+.breadcrumbLink {
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.breadcrumbLink:hover {
+  color: var(--debats-red);
+}
+
+.breadcrumbSeparator {
+  margin: 0 8px;
+}
+
+.header {
+  display: flex;
+  gap: 25px;
+  margin-bottom: 40px;
+  align-items: center;
+}
+
+.figureName {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.6em;
+  color: var(--debats-red);
+  text-transform: uppercase;
+  text-decoration: none;
+  display: block;
+  margin: 0;
+}
+
+.figureName:hover {
+  text-decoration: underline;
+}
+
+.subjectTitle {
+  font-family: var(--font-gotham-book);
+  font-size: 1.3em;
+  color: var(--text-dark);
+  margin: 6px 0 0 0;
+}
+
+.subjectLink {
+  color: var(--text-dark);
+  text-decoration: none;
+  font-family: var(--font-gotham-bold);
+  font-size: 1.05em;
+}
+
+.subjectLink:hover {
+  color: var(--debats-red);
+  text-decoration: underline;
+}
+
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 0 0 25px 0;
+}
+
+.count {
+  color: var(--debats-red);
+}
+
+.emptyMessage {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  color: var(--text-light);
+}
+
+.positionCard {
+  margin-bottom: 35px;
+  padding: 25px;
+  background: #fafafa;
+  border-left: 4px solid var(--debats-red);
+  border-radius: 0 4px 4px 0;
+}
+
+.positionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.05em;
+  color: var(--text-dark);
+  margin: 0 0 5px 0;
+}
+
+.positionLabel {
+  font-family: var(--font-gotham-book);
+  font-weight: normal;
+  color: var(--text-light);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.evidenceItem {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.evidenceItem:first-child {
+  margin-top: 15px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.quote {
+  font-family: var(--font-gotham-book);
+  font-size: 0.95em;
+  line-height: 1.7em;
+  font-style: italic;
+  color: var(--text-dark);
+  margin: 0 0 10px 0;
+  padding: 0;
+  border: none;
+}
+
+.quote::before {
+  content: '\AB\A0';
+  color: var(--debats-red);
+  font-style: normal;
+}
+
+.quote::after {
+  content: '\A0\BB';
+  color: var(--debats-red);
+  font-style: normal;
+}
+
+.evidenceMeta {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--text-light);
+}
+
+.sourceLink {
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+a.sourceLink:hover {
+  color: var(--debats-red);
+  text-decoration: underline;
+}
+
+.metaSeparator {
+  margin: 0 8px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .breadcrumb {
+    text-align: center;
+  }
+
+  .positionCard {
+    padding: 20px 15px;
+  }
+}

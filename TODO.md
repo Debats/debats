@@ -5,8 +5,7 @@
 - [ ] **Pérenniser le mécanisme d’ajout de contenu depuis Claude** — le script `import:content` atteint ses limites. Réfléchir au meilleur moyen d’alimenter le site efficacement sans tout renvoyer à chaque fois. Un skill qui utilise l’API de production ?
 
 ## Prochaines priorités
-- [ ] **Regarder les issues Sentry** — analyser les erreurs remontées et corriger les plus critiques
-- [ ] **Pas de détail d’une prise de position** - U
+- [ ] **Page détail prises de position** — route `/p/[slug]/s/[subjectSlug]` pour afficher les prises de position d’une personnalité sur un sujet
 - [ ] **Page d’accueil : Limiter le nombre de personnalités actives (thumbnails) sous chaque sujet**
 - [ ] **Ajouter un évènement Plausible qu’on on utilise la recherche de personnalité**
 - [ ] **Édition du profil utilisateur** — permettre de modifier nom, email, mot de passe depuis `/me` (le dashboard existe déjà)
@@ -59,6 +58,8 @@
 
 ## Fait
 
+- [x] Issues Sentry — 2 issues analysées (bug Node.js streams + erreur réseau isolée), ignorées car non applicatives
+- [x] Bug recherche sujet en prod — downshift remplace les types string par des nombres en production
 - [x] Bug scroll index `/p` — scroll remontait en haut avec l'index alphabétique
 - [x] PWA — application installable sur smartphone (manifest, icônes, meta tags)
 - [x] Refonte page personnalités `/p` avec compteurs, recherche, index A-Z

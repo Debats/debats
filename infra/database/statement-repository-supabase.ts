@@ -30,6 +30,106 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
+type StatementRow = Database['public']['Tables']['statements']['Row']
+type PositionRow = Database['public']['Tables']['positions']['Row']
+type SubjectRow = Database['public']['Tables']['subjects']['Row']
+type EvidenceRow = Database['public']['Tables']['evidences']['Row']
+type PublicFigureRow = Database['public']['Tables']['public_figures']['Row']
+
+function mapStatementRow(row: StatementRow): Statement {
+  return Statement.make({
+    id: StatementId.make(row.id),
+    publicFigureId: row.public_figure_id,
+    positionId: row.position_id,
+    takenAt: row.taken_at ? new Date(row.taken_at) : undefined,
+    createdBy: row.created_by ?? undefined,
+    createdAt: new Date(row.created_at!),
+    updatedAt: new Date(row.updated_at!),
+  })
+}
+
+function mapPositionRow(row: PositionRow): Position {
+  return Position.make({
+    id: PositionId.make(row.id),
+    title: PositionTitle.make(row.title),
+    description: row.description,
+    subjectId: row.subject_id,
+    createdBy: row.created_by ?? undefined,
+    createdAt: new Date(row.created_at!),
+    updatedAt: new Date(row.updated_at!),
+  })
+}
+
+function mapSubjectRow(row: SubjectRow): Subject {
+  return Subject.make({
+    id: SubjectId.make(row.id),
+    title: SubjectTitle.make(row.title),
+    slug: SubjectSlug.make(row.slug),
+    presentation: row.presentation,
+    problem: row.problem,
+    pictureUrl: row.picture_url ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    createdAt: new Date(row.created_at!),
+    updatedAt: new Date(row.updated_at!),
+  })
+}
+
+function mapEvidenceRow(row: EvidenceRow): Evidence {
+  return Evidence.make({
+    id: EvidenceId.make(row.id),
+    statementId: row.statement_id,
+    sourceName: row.source_name,
+    sourceUrl: row.source_url ?? undefined,
+    quote: row.quote,
+    factDate: new Date(row.fact_date),
+    createdBy: row.created_by ?? undefined,
+    createdAt: new Date(row.created_at!),
+    updatedAt: new Date(row.updated_at!),
+  })
+}
+
+function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
+  return PublicFigure.make({
+    id: PublicFigureId.make(row.id),
+    name: PublicFigureName.make(row.name),
+    slug: PublicFigureSlug.make(row.slug),
+    presentation: row.presentation,
+    wikipediaUrl: Option.fromNullable(row.wikipedia_url),
+    notorietySources: row.notoriety_sources ?? [],
+    websiteUrl: Option.fromNullable(row.website_url),
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at!),
+    updatedAt: new Date(row.updated_at!),
+  })
+}
+
+const STATEMENT_WITH_DETAILS_QUERY = `
+  id, public_figure_id, position_id, taken_at, created_by, created_at, updated_at,
+  positions!inner (
+    id, title, description, subject_id, created_by, created_at, updated_at,
+    subjects!inner (
+      id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at
+    )
+  ),
+  evidences (
+    id, statement_id, source_name, source_url, quote, fact_date, created_by, created_at, updated_at
+  )
+`
+
+interface StatementWithDetailsRow extends StatementRow {
+  positions: PositionRow & { subjects: SubjectRow }
+  evidences: EvidenceRow[] | null
+}
+
+function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWithDetails {
+  return {
+    statement: mapStatementRow(row),
+    position: mapPositionRow(row.positions),
+    subject: mapSubjectRow(row.positions.subjects),
+    evidences: (row.evidences ?? []).map(mapEvidenceRow),
+  }
+}
+
 export function createStatementRepository(supabase: SupabaseClient<Database>): StatementRepository {
   return {
     findById: (id: string) =>
@@ -46,15 +146,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             throw error
           }
 
-          return Statement.make({
-            id: StatementId.make(data.id),
-            publicFigureId: data.public_figure_id,
-            positionId: data.position_id,
-            takenAt: data.taken_at ? new Date(data.taken_at) : undefined,
-            createdBy: data.created_by ?? undefined,
-            createdAt: new Date(data.created_at!),
-            updatedAt: new Date(data.updated_at!),
-          })
+          return mapStatementRow(data)
         },
         catch: (error) => dbError('Failed to fetch statement', error),
       }),
@@ -68,18 +160,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .eq('public_figure_id', publicFigureId)
 
           if (error) throw error
-
-          return data.map((row) =>
-            Statement.make({
-              id: StatementId.make(row.id),
-              publicFigureId: row.public_figure_id,
-              positionId: row.position_id,
-              takenAt: row.taken_at ? new Date(row.taken_at) : undefined,
-              createdBy: row.created_by ?? undefined,
-              createdAt: new Date(row.created_at!),
-              updatedAt: new Date(row.updated_at!),
-            }),
-          )
+          return data.map(mapStatementRow)
         },
         catch: (error) => dbError('Failed to fetch statements', error),
       }),
@@ -93,18 +174,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .eq('position_id', positionId)
 
           if (error) throw error
-
-          return data.map((row) =>
-            Statement.make({
-              id: StatementId.make(row.id),
-              publicFigureId: row.public_figure_id,
-              positionId: row.position_id,
-              takenAt: row.taken_at ? new Date(row.taken_at) : undefined,
-              createdBy: row.created_by ?? undefined,
-              createdAt: new Date(row.created_at!),
-              updatedAt: new Date(row.updated_at!),
-            }),
-          )
+          return data.map(mapStatementRow)
         },
         catch: (error) => dbError('Failed to fetch statements', error),
       }),
@@ -114,98 +184,28 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select(
-              `
-            id,
-            public_figure_id,
-            position_id,
-            taken_at,
-            created_by,
-            created_at,
-            updated_at,
-            positions!inner (
-              id,
-              title,
-              description,
-              subject_id,
-              created_by,
-              created_at,
-              updated_at,
-              subjects!inner (
-                id,
-                title,
-                slug,
-                presentation,
-                problem,
-                picture_url,
-                created_by,
-                created_at,
-                updated_at
-              )
-            ),
-            evidences (
-              id,
-              statement_id,
-              source_name,
-              source_url,
-              quote,
-              fact_date,
-              created_by,
-              created_at,
-              updated_at
-            )
-          `,
-            )
+            .select(STATEMENT_WITH_DETAILS_QUERY)
             .eq('public_figure_id', publicFigureId)
 
           if (error) throw error
-
-          return data.map((row) => ({
-            statement: Statement.make({
-              id: StatementId.make(row.id),
-              publicFigureId: row.public_figure_id,
-              positionId: row.position_id,
-              takenAt: row.taken_at ? new Date(row.taken_at) : undefined,
-              createdBy: row.created_by ?? undefined,
-              createdAt: new Date(row.created_at!),
-              updatedAt: new Date(row.updated_at!),
-            }),
-            position: Position.make({
-              id: PositionId.make(row.positions.id),
-              title: PositionTitle.make(row.positions.title),
-              description: row.positions.description,
-              subjectId: row.positions.subject_id,
-              createdBy: row.positions.created_by ?? undefined,
-              createdAt: new Date(row.positions.created_at!),
-              updatedAt: new Date(row.positions.updated_at!),
-            }),
-            subject: Subject.make({
-              id: SubjectId.make(row.positions.subjects.id),
-              title: SubjectTitle.make(row.positions.subjects.title),
-              slug: SubjectSlug.make(row.positions.subjects.slug),
-              presentation: row.positions.subjects.presentation,
-              problem: row.positions.subjects.problem,
-              pictureUrl: row.positions.subjects.picture_url ?? undefined,
-              createdBy: row.positions.subjects.created_by ?? undefined,
-              createdAt: new Date(row.positions.subjects.created_at!),
-              updatedAt: new Date(row.positions.subjects.updated_at!),
-            }),
-            evidences: (row.evidences ?? []).map((ev) =>
-              Evidence.make({
-                id: EvidenceId.make(ev.id),
-                statementId: ev.statement_id,
-                sourceName: ev.source_name,
-                sourceUrl: ev.source_url ?? undefined,
-                quote: ev.quote,
-                factDate: new Date(ev.fact_date),
-                createdBy: ev.created_by ?? undefined,
-                createdAt: new Date(ev.created_at!),
-                updatedAt: new Date(ev.updated_at!),
-              }),
-            ),
-          }))
+          return data.map(mapStatementWithDetailsRow)
         },
         catch: (error) => dbError('Failed to fetch statements with details', error),
+      }),
+
+    findByPublicFigureAndSubject: (publicFigureId: string, subjectId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select(STATEMENT_WITH_DETAILS_QUERY)
+            .eq('public_figure_id', publicFigureId)
+            .eq('positions.subject_id', subjectId)
+
+          if (error) throw error
+          return data.map(mapStatementWithDetailsRow)
+        },
+        catch: (error) => dbError('Failed to fetch statements for figure and subject', error),
       }),
 
     findBySubjectWithFigures: (subjectId: string) =>
@@ -215,33 +215,13 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(
               `
-            id,
-            public_figure_id,
-            position_id,
-            taken_at,
-            created_by,
-            created_at,
-            updated_at,
+            id, public_figure_id, position_id, taken_at, created_by, created_at, updated_at,
             positions!inner (
-              id,
-              title,
-              description,
-              subject_id,
-              created_by,
-              created_at,
-              updated_at
+              id, title, description, subject_id, created_by, created_at, updated_at
             ),
             public_figures!inner (
-              id,
-              name,
-              slug,
-              presentation,
-              wikipedia_url,
-              notoriety_sources,
-              website_url,
-              created_by,
-              created_at,
-              updated_at
+              id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
+              created_by, created_at, updated_at
             )
           `,
             )
@@ -250,36 +230,9 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           if (error) throw error
 
           return data.map((row) => ({
-            statement: Statement.make({
-              id: StatementId.make(row.id),
-              publicFigureId: row.public_figure_id,
-              positionId: row.position_id,
-              takenAt: row.taken_at ? new Date(row.taken_at) : undefined,
-              createdBy: row.created_by ?? undefined,
-              createdAt: new Date(row.created_at!),
-              updatedAt: new Date(row.updated_at!),
-            }),
-            position: Position.make({
-              id: PositionId.make(row.positions.id),
-              title: PositionTitle.make(row.positions.title),
-              description: row.positions.description,
-              subjectId: row.positions.subject_id,
-              createdBy: row.positions.created_by ?? undefined,
-              createdAt: new Date(row.positions.created_at!),
-              updatedAt: new Date(row.positions.updated_at!),
-            }),
-            publicFigure: PublicFigure.make({
-              id: PublicFigureId.make(row.public_figures.id),
-              name: PublicFigureName.make(row.public_figures.name),
-              slug: PublicFigureSlug.make(row.public_figures.slug),
-              presentation: row.public_figures.presentation,
-              wikipediaUrl: Option.fromNullable(row.public_figures.wikipedia_url),
-              notorietySources: row.public_figures.notoriety_sources ?? [],
-              websiteUrl: Option.fromNullable(row.public_figures.website_url),
-              createdBy: row.public_figures.created_by,
-              createdAt: new Date(row.public_figures.created_at!),
-              updatedAt: new Date(row.public_figures.updated_at!),
-            }),
+            statement: mapStatementRow(row),
+            position: mapPositionRow(row.positions),
+            publicFigure: mapPublicFigureRow(row.public_figures),
           }))
         },
         catch: (error) => dbError('Failed to fetch statements with figures', error),
@@ -380,16 +333,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .single()
 
           if (error) throw error
-
-          return Statement.make({
-            id: StatementId.make(data.id),
-            publicFigureId: data.public_figure_id,
-            positionId: data.position_id,
-            takenAt: data.taken_at ? new Date(data.taken_at) : undefined,
-            createdBy: data.created_by ?? undefined,
-            createdAt: new Date(data.created_at!),
-            updatedAt: new Date(data.updated_at!),
-          })
+          return mapStatementRow(data)
         },
         catch: (error) => dbError('Failed to create statement', error),
       }),
@@ -412,18 +356,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .single()
 
           if (error) throw error
-
-          return Evidence.make({
-            id: EvidenceId.make(data.id),
-            statementId: data.statement_id,
-            sourceName: data.source_name,
-            sourceUrl: data.source_url ?? undefined,
-            quote: data.quote,
-            factDate: new Date(data.fact_date),
-            createdBy: data.created_by ?? undefined,
-            createdAt: new Date(data.created_at!),
-            updatedAt: new Date(data.updated_at!),
-          })
+          return mapEvidenceRow(data)
         },
         catch: (error) => dbError('Failed to create evidence', error),
       }),
@@ -447,20 +380,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .eq('statement_id', statementId)
 
           if (error) throw error
-
-          return data.map((row) =>
-            Evidence.make({
-              id: EvidenceId.make(row.id),
-              statementId: row.statement_id,
-              sourceName: row.source_name,
-              sourceUrl: row.source_url ?? undefined,
-              quote: row.quote,
-              factDate: new Date(row.fact_date),
-              createdBy: row.created_by ?? undefined,
-              createdAt: new Date(row.created_at!),
-              updatedAt: new Date(row.updated_at!),
-            }),
-          )
+          return data.map(mapEvidenceRow)
         },
         catch: (error) => dbError('Failed to fetch evidences', error),
       }),

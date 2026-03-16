@@ -42,6 +42,14 @@ export interface StatementRepository {
   ): Effect.Effect<StatementWithDetails[], DatabaseError>
 
   /**
+   * Get all statements for a public figure on a specific subject
+   */
+  findByPublicFigureAndSubject(
+    publicFigureId: string,
+    subjectId: string,
+  ): Effect.Effect<StatementWithDetails[], DatabaseError>
+
+  /**
    * Get all statements for a subject with position and public figure details
    */
   findBySubjectWithFigures(subjectId: string): Effect.Effect<StatementWithFigure[], DatabaseError>

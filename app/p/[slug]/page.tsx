@@ -137,7 +137,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
             <div className={styles.subjectsList}>
               {subjects.map(({ subject, positions }) => (
                 <div key={subject.id} className={styles.subjectItem}>
-                  <Link href={`/s/${subject.slug}`} className={styles.subjectContext}>
+                  <Link href={`/p/${slug}/s/${subject.slug}`} className={styles.subjectContext}>
                     {subject.title}
                   </Link>
                   {positions.map(({ statement, position, evidences }) => (
