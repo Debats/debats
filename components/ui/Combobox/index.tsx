@@ -96,7 +96,7 @@ export default function Combobox({
     initialSelectedItem: initialItem ?? null,
     itemToString: (item) => (item ? item.label : ''),
     onInputValueChange: ({ inputValue, type }) => {
-      if (type === '__input_change__') {
+      if (type === useCombobox.stateChangeTypes.InputChange) {
         handleInputChange(inputValue ?? '')
       }
     },

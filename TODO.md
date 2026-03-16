@@ -2,10 +2,10 @@
 
 ## En cours
 
-- [ ] **Bug scroll index `/p`** — quand on utilise l’index alphabétique, le scroll remonte en haut de la page
+- [ ] **Pérenniser le mécanisme d’ajout de contenu depuis Claude** — le script `import:content` atteint ses limites. Réfléchir au meilleur moyen d’alimenter le site efficacement sans tout renvoyer à chaque fois. Un skill qui utilise l’API de production ?
 
 ## Prochaines priorités
-- [ ] **Péréniser le mécanisme d’ajout de contenu depuis claude** Le script `import:content` atteint ses limites. Il faut réfléchir au meilleur moyen de continuer à alimenter le site efficacement sans tout renvoyer à chaque fois. Un skill qui utilise l’API de production ?
+- [ ] **Regarder les issues Sentry** — analyser les erreurs remontées et corriger les plus critiques
 - [ ] **Pas de détail d’une prise de position** - U
 - [ ] **Page d’accueil : Limiter le nombre de personnalités actives (thumbnails) sous chaque sujet**
 - [ ] **Ajouter un évènement Plausible qu’on on utilise la recherche de personnalité**
@@ -59,6 +59,7 @@
 
 ## Fait
 
+- [x] Bug scroll index `/p` — scroll remontait en haut avec l'index alphabétique
 - [x] PWA — application installable sur smartphone (manifest, icônes, meta tags)
 - [x] Refonte page personnalités `/p` avec compteurs, recherche, index A-Z
 - [x] Fix notoriety gap dans `create-public-figure-with-statement`
