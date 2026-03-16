@@ -160,6 +160,59 @@ a.sourceLink:hover {
   margin: 0 8px;
 }
 
+.allies {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alliesLabel {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.otherFigures {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.figureGroup {
+  margin-bottom: 20px;
+}
+
+.figureGroupTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--text-dark);
+  margin: 0 0 10px 0;
+}
+
+.figuresRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.figureLink {
+  display: block;
+  opacity: 0.85;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+
+.figureLink:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;

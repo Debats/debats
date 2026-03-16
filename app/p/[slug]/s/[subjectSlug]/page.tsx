@@ -6,7 +6,10 @@ import { createSSRSupabaseClient } from '../../../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../../../infra/database/public-figure-repository-supabase'
 import { createSubjectRepository } from '../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
-import { StatementWithDetails } from '../../../../../domain/repositories/statement-repository'
+import {
+  StatementWithDetails,
+  StatementWithFigure,
+} from '../../../../../domain/repositories/statement-repository'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../../../components/layout/ErrorDisplay'
@@ -75,6 +78,54 @@ function groupByPosition(statements: StatementWithDetails[]) {
   )
 }
 
+interface FigureSummary {
+  name: string
+  slug: string
+}
+
+interface PositionGroup {
+  title: string
+  figures: FigureSummary[]
+}
+
+function groupOtherFigures(
+  subjectStatements: StatementWithFigure[],
+  currentFigureId: string,
+  currentPositionIds: Set<string>,
+): { alliesByPosition: Map<string, FigureSummary[]>; opponents: PositionGroup[] } {
+  const alliesMap = new Map<string, Map<string, FigureSummary>>()
+  const opponentsMap = new Map<string, { title: string; figures: Map<string, FigureSummary> }>()
+
+  for (const { publicFigure, position } of subjectStatements) {
+    if (publicFigure.id === currentFigureId) continue
+
+    const summary: FigureSummary = { name: publicFigure.name, slug: publicFigure.slug }
+
+    if (currentPositionIds.has(position.id)) {
+      if (!alliesMap.has(position.id)) alliesMap.set(position.id, new Map())
+      const posMap = alliesMap.get(position.id)!
+      if (!posMap.has(publicFigure.id)) posMap.set(publicFigure.id, summary)
+    } else {
+      if (!opponentsMap.has(position.id)) {
+        opponentsMap.set(position.id, { title: position.title, figures: new Map() })
+      }
+      const group = opponentsMap.get(position.id)!
+      if (!group.figures.has(publicFigure.id)) group.figures.set(publicFigure.id, summary)
+    }
+  }
+
+  const alliesByPosition = new Map<string, FigureSummary[]>()
+  Array.from(alliesMap.entries()).forEach(([posId, figMap]) => {
+    alliesByPosition.set(posId, Array.from(figMap.values()))
+  })
+
+  const opponents = Array.from(opponentsMap.values())
+    .map((g) => ({ title: g.title, figures: Array.from(g.figures.values()) }))
+    .sort((a, b) => b.figures.length - a.figures.length)
+
+  return { alliesByPosition, opponents }
+}
+
 function formatDate(date: Date): string {
   return date.toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -99,12 +150,20 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
     if (!figure || !subject) notFound()
 
-    const statements = await Effect.runPromise(
-      statementRepo.findByPublicFigureAndSubject(figure.id, subject.id),
-    )
+    const [statements, subjectStatements] = await Promise.all([
+      Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
+      Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+    ])
 
     const positionsMap = groupByPosition(statements)
     const positions = Object.values(positionsMap)
+
+    const currentPositionIds = new Set(positions.map(({ position }) => position.id))
+    const { alliesByPosition, opponents } = groupOtherFigures(
+      subjectStatements,
+      figure.id,
+      currentPositionIds,
+    )
 
     return (
       <ContentWithSidebar topMargin>
@@ -170,11 +229,51 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                       </div>
                     )),
                   )}
+                  {(alliesByPosition.get(position.id)?.length ?? 0) > 0 && (
+                    <div className={styles.allies}>
+                      <span className={styles.alliesLabel}>Même position :</span>
+                      <div className={styles.figuresRow}>
+                        {alliesByPosition.get(position.id)!.map((f) => (
+                          <Link
+                            key={f.slug}
+                            href={`/p/${f.slug}/s/${subject.slug}`}
+                            className={styles.figureLink}
+                            title={f.name}
+                          >
+                            <FigureAvatar slug={f.slug} name={f.name} size={40} />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </section>
+
+        {opponents.length > 0 && (
+          <section className={styles.otherFigures}>
+            <h2 className={styles.sectionTitle}>POSITIONS DIFFÉRENTES</h2>
+            {opponents.map((group) => (
+              <div key={group.title} className={styles.figureGroup}>
+                <h3 className={styles.figureGroupTitle}>{group.title}</h3>
+                <div className={styles.figuresRow}>
+                  {group.figures.map((f) => (
+                    <Link
+                      key={f.slug}
+                      href={`/p/${f.slug}/s/${subject.slug}`}
+                      className={styles.figureLink}
+                      title={f.name}
+                    >
+                      <FigureAvatar slug={f.slug} name={f.name} size={50} />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
       </ContentWithSidebar>
     )
   } catch (error) {
