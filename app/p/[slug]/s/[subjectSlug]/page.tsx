@@ -33,22 +33,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!figure || !subject) return { title: 'Page introuvable' }
 
+    const title = `${figure.name} sur ${subject.title}`
     const description = `Prises de position de ${figure.name} sur ${subject.title}.`
+    const url = `/p/${slug}/s/${subjectSlug}`
     return {
-      title: `${figure.name} sur ${subject.title}`,
+      title,
       description,
+      alternates: { canonical: url },
       openGraph: {
-        title: `${figure.name} sur ${subject.title}`,
+        title,
         description,
         type: 'profile',
-        url: `/p/${slug}/s/${subjectSlug}`,
-        images: [`/avatars/${slug}.jpg`],
+        url,
       },
       twitter: {
-        card: 'summary',
-        title: `${figure.name} sur ${subject.title}`,
+        card: 'summary_large_image',
+        title,
         description,
-        images: [`/avatars/${slug}.jpg`],
       },
     }
   } catch {
@@ -165,8 +166,24 @@ export default async function FigureSubjectPage({ params }: PageProps) {
       currentPositionIds,
     )
 
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: `${figure.name} sur ${subject.title}`,
+      description: `Prises de position de ${figure.name} sur ${subject.title}.`,
+      url: `https://debats.co/p/${figure.slug}/s/${subject.slug}`,
+      image: `https://debats.co/avatars/${figure.slug}.jpg`,
+      author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
+      about: { '@type': 'Thing', name: subject.title },
+      mentions: { '@type': 'Person', name: figure.name },
+    }
+
     return (
       <ContentWithSidebar topMargin>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <nav className={styles.breadcrumb}>
           <Link href={`/p/${figure.slug}`} className={styles.breadcrumbLink}>
             {figure.name}
