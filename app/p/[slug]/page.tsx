@@ -28,21 +28,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description = figure.presentation
       ? `${figure.name} - ${figure.presentation}`
       : `Positions et prises de position de ${figure.name} sur les sujets de société.`
+    const url = `/p/${slug}`
     return {
       title: figure.name,
       description,
+      alternates: { canonical: url },
       openGraph: {
         title: figure.name,
         description,
         type: 'profile',
-        url: `/p/${slug}`,
-        images: [`/avatars/${slug}.jpg`],
+        url,
       },
       twitter: {
-        card: 'summary',
+        card: 'summary_large_image',
         title: figure.name,
         description,
-        images: [`/avatars/${slug}.jpg`],
       },
     }
   } catch {
@@ -97,8 +97,22 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
       return latestB - latestA
     })
 
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: figure.name,
+      description: figure.presentation,
+      url: `https://debats.co/p/${figure.slug}`,
+      image: `https://debats.co/avatars/${figure.slug}.jpg`,
+      ...(Option.isSome(figure.wikipediaUrl) ? { sameAs: [figure.wikipediaUrl.value] } : {}),
+    }
+
     return (
       <ContentWithSidebar topMargin>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <header className={styles.header}>
           <FigureAvatar slug={figure.slug} name={figure.name} size={120} />
           <div className={styles.headerInfo}>
