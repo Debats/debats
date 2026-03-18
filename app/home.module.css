@@ -51,13 +51,15 @@
   border-bottom: none;
 }
 
-/* Avatars row */
+/* Avatars row — limited to 2 lines of 40px avatars */
 .avatarsRow {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 10px;
+  max-height: 88px;
+  overflow: hidden;
 }
 
 .avatarLink {
