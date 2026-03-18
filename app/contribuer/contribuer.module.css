@@ -66,3 +66,30 @@
 .guideLink:hover {
   text-decoration: underline;
 }
+
+.signupCta {
+  background-color: #fafafa;
+  border-left: 4px solid var(--debats-red);
+  padding: 20px 24px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 32px;
+}
+
+.signupCta p {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-dark);
+  margin: 0 0 12px;
+}
+
+.signupLink {
+  font-family: var(--font-gotham-bold);
+  font-size: 15px;
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.signupLink:hover {
+  text-decoration: underline;
+}

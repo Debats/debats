@@ -41,11 +41,21 @@ export default async function ContribuerPage() {
         </li>
       </ul>
 
-      {contributor && (
+      {contributor ? (
         <p className={styles.reputation}>
           Votre réputation : {contributor.reputation}. Vous êtes un{' '}
           {getRank(contributor.reputation)}.
         </p>
+      ) : (
+        <div className={styles.signupCta}>
+          <p>
+            Pour contribuer, vous devez être invité·e par un contributeur existant. Vous pouvez
+            aussi vous inscrire en liste d&apos;attente pour être informé·e de l&apos;ouverture à toutes et tous.
+          </p>
+          <Link href="/inscription" className={styles.signupLink}>
+            S&apos;inscrire en liste d&apos;attente
+          </Link>
+        </div>
       )}
 
       <h2 className={styles.sectionTitle}>Qu&apos;est-ce que la réputation ?</h2>
