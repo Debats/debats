@@ -24,6 +24,10 @@ import {
   StatementWithFigure,
 } from '../../domain/repositories/statement-repository'
 
+function toISODate(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
   Sentry.captureException(error, { extra: { message } })
@@ -41,7 +45,7 @@ function mapStatementRow(row: StatementRow): Statement {
     id: StatementId.make(row.id),
     publicFigureId: row.public_figure_id,
     positionId: row.position_id,
-    takenAt: row.taken_at ? new Date(row.taken_at) : undefined,
+    takenAt: new Date(row.taken_at),
     createdBy: row.created_by ?? undefined,
     createdAt: new Date(row.created_at!),
     updatedAt: new Date(row.updated_at!),
@@ -327,6 +331,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               id: statement.id,
               public_figure_id: statement.publicFigureId,
               position_id: statement.positionId,
+              taken_at: toISODate(statement.takenAt),
               created_by: statement.createdBy,
             })
             .select()
@@ -349,7 +354,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               source_name: evidence.sourceName,
               source_url: evidence.sourceUrl,
               quote: evidence.quote,
-              fact_date: evidence.factDate.toISOString().split('T')[0],
+              fact_date: toISODate(evidence.factDate),
               created_by: evidence.createdBy,
             })
             .select()

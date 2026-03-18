@@ -7,7 +7,7 @@ export const Statement = S.Struct({
   id: StatementId,
   publicFigureId: S.String,
   positionId: S.String,
-  takenAt: S.optional(S.Date),
+  takenAt: S.Date,
   createdBy: S.optional(S.String),
   createdAt: S.Date,
   updatedAt: S.Date,
@@ -35,6 +35,7 @@ export type Evidence = S.Schema.Type<typeof Evidence>
 export const createStatement = (params: {
   publicFigureId: string
   positionId: string
+  takenAt: Date
   createdBy?: string
 }): Statement => {
   const now = new Date()
@@ -43,6 +44,7 @@ export const createStatement = (params: {
     id: StatementId.make(crypto.randomUUID()),
     publicFigureId: params.publicFigureId,
     positionId: params.positionId,
+    takenAt: params.takenAt,
     createdBy: params.createdBy,
     createdAt: now,
     updatedAt: now,

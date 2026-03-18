@@ -101,6 +101,7 @@ export async function createStatementUseCase(
   const statement = createStatement({
     publicFigureId,
     positionId,
+    takenAt: new Date(factDate),
     createdBy: contributor.id,
   })
 
