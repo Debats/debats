@@ -27,14 +27,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const subjectRepo = createSubjectRepository(supabase)
     const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
     if (!subject) return { title: 'Sujet introuvable' }
+    const url = `/s/${slug}`
     return {
       title: subject.title,
       description: subject.presentation,
+      alternates: { canonical: url },
       openGraph: {
         title: subject.title,
         description: subject.presentation,
         type: 'article',
-        url: `/s/${slug}`,
+        url,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: subject.title,
+        description: subject.presentation,
       },
     }
   } catch {
@@ -96,8 +103,21 @@ export default async function SubjectDetailPage({ params }: PageProps) {
       !!contributor &&
       canPerform(contributor.reputation, major ? 'delete_major_subject' : 'delete_minor_subject')
 
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: subject.title,
+      description: subject.presentation,
+      url: `https://debats.co/s/${subject.slug}`,
+      author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
+    }
+
     return (
       <ContentWithSidebar topMargin>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <header className={styles.header}>
           <h1 className={styles.title}>{subject.title}</h1>
           <p className={styles.presentation}>{subject.presentation}</p>
