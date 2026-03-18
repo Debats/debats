@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { usePlausible } from 'next-plausible'
 import {
   searchPublicFigures,
   PublicFigureSearchResult,
@@ -14,18 +15,23 @@ export default function PersonalitySearch() {
   const [results, setResults] = useState<PublicFigureSearchResult[]>([])
   const [hasSearched, setHasSearched] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const plausible = usePlausible()
 
-  const search = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setResults([])
-      setHasSearched(false)
-      return
-    }
+  const search = useCallback(
+    async (q: string) => {
+      if (q.length < 2) {
+        setResults([])
+        setHasSearched(false)
+        return
+      }
 
-    const data = await searchPublicFigures(q)
-    setResults(data)
-    setHasSearched(true)
-  }, [])
+      const data = await searchPublicFigures(q)
+      setResults(data)
+      setHasSearched(true)
+      plausible('Recherche personnalité', { props: { query: q, results: data.length } })
+    },
+    [plausible],
+  )
 
   useEffect(() => {
     clearTimeout(debounceRef.current)
