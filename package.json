@@ -27,7 +27,7 @@
     "date-fns": "^4.1.0",
     "downshift": "^9.3.0",
     "effect": "^3.16.12",
-    "next": "^16.1.7",
+    "next": "16.1.1-canary.27",
     "next-plausible": "^3.12.5",
     "node-addon-api": "^8.5.0",
     "node-gyp": "^12.2.0",
