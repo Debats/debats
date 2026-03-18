@@ -1,6 +1,6 @@
 .trigger {
   position: fixed;
-  bottom: 24px;
+  bottom: 90px;
   right: 24px;
   z-index: 1500;
   display: flex;
@@ -47,7 +47,7 @@
   .trigger {
     padding: 12px;
     border-radius: 50%;
-    bottom: 16px;
+    bottom: 80px;
     right: 16px;
   }
 
