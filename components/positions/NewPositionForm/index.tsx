@@ -9,6 +9,7 @@ import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import FormSuccess from '../../ui/FormSuccess'
+import GuideExample from '../../ui/GuideExample'
 import styles from '../../ui/form-with-guide.module.css'
 
 interface NewPositionFormProps {
@@ -115,13 +116,12 @@ export default function NewPositionForm({
         <div className={styles.guide}>
           <p className={styles.guideTitle}>Conseil</p>
           <p className={styles.guideText}>
-            La position doit exprimer un point de vue clair sur le sujet. Elle sera défendue par une
-            ou plusieurs personnalités.
+            La position doit exprimer un point de vue précis et concret sur le sujet. Évitez les
+            intitulés vagues ou fourre-tout qui pourraient rassembler des points de vue très
+            différents. Une même personnalité pourra être associée à plusieurs positions.
           </p>
-          <p className={styles.guideExample}>
-            <span className={styles.guideGood}>Pour un moratoire sur les SUV en ville</span>{' '}
-            <span className={styles.guideBad}>Les SUV c&apos;est nul</span>
-          </p>
+          <GuideExample good="Pour un moratoire sur les SUV en ville" bad="Les SUV c'est nul" />
+          <GuideExample good="Modulation du crédit selon les revenus" bad="Réforme en profondeur" />
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
+import GuideExample from '../../ui/GuideExample'
 import styles from '../../ui/form-with-guide.module.css'
 
 type SubmitResult =
@@ -102,14 +103,8 @@ export default function SubjectForm({
           <p className={styles.guideText}>
             Le titre doit être neutre et ne pas inclure de position. Un sujet = un thème précis.
           </p>
-          <p className={styles.guideExample}>
-            <span className={styles.guideGood}>Le montant du SMIC</span>{' '}
-            <span className={styles.guideBad}>L&apos;augmentation du SMIC</span>
-          </p>
-          <p className={styles.guideExample}>
-            <span className={styles.guideGood}>La laïcité</span>{' '}
-            <span className={styles.guideBad}>La laïcité en France</span>
-          </p>
+          <GuideExample good="Le montant du SMIC" bad="L'augmentation du SMIC" />
+          <GuideExample good="La laïcité" bad="La laïcité en France" />
         </div>
       </div>
 
@@ -152,11 +147,7 @@ export default function SubjectForm({
             Formulez la question qui cristallise le débat. Elle doit être ouverte (pas de oui/non)
             et permettre plusieurs positions argumentées.
           </p>
-          <p className={styles.guideExample}>
-            <span className={styles.guideGood}>
-              Quel rôle le nucléaire doit-il jouer dans la transition énergétique ?
-            </span>
-          </p>
+          <GuideExample good="Quel rôle le nucléaire doit-il jouer dans la transition énergétique ?" />
         </div>
       </div>
 

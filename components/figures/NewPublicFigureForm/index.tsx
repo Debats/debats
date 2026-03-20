@@ -9,6 +9,7 @@ import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import FormSuccess from '../../ui/FormSuccess'
+import GuideExample from '../../ui/GuideExample'
 import formStyles from '../../ui/form-with-guide.module.css'
 import localStyles from './NewPublicFigureForm.module.css'
 
@@ -153,10 +154,7 @@ export default function NewPublicFigureForm() {
           <p className={formStyles.guideText}>
             Le nom complet tel qu&apos;il est communément connu. Pas de titre (Dr, M., Mme).
           </p>
-          <p className={formStyles.guideExample}>
-            <span className={formStyles.guideGood}>Simone Veil</span>{' '}
-            <span className={formStyles.guideBad}>Mme Simone Veil</span>
-          </p>
+          <GuideExample good="Simone Veil" bad="Mme Simone Veil" />
         </div>
       </div>
 

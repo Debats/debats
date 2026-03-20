@@ -59,6 +59,13 @@ export default function GuidePage() {
           recenser au moins une <b>prise de position</b> par au moins une <b>personnalité</b> dans
           chacune des <b>positions</b>.
         </p>
+        <p>
+          <b>Important</b> : une même personnalité peut être associée à plusieurs positions au sein
+          d&apos;un même sujet. Par exemple, sur le sujet « Le nucléaire civil », une personnalité
+          peut être à la fois sur « Construction de nouveaux EPR » et « Fermeture de Fessenheim ».
+          Les débats réels sont rarement binaires. Le nombre de positions n&apos;est pas limité —
+          c&apos;est la réalité des prises de position qui dicte la granularité du sujet.
+        </p>
       </AccordionSection>
 
       <AccordionSection title="Qu'est-ce qu'une source ?">
@@ -116,7 +123,9 @@ export default function GuidePage() {
         <p>
           Afin de s&apos;en rapprocher, il est nécessaire pour chaque utilisateur de se demander
           comment exprimer de façon objective l&apos;intitulé des sujets ou les positions des
-          personnalités.
+          personnalités. Les positions doivent être précises et concrètes, pas des catégories vagues
+          comme « Pour » ou « Contre ». Évitez les positions fourre-tout qui pourraient rassembler
+          des points de vue très différents.
         </p>
         <p>
           Lors de la recension d&apos;une prise d&apos;une position ensuite, il est important
