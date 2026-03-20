@@ -38,9 +38,6 @@ export default function Combobox({
   const [selectedId, setSelectedId] = useState(initialItem?.id ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const onSelectRef = useRef(onSelect)
-  onSelectRef.current = onSelect
-
   const updateValidity = useCallback(
     (hasSelection: boolean) => {
       if (!required || !inputRef.current) return
@@ -72,14 +69,13 @@ export default function Combobox({
   useEffect(() => {
     if (initialItem) {
       updateValidity(true)
-      if (onSelectRef.current) onSelectRef.current(initialItem.id)
     } else {
       updateValidity(false)
     }
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-    // initialItem is only needed at mount; onSelectRef is a stable ref
+    // initialItem is only needed at mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateValidity])
 
