@@ -59,21 +59,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 function groupByPosition(statements: StatementWithDetails[]) {
   return statements.reduce(
-    (acc, { statement, position, evidences }) => {
+    (acc, { statement, position }) => {
       if (!acc[position.id]) {
         acc[position.id] = { position, statements: [] }
       }
-      acc[position.id].statements.push({ statement, evidences })
+      acc[position.id].statements.push(statement)
       return acc
     },
     {} as Record<
       string,
       {
         position: StatementWithDetails['position']
-        statements: {
-          statement: StatementWithDetails['statement']
-          evidences: StatementWithDetails['evidences']
-        }[]
+        statements: StatementWithDetails['statement'][]
       }
     >,
   )
@@ -151,12 +148,12 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
     if (!figure || !subject) notFound()
 
-    const [statements, subjectStatements] = await Promise.all([
+    const [figureStatements, subjectStatements] = await Promise.all([
       Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
       Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
     ])
 
-    const positionsMap = groupByPosition(statements)
+    const positionsMap = groupByPosition(figureStatements)
     const positions = Object.values(positionsMap)
 
     const currentPositionIds = new Set(positions.map(({ position }) => position.id))
@@ -211,8 +208,8 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
         <section>
           <h2 className={styles.sectionTitle}>
-            <span className={styles.count}>{statements.length}</span>{' '}
-            {statements.length === 1 ? 'PRISE DE POSITION' : 'PRISES DE POSITION'}
+            <span className={styles.count}>{figureStatements.length}</span>{' '}
+            {figureStatements.length === 1 ? 'PRISE DE POSITION' : 'PRISES DE POSITION'}
           </h2>
 
           {positions.length === 0 ? (
@@ -223,29 +220,27 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                 <div key={position.id} className={styles.positionCard}>
                   <span className={styles.positionLabel}>Sa position</span>
                   <h3 className={styles.positionTitle}>{position.title}</h3>
-                  {posStatements.flatMap(({ evidences }) =>
-                    evidences.map((evidence) => (
-                      <div key={evidence.id} className={styles.evidenceItem}>
-                        <blockquote className={styles.quote}>{evidence.quote}</blockquote>
-                        <div className={styles.evidenceMeta}>
-                          {evidence.sourceUrl ? (
-                            <a
-                              href={evidence.sourceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.sourceLink}
-                            >
-                              {evidence.sourceName}
-                            </a>
-                          ) : (
-                            <span className={styles.sourceLink}>{evidence.sourceName}</span>
-                          )}
-                          <span className={styles.metaSeparator}>&mdash;</span>
-                          {formatDate(evidence.factDate)}
-                        </div>
+                  {posStatements.map((st) => (
+                    <div key={st.id} className={styles.statementItem}>
+                      <blockquote className={styles.quote}>{st.quote}</blockquote>
+                      <div className={styles.statementMeta}>
+                        {st.sourceUrl ? (
+                          <a
+                            href={st.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.sourceLink}
+                          >
+                            {st.sourceName}
+                          </a>
+                        ) : (
+                          <span className={styles.sourceLink}>{st.sourceName}</span>
+                        )}
+                        <span className={styles.metaSeparator}>&mdash;</span>
+                        {formatDate(st.statedAt)}
                       </div>
-                    )),
-                  )}
+                    </div>
+                  ))}
                   {(alliesByPosition.get(position.id)?.length ?? 0) > 0 && (
                     <div className={styles.allies}>
                       <span className={styles.alliesLabel}>Même position :</span>

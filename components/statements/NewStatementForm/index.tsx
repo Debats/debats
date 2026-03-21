@@ -97,7 +97,7 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
       formData.set('sourceName', getFieldValue(form, 'sourceName'))
       formData.set('sourceUrl', getFieldValue(form, 'sourceUrl'))
       formData.set('quote', getFieldValue(form, 'quote'))
-      formData.set('factDate', getFieldValue(form, 'factDate'))
+      formData.set('statedAt', getFieldValue(form, 'statedAt'))
 
       try {
         const result: ActionResult = await addStatementAction(formData)
@@ -286,18 +286,18 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
           />
 
           <div className={styles.dateField}>
-            <label className={styles.dateLabel} htmlFor="factDate">
-              Date du fait
+            <label className={styles.dateLabel} htmlFor="statedAt">
+              Date de la déclaration
             </label>
             <input
               className={styles.dateInput}
-              id="factDate"
-              name="factDate"
+              id="statedAt"
+              name="statedAt"
               type="date"
               required
             />
-            {fieldErrors?.factDate && (
-              <span className={styles.fieldError}>{fieldErrors.factDate}</span>
+            {fieldErrors?.statedAt && (
+              <span className={styles.fieldError}>{fieldErrors.statedAt}</span>
             )}
           </div>
         </div>

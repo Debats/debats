@@ -32,7 +32,6 @@ export function getRank(reputation: number): Rank {
 const ACTIONS = {
   // Sophiste et Métèque (tous les utilisateurs authentifiés)
   add_statement: Rank.Sophiste,
-  add_evidence: Rank.Sophiste,
   add_position: Rank.Sophiste,
 
   // Éloquent (1000+)
@@ -42,24 +41,23 @@ const ACTIONS = {
   invite_user: Rank.Eloquent,
   approve_subject: Rank.Eloquent,
   approve_personality: Rank.Eloquent,
-  approve_evidence: Rank.Eloquent,
   approve_argument: Rank.Eloquent,
   approve_position: Rank.Eloquent,
   reject_subject: Rank.Eloquent,
   reject_personality: Rank.Eloquent,
-  reject_evidence: Rank.Eloquent,
   reject_argument: Rank.Eloquent,
   reject_position: Rank.Eloquent,
 
   // Idéaliste (10000+)
   delete_minor_subject: Rank.Idealiste,
   delete_minor_personality: Rank.Idealiste,
-  delete_evidence: Rank.Idealiste,
   delete_argument: Rank.Idealiste,
   delete_position: Rank.Idealiste,
   edit_argument: Rank.Idealiste,
   edit_subject: Rank.Idealiste,
   edit_personality: Rank.Idealiste,
+  edit_statement: Rank.Idealiste,
+  edit_position: Rank.Idealiste,
 
   // Fondateur (1000000+)
   delete_major_subject: Rank.Fondateur,
@@ -95,8 +93,10 @@ const REWARDS = {
   added_subject_validated: 200,
   added_personality_validated: 50,
   edited_subject: 5,
+  edited_statement: 5,
+  edited_personality: 5,
+  edited_position: 5,
   added_statement_validated: 50,
-  added_evidence_validated: 50,
   added_argument_validated: 50,
   added_position_validated: 50,
   linked_argument_to_statement: 1,
@@ -116,7 +116,6 @@ const REWARDS = {
   personality_rejected_duplicate: -100,
   personality_rejected_off_topic: -100,
   statement_rejected: -100,
-  evidence_rejected: -100,
   argument_rejected: -100,
   position_rejected: -100,
   argument_to_statement_link_rejected: -100,

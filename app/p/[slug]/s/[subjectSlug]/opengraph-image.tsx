@@ -42,13 +42,12 @@ export default async function OGImage({
 
   const firstStatement = statements.length > 0 ? statements[0] : null
   const positionTitle = firstStatement?.position.title ?? null
-  const evidence =
-    firstStatement && firstStatement.evidences.length > 0 ? firstStatement.evidences[0] : null
+  const st = firstStatement?.statement ?? null
 
-  const quote = evidence?.quote ?? null
+  const quote = st?.quote ?? null
   const truncatedQuote = quote && quote.length > 160 ? quote.slice(0, 157) + '\u2026' : quote
-  const sourceName = evidence?.sourceName ?? null
-  const factDate = evidence?.factDate ?? null
+  const sourceName = st?.sourceName ?? null
+  const statementDate = st?.statedAt ?? null
 
   const [gothamBold, gothamBook, logoBuffer] = await Promise.all([
     readFile(join(process.cwd(), 'public/fonts/Gotham-Bold.woff')),
@@ -180,7 +179,9 @@ export default async function OGImage({
           }}
         >
           <span style={{ fontFamily: 'Gotham Book', fontSize: '28px', color: '#999' }}>
-            {[sourceName, factDate ? formatDate(factDate) : null].filter(Boolean).join(' \u2014 ')}
+            {[sourceName, statementDate ? formatDate(statementDate) : null]
+              .filter(Boolean)
+              .join(' \u2014 ')}
           </span>
           <img src={logoSrc} height={80} />
         </div>

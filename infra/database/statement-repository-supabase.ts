@@ -2,13 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../types/database.types'
-import {
-  Statement,
-  StatementId,
-  Evidence,
-  EvidenceId,
-  LatestStatement,
-} from '../../domain/entities/statement'
+import { Statement, StatementId, LatestStatement } from '../../domain/entities/statement'
 import { Position, PositionId, PositionTitle } from '../../domain/entities/position'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
@@ -37,7 +31,6 @@ function dbError(message: string, error: unknown): DatabaseError {
 type StatementRow = Database['public']['Tables']['statements']['Row']
 type PositionRow = Database['public']['Tables']['positions']['Row']
 type SubjectRow = Database['public']['Tables']['subjects']['Row']
-type EvidenceRow = Database['public']['Tables']['evidences']['Row']
 type PublicFigureRow = Database['public']['Tables']['public_figures']['Row']
 
 function mapStatementRow(row: StatementRow): Statement {
@@ -45,7 +38,10 @@ function mapStatementRow(row: StatementRow): Statement {
     id: StatementId.make(row.id),
     publicFigureId: row.public_figure_id,
     positionId: row.position_id,
-    takenAt: new Date(row.taken_at),
+    sourceName: row.source_name,
+    sourceUrl: row.source_url ?? undefined,
+    quote: row.quote,
+    statedAt: new Date(row.stated_at),
     createdBy: row.created_by ?? undefined,
     createdAt: new Date(row.created_at!),
     updatedAt: new Date(row.updated_at!),
@@ -78,20 +74,6 @@ function mapSubjectRow(row: SubjectRow): Subject {
   })
 }
 
-function mapEvidenceRow(row: EvidenceRow): Evidence {
-  return Evidence.make({
-    id: EvidenceId.make(row.id),
-    statementId: row.statement_id,
-    sourceName: row.source_name,
-    sourceUrl: row.source_url ?? undefined,
-    quote: row.quote,
-    factDate: new Date(row.fact_date),
-    createdBy: row.created_by ?? undefined,
-    createdAt: new Date(row.created_at!),
-    updatedAt: new Date(row.updated_at!),
-  })
-}
-
 function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
   return PublicFigure.make({
     id: PublicFigureId.make(row.id),
@@ -108,21 +90,18 @@ function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
 }
 
 const STATEMENT_WITH_DETAILS_QUERY = `
-  id, public_figure_id, position_id, taken_at, created_by, created_at, updated_at,
+  id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
+  created_by, created_at, updated_at,
   positions!inner (
     id, title, description, subject_id, created_by, created_at, updated_at,
     subjects!inner (
       id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at
     )
-  ),
-  evidences (
-    id, statement_id, source_name, source_url, quote, fact_date, created_by, created_at, updated_at
   )
 `
 
 interface StatementWithDetailsRow extends StatementRow {
   positions: PositionRow & { subjects: SubjectRow }
-  evidences: EvidenceRow[] | null
 }
 
 function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWithDetails {
@@ -130,7 +109,6 @@ function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWith
     statement: mapStatementRow(row),
     position: mapPositionRow(row.positions),
     subject: mapSubjectRow(row.positions.subjects),
-    evidences: (row.evidences ?? []).map(mapEvidenceRow),
   }
 }
 
@@ -219,7 +197,8 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(
               `
-            id, public_figure_id, position_id, taken_at, created_by, created_at, updated_at,
+            id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
+            created_by, created_at, updated_at,
             positions!inner (
               id, title, description, subject_id, created_by, created_at, updated_at
             ),
@@ -250,7 +229,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .select(
               `
             id,
-            taken_at,
+            stated_at,
             positions!inner (
               title,
               subjects!inner (
@@ -264,7 +243,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             )
           `,
             )
-            .order('taken_at', { ascending: false })
+            .order('stated_at', { ascending: false })
             .limit(limit)
 
           if (error) throw error
@@ -276,7 +255,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             positionTitle: row.positions.title,
             subjectTitle: row.positions.subjects.title,
             subjectSlug: row.positions.subjects.slug,
-            takenAt: new Date(row.taken_at),
+            statedAt: new Date(row.stated_at),
           }))
         },
         catch: (error) => dbError('Failed to fetch latest statements', error),
@@ -316,7 +295,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             positionTitle: row.positions.title,
             subjectTitle: row.positions.subjects.title,
             subjectSlug: row.positions.subjects.slug,
-            takenAt: row.created_at ? new Date(row.created_at!) : new Date(),
+            statedAt: row.created_at ? new Date(row.created_at!) : new Date(),
           }))
         },
         catch: (error) => dbError('Failed to fetch latest reported statements', error),
@@ -331,7 +310,10 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               id: statement.id,
               public_figure_id: statement.publicFigureId,
               position_id: statement.positionId,
-              taken_at: toISODate(statement.takenAt),
+              source_name: statement.sourceName,
+              source_url: statement.sourceUrl,
+              quote: statement.quote,
+              stated_at: toISODate(statement.statedAt),
               created_by: statement.createdBy,
             })
             .select()
@@ -343,27 +325,26 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to create statement', error),
       }),
 
-    createEvidence: (evidence: Evidence) =>
+    update: (statement: Statement) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
-            .from('evidences')
-            .insert({
-              id: evidence.id,
-              statement_id: evidence.statementId,
-              source_name: evidence.sourceName,
-              source_url: evidence.sourceUrl,
-              quote: evidence.quote,
-              fact_date: toISODate(evidence.factDate),
-              created_by: evidence.createdBy,
+            .from('statements')
+            .update({
+              position_id: statement.positionId,
+              source_name: statement.sourceName,
+              source_url: statement.sourceUrl ?? null,
+              quote: statement.quote,
+              stated_at: toISODate(statement.statedAt),
             })
+            .eq('id', statement.id)
             .select()
             .single()
 
           if (error) throw error
-          return mapEvidenceRow(data)
+          return mapStatementRow(data)
         },
-        catch: (error) => dbError('Failed to create evidence', error),
+        catch: (error) => dbError('Failed to update statement', error),
       }),
 
     delete: (id: string) =>
@@ -374,20 +355,6 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           if (error) throw error
         },
         catch: (error) => dbError('Failed to delete statement', error),
-      }),
-
-    getEvidences: (statementId: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('evidences')
-            .select('*')
-            .eq('statement_id', statementId)
-
-          if (error) throw error
-          return data.map(mapEvidenceRow)
-        },
-        catch: (error) => dbError('Failed to fetch evidences', error),
       }),
   }
 }

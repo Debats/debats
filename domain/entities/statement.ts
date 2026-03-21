@@ -7,7 +7,10 @@ export const Statement = S.Struct({
   id: StatementId,
   publicFigureId: S.String,
   positionId: S.String,
-  takenAt: S.Date,
+  sourceName: S.String.pipe(S.minLength(1), S.maxLength(255)),
+  sourceUrl: S.optional(S.String),
+  quote: S.String.pipe(S.minLength(10)),
+  statedAt: S.Date,
   createdBy: S.optional(S.String),
   createdAt: S.Date,
   updatedAt: S.Date,
@@ -15,27 +18,13 @@ export const Statement = S.Struct({
 
 export type Statement = S.Schema.Type<typeof Statement>
 
-export const EvidenceId = S.String.pipe(S.brand('EvidenceId'))
-export type EvidenceId = S.Schema.Type<typeof EvidenceId>
-
-export const Evidence = S.Struct({
-  id: EvidenceId,
-  statementId: S.String,
-  sourceName: S.String.pipe(S.minLength(1), S.maxLength(255)),
-  sourceUrl: S.optional(S.String),
-  quote: S.String.pipe(S.minLength(10)),
-  factDate: S.Date,
-  createdBy: S.optional(S.String),
-  createdAt: S.Date,
-  updatedAt: S.Date,
-})
-
-export type Evidence = S.Schema.Type<typeof Evidence>
-
 export const createStatement = (params: {
   publicFigureId: string
   positionId: string
-  takenAt: Date
+  sourceName: string
+  sourceUrl?: string
+  quote: string
+  statedAt: Date
   createdBy?: string
 }): Statement => {
   const now = new Date()
@@ -44,53 +33,32 @@ export const createStatement = (params: {
     id: StatementId.make(crypto.randomUUID()),
     publicFigureId: params.publicFigureId,
     positionId: params.positionId,
-    takenAt: params.takenAt,
-    createdBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}
-
-export const createEvidence = (params: {
-  statementId: string
-  sourceName: string
-  sourceUrl?: string
-  quote: string
-  factDate: Date
-  createdBy?: string
-}): Evidence => {
-  const now = new Date()
-
-  return Evidence.make({
-    id: EvidenceId.make(crypto.randomUUID()),
-    statementId: params.statementId,
     sourceName: params.sourceName,
     sourceUrl: params.sourceUrl,
     quote: params.quote,
-    factDate: params.factDate,
+    statedAt: params.statedAt,
     createdBy: params.createdBy,
     createdAt: now,
     updatedAt: now,
   })
 }
 
-export const isStatementValid = (statement: Statement, evidences: Evidence[]): boolean => {
-  return evidences.filter((evidence) => evidence.statementId === statement.id).length >= 1
-}
-
-export const updateEvidence = (
-  evidence: Evidence,
+export const updateStatement = (
+  statement: Statement,
   params: {
     sourceName?: string
     sourceUrl?: string
     quote?: string
-    factDate?: Date
+    statedAt?: Date
   },
-): Evidence => ({
-  ...evidence,
-  ...params,
-  updatedAt: new Date(),
-})
+): Statement => {
+  const updated = { ...statement, updatedAt: new Date() }
+  if (params.sourceName !== undefined) updated.sourceName = params.sourceName
+  if (params.sourceUrl !== undefined) updated.sourceUrl = params.sourceUrl
+  if (params.quote !== undefined) updated.quote = params.quote
+  if (params.statedAt !== undefined) updated.statedAt = params.statedAt
+  return updated
+}
 
 /**
  * Lightweight projection for the "latest statements" sidebar
@@ -102,5 +70,5 @@ export interface LatestStatement {
   positionTitle: string
   subjectTitle: string
   subjectSlug: string
-  takenAt: Date
+  statedAt: Date
 }

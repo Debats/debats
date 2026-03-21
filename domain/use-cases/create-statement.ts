@@ -2,7 +2,7 @@ import { Either } from 'effect'
 import * as S from 'effect/Schema'
 import { Effect } from 'effect'
 import { ArrayFormatter } from 'effect/ParseResult'
-import { createStatement, createEvidence, Statement } from '../entities/statement'
+import { createStatement, Statement } from '../entities/statement'
 import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
@@ -14,7 +14,7 @@ const CreateStatementInput = S.Struct({
   sourceName: S.String.pipe(S.minLength(1)),
   sourceUrl: S.optional(S.String),
   quote: S.String.pipe(S.minLength(10)),
-  factDate: S.String.pipe(S.pattern(/^\d{4}-\d{2}-\d{2}$/)),
+  statedAt: S.String.pipe(S.pattern(/^\d{4}-\d{2}-\d{2}$/)),
 })
 
 type CreateStatementParams = {
@@ -25,7 +25,7 @@ type CreateStatementParams = {
   sourceName: string
   sourceUrl: string
   quote: string
-  factDate: string
+  statedAt: string
   statementRepo: StatementRepository
   positionRepo: PositionRepository
   publicFigureRepo: PublicFigureRepository
@@ -45,7 +45,7 @@ export async function createStatementUseCase(
     sourceName,
     sourceUrl,
     quote,
-    factDate,
+    statedAt,
     statementRepo,
     positionRepo,
     publicFigureRepo,
@@ -65,7 +65,7 @@ export async function createStatementUseCase(
     sourceName,
     sourceUrl: sourceUrl || undefined,
     quote,
-    factDate,
+    statedAt,
   })
 
   if (Either.isLeft(decoded)) {
@@ -77,8 +77,8 @@ export async function createStatementUseCase(
         fieldErrors.sourceName = 'Le nom de la source est requis.'
       } else if (field === 'quote') {
         fieldErrors.quote = 'La citation doit faire au moins 10 caractères.'
-      } else if (field === 'factDate') {
-        fieldErrors.factDate = 'La date du fait est invalide (format attendu : AAAA-MM-JJ).'
+      } else if (field === 'statedAt') {
+        fieldErrors.statedAt = 'La date de la déclaration est invalide (format attendu : AAAA-MM-JJ).'
       }
     }
     return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
@@ -101,21 +101,14 @@ export async function createStatementUseCase(
   const statement = createStatement({
     publicFigureId,
     positionId,
-    takenAt: new Date(factDate),
-    createdBy: contributor.id,
-  })
-
-  const evidence = createEvidence({
-    statementId: statement.id,
     sourceName,
     sourceUrl: sourceUrl || undefined,
     quote,
-    factDate: new Date(factDate),
+    statedAt: new Date(statedAt),
     createdBy: contributor.id,
   })
 
   const created = await Effect.runPromise(statementRepo.create(statement))
-  await Effect.runPromise(statementRepo.createEvidence(evidence))
 
   await Effect.runPromise(
     reputationRepo.recordEvent({

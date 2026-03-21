@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect, Option } from 'effect'
 import { createStatementUseCase } from './create-statement'
 import { Statement } from '../entities/statement'
-import { Evidence } from '../entities/statement'
 import { Position, PositionId, PositionTitle } from '../entities/position'
 import {
   PublicFigure,
@@ -35,7 +34,7 @@ const fakePublicFigure = PublicFigure.make({
 
 const fakeStatementRepo = {
   create: (s: Statement) => Effect.succeed(s),
-  createEvidence: (e: Evidence) => Effect.succeed(e),
+  update: (s: Statement) => Effect.succeed(s),
   findById: () => Effect.succeed(null),
   findByPublicFigureId: () => Effect.succeed([]),
   findByPositionId: () => Effect.succeed([]),
@@ -45,7 +44,6 @@ const fakeStatementRepo = {
   findLatest: () => Effect.succeed([]),
   findLatestReported: () => Effect.succeed([]),
   delete: () => Effect.succeed(undefined as void),
-  getEvidences: () => Effect.succeed([]),
 }
 
 const fakePositionRepo = {
@@ -82,7 +80,7 @@ const validParams = {
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
   quote: 'Une citation suffisamment longue pour être valide.',
-  factDate: '2024-01-15',
+  statedAt: '2024-01-15',
   statementRepo: fakeStatementRepo,
   positionRepo: fakePositionRepo,
   publicFigureRepo: fakePublicFigureRepo,
@@ -132,12 +130,12 @@ describe('createStatementUseCase', () => {
     const result = await createStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 0 },
-      factDate: 'pas-une-date',
+      statedAt: 'pas-une-date',
     })
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.factDate).toBeDefined()
+      expect(result.left.statedAt).toBeDefined()
     }
   })
 
@@ -195,10 +193,9 @@ describe('createStatementUseCase', () => {
     }
   })
 
-  it('should create statement, evidence and award reputation on success', async () => {
+  it('should create statement and award reputation on success', async () => {
     let reputationAdded = 0
     let createdStatement: Statement | null = null
-    let createdEvidence: Evidence | null = null
 
     const result = await createStatementUseCase({
       ...validParams,
@@ -208,10 +205,6 @@ describe('createStatementUseCase', () => {
         create: (s: Statement) => {
           createdStatement = s
           return Effect.succeed(s)
-        },
-        createEvidence: (e: Evidence) => {
-          createdEvidence = e
-          return Effect.succeed(e)
         },
       },
       reputationRepo: {
@@ -228,12 +221,11 @@ describe('createStatementUseCase', () => {
     if (Either.isRight(result)) {
       expect(result.right.publicFigureId).toBe('figure-1')
       expect(result.right.positionId).toBe('pos-1')
+      expect(result.right.sourceName).toBe('Le Monde')
+      expect(result.right.quote).toBe('Une citation suffisamment longue pour être valide.')
       expect(result.right.createdBy).toBe('abc')
     }
     expect(createdStatement).not.toBeNull()
-    expect(createdEvidence).not.toBeNull()
-    expect(createdEvidence!.statementId).toBe(createdStatement!.id)
-    expect(createdEvidence!.sourceName).toBe('Le Monde')
     expect(reputationAdded).toBe(50)
   })
 })

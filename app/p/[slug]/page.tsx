@@ -6,7 +6,6 @@ import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
-import { Evidence } from '../../../domain/entities/statement'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
 import Button from '../../../components/ui/Button'
@@ -52,21 +51,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 function groupBySubject(statements: StatementWithDetails[]) {
   return statements.reduce(
-    (acc, { statement, position, subject, evidences }) => {
+    (acc, { statement, position, subject }) => {
       if (!acc[subject.id]) {
-        acc[subject.id] = { subject, positions: [] }
+        acc[subject.id] = { subject, entries: [] }
       }
-      acc[subject.id].positions.push({ statement, position, evidences })
+      acc[subject.id].entries.push({ statement, position })
       return acc
     },
     {} as Record<
       string,
       {
         subject: StatementWithDetails['subject']
-        positions: {
+        entries: {
           statement: StatementWithDetails['statement']
           position: StatementWithDetails['position']
-          evidences: Evidence[]
         }[]
       }
     >,
@@ -92,8 +90,8 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
 
     const subjectsMap = groupBySubject(statements)
     const subjects = Object.values(subjectsMap).sort((a, b) => {
-      const latestA = Math.max(...a.positions.map((p) => p.statement.createdAt.getTime()))
-      const latestB = Math.max(...b.positions.map((p) => p.statement.createdAt.getTime()))
+      const latestA = Math.max(...a.entries.map((e) => e.statement.createdAt.getTime()))
+      const latestB = Math.max(...b.entries.map((e) => e.statement.createdAt.getTime()))
       return latestB - latestA
     })
 
@@ -149,34 +147,28 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
             <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
           ) : (
             <div className={styles.subjectsList}>
-              {subjects.map(({ subject, positions }) => (
+              {subjects.map(({ subject, entries }) => (
                 <div key={subject.id} className={styles.subjectItem}>
                   <Link href={`/p/${slug}/s/${subject.slug}`} className={styles.subjectContext}>
                     {subject.title}
                   </Link>
-                  {positions.map(({ statement, position, evidences }) => (
+                  {entries.map(({ statement, position }) => (
                     <div key={statement.id} className={styles.positionBlock}>
                       <h3 className={styles.positionTitle}>
                         <span className={styles.positionLabel}>Sa position :</span> {position.title}
                       </h3>
-                      {evidences.length > 0 && (
-                        <>
-                          <blockquote className={styles.quote}>{evidences[0].quote}</blockquote>
-                          {evidences[0].sourceUrl ? (
-                            <a
-                              href={evidences[0].sourceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.sourceLink}
-                            >
-                              Source : {evidences[0].sourceName}
-                            </a>
-                          ) : (
-                            <span className={styles.sourceLink}>
-                              Source : {evidences[0].sourceName}
-                            </span>
-                          )}
-                        </>
+                      <blockquote className={styles.quote}>{statement.quote}</blockquote>
+                      {statement.sourceUrl ? (
+                        <a
+                          href={statement.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.sourceLink}
+                        >
+                          Source : {statement.sourceName}
+                        </a>
+                      ) : (
+                        <span className={styles.sourceLink}>Source : {statement.sourceName}</span>
                       )}
                     </div>
                   ))}

@@ -105,13 +105,13 @@
   margin-bottom: 4px;
 }
 
-.evidenceItem {
+.statementItem {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid #eee;
 }
 
-.evidenceItem:first-child {
+.statementItem:first-child {
   margin-top: 15px;
   padding-top: 0;
   border-top: none;
@@ -140,7 +140,7 @@
   font-style: normal;
 }
 
-.evidenceMeta {
+.statementMeta {
   font-family: var(--font-gotham-book);
   font-size: 0.8em;
   color: var(--text-light);

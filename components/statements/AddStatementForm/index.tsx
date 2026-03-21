@@ -110,11 +110,11 @@ export default function AddStatementForm({ subjectId, slug, positions }: AddStat
       />
 
       <div className={styles.dateField}>
-        <label className={styles.dateLabel} htmlFor="factDate">
-          Date du fait
+        <label className={styles.dateLabel} htmlFor="statedAt">
+          Date de la déclaration
         </label>
-        <input className={styles.dateInput} id="factDate" name="factDate" type="date" required />
-        {fieldErrors?.factDate && <span className={styles.fieldError}>{fieldErrors.factDate}</span>}
+        <input className={styles.dateInput} id="statedAt" name="statedAt" type="date" required />
+        {fieldErrors?.statedAt && <span className={styles.fieldError}>{fieldErrors.statedAt}</span>}
       </div>
 
       <div className={styles.actions}>

@@ -46,7 +46,7 @@ describe('Reputation System', () => {
 
   describe('canPerform', () => {
     describe('actions available to Sophiste and Meteque (new users)', () => {
-      const newUserActions: Action[] = ['add_statement', 'add_evidence', 'add_position']
+      const newUserActions: Action[] = ['add_statement', 'add_position']
 
       for (const action of newUserActions) {
         it(`should allow ${action} for Sophiste (-400)`, () => {
@@ -67,12 +67,10 @@ describe('Reputation System', () => {
         'invite_user',
         'approve_subject',
         'approve_personality',
-        'approve_evidence',
         'approve_argument',
         'approve_position',
         'reject_subject',
         'reject_personality',
-        'reject_evidence',
         'reject_argument',
         'reject_position',
       ]
@@ -92,12 +90,13 @@ describe('Reputation System', () => {
       const idealisteActions: Action[] = [
         'delete_minor_subject',
         'delete_minor_personality',
-        'delete_evidence',
         'delete_argument',
         'delete_position',
         'edit_argument',
         'edit_subject',
         'edit_personality',
+        'edit_statement',
+        'edit_position',
       ]
 
       for (const action of idealisteActions) {
@@ -163,10 +162,6 @@ describe('Reputation System', () => {
 
     it('should return 50 for added_statement_validated', () => {
       expect(reputationReward('added_statement_validated')).toBe(50)
-    })
-
-    it('should return 50 for added_evidence_validated', () => {
-      expect(reputationReward('added_evidence_validated')).toBe(50)
     })
 
     it('should return 1 for linked_argument_to_statement', () => {

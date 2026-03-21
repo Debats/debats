@@ -143,57 +143,6 @@ export type Database = {
         }
         Relationships: []
       }
-      evidences: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          fact_date: string
-          id: string
-          quote: string
-          source_name: string
-          source_url: string | null
-          statement_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          fact_date: string
-          id?: string
-          quote: string
-          source_name: string
-          source_url?: string | null
-          statement_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          fact_date?: string
-          id?: string
-          quote?: string
-          source_name?: string
-          source_url?: string | null
-          statement_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "evidences_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "contributors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "evidences_statement_id_fkey"
-            columns: ["statement_id"]
-            isOneToOne: false
-            referencedRelation: "statements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invitations: {
         Row: {
           created_at: string | null
@@ -386,7 +335,10 @@ export type Database = {
           id: string
           position_id: string
           public_figure_id: string
-          taken_at: string
+          quote: string
+          source_name: string
+          source_url: string | null
+          stated_at: string
           updated_at: string | null
         }
         Insert: {
@@ -395,7 +347,10 @@ export type Database = {
           id?: string
           position_id: string
           public_figure_id: string
-          taken_at?: string
+          quote: string
+          source_name: string
+          source_url?: string | null
+          stated_at: string
           updated_at?: string | null
         }
         Update: {
@@ -404,7 +359,10 @@ export type Database = {
           id?: string
           position_id?: string
           public_figure_id?: string
-          taken_at?: string
+          quote?: string
+          source_name?: string
+          source_url?: string | null
+          stated_at?: string
           updated_at?: string | null
         }
         Relationships: [

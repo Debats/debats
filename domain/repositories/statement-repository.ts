@@ -1,5 +1,5 @@
 import { Context, Effect } from 'effect'
-import { Statement, Evidence, LatestStatement } from '../entities/statement'
+import { Statement, LatestStatement } from '../entities/statement'
 import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { PublicFigure } from '../entities/public-figure'
@@ -15,7 +15,6 @@ export interface StatementWithDetails {
   statement: Statement
   position: Position
   subject: Subject
-  evidences: Evidence[]
 }
 
 /**
@@ -55,7 +54,7 @@ export interface StatementRepository {
   findBySubjectWithFigures(subjectId: string): Effect.Effect<StatementWithFigure[], DatabaseError>
 
   /**
-   * Get the N most recent statements by taken_at date
+   * Get the N most recent statements by date
    */
   findLatest(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
 
@@ -66,11 +65,9 @@ export interface StatementRepository {
 
   create(statement: Statement): Effect.Effect<Statement, DatabaseError>
 
-  createEvidence(evidence: Evidence): Effect.Effect<Evidence, DatabaseError>
+  update(statement: Statement): Effect.Effect<Statement, DatabaseError>
 
   delete(id: string): Effect.Effect<void, DatabaseError>
-
-  getEvidences(statementId: string): Effect.Effect<Evidence[], DatabaseError>
 }
 
 export const StatementRepository = Context.GenericTag<StatementRepository>('StatementRepository')

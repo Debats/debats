@@ -34,7 +34,7 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
     sourceName: String(formData.get('sourceName') ?? ''),
     sourceUrl: String(formData.get('sourceUrl') ?? ''),
     quote: String(formData.get('quote') ?? ''),
-    factDate: String(formData.get('factDate') ?? ''),
+    statedAt: String(formData.get('statedAt') ?? ''),
     statementRepo: createStatementRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     publicFigureRepo,
