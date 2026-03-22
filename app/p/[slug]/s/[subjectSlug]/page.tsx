@@ -10,6 +10,8 @@ import {
   StatementWithDetails,
   StatementWithFigure,
 } from '../../../../../domain/repositories/statement-repository'
+import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
+import { canPerform } from '../../../../../domain/reputation/permissions'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../../../components/layout/ErrorDisplay'
@@ -148,10 +150,13 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
     if (!figure || !subject) notFound()
 
-    const [figureStatements, subjectStatements] = await Promise.all([
+    const [figureStatements, subjectStatements, contributor] = await Promise.all([
       Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
       Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+      getAuthenticatedContributor(),
     ])
+
+    const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
 
     const positionsMap = groupByPosition(figureStatements)
     const positions = Object.values(positionsMap)
@@ -238,6 +243,17 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                         )}
                         <span className={styles.metaSeparator}>&mdash;</span>
                         {formatDate(st.statedAt)}
+                        {canEdit && (
+                          <>
+                            <span className={styles.metaSeparator}>&mdash;</span>
+                            <Link
+                              href={`/p/${slug}/s/${subjectSlug}/modifier/${st.id}`}
+                              className={styles.editLink}
+                            >
+                              Modifier
+                            </Link>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

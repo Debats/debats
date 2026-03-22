@@ -1,18 +1,16 @@
 import { Either } from 'effect'
 import { Effect } from 'effect'
-import { createStatement, Statement } from '../entities/statement'
+import { updateStatement, Statement } from '../entities/statement'
 import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
-import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 
-type CreateStatementParams = {
+type UpdateStatementParams = {
   contributor: ContributorIdentity | null
-  subjectId: string
-  publicFigureId: string
+  statementId: string
   positionId: string
   sourceName: string
   sourceUrl: string
@@ -20,19 +18,17 @@ type CreateStatementParams = {
   statedAt: string
   statementRepo: StatementRepository
   positionRepo: PositionRepository
-  publicFigureRepo: PublicFigureRepository
   reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
 
-export async function createStatementUseCase(
-  params: CreateStatementParams,
+export async function updateStatementUseCase(
+  params: UpdateStatementParams,
 ): Promise<Either.Either<Statement, string | FieldErrors>> {
   const {
     contributor,
-    subjectId,
-    publicFigureId,
+    statementId,
     positionId,
     sourceName,
     sourceUrl,
@@ -40,7 +36,6 @@ export async function createStatementUseCase(
     statedAt,
     statementRepo,
     positionRepo,
-    publicFigureRepo,
     reputationRepo,
   } = params
 
@@ -48,9 +43,9 @@ export async function createStatementUseCase(
     return Either.left('Vous devez être connecté·e.')
   }
 
-  if (!canPerform(contributor.reputation, 'add_statement')) {
-    const rank = requiredRank('add_statement')
-    return Either.left(`Vous devez être ${rank} pour ajouter une prise de position.`)
+  if (!canPerform(contributor.reputation, 'edit_statement')) {
+    const rank = requiredRank('edit_statement')
+    return Either.left(`Vous devez être ${rank} pour modifier une prise de position.`)
   }
 
   const validationError = validateStatementFields({ sourceName, sourceUrl, quote, statedAt })
@@ -58,41 +53,44 @@ export async function createStatementUseCase(
     return Either.left(validationError)
   }
 
-  const publicFigure = await Effect.runPromise(publicFigureRepo.findById(publicFigureId))
-  if (!publicFigure) {
-    return Either.left('La personnalité sélectionnée est introuvable.')
+  const existing = await Effect.runPromise(statementRepo.findById(statementId))
+  if (!existing) {
+    return Either.left('Prise de position introuvable.')
   }
 
-  const position = await Effect.runPromise(positionRepo.findById(positionId))
-  if (!position) {
+  const newPosition = await Effect.runPromise(positionRepo.findById(positionId))
+  if (!newPosition) {
     return Either.left('La position sélectionnée est introuvable.')
   }
 
-  if (position.subjectId !== subjectId) {
-    return Either.left("La position sélectionnée n'appartient pas à ce sujet.")
+  if (positionId !== existing.positionId) {
+    const currentPosition = await Effect.runPromise(positionRepo.findById(existing.positionId))
+    if (currentPosition && newPosition.subjectId !== currentPosition.subjectId) {
+      return Either.left('La nouvelle position doit appartenir au même sujet.')
+    }
   }
 
-  const statement = createStatement({
-    publicFigureId,
-    positionId,
-    sourceName,
-    sourceUrl: sourceUrl || undefined,
-    quote,
-    statedAt: new Date(statedAt),
-    createdBy: contributor.id,
-  })
+  const updated = updateStatement(
+    { ...existing, positionId },
+    {
+      sourceName,
+      sourceUrl: sourceUrl || undefined,
+      quote,
+      statedAt: new Date(statedAt),
+    },
+  )
 
-  const created = await Effect.runPromise(statementRepo.create(statement))
+  const saved = await Effect.runPromise(statementRepo.update(updated))
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
       contributorId: contributor.id,
-      action: 'added_statement_validated',
-      amount: reputationReward('added_statement_validated'),
+      action: 'edited_statement',
+      amount: reputationReward('edited_statement'),
       relatedEntityType: 'statement',
-      relatedEntityId: created.id,
+      relatedEntityId: saved.id,
     }),
   )
 
-  return Either.right(created)
+  return Either.right(saved)
 }

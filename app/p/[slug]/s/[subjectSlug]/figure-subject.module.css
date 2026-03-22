@@ -160,6 +160,17 @@ a.sourceLink:hover {
   margin: 0 8px;
 }
 
+.editLink {
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 0.85em;
+}
+
+.editLink:hover {
+  color: var(--debats-red);
+  text-decoration: underline;
+}
+
 .allies {
   margin-top: 20px;
   padding-top: 15px;
