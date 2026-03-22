@@ -1,18 +1,12 @@
 import { Either } from 'effect'
-import * as S from 'effect/Schema'
 import { Effect } from 'effect'
-import { ArrayFormatter } from 'effect/ParseResult'
 import { createPublicFigure, generateSlug, PublicFigure } from '../entities/public-figure'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
-
-const CreatePublicFigureInput = S.Struct({
-  name: S.String.pipe(S.minLength(2), S.maxLength(100)),
-  presentation: S.String.pipe(S.minLength(10)),
-})
+import { validatePublicFigureFields } from './validate-public-figure-fields'
 
 type CreatePublicFigureParams = {
   contributor: ContributorIdentity | null
@@ -35,8 +29,7 @@ export type { FieldErrors }
 export async function validateCreatePublicFigure(
   params: CreatePublicFigureParams,
 ): Promise<Either.Either<void, string | FieldErrors>> {
-  const { contributor, name, notorietySources, publicFigureRepo, wikipediaValidator } = params
-  const wikipediaUrl = params.wikipediaUrl.trim()
+  const { contributor, name, publicFigureRepo } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -47,67 +40,21 @@ export async function validateCreatePublicFigure(
     return Either.left(`Vous devez être ${rank} pour proposer une nouvelle personnalité.`)
   }
 
-  const decoded = S.decodeUnknownEither(CreatePublicFigureInput, { errors: 'all' })({
+  const fieldErrors = await validatePublicFigureFields({
     name,
     presentation: params.presentation,
+    wikipediaUrl: params.wikipediaUrl,
+    notorietySources: params.notorietySources,
+    wikipediaValidator: params.wikipediaValidator,
   })
 
-  const fieldErrors: FieldErrors = {}
-
-  if (Either.isLeft(decoded)) {
-    const issues = ArrayFormatter.formatErrorSync(decoded.left)
-    for (const issue of issues) {
-      const field = issue.path.join('.')
-      if (field === 'name') {
-        fieldErrors.name = 'Le nom doit faire entre 2 et 100 caractères.'
-      } else if (field === 'presentation') {
-        fieldErrors.presentation = 'La présentation doit faire au moins 10 caractères.'
-      }
-    }
-  }
-
-  if (wikipediaUrl) {
-    if (!/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/.test(wikipediaUrl)) {
-      fieldErrors.wikipediaUrl =
-        'L\u2019URL Wikipedia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).'
-    }
-  } else {
-    const urlPattern = /^https?:\/\/.+/
-    if (notorietySources.length < 2) {
-      fieldErrors.notorietySources =
-        'Sans page Wikipedia, au moins 2 sources de notoriété sont requises.'
-    } else if (!notorietySources.every((url) => urlPattern.test(url))) {
-      fieldErrors.notorietySources =
-        'Les sources de notoriété doivent être des URLs valides (https://...).'
-    }
-  }
-
-  if (Object.keys(fieldErrors).length > 0) {
+  if (fieldErrors) {
     return Either.left(fieldErrors)
   }
 
   const existingBySlug = await Effect.runPromise(publicFigureRepo.findBySlug(generateSlug(name)))
   if (existingBySlug) {
     return Either.left({ name: 'Une personnalité avec ce nom existe déjà.' })
-  }
-
-  if (wikipediaUrl) {
-    try {
-      const wikiResult = await wikipediaValidator.validatePage(wikipediaUrl)
-      if (!wikiResult.exists) {
-        return Either.left({
-          wikipediaUrl: 'La page Wikipedia n\u2019existe pas.',
-        })
-      }
-      if (!wikiResult.isBiography) {
-        return Either.left({
-          wikipediaUrl: 'La page Wikipedia ne correspond pas à une biographie.',
-        })
-      }
-    } catch {
-      // Mode gracieux : si le validateur échoue (timeout, erreur réseau),
-      // on accepte l'URL quand même. Seuls les refus explicites bloquent.
-    }
   }
 
   return Either.right(undefined)

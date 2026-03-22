@@ -7,6 +7,7 @@ import { createPublicFigureRepository } from '../../../infra/database/public-fig
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
+import { canPerform } from '../../../domain/reputation/permissions'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
 import Button from '../../../components/ui/Button'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
@@ -134,6 +135,11 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
               >
                 Ajouter une prise de position
               </Button>
+              {canPerform(contributor.reputation, 'edit_personality') && (
+                <Button href={`/p/${slug}/modifier`} variant="secondary">
+                  Modifier la personnalité
+                </Button>
+              )}
             </div>
           )}
         </header>
