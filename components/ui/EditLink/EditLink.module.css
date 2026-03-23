@@ -1,0 +1,12 @@
+.editLink {
+  font-family: var(--font-gotham-book);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.editLink:hover {
+  color: var(--debats-red);
+  text-decoration: underline;
+}

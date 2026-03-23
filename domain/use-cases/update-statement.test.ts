@@ -57,6 +57,7 @@ const fakePositionRepo = {
     Effect.succeed(allPositions.find((p) => p.id === id) ?? null),
   findBySubjectId: () => Effect.succeed([]),
   create: (p: Position) => Effect.succeed(p),
+  update: (p: Position) => Effect.succeed(p),
 }
 
 const fakeReputationRepo = {

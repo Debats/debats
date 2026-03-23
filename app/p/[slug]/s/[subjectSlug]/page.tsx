@@ -12,6 +12,7 @@ import {
 } from '../../../../../domain/repositories/statement-repository'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
+import EditLink from '../../../../../components/ui/EditLink'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../../../components/layout/ErrorDisplay'
@@ -246,12 +247,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                         {canEdit && (
                           <>
                             <span className={styles.metaSeparator}>&mdash;</span>
-                            <Link
-                              href={`/p/${slug}/s/${subjectSlug}/modifier/${st.id}`}
-                              className={styles.editLink}
-                            >
-                              Modifier
-                            </Link>
+                            <EditLink href={`/p/${slug}/s/${subjectSlug}/modifier/${st.id}`} />
                           </>
                         )}
                       </div>

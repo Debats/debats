@@ -91,5 +91,33 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
         },
         catch: (error) => dbError('Failed to create position', error),
       }),
+
+    update: (position: Position) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('positions')
+            .update({
+              title: position.title,
+              description: position.description,
+            })
+            .eq('id', position.id)
+            .select()
+            .single()
+
+          if (error) throw error
+
+          return Position.make({
+            id: PositionId.make(data.id),
+            title: PositionTitle.make(data.title),
+            description: data.description,
+            subjectId: data.subject_id,
+            createdBy: data.created_by ?? undefined,
+            createdAt: new Date(data.created_at),
+            updatedAt: new Date(data.updated_at),
+          })
+        },
+        catch: (error) => dbError('Failed to update position', error),
+      }),
   }
 }

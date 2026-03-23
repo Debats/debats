@@ -50,6 +50,7 @@ const fakePositionRepo = {
   findById: () => Effect.succeed(fakePosition as Position | null),
   findBySubjectId: () => Effect.succeed([fakePosition]),
   create: (p: Position) => Effect.succeed(p),
+  update: (p: Position) => Effect.succeed(p),
 }
 
 const fakePublicFigureRepo = {
