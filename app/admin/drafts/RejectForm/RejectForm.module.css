@@ -1,0 +1,26 @@
+.container {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--debats-red);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}

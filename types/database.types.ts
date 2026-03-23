@@ -143,6 +143,63 @@ export type Database = {
         }
         Relationships: []
       }
+      draft_statements: {
+        Row: {
+          ai_notes: string | null
+          created_at: string
+          date: string
+          id: string
+          position_data: Json | null
+          position_title: string
+          public_figure_data: Json | null
+          public_figure_name: string
+          quote: string
+          rejection_note: string | null
+          source_name: string
+          source_url: string
+          status: string
+          subject_data: Json | null
+          subject_title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_notes?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          position_data?: Json | null
+          position_title: string
+          public_figure_data?: Json | null
+          public_figure_name: string
+          quote: string
+          rejection_note?: string | null
+          source_name: string
+          source_url: string
+          status?: string
+          subject_data?: Json | null
+          subject_title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_notes?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          position_data?: Json | null
+          position_title?: string
+          public_figure_data?: Json | null
+          public_figure_name?: string
+          quote?: string
+          rejection_note?: string | null
+          source_name?: string
+          source_url?: string
+          status?: string
+          subject_data?: Json | null
+          subject_title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           created_at: string | null

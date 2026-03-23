@@ -111,7 +111,11 @@ describe('Reputation System', () => {
     })
 
     describe('actions requiring Fondateur rank (1000000+)', () => {
-      const fondateurActions: Action[] = ['delete_major_subject', 'delete_major_personality']
+      const fondateurActions: Action[] = [
+        'delete_major_subject',
+        'delete_major_personality',
+        'admin',
+      ]
 
       for (const action of fondateurActions) {
         it(`should deny ${action} for Idealiste (999999)`, () => {

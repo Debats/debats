@@ -1,0 +1,28 @@
+.details {
+  background-color: #f8f6f0;
+  border-left: 3px solid #e0dcd3;
+  border-radius: 0 4px 4px 0;
+  margin-top: 8px;
+}
+
+.summary {
+  font-family: var(--font-gotham-bold);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.content {
+  padding: 0 12px 10px;
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dark);
+}
+
+.content p {
+  margin: 4px 0;
+}

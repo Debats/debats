@@ -62,6 +62,7 @@ const ACTIONS = {
   // Fondateur (1000000+)
   delete_major_subject: Rank.Fondateur,
   delete_major_personality: Rank.Fondateur,
+  admin: Rank.Fondateur,
 } as const
 
 export type Action = keyof typeof ACTIONS

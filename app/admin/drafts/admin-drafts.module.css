@@ -1,0 +1,32 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 30px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.8em;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--debats-red);
+  margin: 0 0 30px 0;
+}
+
+.accessDenied {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  color: var(--text-light);
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  color: var(--text-light);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
