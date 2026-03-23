@@ -31,6 +31,7 @@ export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStateme
     positionData: {
       description: 'Régulariser les travailleurs sans-papiers présents sur le territoire.',
     },
+    origin: 'test',
     status: 'pending',
     rejectionNote: null,
     createdAt: new Date(),

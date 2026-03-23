@@ -149,6 +149,7 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          origin: string
           position_data: Json | null
           position_title: string
           public_figure_data: Json | null
@@ -167,6 +168,7 @@ export type Database = {
           created_at?: string
           date: string
           id?: string
+          origin: string
           position_data?: Json | null
           position_title: string
           public_figure_data?: Json | null
@@ -185,6 +187,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          origin?: string
           position_data?: Json | null
           position_title?: string
           public_figure_data?: Json | null

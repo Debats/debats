@@ -70,6 +70,7 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
           {draft.sourceName}
         </a>
         <span className={styles.date}>{draft.date}</span>
+        {draft.origin && <span className={styles.origin}>{draft.origin}</span>}
       </div>
 
       {draft.aiNotes && <p className={styles.aiNotes}>{draft.aiNotes}</p>}

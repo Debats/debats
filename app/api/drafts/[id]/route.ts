@@ -17,6 +17,7 @@ const ALLOWED_FIELDS = new Set([
   'subjectData',
   'positionData',
   'rejectionNote',
+  'origin',
 ])
 
 export async function PATCH(

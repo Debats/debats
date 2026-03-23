@@ -42,6 +42,7 @@ const REQUIRED_FIELDS = [
   'sourceUrl',
   'quote',
   'date',
+  'origin',
 ] as const
 
 function validateDraftInput(
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
     public_figure_data: (d.publicFigureData as Json) ?? null,
     subject_data: (d.subjectData as Json) ?? null,
     position_data: (d.positionData as Json) ?? null,
+    origin: d.origin as string,
   }))
 
   const { data, error } = await supabase.from('draft_statements').insert(rows).select('id')

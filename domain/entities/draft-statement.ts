@@ -21,6 +21,7 @@ export type DraftStatement = {
   positionData: {
     description: string
   } | null
+  origin: string
   status: 'pending' | 'validated' | 'rejected'
   rejectionNote: string | null
   createdAt: Date

@@ -25,6 +25,7 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
     publicFigureData: (row.public_figure_data as DraftStatement['publicFigureData']) ?? null,
     subjectData: (row.subject_data as DraftStatement['subjectData']) ?? null,
     positionData: (row.position_data as DraftStatement['positionData']) ?? null,
+    origin: row.origin as string,
     status: row.status as DraftStatement['status'],
     rejectionNote: (row.rejection_note as string) ?? null,
     createdAt: new Date(row.created_at as string),
@@ -103,6 +104,7 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
           if (fields.subjectData !== undefined) row.subject_data = fields.subjectData
           if (fields.positionData !== undefined) row.position_data = fields.positionData
           if (fields.rejectionNote !== undefined) row.rejection_note = fields.rejectionNote
+          if (fields.origin !== undefined) row.origin = fields.origin
 
           const { data, error } = await supabase
             .from('draft_statements')

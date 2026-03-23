@@ -40,6 +40,15 @@
   color: var(--text-light);
 }
 
+.origin {
+  font-family: var(--font-gotham-book);
+  font-size: 11px;
+  color: var(--text-light);
+  background: var(--bg-gray);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
 .aiNotes {
   font-family: var(--font-gotham-book);
   font-size: 12px;
