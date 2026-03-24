@@ -22,7 +22,7 @@ export type DraftStatement = {
     description: string
   } | null
   origin: string
-  status: 'pending' | 'validated' | 'rejected'
+  status: 'pending' | 'validated' | 'rejected' | 'revision_requested'
   rejectionNote: string | null
   createdAt: Date
   updatedAt: Date

@@ -35,34 +35,20 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
 
 export function createDraftStatementRepository(supabase: SupabaseClient): DraftStatementRepository {
   return {
-    findAllPending: () =>
+    findByStatus: (status: DraftStatement['status']) =>
       Effect.tryPromise({
         try: async () => {
+          const orderColumn = status === 'pending' ? 'created_at' : 'updated_at'
           const { data, error } = await supabase
             .from('draft_statements')
             .select('*')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
+            .eq('status', status)
+            .order(orderColumn, { ascending: false })
 
           if (error) throw error
           return data.map(mapRow)
         },
-        catch: (error) => dbError('Failed to fetch pending drafts', error),
-      }),
-
-    findAllRejected: () =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('draft_statements')
-            .select('*')
-            .eq('status', 'rejected')
-            .order('updated_at', { ascending: false })
-
-          if (error) throw error
-          return data.map(mapRow)
-        },
-        catch: (error) => dbError('Failed to fetch rejected drafts', error),
+        catch: (error) => dbError(`Failed to fetch ${status} drafts`, error),
       }),
 
     findById: (id: string) =>
@@ -119,7 +105,11 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         catch: (error) => dbError('Failed to update draft', error),
       }),
 
-    updateStatus: (id: string, status: 'validated' | 'rejected', rejectionNote?: string) =>
+    updateStatus: (
+      id: string,
+      status: 'validated' | 'rejected' | 'revision_requested',
+      rejectionNote?: string,
+    ) =>
       Effect.tryPromise({
         try: async () => {
           const { error } = await supabase

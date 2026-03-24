@@ -11,9 +11,10 @@ export async function GET(request: NextRequest) {
   }
 
   const status = request.nextUrl.searchParams.get('status') ?? 'pending'
-  if (status !== 'pending' && status !== 'rejected') {
+  const validStatuses = ['pending', 'rejected', 'revision_requested'] as const
+  if (!validStatuses.includes(status as (typeof validStatuses)[number])) {
     return NextResponse.json(
-      { error: 'Invalid status. Use "pending" or "rejected".' },
+      { error: 'Invalid status. Use "pending", "rejected" or "revision_requested".' },
       { status: 400 },
     )
   }
@@ -22,9 +23,7 @@ export async function GET(request: NextRequest) {
   const draftRepo = createDraftStatementRepository(supabase)
 
   const result = await Effect.runPromise(
-    Effect.either(
-      status === 'pending' ? draftRepo.findAllPending() : draftRepo.findAllRejected(),
-    ),
+    Effect.either(draftRepo.findByStatus(status as (typeof validStatuses)[number])),
   )
 
   if (result._tag === 'Left') {

@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/nextjs'
 import { DraftStatement } from '../../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../../domain/use-cases/resolve-draft'
 import { validateDraftAction, ActionResult } from '../../../actions/validate-draft-action'
-import { rejectDraftAction } from '../../../actions/reject-draft-action'
+import { rejectDraftAction, requestRevisionAction } from '../../../actions/reject-draft-action'
 import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
 import CreationPreview from '../CreationPreview'
@@ -53,6 +53,11 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
 
   const handleReject = useCallback(
     (note: string) => executeAction(() => rejectDraftAction(draft.id, note)),
+    [draft.id, executeAction],
+  )
+
+  const handleRequestRevision = useCallback(
+    (note: string) => executeAction(() => requestRevisionAction(draft.id, note)),
     [draft.id, executeAction],
   )
 
@@ -127,6 +132,7 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
       {showRejectForm && (
         <RejectForm
           onReject={handleReject}
+          onRequestRevision={handleRequestRevision}
           onCancel={() => setShowRejectForm(false)}
           disabled={isPending}
         />

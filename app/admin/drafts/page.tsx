@@ -37,7 +37,7 @@ export default async function AdminDraftsPage() {
   const subjectRepo = createSubjectRepository(supabase)
   const positionRepo = createPositionRepository(supabase)
 
-  const drafts = await Effect.runPromise(draftRepo.findAllPending())
+  const drafts = await Effect.runPromise(draftRepo.findByStatus('pending'))
 
   const draftsWithResolution: DraftWithResolution[] = await Promise.all(
     drafts.map(async (draft) => {

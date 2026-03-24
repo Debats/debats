@@ -3,8 +3,7 @@ import { DraftStatement } from '../entities/draft-statement'
 import { DatabaseError } from './errors'
 
 export interface DraftStatementRepository {
-  findAllPending(): Effect.Effect<DraftStatement[], DatabaseError>
-  findAllRejected(): Effect.Effect<DraftStatement[], DatabaseError>
+  findByStatus(status: DraftStatement['status']): Effect.Effect<DraftStatement[], DatabaseError>
   findById(id: string): Effect.Effect<DraftStatement | null, DatabaseError>
   update(
     id: string,
@@ -12,7 +11,7 @@ export interface DraftStatementRepository {
   ): Effect.Effect<DraftStatement, DatabaseError>
   updateStatus(
     id: string,
-    status: 'validated' | 'rejected',
+    status: 'validated' | 'rejected' | 'revision_requested',
     rejectionNote?: string,
   ): Effect.Effect<void, DatabaseError>
 }

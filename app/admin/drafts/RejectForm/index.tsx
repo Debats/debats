@@ -6,16 +6,26 @@ import styles from './RejectForm.module.css'
 
 interface RejectFormProps {
   onReject: (note: string) => Promise<void>
+  onRequestRevision: (note: string) => Promise<void>
   onCancel: () => void
   disabled: boolean
 }
 
-export default function RejectForm({ onReject, onCancel, disabled }: RejectFormProps) {
+export default function RejectForm({
+  onReject,
+  onRequestRevision,
+  onCancel,
+  disabled,
+}: RejectFormProps) {
   const [note, setNote] = useState('')
 
-  const handleSubmit = useCallback(async () => {
+  const handleReject = useCallback(async () => {
     await onReject(note)
   }, [note, onReject])
+
+  const handleRequestRevision = useCallback(async () => {
+    await onRequestRevision(note)
+  }, [note, onRequestRevision])
 
   return (
     <div className={styles.container}>
@@ -23,17 +33,25 @@ export default function RejectForm({ onReject, onCancel, disabled }: RejectFormP
         className={styles.textarea}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Raison du rejet (obligatoire)…"
+        placeholder="Commentaire (obligatoire)…"
         rows={3}
       />
       <div className={styles.actions}>
         <Button
-          variant="danger"
+          variant="secondary"
           size="small"
-          onClick={handleSubmit}
+          onClick={handleRequestRevision}
           disabled={!note.trim() || disabled}
         >
-          Confirmer le rejet
+          Demander une révision
+        </Button>
+        <Button
+          variant="danger"
+          size="small"
+          onClick={handleReject}
+          disabled={!note.trim() || disabled}
+        >
+          Rejeter définitivement
         </Button>
         <Button variant="link" size="small" onClick={onCancel} disabled={disabled}>
           Annuler
