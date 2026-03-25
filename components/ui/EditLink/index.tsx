@@ -9,6 +9,7 @@ interface EditLinkProps {
 export default function EditLink({ href, label = 'Modifier' }: EditLinkProps) {
   return (
     <Link href={href} className={styles.editLink}>
+      <span className={styles.icon}>✎</span>
       {label}
     </Link>
   )

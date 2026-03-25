@@ -9,7 +9,6 @@ import { StatementWithFigure } from '../../../domain/repositories/statement-repo
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
-import EditLink from '../../../components/ui/EditLink'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
 import SubjectActions from '../../../components/subjects/SubjectActions'
 import Button from '../../../components/ui/Button'
@@ -99,7 +98,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
     const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
     const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
-    const canEditPosition = !!contributor && canPerform(contributor.reputation, 'edit_position')
     const major = isMajorSubject(subject, stats.statementsCount)
     const canDelete =
       !!contributor &&
@@ -167,9 +165,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
                     >
                       {position.title}
                     </Link>
-                    {canEditPosition && (
-                      <EditLink href={`/s/${slug}/position/${position.id}/modifier`} />
-                    )}
                   </h3>
                   <p className={styles.positionDescription}>{position.description}</p>
                   <a href="#" className={styles.viewArguments}>

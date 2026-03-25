@@ -1,5 +1,6 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
@@ -10,6 +11,7 @@ import type { ActionResult } from './validate-draft-action'
 export async function mergePositionsAction(
   sourcePositionId: string,
   targetPositionId: string,
+  subjectSlug: string,
 ): Promise<ActionResult> {
   const contributor = await getAdminContributor()
   if (!contributor) {
@@ -29,5 +31,5 @@ export async function mergePositionsAction(
     return { success: false, error: result.left }
   }
 
-  return { success: true }
+  redirect(`/s/${subjectSlug}/position/${targetPositionId}`)
 }

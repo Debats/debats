@@ -8,6 +8,7 @@
 /.direnv
 /.env.local
 /.env.production
+TODO.md
 
 # Build artifacts
 tsconfig.tsbuildinfo

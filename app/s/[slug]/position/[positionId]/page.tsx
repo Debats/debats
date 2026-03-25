@@ -8,9 +8,8 @@ import { createPositionRepository } from '../../../../../infra/database/position
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
-import { getAdminContributor } from '../../../../actions/admin-guard'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
-import EditLink from '../../../../../components/ui/EditLink'
+import AdminMenu from '../../../../../components/ui/AdminMenu'
 import Button from '../../../../../components/ui/Button'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../../../components/layout/ErrorDisplay'
@@ -50,11 +49,10 @@ export default async function PositionDetailPage({ params }: PageProps) {
     const positionRepo = createPositionRepository(supabase)
     const statementRepo = createStatementRepository(supabase)
 
-    const [subject, position, contributor, admin] = await Promise.all([
+    const [subject, position, contributor] = await Promise.all([
       Effect.runPromise(subjectRepo.findBySlug(slug)),
       Effect.runPromise(positionRepo.findById(positionId)),
       getAuthenticatedContributor(),
-      getAdminContributor(),
     ])
 
     if (!subject) notFound()
@@ -71,6 +69,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
       .map((p) => ({ id: p.id, title: p.title }))
 
     const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_position')
+    const isAdmin = !!contributor && canPerform(contributor.reputation, 'admin')
 
     return (
       <ContentWithSidebar topMargin>
@@ -83,10 +82,32 @@ export default async function PositionDetailPage({ params }: PageProps) {
         </nav>
 
         <header className={styles.header}>
-          <h1 className={styles.title}>
-            {position.title}
-            {canEdit && <EditLink href={`/s/${slug}/position/${positionId}/modifier`} />}
-          </h1>
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>{position.title}</h1>
+            {(canEdit || isAdmin) && (
+              <AdminMenu
+                actions={[
+                  ...(canEdit
+                    ? [
+                        {
+                          label: 'Modifier',
+                          icon: '✎',
+                          href: `/s/${slug}/position/${positionId}/modifier`,
+                        },
+                      ]
+                    : []),
+                ]}
+              >
+                {isAdmin && otherPositions.length > 0 && (
+                  <MergePositionForm
+                    sourcePositionId={positionId}
+                    subjectSlug={slug}
+                    otherPositions={otherPositions}
+                  />
+                )}
+              </AdminMenu>
+            )}
+          </div>
           <p className={styles.description}>{position.description}</p>
         </header>
 
@@ -144,14 +165,6 @@ export default async function PositionDetailPage({ params }: PageProps) {
               Ajouter une prise de position
             </Button>
           </div>
-        )}
-
-        {admin && otherPositions.length > 0 && (
-          <MergePositionForm
-            sourcePositionId={positionId}
-            subjectSlug={slug}
-            otherPositions={otherPositions}
-          />
         )}
       </ContentWithSidebar>
     )

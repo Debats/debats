@@ -43,13 +43,13 @@ export default async function EditPositionPage({ params }: PageProps) {
     if (!position) notFound()
     if (position.subjectId !== subject.id) notFound()
 
-    const returnHref = `/s/${slug}`
+    const returnHref = `/s/${slug}/position/${positionId}`
 
     return (
       <ContentWithSidebar topMargin>
         <FormPageHeader
           backHref={returnHref}
-          backLabel="Retour au sujet"
+          backLabel="Retour à la position"
           title="Modifier la position"
           subtitle={`${position.title} — ${subject.title}`}
         />
