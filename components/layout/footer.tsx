@@ -1,7 +1,10 @@
 import Link from 'next/link'
+import { getAdminContributor } from '../../app/actions/admin-guard'
 import styles from './footer.module.css'
 
-export default function Footer() {
+export default async function Footer() {
+  const admin = await getAdminContributor()
+
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
@@ -20,6 +23,13 @@ export default function Footer() {
         <div className={styles.navigation}>
           <nav>
             <ul className={styles.navList}>
+              {admin && (
+                <li className={styles.navItem}>
+                  <Link href="/admin/drafts" className={styles.navLink}>
+                    Brouillons
+                  </Link>
+                </li>
+              )}
               <li className={styles.navItem}>
                 <Link href="/a-propos" className={styles.navLink}>
                   À propos
