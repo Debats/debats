@@ -7,4 +7,6 @@ export interface PositionRepository {
   findBySubjectId(subjectId: string): Effect.Effect<Position[], DatabaseError>
   create(position: Position): Effect.Effect<Position, DatabaseError>
   update(position: Position): Effect.Effect<Position, DatabaseError>
+  delete(id: string): Effect.Effect<void, DatabaseError>
+  mergeInto(sourceId: string, targetId: string): Effect.Effect<void, DatabaseError>
 }

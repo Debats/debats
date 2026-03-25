@@ -19,11 +19,12 @@ const existingPosition = createPosition({
 })
 
 const fakePositionRepo = {
-  findById: (id: string) =>
-    Effect.succeed(id === existingPosition.id ? existingPosition : null),
+  findById: (id: string) => Effect.succeed(id === existingPosition.id ? existingPosition : null),
   findBySubjectId: () => Effect.succeed([existingPosition]),
   create: (p: Position) => Effect.succeed(p),
   update: (p: Position) => Effect.succeed(p),
+  delete: () => Effect.succeed(undefined as void),
+  mergeInto: () => Effect.succeed(undefined as void),
 }
 
 const fakeReputationRepo = {

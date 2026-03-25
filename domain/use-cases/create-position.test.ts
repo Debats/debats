@@ -19,6 +19,8 @@ const fakePositionRepo = {
   findBySubjectId: () => Effect.succeed([] as Position[]),
   create: (p: Position) => Effect.succeed(p),
   update: (p: Position) => Effect.succeed(p),
+  delete: () => Effect.succeed(undefined as void),
+  mergeInto: () => Effect.succeed(undefined as void),
 }
 
 const fakeSubjectRepo = {

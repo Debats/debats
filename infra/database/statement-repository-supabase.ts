@@ -161,6 +161,38 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements', error),
       }),
 
+    findByPositionIdWithFigures: (positionId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select(
+              `
+            id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
+            created_by, created_at, updated_at,
+            positions!inner (
+              id, title, description, subject_id, created_by, created_at, updated_at
+            ),
+            public_figures!inner (
+              id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
+              created_by, created_at, updated_at
+            )
+          `,
+            )
+            .eq('position_id', positionId)
+            .order('stated_at', { ascending: false })
+
+          if (error) throw error
+
+          return data.map((row) => ({
+            statement: mapStatementRow(row),
+            position: mapPositionRow(row.positions),
+            publicFigure: mapPublicFigureRow(row.public_figures),
+          }))
+        },
+        catch: (error) => dbError('Failed to fetch statements with figures for position', error),
+      }),
+
     findByPublicFigureWithDetails: (publicFigureId: string) =>
       Effect.tryPromise({
         try: async () => {

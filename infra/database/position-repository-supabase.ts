@@ -119,5 +119,26 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
         },
         catch: (error) => dbError('Failed to update position', error),
       }),
+
+    delete: (id: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase.from('positions').delete().eq('id', id)
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to delete position', error),
+      }),
+
+    mergeInto: (sourceId: string, targetId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase.rpc('merge_positions', {
+            source_id: sourceId,
+            target_id: targetId,
+          })
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to merge positions', error),
+      }),
   }
 }

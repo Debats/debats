@@ -87,6 +87,15 @@
   gap: 12px;
 }
 
+.positionLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.positionLink:hover {
+  color: var(--debats-red);
+}
+
 .positionDescription {
   font-family: var(--font-gotham-book);
   font-size: 0.9em;

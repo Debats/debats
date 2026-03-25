@@ -161,7 +161,12 @@ export default async function SubjectDetailPage({ params }: PageProps) {
               {positions.map(({ position, figures }) => (
                 <div key={position.id} className={styles.positionItem}>
                   <h3 className={styles.positionTitle}>
-                    {position.title}
+                    <Link
+                      href={`/s/${slug}/position/${position.id}`}
+                      className={styles.positionLink}
+                    >
+                      {position.title}
+                    </Link>
                     {canEditPosition && (
                       <EditLink href={`/s/${slug}/position/${position.id}/modifier`} />
                     )}

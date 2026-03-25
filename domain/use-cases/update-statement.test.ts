@@ -38,10 +38,10 @@ const existingStatement = createStatement({
 const allPositions = [existingPosition, anotherPosition, positionOnOtherSubject]
 
 const fakeStatementRepo = {
-  findById: (id: string) =>
-    Effect.succeed(id === existingStatement.id ? existingStatement : null),
+  findById: (id: string) => Effect.succeed(id === existingStatement.id ? existingStatement : null),
   findByPublicFigureId: () => Effect.succeed([]),
   findByPositionId: () => Effect.succeed([]),
+  findByPositionIdWithFigures: () => Effect.succeed([]),
   findByPublicFigureWithDetails: () => Effect.succeed([]),
   findByPublicFigureAndSubject: () => Effect.succeed([]),
   findBySubjectWithFigures: () => Effect.succeed([]),
@@ -53,11 +53,12 @@ const fakeStatementRepo = {
 }
 
 const fakePositionRepo = {
-  findById: (id: string) =>
-    Effect.succeed(allPositions.find((p) => p.id === id) ?? null),
+  findById: (id: string) => Effect.succeed(allPositions.find((p) => p.id === id) ?? null),
   findBySubjectId: () => Effect.succeed([]),
   create: (p: Position) => Effect.succeed(p),
   update: (p: Position) => Effect.succeed(p),
+  delete: () => Effect.succeed(undefined as void),
+  mergeInto: () => Effect.succeed(undefined as void),
 }
 
 const fakeReputationRepo = {

@@ -1,0 +1,49 @@
+.container {
+  margin-top: 30px;
+  padding: 16px;
+  border: 1px solid #e0dcd3;
+  border-radius: 4px;
+  background-color: #fdf8f4;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #c62828;
+  margin: 0 0 6px 0;
+}
+
+.description {
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  color: var(--text-light);
+  margin: 0 0 12px 0;
+}
+
+.form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  flex: 1;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--debats-red);
+}
+
+.error {
+  font-size: 12px;
+  color: #c62828;
+  margin-top: 8px;
+}

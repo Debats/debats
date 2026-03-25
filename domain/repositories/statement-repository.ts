@@ -33,6 +33,10 @@ export interface StatementRepository {
 
   findByPositionId(positionId: string): Effect.Effect<Statement[], DatabaseError>
 
+  findByPositionIdWithFigures(
+    positionId: string,
+  ): Effect.Effect<StatementWithFigure[], DatabaseError>
+
   /**
    * Get all statements for a public figure with position and subject details
    */
