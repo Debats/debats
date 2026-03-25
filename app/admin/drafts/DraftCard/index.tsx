@@ -7,10 +7,15 @@ import { DraftStatement } from '../../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../../domain/use-cases/resolve-draft'
 import { validateDraftAction, ActionResult } from '../../../actions/validate-draft-action'
 import { rejectDraftAction, requestRevisionAction } from '../../../actions/reject-draft-action'
+import {
+  amendAndValidateDraftAction,
+  DraftAmendments,
+} from '../../../actions/amend-and-validate-draft-action'
 import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
 import CreationPreview from '../CreationPreview'
 import RejectForm from '../RejectForm'
+import DraftAmendForm from '../DraftAmendForm'
 import styles from './DraftCard.module.css'
 
 interface DraftCardProps {
@@ -23,6 +28,7 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string>()
   const [showRejectForm, setShowRejectForm] = useState(false)
+  const [showAmendForm, setShowAmendForm] = useState(false)
 
   const executeAction = useCallback(
     async (action: () => Promise<ActionResult>) => {
@@ -58,6 +64,12 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
 
   const handleRequestRevision = useCallback(
     (note: string) => executeAction(() => requestRevisionAction(draft.id, note)),
+    [draft.id, executeAction],
+  )
+
+  const handleAmendAndValidate = useCallback(
+    (amendments: DraftAmendments) =>
+      executeAction(() => amendAndValidateDraftAction(draft.id, amendments)),
     [draft.id, executeAction],
   )
 
@@ -122,12 +134,36 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
         <Button
           variant="secondary"
           size="small"
-          onClick={() => setShowRejectForm(!showRejectForm)}
+          onClick={() => {
+            setShowAmendForm(!showAmendForm)
+            setShowRejectForm(false)
+          }}
+          disabled={isPending}
+        >
+          Amender
+        </Button>
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={() => {
+            setShowRejectForm(!showRejectForm)
+            setShowAmendForm(false)
+          }}
           disabled={isPending}
         >
           Rejeter
         </Button>
       </div>
+
+      {showAmendForm && (
+        <DraftAmendForm
+          draft={draft}
+          resolution={resolution}
+          onSubmit={handleAmendAndValidate}
+          onCancel={() => setShowAmendForm(false)}
+          disabled={isPending}
+        />
+      )}
 
       {showRejectForm && (
         <RejectForm

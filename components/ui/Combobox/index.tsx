@@ -17,7 +17,7 @@ interface ComboboxProps {
   required?: boolean
   requiredMessage?: string
   onSearch: (query: string) => Promise<ComboboxItem[]>
-  onSelect?: (id: string) => void
+  onSelect?: (id: string, label: string) => void
   debounceMs?: number
   initialItem?: ComboboxItem
 }
@@ -100,7 +100,7 @@ export default function Combobox({
       const newId = item ? item.id : ''
       setSelectedId(newId)
       updateValidity(!!newId)
-      if (onSelect) onSelect(newId)
+      if (onSelect) onSelect(newId, item?.label ?? '')
     },
   })
 
