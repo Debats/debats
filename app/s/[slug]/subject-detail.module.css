@@ -2,6 +2,12 @@
   margin-bottom: 40px;
 }
 
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .title {
   font-family: var(--font-gotham-bold);
   font-size: 1.8em;

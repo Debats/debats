@@ -8,13 +8,13 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border: 1px solid var(--border-light);
   border-radius: 4px;
   background: white;
   color: var(--text-light);
   font-family: var(--font-gotham-book);
-  font-size: 11px;
+  font-size: 0.85rem;
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -30,7 +30,7 @@
 }
 
 .triggerIcon {
-  font-size: 12px;
+  font-size: 1rem;
   line-height: 1;
 }
 
@@ -59,13 +59,13 @@
 .action {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: none;
   background: none;
   font-family: var(--font-gotham-book);
-  font-size: 13px;
+  font-size: 0.9rem;
   color: var(--text-dark);
   text-decoration: none;
   cursor: pointer;
@@ -86,8 +86,8 @@
 }
 
 .actionIcon {
-  font-size: 13px;
-  width: 18px;
+  font-size: 1.4rem;
+  width: 1.5rem;
   text-align: center;
   flex-shrink: 0;
 }

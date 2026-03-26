@@ -9,6 +9,7 @@ import { StatementWithDetails } from '../../../domain/repositories/statement-rep
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
+import AdminMenu from '../../../components/ui/AdminMenu'
 import Button from '../../../components/ui/Button'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../components/layout/ErrorDisplay'
@@ -129,16 +130,16 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
             )}
           </div>
           {contributor && (
-            <div>
+            <div className={styles.headerActions}>
               <Button
                 href={`/nouvelle-prise-de-position?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`}
               >
                 Ajouter une prise de position
               </Button>
               {canPerform(contributor.reputation, 'edit_personality') && (
-                <Button href={`/p/${slug}/modifier`} variant="secondary">
-                  Modifier la personnalité
-                </Button>
+                <AdminMenu
+                  actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]}
+                />
               )}
             </div>
           )}

@@ -10,8 +10,8 @@ import { isMajorSubject } from '../../../domain/entities/subject'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
-import SubjectActions from '../../../components/subjects/SubjectActions'
 import Button from '../../../components/ui/Button'
+import SubjectAdminMenu from './SubjectAdminMenu'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../components/layout/ErrorDisplay'
 import styles from './subject-detail.module.css'
@@ -119,7 +119,17 @@ export default async function SubjectDetailPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <header className={styles.header}>
-          <h1 className={styles.title}>{subject.title}</h1>
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>{subject.title}</h1>
+            {(canEditSubject || canDelete) && (
+              <SubjectAdminMenu
+                subjectId={subject.id}
+                subjectSlug={subject.slug}
+                canEdit={canEditSubject}
+                canDelete={canDelete}
+              />
+            )}
+          </div>
           <p className={styles.presentation}>{subject.presentation}</p>
           <p className={styles.problem}>{subject.problem}</p>
           {contributor && (
@@ -134,12 +144,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
                   Ajouter une position
                 </Button>
               )}
-              <SubjectActions
-                subjectId={subject.id}
-                subjectSlug={subject.slug}
-                canEdit={canEditSubject}
-                canDelete={canDelete}
-              />
             </div>
           )}
         </header>

@@ -9,6 +9,7 @@ interface AdminMenuAction {
   href?: string
   onClick?: () => void
   variant?: 'default' | 'danger'
+  keepOpen?: boolean
 }
 
 interface AdminMenuProps {
@@ -68,7 +69,7 @@ export default function AdminMenu({ actions, children }: AdminMenuProps) {
                 className={className}
                 onClick={() => {
                   action.onClick?.()
-                  setOpen(false)
+                  if (!action.keepOpen) setOpen(false)
                 }}
               >
                 <span className={styles.actionIcon}>{action.icon}</span>

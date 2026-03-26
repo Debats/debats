@@ -1,0 +1,35 @@
+.trigger {
+  font-family: var(--font-gotham-book);
+  font-size: 12px;
+  color: #c62828;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.warning {
+  font-family: var(--font-gotham-book);
+  font-size: 11px;
+  color: #c62828;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.error {
+  font-size: 11px;
+  color: #c62828;
+}
