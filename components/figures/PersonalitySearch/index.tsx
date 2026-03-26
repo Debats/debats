@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback } from 'react'
 import Link from 'next/link'
 import { usePlausible } from 'next-plausible'
 import {
@@ -8,61 +8,33 @@ import {
   PublicFigureSearchResult,
 } from '../../../app/actions/search-public-figures'
 import FigureAvatar from '../FigureAvatar'
+import SearchField from '../../ui/SearchField'
 import styles from './PersonalitySearch.module.css'
 
 export default function PersonalitySearch() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<PublicFigureSearchResult[]>([])
-  const [hasSearched, setHasSearched] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const plausible = usePlausible()
 
-  const search = useCallback(
-    async (q: string) => {
-      if (q.length < 2) {
-        setResults([])
-        setHasSearched(false)
-        return
-      }
+  const handleSearch = useCallback((query: string) => searchPublicFigures(query), [])
 
-      const data = await searchPublicFigures(q)
-      setResults(data)
-      setHasSearched(true)
-      plausible('Recherche personnalité', { props: { query: q, results: data.length } })
+  const handleSearchComplete = useCallback(
+    (query: string, count: number) => {
+      plausible('Recherche personnalité', { props: { query, results: count } })
     },
     [plausible],
   )
 
-  useEffect(() => {
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(query), 300)
-    return () => clearTimeout(debounceRef.current)
-  }, [query, search])
-
   return (
-    <div className={styles.searchContainer}>
-      <input
-        type="search"
-        className={styles.searchInput}
-        placeholder="Rechercher une personnalité…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-
-      {hasSearched && (
-        <div className={styles.results}>
-          {results.length === 0 ? (
-            <p className={styles.noResults}>Aucun résultat pour « {query} »</p>
-          ) : (
-            results.map((figure) => (
-              <Link key={figure.id} href={`/p/${figure.slug}`} className={styles.resultItem}>
-                <FigureAvatar slug={figure.slug} name={figure.name} size={32} />
-                {figure.name}
-              </Link>
-            ))
-          )}
-        </div>
+    <SearchField<PublicFigureSearchResult>
+      placeholder="Rechercher une personnalité…"
+      onSearch={handleSearch}
+      keyExtractor={(f) => f.id}
+      onSearchComplete={handleSearchComplete}
+      renderResult={(figure) => (
+        <Link href={`/p/${figure.slug}`} className={styles.resultLink}>
+          <FigureAvatar slug={figure.slug} name={figure.name} size={32} />
+          {figure.name}
+        </Link>
       )}
-    </div>
+    />
   )
 }

@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../components/layout/ErrorDisplay'
 import SubjectCounters from '../../components/subjects/SubjectCounters'
+import SubjectSearch from '../../components/subjects/SubjectSearch'
 import SubjectTitle from '../../components/subjects/SubjectTitle'
 import styles from './subjects.module.css'
 
@@ -45,6 +46,8 @@ export default async function SubjectsPage() {
             </Button>
           )}
         </div>
+
+        <SubjectSearch />
 
         <div className={styles.subjectsIndex}>
           {subjectsWithStats.length === 0 ? (
