@@ -4,12 +4,11 @@ import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
 import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
-import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
-import { StatementWithFigure } from '../../../domain/repositories/statement-repository'
+import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
-import FigureAvatar from '../../../components/figures/FigureAvatar'
+import FigureAvatarRow from '../../../components/figures/FigureAvatarRow'
 import Button from '../../../components/ui/Button'
 import SubjectAdminMenu from './SubjectAdminMenu'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
@@ -49,52 +48,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-function groupByPosition(statements: StatementWithFigure[]) {
-  return statements.reduce(
-    (acc, { statement, position, publicFigure }) => {
-      if (!acc[position.id]) {
-        acc[position.id] = { position, figures: [] }
-      }
-      acc[position.id].figures.push({ statement, publicFigure })
-      return acc
-    },
-    {} as Record<
-      string,
-      {
-        position: StatementWithFigure['position']
-        figures: {
-          statement: StatementWithFigure['statement']
-          publicFigure: StatementWithFigure['publicFigure']
-        }[]
-      }
-    >,
-  )
-}
-
 export default async function SubjectDetailPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
     const supabase = await createSSRSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
-    const statementRepo = createStatementRepository(supabase)
 
     const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
 
     if (!subject) notFound()
 
-    const [statements, stats, contributor] = await Promise.all([
-      Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+    const [positions, stats, contributor] = await Promise.all([
+      Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
       Effect.runPromise(subjectRepo.getStats(subject.id)),
       getAuthenticatedContributor(),
     ])
 
-    const positionsMap = groupByPosition(statements)
-    const positions = Object.values(positionsMap).sort(
-      (a, b) => b.figures.length - a.figures.length,
-    )
-
-    const uniqueFigures = new Set(statements.map((s) => s.publicFigure.id))
+    const totalFigures = stats.publicFiguresCount
 
     const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
     const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
@@ -152,7 +123,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
           <h2 className={styles.sectionTitle}>
             POSITIONS <span className={styles.count}>{positions.length}</span>{' '}
             <span className={styles.countDetail}>
-              ({uniqueFigures.size} personnalité{uniqueFigures.size !== 1 ? 's' : ''})
+              ({totalFigures} personnalité{totalFigures !== 1 ? 's' : ''})
             </span>
           </h2>
 
@@ -160,32 +131,25 @@ export default async function SubjectDetailPage({ params }: PageProps) {
             <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
           ) : (
             <div className={styles.positionsList}>
-              {positions.map(({ position, figures }) => (
-                <div key={position.id} className={styles.positionItem}>
+              {positions.map((pos) => (
+                <div key={pos.positionId} className={styles.positionItem}>
                   <h3 className={styles.positionTitle}>
                     <Link
-                      href={`/s/${slug}/position/${position.id}`}
+                      href={`/s/${slug}/position/${pos.positionId}`}
                       className={styles.positionLink}
                     >
-                      {position.title}
+                      {pos.positionTitle}
                     </Link>
                   </h3>
-                  <p className={styles.positionDescription}>{position.description}</p>
+                  <p className={styles.positionDescription}>{pos.positionDescription}</p>
                   <a href="#" className={styles.viewArguments}>
                     Voir les arguments
                   </a>
-                  <div className={styles.figuresRow}>
-                    {figures.map(({ statement, publicFigure }) => (
-                      <Link
-                        key={statement.id}
-                        href={`/p/${publicFigure.slug}`}
-                        title={publicFigure.name}
-                        className={styles.figureLink}
-                      >
-                        <FigureAvatar slug={publicFigure.slug} name={publicFigure.name} size={40} />
-                      </Link>
-                    ))}
-                  </div>
+                  <FigureAvatarRow
+                    figures={pos.figures}
+                    totalCount={pos.totalFiguresCount}
+                    size={40}
+                  />
                 </div>
               ))}
             </div>

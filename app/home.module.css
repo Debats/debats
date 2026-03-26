@@ -51,26 +51,6 @@
   border-bottom: none;
 }
 
-/* Avatars row — limited to 2 lines of 40px avatars */
-.avatarsRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-  max-height: 88px;
-  overflow: hidden;
-}
-
-.avatarLink {
-  display: block;
-  line-height: 0;
-}
-
-.avatarLink:hover {
-  opacity: 0.8;
-}
-
 /* See more link */
 .seeMoreLink {
   color: var(--debats-red);

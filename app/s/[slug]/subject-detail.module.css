@@ -123,22 +123,3 @@
 .viewArguments:hover {
   text-decoration: underline;
 }
-
-.figuresRow {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.figureLink {
-  display: block;
-  opacity: 0.85;
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.figureLink:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}

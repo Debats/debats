@@ -194,25 +194,6 @@ a.sourceLink:hover {
   margin: 0 0 10px 0;
 }
 
-.figuresRow {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.figureLink {
-  display: block;
-  opacity: 0.85;
-  transition:
-    opacity 0.15s,
-    transform 0.15s;
-}
-
-.figureLink:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
 @media (max-width: 768px) {
   .header {
     flex-direction: column;

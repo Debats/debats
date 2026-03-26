@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Effect } from 'effect'
 import { createSSRSupabaseClient } from '../infra/supabase/ssr'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
-import FigureAvatar from '../components/figures/FigureAvatar'
+import FigureAvatarRow from '../components/figures/FigureAvatarRow'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../components/layout/ErrorDisplay'
 import SubjectCounters from '../components/subjects/SubjectCounters'
@@ -46,18 +46,12 @@ export default async function HomePage() {
                 />
 
                 {subject.figures.length > 0 && (
-                  <div className={styles.avatarsRow}>
-                    {subject.figures.map((figure) => (
-                      <Link
-                        key={figure.id}
-                        href={`/p/${figure.slug}`}
-                        className={styles.avatarLink}
-                        title={figure.name}
-                      >
-                        <FigureAvatar slug={figure.slug} name={figure.name} size={40} />
-                      </Link>
-                    ))}
-                  </div>
+                  <FigureAvatarRow
+                    figures={subject.figures}
+                    totalCount={subject.publicFiguresCount}
+                    size={40}
+                    maxLines={2}
+                  />
                 )}
 
                 <Link href={`/s/${subject.slug}`} className={styles.seeMoreLink}>

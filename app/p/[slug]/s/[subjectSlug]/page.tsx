@@ -14,6 +14,7 @@ import { getAuthenticatedContributor } from '../../../../actions/get-authenticat
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import EditLink from '../../../../../components/ui/EditLink'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
+import FigureAvatarRow from '../../../../../components/figures/FigureAvatarRow'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import ErrorDisplay from '../../../../../components/layout/ErrorDisplay'
 import styles from './figure-subject.module.css'
@@ -256,18 +257,13 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                   {(alliesByPosition.get(position.id)?.length ?? 0) > 0 && (
                     <div className={styles.allies}>
                       <span className={styles.alliesLabel}>Même position :</span>
-                      <div className={styles.figuresRow}>
-                        {alliesByPosition.get(position.id)!.map((f) => (
-                          <Link
-                            key={f.slug}
-                            href={`/p/${f.slug}/s/${subject.slug}`}
-                            className={styles.figureLink}
-                            title={f.name}
-                          >
-                            <FigureAvatar slug={f.slug} name={f.name} size={40} />
-                          </Link>
-                        ))}
-                      </div>
+                      <FigureAvatarRow
+                        figures={alliesByPosition
+                          .get(position.id)!
+                          .map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
+                        size={40}
+                        hrefSuffix={`/s/${subject.slug}`}
+                      />
                     </div>
                   )}
                 </div>
@@ -282,18 +278,11 @@ export default async function FigureSubjectPage({ params }: PageProps) {
             {opponents.map((group) => (
               <div key={group.title} className={styles.figureGroup}>
                 <h3 className={styles.figureGroupTitle}>{group.title}</h3>
-                <div className={styles.figuresRow}>
-                  {group.figures.map((f) => (
-                    <Link
-                      key={f.slug}
-                      href={`/p/${f.slug}/s/${subject.slug}`}
-                      className={styles.figureLink}
-                      title={f.name}
-                    >
-                      <FigureAvatar slug={f.slug} name={f.name} size={50} />
-                    </Link>
-                  ))}
-                </div>
+                <FigureAvatarRow
+                  figures={group.figures.map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
+                  size={50}
+                  hrefSuffix={`/s/${subject.slug}`}
+                />
               </div>
             ))}
           </section>
