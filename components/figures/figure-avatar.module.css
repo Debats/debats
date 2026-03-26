@@ -2,3 +2,14 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+.placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--bg-gray);
+  color: var(--text-light);
+  font-family: var(--font-gotham-bold);
+  line-height: 1;
+}
