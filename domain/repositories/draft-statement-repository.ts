@@ -14,4 +14,5 @@ export interface DraftStatementRepository {
     status: 'validated' | 'rejected' | 'revision_requested',
     rejectionNote?: string,
   ): Effect.Effect<void, DatabaseError>
+  deleteById(id: string): Effect.Effect<void, DatabaseError>
 }

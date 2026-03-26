@@ -124,5 +124,14 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         },
         catch: (error) => dbError('Failed to update draft status', error),
       }),
+
+    deleteById: (id: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase.from('draft_statements').delete().eq('id', id)
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to delete draft', error),
+      }),
   }
 }

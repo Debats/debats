@@ -58,3 +58,24 @@ export async function PATCH(
 
   return NextResponse.json(result.right)
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!checkAdminApiKey(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { id } = await params
+  const supabase = createAdminSupabaseClient()
+  const draftRepo = createDraftStatementRepository(supabase)
+
+  const result = await Effect.runPromise(Effect.either(draftRepo.deleteById(id)))
+
+  if (result._tag === 'Left') {
+    return NextResponse.json({ error: 'Failed to delete draft' }, { status: 500 })
+  }
+
+  return NextResponse.json({ deleted: true })
+}

@@ -11,6 +11,7 @@ import {
   amendAndValidateDraftAction,
   DraftAmendments,
 } from '../../../actions/amend-and-validate-draft-action'
+import { deleteDraftAction } from '../../../actions/delete-draft-action'
 import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
 import CreationPreview from '../CreationPreview'
@@ -70,6 +71,11 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
   const handleAmendAndValidate = useCallback(
     (amendments: DraftAmendments) =>
       executeAction(() => amendAndValidateDraftAction(draft.id, amendments)),
+    [draft.id, executeAction],
+  )
+
+  const handleDelete = useCallback(
+    () => executeAction(() => deleteDraftAction(draft.id)),
     [draft.id, executeAction],
   )
 
@@ -152,6 +158,9 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
           disabled={isPending}
         >
           Rejeter
+        </Button>
+        <Button variant="danger" size="small" onClick={handleDelete} disabled={isPending}>
+          Supprimer
         </Button>
       </div>
 
