@@ -25,6 +25,9 @@ const fakeSubjectRepo = {
   getStats: () =>
     Effect.succeed({ subjectId: '', positionsCount: 0, publicFiguresCount: 0, statementsCount: 2 }),
   findSummariesByActivity: () => Effect.succeed([]),
+  findSummariesByCreatedAt: () => Effect.succeed([]),
+  findSummaryById: () => Effect.succeed(null),
+  findAllIds: () => Effect.succeed([]),
 }
 
 const fakeReputationRepo = {

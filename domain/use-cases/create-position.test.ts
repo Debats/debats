@@ -38,6 +38,9 @@ const fakeSubjectRepo = {
       publicFiguresCount: 0,
     }),
   findSummariesByActivity: () => Effect.succeed([]),
+  findSummariesByCreatedAt: () => Effect.succeed([]),
+  findSummaryById: () => Effect.succeed(null),
+  findAllIds: () => Effect.succeed([]),
 }
 
 const fakeReputationRepo = {

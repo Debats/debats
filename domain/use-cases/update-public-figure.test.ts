@@ -24,10 +24,8 @@ const existingFigure = PublicFigure.make({
 const fakePublicFigureRepo = {
   findAll: () => Effect.succeed([existingFigure]),
   searchByName: () => Effect.succeed([]),
-  findBySlug: (slug: string) =>
-    Effect.succeed(slug === 'jean-dupont' ? existingFigure : null),
-  findById: (id: string) =>
-    Effect.succeed(id === existingFigure.id ? existingFigure : null),
+  findBySlug: (slug: string) => Effect.succeed(slug === 'jean-dupont' ? existingFigure : null),
+  findById: (id: string) => Effect.succeed(id === existingFigure.id ? existingFigure : null),
   findByWikipediaUrl: () => Effect.succeed(null as PublicFigure | null),
   create: (f: PublicFigure) => Effect.succeed(f),
   update: (f: PublicFigure) => Effect.succeed(f),
@@ -35,6 +33,9 @@ const fakePublicFigureRepo = {
   getStats: () =>
     Effect.succeed({ publicFigureId: '', subjectsCount: 0, positionsCount: 0, statementsCount: 0 }),
   findSummariesByActivity: () => Effect.succeed([]),
+  findSummariesByCreatedAt: () => Effect.succeed([]),
+  findSummaryById: () => Effect.succeed(null),
+  findAllIds: () => Effect.succeed([]),
   findByLetter: () => Effect.succeed([]),
 }
 

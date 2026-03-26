@@ -173,36 +173,75 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
       }),
 
     findSummariesByActivity: (limit: number) =>
+      fetchSummaries(supabase, 'latest_statement_at', limit),
+
+    findSummariesByCreatedAt: (limit: number) => fetchSummaries(supabase, 'created_at', limit),
+
+    findSummaryById: (id: string) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('v_subject_activity_summary')
             .select('*')
-            .order('latest_statement_at', { ascending: false, nullsFirst: false })
-            .limit(limit)
+            .eq('id', id)
+            .maybeSingle()
 
           if (error) throw error
+          if (!data) return null
 
-          return data.map(
-            (row): SubjectActivitySummary => ({
-              id: row.id,
-              title: row.title,
-              slug: row.slug,
-              presentation: row.presentation,
-              problem: row.problem,
-              pictureUrl: row.picture_url ?? undefined,
-              createdAt: new Date(row.created_at!),
-              latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
-              positionsCount: row.positions_count ?? 0,
-              statementsCount: row.statements_count ?? 0,
-              publicFiguresCount: row.public_figures_count ?? 0,
-              figures: Array.isArray(row.figures)
-                ? (row.figures as Array<{ id: string; name: string; slug: string }>)
-                : [],
-            }),
-          )
+          return mapSummaryRow(data)
         },
-        catch: (error) => dbError('Failed to fetch subject summaries', error),
+        catch: (error) => dbError('Failed to fetch subject summary by id', error),
+      }),
+
+    findAllIds: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase.from('subjects').select('id').order('id')
+
+          if (error) throw error
+          return data.map((row) => row.id)
+        },
+        catch: (error) => dbError('Failed to fetch subject ids', error),
       }),
   }
+}
+
+function mapSummaryRow(row: Record<string, unknown>): SubjectActivitySummary {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    slug: row.slug as string,
+    presentation: row.presentation as string,
+    problem: row.problem as string,
+    pictureUrl: (row.picture_url as string) ?? undefined,
+    createdAt: new Date(row.created_at as string),
+    latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at as string) : null,
+    positionsCount: (row.positions_count as number) ?? 0,
+    statementsCount: (row.statements_count as number) ?? 0,
+    publicFiguresCount: (row.public_figures_count as number) ?? 0,
+    figures: Array.isArray(row.figures)
+      ? (row.figures as Array<{ id: string; name: string; slug: string }>)
+      : [],
+  }
+}
+
+function fetchSummaries(
+  supabase: SupabaseClient,
+  orderBy: string,
+  limit: number,
+): Effect.Effect<SubjectActivitySummary[], DatabaseError> {
+  return Effect.tryPromise({
+    try: async () => {
+      const { data, error } = await supabase
+        .from('v_subject_activity_summary')
+        .select('*')
+        .order(orderBy, { ascending: false, nullsFirst: false })
+        .limit(limit)
+
+      if (error) throw error
+      return data.map(mapSummaryRow)
+    },
+    catch: (error) => dbError('Failed to fetch subject summaries', error),
+  })
 }

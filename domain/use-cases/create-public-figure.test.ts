@@ -25,6 +25,9 @@ const fakePublicFigureRepo = {
       statementsCount: 0,
     }),
   findSummariesByActivity: () => Effect.succeed([]),
+  findSummariesByCreatedAt: () => Effect.succeed([]),
+  findSummaryById: () => Effect.succeed(null),
+  findAllIds: () => Effect.succeed([]),
   findByLetter: () => Effect.succeed([]),
 }
 
