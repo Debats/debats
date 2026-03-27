@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, FormEvent } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { updatePublicFigureAction, ActionResult } from '../../../app/actions/update-public-figure'
@@ -160,7 +161,14 @@ export default function EditPublicFigureForm({
           {fieldErrors?.photo && <span className={formStyles.fieldError}>{fieldErrors.photo}</span>}
         </div>
         {photoPreviewUrl && (
-          <img src={photoPreviewUrl} alt="Aperçu" className={localStyles.photoPreview} />
+          <Image
+            src={photoPreviewUrl}
+            alt=""
+            width={200}
+            height={200}
+            unoptimized
+            className={localStyles.photoPreview}
+          />
         )}
       </div>
 
