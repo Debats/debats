@@ -206,7 +206,11 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     findAllIds: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase.from('subjects').select('id').is('deleted_at', null).order('id')
+          const { data, error } = await supabase
+            .from('subjects')
+            .select('id')
+            .is('deleted_at', null)
+            .order('id')
 
           if (error) throw error
           return data.map((row) => row.id)
