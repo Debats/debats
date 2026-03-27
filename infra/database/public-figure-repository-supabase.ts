@@ -19,7 +19,11 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
     findAll: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase.from('public_figures').select('*').order('name')
+          const { data, error } = await supabase
+            .from('public_figures')
+            .select('*')
+            .is('deleted_at', null)
+            .order('name')
 
           if (error) throw error
 
@@ -48,6 +52,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .from('public_figures')
             .select('*')
             .ilike('name', `%${query}%`)
+            .is('deleted_at', null)
             .order('name')
             .limit(limit)
 
@@ -78,6 +83,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .from('public_figures')
             .select('*')
             .eq('slug', slug)
+            .is('deleted_at', null)
             .single()
 
           if (error) {
@@ -108,6 +114,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .from('public_figures')
             .select('*')
             .eq('id', id)
+            .is('deleted_at', null)
             .single()
 
           if (error) {
@@ -138,6 +145,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .from('public_figures')
             .select('*')
             .eq('wikipedia_url', url)
+            .is('deleted_at', null)
             .single()
 
           if (error) {
@@ -235,8 +243,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
     delete: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase.from('public_figures').delete().eq('id', id)
-
+          const { error } = await supabase.rpc('soft_delete_public_figure', { p_id: id })
           if (error) throw error
         },
         catch: (error) => dbError('Failed to delete public figure', error),
@@ -249,6 +256,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .from('statements')
             .select('*', { count: 'exact', head: true })
             .eq('public_figure_id', publicFigureId)
+            .is('deleted_at', null)
 
           if (statementsError) throw statementsError
 
@@ -261,6 +269,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
           `,
             )
             .eq('public_figure_id', publicFigureId)
+            .is('deleted_at', null)
 
           if (subjectsError) throw subjectsError
 

@@ -51,6 +51,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           const { data, error } = await supabase
             .from('subjects')
             .select('*')
+            .is('deleted_at', null)
             .order('created_at', { ascending: false })
 
           if (error) throw error
@@ -62,7 +63,12 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     findById: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase.from('subjects').select('*').eq('id', id).single()
+          const { data, error } = await supabase
+            .from('subjects')
+            .select('*')
+            .eq('id', id)
+            .is('deleted_at', null)
+            .single()
 
           if (error) {
             if (error.code === 'PGRST116') return null
@@ -80,6 +86,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
             .from('subjects')
             .select('*')
             .eq('slug', slug)
+            .is('deleted_at', null)
             .single()
 
           if (error) {
@@ -123,8 +130,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     delete: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase.from('subjects').delete().eq('id', id)
-
+          const { error } = await supabase.rpc('soft_delete_subject', { p_id: id })
           if (error) throw error
         },
         catch: (error) => dbError('Failed to delete subject', error),
@@ -137,6 +143,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
             .from('positions')
             .select('*', { count: 'exact', head: true })
             .eq('subject_id', subjectId)
+            .is('deleted_at', null)
 
           if (positionsError) throw positionsError
 
@@ -149,6 +156,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           `,
             )
             .eq('positions.subject_id', subjectId)
+            .is('deleted_at', null)
 
           if (figuresError) throw figuresError
 
@@ -159,6 +167,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
             .from('statements')
             .select('*, positions!inner(subject_id)', { count: 'exact', head: true })
             .eq('positions.subject_id', subjectId)
+            .is('deleted_at', null)
 
           if (statementsError) throw statementsError
 
@@ -197,7 +206,7 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     findAllIds: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase.from('subjects').select('id').order('id')
+          const { data, error } = await supabase.from('subjects').select('id').is('deleted_at', null).order('id')
 
           if (error) throw error
           return data.map((row) => row.id)

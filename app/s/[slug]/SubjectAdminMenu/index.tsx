@@ -50,7 +50,7 @@ export default function SubjectAdminMenu({
       {showDeleteConfirm && (
         <ConfirmAction
           open
-          warning="Cette action est irréversible. Toutes les positions et prises de position liées seront supprimées."
+          warning="Le sujet et toutes ses prises de position seront supprimés."
           confirmLabel="Supprimer"
           pendingLabel="Suppression…"
           onConfirm={handleDelete}

@@ -91,11 +91,11 @@ function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
 
 const STATEMENT_WITH_DETAILS_QUERY = `
   id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
-  created_by, created_at, updated_at,
+  created_by, created_at, updated_at, deleted_at,
   positions!inner (
-    id, title, description, subject_id, created_by, created_at, updated_at,
+    id, title, description, subject_id, created_by, created_at, updated_at, deleted_at,
     subjects!inner (
-      id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at
+      id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at, deleted_at
     )
   )
 `
@@ -121,6 +121,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select('*')
             .eq('id', id)
+            .is('deleted_at', null)
             .single()
 
           if (error) {
@@ -140,6 +141,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select('*')
             .eq('public_figure_id', publicFigureId)
+            .is('deleted_at', null)
 
           if (error) throw error
           return data.map(mapStatementRow)
@@ -154,6 +156,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select('*')
             .eq('position_id', positionId)
+            .is('deleted_at', null)
 
           if (error) throw error
           return data.map(mapStatementRow)
@@ -169,17 +172,18 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .select(
               `
             id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
-            created_by, created_at, updated_at,
+            created_by, created_at, updated_at, deleted_at,
             positions!inner (
-              id, title, description, subject_id, created_by, created_at, updated_at
+              id, title, description, subject_id, created_by, created_at, updated_at, deleted_at
             ),
             public_figures!inner (
               id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
-              created_by, created_at, updated_at
+              created_by, created_at, updated_at, deleted_at
             )
           `,
             )
             .eq('position_id', positionId)
+            .is('deleted_at', null)
             .order('stated_at', { ascending: false })
 
           if (error) throw error
@@ -200,6 +204,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(STATEMENT_WITH_DETAILS_QUERY)
             .eq('public_figure_id', publicFigureId)
+            .is('deleted_at', null)
 
           if (error) throw error
           return data.map(mapStatementWithDetailsRow)
@@ -215,6 +220,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .select(STATEMENT_WITH_DETAILS_QUERY)
             .eq('public_figure_id', publicFigureId)
             .eq('positions.subject_id', subjectId)
+            .is('deleted_at', null)
 
           if (error) throw error
           return data.map(mapStatementWithDetailsRow)
@@ -230,17 +236,18 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .select(
               `
             id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
-            created_by, created_at, updated_at,
+            created_by, created_at, updated_at, deleted_at,
             positions!inner (
-              id, title, description, subject_id, created_by, created_at, updated_at
+              id, title, description, subject_id, created_by, created_at, updated_at, deleted_at
             ),
             public_figures!inner (
               id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
-              created_by, created_at, updated_at
+              created_by, created_at, updated_at, deleted_at
             )
           `,
             )
             .eq('positions.subject_id', subjectId)
+            .is('deleted_at', null)
 
           if (error) throw error
 
@@ -275,6 +282,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             )
           `,
             )
+            .is('deleted_at', null)
             .order('stated_at', { ascending: false })
             .limit(limit)
 
@@ -315,6 +323,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             )
           `,
             )
+            .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(limit)
 
@@ -382,8 +391,10 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
     delete: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase.from('statements').delete().eq('id', id)
-
+          const { error } = await supabase
+            .from('statements')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id)
           if (error) throw error
         },
         catch: (error) => dbError('Failed to delete statement', error),

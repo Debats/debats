@@ -255,6 +255,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
           description: string
           id: string
           subject_id: string
@@ -264,6 +265,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           description: string
           id?: string
           subject_id: string
@@ -273,6 +275,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           description?: string
           id?: string
           subject_id?: string
@@ -307,6 +310,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string
+          deleted_at: string | null
           id: string
           name: string
           notoriety_sources: string[] | null
@@ -319,6 +323,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by: string
+          deleted_at?: string | null
           id?: string
           name: string
           notoriety_sources?: string[] | null
@@ -331,6 +336,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string
+          deleted_at?: string | null
           id?: string
           name?: string
           notoriety_sources?: string[] | null
@@ -392,6 +398,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
           id: string
           position_id: string
           public_figure_id: string
@@ -404,6 +411,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           id?: string
           position_id: string
           public_figure_id: string
@@ -416,6 +424,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           id?: string
           position_id?: string
           public_figure_id?: string
@@ -460,6 +469,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
           id: string
           picture_url: string | null
           presentation: string
@@ -471,6 +481,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           id?: string
           picture_url?: string | null
           presentation: string
@@ -482,6 +493,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           id?: string
           picture_url?: string | null
           presentation?: string
@@ -543,7 +555,24 @@ export type Database = {
       }
     }
     Functions: {
+      get_subject_positions_summary: {
+        Args: { p_figures_limit?: number; p_subject_id: string }
+        Returns: {
+          figures: Json
+          position_description: string
+          position_id: string
+          position_title: string
+          total_figures_count: number
+        }[]
+      }
       get_user_id_by_email: { Args: { target_email: string }; Returns: string }
+      merge_positions: {
+        Args: { source_id: string; target_id: string }
+        Returns: undefined
+      }
+      soft_delete_position: { Args: { p_id: string }; Returns: undefined }
+      soft_delete_public_figure: { Args: { p_id: string }; Returns: undefined }
+      soft_delete_subject: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

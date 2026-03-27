@@ -16,7 +16,12 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
     findById: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase.from('positions').select('*').eq('id', id).single()
+          const { data, error } = await supabase
+            .from('positions')
+            .select('*')
+            .eq('id', id)
+            .is('deleted_at', null)
+            .single()
 
           if (error) {
             if (error.code === 'PGRST116') return null
@@ -43,6 +48,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             .from('positions')
             .select('*')
             .eq('subject_id', subjectId)
+            .is('deleted_at', null)
             .order('title')
 
           if (error) throw error
@@ -123,7 +129,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
     delete: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase.from('positions').delete().eq('id', id)
+          const { error } = await supabase.rpc('soft_delete_position', { p_id: id })
           if (error) throw error
         },
         catch: (error) => dbError('Failed to delete position', error),
