@@ -43,18 +43,15 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
   }>()
 
   useEffect(() => {
-    if (!selectedSubjectId) {
-      setPositions([])
-      setSelectedPositionId('')
-      return
-    }
+    if (!selectedSubjectId) return
 
-    setLoadingPositions(true)
+    const controller = new AbortController()
     getPositionsForSubject(selectedSubjectId).then((result) => {
+      if (controller.signal.aborted) return
       setPositions(result)
-      setSelectedPositionId('')
       setLoadingPositions(false)
     })
+    return () => controller.abort()
   }, [selectedSubjectId])
 
   const handleSearchFigures = useCallback(async (query: string) => {
@@ -196,6 +193,9 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
             onSelect={(id) => {
               setSelectedSubjectId(id)
               setSelectedSubjectSlug(subjectSlugMapRef.current.get(id) ?? '')
+              setPositions([])
+              setSelectedPositionId('')
+              setLoadingPositions(!!id)
             }}
             initialItem={
               initialSubject ? { id: initialSubject.id, label: initialSubject.title } : undefined

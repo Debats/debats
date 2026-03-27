@@ -84,16 +84,16 @@ export default function DraftAmendForm({
   const [quote, setQuote] = useState(draft.quote)
 
   useEffect(() => {
-    if (subjectMode === 'existing' && subjectId) {
-      getPositionsForSubject(subjectId).then((positions) => {
-        setAvailablePositions(positions)
-        const match = positions.find((p) => p.title === draft.positionTitle)
-        if (match) setSelectedPositionId(match.id)
-      })
-    } else {
-      setAvailablePositions([])
-      setSelectedPositionId('')
-    }
+    if (subjectMode !== 'existing' || !subjectId) return
+
+    const controller = new AbortController()
+    getPositionsForSubject(subjectId).then((positions) => {
+      if (controller.signal.aborted) return
+      setAvailablePositions(positions)
+      const match = positions.find((p) => p.title === draft.positionTitle)
+      if (match) setSelectedPositionId(match.id)
+    })
+    return () => controller.abort()
   }, [subjectMode, subjectId, draft.positionTitle])
 
   const handleFigureChange = useCallback((value: EntityFieldValue) => {
@@ -107,6 +107,7 @@ export default function DraftAmendForm({
     setSubjectId(value.mode === 'existing' ? value.id : null)
     setPositionMode('new')
     setSelectedPositionId('')
+    setAvailablePositions([])
   }, [])
 
   const searchFigures = useCallback(
