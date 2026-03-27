@@ -103,7 +103,7 @@ export default async function OGImage({
                 display: 'flex',
               }}
             >
-              <img src={avatarSrc} width={170} height={170} style={{ objectFit: 'cover' }} />
+              <img src={avatarSrc} alt="" width={170} height={170} style={{ objectFit: 'cover' }} />
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -183,7 +183,7 @@ export default async function OGImage({
               .filter(Boolean)
               .join(' \u2014 ')}
           </span>
-          <img src={logoSrc} height={80} />
+          <img src={logoSrc} alt="" height={80} />
         </div>
       </div>
     </div>,

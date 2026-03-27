@@ -92,7 +92,7 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
                 display: 'flex',
               }}
             >
-              <img src={avatarSrc} width={200} height={200} style={{ objectFit: 'cover' }} />
+              <img src={avatarSrc} alt="" width={200} height={200} style={{ objectFit: 'cover' }} />
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -145,7 +145,7 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
               >
                 {`${statements.length} prise${statements.length > 1 ? 's' : ''} de position sur ${subjectTitles.length} sujet${subjectTitles.length > 1 ? 's' : ''}`}
               </span>
-              <img src={logoSrc} height={60} />
+              <img src={logoSrc} alt="" height={60} />
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               {subjectTitles.slice(0, 6).map((title) => (

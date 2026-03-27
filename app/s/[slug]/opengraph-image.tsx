@@ -139,7 +139,7 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
                     display: 'flex',
                   }}
                 >
-                  <img src={a.src} width={65} height={65} style={{ objectFit: 'cover' }} />
+                  <img src={a.src} alt="" width={65} height={65} style={{ objectFit: 'cover' }} />
                 </div>
               ))}
               {figures.length > 8 && (
@@ -160,7 +160,7 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
 
         {/* Logo */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
-          <img src={logoSrc} height={70} />
+          <img src={logoSrc} alt="" height={70} />
         </div>
       </div>
     </div>,
