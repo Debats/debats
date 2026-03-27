@@ -17,7 +17,9 @@
     "migrate": "supabase link --project-ref $SUPABASE_PROJECT_ID && supabase db push",
     "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts",
     "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts",
-    "supabase:config:push": "node --env-file=.env.production --import tsx scripts/push-prod-auth-config.ts"
+    "supabase:config:push": "node --env-file=.env.production --import tsx scripts/push-prod-auth-config.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.39.0",
@@ -37,6 +39,9 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "^10.3.3",
+    "@storybook/addon-docs": "^10.3.3",
+    "@storybook/nextjs-vite": "^10.3.3",
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^7.0.11",
     "@types/react": "^19.2.14",
@@ -45,10 +50,13 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.0.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-storybook": "^10.3.3",
     "prettier": "^3.8.1",
+    "storybook": "^10.3.3",
     "supabase": "^2.76.8",
     "tsx": "^4.21.0",
     "typescript": "~5.2.2",
+    "vite": "^8.0.3",
     "vitest": "^3.2.4"
   }
 }

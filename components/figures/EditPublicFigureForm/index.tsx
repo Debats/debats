@@ -97,7 +97,16 @@ export default function EditPublicFigureForm({
         setIsPending(false)
       }
     },
-    [figureId, name, presentation, wikipediaUrl, websiteUrl, notorietySource1, notorietySource2, router],
+    [
+      figureId,
+      name,
+      presentation,
+      wikipediaUrl,
+      websiteUrl,
+      notorietySource1,
+      notorietySource2,
+      router,
+    ],
   )
 
   const showNotorietySources = !wikipediaUrl.trim()

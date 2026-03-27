@@ -16,5 +16,8 @@ tsconfig.tsbuildinfo
 # IDE
 .idea/
 
+# Storybook
+storybook-static
+
 # AI tools
 .claude

@@ -50,7 +50,8 @@ export default async function ContribuerPage() {
         <div className={styles.signupCta}>
           <p>
             Pour contribuer, vous devez être invité·e par un contributeur existant. Vous pouvez
-            aussi vous inscrire en liste d&apos;attente pour être informé·e de l&apos;ouverture à toutes et tous.
+            aussi vous inscrire en liste d&apos;attente pour être informé·e de l&apos;ouverture à
+            toutes et tous.
           </p>
           <Link href="/inscription" className={styles.signupLink}>
             S&apos;inscrire en liste d&apos;attente
