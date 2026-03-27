@@ -16,7 +16,6 @@ import EditLink from '../../../../../components/ui/EditLink'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import FigureAvatarRow from '../../../../../components/figures/FigureAvatarRow'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
-import ErrorDisplay from '../../../../../components/layout/ErrorDisplay'
 import styles from './figure-subject.module.css'
 
 interface PageProps {
@@ -139,163 +138,153 @@ function formatDate(date: Date): string {
 export default async function FigureSubjectPage({ params }: PageProps) {
   const { slug, subjectSlug } = await params
 
-  try {
-    const supabase = await createSSRSupabaseClient()
-    const figureRepo = createPublicFigureRepository(supabase)
-    const subjectRepo = createSubjectRepository(supabase)
-    const statementRepo = createStatementRepository(supabase)
+  const supabase = await createSSRSupabaseClient()
+  const figureRepo = createPublicFigureRepository(supabase)
+  const subjectRepo = createSubjectRepository(supabase)
+  const statementRepo = createStatementRepository(supabase)
 
-    const [figure, subject] = await Promise.all([
-      Effect.runPromise(figureRepo.findBySlug(slug)),
-      Effect.runPromise(subjectRepo.findBySlug(subjectSlug)),
-    ])
+  const [figure, subject] = await Promise.all([
+    Effect.runPromise(figureRepo.findBySlug(slug)),
+    Effect.runPromise(subjectRepo.findBySlug(subjectSlug)),
+  ])
 
-    if (!figure || !subject) notFound()
+  if (!figure || !subject) notFound()
 
-    const [figureStatements, subjectStatements, contributor] = await Promise.all([
-      Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
-      Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
-      getAuthenticatedContributor(),
-    ])
+  const [figureStatements, subjectStatements, contributor] = await Promise.all([
+    Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
+    Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+    getAuthenticatedContributor(),
+  ])
 
-    const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
+  const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
 
-    const positionsMap = groupByPosition(figureStatements)
-    const positions = Object.values(positionsMap)
+  const positionsMap = groupByPosition(figureStatements)
+  const positions = Object.values(positionsMap)
 
-    const currentPositionIds = new Set(positions.map(({ position }) => position.id))
-    const { alliesByPosition, opponents } = groupOtherFigures(
-      subjectStatements,
-      figure.id,
-      currentPositionIds,
-    )
+  const currentPositionIds = new Set(positions.map(({ position }) => position.id))
+  const { alliesByPosition, opponents } = groupOtherFigures(
+    subjectStatements,
+    figure.id,
+    currentPositionIds,
+  )
 
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Article',
-      headline: `${figure.name} sur ${subject.title}`,
-      description: `Prises de position de ${figure.name} sur ${subject.title}.`,
-      url: `https://debats.co/p/${figure.slug}/s/${subject.slug}`,
-      image: `https://debats.co/avatars/${figure.slug}.jpg`,
-      author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
-      about: { '@type': 'Thing', name: subject.title },
-      mentions: { '@type': 'Person', name: figure.name },
-    }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: `${figure.name} sur ${subject.title}`,
+    description: `Prises de position de ${figure.name} sur ${subject.title}.`,
+    url: `https://debats.co/p/${figure.slug}/s/${subject.slug}`,
+    image: `https://debats.co/avatars/${figure.slug}.jpg`,
+    author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
+    about: { '@type': 'Thing', name: subject.title },
+    mentions: { '@type': 'Person', name: figure.name },
+  }
 
-    return (
-      <ContentWithSidebar topMargin>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <nav className={styles.breadcrumb}>
-          <Link href={`/p/${figure.slug}`} className={styles.breadcrumbLink}>
+  return (
+    <ContentWithSidebar topMargin>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <nav className={styles.breadcrumb}>
+        <Link href={`/p/${figure.slug}`} className={styles.breadcrumbLink}>
+          {figure.name}
+        </Link>
+        <span className={styles.breadcrumbSeparator}>/</span>
+        <Link href={`/s/${subject.slug}`} className={styles.breadcrumbLink}>
+          {subject.title}
+        </Link>
+      </nav>
+
+      <header className={styles.header}>
+        <FigureAvatar slug={figure.slug} name={figure.name} size={100} />
+        <div>
+          <Link href={`/p/${figure.slug}`} className={styles.figureName}>
             {figure.name}
           </Link>
-          <span className={styles.breadcrumbSeparator}>/</span>
-          <Link href={`/s/${subject.slug}`} className={styles.breadcrumbLink}>
-            {subject.title}
-          </Link>
-        </nav>
-
-        <header className={styles.header}>
-          <FigureAvatar slug={figure.slug} name={figure.name} size={100} />
-          <div>
-            <Link href={`/p/${figure.slug}`} className={styles.figureName}>
-              {figure.name}
+          <p className={styles.subjectTitle}>
+            sur{' '}
+            <Link href={`/s/${subject.slug}`} className={styles.subjectLink}>
+              {subject.title}
             </Link>
-            <p className={styles.subjectTitle}>
-              sur{' '}
-              <Link href={`/s/${subject.slug}`} className={styles.subjectLink}>
-                {subject.title}
-              </Link>
-            </p>
-          </div>
-        </header>
+          </p>
+        </div>
+      </header>
 
-        <section>
-          <h2 className={styles.sectionTitle}>
-            <span className={styles.count}>{figureStatements.length}</span>{' '}
-            {figureStatements.length === 1 ? 'PRISE DE POSITION' : 'PRISES DE POSITION'}
-          </h2>
+      <section>
+        <h2 className={styles.sectionTitle}>
+          <span className={styles.count}>{figureStatements.length}</span>{' '}
+          {figureStatements.length === 1 ? 'PRISE DE POSITION' : 'PRISES DE POSITION'}
+        </h2>
 
-          {positions.length === 0 ? (
-            <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
-          ) : (
-            <div>
-              {positions.map(({ position, statements: posStatements }) => (
-                <div key={position.id} className={styles.positionCard}>
-                  <span className={styles.positionLabel}>Sa position</span>
-                  <h3 className={styles.positionTitle}>{position.title}</h3>
-                  {posStatements.map((st) => (
-                    <div key={st.id} className={styles.statementItem}>
-                      <blockquote className={styles.quote}>{st.quote}</blockquote>
-                      <div className={styles.statementMeta}>
-                        {st.sourceUrl ? (
-                          <a
-                            href={st.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.sourceLink}
-                          >
-                            {st.sourceName}
-                          </a>
-                        ) : (
-                          <span className={styles.sourceLink}>{st.sourceName}</span>
-                        )}
-                        <span className={styles.metaSeparator}>&mdash;</span>
-                        {formatDate(st.statedAt)}
-                        {canEdit && (
-                          <>
-                            <span className={styles.metaSeparator}>&mdash;</span>
-                            <EditLink href={`/p/${slug}/s/${subjectSlug}/modifier/${st.id}`} />
-                          </>
-                        )}
-                      </div>
+        {positions.length === 0 ? (
+          <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
+        ) : (
+          <div>
+            {positions.map(({ position, statements: posStatements }) => (
+              <div key={position.id} className={styles.positionCard}>
+                <span className={styles.positionLabel}>Sa position</span>
+                <h3 className={styles.positionTitle}>{position.title}</h3>
+                {posStatements.map((st) => (
+                  <div key={st.id} className={styles.statementItem}>
+                    <blockquote className={styles.quote}>{st.quote}</blockquote>
+                    <div className={styles.statementMeta}>
+                      {st.sourceUrl ? (
+                        <a
+                          href={st.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.sourceLink}
+                        >
+                          {st.sourceName}
+                        </a>
+                      ) : (
+                        <span className={styles.sourceLink}>{st.sourceName}</span>
+                      )}
+                      <span className={styles.metaSeparator}>&mdash;</span>
+                      {formatDate(st.statedAt)}
+                      {canEdit && (
+                        <>
+                          <span className={styles.metaSeparator}>&mdash;</span>
+                          <EditLink href={`/p/${slug}/s/${subjectSlug}/modifier/${st.id}`} />
+                        </>
+                      )}
                     </div>
-                  ))}
-                  {(alliesByPosition.get(position.id)?.length ?? 0) > 0 && (
-                    <div className={styles.allies}>
-                      <span className={styles.alliesLabel}>Même position :</span>
-                      <FigureAvatarRow
-                        figures={alliesByPosition
-                          .get(position.id)!
-                          .map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
-                        size={40}
-                        hrefSuffix={`/s/${subject.slug}`}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {opponents.length > 0 && (
-          <section className={styles.otherFigures}>
-            <h2 className={styles.sectionTitle}>POSITIONS DIFFÉRENTES</h2>
-            {opponents.map((group) => (
-              <div key={group.title} className={styles.figureGroup}>
-                <h3 className={styles.figureGroupTitle}>{group.title}</h3>
-                <FigureAvatarRow
-                  figures={group.figures.map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
-                  size={50}
-                  hrefSuffix={`/s/${subject.slug}`}
-                />
+                  </div>
+                ))}
+                {(alliesByPosition.get(position.id)?.length ?? 0) > 0 && (
+                  <div className={styles.allies}>
+                    <span className={styles.alliesLabel}>Même position :</span>
+                    <FigureAvatarRow
+                      figures={alliesByPosition
+                        .get(position.id)!
+                        .map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
+                      size={40}
+                      hrefSuffix={`/s/${subject.slug}`}
+                    />
+                  </div>
+                )}
               </div>
             ))}
-          </section>
+          </div>
         )}
-      </ContentWithSidebar>
-    )
-  } catch (error) {
-    return (
-      <ErrorDisplay
-        title="Erreur"
-        message="Impossible de charger les prises de position."
-        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
-      />
-    )
-  }
+      </section>
+
+      {opponents.length > 0 && (
+        <section className={styles.otherFigures}>
+          <h2 className={styles.sectionTitle}>POSITIONS DIFFÉRENTES</h2>
+          {opponents.map((group) => (
+            <div key={group.title} className={styles.figureGroup}>
+              <h3 className={styles.figureGroupTitle}>{group.title}</h3>
+              <FigureAvatarRow
+                figures={group.figures.map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
+                size={50}
+                hrefSuffix={`/s/${subject.slug}`}
+              />
+            </div>
+          ))}
+        </section>
+      )}
+    </ContentWithSidebar>
+  )
 }

@@ -8,7 +8,6 @@ import { getAuthenticatedContributor } from '../../../../../actions/get-authenti
 import { canPerform } from '../../../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../components/layout/FormPageHeader'
-import ErrorDisplay from '../../../../../../components/layout/ErrorDisplay'
 import EditPositionForm from '../../../../../../components/positions/EditPositionForm'
 
 interface PageProps {
@@ -29,46 +28,36 @@ export default async function EditPositionPage({ params }: PageProps) {
     redirect(`/s/${slug}`)
   }
 
-  try {
-    const supabase = await createSSRSupabaseClient()
-    const subjectRepo = createSubjectRepository(supabase)
-    const positionRepo = createPositionRepository(supabase)
+  const supabase = await createSSRSupabaseClient()
+  const subjectRepo = createSubjectRepository(supabase)
+  const positionRepo = createPositionRepository(supabase)
 
-    const [subject, position] = await Promise.all([
-      Effect.runPromise(subjectRepo.findBySlug(slug)),
-      Effect.runPromise(positionRepo.findById(positionId)),
-    ])
+  const [subject, position] = await Promise.all([
+    Effect.runPromise(subjectRepo.findBySlug(slug)),
+    Effect.runPromise(positionRepo.findById(positionId)),
+  ])
 
-    if (!subject) notFound()
-    if (!position) notFound()
-    if (position.subjectId !== subject.id) notFound()
+  if (!subject) notFound()
+  if (!position) notFound()
+  if (position.subjectId !== subject.id) notFound()
 
-    const returnHref = `/s/${slug}/position/${positionId}`
+  const returnHref = `/s/${slug}/position/${positionId}`
 
-    return (
-      <ContentWithSidebar topMargin>
-        <FormPageHeader
-          backHref={returnHref}
-          backLabel="Retour à la position"
-          title="Modifier la position"
-          subtitle={`${position.title} — ${subject.title}`}
-        />
-
-        <EditPositionForm
-          positionId={position.id}
-          returnHref={returnHref}
-          initialTitle={position.title}
-          initialDescription={position.description}
-        />
-      </ContentWithSidebar>
-    )
-  } catch (error) {
-    return (
-      <ErrorDisplay
-        title="Erreur"
-        message="Impossible de charger la position."
-        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
+  return (
+    <ContentWithSidebar topMargin>
+      <FormPageHeader
+        backHref={returnHref}
+        backLabel="Retour à la position"
+        title="Modifier la position"
+        subtitle={`${position.title} — ${subject.title}`}
       />
-    )
-  }
+
+      <EditPositionForm
+        positionId={position.id}
+        returnHref={returnHref}
+        initialTitle={position.title}
+        initialDescription={position.description}
+      />
+    </ContentWithSidebar>
+  )
 }

@@ -7,7 +7,6 @@ import { createSubjectRepository } from '../../../../infra/database/subject-repo
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import NewPositionForm from '../../../../components/positions/NewPositionForm'
-import ErrorDisplay from '../../../../components/layout/ErrorDisplay'
 import styles from './nouvelle-position.module.css'
 
 interface PageProps {
@@ -37,33 +36,23 @@ export default async function NewPositionPage({ params }: PageProps) {
     redirect(`/s/${slug}`)
   }
 
-  try {
-    const supabase = await createSSRSupabaseClient()
-    const subjectRepo = createSubjectRepository(supabase)
+  const supabase = await createSSRSupabaseClient()
+  const subjectRepo = createSubjectRepository(supabase)
 
-    const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
-    if (!subject) notFound()
+  const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
+  if (!subject) notFound()
 
-    return (
-      <ContentWithSidebar topMargin>
-        <header className={styles.header}>
-          <Link href={`/s/${slug}`} className={styles.backLink}>
-            &larr; Retour au sujet
-          </Link>
-          <h1 className={styles.title}>{subject.title}</h1>
-          <p className={styles.subtitle}>Proposer une nouvelle position</p>
-        </header>
+  return (
+    <ContentWithSidebar topMargin>
+      <header className={styles.header}>
+        <Link href={`/s/${slug}`} className={styles.backLink}>
+          &larr; Retour au sujet
+        </Link>
+        <h1 className={styles.title}>{subject.title}</h1>
+        <p className={styles.subtitle}>Proposer une nouvelle position</p>
+      </header>
 
-        <NewPositionForm subjectId={subject.id} subjectSlug={slug} subjectTitle={subject.title} />
-      </ContentWithSidebar>
-    )
-  } catch (error) {
-    return (
-      <ErrorDisplay
-        title="Erreur"
-        message="Impossible de charger le formulaire."
-        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
-      />
-    )
-  }
+      <NewPositionForm subjectId={subject.id} subjectSlug={slug} subjectTitle={subject.title} />
+    </ContentWithSidebar>
+  )
 }

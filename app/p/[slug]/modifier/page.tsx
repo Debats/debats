@@ -7,7 +7,6 @@ import { getAuthenticatedContributor } from '../../../actions/get-authenticated-
 import { canPerform } from '../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
-import ErrorDisplay from '../../../../components/layout/ErrorDisplay'
 import EditPublicFigureForm from '../../../../components/figures/EditPublicFigureForm'
 
 interface PageProps {
@@ -28,40 +27,30 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
     redirect(`/p/${slug}`)
   }
 
-  try {
-    const supabase = await createSSRSupabaseClient()
-    const figureRepo = createPublicFigureRepository(supabase)
-    const figure = await Effect.runPromise(figureRepo.findBySlug(slug))
+  const supabase = await createSSRSupabaseClient()
+  const figureRepo = createPublicFigureRepository(supabase)
+  const figure = await Effect.runPromise(figureRepo.findBySlug(slug))
 
-    if (!figure) notFound()
+  if (!figure) notFound()
 
-    return (
-      <ContentWithSidebar topMargin>
-        <FormPageHeader
-          backHref={`/p/${slug}`}
-          backLabel="Retour à la personnalité"
-          title="Modifier la personnalité"
-          subtitle={figure.name}
-        />
-
-        <EditPublicFigureForm
-          figureId={figure.id}
-          figureSlug={figure.slug}
-          initialName={figure.name}
-          initialPresentation={figure.presentation}
-          initialWikipediaUrl={Option.isSome(figure.wikipediaUrl) ? figure.wikipediaUrl.value : ''}
-          initialWebsiteUrl={Option.isSome(figure.websiteUrl) ? figure.websiteUrl.value : ''}
-          initialNotorietySources={figure.notorietySources}
-        />
-      </ContentWithSidebar>
-    )
-  } catch (error) {
-    return (
-      <ErrorDisplay
-        title="Erreur"
-        message="Impossible de charger la personnalité."
-        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
+  return (
+    <ContentWithSidebar topMargin>
+      <FormPageHeader
+        backHref={`/p/${slug}`}
+        backLabel="Retour à la personnalité"
+        title="Modifier la personnalité"
+        subtitle={figure.name}
       />
-    )
-  }
+
+      <EditPublicFigureForm
+        figureId={figure.id}
+        figureSlug={figure.slug}
+        initialName={figure.name}
+        initialPresentation={figure.presentation}
+        initialWikipediaUrl={Option.isSome(figure.wikipediaUrl) ? figure.wikipediaUrl.value : ''}
+        initialWebsiteUrl={Option.isSome(figure.websiteUrl) ? figure.websiteUrl.value : ''}
+        initialNotorietySources={figure.notorietySources}
+      />
+    </ContentWithSidebar>
+  )
 }

@@ -7,7 +7,6 @@ import { getAuthenticatedContributor } from '../../../actions/get-authenticated-
 import { canPerform } from '../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
-import ErrorDisplay from '../../../../components/layout/ErrorDisplay'
 import EditSubjectForm from '../../../../components/subjects/EditSubjectForm'
 
 interface PageProps {
@@ -28,38 +27,28 @@ export default async function EditSubjectPage({ params }: PageProps) {
     redirect('/s')
   }
 
-  try {
-    const supabase = await createSSRSupabaseClient()
-    const subjectRepo = createSubjectRepository(supabase)
-    const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
+  const supabase = await createSSRSupabaseClient()
+  const subjectRepo = createSubjectRepository(supabase)
+  const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
 
-    if (!subject) notFound()
+  if (!subject) notFound()
 
-    return (
-      <ContentWithSidebar topMargin>
-        <FormPageHeader
-          backHref={`/s/${slug}`}
-          backLabel="Retour au sujet"
-          title="Modifier le sujet"
-          subtitle={subject.title}
-        />
-
-        <EditSubjectForm
-          subjectId={subject.id}
-          subjectSlug={subject.slug}
-          initialTitle={subject.title}
-          initialPresentation={subject.presentation}
-          initialProblem={subject.problem}
-        />
-      </ContentWithSidebar>
-    )
-  } catch (error) {
-    return (
-      <ErrorDisplay
-        title="Erreur"
-        message="Impossible de charger le sujet."
-        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
+  return (
+    <ContentWithSidebar topMargin>
+      <FormPageHeader
+        backHref={`/s/${slug}`}
+        backLabel="Retour au sujet"
+        title="Modifier le sujet"
+        subtitle={subject.title}
       />
-    )
-  }
+
+      <EditSubjectForm
+        subjectId={subject.id}
+        subjectSlug={subject.slug}
+        initialTitle={subject.title}
+        initialPresentation={subject.presentation}
+        initialProblem={subject.problem}
+      />
+    </ContentWithSidebar>
+  )
 }

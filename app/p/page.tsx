@@ -10,7 +10,6 @@ import Button from '../../components/ui/Button'
 import FigureAvatar from '../../components/figures/FigureAvatar'
 import PersonalitySearch from '../../components/figures/PersonalitySearch'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
-import ErrorDisplay from '../../components/layout/ErrorDisplay'
 import styles from './personalities.module.css'
 
 export const metadata: Metadata = {
@@ -65,99 +64,89 @@ interface PageProps {
 }
 
 export default async function PersonalitiesPage({ searchParams }: PageProps) {
-  try {
-    const { lettre } = await searchParams
-    const supabase = await createSSRSupabaseClient()
-    const repo = createPublicFigureRepository(supabase)
+  const { lettre } = await searchParams
+  const supabase = await createSSRSupabaseClient()
+  const repo = createPublicFigureRepository(supabase)
 
-    const contributor = await getAuthenticatedContributor()
-    const canAddPersonality = contributor
-      ? canPerform(contributor.reputation, 'add_personality')
-      : false
+  const contributor = await getAuthenticatedContributor()
+  const canAddPersonality = contributor
+    ? canPerform(contributor.reputation, 'add_personality')
+    : false
 
-    const [mostActive, recentlyActive, letterFigures] = await Promise.all([
-      Effect.runPromise(repo.findSummariesByActivity(10, 'subjects_count')),
-      Effect.runPromise(repo.findSummariesByActivity(10, 'latest_statement_at')),
-      lettre ? Effect.runPromise(repo.findByLetter(lettre)) : Promise.resolve(null),
-    ])
+  const [mostActive, recentlyActive, letterFigures] = await Promise.all([
+    Effect.runPromise(repo.findSummariesByActivity(10, 'subjects_count')),
+    Effect.runPromise(repo.findSummariesByActivity(10, 'latest_statement_at')),
+    lettre ? Effect.runPromise(repo.findByLetter(lettre)) : Promise.resolve(null),
+  ])
 
-    return (
-      <ContentWithSidebar topMargin>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
-          {canAddPersonality && (
-            <Button href="/p/ajouter" size="small">
-              Ajouter une personnalité
-            </Button>
-          )}
+  return (
+    <ContentWithSidebar topMargin>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
+        {canAddPersonality && (
+          <Button href="/p/ajouter" size="small">
+            Ajouter une personnalité
+          </Button>
+        )}
+      </div>
+
+      <PersonalitySearch />
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Les plus actives</h2>
+        <div className={styles.figureGrid}>
+          {mostActive.map((figure) => (
+            <FigureCard
+              key={figure.id}
+              figure={figure}
+              stat={`${figure.subjectsCount} sujet${figure.subjectsCount !== 1 ? 's' : ''}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Activité récente</h2>
+        <div className={styles.figureGrid}>
+          {recentlyActive.map((figure) => (
+            <FigureCard
+              key={figure.id}
+              figure={figure}
+              stat={
+                figure.latestStatementAt
+                  ? formatRelativeDate(figure.latestStatementAt)
+                  : 'Aucune activité'
+              }
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Index A-Z</h2>
+        <div className={styles.alphabetBar}>
+          {ALPHABET.map((l) => (
+            <Link
+              key={l}
+              href={`/p?lettre=${l}`}
+              scroll={false}
+              className={`${styles.letterLink} ${lettre === l ? styles.letterActive : ''}`}
+            >
+              {l}
+            </Link>
+          ))}
         </div>
 
-        <PersonalitySearch />
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Les plus actives</h2>
-          <div className={styles.figureGrid}>
-            {mostActive.map((figure) => (
-              <FigureCard
-                key={figure.id}
-                figure={figure}
-                stat={`${figure.subjectsCount} sujet${figure.subjectsCount !== 1 ? 's' : ''}`}
-              />
-            ))}
+        {letterFigures && (
+          <div className={styles.letterResults}>
+            {letterFigures.length === 0 ? (
+              <p className={styles.noResults}>Aucune personnalité commençant par « {lettre} ».</p>
+            ) : (
+              letterFigures.map((figure) => <FigureRow key={figure.id} figure={figure} />)
+            )}
           </div>
-        </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Activité récente</h2>
-          <div className={styles.figureGrid}>
-            {recentlyActive.map((figure) => (
-              <FigureCard
-                key={figure.id}
-                figure={figure}
-                stat={
-                  figure.latestStatementAt
-                    ? formatRelativeDate(figure.latestStatementAt)
-                    : 'Aucune activité'
-                }
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Index A-Z</h2>
-          <div className={styles.alphabetBar}>
-            {ALPHABET.map((l) => (
-              <Link
-                key={l}
-                href={`/p?lettre=${l}`}
-                scroll={false}
-                className={`${styles.letterLink} ${lettre === l ? styles.letterActive : ''}`}
-              >
-                {l}
-              </Link>
-            ))}
-          </div>
-
-          {letterFigures && (
-            <div className={styles.letterResults}>
-              {letterFigures.length === 0 ? (
-                <p className={styles.noResults}>Aucune personnalité commençant par « {lettre} ».</p>
-              ) : (
-                letterFigures.map((figure) => <FigureRow key={figure.id} figure={figure} />)
-              )}
-            </div>
-          )}
-        </section>
-      </ContentWithSidebar>
-    )
-  } catch (error) {
-    return (
-      <ErrorDisplay
-        title="Erreur"
-        message="Impossible de charger les personnalités."
-        detail={error instanceof Error ? error.message : 'Erreur inconnue'}
-      />
-    )
-  }
+        )}
+      </section>
+    </ContentWithSidebar>
+  )
 }

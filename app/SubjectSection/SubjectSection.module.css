@@ -1,0 +1,33 @@
+.section {
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.2em;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--debats-red);
+  margin: 0 0 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 1em;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

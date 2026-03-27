@@ -1,0 +1,42 @@
+.hero {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+    url('/images/intro-bg.jpg') center 30% / cover no-repeat;
+  text-align: center;
+  padding: 60px 30px;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 2.2em;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin: 0 0 15px;
+}
+
+.subtitle {
+  font-family: var(--font-gotham-book);
+  font-size: 1em;
+  color: #ffffff;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 40px 20px;
+  }
+
+  .title {
+    font-size: 1.6em;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: 0.9em;
+  }
+}
