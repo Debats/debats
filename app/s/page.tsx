@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import { canPerform } from '../../domain/reputation/permissions'
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 }
 
 export default async function SubjectsPage() {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
 
   const contributor = await getAuthenticatedContributor()

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { redirect, notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../../../../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../../../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../../../../../infra/database/public-figure-repository-supabase'
 import { createSubjectRepository } from '../../../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../../../infra/database/statement-repository-supabase'
@@ -34,7 +34,7 @@ export default async function EditStatementPage({ params }: PageProps) {
     redirect(`/p/${slug}/s/${subjectSlug}`)
   }
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const figureRepo = createPublicFigureRepository(supabase)
   const subjectRepo = createSubjectRepository(supabase)
   const statementRepo = createStatementRepository(supabase)

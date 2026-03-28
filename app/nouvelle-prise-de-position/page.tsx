@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { Effect } from 'effect'
 import { redirect } from 'next/navigation'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import NewStatementForm from '../../components/statements/NewStatementForm'
@@ -33,7 +33,7 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
   const initialFigure = figureId && figureName ? { id: figureId, name: figureName } : undefined
   let initialSubject: { id: string; title: string; slug?: string } | undefined
   if (subjectId && subjectTitle) {
-    const supabase = await createSSRSupabaseClient()
+    const supabase = createAdminSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
     initialSubject = { id: subjectId, title: subjectTitle, slug: subject?.slug }

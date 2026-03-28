@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { redirect, notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../../../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../../../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../../../../../infra/database/position-repository-supabase'
 import { getAuthenticatedContributor } from '../../../../../actions/get-authenticated-contributor'
@@ -28,7 +28,7 @@ export default async function EditPositionPage({ params }: PageProps) {
     redirect(`/s/${slug}`)
   }
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
   const positionRepo = createPositionRepository(supabase)
 

@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { dailyIndex } from '../../domain/services/daily-pick'
 import ActionLink from '../../components/ui/ActionLink'
@@ -10,7 +10,7 @@ import SubjectTitle from '../../components/subjects/SubjectTitle'
 import styles from './DailySubject.module.css'
 
 export default async function DailySubject() {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
 
   const subjectIds = await Effect.runPromise(subjectRepo.findAllIds())

@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../infra/supabase/admin'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
 import { createPublicFigureRepository } from '../infra/database/public-figure-repository-supabase'
 
@@ -51,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const supabase = await createSSRSupabaseClient()
+    const supabase = createAdminSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const publicFigureRepo = createPublicFigureRepository(supabase)
 

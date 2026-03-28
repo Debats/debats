@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
 import { isMajorSubject } from '../../../domain/entities/subject'
@@ -21,7 +21,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   try {
-    const supabase = await createSSRSupabaseClient()
+    const supabase = createAdminSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
     if (!subject) return { title: 'Sujet introuvable' }
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function SubjectDetailPage({ params }: PageProps) {
   const { slug } = await params
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
 
   const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))

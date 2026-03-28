@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { PublicFigureActivitySummary } from '../../domain/value-objects/public-figure-activity-summary'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
@@ -65,7 +65,7 @@ interface PageProps {
 
 export default async function PersonalitiesPage({ searchParams }: PageProps) {
   const { lettre } = await searchParams
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const repo = createPublicFigureRepository(supabase)
 
   const contributor = await getAuthenticatedContributor()

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { redirect, notFound } from 'next/navigation'
 import { Effect, Option } from 'effect'
-import { createSSRSupabaseClient } from '../../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../../infra/database/public-figure-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
@@ -27,7 +27,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
     redirect(`/p/${slug}`)
   }
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const figureRepo = createPublicFigureRepository(supabase)
   const figure = await Effect.runPromise(figureRepo.findBySlug(slug))
 

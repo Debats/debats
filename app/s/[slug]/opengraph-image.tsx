@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 
@@ -13,7 +13,7 @@ export const contentType = 'image/png'
 export default async function OGImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
   const statementRepo = createStatementRepository(supabase)
 

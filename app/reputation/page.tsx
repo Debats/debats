@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Effect } from 'effect'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { getRank } from '../../domain/reputation/permissions'
 import { actionLabel } from '../../domain/reputation/action-labels'
@@ -33,7 +33,7 @@ export default async function ReputationPage() {
     )
   }
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const repository = createReputationRepository(supabase)
   const events = await Effect.runPromise(repository.getHistory(contributor.id))
   const rank = getRank(contributor.reputation)

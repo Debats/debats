@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../../../../infra/database/position-repository-supabase'
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
@@ -22,7 +22,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug, positionId } = await params
   try {
-    const supabase = await createSSRSupabaseClient()
+    const supabase = createAdminSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const positionRepo = createPositionRepository(supabase)
     const [subject, position] = await Promise.all([
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PositionDetailPage({ params }: PageProps) {
   const { slug, positionId } = await params
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
   const positionRepo = createPositionRepository(supabase)
   const statementRepo = createStatementRepository(supabase)

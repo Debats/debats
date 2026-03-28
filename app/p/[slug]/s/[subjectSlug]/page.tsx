@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../../../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../../../infra/database/public-figure-repository-supabase'
 import { createSubjectRepository } from '../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
@@ -25,7 +25,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug, subjectSlug } = await params
   try {
-    const supabase = await createSSRSupabaseClient()
+    const supabase = createAdminSupabaseClient()
     const figureRepo = createPublicFigureRepository(supabase)
     const subjectRepo = createSubjectRepository(supabase)
 
@@ -138,7 +138,7 @@ function formatDate(date: Date): string {
 export default async function FigureSubjectPage({ params }: PageProps) {
   const { slug, subjectSlug } = await params
 
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const figureRepo = createPublicFigureRepository(supabase)
   const subjectRepo = createSubjectRepository(supabase)
   const statementRepo = createStatementRepository(supabase)

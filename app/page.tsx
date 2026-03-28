@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../infra/supabase/admin'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
 import ActionLink from '../components/ui/ActionLink'
@@ -11,14 +11,14 @@ const MOST_ACTIVE_LIMIT = 4
 const RECENTLY_ADDED_LIMIT = 4
 
 async function MostActiveSubjects() {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
   const subjects = await Effect.runPromise(subjectRepo.findSummariesByActivity(MOST_ACTIVE_LIMIT))
   return <SubjectSection title="Les plus actifs" subjects={subjects} />
 }
 
 async function RecentlyAddedSubjects() {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
   const subjects = await Effect.runPromise(
     subjectRepo.findSummariesByCreatedAt(RECENTLY_ADDED_LIMIT),
