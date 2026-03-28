@@ -2,12 +2,11 @@
 
 import ErrorDisplay from '../components/layout/ErrorDisplay'
 
-export default function HomeError({ error }: { error: Error & { digest?: string } }) {
+export default function GlobalError() {
   return (
     <ErrorDisplay
       title="Erreur"
-      message="Impossible de charger la page d'accueil."
-      detail={error.message}
+      message="Une erreur est survenue lors du chargement de cette page."
     />
   )
 }
