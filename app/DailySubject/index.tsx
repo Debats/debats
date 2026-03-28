@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Effect } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'

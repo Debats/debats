@@ -32,7 +32,7 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
   const subjectSlugMapRef = useRef<Map<string, string>>(new Map())
 
   const [positions, setPositions] = useState<PositionOption[]>([])
-  const [loadingPositions, setLoadingPositions] = useState(false)
+  const [loadingPositions, setLoadingPositions] = useState(!!initialSubject?.id)
 
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
