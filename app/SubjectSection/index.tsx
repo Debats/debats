@@ -1,4 +1,5 @@
 import { SubjectActivitySummary } from '../../domain/repositories/subject-repository'
+import SectionTitle from '../../components/ui/SectionTitle'
 import SubjectCardCompact from '../SubjectCardCompact'
 import styles from './SubjectSection.module.css'
 
@@ -10,7 +11,7 @@ interface SubjectSectionProps {
 export default function SubjectSection({ title, subjects }: SubjectSectionProps) {
   return (
     <section className={styles.section}>
-      <h2 className={styles.title}>{title}</h2>
+      <SectionTitle>{title}</SectionTitle>
       {subjects.length === 0 ? (
         <p className={styles.empty}>Aucun sujet pour le moment.</p>
       ) : (

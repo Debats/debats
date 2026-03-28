@@ -1,0 +1,14 @@
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.2em;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--debats-red);
+  margin: 0 0 20px;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 1em;
+  }
+}
