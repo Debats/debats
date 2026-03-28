@@ -3,7 +3,6 @@
 import * as Sentry from '@sentry/nextjs'
 import sharp from 'sharp'
 import { Either } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
@@ -25,8 +24,7 @@ export async function updatePublicFigureAction(
   figureId: string,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = await createSSRSupabaseClient()
-  const admin = createAdminSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
   const name = String(formData.get('name') ?? '')
@@ -45,7 +43,7 @@ export async function updatePublicFigureAction(
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
     publicFigureRepo: createPublicFigureRepository(supabase),
-    reputationRepo: createReputationRepository(admin),
+    reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   }
 
@@ -75,7 +73,7 @@ export async function updatePublicFigureAction(
       .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
       .jpeg({ quality: 85 })
       .toBuffer()
-    const { error: uploadError } = await admin.storage
+    const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(storagePath, resizedBuffer, {
         contentType: 'image/jpeg',
@@ -93,7 +91,7 @@ export async function updatePublicFigureAction(
     }
   } else if (slugChanged) {
     // No new photo but slug changed: copy old avatar to new path
-    const { error: copyError } = await admin.storage
+    const { error: copyError } = await supabase.storage
       .from('avatars')
       .copy(`${oldSlug}.jpg`, `${newSlug}.jpg`)
 
@@ -107,7 +105,7 @@ export async function updatePublicFigureAction(
 
   // Clean up old avatar if slug changed
   if (slugChanged) {
-    await admin.storage.from('avatars').remove([`${oldSlug}.jpg`])
+    await supabase.storage.from('avatars').remove([`${oldSlug}.jpg`])
   }
 
   // Phase 3: Persist

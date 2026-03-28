@@ -1,7 +1,6 @@
 'use server'
 
 import { Either } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
@@ -14,7 +13,7 @@ export type ActionResult =
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
 export async function createSubjectAction(formData: FormData): Promise<ActionResult> {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
   const result = await createSubjectUseCase({
@@ -23,7 +22,7 @@ export async function createSubjectAction(formData: FormData): Promise<ActionRes
     presentation: String(formData.get('presentation') ?? ''),
     problem: String(formData.get('problem') ?? ''),
     subjectRepo: createSubjectRepository(supabase),
-    reputationRepo: createReputationRepository(createAdminSupabaseClient()),
+    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

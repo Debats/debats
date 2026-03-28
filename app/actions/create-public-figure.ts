@@ -3,7 +3,6 @@
 import * as Sentry from '@sentry/nextjs'
 import sharp from 'sharp'
 import { Either } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
@@ -22,8 +21,7 @@ export type ActionResult =
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
 export async function createPublicFigureAction(formData: FormData): Promise<ActionResult> {
-  const supabase = await createSSRSupabaseClient()
-  const admin = createAdminSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
   const name = String(formData.get('name') ?? '')
@@ -49,7 +47,7 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
     publicFigureRepo: createPublicFigureRepository(supabase),
-    reputationRepo: createReputationRepository(admin),
+    reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   }
 
@@ -70,7 +68,7 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
     .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
     .jpeg({ quality: 85 })
     .toBuffer()
-  const { error: uploadError } = await admin.storage
+  const { error: uploadError } = await supabase.storage
     .from('avatars')
     .upload(storagePath, resizedBuffer, {
       contentType: 'image/jpeg',

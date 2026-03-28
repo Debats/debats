@@ -1,7 +1,6 @@
 'use server'
 
 import { Either } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
@@ -17,7 +16,7 @@ export async function updatePositionAction(
   positionId: string,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
   const result = await updatePositionUseCase({
@@ -26,7 +25,7 @@ export async function updatePositionAction(
     title: String(formData.get('title') ?? ''),
     description: String(formData.get('description') ?? ''),
     positionRepo: createPositionRepository(supabase),
-    reputationRepo: createReputationRepository(createAdminSupabaseClient()),
+    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {
