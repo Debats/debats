@@ -54,6 +54,59 @@
   border-color: var(--debats-red);
 }
 
+.notorietySources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notorietyLabel {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.notorietyRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.notorietyRow > :first-child {
+  flex: 1;
+}
+
+.removeSource {
+  background: none;
+  border: none;
+  color: #c62828;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.removeSource:hover {
+  color: #b71c1c;
+}
+
+.addSource {
+  background: none;
+  border: none;
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  color: var(--debats-red);
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.addSource:hover {
+  text-decoration: underline;
+}
+
 .actions {
   display: flex;
   gap: 10px;

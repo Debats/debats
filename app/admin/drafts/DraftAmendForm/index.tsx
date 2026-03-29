@@ -54,6 +54,9 @@ export default function DraftAmendForm({
     draft.publicFigureData?.presentation ?? '',
   )
   const [figureWikipedia, setFigureWikipedia] = useState(draft.publicFigureData?.wikipediaUrl ?? '')
+  const [figureNotorietySources, setFigureNotorietySources] = useState<string[]>(
+    draft.publicFigureData?.notorietySources ?? ['', ''],
+  )
 
   // Subject
   const [subjectMode, setSubjectMode] = useState<EntityFieldValue['mode']>(
@@ -129,6 +132,7 @@ export default function DraftAmendForm({
       figureName,
       figurePresentation,
       figureWikipedia,
+      figureNotorietySources,
       subjectMode,
       subjectTitle,
       subjectPresentation,
@@ -148,6 +152,7 @@ export default function DraftAmendForm({
     figureName,
     figurePresentation,
     figureWikipedia,
+    figureNotorietySources,
     subjectMode,
     subjectTitle,
     subjectPresentation,
@@ -193,6 +198,48 @@ export default function DraftAmendForm({
           value={figureWikipedia}
           onChange={(e) => setFigureWikipedia(e.target.value)}
         />
+        {!figureWikipedia && (
+          <div className={styles.notorietySources}>
+            <label className={styles.notorietyLabel}>
+              Sources de notoriété (min. 2, requises sans Wikipedia)
+            </label>
+            {figureNotorietySources.map((url, index) => (
+              <div key={index} className={styles.notorietyRow}>
+                <TextField
+                  label={`Source ${index + 1}`}
+                  id={`amend-figure-notoriety-${index}`}
+                  name={`figureNotoriety${index}`}
+                  value={url}
+                  onChange={(e) => {
+                    const next = [...figureNotorietySources]
+                    next[index] = e.target.value
+                    setFigureNotorietySources(next)
+                  }}
+                />
+                {figureNotorietySources.length > 2 && (
+                  <button
+                    type="button"
+                    className={styles.removeSource}
+                    onClick={() =>
+                      setFigureNotorietySources(
+                        figureNotorietySources.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              className={styles.addSource}
+              onClick={() => setFigureNotorietySources([...figureNotorietySources, ''])}
+            >
+              + Ajouter une source
+            </button>
+          </div>
+        )}
       </EntityField>
 
       <EntityField

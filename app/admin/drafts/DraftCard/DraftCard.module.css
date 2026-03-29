@@ -70,6 +70,27 @@
   margin-top: 16px;
 }
 
+.notorietySources {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+}
+
+.notorietySources li {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.notorietySources a {
+  color: var(--debats-red);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.notorietySources a:hover {
+  text-decoration: underline;
+}
+
 .error {
   font-size: 13px;
   color: #c62828;

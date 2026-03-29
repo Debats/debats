@@ -55,6 +55,7 @@ function makeState(overrides: Partial<AmendFormState> = {}): AmendFormState {
     figureName: 'Jean-Luc Mélenchon',
     figurePresentation: 'Homme politique français.',
     figureWikipedia: 'https://fr.wikipedia.org/wiki/JLM',
+    figureNotorietySources: [],
     subjectMode: 'existing',
     subjectTitle: "L'immigration",
     subjectPresentation: 'Sujet central.',
@@ -134,6 +135,46 @@ describe('buildAmendments', () => {
     )
     expect(result.positionTitle).toBe('Fermeture des frontières')
     expect(result.positionData).toBeNull()
+  })
+
+  it('should include notoriety sources in figure creation data when provided', () => {
+    const draft = makeDraft({
+      publicFigureData: { presentation: 'Bio.', notorietySources: [] },
+    })
+    const result = buildAmendments(
+      draft,
+      noneFoundResolution,
+      makeState({
+        figureMode: 'new',
+        figurePresentation: 'Bio.',
+        figureWikipedia: '',
+        figureNotorietySources: ['https://lemonde.fr/article', 'https://liberation.fr/article'],
+      }),
+    )
+    expect(result.publicFigureData).toEqual({
+      presentation: 'Bio.',
+      notorietySources: ['https://lemonde.fr/article', 'https://liberation.fr/article'],
+    })
+  })
+
+  it('should filter out empty notoriety sources', () => {
+    const draft = makeDraft({
+      publicFigureData: { presentation: 'Bio.', notorietySources: [] },
+    })
+    const result = buildAmendments(
+      draft,
+      noneFoundResolution,
+      makeState({
+        figureMode: 'new',
+        figurePresentation: 'Bio.',
+        figureWikipedia: '',
+        figureNotorietySources: ['https://lemonde.fr/article', '', '  '],
+      }),
+    )
+    expect(result.publicFigureData).toEqual({
+      presentation: 'Bio.',
+      notorietySources: ['https://lemonde.fr/article'],
+    })
   })
 
   it('should include new position data in new mode', () => {

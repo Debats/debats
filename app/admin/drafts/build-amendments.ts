@@ -7,6 +7,7 @@ export type AmendFormState = {
   figureName: string
   figurePresentation: string
   figureWikipedia: string
+  figureNotorietySources: string[]
   subjectMode: 'existing' | 'new'
   subjectTitle: string
   subjectPresentation: string
@@ -37,13 +38,20 @@ export function buildAmendments(
     }
   } else {
     if (state.figureName !== draft.publicFigureName) amendments.publicFigureName = state.figureName
+    const filteredSources = state.figureNotorietySources.filter((s) => s.trim() !== '')
     const newData = {
       presentation: state.figurePresentation,
       ...(state.figureWikipedia ? { wikipediaUrl: state.figureWikipedia } : {}),
+      ...(filteredSources.length > 0 ? { notorietySources: filteredSources } : {}),
     }
+    const originalSources = draft.publicFigureData?.notorietySources ?? []
+    const sourcesChanged =
+      filteredSources.length !== originalSources.length ||
+      filteredSources.some((s, i) => s !== originalSources[i])
     const changed =
       state.figurePresentation !== (draft.publicFigureData?.presentation ?? '') ||
-      state.figureWikipedia !== (draft.publicFigureData?.wikipediaUrl ?? '')
+      state.figureWikipedia !== (draft.publicFigureData?.wikipediaUrl ?? '') ||
+      sourcesChanged
     if (changed) amendments.publicFigureData = newData
   }
 

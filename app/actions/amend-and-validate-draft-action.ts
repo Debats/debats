@@ -19,7 +19,11 @@ export type DraftAmendments = {
   positionTitle?: string
   sourceName?: string
   quote?: string
-  publicFigureData?: { presentation: string; wikipediaUrl?: string } | null
+  publicFigureData?: {
+    presentation: string
+    wikipediaUrl?: string
+    notorietySources?: string[]
+  } | null
   subjectData?: { presentation: string; problem: string } | null
   positionData?: { description: string } | null
 }

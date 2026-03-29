@@ -111,6 +111,35 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
       {draft.publicFigureData && !resolution.publicFigure.found && (
         <CreationPreview title={draft.publicFigureName}>
           <p>{draft.publicFigureData.presentation}</p>
+          {draft.publicFigureData.wikipediaUrl && (
+            <p>
+              <strong>Wikipedia :</strong>{' '}
+              <a
+                href={draft.publicFigureData.wikipediaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {draft.publicFigureData.wikipediaUrl}
+              </a>
+            </p>
+          )}
+          {draft.publicFigureData.notorietySources &&
+            draft.publicFigureData.notorietySources.length > 0 && (
+              <>
+                <p>
+                  <strong>Sources de notoriété :</strong>
+                </p>
+                <ul className={styles.notorietySources}>
+                  {draft.publicFigureData.notorietySources.map((url, index) => (
+                    <li key={index}>
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        {url}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
         </CreationPreview>
       )}
 
