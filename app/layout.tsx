@@ -4,6 +4,7 @@ import '../styles/debats-colors.css'
 import '../styles/layout.css'
 import PlausibleProvider from 'next-plausible'
 import Header from '../components/layout/header'
+import { ShareButtonProvider } from '../components/ui/ShareButton/ShareButtonContext'
 import Footer from '../components/layout/footer'
 import NoticeBanner from '../components/layout/NoticeBanner'
 import FeedbackWidget from '../components/feedback/FeedbackWidget'
@@ -61,17 +62,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body>
         <PlausibleProvider domain="debats.co">
-          <div className="layout-container">
-            <Header />
-            <main className="main-content">
-              <Suspense>
-                <NoticeBanner />
-              </Suspense>
-              <div className="page-content">{children}</div>
-            </main>
-            <Footer />
-            <FeedbackWidget />
-          </div>
+          <ShareButtonProvider>
+            <div className="layout-container">
+              <Header />
+              <main className="main-content">
+                <Suspense>
+                  <NoticeBanner />
+                </Suspense>
+                <div className="page-content">{children}</div>
+              </main>
+              <Footer />
+              <FeedbackWidget />
+            </div>
+          </ShareButtonProvider>
         </PlausibleProvider>
       </body>
     </html>

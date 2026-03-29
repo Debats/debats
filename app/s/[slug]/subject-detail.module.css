@@ -34,14 +34,6 @@
   margin: 0;
 }
 
-.headerActions {
-  margin-top: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
 .sectionTitle {
   font-family: var(--font-gotham-bold);
   font-size: 1.2em;

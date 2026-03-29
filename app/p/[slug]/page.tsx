@@ -11,6 +11,8 @@ import { canPerform } from '../../../domain/reputation/permissions'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
 import AdminMenu from '../../../components/ui/AdminMenu'
 import Button from '../../../components/ui/Button'
+import HeaderActions from '../../../components/layout/HeaderActions'
+import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import styles from './personality-detail.module.css'
 
@@ -127,20 +129,23 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
             </a>
           )}
         </div>
-        {contributor && (
-          <div className={styles.headerActions}>
-            <Button
-              href={`/nouvelle-prise-de-position?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`}
-            >
-              Ajouter une prise de position
-            </Button>
-            {canPerform(contributor.reputation, 'edit_personality') && (
-              <AdminMenu
-                actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]}
-              />
-            )}
-          </div>
-        )}
+        <HeaderActions>
+          {contributor && (
+            <>
+              <Button
+                href={`/nouvelle-prise-de-position?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`}
+              >
+                Ajouter une prise de position
+              </Button>
+              {canPerform(contributor.reputation, 'edit_personality') && (
+                <AdminMenu
+                  actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]}
+                />
+              )}
+            </>
+          )}
+          <ShareButton title={figure.name} />
+        </HeaderActions>
       </header>
 
       <section>

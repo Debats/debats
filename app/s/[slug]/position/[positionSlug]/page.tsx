@@ -11,6 +11,8 @@ import { getAuthenticatedContributor } from '../../../../actions/get-authenticat
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import AdminMenu from '../../../../../components/ui/AdminMenu'
 import Button from '../../../../../components/ui/Button'
+import HeaderActions from '../../../../../components/layout/HeaderActions'
+import ShareButton from '../../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import MergePositionForm from './MergePositionForm'
 import styles from './position-detail.module.css'
@@ -108,6 +110,9 @@ export default async function PositionDetailPage({ params }: PageProps) {
           )}
         </div>
         <p className={styles.description}>{position.description}</p>
+        <HeaderActions>
+          <ShareButton title={`${position.title} — ${subject.title}`} text={position.description} />
+        </HeaderActions>
       </header>
 
       <section>

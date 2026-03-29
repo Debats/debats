@@ -1,0 +1,43 @@
+.button {
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+  box-sizing: border-box;
+  border: 1px solid var(--border-light);
+  background: none;
+  color: var(--text-dark);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.button:hover {
+  border-color: var(--debats-red);
+  color: var(--debats-red);
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--debats-red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.iconButton:hover {
+  color: #d11635;
+}

@@ -10,6 +10,8 @@ import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import FigureAvatarRow from '../../../components/figures/FigureAvatarRow'
 import Button from '../../../components/ui/Button'
+import HeaderActions from '../../../components/layout/HeaderActions'
+import ShareButton from '../../../components/ui/ShareButton'
 import SubjectAdminMenu from './SubjectAdminMenu'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import styles from './subject-detail.module.css'
@@ -101,20 +103,23 @@ export default async function SubjectDetailPage({ params }: PageProps) {
         </div>
         <p className={styles.presentation}>{subject.presentation}</p>
         <p className={styles.problem}>{subject.problem}</p>
-        {contributor && (
-          <div className={styles.headerActions}>
-            <Button
-              href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
-            >
-              Ajouter une prise de position
-            </Button>
-            {canAddPosition && (
-              <Button href={`/s/${slug}/nouvelle-position`} variant="secondary">
-                Ajouter une position
+        <HeaderActions>
+          {contributor && (
+            <>
+              <Button
+                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
+              >
+                Ajouter une prise de position
               </Button>
-            )}
-          </div>
-        )}
+              {canAddPosition && (
+                <Button href={`/s/${slug}/nouvelle-position`} variant="secondary">
+                  Ajouter une position
+                </Button>
+              )}
+            </>
+          )}
+          <ShareButton title={subject.title} text={subject.presentation} />
+        </HeaderActions>
       </header>
 
       <section>

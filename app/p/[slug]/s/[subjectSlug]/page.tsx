@@ -13,6 +13,8 @@ import {
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import EditLink from '../../../../../components/ui/EditLink'
+import HeaderActions from '../../../../../components/layout/HeaderActions'
+import ShareButton from '../../../../../components/ui/ShareButton'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import FigureAvatarRow from '../../../../../components/figures/FigureAvatarRow'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
@@ -208,6 +210,9 @@ export default async function FigureSubjectPage({ params }: PageProps) {
               {subject.title}
             </Link>
           </p>
+          <HeaderActions>
+            <ShareButton title={`${figure.name} sur ${subject.title}`} />
+          </HeaderActions>
         </div>
       </header>
 

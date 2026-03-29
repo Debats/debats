@@ -8,14 +8,6 @@
 .headerInfo {
 }
 
-.headerActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  margin-top: 12px;
-}
-
 .name {
   font-family: var(--font-gotham-bold);
   font-size: 1.8em;

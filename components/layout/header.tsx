@@ -4,10 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import AuthSection from '../auth/AuthSection'
+import ShareButton from '../ui/ShareButton'
+import { useShareButtonContext } from '../ui/ShareButton/ShareButtonContext'
 import styles from './header.module.css'
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { hasPageShareButton } = useShareButtonContext()
 
   const closeMenu = () => setMenuOpen(false)
 
@@ -27,6 +30,7 @@ export default function Header() {
             </Link>
           </div>
 
+          {!hasPageShareButton && <ShareButton iconOnly />}
           <button
             className={styles.burger}
             onClick={() => setMenuOpen(!menuOpen)}
