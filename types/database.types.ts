@@ -258,6 +258,7 @@ export type Database = {
           deleted_at: string | null
           description: string
           id: string
+          slug: string
           subject_id: string
           title: string
           updated_at: string | null
@@ -268,6 +269,7 @@ export type Database = {
           deleted_at?: string | null
           description: string
           id?: string
+          slug: string
           subject_id: string
           title: string
           updated_at?: string | null
@@ -278,6 +280,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string
           id?: string
+          slug?: string
           subject_id?: string
           title?: string
           updated_at?: string | null
@@ -561,6 +564,7 @@ export type Database = {
           figures: Json
           position_description: string
           position_id: string
+          position_slug: string
           position_title: string
           total_figures_count: number
         }[]

@@ -6,7 +6,7 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigure } from '../entities/public-figure'
 import { Subject } from '../entities/subject'
-import { Position, PositionId, PositionTitle } from '../entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { makeDraft, makePublicFigure, makeSubject, makePosition } from './draft-test-helpers'
 
 const stubPublicFigureRepo = (figure: PublicFigure | null): PublicFigureRepository =>
@@ -88,6 +88,7 @@ describe('resolveDraft', () => {
     const otherPosition = Position.make({
       id: PositionId.make('pos-2'),
       title: PositionTitle.make('Autre position sur ce sujet'),
+      slug: PositionSlug.make('autre-position-sur-ce-sujet'),
       description: 'Une autre position.',
       subjectId: 'sub-1',
       createdAt: new Date(),

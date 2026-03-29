@@ -2,12 +2,14 @@ import { describe, it, expect, vi } from 'vitest'
 import { Effect, Either } from 'effect'
 import { mergePositions } from './merge-positions'
 import { PositionRepository } from '../repositories/position-repository'
-import { Position, PositionId, PositionTitle } from '../entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
+import { slugify } from '../value-objects/slug'
 
 function makePosition(id: string, subjectId: string, title: string): Position {
   return Position.make({
     id: PositionId.make(id),
     title: PositionTitle.make(title),
+    slug: PositionSlug.make(slugify(title)),
     description: 'Description test.',
     subjectId,
     createdAt: new Date(),

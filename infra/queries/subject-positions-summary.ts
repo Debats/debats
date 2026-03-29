@@ -21,6 +21,7 @@ export function getSubjectPositionsSummary(
       return (data as Record<string, unknown>[]).map((row) => ({
         positionId: row.position_id as string,
         positionTitle: row.position_title as string,
+        positionSlug: row.position_slug as string,
         positionDescription: row.position_description as string,
         totalFiguresCount: Number(row.total_figures_count),
         figures: (row.figures as Array<{ id: string; name: string; slug: string }>) ?? [],

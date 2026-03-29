@@ -7,7 +7,7 @@ import {
   PublicFigureSlug,
 } from '../entities/public-figure'
 import { Subject, SubjectId, SubjectSlug, SubjectTitle } from '../entities/subject'
-import { Position, PositionId, PositionTitle } from '../entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 
 export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
   return {
@@ -71,6 +71,7 @@ export function makePosition(): Position {
   return Position.make({
     id: PositionId.make('pos-1'),
     title: PositionTitle.make('Régularisation des sans-papiers'),
+    slug: PositionSlug.make('regularisation-des-sans-papiers'),
     description: 'Régulariser les travailleurs sans-papiers.',
     subjectId: 'sub-1',
     createdAt: new Date(),

@@ -1,0 +1,1 @@
+ALTER TABLE positions ADD COLUMN slug VARCHAR(100);

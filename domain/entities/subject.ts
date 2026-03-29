@@ -1,6 +1,6 @@
-import { pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { isAfter, subDays } from 'date-fns/fp'
+import { slugify } from '../value-objects/slug'
 
 export const SubjectId = S.String.pipe(S.brand('SubjectId'))
 export type SubjectId = S.Schema.Type<typeof SubjectId>
@@ -28,17 +28,7 @@ export const Subject = S.Struct({
 
 export type Subject = S.Schema.Type<typeof Subject>
 
-export const generateSlug = (title: string): SubjectSlug =>
-  pipe(
-    title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, ''),
-    SubjectSlug.make,
-  )
+export const generateSlug = (title: string): SubjectSlug => SubjectSlug.make(slugify(title))
 
 export const createSubject = (params: {
   title: string

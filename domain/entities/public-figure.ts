@@ -1,7 +1,7 @@
-import { pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { Option } from 'effect'
 import { isAfter, subDays } from 'date-fns/fp'
+import { slugify } from '../value-objects/slug'
 
 export const PublicFigureId = S.String.pipe(S.brand('PublicFigureId'))
 export type PublicFigureId = S.Schema.Type<typeof PublicFigureId>
@@ -34,17 +34,7 @@ export const PublicFigure = S.Struct({
 
 export type PublicFigure = S.Schema.Type<typeof PublicFigure>
 
-export const generateSlug = (name: string): PublicFigureSlug =>
-  pipe(
-    name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, ''),
-    PublicFigureSlug.make,
-  )
+export const generateSlug = (name: string): PublicFigureSlug => PublicFigureSlug.make(slugify(name))
 
 export const createPublicFigure = (params: {
   name: string

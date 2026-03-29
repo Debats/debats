@@ -3,7 +3,7 @@ import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../types/database.types'
 import { Statement, StatementId, LatestStatement } from '../../domain/entities/statement'
-import { Position, PositionId, PositionTitle } from '../../domain/entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
   PublicFigure,
@@ -52,6 +52,7 @@ function mapPositionRow(row: PositionRow): Position {
   return Position.make({
     id: PositionId.make(row.id),
     title: PositionTitle.make(row.title),
+    slug: PositionSlug.make(row.slug),
     description: row.description,
     subjectId: row.subject_id,
     createdBy: row.created_by ?? undefined,
@@ -93,7 +94,7 @@ const STATEMENT_WITH_DETAILS_QUERY = `
   id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
   created_by, created_at, updated_at, deleted_at,
   positions!inner (
-    id, title, description, subject_id, created_by, created_at, updated_at, deleted_at,
+    id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
     subjects!inner (
       id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at, deleted_at
     )
@@ -174,7 +175,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
             created_by, created_at, updated_at, deleted_at,
             positions!inner (
-              id, title, description, subject_id, created_by, created_at, updated_at, deleted_at
+              id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
             ),
             public_figures!inner (
               id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
@@ -238,7 +239,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
             created_by, created_at, updated_at, deleted_at,
             positions!inner (
-              id, title, description, subject_id, created_by, created_at, updated_at, deleted_at
+              id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
             ),
             public_figures!inner (
               id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,

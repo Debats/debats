@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Position, PositionId, PositionTitle } from '../../domain/entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { PositionRepository } from '../../domain/repositories/position-repository'
 
@@ -9,6 +9,19 @@ function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
   Sentry.captureException(error, { extra: { message } })
   return new DatabaseError(msg)
+}
+
+function mapRow(data: Record<string, unknown>): Position {
+  return Position.make({
+    id: PositionId.make(data.id as string),
+    title: PositionTitle.make(data.title as string),
+    slug: PositionSlug.make(data.slug as string),
+    description: data.description as string,
+    subjectId: data.subject_id as string,
+    createdBy: (data.created_by as string) ?? undefined,
+    createdAt: new Date(data.created_at as string),
+    updatedAt: new Date(data.updated_at as string),
+  })
 }
 
 export function createPositionRepository(supabase: SupabaseClient): PositionRepository {
@@ -28,17 +41,28 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             throw error
           }
 
-          return Position.make({
-            id: PositionId.make(data.id),
-            title: PositionTitle.make(data.title),
-            description: data.description,
-            subjectId: data.subject_id,
-            createdBy: data.created_by ?? undefined,
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-          })
+          return mapRow(data)
         },
         catch: (error) => dbError('Failed to fetch position', error),
+      }),
+
+    findBySubjectAndSlug: (subjectId: string, slug: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('positions')
+            .select('*')
+            .eq('subject_id', subjectId)
+            .eq('slug', slug)
+            .is('deleted_at', null)
+            .maybeSingle()
+
+          if (error) throw error
+          if (!data) return null
+
+          return mapRow(data)
+        },
+        catch: (error) => dbError('Failed to fetch position by slug', error),
       }),
 
     findBySubjectId: (subjectId: string) =>
@@ -52,18 +76,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             .order('title')
 
           if (error) throw error
-
-          return data.map((row) =>
-            Position.make({
-              id: PositionId.make(row.id),
-              title: PositionTitle.make(row.title),
-              description: row.description,
-              subjectId: row.subject_id,
-              createdBy: row.created_by ?? undefined,
-              createdAt: new Date(row.created_at),
-              updatedAt: new Date(row.updated_at),
-            }),
-          )
+          return data.map(mapRow)
         },
         catch: (error) => dbError('Failed to fetch positions', error),
       }),
@@ -76,6 +89,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             .insert({
               id: position.id,
               title: position.title,
+              slug: position.slug,
               description: position.description,
               subject_id: position.subjectId,
               created_by: position.createdBy ?? null,
@@ -84,16 +98,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             .single()
 
           if (error) throw error
-
-          return Position.make({
-            id: PositionId.make(data.id),
-            title: PositionTitle.make(data.title),
-            description: data.description,
-            subjectId: data.subject_id,
-            createdBy: data.created_by ?? undefined,
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-          })
+          return mapRow(data)
         },
         catch: (error) => dbError('Failed to create position', error),
       }),
@@ -105,6 +110,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             .from('positions')
             .update({
               title: position.title,
+              slug: position.slug,
               description: position.description,
             })
             .eq('id', position.id)
@@ -112,16 +118,7 @@ export function createPositionRepository(supabase: SupabaseClient): PositionRepo
             .single()
 
           if (error) throw error
-
-          return Position.make({
-            id: PositionId.make(data.id),
-            title: PositionTitle.make(data.title),
-            description: data.description,
-            subjectId: data.subject_id,
-            createdBy: data.created_by ?? undefined,
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-          })
+          return mapRow(data)
         },
         catch: (error) => dbError('Failed to update position', error),
       }),

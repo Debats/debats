@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect, Option } from 'effect'
 import { createStatementUseCase } from './create-statement'
 import { Statement } from '../entities/statement'
-import { Position, PositionId, PositionTitle } from '../entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import {
   PublicFigure,
   PublicFigureId,
@@ -13,6 +13,7 @@ import {
 const fakePosition = Position.make({
   id: PositionId.make('pos-1'),
   title: PositionTitle.make('Pour la mesure'),
+  slug: PositionSlug.make('pour-la-mesure'),
   description: 'Description suffisamment longue pour être valide.',
   subjectId: 'subject-1',
   createdAt: new Date(),
@@ -49,6 +50,7 @@ const fakeStatementRepo = {
 
 const fakePositionRepo = {
   findById: () => Effect.succeed(fakePosition as Position | null),
+  findBySubjectAndSlug: () => Effect.succeed(null as Position | null),
   findBySubjectId: () => Effect.succeed([fakePosition]),
   create: (p: Position) => Effect.succeed(p),
   update: (p: Position) => Effect.succeed(p),
