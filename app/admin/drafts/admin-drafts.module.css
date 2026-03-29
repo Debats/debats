@@ -24,9 +24,3 @@
   font-size: 15px;
   color: var(--text-light);
 }
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}

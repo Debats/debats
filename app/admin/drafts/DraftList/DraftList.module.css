@@ -1,0 +1,40 @@
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.label {
+  font-family: var(--font-gotham-bold);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+}
+
+.select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  flex: 1;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--debats-red);
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  font-size: 15px;
+  color: var(--text-light);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

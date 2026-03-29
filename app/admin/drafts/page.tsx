@@ -5,20 +5,14 @@ import { createDraftStatementRepository } from '../../../infra/database/draft-st
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../../infra/database/position-repository-supabase'
-import { resolveDraft, DraftResolution } from '../../../domain/use-cases/resolve-draft'
+import { resolveDraft } from '../../../domain/use-cases/resolve-draft'
 import { getAdminContributor } from '../../actions/admin-guard'
-import { DraftStatement } from '../../../domain/entities/draft-statement'
-import DraftCard from './DraftCard'
+import DraftList from './DraftList'
 import styles from './admin-drafts.module.css'
 
 export const metadata: Metadata = {
   title: 'Brouillons',
   robots: { index: false, follow: false },
-}
-
-type DraftWithResolution = {
-  draft: DraftStatement
-  resolution: DraftResolution
 }
 
 export default async function AdminDraftsPage() {
@@ -39,7 +33,7 @@ export default async function AdminDraftsPage() {
 
   const drafts = await Effect.runPromise(draftRepo.findByStatus('pending'))
 
-  const draftsWithResolution: DraftWithResolution[] = await Promise.all(
+  const draftsWithResolution = await Promise.all(
     drafts.map(async (draft) => {
       const resolution = await Effect.runPromise(
         resolveDraft(draft, { publicFigureRepo, subjectRepo, positionRepo }),
@@ -55,11 +49,7 @@ export default async function AdminDraftsPage() {
       {draftsWithResolution.length === 0 ? (
         <p className={styles.empty}>Aucun brouillon en attente de validation.</p>
       ) : (
-        <div className={styles.list}>
-          {draftsWithResolution.map(({ draft, resolution }) => (
-            <DraftCard key={draft.id} draft={draft} resolution={resolution} />
-          ))}
-        </div>
+        <DraftList drafts={draftsWithResolution} />
       )}
     </div>
   )
