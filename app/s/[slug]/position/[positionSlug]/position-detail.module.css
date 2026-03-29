@@ -1,0 +1,128 @@
+.breadcrumb {
+  font-family: var(--font-gotham-book);
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+.breadcrumbLink {
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.breadcrumbLink:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbSeparator {
+  margin: 0 8px;
+}
+
+.header {
+  margin-bottom: 30px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 1.5em;
+  color: var(--debats-red);
+  margin: 0 0 10px 0;
+}
+
+.description {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.sectionTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--text-dark);
+  margin: 0 0 20px 0;
+}
+
+.count {
+  color: var(--debats-red);
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.statementsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.statementItem {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.statementItem:last-child {
+  border-bottom: none;
+}
+
+.figureInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.figureName {
+  font-family: var(--font-gotham-bold);
+  font-size: 14px;
+  color: var(--text-dark);
+  text-decoration: none;
+  display: block;
+}
+
+.figureName:hover {
+  color: var(--debats-red);
+}
+
+.statementDate {
+  font-family: var(--font-gotham-book);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.quote {
+  font-family: var(--font-gotham-book);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dark);
+  margin: 0 0 8px 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--debats-red);
+  font-style: italic;
+}
+
+.source {
+  font-family: var(--font-gotham-book);
+  font-size: 12px;
+  color: var(--debats-red);
+  text-decoration: none;
+}
+
+.source:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  margin-top: 20px;
+}

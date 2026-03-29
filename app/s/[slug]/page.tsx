@@ -133,7 +133,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
               <div key={pos.positionId} className={styles.positionItem}>
                 <h3 className={styles.positionTitle}>
                   <Link
-                    href={`/s/${slug}/position/${pos.positionId}`}
+                    href={`/s/${slug}/position/${pos.positionSlug}`}
                     className={styles.positionLink}
                   >
                     {pos.positionTitle}
