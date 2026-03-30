@@ -127,11 +127,11 @@ export default async function PositionDetailPage({ params }: PageProps) {
             {positionStatements.map(({ statement, publicFigure }) => (
               <div key={statement.id} className={styles.statementItem}>
                 <div className={styles.figureInfo}>
-                  <Link href={`/p/${publicFigure.slug}`}>
+                  <Link href={`/p/${publicFigure.slug}/s/${slug}`}>
                     <FigureAvatar slug={publicFigure.slug} name={publicFigure.name} size={48} />
                   </Link>
                   <div>
-                    <Link href={`/p/${publicFigure.slug}`} className={styles.figureName}>
+                    <Link href={`/p/${publicFigure.slug}/s/${slug}`} className={styles.figureName}>
                       {publicFigure.name}
                     </Link>
                     <span className={styles.statementDate}>
