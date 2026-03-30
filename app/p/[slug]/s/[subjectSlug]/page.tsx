@@ -13,6 +13,7 @@ import {
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import EditLink from '../../../../../components/ui/EditLink'
+import LinkedTitle from '../../../../../components/ui/LinkedTitle'
 import HeaderActions from '../../../../../components/layout/HeaderActions'
 import ShareButton from '../../../../../components/ui/ShareButton'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
@@ -88,6 +89,7 @@ interface FigureSummary {
 
 interface PositionGroup {
   title: string
+  slug: string
   figures: FigureSummary[]
 }
 
@@ -97,7 +99,10 @@ function groupOtherFigures(
   currentPositionIds: Set<string>,
 ): { alliesByPosition: Map<string, FigureSummary[]>; opponents: PositionGroup[] } {
   const alliesMap = new Map<string, Map<string, FigureSummary>>()
-  const opponentsMap = new Map<string, { title: string; figures: Map<string, FigureSummary> }>()
+  const opponentsMap = new Map<
+    string,
+    { title: string; slug: string; figures: Map<string, FigureSummary> }
+  >()
 
   for (const { publicFigure, position } of subjectStatements) {
     if (publicFigure.id === currentFigureId) continue
@@ -110,7 +115,11 @@ function groupOtherFigures(
       if (!posMap.has(publicFigure.id)) posMap.set(publicFigure.id, summary)
     } else {
       if (!opponentsMap.has(position.id)) {
-        opponentsMap.set(position.id, { title: position.title, figures: new Map() })
+        opponentsMap.set(position.id, {
+          title: position.title,
+          slug: position.slug,
+          figures: new Map(),
+        })
       }
       const group = opponentsMap.get(position.id)!
       if (!group.figures.has(publicFigure.id)) group.figures.set(publicFigure.id, summary)
@@ -123,7 +132,7 @@ function groupOtherFigures(
   })
 
   const opponents = Array.from(opponentsMap.values())
-    .map((g) => ({ title: g.title, figures: Array.from(g.figures.values()) }))
+    .map((g) => ({ title: g.title, slug: g.slug, figures: Array.from(g.figures.values()) }))
     .sort((a, b) => b.figures.length - a.figures.length)
 
   return { alliesByPosition, opponents }
@@ -229,7 +238,12 @@ export default async function FigureSubjectPage({ params }: PageProps) {
             {positions.map(({ position, statements: posStatements }) => (
               <div key={position.id} className={styles.positionCard}>
                 <span className={styles.positionLabel}>Sa position</span>
-                <h3 className={styles.positionTitle}>{position.title}</h3>
+                <LinkedTitle
+                  href={`/s/${subjectSlug}/position/${position.slug}`}
+                  className={styles.positionTitle}
+                >
+                  {position.title}
+                </LinkedTitle>
                 {posStatements.map((st) => (
                   <div key={st.id} className={styles.statementItem}>
                     <blockquote className={styles.quote}>{st.quote}</blockquote>
@@ -280,7 +294,12 @@ export default async function FigureSubjectPage({ params }: PageProps) {
           <h2 className={styles.sectionTitle}>POSITIONS DIFFÉRENTES</h2>
           {opponents.map((group) => (
             <div key={group.title} className={styles.figureGroup}>
-              <h3 className={styles.figureGroupTitle}>{group.title}</h3>
+              <LinkedTitle
+                href={`/s/${subject.slug}/position/${group.slug}`}
+                className={styles.figureGroupTitle}
+              >
+                {group.title}
+              </LinkedTitle>
               <FigureAvatarRow
                 figures={group.figures.map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
                 size={50}
