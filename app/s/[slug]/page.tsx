@@ -149,6 +149,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
                   figures={pos.figures}
                   totalCount={pos.totalFiguresCount}
                   size={40}
+                  hrefSuffix={`/s/${slug}`}
                 />
               </div>
             ))}

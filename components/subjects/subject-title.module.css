@@ -1,7 +1,7 @@
 .subjectTitle {
   font-family: var(--font-gotham-book);
   font-size: 1.1em;
-  margin: 0 0 10px;
+  margin: 0;
   font-weight: normal;
   color: var(--text-dark);
   text-transform: uppercase;

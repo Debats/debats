@@ -24,18 +24,18 @@ export default async function DailySubject() {
     <section className={styles.section}>
       <SectionTitle>Le sujet du jour</SectionTitle>
       <div className={styles.card}>
-        <SubjectTitle slug={subject.slug} title={subject.title} as="h3" />
+        <div className={styles.header}>
+          <SubjectTitle slug={subject.slug} title={subject.title} as="h3" />
+          <SubjectCounters positionsCount={subject.positionsCount} />
+        </div>
         <p className={styles.presentation}>{subject.presentation}</p>
-        <SubjectCounters
-          positionsCount={subject.positionsCount}
-          publicFiguresCount={subject.publicFiguresCount}
-        />
         {subject.figures.length > 0 && (
           <FigureAvatarRow
             figures={subject.figures}
             totalCount={subject.publicFiguresCount}
             size={44}
             maxLines={2}
+            hrefSuffix={`/s/${subject.slug}`}
           />
         )}
         <ActionLink href={`/s/${subject.slug}`}>Découvrir les positions</ActionLink>

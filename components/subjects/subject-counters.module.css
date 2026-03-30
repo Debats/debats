@@ -1,10 +1,5 @@
-.counters {
-}
-
-.countItem {
-  color: var(--debats-red);
+.counter {
+  color: var(--text-light);
   font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  margin: 4px 0;
-  display: block;
+  font-size: 0.75em;
 }

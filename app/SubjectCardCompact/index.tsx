@@ -7,16 +7,16 @@ import styles from './SubjectCardCompact.module.css'
 export default function SubjectCardCompact({ subject }: { subject: SubjectActivitySummary }) {
   return (
     <div className={styles.card}>
-      <SubjectTitle slug={subject.slug} title={subject.title} />
-      <SubjectCounters
-        positionsCount={subject.positionsCount}
-        publicFiguresCount={subject.publicFiguresCount}
-      />
+      <div className={styles.header}>
+        <SubjectTitle slug={subject.slug} title={subject.title} />
+        <SubjectCounters positionsCount={subject.positionsCount} />
+      </div>
       {subject.figures.length > 0 && (
         <FigureAvatarRow
           figures={subject.figures}
           totalCount={subject.publicFiguresCount}
           size={36}
+          hrefSuffix={`/s/${subject.slug}`}
         />
       )}
     </div>

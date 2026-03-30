@@ -55,10 +55,7 @@ export default async function SubjectsPage() {
             <div key={subject.id} className={styles.subjectItem}>
               <div className={styles.subjectInfo}>
                 <SubjectTitle slug={subject.slug} title={subject.title} as="h2" />
-                <SubjectCounters
-                  positionsCount={stats.positionsCount}
-                  publicFiguresCount={stats.publicFiguresCount}
-                />
+                <SubjectCounters positionsCount={stats.positionsCount} />
               </div>
 
               <div className={styles.subjectPresentation}>

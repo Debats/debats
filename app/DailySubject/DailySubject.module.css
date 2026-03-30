@@ -10,6 +10,12 @@
   gap: 12px;
 }
 
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .presentation {
   font-family: var(--font-gotham-book);
   font-size: 0.9em;
