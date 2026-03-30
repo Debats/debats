@@ -39,7 +39,7 @@ export default function AProposPage() {
 
       <div id="accroche" className={styles.accroche}>
         <p>
-          <em>Débats</em> est un projet francophone et participatif, ayant pour objectif
+          <em>{'Débats '}</em>est un projet francophone et participatif, ayant pour objectif
           d&apos;offrir une synthèse ouverte, impartiale et vérifiable, des sujets clivants de notre
           société.
         </p>
@@ -74,8 +74,8 @@ export default function AProposPage() {
         </p>
 
         <p>
-          L&apos;ambition de <em>Débats</em> est simple : recenser, sur chaque grand thème qui fait
-          débat, les prises de position de celles et ceux qui décident de s&apos;engager.
+          L&apos;ambition de <em>{'Débats '}</em>est simple : recenser, sur chaque grand thème qui
+          fait débat, les prises de position de celles et ceux qui décident de s&apos;engager.
           Cartographier l&apos;évolution de leur pensée, de leurs opinions, des combats qu&apos;ils
           ont menés. Donner à voir la constance, la progression ou l&apos;incohérence d&apos;un
           engagement dans le temps.
@@ -83,7 +83,7 @@ export default function AProposPage() {
 
         <p>
           Rédigé par des volontaires sur une plateforme en ligne, et fonctionnant sur le principe du
-          wiki, <em>Débats</em> a pour objectif d&apos;offrir un contenu libre, impartial et
+          wiki, <em>{'Débats '}</em>a pour objectif d&apos;offrir un contenu libre, impartial et
           vérifiable des prises de position de celles et ceux qui participent aux débats publics.
         </p>
 
