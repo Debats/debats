@@ -102,16 +102,3 @@
   text-align: justify;
   margin: 0 0 15px 0;
 }
-
-.viewArguments {
-  color: var(--debats-red);
-  text-decoration: none;
-  font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  display: block;
-  margin-bottom: 15px;
-}
-
-.viewArguments:hover {
-  text-decoration: underline;
-}

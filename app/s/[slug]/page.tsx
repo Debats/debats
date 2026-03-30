@@ -145,9 +145,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
                   </Link>
                 </h3>
                 <p className={styles.positionDescription}>{pos.positionDescription}</p>
-                <a href="#" className={styles.viewArguments}>
-                  Voir les arguments
-                </a>
                 <FigureAvatarRow
                   figures={pos.figures}
                   totalCount={pos.totalFiguresCount}
