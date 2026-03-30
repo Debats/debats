@@ -30,17 +30,19 @@ export default function Header() {
             </Link>
           </div>
 
-          {!hasPageShareButton && <ShareButton iconOnly />}
-          <button
-            className={styles.burger}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            aria-expanded={menuOpen}
-          >
-            <span className={styles.burgerLine} />
-            <span className={styles.burgerLine} />
-            <span className={styles.burgerLine} />
-          </button>
+          <div className={styles.mobileActions}>
+            {!hasPageShareButton && <ShareButton iconOnly />}
+            <button
+              className={styles.burger}
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={menuOpen}
+            >
+              <span className={styles.burgerLine} />
+              <span className={styles.burgerLine} />
+              <span className={styles.burgerLine} />
+            </button>
+          </div>
         </div>
 
         <div className={`${styles.menu} ${menuOpen ? styles.menuOpen : ''}`}>
