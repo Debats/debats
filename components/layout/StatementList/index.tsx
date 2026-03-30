@@ -27,7 +27,11 @@ export default function StatementList({ title, statements }: StatementListProps)
                 <Link href={`/p/${statement.publicFigureSlug}`}>
                   <strong>{statement.publicFigureName}</strong>
                 </Link>{' '}
-                s&apos;est déclaré(e) pour <strong>{statement.positionTitle}</strong> dans le débat{' '}
+                s&apos;est déclaré(e) pour{' '}
+                <Link href={`/p/${statement.publicFigureSlug}/s/${statement.subjectSlug}`}>
+                  <strong>{statement.positionTitle}</strong>
+                </Link>{' '}
+                dans le débat{' '}
                 <Link href={`/s/${statement.subjectSlug}`}>
                   <strong>{statement.subjectTitle}</strong>
                 </Link>

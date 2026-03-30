@@ -272,6 +272,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             stated_at,
             positions!inner (
               title,
+              slug,
               subjects!inner (
                 title,
                 slug
@@ -294,6 +295,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             publicFigureName: row.public_figures.name,
             publicFigureSlug: row.public_figures.slug,
             positionTitle: row.positions.title,
+            positionSlug: row.positions.slug,
             subjectTitle: row.positions.subjects.title,
             subjectSlug: row.positions.subjects.slug,
             statedAt: new Date(row.stated_at),
@@ -313,6 +315,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             created_at,
             positions!inner (
               title,
+              slug,
               subjects!inner (
                 title,
                 slug
@@ -335,6 +338,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             publicFigureName: row.public_figures.name,
             publicFigureSlug: row.public_figures.slug,
             positionTitle: row.positions.title,
+            positionSlug: row.positions.slug,
             subjectTitle: row.positions.subjects.title,
             subjectSlug: row.positions.subjects.slug,
             statedAt: row.created_at ? new Date(row.created_at!) : new Date(),

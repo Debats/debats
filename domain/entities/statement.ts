@@ -68,6 +68,7 @@ export interface LatestStatement {
   publicFigureName: string
   publicFigureSlug: string
   positionTitle: string
+  positionSlug: string
   subjectTitle: string
   subjectSlug: string
   statedAt: Date
