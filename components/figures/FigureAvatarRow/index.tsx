@@ -16,7 +16,7 @@ interface FigureAvatarRowProps {
   totalCount?: number
   size?: number
   maxLines?: number
-  /** Appended after /p/{slug} (e.g. "/s/le-nucleaire") */
+  /** Appended after /p/{slug} (e.g. "/s/le-nucleaire"). Also used as the "+N" badge link. */
   hrefSuffix?: string
 }
 
@@ -70,11 +70,20 @@ export default function FigureAvatarRow({
           <FigureAvatar slug={figure.slug} name={figure.name} size={size} />
         </Link>
       ))}
-      {badgeCount > 0 && (
-        <span className={styles.overflow} style={{ width: size, height: size }}>
-          +{badgeCount}
-        </span>
-      )}
+      {badgeCount > 0 &&
+        (hrefSuffix ? (
+          <Link
+            href={hrefSuffix}
+            className={`${styles.overflow} ${styles.overflowLink}`}
+            style={{ width: size, height: size }}
+          >
+            +{badgeCount}
+          </Link>
+        ) : (
+          <span className={styles.overflow} style={{ width: size, height: size }}>
+            +{badgeCount}
+          </span>
+        ))}
     </div>
   )
 }

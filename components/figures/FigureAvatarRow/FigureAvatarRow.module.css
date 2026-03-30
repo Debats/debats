@@ -30,3 +30,17 @@
   font-size: 0.75rem;
   flex-shrink: 0;
 }
+
+a.overflowLink,
+a.overflowLink:link,
+a.overflowLink:visited {
+  color: var(--text-light);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+a.overflowLink:hover {
+  background-color: var(--debats-red);
+  color: white;
+}
