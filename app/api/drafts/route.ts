@@ -3,6 +3,7 @@ import { Effect } from 'effect'
 import { Json } from '../../../types/database.types'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
+import { validateSlugifiableFields } from './validation'
 import { checkAdminApiKey } from './auth'
 
 export async function GET(request: NextRequest) {
@@ -52,6 +53,8 @@ function validateDraftInput(
       return `Missing or empty required field: ${field}`
     }
   }
+  const slugError = validateSlugifiableFields(draft, false)
+  if (slugError) return slugError
   if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date as string)) {
     return 'Invalid date format (expected YYYY-MM-DD)'
   }

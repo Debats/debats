@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../../infra/database/draft-statement-repository-supabase'
+import { validateSlugifiableFields } from '../validation'
 import { checkAdminApiKey } from '../auth'
 
 const ALLOWED_FIELDS = new Set([
@@ -45,6 +46,11 @@ export async function PATCH(
 
   if (Object.keys(body).length === 0) {
     return NextResponse.json({ error: 'No fields to update.' }, { status: 400 })
+  }
+
+  const slugError = validateSlugifiableFields(body, true)
+  if (slugError) {
+    return NextResponse.json({ error: slugError }, { status: 400 })
   }
 
   const supabase = createAdminSupabaseClient()
