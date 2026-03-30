@@ -181,8 +181,8 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         catch: (error) => dbError('Failed to get stats', error),
       }),
 
-    findSummariesByActivity: (limit: number) =>
-      fetchSummaries(supabase, 'latest_statement_at', limit),
+    findSummariesByActivity: (limit: number, excludeId?: string) =>
+      fetchSummaries(supabase, 'latest_statement_at', limit, excludeId),
 
     findSummariesByCreatedAt: (limit: number) => fetchSummaries(supabase, 'created_at', limit),
 
@@ -243,17 +243,24 @@ function fetchSummaries(
   supabase: SupabaseClient,
   orderBy: string,
   limit: number,
+  excludeId?: string,
 ): Effect.Effect<SubjectActivitySummary[], DatabaseError> {
   return Effect.tryPromise({
     try: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('v_subject_activity_summary')
         .select('*')
         .order(orderBy, { ascending: false, nullsFirst: false })
-        .limit(limit)
+        .limit(excludeId ? limit + 1 : limit)
+
+      if (excludeId) {
+        query = query.neq('id', excludeId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
-      return data.map(mapSummaryRow)
+      return data.slice(0, limit).map(mapSummaryRow)
     },
     catch: (error) => dbError('Failed to fetch subject summaries', error),
   })

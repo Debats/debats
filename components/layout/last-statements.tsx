@@ -1,10 +1,10 @@
 import { Effect } from 'effect'
-import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import StatementList from './StatementList'
 
 export default async function LastStatements() {
-  const supabase = await createSSRSupabaseClient()
+  const supabase = createAdminSupabaseClient()
   const statementRepo = createStatementRepository(supabase)
   const [latestTaken, latestReported] = await Promise.all([
     Effect.runPromise(statementRepo.findLatest(5)),

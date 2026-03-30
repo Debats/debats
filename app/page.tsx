@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../infra/supabase/admin'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
+import { dailyIndex } from '../domain/services/daily-pick'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
 import ActionLink from '../components/ui/ActionLink'
 import HeroSection from './HeroSection'
@@ -13,7 +14,13 @@ const RECENTLY_ADDED_LIMIT = 4
 async function MostActiveSubjects() {
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
-  const subjects = await Effect.runPromise(subjectRepo.findSummariesByActivity(MOST_ACTIVE_LIMIT))
+
+  const subjectIds = await Effect.runPromise(subjectRepo.findAllIds())
+  const dailyId = subjectIds.length > 0 ? subjectIds[dailyIndex(subjectIds.length)] : undefined
+
+  const subjects = await Effect.runPromise(
+    subjectRepo.findSummariesByActivity(MOST_ACTIVE_LIMIT, dailyId),
+  )
   return <SubjectSection title="Les plus actifs" subjects={subjects} />
 }
 
