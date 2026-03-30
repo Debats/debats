@@ -1,58 +1,29 @@
 .footer {
   clear: left;
   margin-top: 55px;
-  padding: 20px 0;
+  padding: 25px 0;
   border-top: 1px solid #eaeaea;
-  color: #777;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 30px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
-.legal {
-}
-
-.legalText {
-  font-family: var(--font-gotham-book);
-  font-size: 0.8em;
-  color: #777;
-}
-
-.legalLink {
-  color: #555;
-  font-family: var(--font-gotham-book);
-  text-decoration: none;
-}
-
-.legalLink:hover {
-  color: #222;
-}
-
-.separator {
-  margin: 0 5px;
-  color: #777;
-}
-
-.navigation {
+.navLinks {
   display: flex;
-  justify-content: flex-end;
-}
-
-.navList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-}
-
-.navItem {
-  margin-left: 15px;
+  align-items: center;
+  gap: 20px;
 }
 
 .navLink {
@@ -66,33 +37,57 @@
   color: #222;
 }
 
-.externalLink {
-  color: #555;
-  font-family: var(--font-gotham-book);
-  text-decoration: none;
-  font-size: 0.9em;
+.socialLinks {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.externalLink:hover {
+.iconLink {
+  color: #999;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.iconLink:hover {
   color: #222;
 }
 
+.legal {
+  font-family: var(--font-gotham-book);
+  font-size: 0.75em;
+  color: #999;
+  text-align: center;
+}
+
+.legalLink {
+  color: #999;
+  font-family: var(--font-gotham-book);
+  text-decoration: none;
+}
+
+.legalLink:hover {
+  color: #555;
+}
+
+.separator {
+  margin: 0 5px;
+  color: #ccc;
+}
+
 @media (max-width: 768px) {
-  .container {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    text-align: center;
+  .nav {
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .navigation {
+  .navLinks {
     justify-content: center;
   }
 
-  .navList {
+  .socialLinks {
     justify-content: center;
-  }
-
-  .navItem {
-    margin: 0 7px;
   }
 }
