@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createBrowserSupabaseClient } from '../../../infra/supabase/browser'
 import type { User } from '@supabase/supabase-js'
@@ -8,7 +9,12 @@ import Button from '../../ui/Button'
 import LoginModal from '../LoginModal'
 import styles from './AuthSection.module.css'
 
-export default function AuthSection() {
+interface AuthSectionProps {
+  onAuthChange?: () => void
+}
+
+export default function AuthSection({ onAuthChange }: AuthSectionProps) {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [showLogin, setShowLogin] = useState(false)
 
@@ -21,10 +27,12 @@ export default function AuthSection() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      onAuthChange?.()
+      router.refresh()
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [onAuthChange, router])
 
   if (user) {
     const displayName = user.user_metadata?.name || user.email

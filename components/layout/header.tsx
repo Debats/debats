@@ -62,7 +62,7 @@ export default function Header() {
             </Link>
           </nav>
 
-          <AuthSection />
+          <AuthSection onAuthChange={() => setMenuOpen(false)} />
         </div>
       </div>
     </header>
