@@ -47,6 +47,11 @@
   overflow: hidden;
 }
 
+.dropdownAlignLeft {
+  left: 0;
+  right: auto;
+}
+
 .header {
   font-family: var(--font-gotham-bold);
   font-size: 10px;

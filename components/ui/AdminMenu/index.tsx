@@ -20,9 +20,22 @@ interface AdminMenuProps {
 
 export default function AdminMenu({ actions, children }: AdminMenuProps) {
   const [open, setOpen] = useState(false)
+  const [alignLeft, setAlignLeft] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const toggle = useCallback(() => setOpen((prev) => !prev), [])
+  const toggle = useCallback(() => {
+    setOpen((prev) => !prev)
+    setAlignLeft(false)
+  }, [])
+
+  const dropdownRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      if (rect.left < 0) setAlignLeft(true)
+    },
+    [open],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -48,7 +61,10 @@ export default function AdminMenu({ actions, children }: AdminMenuProps) {
       </button>
 
       {open && (
-        <div className={styles.dropdown}>
+        <div
+          ref={dropdownRef}
+          className={`${styles.dropdown} ${alignLeft ? styles.dropdownAlignLeft : ''}`}
+        >
           <div className={styles.header}>Administration</div>
           {actions.map((action) => {
             const className = `${styles.action} ${action.variant === 'danger' ? styles.actionDanger : ''}`
