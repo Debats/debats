@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import AuthSection from '../auth/AuthSection'
@@ -11,15 +12,18 @@ import styles from './header.module.css'
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { hasPageShareButton } = useShareButtonContext()
+  const pathname = usePathname()
 
-  const closeMenu = () => setMenuOpen(false)
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
 
   return (
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.topBar}>
           <div className={styles.logoSection}>
-            <Link href="/" onClick={closeMenu}>
+            <Link href="/">
               <Image
                 src="/images/header.png"
                 alt="Débats.co"
@@ -47,13 +51,13 @@ export default function Header() {
 
         <div className={`${styles.menu} ${menuOpen ? styles.menuOpen : ''}`}>
           <nav className={styles.nav}>
-            <Link href="/s" className={styles.navLink} onClick={closeMenu}>
+            <Link href="/s" className={styles.navLink}>
               Sujets
             </Link>
-            <Link href="/p" className={styles.navLink} onClick={closeMenu}>
+            <Link href="/p" className={styles.navLink}>
               Personnalités
             </Link>
-            <Link href="/contribuer" className={styles.navLink} onClick={closeMenu}>
+            <Link href="/contribuer" className={styles.navLink}>
               Contribuer
             </Link>
           </nav>
