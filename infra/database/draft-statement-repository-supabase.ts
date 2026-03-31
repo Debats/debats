@@ -51,6 +51,43 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         catch: (error) => dbError(`Failed to fetch ${status} drafts`, error),
       }),
 
+    findPendingBySubject: (subjectTitle: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('draft_statements')
+            .select('*')
+            .eq('status', 'pending')
+            .eq('subject_title', subjectTitle)
+            .order('created_at', { ascending: false })
+
+          if (error) throw error
+          return data.map(mapRow)
+        },
+        catch: (error) => dbError('Failed to fetch pending drafts by subject', error),
+      }),
+
+    countPendingBySubject: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('draft_statements')
+            .select('subject_title')
+            .eq('status', 'pending')
+
+          if (error) throw error
+          const counts = new Map<string, number>()
+          for (const row of data) {
+            const title = row.subject_title as string
+            counts.set(title, (counts.get(title) ?? 0) + 1)
+          }
+          return Array.from(counts, ([subjectTitle, count]) => ({ subjectTitle, count })).sort(
+            (a, b) => b.count - a.count,
+          )
+        },
+        catch: (error) => dbError('Failed to count pending drafts by subject', error),
+      }),
+
     findById: (id: string) =>
       Effect.tryPromise({
         try: async () => {

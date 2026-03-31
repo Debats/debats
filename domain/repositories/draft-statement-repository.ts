@@ -2,8 +2,12 @@ import { Effect } from 'effect'
 import { DraftStatement } from '../entities/draft-statement'
 import { DatabaseError } from './errors'
 
+export type SubjectDraftCount = { subjectTitle: string; count: number }
+
 export interface DraftStatementRepository {
   findByStatus(status: DraftStatement['status']): Effect.Effect<DraftStatement[], DatabaseError>
+  findPendingBySubject(subjectTitle: string): Effect.Effect<DraftStatement[], DatabaseError>
+  countPendingBySubject(): Effect.Effect<SubjectDraftCount[], DatabaseError>
   findById(id: string): Effect.Effect<DraftStatement | null, DatabaseError>
   update(
     id: string,
