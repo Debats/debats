@@ -47,6 +47,9 @@ export async function amendAndValidateDraftAction(
     if (updateResult._tag === 'Left') {
       return { success: false, error: 'Erreur lors de la mise à jour du brouillon.' }
     }
+    if (updateResult.right === null) {
+      return { success: false, error: 'Brouillon introuvable.' }
+    }
   }
 
   const result = await validateDraft({

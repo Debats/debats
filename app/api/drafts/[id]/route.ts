@@ -62,6 +62,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update draft' }, { status: 500 })
   }
 
+  if (result.right === null) {
+    return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
+  }
+
   return NextResponse.json(result.right)
 }
 

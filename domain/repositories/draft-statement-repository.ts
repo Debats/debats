@@ -8,7 +8,7 @@ export interface DraftStatementRepository {
   update(
     id: string,
     fields: Partial<Omit<DraftStatement, 'id' | 'createdAt' | 'updatedAt' | 'status'>>,
-  ): Effect.Effect<DraftStatement, DatabaseError>
+  ): Effect.Effect<DraftStatement | null, DatabaseError>
   updateStatus(
     id: string,
     status: 'validated' | 'rejected' | 'revision_requested',

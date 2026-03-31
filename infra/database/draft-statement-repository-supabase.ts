@@ -58,13 +58,10 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
             .from('draft_statements')
             .select('*')
             .eq('id', id)
-            .single()
+            .maybeSingle()
 
-          if (error) {
-            if (error.code === 'PGRST116') return null
-            throw error
-          }
-          return mapRow(data)
+          if (error) throw error
+          return data ? mapRow(data) : null
         },
         catch: (error) => dbError('Failed to fetch draft', error),
       }),
@@ -97,10 +94,10 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
             .update({ ...row, status: 'pending' })
             .eq('id', id)
             .select()
-            .single()
+            .maybeSingle()
 
           if (error) throw error
-          return mapRow(data)
+          return data ? mapRow(data) : null
         },
         catch: (error) => dbError('Failed to update draft', error),
       }),
