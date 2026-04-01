@@ -25,10 +25,12 @@ export default function AuthSection({ onAuthChange }: AuthSectionProps) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
-      onAuthChange?.()
-      router.refresh()
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        onAuthChange?.()
+        router.refresh()
+      }
     })
 
     return () => subscription.unsubscribe()
