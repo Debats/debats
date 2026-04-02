@@ -1,0 +1,103 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 40px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.95em;
+  color: var(--text-dark);
+  margin: 0 0 2px 0;
+}
+
+.description {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.deleteButton {
+  font-family: var(--font-gotham-book);
+  font-size: 0.75em;
+  color: var(--text-light);
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.deleteButton:hover {
+  color: var(--debats-red);
+  border-color: var(--debats-red);
+}
+
+.newForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.newFormTitle {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.newFormRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.newFormRow > :first-child {
+  flex: 1;
+}
+
+.newFormRow > :nth-child(2) {
+  flex: 2;
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  font-size: 0.9em;
+  color: var(--text-light);
+  margin: 20px 0;
+}

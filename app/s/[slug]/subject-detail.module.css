@@ -16,6 +16,13 @@
   margin: 0 0 15px 0;
 }
 
+.themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
 .presentation {
   font-family: var(--font-gotham-book);
   font-size: 0.9em;

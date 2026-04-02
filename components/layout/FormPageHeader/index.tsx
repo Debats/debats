@@ -5,7 +5,7 @@ interface FormPageHeaderProps {
   backHref: string
   backLabel: string
   title: string
-  subtitle: string
+  subtitle?: string
 }
 
 export default function FormPageHeader({
@@ -20,7 +20,7 @@ export default function FormPageHeader({
         &larr; {backLabel}
       </Link>
       <h1 className={styles.title}>{title}</h1>
-      <p className={styles.subtitle}>{subtitle}</p>
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
     </header>
   )
 }

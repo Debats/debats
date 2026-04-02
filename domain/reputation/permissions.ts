@@ -35,6 +35,7 @@ const ACTIONS = {
   add_position: Rank.Sophiste,
 
   // Éloquent (1000+)
+  assign_theme: Rank.Eloquent,
   add_argument: Rank.Eloquent,
   add_subject: Rank.Eloquent,
   add_personality: Rank.Eloquent,
@@ -49,6 +50,9 @@ const ACTIONS = {
   reject_position: Rank.Eloquent,
 
   // Idéaliste (10000+)
+  add_theme: Rank.Idealiste,
+  edit_theme: Rank.Idealiste,
+  delete_theme: Rank.Idealiste,
   delete_minor_subject: Rank.Idealiste,
   delete_minor_personality: Rank.Idealiste,
   delete_argument: Rank.Idealiste,

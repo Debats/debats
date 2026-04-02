@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../../infra/database/subject-repository-supabase'
+import { createThemeRepository } from '../../../../infra/database/theme-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
@@ -29,9 +30,16 @@ export default async function EditSubjectPage({ params }: PageProps) {
 
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
-  const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
+  const themeRepo = createThemeRepository(supabase)
+
+  const [subject, allThemes] = await Promise.all([
+    Effect.runPromise(subjectRepo.findBySlug(slug)),
+    Effect.runPromise(themeRepo.findAll()),
+  ])
 
   if (!subject) notFound()
+
+  const subjectThemes = await Effect.runPromise(themeRepo.findBySubjectId(subject.id))
 
   return (
     <ContentWithSidebar topMargin>
@@ -45,9 +53,13 @@ export default async function EditSubjectPage({ params }: PageProps) {
       <EditSubjectForm
         subjectId={subject.id}
         subjectSlug={subject.slug}
-        initialTitle={subject.title}
-        initialPresentation={subject.presentation}
-        initialProblem={subject.problem}
+        subject={{
+          title: subject.title,
+          presentation: subject.presentation,
+          problem: subject.problem,
+          themeIds: subjectThemes.map((t) => t.id),
+        }}
+        availableThemes={allThemes.map((t) => ({ id: t.id, name: t.name }))}
       />
     </ContentWithSidebar>
   )

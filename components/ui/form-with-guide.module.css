@@ -35,6 +35,16 @@
   margin: 0;
 }
 
+.label {
+  display: block;
+  font-family: var(--font-gotham-bold);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
 .fieldError {
   font-size: 13px;
   color: #d32f2f;

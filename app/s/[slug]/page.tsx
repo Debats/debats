@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
+import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { canPerform } from '../../../domain/reputation/permissions'
@@ -13,6 +14,7 @@ import Button from '../../../components/ui/Button'
 import HeaderActions from '../../../components/layout/HeaderActions'
 import ShareButton from '../../../components/ui/ShareButton'
 import SubjectAdminMenu from './SubjectAdminMenu'
+import ThemeBadge from '../../../components/ui/ThemeBadge'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import styles from './subject-detail.module.css'
 
@@ -59,10 +61,13 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
   if (!subject) notFound()
 
-  const [positions, stats, contributor] = await Promise.all([
+  const themeRepo = createThemeRepository(supabase)
+
+  const [positions, stats, contributor, themes] = await Promise.all([
     Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
     Effect.runPromise(subjectRepo.getStats(subject.id)),
     getAuthenticatedContributor(),
+    Effect.runPromise(themeRepo.findBySubjectId(subject.id)),
   ])
 
   const totalFigures = stats.publicFiguresCount
@@ -101,6 +106,13 @@ export default async function SubjectDetailPage({ params }: PageProps) {
             />
           )}
         </div>
+        {themes.length > 0 && (
+          <div className={styles.themes}>
+            {themes.map((t) => (
+              <ThemeBadge key={t.id} name={t.name} slug={t.slug} />
+            ))}
+          </div>
+        )}
         <p className={styles.presentation}>{subject.presentation}</p>
         <p className={styles.problem}>{subject.problem}</p>
         <HeaderActions>

@@ -468,6 +468,56 @@ export type Database = {
           },
         ]
       }
+      subject_themes: {
+        Row: {
+          created_at: string
+          created_by: string
+          subject_id: string
+          theme_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          subject_id: string
+          theme_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          subject_id?: string
+          theme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_themes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_themes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_themes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_subject_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_themes_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           created_at: string | null
@@ -509,6 +559,54 @@ export type Database = {
           {
             foreignKeyName: "subjects_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      themes: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "themes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "themes_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "contributors"
             referencedColumns: ["id"]

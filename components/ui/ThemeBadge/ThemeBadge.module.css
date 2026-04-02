@@ -1,0 +1,19 @@
+.badge {
+  display: inline-block;
+  font-family: var(--font-gotham-bold);
+  font-size: 0.7em;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  padding: 3px 8px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.badge:hover {
+  background: #eee;
+  color: var(--debats-red);
+}

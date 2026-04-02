@@ -51,6 +51,9 @@ export default async function Footer() {
                 Brouillons
               </Link>
             )}
+            <Link href="/themes" className={styles.navLink}>
+              Thématiques
+            </Link>
             <Link href="/a-propos" className={styles.navLink}>
               À propos
             </Link>
