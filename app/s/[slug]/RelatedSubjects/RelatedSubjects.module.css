@@ -1,0 +1,77 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.8em;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.empty {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: #999;
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: var(--debats-red);
+  background: white;
+  border: 1px solid #e0dcd3;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.chipRemoving {
+  opacity: 0.4;
+}
+
+.chipLabel {
+  padding: 5px 10px;
+}
+
+.chipRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 100%;
+  padding: 5px 0;
+  background: none;
+  border: none;
+  border-left: 1px solid #e0dcd3;
+  color: #ccc;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.chipRemove:hover {
+  background: var(--debats-red);
+  color: white;
+}
+
+.chipRemove:disabled {
+  cursor: not-allowed;
+}
+
+.searchRow {
+  max-width: 350px;
+}

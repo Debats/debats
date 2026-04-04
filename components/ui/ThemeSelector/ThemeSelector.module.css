@@ -8,8 +8,8 @@
   font-family: var(--font-gotham-book);
   font-size: 0.85em;
   color: var(--text-light);
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
+  background: white;
+  border: 1px solid #e0dcd3;
   border-radius: 3px;
   padding: 5px 12px;
   cursor: pointer;
@@ -21,7 +21,7 @@
 }
 
 .item:hover {
-  background: #eee;
+  background: #f0ede6;
 }
 
 .item[data-state='on'] {

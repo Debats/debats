@@ -5,6 +5,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
+import { createRelatedSubjectsRepository } from '../../../infra/database/related-subjects-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { canPerform } from '../../../domain/reputation/permissions'
@@ -62,12 +63,14 @@ export default async function SubjectDetailPage({ params }: PageProps) {
   if (!subject) notFound()
 
   const themeRepo = createThemeRepository(supabase)
+  const relatedRepo = createRelatedSubjectsRepository(supabase)
 
-  const [positions, stats, contributor, themes] = await Promise.all([
+  const [positions, stats, contributor, themes, relatedSubjects] = await Promise.all([
     Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
     Effect.runPromise(subjectRepo.getStats(subject.id)),
     getAuthenticatedContributor(),
     Effect.runPromise(themeRepo.findBySubjectId(subject.id)),
+    Effect.runPromise(relatedRepo.findRelated(subject.id)),
   ])
 
   const totalFigures = stats.publicFiguresCount
@@ -106,11 +109,28 @@ export default async function SubjectDetailPage({ params }: PageProps) {
             />
           )}
         </div>
-        {themes.length > 0 && (
-          <div className={styles.themes}>
-            {themes.map((t) => (
-              <ThemeBadge key={t.id} name={t.name} slug={t.slug} />
-            ))}
+        {(themes.length > 0 || relatedSubjects.length > 0) && (
+          <div className={styles.metadata}>
+            {themes.length > 0 && (
+              <div className={styles.metadataRow}>
+                {themes.map((t) => (
+                  <ThemeBadge key={t.id} name={t.name} slug={t.slug} />
+                ))}
+              </div>
+            )}
+            {relatedSubjects.length > 0 && (
+              <div className={styles.metadataRow}>
+                <span className={styles.metadataLabel}>Voir aussi</span>
+                {relatedSubjects.map((s, i) => (
+                  <span key={s.id}>
+                    {i > 0 && <span className={styles.relatedSeparator}> · </span>}
+                    <Link href={`/s/${s.slug}`} className={styles.relatedLink}>
+                      {s.title}
+                    </Link>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
         <p className={styles.presentation}>{subject.presentation}</p>

@@ -16,9 +16,9 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
-type SubjectRow = Database['public']['Tables']['subjects']['Row']
+export type SubjectRow = Database['public']['Tables']['subjects']['Row']
 
-const mapRowToEntity = (row: SubjectRow) =>
+export const mapRowToEntity = (row: SubjectRow) =>
   Subject.make({
     id: SubjectId.make(row.id),
     title: SubjectTitle.make(row.title),

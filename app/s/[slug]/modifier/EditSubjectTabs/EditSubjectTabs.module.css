@@ -1,0 +1,56 @@
+.tabList {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 28px;
+}
+
+.tabTrigger {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.8em;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: none;
+  border: none;
+  padding: 10px 20px 12px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s;
+}
+
+.tabTrigger:hover {
+  color: var(--text-dark);
+}
+
+.tabTrigger[data-state='active'] {
+  color: var(--debats-red);
+}
+
+.tabTrigger[data-state='active']::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--debats-red);
+}
+
+.tabContent {
+  outline: none;
+}
+
+.tabContent[data-state='inactive'] {
+  display: none;
+}
+
+.classificationPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  background: #f8f6f0;
+  border-left: 3px solid var(--debats-red);
+  border-radius: 0 6px 6px 0;
+  padding: 24px 28px;
+}

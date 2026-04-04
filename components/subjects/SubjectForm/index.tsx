@@ -9,7 +9,6 @@ import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import GuideExample from '../../ui/GuideExample'
-import ThemeSelector, { ThemeOption } from '../../ui/ThemeSelector'
 import styles from '../../ui/form-with-guide.module.css'
 
 type SubmitResult =
@@ -21,7 +20,6 @@ export interface SubjectFormValues {
   title: string
   presentation: string
   problem: string
-  themeIds: string[]
 }
 
 interface SubjectFormProps {
@@ -30,7 +28,6 @@ interface SubjectFormProps {
   pendingLabel: string
   cancelHref?: string
   subject?: SubjectFormValues
-  availableThemes?: ThemeOption[]
   onSuccess?: (result: { slug: string; title: string }) => void
 }
 
@@ -40,14 +37,12 @@ export default function SubjectForm({
   pendingLabel,
   cancelHref,
   subject,
-  availableThemes = [],
   onSuccess,
 }: SubjectFormProps) {
   const router = useRouter()
   const [title, setTitle] = useState(subject?.title ?? '')
   const [presentation, setPresentation] = useState(subject?.presentation ?? '')
   const [problem, setProblem] = useState(subject?.problem ?? '')
-  const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>(subject?.themeIds ?? [])
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
   const [isPending, setIsPending] = useState(false)
@@ -63,8 +58,6 @@ export default function SubjectForm({
       formData.set('title', title)
       formData.set('presentation', presentation)
       formData.set('problem', problem)
-      formData.set('themeIds', JSON.stringify(selectedThemeIds))
-
       try {
         const result = await onSubmit(formData)
 
@@ -88,7 +81,7 @@ export default function SubjectForm({
         setIsPending(false)
       }
     },
-    [title, presentation, problem, selectedThemeIds, onSubmit, onSuccess, router],
+    [title, presentation, problem, onSubmit, onSuccess, router],
   )
 
   return (
@@ -158,26 +151,6 @@ export default function SubjectForm({
           <GuideExample good="Quel rôle le nucléaire doit-il jouer dans la transition énergétique ?" />
         </div>
       </div>
-
-      {availableThemes.length > 0 && (
-        <div className={styles.fieldGroup}>
-          <div>
-            <label className={styles.label}>Thématiques</label>
-            <ThemeSelector
-              themes={availableThemes}
-              value={selectedThemeIds}
-              onChange={setSelectedThemeIds}
-            />
-          </div>
-          <div className={styles.guide}>
-            <p className={styles.guideTitle}>Conseils</p>
-            <p className={styles.guideText}>
-              Sélectionnez une ou plusieurs thématiques pour aider les visiteurs à trouver ce sujet.
-              Si aucune thématique ne correspond, laissez vide.
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className={styles.actions}>
         <Button type="submit">{isPending ? pendingLabel : submitLabel}</Button>

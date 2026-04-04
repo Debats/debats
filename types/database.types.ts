@@ -359,6 +359,63 @@ export type Database = {
           },
         ]
       }
+      related_subjects: {
+        Row: {
+          created_at: string
+          created_by: string
+          subject_id_1: string
+          subject_id_2: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          subject_id_1: string
+          subject_id_2: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          subject_id_1?: string
+          subject_id_2?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "related_subjects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "related_subjects_subject_id_1_fkey"
+            columns: ["subject_id_1"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "related_subjects_subject_id_1_fkey"
+            columns: ["subject_id_1"]
+            isOneToOne: false
+            referencedRelation: "v_subject_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "related_subjects_subject_id_2_fkey"
+            columns: ["subject_id_2"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "related_subjects_subject_id_2_fkey"
+            columns: ["subject_id_2"]
+            isOneToOne: false
+            referencedRelation: "v_subject_activity_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reputation_events: {
         Row: {
           action: string

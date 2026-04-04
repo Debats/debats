@@ -36,6 +36,7 @@ const ACTIONS = {
 
   // Éloquent (1000+)
   assign_theme: Rank.Eloquent,
+  link_subjects: Rank.Eloquent,
   add_argument: Rank.Eloquent,
   add_subject: Rank.Eloquent,
   add_personality: Rank.Eloquent,

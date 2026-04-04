@@ -4,11 +4,12 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../../infra/database/subject-repository-supabase'
 import { createThemeRepository } from '../../../../infra/database/theme-repository-supabase'
+import { createRelatedSubjectsRepository } from '../../../../infra/database/related-subjects-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
-import EditSubjectForm from '../../../../components/subjects/EditSubjectForm'
+import EditSubjectTabs from './EditSubjectTabs'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -31,6 +32,7 @@ export default async function EditSubjectPage({ params }: PageProps) {
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
   const themeRepo = createThemeRepository(supabase)
+  const relatedRepo = createRelatedSubjectsRepository(supabase)
 
   const [subject, allThemes] = await Promise.all([
     Effect.runPromise(subjectRepo.findBySlug(slug)),
@@ -39,7 +41,10 @@ export default async function EditSubjectPage({ params }: PageProps) {
 
   if (!subject) notFound()
 
-  const subjectThemes = await Effect.runPromise(themeRepo.findBySubjectId(subject.id))
+  const [subjectThemes, relatedSubjects] = await Promise.all([
+    Effect.runPromise(themeRepo.findBySubjectId(subject.id)),
+    Effect.runPromise(relatedRepo.findRelated(subject.id)),
+  ])
 
   return (
     <ContentWithSidebar topMargin>
@@ -50,16 +55,21 @@ export default async function EditSubjectPage({ params }: PageProps) {
         subtitle={subject.title}
       />
 
-      <EditSubjectForm
+      <EditSubjectTabs
         subjectId={subject.id}
         subjectSlug={subject.slug}
         subject={{
           title: subject.title,
           presentation: subject.presentation,
           problem: subject.problem,
-          themeIds: subjectThemes.map((t) => t.id),
         }}
         availableThemes={allThemes.map((t) => ({ id: t.id, name: t.name }))}
+        selectedThemeIds={subjectThemes.map((t) => t.id)}
+        relatedSubjects={relatedSubjects.map((s) => ({
+          id: s.id,
+          title: s.title,
+          slug: s.slug,
+        }))}
       />
     </ContentWithSidebar>
   )

@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.8em;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.hint {
+  font-family: var(--font-gotham-book);
+  font-size: 0.75em;
+  color: #999;
+  margin: 0;
+}

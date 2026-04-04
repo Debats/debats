@@ -16,11 +16,43 @@
   margin: 0 0 15px 0;
 }
 
-.themes {
+.metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.metadataRow {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   gap: 6px;
-  margin-bottom: 12px;
+}
+
+.metadataLabel {
+  font-family: var(--font-gotham-book);
+  font-size: 0.85em;
+  color: var(--text-light);
+}
+
+.relatedLink {
+  font-family: var(--font-gotham-bold);
+  font-size: 0.95em;
+  color: var(--debats-red);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.relatedLink:hover {
+  text-decoration-thickness: 2px;
+}
+
+.relatedSeparator {
+  font-family: var(--font-gotham-book);
+  font-size: 0.8em;
+  color: #ccc;
 }
 
 .presentation {

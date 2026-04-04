@@ -3,21 +3,14 @@
 import { useCallback } from 'react'
 import { updateSubjectAction } from '../../../app/actions/update-subject'
 import SubjectForm, { SubjectFormValues } from '../SubjectForm'
-import { ThemeOption } from '../../ui/ThemeSelector'
 
 interface EditSubjectFormProps {
   subjectId: string
   subjectSlug: string
   subject: SubjectFormValues
-  availableThemes: ThemeOption[]
 }
 
-export default function EditSubjectForm({
-  subjectId,
-  subjectSlug,
-  subject,
-  availableThemes,
-}: EditSubjectFormProps) {
+export default function EditSubjectForm({ subjectId, subjectSlug, subject }: EditSubjectFormProps) {
   const handleSubmit = useCallback(
     (formData: FormData) => updateSubjectAction(subjectId, formData),
     [subjectId],
@@ -30,7 +23,6 @@ export default function EditSubjectForm({
       pendingLabel="Enregistrement..."
       cancelHref={`/s/${subjectSlug}`}
       subject={subject}
-      availableThemes={availableThemes}
     />
   )
 }
