@@ -67,6 +67,7 @@ export default async function EditStatementPage({ params }: PageProps) {
         returnHref={returnHref}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
         initialPositionId={statement.positionId}
+        initialStatementType={statement.statementType}
         initialSourceName={statement.sourceName}
         initialSourceUrl={statement.sourceUrl ?? ''}
         initialQuote={statement.quote}

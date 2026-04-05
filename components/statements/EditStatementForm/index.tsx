@@ -14,6 +14,7 @@ interface EditStatementFormProps {
   returnHref: string
   positions: PositionOption[]
   initialPositionId: string
+  initialStatementType: string
   initialSourceName: string
   initialSourceUrl: string
   initialQuote: string
@@ -25,6 +26,7 @@ export default function EditStatementForm({
   returnHref,
   positions,
   initialPositionId,
+  initialStatementType,
   initialSourceName,
   initialSourceUrl,
   initialQuote,
@@ -44,6 +46,7 @@ export default function EditStatementForm({
       cancelHref={returnHref}
       positions={positions}
       initialPositionId={initialPositionId}
+      initialStatementType={initialStatementType}
       initialSourceName={initialSourceName}
       initialSourceUrl={initialSourceUrl}
       initialQuote={initialQuote}

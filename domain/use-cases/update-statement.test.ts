@@ -28,6 +28,7 @@ const positionOnOtherSubject = createPosition({
 const existingStatement = createStatement({
   publicFigureId: 'figure-1',
   positionId: existingPosition.id,
+  statementType: 'declaration',
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
   quote: 'Citation originale suffisamment longue.',
@@ -71,6 +72,7 @@ const fakeReputationRepo = {
 const validParams = {
   statementId: existingStatement.id,
   positionId: existingPosition.id,
+  statementType: 'declaration' as const,
   sourceName: 'France Inter',
   sourceUrl: 'https://franceinter.fr/article',
   quote: 'Nouvelle citation suffisamment longue.',

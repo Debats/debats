@@ -6,6 +6,7 @@ import { createStatementRepository } from '../../infra/database/statement-reposi
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
+import { parseStatementType } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -27,6 +28,7 @@ export async function createStatementAction(
     subjectId,
     publicFigureId: String(formData.get('publicFigureId') ?? ''),
     positionId: String(formData.get('positionId') ?? ''),
+    statementType: parseStatementType(formData.get('statementType')),
     sourceName: String(formData.get('sourceName') ?? ''),
     sourceUrl: String(formData.get('sourceUrl') ?? ''),
     quote: String(formData.get('quote') ?? ''),

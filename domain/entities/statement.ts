@@ -3,10 +3,26 @@ import * as S from 'effect/Schema'
 export const StatementId = S.String.pipe(S.brand('StatementId'))
 export type StatementId = S.Schema.Type<typeof StatementId>
 
+export const STATEMENT_TYPES = ['declaration', 'vote', 'program', 'act'] as const
+export type StatementType = (typeof STATEMENT_TYPES)[number]
+
+export const STATEMENT_TYPE_LABELS: Record<StatementType, string> = {
+  declaration: 'Déclaration',
+  vote: 'Vote',
+  program: 'Programme',
+  act: 'Acte',
+}
+
+export function parseStatementType(value: unknown): StatementType {
+  const str = String(value ?? '')
+  return STATEMENT_TYPES.includes(str as StatementType) ? (str as StatementType) : 'declaration'
+}
+
 export const Statement = S.Struct({
   id: StatementId,
   publicFigureId: S.String,
   positionId: S.String,
+  statementType: S.Literal(...STATEMENT_TYPES),
   sourceName: S.String.pipe(S.minLength(1), S.maxLength(255)),
   sourceUrl: S.optional(S.String),
   quote: S.String.pipe(S.minLength(10)),
@@ -21,6 +37,7 @@ export type Statement = S.Schema.Type<typeof Statement>
 export const createStatement = (params: {
   publicFigureId: string
   positionId: string
+  statementType: StatementType
   sourceName: string
   sourceUrl?: string
   quote: string
@@ -33,6 +50,7 @@ export const createStatement = (params: {
     id: StatementId.make(crypto.randomUUID()),
     publicFigureId: params.publicFigureId,
     positionId: params.positionId,
+    statementType: params.statementType,
     sourceName: params.sourceName,
     sourceUrl: params.sourceUrl,
     quote: params.quote,
@@ -46,6 +64,7 @@ export const createStatement = (params: {
 export const updateStatement = (
   statement: Statement,
   params: {
+    statementType?: StatementType
     sourceName?: string
     sourceUrl?: string
     quote?: string
@@ -53,6 +72,7 @@ export const updateStatement = (
   },
 ): Statement => {
   const updated = { ...statement, updatedAt: new Date() }
+  if (params.statementType !== undefined) updated.statementType = params.statementType
   if (params.sourceName !== undefined) updated.sourceName = params.sourceName
   if (params.sourceUrl !== undefined) updated.sourceUrl = params.sourceUrl
   if (params.quote !== undefined) updated.quote = params.quote

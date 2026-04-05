@@ -80,6 +80,7 @@ export async function validateDraft(
     subjectId: subjectId.right,
     publicFigureId: publicFigureId.right,
     positionId: positionId.right,
+    statementType: 'declaration',
     sourceName: draft.sourceName,
     sourceUrl: draft.sourceUrl,
     quote: draft.quote,

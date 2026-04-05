@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
+import { parseStatementType } from '../../domain/entities/statement'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -24,6 +25,7 @@ export async function updateStatementAction(
     contributor,
     statementId,
     positionId: String(formData.get('positionId') ?? ''),
+    statementType: parseStatementType(formData.get('statementType')),
     sourceName: String(formData.get('sourceName') ?? ''),
     sourceUrl: String(formData.get('sourceUrl') ?? ''),
     quote: String(formData.get('quote') ?? ''),

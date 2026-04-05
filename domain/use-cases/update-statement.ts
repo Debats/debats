@@ -1,6 +1,6 @@
 import { Either } from 'effect'
 import { Effect } from 'effect'
-import { updateStatement, Statement } from '../entities/statement'
+import { updateStatement, Statement, StatementType } from '../entities/statement'
 import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
@@ -12,6 +12,7 @@ type UpdateStatementParams = {
   contributor: ContributorIdentity | null
   statementId: string
   positionId: string
+  statementType: StatementType
   sourceName: string
   sourceUrl: string
   quote: string
@@ -30,6 +31,7 @@ export async function updateStatementUseCase(
     contributor,
     statementId,
     positionId,
+    statementType,
     sourceName,
     sourceUrl,
     quote,
@@ -73,6 +75,7 @@ export async function updateStatementUseCase(
   const updated = updateStatement(
     { ...existing, positionId },
     {
+      statementType,
       sourceName,
       sourceUrl: sourceUrl || undefined,
       quote,

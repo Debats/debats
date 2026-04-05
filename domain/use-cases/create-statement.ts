@@ -1,6 +1,6 @@
 import { Either } from 'effect'
 import { Effect } from 'effect'
-import { createStatement, Statement } from '../entities/statement'
+import { createStatement, Statement, StatementType } from '../entities/statement'
 import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
@@ -14,6 +14,7 @@ type CreateStatementParams = {
   subjectId: string
   publicFigureId: string
   positionId: string
+  statementType: StatementType
   sourceName: string
   sourceUrl: string
   quote: string
@@ -34,6 +35,7 @@ export async function createStatementUseCase(
     subjectId,
     publicFigureId,
     positionId,
+    statementType,
     sourceName,
     sourceUrl,
     quote,
@@ -75,6 +77,7 @@ export async function createStatementUseCase(
   const statement = createStatement({
     publicFigureId,
     positionId,
+    statementType,
     sourceName,
     sourceUrl: sourceUrl || undefined,
     quote,

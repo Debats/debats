@@ -38,6 +38,7 @@ function mapStatementRow(row: StatementRow): Statement {
     id: StatementId.make(row.id),
     publicFigureId: row.public_figure_id,
     positionId: row.position_id,
+    statementType: row.statement_type,
     sourceName: row.source_name,
     sourceUrl: row.source_url ?? undefined,
     quote: row.quote,
@@ -91,7 +92,7 @@ function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
 }
 
 const STATEMENT_WITH_DETAILS_QUERY = `
-  id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
+  id, public_figure_id, position_id, statement_type, source_name, source_url, quote, stated_at,
   created_by, created_at, updated_at, deleted_at,
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
@@ -172,7 +173,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(
               `
-            id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
+            id, public_figure_id, position_id, statement_type, source_name, source_url, quote, stated_at,
             created_by, created_at, updated_at, deleted_at,
             positions!inner (
               id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
@@ -236,7 +237,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(
               `
-            id, public_figure_id, position_id, source_name, source_url, quote, stated_at,
+            id, public_figure_id, position_id, statement_type, source_name, source_url, quote, stated_at,
             created_by, created_at, updated_at, deleted_at,
             positions!inner (
               id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
@@ -356,6 +357,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               id: statement.id,
               public_figure_id: statement.publicFigureId,
               position_id: statement.positionId,
+              statement_type: statement.statementType,
               source_name: statement.sourceName,
               source_url: statement.sourceUrl,
               quote: statement.quote,
@@ -378,6 +380,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .update({
               position_id: statement.positionId,
+              statement_type: statement.statementType,
               source_name: statement.sourceName,
               source_url: statement.sourceUrl ?? null,
               quote: statement.quote,

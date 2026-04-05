@@ -86,6 +86,7 @@ const validParams = {
   subjectId: 'subject-1',
   publicFigureId: 'figure-1',
   positionId: 'pos-1',
+  statementType: 'declaration' as const,
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
   quote: 'Une citation suffisamment longue pour être valide.',

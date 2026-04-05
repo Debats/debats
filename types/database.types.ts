@@ -466,6 +466,7 @@ export type Database = {
           source_name: string
           source_url: string | null
           stated_at: string
+          statement_type: Database["public"]["Enums"]["statement_type"]
           updated_at: string | null
         }
         Insert: {
@@ -479,6 +480,7 @@ export type Database = {
           source_name: string
           source_url?: string | null
           stated_at: string
+          statement_type?: Database["public"]["Enums"]["statement_type"]
           updated_at?: string | null
         }
         Update: {
@@ -492,6 +494,7 @@ export type Database = {
           source_name?: string
           source_url?: string | null
           stated_at?: string
+          statement_type?: Database["public"]["Enums"]["statement_type"]
           updated_at?: string | null
         }
         Relationships: [
@@ -734,7 +737,7 @@ export type Database = {
       soft_delete_subject: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      statement_type: "declaration" | "vote" | "program" | "act"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -864,7 +867,9 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      statement_type: ["declaration", "vote", "program", "act"],
+    },
   },
 } as const
 

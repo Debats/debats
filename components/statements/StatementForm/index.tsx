@@ -3,6 +3,7 @@
 import { useState, useCallback, FormEvent, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
+import { STATEMENT_TYPES, STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
 import { FieldErrors } from '../../../domain/use-cases/types'
 import TextField from '../../ui/TextField'
 
@@ -30,6 +31,7 @@ interface StatementFormProps {
   positions: PositionOption[]
   onSearchFigures?: (query: string) => Promise<{ id: string; label: string }[]>
   initialPositionId?: string
+  initialStatementType?: string
   initialSourceName?: string
   initialSourceUrl?: string
   initialQuote?: string
@@ -45,6 +47,7 @@ export default function StatementForm({
   positions,
   onSearchFigures,
   initialPositionId = '',
+  initialStatementType = 'declaration',
   initialSourceName = '',
   initialSourceUrl = '',
   initialQuote = '',
@@ -115,6 +118,24 @@ export default function StatementForm({
           {positions.map((position) => (
             <option key={position.id} value={position.id}>
               {position.title}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.selectField}>
+        <label className={styles.selectLabel} htmlFor="statementType">
+          Type
+        </label>
+        <select
+          className={styles.select}
+          id="statementType"
+          name="statementType"
+          defaultValue={initialStatementType}
+        >
+          {STATEMENT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {STATEMENT_TYPE_LABELS[type]}
             </option>
           ))}
         </select>
