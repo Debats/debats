@@ -46,6 +46,7 @@ const fakeSubjectRepo = {
   findSummaryById: () => Effect.succeed(null),
   findSummariesByIds: () => Effect.succeed([]),
   findAllIds: () => Effect.succeed([]),
+  findIdsWithoutPrimaryTheme: () => Effect.succeed([]),
 }
 
 function fakeThemeRepo() {

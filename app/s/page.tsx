@@ -28,6 +28,22 @@ interface ThemeSection {
   totalCount: number
 }
 
+function SubjectCardList({ subjects }: { subjects: SubjectActivitySummary[] }) {
+  return (
+    <div className={styles.subjectList}>
+      {subjects.map((subject) => (
+        <Link key={subject.id} href={`/s/${subject.slug}`} className={styles.subjectCard}>
+          <h3 className={styles.subjectCardTitle}>{subject.title}</h3>
+          <p className={styles.subjectCardPresentation}>{subject.presentation}</p>
+          <span className={styles.subjectCardStats}>
+            {subject.statementsCount} prise{subject.statementsCount !== 1 ? 's' : ''} de position
+          </span>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 export default async function SubjectsPage() {
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
@@ -36,9 +52,10 @@ export default async function SubjectsPage() {
   const contributor = await getAuthenticatedContributor()
   const canAddSubject = contributor ? canPerform(contributor.reputation, 'add_subject') : false
 
-  const [themes, primaryLinks] = await Promise.all([
+  const [themes, primaryLinks, unthemedIds] = await Promise.all([
     Effect.runPromise(themeRepo.findAll()),
     Effect.runPromise(themeRepo.findAllPrimaryLinks()),
+    Effect.runPromise(subjectRepo.findIdsWithoutPrimaryTheme()),
   ])
 
   const subjectIdsByTheme = new Map<string, string[]>()
@@ -48,13 +65,18 @@ export default async function SubjectsPage() {
     subjectIdsByTheme.set(link.themeId, ids)
   }
 
-  const allSubjectIds = primaryLinks.map((l) => l.subjectId)
+  const allNeededIds = [...primaryLinks.map((l) => l.subjectId), ...unthemedIds]
   const summaries =
-    allSubjectIds.length > 0
-      ? await Effect.runPromise(subjectRepo.findSummariesByIds(allSubjectIds))
+    allNeededIds.length > 0
+      ? await Effect.runPromise(subjectRepo.findSummariesByIds(allNeededIds))
       : []
 
   const summaryMap = new Map(summaries.map((s) => [s.id, s]))
+
+  const unthemedSubjects = unthemedIds
+    .map((id) => summaryMap.get(id))
+    .filter((s): s is SubjectActivitySummary => s !== undefined)
+    .sort((a, b) => b.statementsCount - a.statementsCount)
 
   const sections: ThemeSection[] = themes
     .map((theme) => {
@@ -88,34 +110,40 @@ export default async function SubjectsPage() {
 
       <SubjectSearch />
 
-      {sections.length === 0 ? (
-        <p className={styles.empty}>Aucun sujet classé pour le moment.</p>
+      {sections.length === 0 && unthemedSubjects.length === 0 ? (
+        <p className={styles.empty}>Aucun sujet pour le moment.</p>
       ) : (
-        sections.map((section) => (
-          <section key={section.themeId} className={styles.themeSection}>
-            <div className={styles.themeSectionHeader}>
-              <h2 className={styles.themeSectionTitle}>{section.themeName}</h2>
-              {section.totalCount > SUBJECTS_PER_THEME && (
-                <Link href={`/themes/${section.themeSlug}`} className={styles.themeSectionSeeAll}>
-                  Voir les {section.totalCount} sujets →
-                </Link>
-              )}
-            </div>
+        <>
+          {sections.map((section) => (
+            <section key={section.themeId} className={styles.themeSection}>
+              <div className={styles.themeSectionHeader}>
+                <h2 className={styles.themeSectionTitle}>{section.themeName}</h2>
+                {section.totalCount > SUBJECTS_PER_THEME && (
+                  <Link href={`/themes/${section.themeSlug}`} className={styles.themeSectionSeeAll}>
+                    Voir les {section.totalCount} sujets →
+                  </Link>
+                )}
+              </div>
 
-            <div className={styles.subjectList}>
-              {section.subjects.map((subject) => (
-                <Link key={subject.id} href={`/s/${subject.slug}`} className={styles.subjectCard}>
-                  <h3 className={styles.subjectCardTitle}>{subject.title}</h3>
-                  <p className={styles.subjectCardPresentation}>{subject.presentation}</p>
-                  <span className={styles.subjectCardStats}>
-                    {subject.statementsCount} prise{subject.statementsCount !== 1 ? 's' : ''} de
-                    position
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))
+              <SubjectCardList subjects={section.subjects} />
+            </section>
+          ))}
+
+          {unthemedSubjects.length > 0 && (
+            <section className={styles.themeSection}>
+              <div className={styles.themeSectionHeader}>
+                <h2 className={styles.themeSectionTitle}>Autres sujets</h2>
+                {unthemedSubjects.length > SUBJECTS_PER_THEME && (
+                  <Link href="/themes/autres" className={styles.themeSectionSeeAll}>
+                    Voir les {unthemedSubjects.length} sujets →
+                  </Link>
+                )}
+              </div>
+
+              <SubjectCardList subjects={unthemedSubjects.slice(0, SUBJECTS_PER_THEME)} />
+            </section>
+          )}
+        </>
       )}
     </ContentWithSidebar>
   )

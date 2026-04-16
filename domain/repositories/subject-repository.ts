@@ -44,4 +44,5 @@ export interface SubjectRepository {
   findSummaryById(id: string): Effect.Effect<SubjectActivitySummary | null, DatabaseError>
   findSummariesByIds(ids: string[]): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   findAllIds(): Effect.Effect<string[], DatabaseError>
+  findIdsWithoutPrimaryTheme(): Effect.Effect<string[], DatabaseError>
 }

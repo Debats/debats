@@ -233,6 +233,29 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         },
         catch: (error) => dbError('Failed to fetch subject ids', error),
       }),
+
+    findIdsWithoutPrimaryTheme: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data: themedData, error: themedError } = await supabase
+            .from('subject_themes')
+            .select('subject_id')
+            .eq('is_primary', true)
+
+          if (themedError) throw themedError
+
+          let query = supabase.from('subjects').select('id').is('deleted_at', null).order('id')
+
+          if (themedData.length > 0) {
+            query = query.not('id', 'in', `(${themedData.map((r) => r.subject_id).join(',')})`)
+          }
+
+          const { data, error } = await query
+          if (error) throw error
+          return data.map((row) => row.id)
+        },
+        catch: (error) => dbError('Failed to fetch unthemed subject ids', error),
+      }),
   }
 }
 
