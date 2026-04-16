@@ -15,6 +15,7 @@ interface EditSubjectTabsProps {
   subject: SubjectFormValues
   availableThemes: ThemeOption[]
   selectedThemeIds: string[]
+  primaryThemeId: string | null
   relatedSubjects: RelatedSubjectData[]
 }
 
@@ -24,6 +25,7 @@ export default function EditSubjectTabs({
   subject,
   availableThemes,
   selectedThemeIds,
+  primaryThemeId,
   relatedSubjects,
 }: EditSubjectTabsProps) {
   return (
@@ -48,6 +50,7 @@ export default function EditSubjectTabs({
               subjectId={subjectId}
               availableThemes={availableThemes}
               selectedThemeIds={selectedThemeIds}
+              primaryThemeId={primaryThemeId}
             />
           )}
 

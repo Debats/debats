@@ -65,11 +65,11 @@ export default async function SubjectDetailPage({ params }: PageProps) {
   const themeRepo = createThemeRepository(supabase)
   const relatedRepo = createRelatedSubjectsRepository(supabase)
 
-  const [positions, stats, contributor, themes, relatedSubjects] = await Promise.all([
+  const [positions, stats, contributor, themeAssignments, relatedSubjects] = await Promise.all([
     Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
     Effect.runPromise(subjectRepo.getStats(subject.id)),
     getAuthenticatedContributor(),
-    Effect.runPromise(themeRepo.findBySubjectId(subject.id)),
+    Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
     Effect.runPromise(relatedRepo.findRelated(subject.id)),
   ])
 
@@ -109,12 +109,12 @@ export default async function SubjectDetailPage({ params }: PageProps) {
             />
           )}
         </div>
-        {(themes.length > 0 || relatedSubjects.length > 0) && (
+        {(themeAssignments.length > 0 || relatedSubjects.length > 0) && (
           <div className={styles.metadata}>
-            {themes.length > 0 && (
+            {themeAssignments.length > 0 && (
               <div className={styles.metadataRow}>
-                {themes.map((t) => (
-                  <ThemeBadge key={t.id} name={t.name} slug={t.slug} />
+                {themeAssignments.map((a) => (
+                  <ThemeBadge key={a.theme.id} name={a.theme.name} slug={a.theme.slug} />
                 ))}
               </div>
             )}

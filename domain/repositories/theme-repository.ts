@@ -2,6 +2,11 @@ import { Effect } from 'effect'
 import { Theme } from '../entities/theme'
 import { DatabaseError } from './errors'
 
+export interface ThemeAssignment {
+  theme: Theme
+  isPrimary: boolean
+}
+
 export interface ThemeRepository {
   findAll(): Effect.Effect<Theme[], DatabaseError>
 
@@ -17,13 +22,18 @@ export interface ThemeRepository {
 
   delete(id: string): Effect.Effect<void, DatabaseError>
 
-  findBySubjectId(subjectId: string): Effect.Effect<Theme[], DatabaseError>
+  /**
+   * Returns themes assigned to a subject, ordered with the primary one first.
+   */
+  findAssignmentsBySubjectId(subjectId: string): Effect.Effect<ThemeAssignment[], DatabaseError>
 
-  assignToSubject(
+  /**
+   * Atomically replaces all theme assignments for a subject.
+   * At most one assignment may have isPrimary = true.
+   */
+  setAssignments(
     subjectId: string,
-    themeId: string,
+    assignments: Array<{ themeId: string; isPrimary: boolean }>,
     createdBy: string,
   ): Effect.Effect<void, DatabaseError>
-
-  removeFromSubject(subjectId: string, themeId: string): Effect.Effect<void, DatabaseError>
 }

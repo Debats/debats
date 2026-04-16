@@ -4,6 +4,12 @@
   gap: 8px;
 }
 
+.itemWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
 .item {
   font-family: var(--font-gotham-book);
   font-size: 0.85em;
@@ -29,8 +35,39 @@
   border-color: var(--debats-red);
   color: white;
   font-family: var(--font-gotham-bold);
+  border-radius: 3px 0 0 3px;
 }
 
 .item[data-state='on']:hover {
   background: #d91a38;
+}
+
+.starButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 100%;
+  padding: 5px 0;
+  background: #d91a38;
+  border: 1px solid var(--debats-red);
+  border-left: none;
+  border-radius: 0 3px 3px 0;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.starButton:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.starActive {
+  color: #ffd700;
+}
+
+.starActive:hover {
+  color: #ffd700;
 }

@@ -41,8 +41,8 @@ export default async function EditSubjectPage({ params }: PageProps) {
 
   if (!subject) notFound()
 
-  const [subjectThemes, relatedSubjects] = await Promise.all([
-    Effect.runPromise(themeRepo.findBySubjectId(subject.id)),
+  const [themeAssignments, relatedSubjects] = await Promise.all([
+    Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
     Effect.runPromise(relatedRepo.findRelated(subject.id)),
   ])
 
@@ -64,7 +64,8 @@ export default async function EditSubjectPage({ params }: PageProps) {
           problem: subject.problem,
         }}
         availableThemes={allThemes.map((t) => ({ id: t.id, name: t.name }))}
-        selectedThemeIds={subjectThemes.map((t) => t.id)}
+        selectedThemeIds={themeAssignments.map((a) => a.theme.id)}
+        primaryThemeId={themeAssignments.find((a) => a.isPrimary)?.theme.id ?? null}
         relatedSubjects={relatedSubjects.map((s) => ({
           id: s.id,
           title: s.title,

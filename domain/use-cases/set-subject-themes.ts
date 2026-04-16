@@ -9,6 +9,7 @@ type SetSubjectThemesParams = {
   contributor: ContributorIdentity | null
   subjectId: string
   themeIds: ThemeId[]
+  primaryThemeId: ThemeId | null
   themeRepo: ThemeRepository
   subjectRepo: SubjectRepository
 }
@@ -16,7 +17,7 @@ type SetSubjectThemesParams = {
 export async function setSubjectThemesUseCase(
   params: SetSubjectThemesParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, subjectId, themeIds, themeRepo, subjectRepo } = params
+  const { contributor, subjectId, themeIds, primaryThemeId, themeRepo, subjectRepo } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -32,6 +33,10 @@ export async function setSubjectThemesUseCase(
     return Either.left('Le sujet est introuvable.')
   }
 
+  if (primaryThemeId !== null && !themeIds.includes(primaryThemeId)) {
+    return Either.left('La thématique principale doit faire partie des thématiques sélectionnées.')
+  }
+
   if (themeIds.length > 0) {
     const foundThemes = await Effect.runPromise(themeRepo.findByIds(themeIds))
     if (foundThemes.length !== themeIds.length) {
@@ -41,20 +46,12 @@ export async function setSubjectThemesUseCase(
     }
   }
 
-  const currentThemes = await Effect.runPromise(themeRepo.findBySubjectId(subjectId))
-  const currentIds = new Set(currentThemes.map((t) => t.id))
-  const targetIds = new Set(themeIds)
+  const assignments = themeIds.map((themeId) => ({
+    themeId,
+    isPrimary: themeId === primaryThemeId,
+  }))
 
-  const toRemove = currentThemes.filter((t) => !targetIds.has(t.id))
-  const toAdd = themeIds.filter((id) => !currentIds.has(id))
-
-  for (const theme of toRemove) {
-    await Effect.runPromise(themeRepo.removeFromSubject(subjectId, theme.id))
-  }
-
-  for (const themeId of toAdd) {
-    await Effect.runPromise(themeRepo.assignToSubject(subjectId, themeId, contributor.id))
-  }
+  await Effect.runPromise(themeRepo.setAssignments(subjectId, assignments, contributor.id))
 
   return Either.right(undefined)
 }

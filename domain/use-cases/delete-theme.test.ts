@@ -25,9 +25,8 @@ const fakeThemeRepo = {
   create: (t: Theme) => Effect.succeed(t),
   update: (t: Theme) => Effect.succeed(t),
   delete: () => Effect.succeed(undefined as void),
-  findBySubjectId: () => Effect.succeed([]),
-  assignToSubject: () => Effect.succeed(undefined as void),
-  removeFromSubject: () => Effect.succeed(undefined as void),
+  findAssignmentsBySubjectId: () => Effect.succeed([]),
+  setAssignments: () => Effect.succeed(undefined as void),
 }
 
 describe('deleteThemeUseCase', () => {

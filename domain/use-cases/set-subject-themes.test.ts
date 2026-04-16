@@ -47,9 +47,8 @@ const fakeSubjectRepo = {
   findAllIds: () => Effect.succeed([]),
 }
 
-function fakeThemeRepo(currentThemes: Theme[] = []) {
-  const assigned: Array<{ subjectId: string; themeId: string }> = []
-  const removed: Array<{ subjectId: string; themeId: string }> = []
+function fakeThemeRepo() {
+  const savedAssignments: Array<{ subjectId: string; themeId: string; isPrimary: boolean }> = []
 
   return {
     repo: {
@@ -64,39 +63,32 @@ function fakeThemeRepo(currentThemes: Theme[] = []) {
       create: (t: Theme) => Effect.succeed(t),
       update: (t: Theme) => Effect.succeed(t),
       delete: () => Effect.succeed(undefined as void),
-      findBySubjectId: () => Effect.succeed(currentThemes),
-      assignToSubject: (subjectId: string, themeId: string) => {
-        assigned.push({ subjectId, themeId })
-        return Effect.succeed(undefined as void)
-      },
-      removeFromSubject: (subjectId: string, themeId: string) => {
-        removed.push({ subjectId, themeId })
+      findAssignmentsBySubjectId: () => Effect.succeed([]),
+      setAssignments: (
+        subjectId: string,
+        assignments: Array<{ themeId: string; isPrimary: boolean }>,
+      ) => {
+        assignments.forEach((a) =>
+          savedAssignments.push({ subjectId, themeId: a.themeId, isPrimary: a.isPrimary }),
+        )
         return Effect.succeed(undefined as void)
       },
     },
-    assigned,
-    removed,
-  }
-}
-
-const validParams = (currentThemes: Theme[] = []) => {
-  const { repo, assigned, removed } = fakeThemeRepo(currentThemes)
-  return {
-    params: {
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1'), ThemeId.make('theme-2')],
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
-    },
-    assigned,
-    removed,
+    savedAssignments,
   }
 }
 
 describe('setSubjectThemesUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const { params } = validParams()
-    const result = await setSubjectThemesUseCase({ ...params, contributor: null })
+    const { repo } = fakeThemeRepo()
+    const result = await setSubjectThemesUseCase({
+      contributor: null,
+      subjectId: 'subject-1',
+      themeIds: [ThemeId.make('theme-1')],
+      primaryThemeId: null,
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
+    })
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -104,11 +96,15 @@ describe('setSubjectThemesUseCase', () => {
     }
   })
 
-  it('should fail when contributor lacks reputation (requires Éloquent)', async () => {
-    const { params } = validParams()
+  it('should fail when contributor lacks reputation', async () => {
+    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      ...params,
       contributor: { id: 'abc', reputation: 0 },
+      subjectId: 'subject-1',
+      themeIds: [ThemeId.make('theme-1')],
+      primaryThemeId: null,
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
     })
 
     expect(Either.isLeft(result)).toBe(true)
@@ -118,11 +114,14 @@ describe('setSubjectThemesUseCase', () => {
   })
 
   it('should fail when subject does not exist', async () => {
-    const { params } = validParams()
+    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      ...params,
       contributor: { id: 'abc', reputation: 1000 },
       subjectId: 'nonexistent',
+      themeIds: [ThemeId.make('theme-1')],
+      primaryThemeId: null,
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
     })
 
     expect(Either.isLeft(result)).toBe(true)
@@ -132,11 +131,14 @@ describe('setSubjectThemesUseCase', () => {
   })
 
   it('should fail when a theme ID does not exist', async () => {
-    const { params } = validParams()
+    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      ...params,
       contributor: { id: 'abc', reputation: 1000 },
+      subjectId: 'subject-1',
       themeIds: [ThemeId.make('theme-1'), ThemeId.make('nonexistent')],
+      primaryThemeId: null,
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
     })
 
     expect(Either.isLeft(result)).toBe(true)
@@ -145,48 +147,68 @@ describe('setSubjectThemesUseCase', () => {
     }
   })
 
-  it('should assign new themes and remove old ones', async () => {
-    const { params, assigned, removed } = validParams([economie])
-
+  it('should fail when primaryThemeId is not in themeIds', async () => {
+    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      ...params,
       contributor: { id: 'abc', reputation: 1000 },
-      themeIds: [ThemeId.make('theme-2'), ThemeId.make('theme-3')],
+      subjectId: 'subject-1',
+      themeIds: [ThemeId.make('theme-1')],
+      primaryThemeId: ThemeId.make('theme-2'),
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result)) {
+      expect(result.left).toContain('principale')
+    }
+  })
+
+  it('should assign themes with primary flag', async () => {
+    const { repo, savedAssignments } = fakeThemeRepo()
+    const result = await setSubjectThemesUseCase({
+      contributor: { id: 'abc', reputation: 1000 },
+      subjectId: 'subject-1',
+      themeIds: [ThemeId.make('theme-1'), ThemeId.make('theme-2')],
+      primaryThemeId: ThemeId.make('theme-1'),
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(removed).toEqual([{ subjectId: 'subject-1', themeId: 'theme-1' }])
-    expect(assigned).toEqual([
-      { subjectId: 'subject-1', themeId: 'theme-2' },
-      { subjectId: 'subject-1', themeId: 'theme-3' },
+    expect(savedAssignments).toEqual([
+      { subjectId: 'subject-1', themeId: 'theme-1', isPrimary: true },
+      { subjectId: 'subject-1', themeId: 'theme-2', isPrimary: false },
     ])
   })
 
-  it('should not touch themes that are already assigned', async () => {
-    const { params, assigned, removed } = validParams([economie, societe])
-
+  it('should allow no primary theme', async () => {
+    const { repo, savedAssignments } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      ...params,
       contributor: { id: 'abc', reputation: 1000 },
-      themeIds: [ThemeId.make('theme-1'), ThemeId.make('theme-2'), ThemeId.make('theme-3')],
+      subjectId: 'subject-1',
+      themeIds: [ThemeId.make('theme-1'), ThemeId.make('theme-2')],
+      primaryThemeId: null,
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(removed).toEqual([])
-    expect(assigned).toEqual([{ subjectId: 'subject-1', themeId: 'theme-3' }])
+    expect(savedAssignments.every((a) => !a.isPrimary)).toBe(true)
   })
 
-  it('should allow setting an empty list (remove all themes)', async () => {
-    const { params, assigned, removed } = validParams([economie])
-
+  it('should allow empty list (remove all themes)', async () => {
+    const { repo, savedAssignments } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      ...params,
       contributor: { id: 'abc', reputation: 1000 },
+      subjectId: 'subject-1',
       themeIds: [],
+      primaryThemeId: null,
+      themeRepo: repo,
+      subjectRepo: fakeSubjectRepo,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(removed).toEqual([{ subjectId: 'subject-1', themeId: 'theme-1' }])
-    expect(assigned).toEqual([])
+    expect(savedAssignments).toEqual([])
   })
 })

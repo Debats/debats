@@ -3,7 +3,7 @@ import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Theme, ThemeId, ThemeName, ThemeSlug } from '../../domain/entities/theme'
 import { DatabaseError } from '../../domain/repositories/errors'
-import { ThemeRepository } from '../../domain/repositories/theme-repository'
+import { ThemeRepository, ThemeAssignment } from '../../domain/repositories/theme-repository'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -139,12 +139,12 @@ export function createThemeRepository(supabase: SupabaseClient): ThemeRepository
         catch: (error) => dbError('Failed to delete theme', error),
       }),
 
-    findBySubjectId: (subjectId: string) =>
+    findAssignmentsBySubjectId: (subjectId: string) =>
       Effect.tryPromise({
         try: async () => {
           const { data: links, error: linksError } = await supabase
             .from('subject_themes')
-            .select('theme_id')
+            .select('theme_id, is_primary')
             .eq('subject_id', subjectId)
 
           if (linksError) throw linksError
@@ -158,35 +158,46 @@ export function createThemeRepository(supabase: SupabaseClient): ThemeRepository
             .order('name')
 
           if (error) throw error
-          return data.map(mapRow)
+
+          const primaryMap = new Map(links.map((l) => [l.theme_id, l.is_primary]))
+          return data.map(
+            (row): ThemeAssignment => ({
+              theme: mapRow(row),
+              isPrimary: primaryMap.get(row.id) ?? false,
+            }),
+          )
         },
-        catch: (error) => dbError('Failed to fetch themes for subject', error),
+        catch: (error) => dbError('Failed to fetch theme assignments for subject', error),
       }),
 
-    assignToSubject: (subjectId: string, themeId: string, createdBy: string) =>
+    setAssignments: (
+      subjectId: string,
+      assignments: Array<{ themeId: string; isPrimary: boolean }>,
+      createdBy: string,
+    ) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase
-            .from('subject_themes')
-            .insert({ subject_id: subjectId, theme_id: themeId, created_by: createdBy })
-
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to assign theme to subject', error),
-      }),
-
-    removeFromSubject: (subjectId: string, themeId: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase
+          const { error: deleteError } = await supabase
             .from('subject_themes')
             .delete()
             .eq('subject_id', subjectId)
-            .eq('theme_id', themeId)
 
-          if (error) throw error
+          if (deleteError) throw deleteError
+
+          if (assignments.length === 0) return
+
+          const rows = assignments.map((a) => ({
+            subject_id: subjectId,
+            theme_id: a.themeId,
+            is_primary: a.isPrimary,
+            created_by: createdBy,
+          }))
+
+          const { error: insertError } = await supabase.from('subject_themes').insert(rows)
+
+          if (insertError) throw insertError
         },
-        catch: (error) => dbError('Failed to remove theme from subject', error),
+        catch: (error) => dbError('Failed to set theme assignments', error),
       }),
   }
 }

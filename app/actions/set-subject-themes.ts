@@ -13,6 +13,7 @@ export type SetThemesResult = { success: true } | { success: false; error: strin
 export async function setSubjectThemesAction(
   subjectId: string,
   themeIds: string[],
+  primaryThemeId: string | null,
 ): Promise<SetThemesResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
@@ -21,6 +22,7 @@ export async function setSubjectThemesAction(
     contributor,
     subjectId,
     themeIds: themeIds.map((id) => ThemeId.make(id)),
+    primaryThemeId: primaryThemeId ? ThemeId.make(primaryThemeId) : null,
     themeRepo: createThemeRepository(supabase),
     subjectRepo: createSubjectRepository(supabase),
   })

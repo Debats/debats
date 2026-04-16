@@ -532,18 +532,21 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          is_primary: boolean
           subject_id: string
           theme_id: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          is_primary?: boolean
           subject_id: string
           theme_id: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          is_primary?: boolean
           subject_id?: string
           theme_id?: string
         }

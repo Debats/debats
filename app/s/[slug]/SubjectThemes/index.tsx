@@ -11,20 +11,24 @@ interface SubjectThemesProps {
   subjectId: string
   availableThemes: ThemeOption[]
   selectedThemeIds: string[]
+  primaryThemeId: string | null
 }
 
 export default function SubjectThemes({
   subjectId,
   availableThemes,
-  selectedThemeIds,
+  selectedThemeIds: initialSelectedIds,
+  primaryThemeId: initialPrimaryId,
 }: SubjectThemesProps) {
   const router = useRouter()
   const [error, setError] = useState<string>()
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds)
+  const [primaryId, setPrimaryId] = useState<string | null>(initialPrimaryId)
 
-  const handleChange = useCallback(
-    async (themeIds: string[]) => {
+  const save = useCallback(
+    async (themeIds: string[], primary: string | null) => {
       setError(undefined)
-      const result = await setSubjectThemesAction(subjectId, themeIds)
+      const result = await setSubjectThemesAction(subjectId, themeIds, primary)
       if (result.success) {
         router.refresh()
       } else {
@@ -34,13 +38,39 @@ export default function SubjectThemes({
     [subjectId, router],
   )
 
+  const handleToggle = useCallback(
+    (themeIds: string[]) => {
+      setSelectedIds(themeIds)
+      const newPrimary = primaryId && themeIds.includes(primaryId) ? primaryId : null
+      setPrimaryId(newPrimary)
+      save(themeIds, newPrimary)
+    },
+    [primaryId, save],
+  )
+
+  const handlePrimaryToggle = useCallback(
+    (themeId: string) => {
+      const newPrimary = primaryId === themeId ? null : themeId
+      setPrimaryId(newPrimary)
+      save(selectedIds, newPrimary)
+    },
+    [primaryId, selectedIds, save],
+  )
+
   return (
     <div className={styles.container}>
       <label className={styles.label}>Thématiques</label>
       {error && <FormError message={error} />}
-      <ThemeSelector themes={availableThemes} value={selectedThemeIds} onChange={handleChange} />
+      <ThemeSelector
+        themes={availableThemes}
+        value={selectedIds}
+        primaryId={primaryId}
+        onChange={handleToggle}
+        onPrimaryToggle={handlePrimaryToggle}
+      />
       <p className={styles.hint}>
-        Sélectionnez une ou plusieurs thématiques. Les changements sont enregistrés immédiatement.
+        Sélectionnez une ou plusieurs thématiques. Cliquez sur l&apos;étoile pour définir la
+        thématique principale (utilisée pour le classement sur la page des sujets).
       </p>
     </div>
   )
