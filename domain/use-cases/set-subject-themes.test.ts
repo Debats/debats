@@ -44,6 +44,7 @@ const fakeSubjectRepo = {
   findSummariesByActivity: () => Effect.succeed([]),
   findSummariesByCreatedAt: () => Effect.succeed([]),
   findSummaryById: () => Effect.succeed(null),
+  findSummariesByIds: () => Effect.succeed([]),
   findAllIds: () => Effect.succeed([]),
 }
 
@@ -63,6 +64,8 @@ function fakeThemeRepo() {
       create: (t: Theme) => Effect.succeed(t),
       update: (t: Theme) => Effect.succeed(t),
       delete: () => Effect.succeed(undefined as void),
+      findAllPrimaryLinks: () => Effect.succeed([]),
+      findSubjectIdsByThemeId: () => Effect.succeed([]),
       findAssignmentsBySubjectId: () => Effect.succeed([]),
       setAssignments: (
         subjectId: string,

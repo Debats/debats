@@ -139,6 +139,37 @@ export function createThemeRepository(supabase: SupabaseClient): ThemeRepository
         catch: (error) => dbError('Failed to delete theme', error),
       }),
 
+    findAllPrimaryLinks: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('subject_themes')
+            .select('theme_id, subject_id')
+            .eq('is_primary', true)
+
+          if (error) throw error
+          return data.map((row) => ({
+            themeId: row.theme_id,
+            subjectId: row.subject_id,
+          }))
+        },
+        catch: (error) => dbError('Failed to fetch primary theme links', error),
+      }),
+
+    findSubjectIdsByThemeId: (themeId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('subject_themes')
+            .select('subject_id')
+            .eq('theme_id', themeId)
+
+          if (error) throw error
+          return data.map((row) => row.subject_id)
+        },
+        catch: (error) => dbError('Failed to fetch subject ids for theme', error),
+      }),
+
     findAssignmentsBySubjectId: (subjectId: string) =>
       Effect.tryPromise({
         try: async () => {

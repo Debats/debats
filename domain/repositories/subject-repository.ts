@@ -42,5 +42,6 @@ export interface SubjectRepository {
   ): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   findSummariesByCreatedAt(limit: number): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   findSummaryById(id: string): Effect.Effect<SubjectActivitySummary | null, DatabaseError>
+  findSummariesByIds(ids: string[]): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   findAllIds(): Effect.Effect<string[], DatabaseError>
 }

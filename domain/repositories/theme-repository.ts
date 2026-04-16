@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { Theme } from '../entities/theme'
+import { Theme, ThemeId } from '../entities/theme'
 import { DatabaseError } from './errors'
 
 export interface ThemeAssignment {
@@ -21,6 +21,16 @@ export interface ThemeRepository {
   update(theme: Theme): Effect.Effect<Theme, DatabaseError>
 
   delete(id: string): Effect.Effect<void, DatabaseError>
+
+  /**
+   * Returns all (themeId, subjectId) pairs where is_primary = true.
+   */
+  findAllPrimaryLinks(): Effect.Effect<Array<{ themeId: string; subjectId: string }>, DatabaseError>
+
+  /**
+   * Returns all subject IDs assigned to a theme (primary or not).
+   */
+  findSubjectIdsByThemeId(themeId: ThemeId): Effect.Effect<string[], DatabaseError>
 
   /**
    * Returns themes assigned to a subject, ordered with the primary one first.

@@ -203,6 +203,22 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         catch: (error) => dbError('Failed to fetch subject summary by id', error),
       }),
 
+    findSummariesByIds: (ids: string[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (ids.length === 0) return []
+
+          const { data, error } = await supabase
+            .from('v_subject_activity_summary')
+            .select('*')
+            .in('id', ids)
+
+          if (error) throw error
+          return data.map(mapSummaryRow)
+        },
+        catch: (error) => dbError('Failed to fetch subject summaries by ids', error),
+      }),
+
     findAllIds: () =>
       Effect.tryPromise({
         try: async () => {

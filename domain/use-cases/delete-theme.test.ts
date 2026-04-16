@@ -25,6 +25,8 @@ const fakeThemeRepo = {
   create: (t: Theme) => Effect.succeed(t),
   update: (t: Theme) => Effect.succeed(t),
   delete: () => Effect.succeed(undefined as void),
+  findAllPrimaryLinks: () => Effect.succeed([]),
+  findSubjectIdsByThemeId: () => Effect.succeed([]),
   findAssignmentsBySubjectId: () => Effect.succeed([]),
   setAssignments: () => Effect.succeed(undefined as void),
 }
