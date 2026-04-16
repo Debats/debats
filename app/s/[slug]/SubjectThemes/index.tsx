@@ -41,7 +41,8 @@ export default function SubjectThemes({
   const handleToggle = useCallback(
     (themeIds: string[]) => {
       setSelectedIds(themeIds)
-      const newPrimary = primaryId && themeIds.includes(primaryId) ? primaryId : null
+      const newPrimary =
+        primaryId && themeIds.includes(primaryId) ? primaryId : (themeIds[0] ?? null)
       setPrimaryId(newPrimary)
       save(themeIds, newPrimary)
     },
@@ -50,9 +51,9 @@ export default function SubjectThemes({
 
   const handlePrimaryToggle = useCallback(
     (themeId: string) => {
-      const newPrimary = primaryId === themeId ? null : themeId
-      setPrimaryId(newPrimary)
-      save(selectedIds, newPrimary)
+      if (themeId === primaryId) return
+      setPrimaryId(themeId)
+      save(selectedIds, themeId)
     },
     [primaryId, selectedIds, save],
   )

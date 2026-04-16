@@ -123,7 +123,7 @@ describe('setSubjectThemesUseCase', () => {
       contributor: { id: 'abc', reputation: 1000 },
       subjectId: 'nonexistent',
       themeIds: [ThemeId.make('theme-1')],
-      primaryThemeId: null,
+      primaryThemeId: ThemeId.make('theme-1'),
       themeRepo: repo,
       subjectRepo: fakeSubjectRepo,
     })
@@ -140,7 +140,7 @@ describe('setSubjectThemesUseCase', () => {
       contributor: { id: 'abc', reputation: 1000 },
       subjectId: 'subject-1',
       themeIds: [ThemeId.make('theme-1'), ThemeId.make('nonexistent')],
-      primaryThemeId: null,
+      primaryThemeId: ThemeId.make('theme-1'),
       themeRepo: repo,
       subjectRepo: fakeSubjectRepo,
     })
@@ -186,8 +186,8 @@ describe('setSubjectThemesUseCase', () => {
     ])
   })
 
-  it('should allow no primary theme', async () => {
-    const { repo, savedAssignments } = fakeThemeRepo()
+  it('should fail when themes are selected but no primary theme', async () => {
+    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
       contributor: { id: 'abc', reputation: 1000 },
       subjectId: 'subject-1',
@@ -197,8 +197,10 @@ describe('setSubjectThemesUseCase', () => {
       subjectRepo: fakeSubjectRepo,
     })
 
-    expect(Either.isRight(result)).toBe(true)
-    expect(savedAssignments.every((a) => !a.isPrimary)).toBe(true)
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result)) {
+      expect(result.left).toContain('principale')
+    }
   })
 
   it('should allow empty list (remove all themes)', async () => {

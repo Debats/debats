@@ -28,13 +28,19 @@ export async function setSubjectThemesUseCase(
     return Either.left(`Vous devez être ${rank} pour modifier les thématiques d'un sujet.`)
   }
 
-  const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
-  if (!subject) {
-    return Either.left('Le sujet est introuvable.')
+  if (themeIds.length > 0 && primaryThemeId === null) {
+    return Either.left(
+      'Une thématique principale doit être définie quand des thématiques sont sélectionnées.',
+    )
   }
 
   if (primaryThemeId !== null && !themeIds.includes(primaryThemeId)) {
     return Either.left('La thématique principale doit faire partie des thématiques sélectionnées.')
+  }
+
+  const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
+  if (!subject) {
+    return Either.left('Le sujet est introuvable.')
   }
 
   if (themeIds.length > 0) {
