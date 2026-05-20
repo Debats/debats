@@ -1,8 +1,10 @@
 import { MetadataRoute } from 'next'
+import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../infra/supabase/admin'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
 import { createPublicFigureRepository } from '../infra/database/public-figure-repository-supabase'
+import { createThemeRepository } from '../infra/database/theme-repository-supabase'
 
 const BASE_URL = 'https://debats.co'
 
@@ -22,6 +24,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}/p`,
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/themes`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/themes/autres`,
+      changeFrequency: 'weekly',
+      priority: 0.6,
     },
     {
       url: `${BASE_URL}/a-propos`,
@@ -54,10 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createAdminSupabaseClient()
     const subjectRepo = createSubjectRepository(supabase)
     const publicFigureRepo = createPublicFigureRepository(supabase)
+    const themeRepo = createThemeRepository(supabase)
 
-    const [subjects, publicFigures] = await Promise.all([
+    const [subjects, publicFigures, themes] = await Promise.all([
       Effect.runPromise(subjectRepo.findAll()),
       Effect.runPromise(publicFigureRepo.findAll()),
+      Effect.runPromise(themeRepo.findAll()),
     ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
@@ -74,9 +88,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-    return [...staticPages, ...subjectPages, ...publicFigurePages]
-  } catch {
-    // If DB is unavailable, return static pages only
+    const themePages: MetadataRoute.Sitemap = themes.map((theme) => ({
+      url: `${BASE_URL}/themes/${theme.slug}`,
+      lastModified: theme.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
+
+    return [...staticPages, ...subjectPages, ...publicFigurePages, ...themePages]
+  } catch (error) {
+    Sentry.captureException(error, { extra: { context: 'sitemap generation' } })
     return staticPages
   }
 }
