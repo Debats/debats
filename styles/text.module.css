@@ -19,6 +19,47 @@
   text-wrap: pretty;
 }
 
+/* Titre d'en-tête de sujet ou de personnalité */
+.displayLarge {
+  composes: display;
+  font-size: clamp(36px, 3vw + 20px, 56px);
+  line-height: 1.05;
+}
+
+/* Problématique, citation : la voix du débat */
+.voice {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(20px, 1vw + 14px, 26px);
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+/* Texte courant */
+.body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.small {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* Grand nombre */
+.number {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--ink);
+}
+
 /* Titres de section et de carte */
 .title {
   font-family: var(--font-sans);

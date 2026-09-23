@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
@@ -10,13 +9,12 @@ import { getSubjectPositionsSummary } from '../../../infra/queries/subject-posit
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
-import FigureAvatarRow from '../../../components/figures/FigureAvatarRow'
 import Button from '../../../components/ui/Button'
-import HeaderActions from '../../../components/layout/HeaderActions'
 import ShareButton from '../../../components/ui/ShareButton'
-import SubjectAdminMenu from './SubjectAdminMenu'
-import ThemeBadge from '../../../components/ui/ThemeBadge'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
+import SubjectAdminMenu from './SubjectAdminMenu'
+import SubjectHero from './SubjectHero'
+import PositionCard from './PositionCard'
 import styles from './subject-detail.module.css'
 
 interface PageProps {
@@ -73,8 +71,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
     Effect.runPromise(relatedRepo.findRelated(subject.id)),
   ])
 
-  const totalFigures = stats.publicFiguresCount
-
   const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
   const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
   const major = isMajorSubject(subject, stats.statementsCount)
@@ -91,103 +87,77 @@ export default async function SubjectDetailPage({ params }: PageProps) {
     author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
   }
 
+  const positionsHint =
+    positions.length > 1
+      ? `${positions.length} positions, de la plus à la moins soutenue`
+      : undefined
+
   return (
-    <ContentWithSidebar topMargin>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className={styles.header}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.title}>{subject.title}</h1>
-          {(canEditSubject || canDelete) && (
+      <SubjectHero
+        title={subject.title}
+        problem={subject.problem}
+        presentation={subject.presentation}
+        themes={themeAssignments.map((assignment) => assignment.theme)}
+        relatedSubjects={relatedSubjects}
+        counts={{
+          positions: positions.length,
+          publicFigures: stats.publicFiguresCount,
+          statements: stats.statementsCount,
+        }}
+        adminMenu={
+          (canEditSubject || canDelete) && (
             <SubjectAdminMenu
               subjectId={subject.id}
               subjectSlug={subject.slug}
               canEdit={canEditSubject}
               canDelete={canDelete}
             />
-          )}
-        </div>
-        {(themeAssignments.length > 0 || relatedSubjects.length > 0) && (
-          <div className={styles.metadata}>
-            {themeAssignments.length > 0 && (
-              <div className={styles.metadataRow}>
-                {themeAssignments.map((a) => (
-                  <ThemeBadge key={a.theme.id} name={a.theme.name} slug={a.theme.slug} />
-                ))}
-              </div>
-            )}
-            {relatedSubjects.length > 0 && (
-              <div className={styles.metadataRow}>
-                <span className={styles.metadataLabel}>Voir aussi</span>
-                {relatedSubjects.map((s, i) => (
-                  <span key={s.id}>
-                    {i > 0 && <span className={styles.relatedSeparator}> · </span>}
-                    <Link href={`/s/${s.slug}`} className={styles.relatedLink}>
-                      {s.title}
-                    </Link>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        <p className={styles.presentation}>{subject.presentation}</p>
-        <p className={styles.problem}>{subject.problem}</p>
-        <HeaderActions>
-          {contributor && (
-            <>
-              <Button
-                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
-              >
-                Ajouter une prise de position
-              </Button>
-              {canAddPosition && (
-                <Button href={`/s/${slug}/nouvelle-position`} variant="secondary">
-                  Ajouter une position
+          )
+        }
+        actions={
+          <>
+            {contributor && (
+              <>
+                <Button
+                  href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
+                >
+                  Ajouter une prise de position
                 </Button>
-              )}
-            </>
+                {canAddPosition && (
+                  <Button href={`/s/${slug}/nouvelle-position`} variant="secondary">
+                    Ajouter une position
+                  </Button>
+                )}
+              </>
+            )}
+            <ShareButton title={subject.title} text={subject.presentation} />
+          </>
+        }
+      />
+
+      <ContentWithSidebar topMargin>
+        <section>
+          <header className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>Qui pense quoi ?</h2>
+            {positionsHint && <p className={styles.sectionHint}>{positionsHint}</p>}
+          </header>
+
+          {positions.length === 0 ? (
+            <p className={styles.empty}>Aucune prise de position enregistrée.</p>
+          ) : (
+            <div className={styles.list}>
+              {positions.map((position) => (
+                <PositionCard key={position.positionId} position={position} subjectSlug={slug} />
+              ))}
+            </div>
           )}
-          <ShareButton title={subject.title} text={subject.presentation} />
-        </HeaderActions>
-      </header>
-
-      <section>
-        <h2 className={styles.sectionTitle}>
-          POSITIONS <span className={styles.count}>{positions.length}</span>{' '}
-          <span className={styles.countDetail}>
-            ({totalFigures} personnalité{totalFigures !== 1 ? 's' : ''})
-          </span>
-        </h2>
-
-        {positions.length === 0 ? (
-          <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
-        ) : (
-          <div className={styles.positionsList}>
-            {positions.map((pos) => (
-              <div key={pos.positionId} className={styles.positionItem}>
-                <h3 className={styles.positionTitle}>
-                  <Link
-                    href={`/s/${slug}/position/${pos.positionSlug}`}
-                    className={styles.positionLink}
-                  >
-                    {pos.positionTitle}
-                  </Link>
-                </h3>
-                <p className={styles.positionDescription}>{pos.positionDescription}</p>
-                <FigureAvatarRow
-                  figures={pos.figures}
-                  totalCount={pos.totalFiguresCount}
-                  size={40}
-                  hrefSuffix={`/s/${slug}`}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </ContentWithSidebar>
+        </section>
+      </ContentWithSidebar>
+    </>
   )
 }
