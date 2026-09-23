@@ -1,16 +1,15 @@
-.layout-container {
+.container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.main-content {
+.main {
   flex: 1;
-  padding-top: 80px;
   display: flex;
   flex-direction: column;
 }
 
-.page-content {
+.page {
   flex: 1;
 }

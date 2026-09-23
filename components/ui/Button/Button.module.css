@@ -1,82 +1,91 @@
 .button {
-  font-family: var(--font-gotham-bold);
+  font-family: var(--font-sans);
   font-size: 14px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
-  box-sizing: border-box;
-  border: 1px solid transparent;
-  text-decoration: none;
+  font-weight: 500;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 20px;
-  line-height: 1;
-  border-radius: 4px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .button::after {
   content: none !important;
 }
 
-.primary {
-  background-color: var(--debats-red);
-  color: white;
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
+.primary,
 .primary:link,
 .primary:visited {
-  color: white;
+  background-color: var(--signal);
+  color: #ffffff;
 }
 
 .primary:hover {
-  background-color: #d11635;
-  color: white;
+  background-color: var(--signal-dark);
+  color: #ffffff;
 }
 
-.small {
-  font-size: 11px;
-  padding: 8px 14px;
-  letter-spacing: 0.5px;
-}
-
-.secondary {
-  background: none;
-  color: var(--text-dark);
-  border: 1px solid var(--border-light);
-}
-
+.secondary,
 .secondary:link,
 .secondary:visited {
-  color: var(--text-dark);
+  background: none;
+  color: var(--ink);
+  border-color: var(--line-2);
 }
 
 .secondary:hover {
-  border-color: var(--debats-red);
-  color: var(--debats-red);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
-.danger {
-  background-color: #c0392b;
-  color: white;
+.danger,
+.danger:link,
+.danger:visited {
+  background-color: var(--danger);
+  color: #ffffff;
 }
 
 .danger:hover {
-  background-color: #a93226;
-  color: white;
+  background-color: #8f1426;
+  color: #ffffff;
 }
 
-.link {
+.link,
+.link:link,
+.link:visited {
   background: none;
-  color: var(--debats-red);
+  color: var(--signal);
+  height: auto;
   padding: 0;
   border: none;
+  border-radius: 0;
 }
 
 .link:hover {
-  color: #d11635;
+  color: var(--signal-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.small {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
 }

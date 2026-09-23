@@ -104,6 +104,16 @@ Contributors (Contributeurs)
 └── public/           # Assets statiques (polices, images)
 ```
 
+### Styles et design system
+
+Le style est en CSS Modules, organisé en trois couches :
+
+- `styles/tokens.css` : uniquement les custom properties (surfaces, encre, signal, fontes, rayons). Toute couleur ou fonte du site vient de là. Les alias hérités (`--debats-red`, `--font-gotham-*`) y sont conservés le temps de migrer les feuilles restantes.
+- `styles/base.css` : reset et défauts d'éléments, dans des `@layer` pour qu'un module gagne toujours sur la base.
+- `styles/text.module.css` : recettes typographiques partagées (`display`, `title`, `label`), réutilisées par les modules de page via `composes`.
+
+Les fontes (Instrument Serif, Instrument Sans, JetBrains Mono) sont chargées par `next/font` dans `app/layout.tsx` et exposées en variables CSS sur `<html>`. Chaque composant garde son propre module colocalisé.
+
 ### Projets legacy (référence)
 
 - `ruby-backend/` : Application Rails originale

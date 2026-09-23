@@ -4,9 +4,9 @@
   justify-content: center;
   gap: 12px;
   padding: 12px 20px;
-  background-color: #fef2f2;
-  border-bottom: 2px solid #f21e40;
-  color: #991b1b;
+  background-color: var(--signal-soft);
+  border-bottom: 1px solid var(--signal);
+  color: var(--signal-dark);
 }
 
 .message {
@@ -19,12 +19,12 @@
   background: none;
   border: none;
   font-size: 20px;
-  color: #991b1b;
+  color: var(--signal-dark);
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
 }
 
 .dismiss:hover {
-  color: #f21e40;
+  color: var(--signal);
 }

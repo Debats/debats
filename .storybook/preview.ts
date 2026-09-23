@@ -1,7 +1,7 @@
 import type { Preview } from '@storybook/nextjs-vite'
 
-import '../styles/debats-colors.css'
-import '../styles/layout.css'
+import '../styles/tokens.css'
+import '../styles/base.css'
 
 const preview: Preview = {
   parameters: {

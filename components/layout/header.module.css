@@ -1,20 +1,19 @@
 .header {
-  background-color: white;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 20px 0;
-  position: fixed;
+  background-color: var(--paper);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 1000;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0 30px;
+  padding: 0 40px;
+  min-height: 64px;
   display: flex;
   align-items: center;
+  gap: 32px;
 }
 
 .topBar {
@@ -23,14 +22,24 @@
   justify-content: space-between;
 }
 
-.logoSection {
-  flex: 0 0 auto;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.logo {
-  height: auto;
+.mark {
+  display: block;
+  height: 32px;
   width: auto;
-  max-height: 40px;
+}
+
+.wordmark {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
 .mobileActions {
@@ -54,10 +63,10 @@
   display: block;
   width: 24px;
   height: 2px;
-  background-color: var(--debats-red);
+  background-color: var(--ink);
 }
 
-/* Menu - always visible on desktop */
+/* Menu, toujours visible sur desktop */
 .menu {
   display: flex;
   align-items: center;
@@ -66,31 +75,34 @@
 }
 
 .nav {
-  flex: 1;
   display: flex;
-  justify-content: center;
-  gap: 80px;
-  margin: 0 40px;
+  align-items: center;
+  gap: 28px;
 }
 
 .navLink {
-  color: var(--debats-red);
-  text-decoration: none;
-  font-family: var(--font-gotham-bold);
   font-size: 14px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: color 0.3s ease;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: color 0.15s ease;
 }
 
-.navLink:hover {
-  color: #d11635;
+.navLink:hover,
+.navLink[aria-current='page'] {
+  color: var(--ink);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 @media (max-width: 1024px) {
   .container {
     flex-wrap: wrap;
+    padding: 12px 20px;
+    gap: 0;
   }
 
   .topBar {
@@ -104,6 +116,7 @@
   .menu {
     display: none;
     flex-direction: column;
+    align-items: stretch;
     width: 100%;
     gap: 20px;
     padding-top: 20px;
@@ -117,6 +130,10 @@
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    margin: 0;
+  }
+
+  .tools {
+    flex-direction: column;
+    gap: 12px;
   }
 }

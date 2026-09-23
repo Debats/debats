@@ -1,18 +1,10 @@
 .pageTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.8em;
-  letter-spacing: 2px;
-  margin-bottom: 40px;
-  text-align: left;
-  text-transform: uppercase;
-  color: var(--debats-red);
-  font-weight: bold;
-  margin-top: 0;
+  composes: display from '../../styles/text.module.css';
+  margin: 0 0 32px;
 }
 
 @media (max-width: 768px) {
   .pageTitle {
-    font-size: 1.5em;
-    text-align: center;
+    margin-bottom: 24px;
   }
 }

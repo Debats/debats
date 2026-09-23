@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
-import './global.css'
-import '../styles/debats-colors.css'
-import '../styles/layout.css'
+import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from 'next/font/google'
+import '../styles/tokens.css'
+import '../styles/base.css'
+import styles from './layout.module.css'
 import PlausibleProvider from 'next-plausible'
 import Header from '../components/layout/header'
 import { ShareButtonProvider } from '../components/ui/ShareButton/ShareButtonContext'
@@ -10,16 +11,45 @@ import NoticeBanner from '../components/layout/NoticeBanner'
 import FeedbackWidget from '../components/feedback/FeedbackWidget'
 
 import { Metadata, Viewport } from 'next'
+import { siteDescription } from './site'
 
-const siteDescription =
-  'Une synthèse ouverte, impartiale et vérifiable des sujets clivants de notre société.'
-
-// Source de vérité CSS : --debats-red dans styles/debats-colors.css
-const DEBATS_RED = '#f21e40'
+// Source de vérité CSS : --signal dans styles/tokens.css
+const DEBATS_SIGNAL = '#e3243f'
 
 export const viewport: Viewport = {
-  themeColor: DEBATS_RED,
+  themeColor: DEBATS_SIGNAL,
 }
+
+const serif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  style: ['normal', 'italic'],
+  variable: '--font-instrument-serif',
+  display: 'swap',
+})
+
+const sans = Instrument_Sans({
+  subsets: ['latin'],
+  variable: '--font-instrument-sans',
+  display: 'swap',
+})
+
+// Famille limitée à la graisse 600 : sert d'alias à --font-gotham-bold pour les
+// feuilles héritées qui s'appuyaient sur la fonte, pas sur font-weight, pour le gras.
+const sansSemibold = Instrument_Sans({
+  subsets: ['latin'],
+  weight: '600',
+  variable: '--font-instrument-sans-semibold',
+  display: 'swap',
+})
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+})
+
+const fontVariables = [serif, sans, sansSemibold, mono].map((font) => font.variable).join(' ')
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://debats.co'),
@@ -59,17 +89,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={fontVariables}>
       <body>
         <PlausibleProvider domain="debats.co">
           <ShareButtonProvider>
-            <div className="layout-container">
+            <div className={styles.container}>
               <Header />
-              <main className="main-content">
+              <main className={styles.main}>
                 <Suspense>
                   <NoticeBanner />
                 </Suspense>
-                <div className="page-content">{children}</div>
+                <div className={styles.page}>{children}</div>
               </main>
               <Footer />
               <FeedbackWidget />

@@ -1,0 +1,41 @@
+/*
+ * Recettes typographiques partagées.
+ *
+ * Un module de page les réutilise avec `composes` :
+ *   .title { composes: display from '../../styles/text.module.css'; }
+ * Les recettes ne portent ni marge ni couleur de fond : le module qui compose
+ * décide de l'espacement. On n'ajoute une recette qu'au moment où une page
+ * en a besoin.
+ */
+
+/* Titres de page et de sujet */
+.display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(32px, 2.2vw + 20px, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+/* Titres de section et de carte */
+.title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* Libellé de section : capitales espacées, discret */
+.label {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}

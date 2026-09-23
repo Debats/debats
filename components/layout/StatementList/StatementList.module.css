@@ -1,12 +1,6 @@
 .title {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.1em;
-  letter-spacing: 2px;
-  margin-bottom: 30px;
-  text-align: left;
-  font-weight: bold;
-  color: var(--debats-red);
-  text-transform: uppercase;
+  composes: label from '../../../styles/text.module.css';
+  margin: 0 0 16px;
 }
 
 .statementsList {
@@ -18,8 +12,13 @@
 .statementItem {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 30px;
-  gap: 15px;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.statementItem:last-child {
+  border-bottom: none;
 }
 
 .statementContent {
@@ -27,21 +26,21 @@
 }
 
 .publicFigureText {
-  font-family: var(--font-gotham-book);
-  font-size: 0.8em;
-  line-height: 1.4em;
-  color: var(--text-dark);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
 }
 
 .publicFigureText strong {
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .publicFigureText a {
-  color: var(--text-dark);
+  color: var(--ink);
   text-decoration: none;
 }
 
 .publicFigureText a:hover {
-  color: var(--debats-red);
+  color: var(--signal);
 }

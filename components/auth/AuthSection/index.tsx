@@ -61,9 +61,9 @@ export default function AuthSection({ onAuthChange }: AuthSectionProps) {
       <Button variant="link" onClick={() => setShowLogin(true)}>
         Connexion
       </Button>
-      <Link href="/inscription" className={styles.signupLink}>
+      <Button href="/inscription" variant="secondary" size="small">
         Inscription
-      </Link>
+      </Button>
 
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </div>

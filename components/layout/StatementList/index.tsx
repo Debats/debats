@@ -20,14 +20,14 @@ export default function StatementList({ title, statements }: StatementListProps)
             <FigureAvatar
               slug={statement.publicFigureSlug}
               name={statement.publicFigureName}
-              size={50}
+              size={36}
             />
             <div className={styles.statementContent}>
               <div className={styles.publicFigureText}>
                 <Link href={`/p/${statement.publicFigureSlug}`}>
                   <strong>{statement.publicFigureName}</strong>
                 </Link>{' '}
-                s&apos;est déclaré(e) pour{' '}
+                s&apos;est déclaré·e pour{' '}
                 <Link href={`/p/${statement.publicFigureSlug}/s/${statement.subjectSlug}`}>
                   <strong>{statement.positionTitle}</strong>
                 </Link>{' '}

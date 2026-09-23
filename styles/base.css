@@ -1,0 +1,127 @@
+/*
+ * Reset et défauts d'éléments.
+ *
+ * Tout est déclaré dans des @layer : une règle de CSS Module (non stratifiée)
+ * gagne toujours sur ces défauts, quelle que soit sa spécificité.
+ */
+@layer reset, base;
+
+@layer reset {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: currentColor;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  pre,
+  figure,
+  blockquote {
+    margin: 0;
+  }
+
+  h1,
+  h2 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  svg {
+    display: block;
+    vertical-align: middle;
+  }
+}
+
+@layer base {
+  html {
+    height: 100%;
+    line-height: 1.5;
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background-color: var(--paper);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a:link,
+  a:visited {
+    color: var(--ink);
+  }
+
+  a:hover {
+    color: var(--signal);
+  }
+
+  a[target='_blank']::after {
+    content: ' \2197';
+    font-size: 0.8em;
+    color: var(--ink-3);
+    display: inline-block;
+  }
+
+  a[href^='mailto:']::after {
+    content: ' \2709';
+    font-size: 0.9em;
+    color: var(--ink-3);
+    display: inline-block;
+  }
+
+  pre {
+    font-family: var(--font-mono);
+    background-color: var(--ink);
+    color: var(--paper);
+    border-radius: var(--radius-control);
+    overflow: auto;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Classes globales héritées, encore posées par quelques pages */
+  .debats-link,
+  a.morelink,
+  .seemore a {
+    color: var(--signal) !important;
+  }
+
+  .debats-link:hover,
+  a.morelink:hover,
+  .seemore a:hover {
+    color: var(--signal-dark) !important;
+  }
+
+  .count {
+    color: var(--signal) !important;
+    text-transform: lowercase;
+  }
+}

@@ -5,9 +5,16 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import AuthSection from '../auth/AuthSection'
+import Button from '../ui/Button'
 import ShareButton from '../ui/ShareButton'
 import { useShareButtonContext } from '../ui/ShareButton/ShareButtonContext'
 import styles from './header.module.css'
+
+const navLinks = [
+  { href: '/s', label: 'Sujets' },
+  { href: '/p', label: 'Personnalités' },
+  { href: '/themes', label: 'Thématiques' },
+]
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -22,17 +29,16 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.topBar}>
-          <div className={styles.logoSection}>
-            <Link href="/">
-              <Image
-                src="/images/header.png"
-                alt="Débats.co"
-                width={125}
-                height={42}
-                className={styles.logo}
-              />
-            </Link>
-          </div>
+          <Link href="/" className={styles.brand}>
+            <Image
+              src="/images/logo-mark.png"
+              alt=""
+              width={33}
+              height={32}
+              className={styles.mark}
+            />
+            <span className={styles.wordmark}>Débats</span>
+          </Link>
 
           <div className={styles.mobileActions}>
             {!hasPageShareButton && <ShareButton iconOnly />}
@@ -51,18 +57,24 @@ export default function Header() {
 
         <div className={`${styles.menu} ${menuOpen ? styles.menuOpen : ''}`}>
           <nav className={styles.nav}>
-            <Link href="/s" className={styles.navLink}>
-              Sujets
-            </Link>
-            <Link href="/p" className={styles.navLink}>
-              Personnalités
-            </Link>
-            <Link href="/contribuer" className={styles.navLink}>
-              Contribuer
-            </Link>
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={styles.navLink}
+                aria-current={pathname.startsWith(href) ? 'page' : undefined}
+              >
+                {label}
+              </Link>
+            ))}
           </nav>
 
-          <AuthSection onAuthChange={() => setMenuOpen(false)} />
+          <div className={styles.tools}>
+            <Button href="/contribuer" size="small">
+              Contribuer
+            </Button>
+            <AuthSection onAuthChange={() => setMenuOpen(false)} />
+          </div>
         </div>
       </div>
     </header>
