@@ -1,8 +1,10 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  padding: 0 24px;
   margin-bottom: 40px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
 }
 
 .item {
@@ -10,8 +12,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .item:last-child {
@@ -23,18 +25,22 @@
   min-width: 0;
 }
 
-.name {
-  font-family: var(--font-gotham-bold);
-  font-size: 0.95em;
-  color: var(--text-dark);
-  margin: 0 0 2px 0;
+.name,
+.name:link,
+.name:visited {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
 }
 
 .description {
-  font-family: var(--font-gotham-book);
-  font-size: 0.8em;
-  color: var(--text-light);
-  margin: 0;
+  composes: small from '../../styles/text.module.css';
+  margin-top: 4px;
 }
 
 .actions {
@@ -43,42 +49,17 @@
   flex-shrink: 0;
 }
 
-.deleteButton {
-  font-family: var(--font-gotham-book);
-  font-size: 0.75em;
-  color: var(--text-light);
-  background: none;
-  border: 1px solid #e0e0e0;
-  border-radius: 3px;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.deleteButton:hover {
-  color: var(--debats-red);
-  border-color: var(--debats-red);
-}
-
 .newForm {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px;
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
 }
 
 .newFormTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 0.9em;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-dark);
-  margin: 0;
+  composes: title from '../../styles/text.module.css';
 }
 
 .newFormRow {
@@ -96,8 +77,6 @@
 }
 
 .empty {
-  font-family: var(--font-gotham-book);
-  font-size: 0.9em;
-  color: var(--text-light);
+  composes: small from '../../styles/text.module.css';
   margin: 20px 0;
 }

@@ -9,6 +9,8 @@ import { canPerform } from '../../domain/reputation/permissions'
 import { SubjectActivitySummary } from '../../domain/repositories/subject-repository'
 import Button from '../../components/ui/Button'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
+import PageHero from '../../components/layout/PageHero'
+import SubjectCard from '../../components/subjects/SubjectCard'
 import SubjectSearch from '../../components/subjects/SubjectSearch'
 import styles from './subjects.module.css'
 
@@ -32,13 +34,7 @@ function SubjectCardList({ subjects }: { subjects: SubjectActivitySummary[] }) {
   return (
     <div className={styles.subjectList}>
       {subjects.map((subject) => (
-        <Link key={subject.id} href={`/s/${subject.slug}`} className={styles.subjectCard}>
-          <h3 className={styles.subjectCardTitle}>{subject.title}</h3>
-          <p className={styles.subjectCardPresentation}>{subject.presentation}</p>
-          <span className={styles.subjectCardStats}>
-            {subject.statementsCount} prise{subject.statementsCount !== 1 ? 's' : ''} de position
-          </span>
-        </Link>
+        <SubjectCard key={subject.id} subject={subject} />
       ))}
     </div>
   )
@@ -98,53 +94,56 @@ export default async function SubjectsPage() {
     .sort((a, b) => b.totalCount - a.totalCount)
 
   return (
-    <ContentWithSidebar>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Sujets</h1>
-        {canAddSubject && (
-          <Button href="/s/ajouter" size="small">
-            Ajouter un sujet
-          </Button>
+    <>
+      <PageHero
+        kicker="Explorer"
+        title="Les sujets"
+        intro="Chaque sujet pose une question qui divise, et rassemble les positions qu'on y trouve, avec les personnalités qui les défendent."
+        actions={canAddSubject && <Button href="/s/ajouter">Ajouter un sujet</Button>}
+      >
+        <SubjectSearch />
+      </PageHero>
+
+      <ContentWithSidebar topMargin>
+        {sections.length === 0 && unthemedSubjects.length === 0 ? (
+          <p className={styles.empty}>Aucun sujet pour le moment.</p>
+        ) : (
+          <>
+            {sections.map((section) => (
+              <section key={section.themeId} className={styles.themeSection}>
+                <div className={styles.themeSectionHeader}>
+                  <h2 className={styles.themeSectionTitle}>{section.themeName}</h2>
+                  {section.totalCount > SUBJECTS_PER_THEME && (
+                    <Link
+                      href={`/themes/${section.themeSlug}`}
+                      className={styles.themeSectionSeeAll}
+                    >
+                      Voir les {section.totalCount} sujets →
+                    </Link>
+                  )}
+                </div>
+
+                <SubjectCardList subjects={section.subjects} />
+              </section>
+            ))}
+
+            {unthemedSubjects.length > 0 && (
+              <section className={styles.themeSection}>
+                <div className={styles.themeSectionHeader}>
+                  <h2 className={styles.themeSectionTitle}>Autres sujets</h2>
+                  {unthemedSubjects.length > SUBJECTS_PER_THEME && (
+                    <Link href="/themes/autres" className={styles.themeSectionSeeAll}>
+                      Voir les {unthemedSubjects.length} sujets →
+                    </Link>
+                  )}
+                </div>
+
+                <SubjectCardList subjects={unthemedSubjects.slice(0, SUBJECTS_PER_THEME)} />
+              </section>
+            )}
+          </>
         )}
-      </div>
-
-      <SubjectSearch />
-
-      {sections.length === 0 && unthemedSubjects.length === 0 ? (
-        <p className={styles.empty}>Aucun sujet pour le moment.</p>
-      ) : (
-        <>
-          {sections.map((section) => (
-            <section key={section.themeId} className={styles.themeSection}>
-              <div className={styles.themeSectionHeader}>
-                <h2 className={styles.themeSectionTitle}>{section.themeName}</h2>
-                {section.totalCount > SUBJECTS_PER_THEME && (
-                  <Link href={`/themes/${section.themeSlug}`} className={styles.themeSectionSeeAll}>
-                    Voir les {section.totalCount} sujets →
-                  </Link>
-                )}
-              </div>
-
-              <SubjectCardList subjects={section.subjects} />
-            </section>
-          ))}
-
-          {unthemedSubjects.length > 0 && (
-            <section className={styles.themeSection}>
-              <div className={styles.themeSectionHeader}>
-                <h2 className={styles.themeSectionTitle}>Autres sujets</h2>
-                {unthemedSubjects.length > SUBJECTS_PER_THEME && (
-                  <Link href="/themes/autres" className={styles.themeSectionSeeAll}>
-                    Voir les {unthemedSubjects.length} sujets →
-                  </Link>
-                )}
-              </div>
-
-              <SubjectCardList subjects={unthemedSubjects.slice(0, SUBJECTS_PER_THEME)} />
-            </section>
-          )}
-        </>
-      )}
-    </ContentWithSidebar>
+      </ContentWithSidebar>
+    </>
   )
 }

@@ -1,31 +1,28 @@
 .header {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .backLink {
-  font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  color: var(--debats-red);
-  text-decoration: none;
+  composes: meta from '../../../styles/text.module.css';
   display: inline-block;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
+  color: var(--ink-2);
+}
+
+.backLink:link,
+.backLink:visited {
+  color: var(--ink-2);
 }
 
 .backLink:hover {
-  text-decoration: underline;
+  color: var(--signal);
 }
 
 .title {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.8em;
-  color: var(--debats-red);
-  text-transform: uppercase;
-  margin: 0 0 10px 0;
+  composes: display from '../../../styles/text.module.css';
 }
 
 .subtitle {
-  font-family: var(--font-gotham-book);
-  font-size: 1em;
-  color: var(--text-light);
-  margin: 0;
+  composes: body from '../../../styles/text.module.css';
+  margin-top: 10px;
 }

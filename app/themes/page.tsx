@@ -5,7 +5,7 @@ import { createThemeRepository } from '../../infra/database/theme-repository-sup
 import { canPerform } from '../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
-import FormPageHeader from '../../components/layout/FormPageHeader'
+import PageHero from '../../components/layout/PageHero'
 import ThemeList from './ThemeList'
 import NewThemeForm from './NewThemeForm'
 
@@ -33,12 +33,17 @@ export default async function ThemesPage() {
   }))
 
   return (
-    <ContentWithSidebar topMargin>
-      <FormPageHeader backHref="/s" backLabel="Retour aux sujets" title="Thématiques" />
+    <>
+      <PageHero
+        kicker="Explorer"
+        title="Les thématiques"
+        intro="Les grandes familles de sujets. Chaque sujet a une thématique principale et peut en rejoindre d'autres."
+      />
+      <ContentWithSidebar topMargin>
+        <ThemeList themes={themesData} canManage={canManage} />
 
-      <ThemeList themes={themesData} canManage={canManage} />
-
-      {canManage && <NewThemeForm />}
-    </ContentWithSidebar>
+        {canManage && <NewThemeForm />}
+      </ContentWithSidebar>
+    </>
   )
 }

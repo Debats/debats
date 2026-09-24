@@ -1,6 +1,6 @@
 import { SubjectActivitySummary } from '../../domain/repositories/subject-repository'
 import SectionTitle from '../../components/ui/SectionTitle'
-import SubjectCardCompact from '../SubjectCardCompact'
+import SubjectCard from '../../components/subjects/SubjectCard'
 import styles from './SubjectSection.module.css'
 
 interface SubjectSectionProps {
@@ -17,7 +17,7 @@ export default function SubjectSection({ title, subjects }: SubjectSectionProps)
       ) : (
         <div className={styles.grid}>
           {subjects.map((subject) => (
-            <SubjectCardCompact key={subject.id} subject={subject} />
+            <SubjectCard key={subject.id} subject={subject} />
           ))}
         </div>
       )}

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 import { deleteThemeAction } from '../../actions/delete-theme'
@@ -40,7 +41,9 @@ export default function ThemeList({ themes, canManage }: ThemeListProps) {
       {themes.map((theme) => (
         <div key={theme.id} className={styles.item}>
           <div className={styles.info}>
-            <p className={styles.name}>{theme.name}</p>
+            <Link href={`/themes/${theme.slug}`} className={styles.name}>
+              {theme.name}
+            </Link>
             <p className={styles.description}>{theme.description}</p>
           </div>
           {canManage && (

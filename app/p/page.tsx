@@ -10,6 +10,8 @@ import Button from '../../components/ui/Button'
 import FigureAvatar from '../../components/figures/FigureAvatar'
 import PersonalitySearch from '../../components/figures/PersonalitySearch'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
+import PageHero from '../../components/layout/PageHero'
+import { plural } from '../../lib/plural'
 import styles from './personalities.module.css'
 
 export const metadata: Metadata = {
@@ -52,7 +54,7 @@ function FigureRow({ figure }: { figure: PublicFigureActivitySummary }) {
           {figure.name}
         </Link>
         <span className={styles.figureRowStat}>
-          {figure.subjectsCount} sujet{figure.subjectsCount !== 1 ? 's' : ''}
+          {figure.subjectsCount} {plural(figure.subjectsCount, 'sujet', 'sujets')}
         </span>
       </div>
     </div>
@@ -80,73 +82,73 @@ export default async function PersonalitiesPage({ searchParams }: PageProps) {
   ])
 
   return (
-    <ContentWithSidebar topMargin>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>LES PERSONNALITÉS</h1>
-        {canAddPersonality && (
-          <Button href="/p/ajouter" size="small">
-            Ajouter une personnalité
-          </Button>
-        )}
-      </div>
+    <>
+      <PageHero
+        kicker="Explorer"
+        title="Les personnalités"
+        intro="Élu·es, responsables, chercheur·es, artistes : qui a pris position, sur quoi, et sur quelles bases."
+        actions={canAddPersonality && <Button href="/p/ajouter">Ajouter une personnalité</Button>}
+      >
+        <PersonalitySearch />
+      </PageHero>
 
-      <PersonalitySearch />
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Les plus actives</h2>
-        <div className={styles.figureGrid}>
-          {mostActive.map((figure) => (
-            <FigureCard
-              key={figure.id}
-              figure={figure}
-              stat={`${figure.subjectsCount} sujet${figure.subjectsCount !== 1 ? 's' : ''}`}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Activité récente</h2>
-        <div className={styles.figureGrid}>
-          {recentlyActive.map((figure) => (
-            <FigureCard
-              key={figure.id}
-              figure={figure}
-              stat={
-                figure.latestStatementAt
-                  ? formatRelativeDate(figure.latestStatementAt)
-                  : 'Aucune activité'
-              }
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Index A-Z</h2>
-        <div className={styles.alphabetBar}>
-          {ALPHABET.map((l) => (
-            <Link
-              key={l}
-              href={`/p?lettre=${l}`}
-              scroll={false}
-              className={`${styles.letterLink} ${lettre === l ? styles.letterActive : ''}`}
-            >
-              {l}
-            </Link>
-          ))}
-        </div>
-
-        {letterFigures && (
-          <div className={styles.letterResults}>
-            {letterFigures.length === 0 ? (
-              <p className={styles.noResults}>Aucune personnalité commençant par « {lettre} ».</p>
-            ) : (
-              letterFigures.map((figure) => <FigureRow key={figure.id} figure={figure} />)
-            )}
+      <ContentWithSidebar topMargin>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Les plus actives</h2>
+          <div className={styles.figureGrid}>
+            {mostActive.map((figure) => (
+              <FigureCard
+                key={figure.id}
+                figure={figure}
+                stat={`${figure.subjectsCount} ${plural(figure.subjectsCount, 'sujet', 'sujets')}`}
+              />
+            ))}
           </div>
-        )}
-      </section>
-    </ContentWithSidebar>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Activité récente</h2>
+          <div className={styles.figureGrid}>
+            {recentlyActive.map((figure) => (
+              <FigureCard
+                key={figure.id}
+                figure={figure}
+                stat={
+                  figure.latestStatementAt
+                    ? formatRelativeDate(figure.latestStatementAt)
+                    : 'Aucune activité'
+                }
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Index A-Z</h2>
+          <div className={styles.alphabetBar}>
+            {ALPHABET.map((l) => (
+              <Link
+                key={l}
+                href={`/p?lettre=${l}`}
+                scroll={false}
+                className={`${styles.letterLink} ${lettre === l ? styles.letterActive : ''}`}
+              >
+                {l}
+              </Link>
+            ))}
+          </div>
+
+          {letterFigures && (
+            <div className={styles.letterResults}>
+              {letterFigures.length === 0 ? (
+                <p className={styles.noResults}>Aucune personnalité commençant par « {lettre} ».</p>
+              ) : (
+                letterFigures.map((figure) => <FigureRow key={figure.id} figure={figure} />)
+              )}
+            </div>
+          )}
+        </section>
+      </ContentWithSidebar>
+    </>
   )
 }

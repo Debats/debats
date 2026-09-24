@@ -1,13 +1,17 @@
-.actionLink {
+.actionLink,
+.actionLink:link,
+.actionLink:visited {
   display: inline-block;
-  font-family: var(--font-gotham-bold);
-  font-size: 0.85em;
-  color: var(--debats-red);
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(227, 36, 63, 0.4);
 }
 
 .actionLink:hover {
-  text-decoration: underline;
+  color: var(--signal-dark);
+  text-decoration-color: var(--signal);
 }

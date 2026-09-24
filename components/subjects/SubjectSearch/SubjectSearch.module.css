@@ -1,15 +1,17 @@
-.resultLink {
+.resultLink,
+.resultLink:link,
+.resultLink:visited {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  text-decoration: none;
-  color: var(--text-dark);
-  font-family: var(--font-gotham-book);
-  font-size: 0.95em;
-  transition: background-color 0.15s;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--ink);
+  transition: background-color 0.15s ease;
 }
 
 .resultLink:hover {
-  background-color: #fafafa;
-  color: var(--debats-red);
+  background-color: var(--paper-2);
+  color: var(--ink);
 }
