@@ -5,30 +5,30 @@
 }
 
 .title {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 1.8em;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--debats-red);
+  color: var(--signal);
   margin: 0 0 30px 0;
 }
 
 .accessDenied {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 15px;
-  color: var(--text-light);
+  color: var(--ink-2);
 }
 
 .empty {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 15px;
-  color: var(--text-light);
+  color: var(--ink-2);
 }
 
 .total {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 15px;
-  color: var(--text-light);
+  color: var(--ink-2);
   margin: 0 0 20px 0;
 }
 
@@ -47,8 +47,8 @@
   align-items: center;
   padding: 12px 16px;
   text-decoration: none;
-  color: var(--text-dark);
-  font-family: var(--font-gotham-book);
+  color: var(--ink);
+  font-family: var(--font-sans);
   font-size: 15px;
   border-radius: 4px;
   transition: background-color 0.1s ease;
@@ -59,10 +59,10 @@
 }
 
 .subjectCount {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 13px;
   color: white;
-  background-color: var(--debats-red);
+  background-color: var(--signal);
   border-radius: 12px;
   padding: 2px 10px;
   min-width: 24px;
@@ -71,14 +71,14 @@
 
 .backLink {
   display: inline-block;
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--text-light);
+  color: var(--ink-2);
   text-decoration: none;
   margin-bottom: 16px;
   transition: color 0.15s ease;
 }
 
 .backLink:hover {
-  color: var(--debats-red);
+  color: var(--signal);
 }

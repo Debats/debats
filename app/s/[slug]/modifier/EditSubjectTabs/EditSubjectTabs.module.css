@@ -6,11 +6,11 @@
 }
 
 .tabTrigger {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 0.8em;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--text-light);
+  color: var(--ink-2);
   background: none;
   border: none;
   padding: 10px 20px 12px;
@@ -20,11 +20,11 @@
 }
 
 .tabTrigger:hover {
-  color: var(--text-dark);
+  color: var(--ink);
 }
 
 .tabTrigger[data-state='active'] {
-  color: var(--debats-red);
+  color: var(--signal);
 }
 
 .tabTrigger[data-state='active']::after {
@@ -34,7 +34,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--debats-red);
+  background: var(--signal);
 }
 
 .tabContent {
@@ -50,7 +50,7 @@
   flex-direction: column;
   gap: 28px;
   background: #f8f6f0;
-  border-left: 3px solid var(--debats-red);
+  border-left: 3px solid var(--signal);
   border-radius: 0 6px 6px 0;
   padding: 24px 28px;
 }

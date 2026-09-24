@@ -1,5 +1,5 @@
 .trigger {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 12px;
   color: #c62828;
   background: none;
@@ -16,7 +16,7 @@
 }
 
 .warning {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 11px;
   color: #c62828;
   margin: 0;

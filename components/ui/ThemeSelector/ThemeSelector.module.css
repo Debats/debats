@@ -11,9 +11,9 @@
 }
 
 .item {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 0.85em;
-  color: var(--text-light);
+  color: var(--ink-2);
   background: white;
   border: 1px solid #e0dcd3;
   border-radius: 3px;
@@ -31,10 +31,10 @@
 }
 
 .item[data-state='on'] {
-  background: var(--debats-red);
-  border-color: var(--debats-red);
+  background: var(--ink);
+  border-color: var(--ink);
   color: white;
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   border-radius: 3px 0 0 3px;
 }
 
@@ -50,7 +50,7 @@
   height: 100%;
   padding: 5px 0;
   background: #d91a38;
-  border: 1px solid var(--debats-red);
+  border: 1px solid var(--ink);
   border-left: none;
   border-radius: 0 3px 3px 0;
   color: rgba(255, 255, 255, 0.4);

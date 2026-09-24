@@ -9,7 +9,7 @@
 }
 
 .fieldset {
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--line-2);
   border-radius: 4px;
   padding: 12px;
   margin: 0;
@@ -19,11 +19,11 @@
 }
 
 .legend {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-light);
+  color: var(--ink-2);
   padding: 0 6px;
 }
 
@@ -34,7 +34,7 @@
 }
 
 .selectLabel {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 13px;
   color: #555;
   text-transform: uppercase;
@@ -43,7 +43,7 @@
 
 .select {
   padding: 10px 12px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--line-2);
   border-radius: 4px;
   font-size: 15px;
   font-family: inherit;
@@ -51,7 +51,7 @@
 
 .select:focus {
   outline: none;
-  border-color: var(--debats-red);
+  border-color: var(--signal);
 }
 
 .notorietySources {
@@ -61,7 +61,7 @@
 }
 
 .notorietyLabel {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 13px;
   color: #555;
   text-transform: uppercase;
@@ -95,9 +95,9 @@
 .addSource {
   background: none;
   border: none;
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 13px;
-  color: var(--debats-red);
+  color: var(--signal);
   cursor: pointer;
   padding: 4px 0;
   text-align: left;

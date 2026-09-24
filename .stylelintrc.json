@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "declaration-property-value-disallowed-list": [
+      {
+        "/.*/": [
+          "/--debats-red/",
+          "/--text-dark/",
+          "/--text-light/",
+          "/--border-light/",
+          "/--bg-light/",
+          "/--bg-gray/",
+          "/--font-gotham/",
+          "/--font-open-sans/",
+          "/Gotham/",
+          "/Open Sans/",
+          "/#f21e40/i",
+          "/#d11635/i"
+        ]
+      },
+      {
+        "message": "Utiliser les tokens de styles/tokens.css (--signal, --ink, --line-2, --font-sans…) : les anciens tokens et les fontes historiques ne sont plus définis."
+      }
+    ]
+  }
+}

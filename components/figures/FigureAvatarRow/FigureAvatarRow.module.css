@@ -24,9 +24,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: var(--bg-gray);
-  color: var(--text-light);
-  font-family: var(--font-gotham-bold);
+  background-color: var(--paper-2);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   flex-shrink: 0;
 }
@@ -34,13 +34,13 @@
 a.overflowLink,
 a.overflowLink:link,
 a.overflowLink:visited {
-  color: var(--text-light);
+  color: var(--ink-2);
   text-decoration: none;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
 a.overflowLink:hover {
-  background-color: var(--debats-red);
+  background-color: var(--ink);
   color: white;
 }

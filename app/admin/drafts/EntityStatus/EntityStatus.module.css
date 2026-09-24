@@ -1,6 +1,6 @@
 .found {
   color: #2e7d32;
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 14px;
 }
 
@@ -10,17 +10,17 @@
 }
 
 .found a:hover {
-  color: var(--debats-red);
+  color: var(--signal);
 }
 
 .create {
   color: #1565c0;
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 14px;
 }
 
 .missing {
   color: #c62828;
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 14px;
 }

@@ -3,9 +3,9 @@
 }
 
 .backLink {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 0.85em;
-  color: var(--debats-red);
+  color: var(--signal);
   text-decoration: none;
   display: inline-block;
   margin-bottom: 15px;
@@ -16,22 +16,22 @@
 }
 
 .title {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 1.8em;
-  color: var(--debats-red);
+  color: var(--signal);
   text-transform: uppercase;
   margin: 0 0 10px 0;
 }
 
 .subtitle {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 1em;
-  color: var(--text-light);
+  color: var(--ink-2);
   margin: 0;
 }
 
 .emptyMessage {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 0.9em;
-  color: var(--text-light);
+  color: var(--ink-2);
 }

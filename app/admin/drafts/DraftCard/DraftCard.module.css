@@ -1,18 +1,18 @@
 .card {
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--line-2);
   border-radius: 6px;
   padding: 20px;
   background: white;
 }
 
 .quote {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.6;
-  color: var(--text-dark);
+  color: var(--ink);
   margin: 0 0 12px 0;
   padding-left: 16px;
-  border-left: 3px solid var(--debats-red);
+  border-left: 3px solid var(--signal);
   font-style: italic;
 }
 
@@ -24,9 +24,9 @@
 }
 
 .source {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 13px;
-  color: var(--debats-red);
+  color: var(--signal);
   text-decoration: none;
 }
 
@@ -35,24 +35,24 @@
 }
 
 .date {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 13px;
-  color: var(--text-light);
+  color: var(--ink-2);
 }
 
 .origin {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 11px;
-  color: var(--text-light);
-  background: var(--bg-gray);
+  color: var(--ink-2);
+  background: var(--paper-2);
   padding: 2px 8px;
   border-radius: 3px;
 }
 
 .aiNotes {
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 12px;
-  color: var(--text-light);
+  color: var(--ink-2);
   font-style: italic;
   margin: 0 0 12px 0;
 }
@@ -82,7 +82,7 @@
 }
 
 .notorietySources a {
-  color: var(--debats-red);
+  color: var(--signal);
   text-decoration: none;
   word-break: break-all;
 }

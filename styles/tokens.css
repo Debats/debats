@@ -7,8 +7,7 @@
  * organisations. Le relief vient des teintes, pas des bordures ni des ombres.
  *
  * Les fontes sont chargées par next/font dans app/layout.tsx, qui expose
- * --font-instrument-serif, --font-instrument-sans, --font-instrument-sans-semibold
- * et --font-jetbrains-mono sur <html>.
+ * --font-instrument-serif, --font-instrument-sans et --font-jetbrains-mono sur <html>.
  */
 :root {
   /* Surfaces */
@@ -54,21 +53,4 @@
   --container-max: 1280px;
   --container-gutter: 40px;
   --container-gutter-mobile: 20px;
-
-  /*
-   * Alias hérités : les feuilles non encore migrées les référencent.
-   * À supprimer quand plus aucune feuille ne les utilise.
-   * --font-gotham-bold pointe vers une famille qui n'a que la graisse 600,
-   * pour que les règles qui comptaient sur la fonte pour le gras le restent.
-   */
-  --debats-red: var(--signal);
-  --text-dark: var(--ink);
-  --text-light: var(--ink-2);
-  --border-light: var(--line-2);
-  --bg-light: var(--card);
-  --bg-gray: var(--paper-2);
-  --font-gotham-book: var(--font-sans);
-  --font-gotham-bold:
-    var(--font-instrument-sans-semibold), 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-open-sans: var(--font-sans);
 }

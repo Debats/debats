@@ -6,7 +6,7 @@
 }
 
 .summary {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -17,10 +17,10 @@
 
 .content {
   padding: 0 12px 10px;
-  font-family: var(--font-gotham-book);
+  font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-dark);
+  color: var(--ink);
 }
 
 .content p {

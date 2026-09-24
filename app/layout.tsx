@@ -34,22 +34,13 @@ const sans = Instrument_Sans({
   display: 'swap',
 })
 
-// Famille limitée à la graisse 600 : sert d'alias à --font-gotham-bold pour les
-// feuilles héritées qui s'appuyaient sur la fonte, pas sur font-weight, pour le gras.
-const sansSemibold = Instrument_Sans({
-  subsets: ['latin'],
-  weight: '600',
-  variable: '--font-instrument-sans-semibold',
-  display: 'swap',
-})
-
 const mono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
 })
 
-const fontVariables = [serif, sans, sansSemibold, mono].map((font) => font.variable).join(' ')
+const fontVariables = [serif, sans, mono].map((font) => font.variable).join(' ')
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://debats.co'),

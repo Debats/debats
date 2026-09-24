@@ -109,7 +109,7 @@ Contributors (Contributeurs)
 
 Le style est en CSS Modules, organisé en trois couches :
 
-- `styles/tokens.css` : uniquement les custom properties (surfaces, encre, signal, fontes, rayons). Toute couleur ou fonte du site vient de là. Les alias hérités (`--debats-red`, `--font-gotham-*`) y sont conservés le temps de migrer les feuilles restantes.
+- `styles/tokens.css` : uniquement les custom properties (surfaces, encre, signal, fontes, rayons, grille). Toute couleur ou fonte du site vient de là ; `npm run lint:css` (stylelint) refuse les anciens tokens et les fontes historiques.
 - `styles/base.css` : reset et défauts d'éléments, dans des `@layer` pour qu'un module gagne toujours sur la base.
 - `styles/text.module.css` : recettes typographiques partagées (`display`, `title`, `label`), réutilisées par les modules de page via `composes`.
 

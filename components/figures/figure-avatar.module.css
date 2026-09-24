@@ -8,8 +8,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: var(--bg-gray);
-  color: var(--text-light);
-  font-family: var(--font-gotham-bold);
+  background-color: var(--paper-2);
+  color: var(--ink);
+  font-family: var(--font-serif);
   line-height: 1;
 }

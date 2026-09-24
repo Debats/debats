@@ -5,20 +5,20 @@
 }
 
 .title {
-  color: var(--debats-red);
-  font-family: var(--font-gotham-bold);
+  color: var(--signal);
+  font-weight: 600;
   font-size: 1.5em;
   margin-bottom: 20px;
 }
 
 .message {
-  font-family: var(--font-gotham-book);
-  color: var(--text-dark);
+  font-family: var(--font-sans);
+  color: var(--ink);
   margin-bottom: 10px;
 }
 
 .detail {
   font-size: 0.9em;
-  color: var(--text-light);
+  color: var(--ink-2);
   margin-top: 10px;
 }

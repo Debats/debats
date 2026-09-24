@@ -5,9 +5,9 @@
 }
 
 .title {
-  font-family: var(--font-gotham-bold);
+  font-weight: 600;
   font-size: 2em;
-  color: var(--debats-red);
+  color: var(--signal);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin: 0 0 24px;
@@ -16,7 +16,7 @@
 .text {
   font-size: 15px;
   line-height: 1.5;
-  color: var(--text-dark);
+  color: var(--ink);
 }
 
 .form {
