@@ -8,13 +8,16 @@ import { createPositionRepository } from '../../../../../infra/database/position
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
+import { STATEMENT_TYPE_LABELS } from '../../../../../domain/entities/statement'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import AdminMenu from '../../../../../components/ui/AdminMenu'
 import Button from '../../../../../components/ui/Button'
-import HeaderActions from '../../../../../components/layout/HeaderActions'
 import ShareButton from '../../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
+import { formatShortDate } from '../../../../../lib/format-date'
+import { plural } from '../../../../../lib/plural'
 import MergePositionForm from './MergePositionForm'
+import PositionHero from './PositionHero'
 import styles from './position-detail.module.css'
 
 interface PageProps {
@@ -67,25 +70,22 @@ export default async function PositionDetailPage({ params }: PageProps) {
   const allPositions = await Effect.runPromise(positionRepo.findBySubjectId(subject.id))
   const otherPositions = allPositions
     .filter((p) => p.id !== position.id)
-    .map((p) => ({ id: p.id, title: p.title }))
+    .map((p) => ({ id: p.id, title: p.title, slug: p.slug }))
 
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_position')
   const isAdmin = !!contributor && canPerform(contributor.reputation, 'admin')
 
-  return (
-    <ContentWithSidebar topMargin>
-      <nav className={styles.breadcrumb}>
-        <Link href={`/s/${slug}`} className={styles.breadcrumbLink}>
-          {subject.title}
-        </Link>
-        <span className={styles.breadcrumbSeparator}>/</span>
-        <span>{position.title}</span>
-      </nav>
+  const figuresCount = new Set(positionStatements.map(({ publicFigure }) => publicFigure.id)).size
 
-      <header className={styles.header}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.title}>{position.title}</h1>
-          {(canEdit || isAdmin) && (
+  return (
+    <>
+      <PositionHero
+        subject={subject}
+        title={position.title}
+        description={position.description}
+        counts={{ statements: positionStatements.length, figures: figuresCount }}
+        adminMenu={
+          (canEdit || isAdmin) && (
             <AdminMenu
               actions={[
                 ...(canEdit
@@ -107,67 +107,108 @@ export default async function PositionDetailPage({ params }: PageProps) {
                 />
               )}
             </AdminMenu>
-          )}
-        </div>
-        <p className={styles.description}>{position.description}</p>
-        <HeaderActions>
-          <ShareButton title={`${position.title} — ${subject.title}`} text={position.description} />
-        </HeaderActions>
-      </header>
+          )
+        }
+        actions={
+          <>
+            {contributor ? (
+              <Button
+                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}&positionId=${position.id}`}
+              >
+                Ajouter une prise de position
+              </Button>
+            ) : (
+              <Button href="/contribuer">Ajouter une prise de position</Button>
+            )}
+            <ShareButton
+              compact
+              title={`${position.title} — ${subject.title}`}
+              text={position.description}
+            />
+          </>
+        }
+      />
 
-      <section>
-        <h2 className={styles.sectionTitle}>
-          PRISES DE POSITION <span className={styles.count}>{positionStatements.length}</span>
-        </h2>
-
-        {positionStatements.length === 0 ? (
-          <p className={styles.empty}>Aucune prise de position enregistrée pour cette position.</p>
-        ) : (
-          <div className={styles.statementsList}>
-            {positionStatements.map(({ statement, publicFigure }) => (
-              <div key={statement.id} className={styles.statementItem}>
-                <div className={styles.figureInfo}>
-                  <Link href={`/p/${publicFigure.slug}/s/${slug}`}>
-                    <FigureAvatar slug={publicFigure.slug} name={publicFigure.name} size={48} />
-                  </Link>
-                  <div>
-                    <Link href={`/p/${publicFigure.slug}/s/${slug}`} className={styles.figureName}>
-                      {publicFigure.name}
-                    </Link>
-                    <span className={styles.statementDate}>
-                      {statement.statedAt.toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                </div>
-                <blockquote className={styles.quote}>{statement.quote}</blockquote>
-                {statement.sourceUrl ? (
-                  <a
-                    href={statement.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.source}
-                  >
-                    {statement.sourceName}
-                  </a>
-                ) : (
-                  <span className={styles.source}>{statement.sourceName}</span>
-                )}
-              </div>
-            ))}
+      <ContentWithSidebar
+        topMargin
+        aside={
+          <div className={styles.subjectCard}>
+            <p className={styles.subjectCardTitle}>Le sujet</p>
+            <Link href={`/s/${slug}`} className={styles.subjectCardName}>
+              {subject.title}
+            </Link>
+            <p className={styles.subjectCardProblem}>{subject.problem}</p>
+            {otherPositions.length > 0 && (
+              <>
+                <p className={styles.subjectCardTitle}>Les autres positions</p>
+                <ul className={styles.otherPositions}>
+                  {otherPositions.map((other) => (
+                    <li key={other.id} className={styles.otherPosition}>
+                      <Link
+                        href={`/s/${slug}/position/${other.slug}`}
+                        className={styles.otherPositionLink}
+                      >
+                        {other.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
-        )}
-      </section>
+        }
+      >
+        <section>
+          <header className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>
+              {positionStatements.length}{' '}
+              {plural(positionStatements.length, 'prise de position', 'prises de position')}
+            </h2>
+          </header>
 
-      {contributor && (
-        <div className={styles.actions}>
-          <Button
-            href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}&positionId=${position.id}`}
-            size="small"
-          >
-            Ajouter une prise de position
-          </Button>
-        </div>
-      )}
-    </ContentWithSidebar>
+          {positionStatements.length === 0 ? (
+            <p className={styles.empty}>
+              Aucune prise de position enregistrée pour cette position.
+            </p>
+          ) : (
+            <div className={styles.list}>
+              {positionStatements.map(({ statement, publicFigure }) => (
+                <article key={statement.id} className={styles.card}>
+                  <Link href={`/p/${publicFigure.slug}/s/${slug}`}>
+                    <FigureAvatar slug={publicFigure.slug} name={publicFigure.name} size={44} />
+                  </Link>
+                  <div className={styles.body}>
+                    <div className={styles.head}>
+                      <Link href={`/p/${publicFigure.slug}/s/${slug}`} className={styles.figure}>
+                        {publicFigure.name}
+                      </Link>
+                      <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
+                    </div>
+                    <blockquote className={styles.quote}>{statement.quote}</blockquote>
+                    <div className={styles.source}>
+                      <span className={styles.type}>
+                        {STATEMENT_TYPE_LABELS[statement.statementType]}
+                      </span>
+                      {statement.sourceUrl ? (
+                        <a
+                          href={statement.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.sourceLink}
+                        >
+                          {statement.sourceName}
+                        </a>
+                      ) : (
+                        <span className={styles.sourceLink}>{statement.sourceName}</span>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </ContentWithSidebar>
+    </>
   )
 }
