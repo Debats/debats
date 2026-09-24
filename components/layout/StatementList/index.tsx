@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import FigureAvatar from '../../figures/FigureAvatar'
+import { formatShortDate } from '../../../lib/format-date'
 import styles from './StatementList.module.css'
 import { LatestStatement } from '../../../domain/entities/statement'
 
@@ -23,19 +24,20 @@ export default function StatementList({ title, statements }: StatementListProps)
               size={36}
             />
             <div className={styles.statementContent}>
-              <div className={styles.publicFigureText}>
+              <p className={styles.publicFigureText}>
                 <Link href={`/p/${statement.publicFigureSlug}`}>
                   <strong>{statement.publicFigureName}</strong>
                 </Link>{' '}
                 s&apos;est déclaré·e pour{' '}
                 <Link href={`/p/${statement.publicFigureSlug}/s/${statement.subjectSlug}`}>
-                  <strong>{statement.positionTitle}</strong>
+                  <em>{statement.positionTitle}</em>
                 </Link>{' '}
                 dans le débat{' '}
                 <Link href={`/s/${statement.subjectSlug}`}>
                   <strong>{statement.subjectTitle}</strong>
                 </Link>
-              </div>
+              </p>
+              <p className={styles.date}>{formatShortDate(statement.statedAt)}</p>
             </div>
           </li>
         ))}

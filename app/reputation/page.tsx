@@ -6,18 +6,11 @@ import { createReputationRepository } from '../../infra/database/reputation-repo
 import { getRank } from '../../domain/reputation/permissions'
 import { actionLabel } from '../../domain/reputation/action-labels'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
+import { formatShortDate } from '../../lib/format-date'
 import styles from './reputation.module.css'
 
 export const metadata = {
   title: 'Réputation — Débats.co',
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
 }
 
 function formatAmount(amount: number): string {
@@ -54,7 +47,7 @@ export default async function ReputationPage() {
         <ul className={styles.list}>
           {events.map((event) => (
             <li key={event.id} className={styles.event}>
-              <span className={styles.date}>{formatDate(event.createdAt)}</span>
+              <span className={styles.date}>{formatShortDate(event.createdAt)}</span>
               <span className={styles.label}>{actionLabel(event.action)}</span>
               <span
                 className={`${styles.amount} ${event.amount >= 0 ? styles.positive : styles.negative}`}

@@ -97,6 +97,7 @@ Contributors (Contributeurs)
 ├── infra/            # Infrastructure (Supabase, Wikipedia API)
 ├── components/       # Composants React réutilisables
 ├── hooks/            # React hooks
+├── lib/              # Utilitaires de présentation (formatage de dates…)
 ├── styles/           # CSS Modules et design system
 ├── supabase/         # Migrations et seeds
 ├── types/            # Types générés (database.types.ts)

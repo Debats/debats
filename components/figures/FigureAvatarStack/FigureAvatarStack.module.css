@@ -1,0 +1,43 @@
+/*
+ * La couleur de l'anneau autour de chaque avatar suit la surface qui porte la
+ * pile : le parent la fixe via --stack-ring (carte par défaut).
+ */
+.stack {
+  display: flex;
+  align-items: center;
+}
+
+.item {
+  display: block;
+  line-height: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--stack-ring, var(--card));
+  margin-left: -8px;
+  transition: transform 0.15s ease;
+}
+
+.item:first-child {
+  margin-left: 0;
+}
+
+.item:hover {
+  transform: translateY(-2px);
+  z-index: 1;
+  position: relative;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background-color: var(--paper-2);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+a.badge:hover {
+  background-color: var(--ink);
+  color: var(--paper);
+}

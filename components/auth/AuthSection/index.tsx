@@ -13,6 +13,13 @@ interface AuthSectionProps {
   onAuthChange?: () => void
 }
 
+/** Deux lettres au plus : initiales d'un nom, ou début d'une adresse e-mail. */
+function initials(displayName: string): string {
+  const words = displayName.split(/[\s@._-]+/).filter(Boolean)
+  const letters = words.length > 1 ? words.slice(0, 2).map((w) => w[0]) : displayName.slice(0, 2)
+  return Array.from(letters).join('').toUpperCase()
+}
+
 export default function AuthSection({ onAuthChange }: AuthSectionProps) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
@@ -37,11 +44,12 @@ export default function AuthSection({ onAuthChange }: AuthSectionProps) {
   }, [onAuthChange, router])
 
   if (user) {
-    const displayName = user.user_metadata?.name || user.email
+    const displayName: string = user.user_metadata?.name || user.email || ''
     return (
       <div className={styles.section}>
-        <Link href="/me" className={styles.userName}>
-          {displayName}
+        <Link href="/me" className={styles.avatar} title={displayName}>
+          <span aria-hidden="true">{initials(displayName)}</span>
+          <span className={styles.visuallyHidden}>Mon compte : {displayName}</span>
         </Link>
         <Button
           variant="link"

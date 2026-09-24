@@ -5,16 +5,35 @@
   gap: 14px;
 }
 
-.userName,
-.userName:link,
-.userName:visited {
-  font-size: 14px;
-  font-weight: 500;
+.avatar,
+.avatar:link,
+.avatar:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--paper-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background-color 0.15s ease;
+}
+
+.avatar:hover {
+  background-color: var(--line);
   color: var(--ink);
 }
 
-.userName:hover {
-  color: var(--signal);
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {

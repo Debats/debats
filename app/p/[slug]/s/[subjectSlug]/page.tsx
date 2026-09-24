@@ -19,6 +19,7 @@ import ShareButton from '../../../../../components/ui/ShareButton'
 import FigureAvatar from '../../../../../components/figures/FigureAvatar'
 import FigureAvatarRow from '../../../../../components/figures/FigureAvatarRow'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
+import { formatDate } from '../../../../../lib/format-date'
 import styles from './figure-subject.module.css'
 
 interface PageProps {
@@ -136,14 +137,6 @@ function groupOtherFigures(
     .sort((a, b) => b.figures.length - a.figures.length)
 
   return { alliesByPosition, opponents }
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 export default async function FigureSubjectPage({ params }: PageProps) {

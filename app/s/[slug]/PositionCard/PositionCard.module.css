@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  scroll-margin-top: 80px;
 }
 
 .head {
@@ -12,6 +13,11 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
+}
+
+.kicker {
+  composes: label from '../../../../styles/text.module.css';
+  margin-bottom: 8px;
 }
 
 .title {
@@ -51,6 +57,31 @@
 
 .description {
   composes: body from '../../../../styles/text.module.css';
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.more,
+.more:link,
+.more:visited {
+  font-size: 13px;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(227, 36, 63, 0.4);
+}
+
+.more:hover {
+  text-decoration-color: var(--signal);
 }
 
 @media (max-width: 768px) {

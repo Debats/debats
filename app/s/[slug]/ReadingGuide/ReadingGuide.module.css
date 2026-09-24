@@ -1,0 +1,39 @@
+.guide {
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  scroll-margin-top: 80px;
+}
+
+.title {
+  composes: label from '../../../../styles/text.module.css';
+  margin-bottom: 12px;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step {
+  composes: small from '../../../../styles/text.module.css';
+  display: flex;
+  gap: 10px;
+}
+
+.step strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.index {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+  flex: none;
+}

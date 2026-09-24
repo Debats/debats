@@ -14,7 +14,9 @@ import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import SubjectAdminMenu from './SubjectAdminMenu'
 import SubjectHero from './SubjectHero'
+import PositionsOverview from './PositionsOverview'
 import PositionCard from './PositionCard'
+import ReadingGuide from './ReadingGuide'
 import styles from './subject-detail.module.css'
 
 interface PageProps {
@@ -87,11 +89,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
     author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
   }
 
-  const positionsHint =
-    positions.length > 1
-      ? `${positions.length} positions, de la plus à la moins soutenue`
-      : undefined
-
   return (
     <>
       <script
@@ -102,6 +99,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
         title={subject.title}
         problem={subject.problem}
         presentation={subject.presentation}
+        updatedAt={subject.updatedAt}
         themes={themeAssignments.map((assignment) => assignment.theme)}
         relatedSubjects={relatedSubjects}
         counts={{
@@ -138,21 +136,29 @@ export default async function SubjectDetailPage({ params }: PageProps) {
             <ShareButton title={subject.title} text={subject.presentation} />
           </>
         }
+        overview={<PositionsOverview positions={positions} />}
       />
 
-      <ContentWithSidebar topMargin>
+      <ContentWithSidebar topMargin aside={<ReadingGuide />}>
         <section>
           <header className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Qui pense quoi ?</h2>
-            {positionsHint && <p className={styles.sectionHint}>{positionsHint}</p>}
+            <h2 className={styles.sectionTitle}>Les positions</h2>
+            {positions.length > 1 && (
+              <p className={styles.sectionHint}>Triées par soutien décroissant</p>
+            )}
           </header>
 
           {positions.length === 0 ? (
-            <p className={styles.empty}>Aucune prise de position enregistrée.</p>
+            <p className={styles.empty}>Aucune position enregistrée pour l’instant.</p>
           ) : (
             <div className={styles.list}>
-              {positions.map((position) => (
-                <PositionCard key={position.positionId} position={position} subjectSlug={slug} />
+              {positions.map((position, index) => (
+                <PositionCard
+                  key={position.positionId}
+                  position={position}
+                  subjectSlug={slug}
+                  featured={index === 0 && positions.length > 1}
+                />
               ))}
             </div>
           )}

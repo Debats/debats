@@ -52,6 +52,14 @@
   color: var(--ink-2);
 }
 
+/* Métadonnées : dates, sources, compteurs */
+.meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
 /* Grand nombre */
 .number {
   font-family: var(--font-serif);

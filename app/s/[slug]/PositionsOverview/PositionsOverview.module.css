@@ -1,0 +1,105 @@
+.overview {
+  margin-top: 48px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 20px;
+}
+
+.label {
+  composes: label from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.hint {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.help,
+.help:link,
+.help:visited {
+  font-size: 13px;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(227, 36, 63, 0.4);
+}
+
+.help:hover {
+  text-decoration-color: var(--signal);
+}
+
+.nodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.node,
+.node:link,
+.node:visited {
+  --stack-ring: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 160px;
+  padding: 20px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  color: var(--ink);
+  transition: box-shadow 0.15s ease;
+}
+
+.node:hover {
+  color: var(--ink);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.nodeMain,
+.nodeMain:link,
+.nodeMain:visited {
+  --stack-ring: var(--ink);
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+.nodeMain:hover {
+  color: var(--paper);
+  box-shadow: none;
+}
+
+.count {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  line-height: 1;
+}
+
+.title {
+  font-size: 14px;
+  line-height: 1.35;
+  margin-top: auto;
+  text-wrap: pretty;
+}
+
+@media (max-width: 768px) {
+  .overview {
+    margin-top: 32px;
+  }
+
+  .nodes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .node {
+    min-height: 140px;
+    padding: 16px;
+  }
+}
