@@ -5,66 +5,26 @@
 }
 
 .selectField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  composes: field from '../../ui/form-field.module.css';
 }
 
 .selectLabel {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  composes: label from '../../ui/form-field.module.css';
 }
 
 .select {
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 15px;
-  font-family: inherit;
-  background-color: white;
-}
-
-.select:focus {
-  outline: none;
-  border-color: var(--debats-red);
+  composes: control from '../../ui/form-field.module.css';
+  cursor: pointer;
 }
 
 .dateField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  composes: field from '../../ui/form-field.module.css';
 }
 
 .dateLabel {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  composes: label from '../../ui/form-field.module.css';
 }
 
 .dateInput {
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 15px;
-  font-family: inherit;
-}
-
-.dateInput:focus {
-  outline: none;
-  border-color: var(--debats-red);
-}
-
-.fieldError {
-  font-size: 13px;
-  color: #d32f2f;
-  margin-top: 4px;
-}
-
-.actions {
-  margin-top: 10px;
+  composes: control from '../../ui/form-field.module.css';
 }

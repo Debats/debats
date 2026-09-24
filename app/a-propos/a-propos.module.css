@@ -1,39 +1,47 @@
 .hero {
-  background: url('/images/intro-bg.jpg') center center / cover no-repeat;
-  min-height: 100vh;
+  position: relative;
+  min-height: 70vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  position: relative;
-  margin-top: -80px;
+  background-color: var(--paper-2);
+  background-image: url('/images/home-banner.jpg');
+  background-size: cover;
+  background-position: center 30%;
+  background-blend-mode: multiply;
 }
 
-.hero::after {
+.hero::before {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: linear-gradient(transparent, white);
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 236, 229, 0.35) 0%,
+    rgba(239, 236, 229, 0.55) 60%,
+    var(--paper) 100%
+  );
 }
 
 .heroTitle {
+  position: relative;
   margin: 0;
 }
 
 .heroLogo {
-  width: 360px;
+  width: 320px;
   height: auto;
 }
 
 .scrollIndicator {
-  margin-top: 60px;
-  opacity: 0.9;
-  z-index: 1;
+  position: relative;
+  margin-top: 48px;
+  color: var(--ink);
+  opacity: 0.7;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
 .scrollIndicator:hover {
@@ -41,76 +49,64 @@
 }
 
 .accroche {
-  max-width: 700px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 60px 30px;
+  padding: 56px var(--container-gutter);
   text-align: center;
   scroll-margin-top: 80px;
 }
 
 .accroche p {
-  font-family: var(--font-open-sans);
-  font-size: 1.2em;
-  line-height: 1.8;
-  color: var(--text-dark);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1.4;
+  color: var(--ink-2);
+  text-wrap: pretty;
 }
 
 .accroche em {
-  font-style: normal;
-  font-weight: 600;
+  font-style: italic;
+  color: var(--ink);
 }
 
 .manifeste {
-  max-width: 700px;
+  composes: prose from '../../styles/prose.module.css';
+  max-width: 760px;
   margin: 0 auto;
-  padding: 0 30px 60px;
+  padding: 0 var(--container-gutter) 60px;
 }
 
 .manifesteTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.8em;
-  color: var(--debats-red);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin: 0 0 40px;
-}
-
-.manifeste p {
-  font-family: var(--font-open-sans);
-  font-size: 1.05em;
-  line-height: 1.8;
-  color: var(--text-dark);
-  margin: 0 0 24px;
-}
-
-.manifeste p:last-child {
-  margin-bottom: 0;
+  composes: display from '../../styles/text.module.css';
+  margin: 0 0 32px;
 }
 
 .highlight {
+  font-family: var(--font-serif);
   font-style: italic;
-  font-weight: 600;
+  font-size: 20px;
+  color: var(--ink);
 }
 
 @media (max-width: 768px) {
-  .heroTitle {
-    font-size: 1.4em;
-    letter-spacing: 8px;
+  .hero {
+    min-height: 50vh;
+  }
+
+  .heroLogo {
+    width: 220px;
   }
 
   .accroche {
-    padding: 40px 20px;
+    padding: 40px var(--container-gutter-mobile);
   }
 
   .accroche p {
-    font-size: 1.05em;
+    font-size: 22px;
   }
 
   .manifeste {
-    padding: 0 20px 40px;
-  }
-
-  .manifesteTitle {
-    font-size: 1.4em;
+    padding: 0 var(--container-gutter-mobile) 40px;
   }
 }

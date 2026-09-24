@@ -3,17 +3,11 @@
 }
 
 .pageTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 18px;
-  color: var(--text-dark);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  composes: display from '../../styles/text.module.css';
   margin: 0 0 8px;
 }
 
 .pageDescription {
-  font-family: var(--font-gotham-book);
-  font-size: 0.95em;
-  color: var(--text-light);
+  composes: body from '../../styles/text.module.css';
   margin: 0 0 24px;
 }

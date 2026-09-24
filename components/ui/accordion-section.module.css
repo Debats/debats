@@ -1,5 +1,5 @@
 .section {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--line);
   display: block;
 }
 
@@ -8,9 +8,10 @@
 }
 
 .summary {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.1em;
-  color: var(--text-dark);
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
   cursor: pointer;
   padding: 20px 0;
   list-style: none;
@@ -24,39 +25,22 @@
   display: none;
 }
 
+.summary:hover {
+  color: var(--signal);
+}
+
 .indicator {
-  color: var(--debats-red);
-  font-size: 1.4em;
+  color: var(--ink-3);
+  font-size: 22px;
   flex-shrink: 0;
   line-height: 1;
 }
 
 .body {
-  padding: 0 0 25px;
-  font-family: var(--font-gotham-book);
-  font-size: 0.95em;
-  line-height: 1.7em;
-  color: var(--text-dark);
-}
-
-.body p {
-  margin: 0 0 15px;
-}
-
-.body p:last-child {
-  margin-bottom: 0;
-}
-
-.body ul {
-  padding-left: 25px;
-  margin: 10px 0 15px;
+  composes: prose from '../../styles/prose.module.css';
+  padding: 0 0 28px;
 }
 
 .body li {
-  margin-bottom: 8px;
-  line-height: 1.6em;
-}
-
-.body b {
-  font-family: var(--font-gotham-bold);
+  line-height: 1.6;
 }

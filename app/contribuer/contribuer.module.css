@@ -1,49 +1,28 @@
 .container {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 40px 20px;
+  composes: narrow from '../../styles/prose.module.css';
 }
 
 .reputation {
-  font-family: var(--font-gotham-book);
-  font-size: 15px;
-  color: var(--text-dark);
-  background-color: #f8f8f8;
-  padding: 12px 16px;
-  border-radius: 4px;
+  composes: small from '../../styles/text.module.css';
+  padding: 14px 18px;
+  border-radius: var(--radius-control);
+  background-color: var(--card);
   margin-bottom: 32px;
 }
 
 .intro {
-  font-family: var(--font-gotham-book);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-dark);
+  composes: text from '../../styles/prose.module.css';
   margin-bottom: 32px;
 }
 
-.intro a {
-  color: var(--debats-red);
-  text-decoration: underline;
-}
-
-.intro a:hover {
-  color: #d11635;
-}
-
 .sectionTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 18px;
-  color: var(--text-dark);
-  margin: 0 0 16px;
+  composes: heading from '../../styles/prose.module.css';
+  margin-top: 0;
 }
 
 .steps {
-  font-family: var(--font-gotham-book);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-dark);
-  padding-left: 20px;
+  composes: text from '../../styles/prose.module.css';
+  padding-left: 22px;
   margin: 0 0 32px;
   display: flex;
   flex-direction: column;
@@ -57,39 +36,51 @@
 .guideLink,
 .guideLink:link,
 .guideLink:visited {
-  font-family: var(--font-gotham-bold);
   font-size: 15px;
-  color: var(--debats-red);
-  text-decoration: none;
+  font-weight: 500;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(227, 36, 63, 0.4);
 }
 
 .guideLink:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--signal);
 }
 
 .signupCta {
-  background-color: #fafafa;
-  border-left: 4px solid var(--debats-red);
-  padding: 20px 24px;
-  border-radius: 0 4px 4px 0;
+  padding: 24px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
   margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .signupCta p {
-  font-family: var(--font-gotham-book);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-dark);
-  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-2);
 }
 
-.signupLink {
-  font-family: var(--font-gotham-bold);
-  font-size: 15px;
-  color: var(--debats-red);
-  text-decoration: none;
+.signupLink,
+.signupLink:link,
+.signupLink:visited {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background-color: var(--signal);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .signupLink:hover {
-  text-decoration: underline;
+  background-color: var(--signal-dark);
+  color: #ffffff;
 }

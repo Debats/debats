@@ -30,9 +30,9 @@ export default function AProposPage() {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <circle cx="30" cy="30" r="29" stroke="white" strokeWidth="1.5" />
-            <path d="M20 24l10 8 10-8" stroke="white" strokeWidth="1.5" fill="none" />
-            <path d="M20 32l10 8 10-8" stroke="white" strokeWidth="1.5" fill="none" />
+            <circle cx="30" cy="30" r="29" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M20 24l10 8 10-8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+            <path d="M20 32l10 8 10-8" stroke="currentColor" strokeWidth="1.5" fill="none" />
           </svg>
         </a>
       </div>

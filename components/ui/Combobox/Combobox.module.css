@@ -1,16 +1,12 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   position: relative;
 }
 
 .label {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  composes: label from '../form-field.module.css';
 }
 
 .inputWrapper {
@@ -18,18 +14,9 @@
 }
 
 .input {
+  composes: control from '../form-field.module.css';
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 15px;
-  font-family: inherit;
   box-sizing: border-box;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--debats-red);
 }
 
 .menu {
@@ -39,31 +26,31 @@
   right: 0;
   z-index: 10;
   list-style: none;
-  margin: 2px 0 0 0;
-  padding: 0;
-  background: white;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  max-height: 200px;
+  margin: 6px 0 0;
+  padding: 6px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  max-height: 240px;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 40px rgba(21, 23, 28, 0.12);
 }
 
 .menu:empty {
-  border: none;
-  box-shadow: none;
+  display: none;
 }
 
 .item {
   padding: 8px 12px;
+  border-radius: var(--radius-control);
   font-size: 14px;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .highlighted {
-  background-color: #f5f5f5;
+  background-color: var(--paper-2);
 }
 
 .selected {
-  font-weight: bold;
+  font-weight: 600;
 }

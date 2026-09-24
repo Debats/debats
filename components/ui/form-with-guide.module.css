@@ -7,53 +7,42 @@
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .guide {
-  background-color: #f8f6f0;
-  border-left: 3px solid #e0dcd3;
-  padding: 10px 14px;
-  border-radius: 0 4px 4px 0;
-  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  background-color: var(--paper-2);
 }
 
 .guideTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 11px;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 4px 0;
+  composes: label from '../../styles/text.module.css';
+  margin: 0 0 4px;
 }
 
 .guideText {
-  font-family: var(--font-gotham-book);
   font-size: 13px;
   line-height: 1.5;
-  color: #777;
+  color: var(--ink-2);
   margin: 0;
 }
 
 .label {
+  composes: label from './form-field.module.css';
   display: block;
-  font-family: var(--font-gotham-bold);
-  font-size: 0.85em;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-dark);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .fieldError {
   font-size: 13px;
-  color: #d32f2f;
+  color: var(--danger);
   margin-top: 4px;
 }
 
 .actions {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 8px;
 }

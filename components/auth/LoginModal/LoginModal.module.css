@@ -1,7 +1,6 @@
 .title {
-  font-family: var(--font-gotham-bold);
-  font-size: 24px;
-  color: var(--text-dark);
+  composes: display from '../../../styles/text.module.css';
+  font-size: 32px;
   margin: 0 0 24px;
 }
 
@@ -12,17 +11,19 @@
 }
 
 .signupHint {
+  composes: small from '../../../styles/text.module.css';
   margin-top: 20px;
-  font-size: 14px;
-  color: #666;
   text-align: center;
 }
 
-.signupHint a {
-  color: var(--debats-red);
+.signupHint a,
+.signupHint a:link,
+.signupHint a:visited {
+  color: var(--signal);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .signupHint a:hover {
-  color: #d11635;
+  color: var(--signal-dark);
 }

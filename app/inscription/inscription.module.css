@@ -1,26 +1,27 @@
 .page {
   max-width: 600px;
-  margin: 60px auto;
-  padding: 0 20px;
+  margin: 0 auto;
+  padding: 56px var(--container-gutter) 0;
 }
 
 .title {
-  font-family: var(--font-gotham-bold);
-  font-size: 2em;
-  color: var(--debats-red);
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  composes: display from '../../styles/text.module.css';
   margin: 0 0 16px;
 }
 
 .subtitle {
-  font-size: 1.1em;
-  color: var(--text-light);
-  line-height: 1.6;
+  composes: lead from '../../styles/prose.module.css';
+  font-size: 20px;
   margin: 0 0 40px;
 }
 
 .brevoForm {
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 32px var(--container-gutter-mobile) 0;
+  }
 }

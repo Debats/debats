@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(21, 23, 28, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,13 +11,14 @@
 }
 
 .modal {
-  background-color: white;
-  border-radius: 8px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
   padding: 40px;
   max-width: 440px;
   width: 100%;
   position: relative;
   margin: auto;
+  box-shadow: 0 24px 60px rgba(21, 23, 28, 0.2);
 }
 
 @media (max-width: 600px) {
@@ -29,15 +30,22 @@
 .closeButton {
   position: absolute;
   top: 12px;
-  right: 16px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
-  color: #999;
+  color: var(--ink-3);
   line-height: 1;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .closeButton:hover {
-  color: #333;
+  background-color: var(--paper-2);
+  color: var(--ink);
 }

@@ -1,7 +1,7 @@
 .container {
-  background-color: #f0faf0;
-  border: 1px solid #4a8c5c;
-  border-radius: 6px;
+  background-color: var(--card);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--radius-card);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -9,18 +9,12 @@
 }
 
 .title {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.1em;
-  color: #2d6a3e;
-  margin: 0;
+  composes: title from '../../../styles/text.module.css';
+  color: var(--ok);
 }
 
 .description {
-  font-family: var(--font-gotham-book);
-  font-size: 0.95em;
-  color: #555;
-  margin: 0;
-  line-height: 1.5;
+  composes: small from '../../../styles/text.module.css';
 }
 
 .actions {
@@ -31,27 +25,31 @@
   align-items: flex-start;
 }
 
-.secondaryLink {
-  font-family: var(--font-gotham-book);
-  font-size: 0.9em;
-  color: var(--debats-red);
-  text-decoration: none;
+.secondaryLink,
+.secondaryLink:link,
+.secondaryLink:visited {
+  font-size: 14px;
+  color: var(--signal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .secondaryLink:hover {
-  text-decoration: underline;
+  color: var(--signal-dark);
 }
 
 .secondaryButton {
-  font-family: var(--font-gotham-book);
-  font-size: 0.9em;
-  color: var(--debats-red);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--signal);
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .secondaryButton:hover {
-  text-decoration: underline;
+  color: var(--signal-dark);
 }

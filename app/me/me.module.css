@@ -1,9 +1,5 @@
 .title {
-  font-family: var(--font-gotham-bold);
-  font-size: 2em;
-  color: var(--debats-red);
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  composes: display from '../../styles/text.module.css';
   margin: 0 0 32px;
 }
 
@@ -11,9 +7,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 0;
+  padding: 0 0 24px;
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--line);
 }
 
 .identityInfo {
@@ -23,21 +19,16 @@
 }
 
 .displayName {
-  font-family: var(--font-gotham-bold);
-  font-size: 1.2em;
-  color: var(--text-dark);
+  composes: title from '../../styles/text.module.css';
 }
 
 .email {
-  font-family: var(--font-gotham-book);
-  font-size: 13px;
-  color: var(--text-light);
+  composes: meta from '../../styles/text.module.css';
 }
 
 .reputationCard {
-  background: var(--bg-light, #fafafa);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
   padding: 24px;
 }
 
@@ -55,28 +46,21 @@
 }
 
 .score {
-  font-family: var(--font-gotham-bold);
-  font-size: 2em;
-  color: var(--text-dark);
+  composes: number from '../../styles/text.module.css';
 }
 
 .scoreLabel {
-  font-family: var(--font-gotham-book);
-  font-size: 14px;
-  color: var(--text-light);
+  composes: small from '../../styles/text.module.css';
 }
 
 .rank {
-  font-family: var(--font-gotham-bold);
-  font-size: 14px;
-  color: var(--debats-red);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  composes: label from '../../styles/text.module.css';
+  color: var(--signal);
 }
 
 .progressBar {
   height: 6px;
-  background: var(--border-light);
+  background-color: var(--paper-2);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -84,28 +68,29 @@
 
 .progressFill {
   height: 100%;
-  background: var(--debats-red);
+  background-color: var(--ink);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
 .progressLabel {
-  font-family: var(--font-gotham-book);
-  font-size: 12px;
-  color: var(--text-light);
+  composes: meta from '../../styles/text.module.css';
 }
 
-.historyLink {
+.historyLink,
+.historyLink:link,
+.historyLink:visited {
   display: inline-block;
   margin-top: 16px;
-  font-family: var(--font-gotham-book);
-  font-size: 13px;
-  color: var(--debats-red);
-  text-decoration: none;
+  font-size: 14px;
+  color: var(--signal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(227, 36, 63, 0.4);
 }
 
 .historyLink:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--signal);
 }
 
 @media (max-width: 768px) {

@@ -1,19 +1,8 @@
 .container {
-  max-width: 800px;
-  margin: 40px auto 0;
-  padding: 0 30px;
+  composes: narrow from '../../styles/prose.module.css';
 }
 
 .text {
-  font-family: var(--font-open-sans);
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--text-dark);
+  composes: text from '../../styles/prose.module.css';
   margin: 0 0 32px;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 0 20px;
-  }
 }

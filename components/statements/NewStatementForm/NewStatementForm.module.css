@@ -5,19 +5,17 @@
 }
 
 .section {
-  border: 1px solid var(--border-light);
-  border-radius: 6px;
-  padding: 20px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  padding: 24px;
   margin: 0;
+  border: none;
 }
 
 .sectionTitle {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: var(--debats-red);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 0 8px;
+  composes: label from '../../../styles/text.module.css';
+  padding: 0;
+  margin-bottom: 16px;
 }
 
 .sectionContent {
@@ -27,85 +25,56 @@
 }
 
 .selectField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  composes: field from '../../ui/form-field.module.css';
 }
 
 .selectLabel {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  composes: label from '../../ui/form-field.module.css';
 }
 
 .selectInput {
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 15px;
-  font-family: inherit;
-  background: white;
-}
-
-.selectInput:focus {
-  outline: none;
-  border-color: var(--debats-red);
+  composes: control from '../../ui/form-field.module.css';
+  cursor: pointer;
 }
 
 .dateField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  composes: field from '../../ui/form-field.module.css';
 }
 
 .dateLabel {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  composes: label from '../../ui/form-field.module.css';
 }
 
 .dateInput {
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 15px;
-  font-family: inherit;
-}
-
-.dateInput:focus {
-  outline: none;
-  border-color: var(--debats-red);
+  composes: control from '../../ui/form-field.module.css';
 }
 
 .fieldError {
   font-size: 13px;
-  color: #d32f2f;
+  color: var(--danger);
   margin-top: 4px;
 }
 
 .guidance {
-  font-family: var(--font-gotham-book);
-  font-size: 0.85em;
-  color: var(--text-light);
+  composes: small from '../../../styles/text.module.css';
   margin: 0;
 }
 
-.guidanceLink {
-  color: var(--debats-red);
-  text-decoration: none;
+.guidanceLink,
+.guidanceLink:link,
+.guidanceLink:visited {
+  color: var(--signal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .guidanceLink:hover {
-  text-decoration: underline;
+  color: var(--signal-dark);
 }
 
 .actions {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 8px;
 }

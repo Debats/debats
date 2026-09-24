@@ -1,35 +1,45 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .label {
-  font-family: var(--font-gotham-bold);
-  font-size: 13px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .control {
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-control);
+  background-color: var(--card);
+  font-family: var(--font-sans);
   font-size: 15px;
-  font-family: inherit;
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.control::placeholder {
+  color: var(--ink-3);
 }
 
 .control:focus {
   outline: none;
-  border-color: var(--debats-red);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(21, 23, 28, 0.06);
 }
 
 .controlError {
-  border-color: #d32f2f;
+  border-color: var(--danger);
 }
 
 .error {
   font-size: 13px;
-  color: #d32f2f;
+  color: var(--danger);
 }
