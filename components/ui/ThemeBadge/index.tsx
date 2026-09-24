@@ -8,7 +8,7 @@ interface ThemeBadgeProps {
 
 export default function ThemeBadge({ name, slug }: ThemeBadgeProps) {
   return (
-    <Link href={`/s?theme=${slug}`} className={styles.badge}>
+    <Link href={`/themes/${slug}`} className={styles.badge}>
       {name}
     </Link>
   )
