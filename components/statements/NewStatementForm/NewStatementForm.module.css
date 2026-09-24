@@ -1,7 +1,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .section {
@@ -10,71 +10,185 @@
   padding: 24px;
   margin: 0;
   border: none;
-}
-
-.sectionTitle {
-  composes: label from '../../../styles/text.module.css';
-  padding: 0;
-  margin-bottom: 16px;
-}
-
-.sectionContent {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.selectField {
+/* Une legend sort du cadre par défaut : float + width la remettent dans le flux de la carte */
+.sectionTitle {
+  composes: title from '../../../styles/text.module.css';
+  float: left;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  flex: none;
+}
+
+.field {
   composes: field from '../../ui/form-field.module.css';
 }
 
-.selectLabel {
+.label {
   composes: label from '../../ui/form-field.module.css';
 }
 
-.selectInput {
-  composes: control from '../../ui/form-field.module.css';
-  cursor: pointer;
-}
-
-.dateField {
-  composes: field from '../../ui/form-field.module.css';
-}
-
-.dateLabel {
-  composes: label from '../../ui/form-field.module.css';
-}
-
-.dateInput {
+.control {
   composes: control from '../../ui/form-field.module.css';
 }
 
 .fieldError {
   font-size: 13px;
   color: var(--danger);
-  margin-top: 4px;
 }
 
-.guidance {
+.hint {
   composes: small from '../../../styles/text.module.css';
-  margin: 0;
+  color: var(--ink-3);
+  margin: -6px 0 0;
 }
 
-.guidanceLink,
-.guidanceLink:link,
-.guidanceLink:visited {
+.hintLink,
+.hintLink:link,
+.hintLink:visited {
   color: var(--signal);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.guidanceLink:hover {
+.hintLink:hover {
   color: var(--signal-dark);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Positions : une carte par option */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background-color: var(--paper);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.option:hover {
+  border-color: var(--line-2);
+}
+
+.optionOn {
+  border-color: var(--ink);
+}
+
+.optionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.radio {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+  flex: none;
+}
+
+/* Type : une rangée de pilules */
+.types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.type {
+  position: relative;
+  cursor: pointer;
+}
+
+.type .radio {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.typeLabel {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.type .radio:checked + .typeLabel {
+  background-color: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.type .radio:focus-visible + .typeLabel {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .actions {
   display: flex;
-  gap: 12px;
   align-items: center;
-  margin-top: 8px;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.draftAction {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 20px;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
 }

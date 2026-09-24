@@ -1,0 +1,62 @@
+.card {
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  composes: label from '../../../styles/text.module.css';
+}
+
+.empty {
+  composes: small from '../../../styles/text.module.css';
+  color: var(--ink-3);
+}
+
+.head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--paper-2);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  flex: none;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.text em {
+  font-style: italic;
+  color: var(--ink);
+}
+
+.quote {
+  composes: quote from '../../../styles/text.module.css';
+  font-size: 18px;
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+}
