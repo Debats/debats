@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { COMING_SOON_MESSAGE } from '../../../../components/ui/ComingSoon'
+import ComingSoon from '../../../../components/ui/ComingSoon'
 import ThemeBadge from '../../../../components/ui/ThemeBadge'
 import { formatShortDate } from '../../../../lib/format-date'
 import styles from './SubjectHero.module.css'
@@ -112,18 +112,10 @@ export default function SubjectHero({
                     {plural(counts.publicFigures, 'personnalité', 'personnalités')}
                   </dt>
                 </div>
-                <div
-                  className={`${styles.stat} ${styles.statSoon}`}
-                  aria-disabled="true"
-                  title={COMING_SOON_MESSAGE}
-                >
+                <ComingSoon as="div" className={styles.stat}>
                   <dd className={`${styles.statValue} ${styles.statValueOrg}`}>–</dd>
-                  <dt className={styles.statLabel}>
-                    organisations
-                    <br />
-                    <span className={styles.soonBadge}>bientôt</span>
-                  </dt>
-                </div>
+                  <dt className={styles.statLabel}>organisations</dt>
+                </ComingSoon>
               </dl>
               <p className={styles.updated}>Mis à jour le {formatShortDate(updatedAt)}</p>
             </div>

@@ -148,22 +148,6 @@
   color: var(--org-dark);
 }
 
-/* Statistique annoncée mais pas encore disponible */
-.statSoon {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.soonBadge {
-  display: inline-block;
-  margin-top: 4px;
-  padding: 1px 6px;
-  border-radius: var(--radius-pill);
-  background-color: var(--paper-2);
-  font-size: 9px;
-  letter-spacing: 0.06em;
-}
-
 .statLabel {
   composes: label from '../../../../styles/text.module.css';
   font-size: 10px;

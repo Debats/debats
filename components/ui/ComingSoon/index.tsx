@@ -1,32 +1,42 @@
+'use client'
+
 import { ReactNode } from 'react'
+import { Tooltip } from 'radix-ui'
 import styles from './ComingSoon.module.css'
 
 export const COMING_SOON_MESSAGE = 'Bientôt disponible !'
 
 interface ComingSoonProps {
   children: ReactNode
-  /** Bloc entier (carte, section) plutôt qu'un élément en ligne (onglet, lien) */
-  block?: boolean
+  /** Élément rendu : un div pour un bloc (carte, entrée de liste de définitions), un span sinon */
+  as?: 'span' | 'div'
   className?: string
 }
 
 /**
  * Grise un élément d'interface dont la fonctionnalité n'existe pas encore.
- * Le contenu reste visible pour montrer ce qui arrive, mais n'est ni cliquable
- * ni annoncé comme actif ; le message « Bientôt disponible ! » l'accompagne.
+ * Le contenu reste visible pour montrer ce qui arrive, mais n'est pas
+ * cliquable ; le message « Bientôt disponible ! » apparaît au survol ou au
+ * focus clavier.
  */
-export default function ComingSoon({ children, block, className }: ComingSoonProps) {
-  const Tag = block ? 'div' : 'span'
-  const classes = [styles.soon, block ? styles.block : styles.inline, className]
-    .filter(Boolean)
-    .join(' ')
+export default function ComingSoon({ children, as: Tag = 'span', className }: ComingSoonProps) {
+  const classes = [styles.soon, className].filter(Boolean).join(' ')
 
   return (
-    <Tag className={classes} aria-disabled="true" title={COMING_SOON_MESSAGE}>
-      <span className={styles.content} inert>
-        {children}
-      </span>
-      <span className={styles.badge}>{block ? COMING_SOON_MESSAGE : 'bientôt'}</span>
-    </Tag>
+    <Tooltip.Provider delayDuration={150}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <Tag className={classes} tabIndex={0} aria-disabled="true">
+            {children}
+          </Tag>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content className={styles.tooltip} sideOffset={6}>
+            {COMING_SOON_MESSAGE}
+            <Tooltip.Arrow className={styles.arrow} width={10} height={5} />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   )
 }
