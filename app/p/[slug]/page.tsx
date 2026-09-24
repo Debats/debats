@@ -6,7 +6,6 @@ import { createPublicFigureRepository } from '../../../infra/database/public-fig
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
-import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
 import { MembershipWithOrganisation } from '../../../domain/repositories/organisation-membership-repository'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
 import {
@@ -22,7 +21,8 @@ import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import FigureHero, { Affiliation } from './FigureHero'
-import FigureStatements, { SubjectGroup } from './FigureStatements'
+import StatementsBySubject from '../../../components/statements/StatementsBySubject'
+import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
 import FigureAnalyses from './FigureAnalyses'
 
 interface PageProps {
@@ -61,19 +61,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-/** Groupe les prises de position par sujet, du sujet le plus récemment abordé au plus ancien. */
-function groupBySubject(statements: StatementWithDetails[]): SubjectGroup[] {
-  const groups = new Map<string, SubjectGroup>()
-  for (const { statement, position, subject } of statements) {
-    const group = groups.get(subject.id) ?? { subject, entries: [] }
-    group.entries.push({ statement, position })
-    groups.set(subject.id, group)
-  }
-  const latest = (group: SubjectGroup) =>
-    Math.max(...group.entries.map((e) => e.statement.createdAt.getTime()))
-  return Array.from(groups.values()).sort((a, b) => latest(b) - latest(a))
-}
-
 /** Les affiliations en cours, telles qu'affichées en pastilles sous le libellé « Personnalité ». */
 function currentAffiliations(memberships: MembershipWithOrganisation[]): Affiliation[] {
   return memberships
@@ -106,7 +93,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
     Effect.runPromise(membershipRepo.findByPublicFigureId(figure.id)),
   ])
 
-  const groups = groupBySubject(statements)
+  const groups = groupStatementsBySubject(statements)
   const statedDates = statements.map(({ statement }) => statement.statedAt)
   const subjectIds = groups.map(({ subject }) => subject.id)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
@@ -185,7 +172,10 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
             { label: 'Analyses', soon: true },
           ]}
         />
-        <FigureStatements figureSlug={slug} groups={groups} />
+        <StatementsBySubject
+          groups={groups}
+          subjectHref={(subjectSlug) => `/p/${slug}/s/${subjectSlug}`}
+        />
       </ContentWithSidebar>
     </>
   )

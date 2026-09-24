@@ -10,6 +10,7 @@ import { StatementRepository } from '../repositories/statement-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
+import { fakeOrganisationRepo } from './organisation-test-helpers'
 import { Subject } from '../entities/subject'
 import { Position } from '../entities/position'
 import { ContributorIdentity } from './types'
@@ -103,7 +104,15 @@ function makeRepos(overrides: {
     recordEvent: ReturnType<typeof vi.fn>
   }
 
-  return { draftRepo, publicFigureRepo, subjectRepo, positionRepo, statementRepo, reputationRepo }
+  return {
+    draftRepo,
+    publicFigureRepo,
+    organisationRepo: fakeOrganisationRepo(),
+    subjectRepo,
+    positionRepo,
+    statementRepo,
+    reputationRepo,
+  }
 }
 
 describe('validateDraft', () => {

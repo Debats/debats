@@ -75,7 +75,7 @@ Contributors (Contributeurs)
 - **PublicFigure** : Les personnalités publiques (politiques, intellectuels, dirigeants d'institutions, porte-paroles d'organisations, etc.) - **Critère de notoriété : la personnalité doit avoir fait l'objet d'au moins deux publications dans des sources indépendantes et fiables** (inspiré des [critères d'admissibilité Wikipedia](https://fr.wikipedia.org/wiki/Wikip%C3%A9dia:Notori%C3%A9t%C3%A9_des_personnes)). La page Wikipedia n'est pas obligatoire.
 - **Organisation** : Les partis, ONG, syndicats, entreprises, lobbies, groupements économiques, associations et collectifs qui prennent part au débat public. Même critère de notoriété que les personnalités ; logo optionnel
 - **OrganisationMembership** : L'affiliation d'une personnalité à une organisation, avec un rôle et une période optionnels. Sans date de fin, l'affiliation est considérée comme actuelle
-- **Statement** : Les prises de position concrètes d'une personnalité sur une position
+- **Statement** : Les prises de position concrètes d'une personnalité ou d'une organisation sur une position (exactement un auteur)
 - **Evidence** : Les preuves et sources (citations, articles, vidéos, discours)
 - **Argument** : Les arguments développés pour défendre une position
 - **Contributor** : Les utilisateurs contributeurs de la plateforme
@@ -217,7 +217,8 @@ Les URLs locales sont configurées sur le port **64321** (voir `supabase/config.
 - [x] CRUD sujets, personnalités, positions, prises de position
 - [x] Système de réputation des contributeurs
 - [x] Organisations et affiliations des personnalités
-- [ ] Prises de position des organisations
+- [x] Prises de position des organisations (formulaire, page organisation)
+- [ ] Organisations sur la page sujet (filtre, positions, dernières prises de position)
 
 ### Phase 2 : Fonctionnalités collaboratives
 

@@ -10,6 +10,9 @@ export interface OrganisationRepository {
 
   findById(id: string): Effect.Effect<Organisation | null, DatabaseError>
 
+  /** Organisations whose name or acronym contains the query */
+  searchByName(query: string, limit?: number): Effect.Effect<Organisation[], DatabaseError>
+
   create(organisation: Organisation): Effect.Effect<Organisation, DatabaseError>
 
   update(organisation: Organisation): Effect.Effect<Organisation, DatabaseError>

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Option } from 'effect'
 import { createStatementUseCase } from './create-statement'
-import { Statement } from '../entities/statement'
+import { organisationAuthor, publicFigureAuthor, Statement } from '../entities/statement'
+import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import {
   PublicFigure,
@@ -41,6 +42,7 @@ const fakeStatementRepo = {
   findByPositionId: () => Effect.succeed([]),
   findByPositionIdWithFigures: () => Effect.succeed([]),
   findByPublicFigureWithDetails: () => Effect.succeed([]),
+  findByOrganisationWithDetails: () => Effect.succeed([]),
   findByPublicFigureAndSubject: () => Effect.succeed([]),
   findBySubjectWithFigures: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),
@@ -84,9 +86,11 @@ const fakeReputationRepo = {
   getHistory: () => Effect.succeed([]),
 }
 
+const organisation = sampleOrganisation()
+
 const validParams = {
   subjectId: 'subject-1',
-  publicFigureId: 'figure-1',
+  author: publicFigureAuthor('figure-1'),
   positionId: 'pos-1',
   statementType: 'declaration' as const,
   sourceName: 'Le Monde',
@@ -96,10 +100,34 @@ const validParams = {
   statementRepo: fakeStatementRepo,
   positionRepo: fakePositionRepo,
   publicFigureRepo: fakePublicFigureRepo,
+  organisationRepo: fakeOrganisationRepo([organisation]),
   reputationRepo: fakeReputationRepo,
 }
 
 describe('createStatementUseCase', () => {
+  it('should fail when the organisation author is not found', async () => {
+    const result = await createStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 0 },
+      author: organisationAuthor('missing-org'),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('organisation')
+  })
+
+  it('should create a statement authored by an organisation', async () => {
+    const result = await createStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 0 },
+      author: organisationAuthor(organisation.id),
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) {
+      expect(result.right.author).toEqual({ kind: 'organisation', id: organisation.id })
+    }
+  })
+
   it('should fail when contributor is null (not authenticated)', async () => {
     const result = await createStatementUseCase({
       ...validParams,
@@ -231,7 +259,7 @@ describe('createStatementUseCase', () => {
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
-      expect(result.right.publicFigureId).toBe('figure-1')
+      expect(result.right.author).toEqual({ kind: 'public_figure', id: 'figure-1' })
       expect(result.right.positionId).toBe('pos-1')
       expect(result.right.sourceName).toBe('Le Monde')
       expect(result.right.quote).toBe('Une citation suffisamment longue pour être valide.')

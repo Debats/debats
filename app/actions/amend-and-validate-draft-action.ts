@@ -4,6 +4,7 @@ import { Effect, Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../infra/database/draft-statement-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
@@ -57,6 +58,7 @@ export async function amendAndValidateDraftAction(
     contributor: { id: contributor.id, reputation: contributor.reputation },
     draftRepo,
     publicFigureRepo: createPublicFigureRepository(supabase),
+    organisationRepo: createOrganisationRepository(supabase),
     subjectRepo: createSubjectRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     statementRepo: createStatementRepository(supabase),

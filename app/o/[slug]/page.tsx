@@ -4,8 +4,10 @@ import { Effect, Option } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../../infra/database/organisation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
+import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
+import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
 import AdminMenu from '../../../components/ui/AdminMenu'
@@ -13,9 +15,9 @@ import Button from '../../../components/ui/Button'
 import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
+import StatementsBySubject from '../../../components/statements/StatementsBySubject'
 import OrganisationHero from './OrganisationHero'
 import OrganisationMembers from './OrganisationMembers'
-import OrganisationStatementsSoon from './OrganisationStatementsSoon'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -49,18 +51,21 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
   const supabase = createAdminSupabaseClient()
   const organisationRepo = createOrganisationRepository(supabase)
   const membershipRepo = createOrganisationMembershipRepository(supabase)
+  const statementRepo = createStatementRepository(supabase)
 
   const organisation = await Effect.runPromise(organisationRepo.findBySlug(slug))
 
   if (!organisation) notFound()
 
-  const [memberships, contributor] = await Promise.all([
+  const [memberships, statements, contributor] = await Promise.all([
     Effect.runPromise(membershipRepo.findByOrganisationId(organisation.id)),
+    Effect.runPromise(statementRepo.findByOrganisationWithDetails(organisation.id)),
     getAuthenticatedContributor(),
   ])
 
   const current = memberships.filter(({ membership }) => isCurrentMembership(membership))
   const former = memberships.filter(({ membership }) => !isCurrentMembership(membership))
+  const groups = groupStatementsBySubject(statements)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_organisation')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const canRemove = !!contributor && canPerform(contributor.reputation, 'remove_membership')
@@ -88,6 +93,10 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
       : {}),
   }
 
+  const newStatementHref = contributor
+    ? `/nouvelle-prise-de-position?organisationId=${organisation.id}&organisationName=${encodeURIComponent(organisation.name)}`
+    : '/contribuer'
+
   return (
     <>
       <script
@@ -101,7 +110,7 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
         typeLabel={ORGANISATION_TYPE_LABELS[organisation.organisationType]}
         presentation={organisation.presentation}
         links={links}
-        membersCount={current.length}
+        counts={{ statements: statements.length, subjects: groups.length, members: current.length }}
         adminMenu={
           canEdit && (
             <AdminMenu actions={[{ label: 'Modifier', icon: '✎', href: `/o/${slug}/modifier` }]} />
@@ -109,29 +118,33 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
         }
         actions={
           <>
-            {canAffiliate && (
-              <Button href={`/o/${slug}/affilier`}>Affilier une personnalité</Button>
-            )}
+            <Button href={newStatementHref}>Ajouter une prise de position</Button>
             <ShareButton compact title={organisation.name} />
           </>
         }
       />
 
-      <ContentWithSidebar topMargin hideLatestStatements aside={<OrganisationStatementsSoon />}>
+      <ContentWithSidebar
+        topMargin
+        aside={
+          <OrganisationMembers
+            organisationSlug={slug}
+            current={current}
+            former={former}
+            canAffiliate={canAffiliate}
+            canRemove={canRemove}
+          />
+        }
+      >
         <SectionTabs
           ariaLabel="Sections de l'organisation"
-          active="Personnalités affiliées"
+          active="Prises de position"
           tabs={[
-            { label: 'Personnalités affiliées', count: memberships.length },
-            { label: 'Prises de position', soon: true },
+            { label: 'Prises de position', count: statements.length },
+            { label: 'Analyses', soon: true },
           ]}
         />
-        <OrganisationMembers
-          organisationSlug={slug}
-          current={current}
-          former={former}
-          canRemove={canRemove}
-        />
+        <StatementsBySubject groups={groups} subjectHref={(subjectSlug) => `/s/${subjectSlug}`} />
       </ContentWithSidebar>
     </>
   )

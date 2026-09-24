@@ -1,41 +1,44 @@
-.empty {
-  composes: body from '../../../../styles/text.module.css';
+.card {
   padding: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
 }
 
-.card {
-  background-color: var(--card);
-  border-radius: var(--radius-card);
-  padding: 8px 24px;
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.group {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.group:last-child {
-  border-bottom: none;
-}
-
-.groupTitle {
+.title {
   composes: label from '../../../../styles/text.module.css';
-  margin-bottom: 4px;
 }
 
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.action {
+  composes: meta from '../../../../styles/text.module.css';
+  color: var(--signal);
+}
+
+.action:link,
+.action:visited {
+  color: var(--signal);
+}
+
+.action:hover {
+  color: var(--signal-dark);
+}
+
+.empty {
+  composes: small from '../../../../styles/text.module.css';
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -54,7 +57,7 @@
 .name,
 .name:link,
 .name:visited {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink);
 }
@@ -65,14 +68,17 @@
 
 .details {
   composes: meta from '../../../../styles/text.module.css';
+  font-size: 11px;
 }
 
-.remove {
-  flex: none;
+.former {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
-@media (max-width: 768px) {
-  .card {
-    padding: 8px 16px;
-  }
+.formerTitle {
+  composes: label from '../../../../styles/text.module.css';
+  color: var(--ink-3);
+  margin-bottom: 4px;
 }

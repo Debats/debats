@@ -48,7 +48,7 @@ export default async function EditStatementPage({ params }: PageProps) {
 
   if (!figure || !subject) notFound()
   if (!statement) notFound()
-  if (statement.publicFigureId !== figure.id) notFound()
+  if (statement.author.kind !== 'public_figure' || statement.author.id !== figure.id) notFound()
 
   const positions = await Effect.runPromise(positionRepo.findBySubjectId(subject.id))
   const returnHref = `/p/${slug}/s/${subjectSlug}`

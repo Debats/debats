@@ -608,8 +608,9 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           id: string
+          organisation_id: string | null
           position_id: string
-          public_figure_id: string
+          public_figure_id: string | null
           quote: string
           source_name: string
           source_url: string | null
@@ -622,8 +623,9 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           id?: string
+          organisation_id?: string | null
           position_id: string
-          public_figure_id: string
+          public_figure_id?: string | null
           quote: string
           source_name: string
           source_url?: string | null
@@ -636,8 +638,9 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           id?: string
+          organisation_id?: string | null
           position_id?: string
-          public_figure_id?: string
+          public_figure_id?: string | null
           quote?: string
           source_name?: string
           source_url?: string | null
@@ -651,6 +654,20 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statements_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statements_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "v_organisation_summary"
             referencedColumns: ["id"]
           },
           {
@@ -837,6 +854,8 @@ export type Database = {
             | null
           presentation: string | null
           slug: string | null
+          statements_count: number | null
+          subjects_count: number | null
         }
         Relationships: []
       }

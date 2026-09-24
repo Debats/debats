@@ -2,7 +2,13 @@ import * as Sentry from '@sentry/nextjs'
 import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../types/database.types'
-import { Statement, StatementId, LatestStatement } from '../../domain/entities/statement'
+import {
+  Statement,
+  StatementId,
+  LatestStatement,
+  organisationAuthor,
+  publicFigureAuthor,
+} from '../../domain/entities/statement'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
@@ -33,10 +39,17 @@ type PositionRow = Database['public']['Tables']['positions']['Row']
 type SubjectRow = Database['public']['Tables']['subjects']['Row']
 type PublicFigureRow = Database['public']['Tables']['public_figures']['Row']
 
+/** The database guarantees exactly one of the two author columns is set */
+function mapAuthor(row: Pick<StatementRow, 'public_figure_id' | 'organisation_id'>) {
+  if (row.organisation_id) return organisationAuthor(row.organisation_id)
+  if (row.public_figure_id) return publicFigureAuthor(row.public_figure_id)
+  throw new Error('Statement without author')
+}
+
 function mapStatementRow(row: StatementRow): Statement {
   return Statement.make({
     id: StatementId.make(row.id),
-    publicFigureId: row.public_figure_id,
+    author: mapAuthor(row),
     positionId: row.position_id,
     statementType: row.statement_type,
     sourceName: row.source_name,
@@ -92,7 +105,7 @@ function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
 }
 
 const STATEMENT_WITH_DETAILS_QUERY = `
-  id, public_figure_id, position_id, statement_type, source_name, source_url, quote, stated_at,
+  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
   created_by, created_at, updated_at, deleted_at,
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
@@ -173,7 +186,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(
               `
-            id, public_figure_id, position_id, statement_type, source_name, source_url, quote, stated_at,
+            id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
             created_by, created_at, updated_at, deleted_at,
             positions!inner (
               id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
@@ -214,6 +227,21 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements with details', error),
       }),
 
+    findByOrganisationWithDetails: (organisationId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select(STATEMENT_WITH_DETAILS_QUERY)
+            .eq('organisation_id', organisationId)
+            .is('deleted_at', null)
+
+          if (error) throw error
+          return data.map(mapStatementWithDetailsRow)
+        },
+        catch: (error) => dbError('Failed to fetch organisation statements', error),
+      }),
+
     findByPublicFigureAndSubject: (publicFigureId: string, subjectId: string) =>
       Effect.tryPromise({
         try: async () => {
@@ -237,7 +265,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .select(
               `
-            id, public_figure_id, position_id, statement_type, source_name, source_url, quote, stated_at,
+            id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
             created_by, created_at, updated_at, deleted_at,
             positions!inner (
               id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
@@ -363,7 +391,10 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .from('statements')
             .insert({
               id: statement.id,
-              public_figure_id: statement.publicFigureId,
+              public_figure_id:
+                statement.author.kind === 'public_figure' ? statement.author.id : null,
+              organisation_id:
+                statement.author.kind === 'organisation' ? statement.author.id : null,
               position_id: statement.positionId,
               statement_type: statement.statementType,
               source_name: statement.sourceName,

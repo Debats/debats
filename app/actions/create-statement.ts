@@ -6,7 +6,8 @@ import { createStatementRepository } from '../../infra/database/statement-reposi
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
-import { parseStatementType } from '../../domain/entities/statement'
+import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
+import { parseStatementType, publicFigureAuthor } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -26,7 +27,7 @@ export async function createStatementAction(
   const result = await createStatementUseCase({
     contributor,
     subjectId,
-    publicFigureId: String(formData.get('publicFigureId') ?? ''),
+    author: publicFigureAuthor(String(formData.get('publicFigureId') ?? '')),
     positionId: String(formData.get('positionId') ?? ''),
     statementType: parseStatementType(formData.get('statementType')),
     sourceName: String(formData.get('sourceName') ?? ''),
@@ -36,6 +37,7 @@ export async function createStatementAction(
     statementRepo: createStatementRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
+    organisationRepo: createOrganisationRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
   })
 

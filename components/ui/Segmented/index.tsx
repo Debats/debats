@@ -13,10 +13,12 @@ interface SegmentedProps {
   /** Libellé de l'option active */
   active: string
   ariaLabel: string
+  /** Rend les options cliquables ; sans lui, le contrôle est purement indicatif */
+  onChange?: (label: string) => void
 }
 
-/** Contrôle segmenté : une option active, les autres annoncées. */
-export default function Segmented({ items, active, ariaLabel }: SegmentedProps) {
+/** Contrôle segmenté : une option active, les autres cliquables ou annoncées. */
+export default function Segmented({ items, active, ariaLabel, onChange }: SegmentedProps) {
   return (
     <div className={styles.segmented} role="group" aria-label={ariaLabel}>
       {items.map((item) => {
@@ -28,6 +30,19 @@ export default function Segmented({ items, active, ariaLabel }: SegmentedProps) 
           </span>
         )
         if (item.soon) return <ComingSoon key={item.label}>{content}</ComingSoon>
+        if (onChange) {
+          return (
+            <button
+              key={item.label}
+              type="button"
+              className={styles.button}
+              aria-pressed={isActive}
+              onClick={() => onChange(item.label)}
+            >
+              {content}
+            </button>
+          )
+        }
         return (
           <span key={item.label} aria-current={isActive ? 'true' : undefined}>
             {content}

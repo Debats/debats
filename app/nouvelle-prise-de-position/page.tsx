@@ -36,12 +36,21 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
   }
 
   const params = await searchParams
-  const figureId = typeof params.figureId === 'string' ? params.figureId : undefined
-  const figureName = typeof params.figureName === 'string' ? params.figureName : undefined
-  const subjectId = typeof params.subjectId === 'string' ? params.subjectId : undefined
-  const subjectTitle = typeof params.subjectTitle === 'string' ? params.subjectTitle : undefined
+  const param = (name: string): string | undefined => {
+    const value = params[name]
+    return typeof value === 'string' ? value : undefined
+  }
+  const figureId = param('figureId')
+  const figureName = param('figureName')
+  const organisationId = param('organisationId')
+  const organisationName = param('organisationName')
+  const subjectId = param('subjectId')
+  const subjectTitle = param('subjectTitle')
 
   const initialFigure = figureId && figureName ? { id: figureId, name: figureName } : undefined
+  const initialOrganisation =
+    organisationId && organisationName ? { id: organisationId, name: organisationName } : undefined
+  const initialAuthor = initialOrganisation ?? initialFigure
   let initialSubject: { id: string; title: string; slug?: string } | undefined
   if (subjectId && subjectTitle) {
     const supabase = createAdminSupabaseClient()
@@ -52,7 +61,11 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
 
   return (
     <StatementDraftProvider
-      initial={{ figureName: initialFigure?.name ?? '', subjectTitle: initialSubject?.title ?? '' }}
+      initial={{
+        authorKind: initialOrganisation ? 'organisation' : 'public_figure',
+        authorName: initialAuthor?.name ?? '',
+        subjectTitle: initialSubject?.title ?? '',
+      }}
     >
       <ContentWithSidebar
         topMargin
@@ -95,11 +108,15 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
           )}
           <h1 className={styles.title}>Nouvelle prise de position</h1>
           <p className={styles.intro}>
-            Une citation datée, sa source, la position qu’elle défend : reliez une personnalité à
-            une position sur un sujet.
+            Une citation datée, sa source, la position qu’elle défend : reliez une personnalité ou
+            une organisation à une position sur un sujet.
           </p>
         </header>
-        <NewStatementForm initialFigure={initialFigure} initialSubject={initialSubject} />
+        <NewStatementForm
+          initialFigure={initialFigure}
+          initialOrganisation={initialOrganisation}
+          initialSubject={initialSubject}
+        />
       </ContentWithSidebar>
     </StatementDraftProvider>
   )

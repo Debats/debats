@@ -1,11 +1,12 @@
 'use client'
 
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { StatementType } from '../../../domain/entities/statement'
+import { StatementAuthorKind, StatementType } from '../../../domain/entities/statement'
 
 /** Ce que l'utilisateur a saisi jusqu'ici, pour l'aperçu en marge du formulaire. */
 export interface StatementDraft {
-  figureName: string
+  authorKind: StatementAuthorKind
+  authorName: string
   subjectTitle: string
   positionTitle: string
   quote: string
@@ -15,7 +16,8 @@ export interface StatementDraft {
 }
 
 export const EMPTY_DRAFT: StatementDraft = {
-  figureName: '',
+  authorKind: 'public_figure',
+  authorName: '',
   subjectTitle: '',
   positionTitle: '',
   quote: '',

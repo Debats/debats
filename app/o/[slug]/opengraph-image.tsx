@@ -3,6 +3,7 @@ import { Effect, Option } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../../infra/database/organisation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
+import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
 import {
@@ -32,9 +33,12 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
     return new ImageResponse(<div>Organisation introuvable</div>, { ...size })
   }
 
-  const [memberships, fonts, brandMark, logoSrc] = await Promise.all([
+  const [memberships, statements, fonts, brandMark, logoSrc] = await Promise.all([
     Effect.runPromise(
       createOrganisationMembershipRepository(supabase).findByOrganisationId(organisation.id),
+    ),
+    Effect.runPromise(
+      createStatementRepository(supabase).findByOrganisationWithDetails(organisation.id),
     ),
     loadOgFonts(),
     loadBrandMark(),
@@ -44,12 +48,16 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
     isCurrentMembership(membership),
   ).length
   const acronym = Option.getOrNull(organisation.acronym)
+  const footer = [
+    `${statements.length} ${plural(statements.length, 'prise de position', 'prises de position')}`,
+    `${membersCount} ${plural(membersCount, 'personnalité affiliée', 'personnalités affiliées')}`,
+  ].join(' · ')
 
   return new ImageResponse(
     <OgFrame
       kicker={`Organisation · ${ORGANISATION_TYPE_LABELS[organisation.organisationType]}`}
       brandMark={brandMark}
-      footer={`${membersCount} ${plural(membersCount, 'personnalité affiliée', 'personnalités affiliées')}`}
+      footer={footer}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
         {logoSrc && (

@@ -4,6 +4,7 @@ import { generateSlug as generatePublicFigureSlug } from '../entities/public-fig
 import { generateSlug as generateSubjectSlug } from '../entities/subject'
 import { DraftStatementRepository } from '../repositories/draft-statement-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
+import { OrganisationRepository } from '../repositories/organisation-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
@@ -13,6 +14,7 @@ import { createPublicFigureUseCase } from './create-public-figure'
 import { createSubjectUseCase } from './create-subject'
 import { createPositionUseCase } from './create-position'
 import { createStatementUseCase } from './create-statement'
+import { publicFigureAuthor } from '../entities/statement'
 import { ContributorIdentity, FieldErrors } from './types'
 
 type ValidateDraftParams = {
@@ -20,6 +22,8 @@ type ValidateDraftParams = {
   contributor: ContributorIdentity
   draftRepo: DraftStatementRepository
   publicFigureRepo: PublicFigureRepository
+  /** Drafts only concern public figures, but the statement use case checks any author */
+  organisationRepo: OrganisationRepository
   subjectRepo: SubjectRepository
   positionRepo: PositionRepository
   statementRepo: StatementRepository
@@ -40,6 +44,7 @@ export async function validateDraft(
     contributor,
     draftRepo,
     publicFigureRepo,
+    organisationRepo,
     subjectRepo,
     positionRepo,
     statementRepo,
@@ -78,7 +83,7 @@ export async function validateDraft(
   const statementResult = await createStatementUseCase({
     contributor,
     subjectId: subjectId.right,
-    publicFigureId: publicFigureId.right,
+    author: publicFigureAuthor(publicFigureId.right),
     positionId: positionId.right,
     statementType: 'declaration',
     sourceName: draft.sourceName,
@@ -88,6 +93,7 @@ export async function validateDraft(
     statementRepo,
     positionRepo,
     publicFigureRepo,
+    organisationRepo,
     reputationRepo,
   })
   if (Either.isLeft(statementResult)) {

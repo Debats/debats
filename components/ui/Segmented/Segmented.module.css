@@ -19,6 +19,24 @@
   color: var(--ink-2);
 }
 
+.button {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+}
+
+.button:hover .segment {
+  color: var(--ink);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .segmentOn {
   background-color: var(--card);
   color: var(--ink);

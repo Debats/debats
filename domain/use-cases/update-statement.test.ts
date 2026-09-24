@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { updateStatementUseCase } from './update-statement'
-import { createStatement, Statement } from '../entities/statement'
+import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
 import { Position, createPosition } from '../entities/position'
 
 const existingPosition = createPosition({
@@ -26,7 +26,7 @@ const positionOnOtherSubject = createPosition({
 })
 
 const existingStatement = createStatement({
-  publicFigureId: 'figure-1',
+  author: publicFigureAuthor('figure-1'),
   positionId: existingPosition.id,
   statementType: 'declaration',
   sourceName: 'Le Monde',
@@ -44,6 +44,7 @@ const fakeStatementRepo = {
   findByPositionId: () => Effect.succeed([]),
   findByPositionIdWithFigures: () => Effect.succeed([]),
   findByPublicFigureWithDetails: () => Effect.succeed([]),
+  findByOrganisationWithDetails: () => Effect.succeed([]),
   findByPublicFigureAndSubject: () => Effect.succeed([]),
   findBySubjectWithFigures: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),

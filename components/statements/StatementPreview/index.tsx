@@ -22,8 +22,9 @@ function parseDate(value: string): Date | null {
 /** Aperçu de la prise de position telle qu'elle apparaîtra sur le site. */
 export default function StatementPreview() {
   const { draft } = useStatementDraft()
-  const isEmpty = !draft.figureName && !draft.quote && !draft.positionTitle
+  const isEmpty = !draft.authorName && !draft.quote && !draft.positionTitle
   const date = parseDate(draft.statedAt)
+  const isOrganisation = draft.authorKind === 'organisation'
 
   return (
     <aside className={styles.card} aria-live="polite">
@@ -33,11 +34,16 @@ export default function StatementPreview() {
       ) : (
         <>
           <div className={styles.head}>
-            <span className={styles.avatar} aria-hidden="true">
-              {initials(draft.figureName || '?')}
+            <span
+              className={isOrganisation ? `${styles.avatar} ${styles.avatarOrg}` : styles.avatar}
+              aria-hidden="true"
+            >
+              {initials(draft.authorName || '?')}
             </span>
             <p className={styles.text}>
-              <strong className={styles.name}>{draft.figureName || 'Une personnalité'}</strong>
+              <strong className={styles.name}>
+                {draft.authorName || (isOrganisation ? 'Une organisation' : 'Une personnalité')}
+              </strong>
               <br />
               pour <em>{draft.positionTitle || '…'}</em>
               {draft.subjectTitle && (

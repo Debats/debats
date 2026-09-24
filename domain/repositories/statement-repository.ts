@@ -45,6 +45,13 @@ export interface StatementRepository {
   ): Effect.Effect<StatementWithDetails[], DatabaseError>
 
   /**
+   * Get all statements of an organisation with position and subject details
+   */
+  findByOrganisationWithDetails(
+    organisationId: string,
+  ): Effect.Effect<StatementWithDetails[], DatabaseError>
+
+  /**
    * Get all statements for a public figure on a specific subject
    */
   findByPublicFigureAndSubject(

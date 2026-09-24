@@ -5,6 +5,7 @@ import Link from 'next/link'
 import * as Sentry from '@sentry/nextjs'
 import { addStatementAction, ActionResult } from '../../../app/actions/add-statement'
 import { searchPublicFigures } from '../../../app/actions/search-public-figures'
+import { searchOrganisations } from '../../../app/actions/search-organisations'
 import { searchSubjects } from '../../../app/actions/search-subjects'
 import {
   getPositionsForSubject,
@@ -14,6 +15,7 @@ import { FieldErrors } from '../../../domain/use-cases/create-statement'
 import {
   STATEMENT_TYPES,
   STATEMENT_TYPE_LABELS,
+  StatementAuthorKind,
   parseStatementType,
 } from '../../../domain/entities/statement'
 import Combobox from '../../ui/Combobox'
@@ -27,15 +29,41 @@ import FormSuccess from '../../ui/FormSuccess'
 import { useStatementDraft } from '../StatementDraft'
 import styles from './NewStatementForm.module.css'
 
+interface NamedEntity {
+  id: string
+  name: string
+}
+
 interface NewStatementFormProps {
-  initialFigure?: { id: string; name: string }
+  initialFigure?: NamedEntity
+  initialOrganisation?: NamedEntity
   initialSubject?: { id: string; title: string; slug?: string }
 }
 
-export default function NewStatementForm({ initialFigure, initialSubject }: NewStatementFormProps) {
+const AUTHOR_KINDS: Record<string, StatementAuthorKind> = {
+  'Une personnalité': 'public_figure',
+  'Une organisation': 'organisation',
+}
+
+const AUTHOR_LABELS: Record<StatementAuthorKind, string> = {
+  public_figure: 'Une personnalité',
+  organisation: 'Une organisation',
+}
+
+export default function NewStatementForm({
+  initialFigure,
+  initialOrganisation,
+  initialSubject,
+}: NewStatementFormProps) {
   const { updateDraft } = useStatementDraft()
 
+  const [authorKind, setAuthorKind] = useState<StatementAuthorKind>(
+    initialOrganisation ? 'organisation' : 'public_figure',
+  )
   const [selectedFigureId, setSelectedFigureId] = useState(initialFigure?.id ?? '')
+  const [selectedOrganisationId, setSelectedOrganisationId] = useState(
+    initialOrganisation?.id ?? '',
+  )
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedSubjectSlug, setSelectedSubjectSlug] = useState(initialSubject?.slug ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
@@ -49,7 +77,8 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
   const [isPending, setIsPending] = useState(false)
   const [successResult, setSuccessResult] = useState<{
     subjectSlug: string
-    figureSlug: string
+    authorHref: string
+    authorLabel: string
   }>()
 
   useEffect(() => {
@@ -69,6 +98,14 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
     return results.map((f) => ({ id: f.id, label: f.name }))
   }, [])
 
+  const handleSearchOrganisations = useCallback(async (query: string) => {
+    const results = await searchOrganisations(query)
+    return results.map((o) => ({
+      id: o.id,
+      label: o.acronym ? `${o.name} (${o.acronym})` : o.name,
+    }))
+  }, [])
+
   const handleSearchSubjects = useCallback(async (query: string) => {
     const results = await searchSubjects(query)
     for (const s of results) {
@@ -76,6 +113,18 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
     }
     return results.map((s) => ({ id: s.id, label: s.title }))
   }, [])
+
+  const changeAuthorKind = useCallback(
+    (label: string) => {
+      const kind = AUTHOR_KINDS[label]
+      if (!kind || kind === authorKind) return
+      setAuthorKind(kind)
+      setSelectedFigureId('')
+      setSelectedOrganisationId('')
+      updateDraft({ authorKind: kind, authorName: '' })
+    },
+    [authorKind, updateDraft],
+  )
 
   const selectPosition = useCallback(
     (id: string) => {
@@ -107,7 +156,9 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
       setIsPending(true)
 
       const formData = new FormData()
+      formData.set('authorKind', authorKind)
       formData.set('publicFigureId', selectedFigureId)
+      formData.set('organisationId', selectedOrganisationId)
       formData.set('subjectId', selectedSubjectId)
       formData.set('positionId', selectedPositionId)
 
@@ -133,7 +184,8 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
         } else {
           setSuccessResult({
             subjectSlug: result.subjectSlug,
-            figureSlug: result.figureSlug,
+            authorHref: result.authorHref,
+            authorLabel: result.authorLabel,
           })
         }
       } catch (err) {
@@ -142,7 +194,7 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
         setIsPending(false)
       }
     },
-    [selectedFigureId, selectedSubjectId, selectedPositionId],
+    [authorKind, selectedFigureId, selectedOrganisationId, selectedSubjectId, selectedPositionId],
   )
 
   if (successResult) {
@@ -153,10 +205,10 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
         href: `/s/${successResult.subjectSlug}`,
       })
     }
-    if (successResult.figureSlug) {
+    if (successResult.authorHref) {
       secondaryActions.push({
-        label: 'Voir la personnalité',
-        href: `/p/${successResult.figureSlug}`,
+        label: successResult.authorLabel,
+        href: successResult.authorHref,
       })
     }
 
@@ -172,6 +224,8 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
     )
   }
 
+  const isOrganisation = authorKind === 'organisation'
+
   return (
     <form onSubmit={handleSubmit} onChange={handleFormChange} className={styles.form}>
       {error && <FormError message={error} />}
@@ -182,31 +236,64 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
         </legend>
         <Segmented
           ariaLabel="Type d’acteur"
-          active="Une personnalité"
-          items={[{ label: 'Une personnalité' }, { label: 'Une organisation', soon: true }]}
+          active={AUTHOR_LABELS[authorKind]}
+          items={[{ label: 'Une personnalité' }, { label: 'Une organisation' }]}
+          onChange={changeAuthorKind}
         />
-        <Combobox
-          label="Personnalité"
-          id="publicFigureId"
-          name="publicFigureId"
-          required
-          placeholder="Tapez un nom…"
-          onSearch={handleSearchFigures}
-          onSelect={(id, label) => {
-            setSelectedFigureId(id)
-            updateDraft({ figureName: label })
-          }}
-          initialItem={
-            initialFigure ? { id: initialFigure.id, label: initialFigure.name } : undefined
-          }
-        />
-        <p className={styles.hint}>
-          La personnalité doit avoir fait l’objet d’au moins deux publications dans des sources
-          indépendantes. Elle n’existe pas encore ?{' '}
-          <Link href="/p/ajouter" className={styles.hintLink}>
-            Créer une personnalité
-          </Link>
-        </p>
+        {isOrganisation ? (
+          <Combobox
+            key="organisation"
+            label="Organisation"
+            id="organisationId"
+            name="organisationId"
+            required
+            placeholder="Tapez un nom ou un sigle…"
+            onSearch={handleSearchOrganisations}
+            onSelect={(id, label) => {
+              setSelectedOrganisationId(id)
+              updateDraft({ authorName: label })
+            }}
+            initialItem={
+              initialOrganisation
+                ? { id: initialOrganisation.id, label: initialOrganisation.name }
+                : undefined
+            }
+          />
+        ) : (
+          <Combobox
+            key="public_figure"
+            label="Personnalité"
+            id="publicFigureId"
+            name="publicFigureId"
+            required
+            placeholder="Tapez un nom…"
+            onSearch={handleSearchFigures}
+            onSelect={(id, label) => {
+              setSelectedFigureId(id)
+              updateDraft({ authorName: label })
+            }}
+            initialItem={
+              initialFigure ? { id: initialFigure.id, label: initialFigure.name } : undefined
+            }
+          />
+        )}
+        {isOrganisation ? (
+          <p className={styles.hint}>
+            Un parti, une ONG, un syndicat, une entreprise ou un collectif qui s’exprime en son nom
+            : communiqué, programme, vote, action. Elle n’existe pas encore ?{' '}
+            <Link href="/o/ajouter" className={styles.hintLink}>
+              Créer une organisation
+            </Link>
+          </p>
+        ) : (
+          <p className={styles.hint}>
+            La personnalité doit avoir fait l’objet d’au moins deux publications dans des sources
+            indépendantes. Elle n’existe pas encore ?{' '}
+            <Link href="/p/ajouter" className={styles.hintLink}>
+              Créer une personnalité
+            </Link>
+          </p>
+        )}
       </fieldset>
 
       <fieldset className={styles.section}>
@@ -295,7 +382,11 @@ export default function NewStatementForm({ initialFigure, initialSubject }: NewS
           id="quote"
           name="quote"
           required
-          placeholder="Les mots exacts de la personnalité (10 caractères au moins)"
+          placeholder={
+            isOrganisation
+              ? 'Les mots exacts du communiqué, du programme ou du vote (10 caractères au moins)'
+              : 'Les mots exacts de la personnalité (10 caractères au moins)'
+          }
           rows={4}
           error={fieldErrors?.quote}
         />

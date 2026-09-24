@@ -3,6 +3,12 @@ import OrganisationLogo from '../../../../components/organisations/OrganisationL
 import { plural } from '../../../../lib/plural'
 import styles from './OrganisationHero.module.css'
 
+interface OrganisationCounts {
+  statements: number
+  subjects: number
+  members: number
+}
+
 interface OrganisationHeroProps {
   slug: string
   name: string
@@ -10,7 +16,7 @@ interface OrganisationHeroProps {
   typeLabel: string
   presentation: string
   links: ExternalLink[]
-  membersCount: number
+  counts: OrganisationCounts
   /** Menu d'administration affiché à côté du nom, si l'utilisateur y a droit */
   adminMenu?: React.ReactNode
   /** Action principale et partage */
@@ -24,7 +30,7 @@ export default function OrganisationHero({
   typeLabel,
   presentation,
   links,
-  membersCount,
+  counts,
   adminMenu,
   actions,
 }: OrganisationHeroProps) {
@@ -48,11 +54,14 @@ export default function OrganisationHero({
       links={links}
       stats={[
         {
-          value: membersCount,
-          label: plural(membersCount, 'personnalité affiliée', 'personnalités affiliées'),
+          value: counts.statements,
+          label: plural(counts.statements, 'prise de position', 'prises de position'),
         },
-        { value: '–', label: 'prises de position', compact: true, soon: true },
-        { value: '–', label: 'sujets', compact: true, soon: true },
+        { value: counts.subjects, label: plural(counts.subjects, 'sujet', 'sujets') },
+        {
+          value: counts.members,
+          label: plural(counts.members, 'personnalité affiliée', 'personnalités affiliées'),
+        },
       ]}
       actions={actions}
     />

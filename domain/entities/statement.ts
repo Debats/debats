@@ -18,9 +18,23 @@ export function parseStatementType(value: unknown): StatementType {
   return STATEMENT_TYPES.includes(str as StatementType) ? (str as StatementType) : 'declaration'
 }
 
+/**
+ * Who takes position: a public figure or an organisation, never both.
+ * Organisations speak through communiqués, programmes, votes and actions.
+ */
+export const StatementAuthor = S.Union(
+  S.Struct({ kind: S.Literal('public_figure'), id: S.String }),
+  S.Struct({ kind: S.Literal('organisation'), id: S.String }),
+)
+export type StatementAuthor = S.Schema.Type<typeof StatementAuthor>
+export type StatementAuthorKind = StatementAuthor['kind']
+
+export const publicFigureAuthor = (id: string): StatementAuthor => ({ kind: 'public_figure', id })
+export const organisationAuthor = (id: string): StatementAuthor => ({ kind: 'organisation', id })
+
 export const Statement = S.Struct({
   id: StatementId,
-  publicFigureId: S.String,
+  author: StatementAuthor,
   positionId: S.String,
   statementType: S.Literal(...STATEMENT_TYPES),
   sourceName: S.String.pipe(S.minLength(1), S.maxLength(255)),
@@ -35,7 +49,7 @@ export const Statement = S.Struct({
 export type Statement = S.Schema.Type<typeof Statement>
 
 export const createStatement = (params: {
-  publicFigureId: string
+  author: StatementAuthor
   positionId: string
   statementType: StatementType
   sourceName: string
@@ -48,7 +62,7 @@ export const createStatement = (params: {
 
   return Statement.make({
     id: StatementId.make(crypto.randomUUID()),
-    publicFigureId: params.publicFigureId,
+    author: params.author,
     positionId: params.positionId,
     statementType: params.statementType,
     sourceName: params.sourceName,

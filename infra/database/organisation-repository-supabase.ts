@@ -94,6 +94,21 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
 
     findById: (id) => findOne('id', id, 'Failed to fetch organisation'),
 
+    searchByName: (query, limit = 10) =>
+      Effect.tryPromise({
+        try: async () => {
+          // The `or` filter is a PostgREST expression: strip its separators from user input
+          const term = query.replace(/[,()]/g, '')
+          const { data, error } = await live()
+            .or(`name.ilike.%${term}%,acronym.ilike.%${term}%`)
+            .order('name')
+            .limit(limit)
+          if (error) throw error
+          return data.map(mapRow)
+        },
+        catch: (error) => dbError('Failed to search organisations', error),
+      }),
+
     create: (organisation) =>
       Effect.tryPromise({
         try: async () => {
@@ -153,6 +168,8 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
               organisationType: row.organisation_type,
               presentation: row.presentation,
               membersCount: row.members_count ?? 0,
+              statementsCount: row.statements_count ?? 0,
+              subjectsCount: row.subjects_count ?? 0,
             }),
           )
         },

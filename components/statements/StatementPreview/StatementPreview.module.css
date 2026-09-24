@@ -36,6 +36,13 @@
   flex: none;
 }
 
+/* Une organisation se reconnaît à son carré arrondi violet, comme son logo */
+.avatarOrg {
+  border-radius: var(--radius-control);
+  background-color: var(--org-soft);
+  color: var(--org-dark);
+}
+
 .text {
   font-size: 14px;
   line-height: 1.45;

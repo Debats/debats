@@ -1,23 +1,16 @@
 import Link from 'next/link'
-import ComingSoon from '../../../../components/ui/ComingSoon'
-import Segmented from '../../../../components/ui/Segmented'
-import ShowMore from '../../../../components/ui/ShowMore'
-import { STATEMENT_TYPE_LABELS } from '../../../../domain/entities/statement'
-import { StatementWithDetails } from '../../../../domain/repositories/statement-repository'
-import { formatShortDate } from '../../../../lib/format-date'
-import styles from './FigureStatements.module.css'
+import ComingSoon from '../../ui/ComingSoon'
+import Segmented from '../../ui/Segmented'
+import ShowMore from '../../ui/ShowMore'
+import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
+import { SubjectGroup } from '../../../domain/services/statements-by-subject'
+import { formatShortDate } from '../../../lib/format-date'
+import styles from './StatementsBySubject.module.css'
 
-export interface SubjectGroup {
-  subject: StatementWithDetails['subject']
-  entries: Array<{
-    statement: StatementWithDetails['statement']
-    position: StatementWithDetails['position']
-  }>
-}
-
-interface FigureStatementsProps {
-  figureSlug: string
+interface StatementsBySubjectProps {
   groups: SubjectGroup[]
+  /** Où mène le titre d'un sujet : la page de l'auteur sur ce sujet, ou le sujet lui-même */
+  subjectHref: (subjectSlug: string) => string
 }
 
 function ChevronIcon() {
@@ -45,11 +38,11 @@ function moreSubjectsLabel(hidden: number) {
   return hidden === 1 ? 'Voir le dernier sujet' : `Voir les ${hidden} autres sujets`
 }
 
-/** Les prises de position d'une personnalité, groupées par sujet. */
-export default function FigureStatements({ figureSlug, groups }: FigureStatementsProps) {
+/** Les prises de position d'un auteur (personnalité ou organisation), groupées par sujet. */
+export default function StatementsBySubject({ groups, subjectHref }: StatementsBySubjectProps) {
   const subjectItems = groups.map(({ subject, entries }) => (
     <article key={subject.id} className={styles.subject}>
-      <Link href={`/p/${figureSlug}/s/${subject.slug}`} className={styles.subjectTitle}>
+      <Link href={subjectHref(subject.slug)} className={styles.subjectTitle}>
         {subject.title}
       </Link>
       {entries.map(({ statement, position }) => (

@@ -25,6 +25,8 @@ export default function OrganisationCard({ organisation }: OrganisationCardProps
         </span>
         <span className={styles.presentation}>{organisation.presentation}</span>
         <span className={styles.meta}>
+          {organisation.statementsCount}{' '}
+          {plural(organisation.statementsCount, 'prise de position', 'prises de position')} ·{' '}
           {organisation.membersCount}{' '}
           {plural(organisation.membersCount, 'personnalité affiliée', 'personnalités affiliées')}
         </span>
