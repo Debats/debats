@@ -32,8 +32,8 @@ export default async function ContribuerPage() {
           d&apos;une personnalité sur un sujet et ajoutez-la avec sa source.
         </li>
         <li>
-          <strong>Ajouter un sujet ou une personnalité</strong> : à partir d&apos;un certain niveau
-          de réputation, vous pouvez enrichir la base.
+          <strong>Ajouter un sujet, une personnalité ou une organisation</strong> : à partir
+          d&apos;un certain niveau de réputation, vous pouvez enrichir la base.
         </li>
         <li>
           <strong>Sourcer</strong> : chaque prise de position doit être appuyée par au moins une

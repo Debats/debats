@@ -1,18 +1,22 @@
 import FigureAvatar from '../../../../components/figures/FigureAvatar'
+import DetailHero, { ExternalLink } from '../../../../components/layout/DetailHero'
+import OrganisationTag from '../../../../components/organisations/OrganisationTag'
 import ComingSoon from '../../../../components/ui/ComingSoon'
 import { ActivityPeriod } from '../../../../domain/services/figure-activity'
 import { plural } from '../../../../lib/plural'
 import styles from './FigureHero.module.css'
 
-interface ExternalLink {
-  href: string
-  label: string
-}
-
 interface FigureCounts {
   statements: number
   subjects: number
   period: ActivityPeriod | null
+}
+
+export interface Affiliation {
+  organisationSlug: string
+  /** Nom court de l'organisation : son sigle quand elle en a un */
+  organisationLabel: string
+  role: string | null
 }
 
 interface FigureHeroProps {
@@ -21,6 +25,8 @@ interface FigureHeroProps {
   presentation: string
   links: ExternalLink[]
   counts: FigureCounts
+  /** Organisations dont la personnalité est membre aujourd'hui */
+  affiliations: Affiliation[]
   /** Menu d'administration affiché à côté du nom, si l'utilisateur y a droit */
   adminMenu?: React.ReactNode
   /** Action principale et partage */
@@ -38,72 +44,42 @@ export default function FigureHero({
   presentation,
   links,
   counts,
+  affiliations,
   adminMenu,
   actions,
 }: FigureHeroProps) {
   return (
-    <section className={styles.hero}>
-      <div className={styles.container}>
-        <div className={styles.kicker}>
+    <DetailHero
+      kicker={
+        <>
           <span className={styles.label}>Personnalité</span>
           <ComingSoon>
             <span className={styles.tag}>Rôle</span>
           </ComingSoon>
-          <ComingSoon>
-            <span className={`${styles.tag} ${styles.tagOrg}`}>Organisation</span>
-          </ComingSoon>
-        </div>
-
-        <div className={styles.grid}>
-          <div className={styles.main}>
-            <FigureAvatar slug={slug} name={name} size={96} />
-            <div>
-              <div className={styles.titleRow}>
-                <h1 className={styles.title}>{name}</h1>
-                {adminMenu}
-              </div>
-              <p className={styles.presentation}>{presentation}</p>
-              {links.length > 0 && (
-                <div className={styles.links}>
-                  {links.map((link) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.aside}>
-            <dl className={styles.stats}>
-              <div className={styles.stat}>
-                <dd className={styles.statValue}>{counts.statements}</dd>
-                <dt className={styles.statLabel}>
-                  {plural(counts.statements, 'prise de position', 'prises de position')}
-                </dt>
-              </div>
-              <div className={styles.stat}>
-                <dd className={styles.statValue}>{counts.subjects}</dd>
-                <dt className={styles.statLabel}>{plural(counts.subjects, 'sujet', 'sujets')}</dt>
-              </div>
-              <div className={styles.stat}>
-                <dd className={`${styles.statValue} ${styles.statPeriod}`}>
-                  {periodLabel(counts.period)}
-                </dd>
-                <dt className={styles.statLabel}>période</dt>
-              </div>
-            </dl>
-            <div className={styles.actions}>{actions}</div>
-          </div>
-        </div>
-      </div>
-    </section>
+          {affiliations.map((affiliation) => (
+            <OrganisationTag
+              key={affiliation.organisationSlug}
+              slug={affiliation.organisationSlug}
+              label={affiliation.organisationLabel}
+              role={affiliation.role}
+            />
+          ))}
+        </>
+      }
+      media={<FigureAvatar slug={slug} name={name} size={96} />}
+      title={name}
+      titleAside={adminMenu}
+      presentation={presentation}
+      links={links}
+      stats={[
+        {
+          value: counts.statements,
+          label: plural(counts.statements, 'prise de position', 'prises de position'),
+        },
+        { value: counts.subjects, label: plural(counts.subjects, 'sujet', 'sujets') },
+        { value: periodLabel(counts.period), label: 'période', compact: true },
+      ]}
+      actions={actions}
+    />
   )
 }

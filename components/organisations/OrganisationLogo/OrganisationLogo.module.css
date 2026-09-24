@@ -1,0 +1,20 @@
+.logo {
+  border-radius: var(--radius-control);
+  object-fit: contain;
+  background-color: var(--card);
+  padding: 6%;
+  flex: none;
+}
+
+.placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  background-color: var(--org-soft);
+  color: var(--org-dark);
+  font-family: var(--font-serif);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  flex: none;
+}

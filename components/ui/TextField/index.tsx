@@ -4,7 +4,7 @@ interface TextFieldProps {
   label: string
   id: string
   name?: string
-  type?: 'text' | 'email' | 'password'
+  type?: 'text' | 'email' | 'password' | 'url' | 'date'
   required?: boolean
   autoComplete?: string
   placeholder?: string

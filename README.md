@@ -61,6 +61,7 @@ Subject (Sujet)
 ├── Positions (ex: "Pour", "Contre", "Nuancé")
     └── Statements (Prises de position)
         ├── PublicFigure (Personnalité)
+        │   └── OrganisationMembership (Affiliation) ── Organisation
         ├── Evidence (Preuves/Sources)
         └── Arguments
 
@@ -72,6 +73,8 @@ Contributors (Contributeurs)
 - **Subject** : Les sujets de débat (ex: "Immigration", "Écologie", "Retraites")
 - **Position** : Les différentes positions possibles sur un sujet
 - **PublicFigure** : Les personnalités publiques (politiques, intellectuels, dirigeants d'institutions, porte-paroles d'organisations, etc.) - **Critère de notoriété : la personnalité doit avoir fait l'objet d'au moins deux publications dans des sources indépendantes et fiables** (inspiré des [critères d'admissibilité Wikipedia](https://fr.wikipedia.org/wiki/Wikip%C3%A9dia:Notori%C3%A9t%C3%A9_des_personnes)). La page Wikipedia n'est pas obligatoire.
+- **Organisation** : Les partis, ONG, syndicats, entreprises, lobbies, groupements économiques, associations et collectifs qui prennent part au débat public. Même critère de notoriété que les personnalités ; logo optionnel
+- **OrganisationMembership** : L'affiliation d'une personnalité à une organisation, avec un rôle et une période optionnels. Sans date de fin, l'affiliation est considérée comme actuelle
 - **Statement** : Les prises de position concrètes d'une personnalité sur une position
 - **Evidence** : Les preuves et sources (citations, articles, vidéos, discours)
 - **Argument** : Les arguments développés pour défendre une position
@@ -213,6 +216,8 @@ Les URLs locales sont configurées sur le port **64321** (voir `supabase/config.
 - [x] Authentification Supabase (inscription par invitation)
 - [x] CRUD sujets, personnalités, positions, prises de position
 - [x] Système de réputation des contributeurs
+- [x] Organisations et affiliations des personnalités
+- [ ] Prises de position des organisations
 
 ### Phase 2 : Fonctionnalités collaboratives
 

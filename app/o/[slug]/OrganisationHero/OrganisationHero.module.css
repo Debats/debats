@@ -1,0 +1,24 @@
+.label {
+  composes: label from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.typeTag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--org-soft);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--org-dark);
+}
+
+.acronym {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 15px;
+  color: var(--org-dark);
+}

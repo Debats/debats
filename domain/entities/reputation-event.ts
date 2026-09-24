@@ -3,6 +3,8 @@ import { type RewardableAction } from '../reputation/permissions'
 export type RelatedEntityType =
   | 'subject'
   | 'public_figure'
+  | 'organisation'
+  | 'organisation_membership'
   | 'position'
   | 'statement'
   | 'invitation'

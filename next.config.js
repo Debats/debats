@@ -24,6 +24,10 @@ const nextConfig = {
         source: '/avatars/:path*',
         destination: `${supabaseUrl}/storage/v1/object/public/avatars/:path*`,
       },
+      {
+        source: '/logos/:path*',
+        destination: `${supabaseUrl}/storage/v1/object/public/logos/:path*`,
+      },
     ]
   },
 }

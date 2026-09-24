@@ -20,7 +20,7 @@ interface NavEntry {
 const navEntries: NavEntry[] = [
   { label: 'Sujets', href: '/s' },
   { label: 'Personnalités', href: '/p' },
-  { label: 'Organisations' },
+  { label: 'Organisations', href: '/o' },
   { label: 'Prises de position' },
   { label: 'Méthode', href: '/guide' },
 ]

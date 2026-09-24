@@ -1,0 +1,78 @@
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.card {
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  padding: 8px 24px;
+}
+
+.group {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.group:last-child {
+  border-bottom: none;
+}
+
+.groupTitle {
+  composes: label from '../../../../styles/text.module.css';
+  margin-bottom: 4px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
+}
+
+.details {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.remove {
+  flex: none;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 8px 16px;
+  }
+}

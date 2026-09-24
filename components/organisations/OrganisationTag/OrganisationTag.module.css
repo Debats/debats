@@ -1,0 +1,30 @@
+.tag,
+.tag:link,
+.tag:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--org-soft);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--org-dark);
+  transition: background-color 0.15s ease;
+}
+
+.tag:hover {
+  background-color: var(--org);
+  color: var(--paper);
+}
+
+.role {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.85;
+}

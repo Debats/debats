@@ -5,7 +5,10 @@ import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
+import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
+import { MembershipWithOrganisation } from '../../../domain/repositories/organisation-membership-repository'
+import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
 import {
   activityPeriod,
   statementsPerYear,
@@ -18,7 +21,7 @@ import Button from '../../../components/ui/Button'
 import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
-import FigureHero from './FigureHero'
+import FigureHero, { Affiliation } from './FigureHero'
 import FigureStatements, { SubjectGroup } from './FigureStatements'
 import FigureAnalyses from './FigureAnalyses'
 
@@ -71,6 +74,17 @@ function groupBySubject(statements: StatementWithDetails[]): SubjectGroup[] {
   return Array.from(groups.values()).sort((a, b) => latest(b) - latest(a))
 }
 
+/** Les affiliations en cours, telles qu'affichées en pastilles sous le libellé « Personnalité ». */
+function currentAffiliations(memberships: MembershipWithOrganisation[]): Affiliation[] {
+  return memberships
+    .filter(({ membership }) => isCurrentMembership(membership))
+    .map(({ membership, organisation }) => ({
+      organisationSlug: organisation.slug,
+      organisationLabel: organisation.acronym ?? organisation.name,
+      role: Option.getOrNull(membership.role),
+    }))
+}
+
 export default async function PersonalityDetailPage({ params }: PageProps) {
   const { slug } = await params
 
@@ -78,16 +92,18 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   const publicFigureRepo = createPublicFigureRepository(supabase)
   const statementRepo = createStatementRepository(supabase)
   const themeRepo = createThemeRepository(supabase)
+  const membershipRepo = createOrganisationMembershipRepository(supabase)
 
   const figure = await Effect.runPromise(publicFigureRepo.findBySlug(slug))
 
   if (!figure) notFound()
 
-  const [statements, contributor, themes, primaryLinks] = await Promise.all([
+  const [statements, contributor, themes, primaryLinks, memberships] = await Promise.all([
     Effect.runPromise(statementRepo.findByPublicFigureWithDetails(figure.id)),
     getAuthenticatedContributor(),
     Effect.runPromise(themeRepo.findAll()),
     Effect.runPromise(themeRepo.findAllPrimaryLinks()),
+    Effect.runPromise(membershipRepo.findByPublicFigureId(figure.id)),
   ])
 
   const groups = groupBySubject(statements)
@@ -130,6 +146,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
           subjects: groups.length,
           period: activityPeriod(statedDates),
         }}
+        affiliations={currentAffiliations(memberships)}
         adminMenu={
           canEdit && (
             <AdminMenu actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]} />

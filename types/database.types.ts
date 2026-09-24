@@ -251,6 +251,154 @@ export type Database = {
           },
         ]
       }
+      organisation_memberships: {
+        Row: {
+          created_at: string
+          created_by: string
+          ended_on: string | null
+          id: string
+          organisation_id: string
+          public_figure_id: string
+          role: string | null
+          started_on: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ended_on?: string | null
+          id?: string
+          organisation_id: string
+          public_figure_id: string
+          role?: string | null
+          started_on?: string | null
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ended_on?: string | null
+          id?: string
+          organisation_id?: string
+          public_figure_id?: string
+          role?: string | null
+          started_on?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_memberships_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_memberships_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_memberships_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "v_organisation_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_memberships_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "public_figures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_memberships_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "v_public_figure_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_memberships_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organisations: {
+        Row: {
+          acronym: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          name: string
+          notoriety_sources: string[]
+          organisation_type: Database["public"]["Enums"]["organisation_type"]
+          presentation: string
+          slug: string
+          updated_at: string
+          updated_by: string
+          website_url: string | null
+          wikipedia_url: string | null
+        }
+        Insert: {
+          acronym?: string | null
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          name: string
+          notoriety_sources?: string[]
+          organisation_type: Database["public"]["Enums"]["organisation_type"]
+          presentation: string
+          slug: string
+          updated_at?: string
+          updated_by: string
+          website_url?: string | null
+          wikipedia_url?: string | null
+        }
+        Update: {
+          acronym?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          notoriety_sources?: string[]
+          organisation_type?: Database["public"]["Enums"]["organisation_type"]
+          presentation?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string
+          website_url?: string | null
+          wikipedia_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       positions: {
         Row: {
           created_at: string | null
@@ -678,6 +826,20 @@ export type Database = {
       }
     }
     Views: {
+      v_organisation_summary: {
+        Row: {
+          acronym: string | null
+          id: string | null
+          members_count: number | null
+          name: string | null
+          organisation_type:
+            | Database["public"]["Enums"]["organisation_type"]
+            | null
+          presentation: string | null
+          slug: string | null
+        }
+        Relationships: []
+      }
       v_public_figure_activity_summary: {
         Row: {
           id: string | null
@@ -736,11 +898,21 @@ export type Database = {
         Args: { source_id: string; target_id: string }
         Returns: undefined
       }
+      soft_delete_organisation: { Args: { p_id: string }; Returns: undefined }
       soft_delete_position: { Args: { p_id: string }; Returns: undefined }
       soft_delete_public_figure: { Args: { p_id: string }; Returns: undefined }
       soft_delete_subject: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
+      organisation_type:
+        | "political_party"
+        | "ngo"
+        | "union"
+        | "company"
+        | "lobby"
+        | "business_group"
+        | "association"
+        | "collective"
       statement_type: "declaration" | "vote" | "program" | "act"
     }
     CompositeTypes: {
@@ -872,6 +1044,16 @@ export const Constants = {
   },
   public: {
     Enums: {
+      organisation_type: [
+        "political_party",
+        "ngo",
+        "union",
+        "company",
+        "lobby",
+        "business_group",
+        "association",
+        "collective",
+      ],
       statement_type: ["declaration", "vote", "program", "act"],
     },
   },

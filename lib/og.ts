@@ -42,18 +42,28 @@ export async function loadBrandMark(): Promise<string> {
   return `data:image/png;base64,${buffer.toString('base64')}`
 }
 
-/** Charge un avatar depuis le stockage Supabase, ou null s'il n'existe pas. */
-export async function loadAvatar(slug: string): Promise<string | null> {
+/** Charge une image publique du stockage Supabase en data URI, ou null si elle n'existe pas. */
+async function loadStorageImage(
+  bucket: string,
+  file: string,
+  mimeType: 'image/jpeg' | 'image/png',
+): Promise<string | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:64321'
   try {
-    const res = await fetch(`${supabaseUrl}/storage/v1/object/public/avatars/${slug}.jpg`)
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/public/${bucket}/${file}`)
     if (!res.ok) return null
     const buffer = Buffer.from(await res.arrayBuffer())
-    return `data:image/jpeg;base64,${buffer.toString('base64')}`
+    return `data:${mimeType};base64,${buffer.toString('base64')}`
   } catch {
     return null
   }
 }
+
+/** L'avatar d'une personnalité, ou null s'il n'existe pas. */
+export const loadAvatar = (slug: string) => loadStorageImage('avatars', `${slug}.jpg`, 'image/jpeg')
+
+/** Le logo d'une organisation, ou null si elle n'en a pas. */
+export const loadLogo = (slug: string) => loadStorageImage('logos', `${slug}.png`, 'image/png')
 
 export function truncate(text: string, max: number): string {
   return text.length > max ? text.slice(0, max - 3) + '…' : text

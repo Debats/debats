@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from '../infra/supabase/admin'
 import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
 import { createPublicFigureRepository } from '../infra/database/public-figure-repository-supabase'
 import { createThemeRepository } from '../infra/database/theme-repository-supabase'
+import { createOrganisationRepository } from '../infra/database/organisation-repository-supabase'
 
 const BASE_URL = 'https://debats.co'
 
@@ -22,6 +23,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${BASE_URL}/p`,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/o`,
       changeFrequency: 'daily',
       priority: 0.9,
     },
@@ -67,11 +73,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const subjectRepo = createSubjectRepository(supabase)
     const publicFigureRepo = createPublicFigureRepository(supabase)
     const themeRepo = createThemeRepository(supabase)
+    const organisationRepo = createOrganisationRepository(supabase)
 
-    const [subjects, publicFigures, themes] = await Promise.all([
+    const [subjects, publicFigures, themes, organisations] = await Promise.all([
       Effect.runPromise(subjectRepo.findAll()),
       Effect.runPromise(publicFigureRepo.findAll()),
       Effect.runPromise(themeRepo.findAll()),
+      Effect.runPromise(organisationRepo.findAll()),
     ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
@@ -95,7 +103,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-    return [...staticPages, ...subjectPages, ...publicFigurePages, ...themePages]
+    const organisationPages: MetadataRoute.Sitemap = organisations.map((organisation) => ({
+      url: `${BASE_URL}/o/${organisation.slug}`,
+      lastModified: organisation.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
+
+    return [
+      ...staticPages,
+      ...subjectPages,
+      ...publicFigurePages,
+      ...organisationPages,
+      ...themePages,
+    ]
   } catch (error) {
     Sentry.captureException(error, { extra: { context: 'sitemap generation' } })
     return staticPages
