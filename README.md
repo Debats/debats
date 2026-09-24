@@ -115,6 +115,8 @@ Le style est en CSS Modules, organisé en trois couches :
 
 Les fontes (Instrument Serif, Instrument Sans, JetBrains Mono) sont chargées par `next/font` dans `app/layout.tsx` et exposées en variables CSS sur `<html>`. Chaque composant garde son propre module colocalisé.
 
+Les images OpenGraph (`opengraph-image.tsx`) sont rendues sans CSS : elles lisent les mêmes fontes au format TTF dans `public/fonts/` et les couleurs des tokens depuis `lib/og.ts`, avec les composants de `components/og/`.
+
 ### Projets legacy (référence)
 
 - `ruby-backend/` : Application Rails originale
