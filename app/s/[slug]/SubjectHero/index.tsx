@@ -3,6 +3,7 @@ import Link from 'next/link'
 import ComingSoon from '../../../../components/ui/ComingSoon'
 import ThemeBadge from '../../../../components/ui/ThemeBadge'
 import { formatShortDate } from '../../../../lib/format-date'
+import { plural } from '../../../../lib/plural'
 import styles from './SubjectHero.module.css'
 
 interface ThemeLink {
@@ -42,10 +43,6 @@ interface SubjectHeroProps {
 
 /** Bannière par défaut tant que les sujets n'ont pas d'image propre */
 const DEFAULT_BANNER = '/images/subject-default.jpg'
-
-function plural(count: number, singular: string, pluralForm: string) {
-  return count === 1 ? singular : pluralForm
-}
 
 export default function SubjectHero({
   title,

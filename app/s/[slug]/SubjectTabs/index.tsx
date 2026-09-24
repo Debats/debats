@@ -1,5 +1,4 @@
-import ComingSoon from '../../../../components/ui/ComingSoon'
-import styles from './SubjectTabs.module.css'
+import SectionTabs from '../../../../components/ui/SectionTabs'
 
 interface SubjectTabsProps {
   positionsCount: number
@@ -11,19 +10,15 @@ interface SubjectTabsProps {
  */
 export default function SubjectTabs({ positionsCount }: SubjectTabsProps) {
   return (
-    <nav className={styles.tabs} aria-label="Sections du sujet">
-      <span className={`${styles.tab} ${styles.tabOn}`} aria-current="page">
-        Positions <span className={styles.count}>{positionsCount}</span>
-      </span>
-      <ComingSoon>
-        <span className={styles.tab}>Arguments</span>
-      </ComingSoon>
-      <ComingSoon>
-        <span className={styles.tab}>Analyses</span>
-      </ComingSoon>
-      <ComingSoon>
-        <span className={styles.tab}>Chronologie</span>
-      </ComingSoon>
-    </nav>
+    <SectionTabs
+      ariaLabel="Sections du sujet"
+      active="Positions"
+      tabs={[
+        { label: 'Positions', count: positionsCount },
+        { label: 'Arguments', soon: true },
+        { label: 'Analyses', soon: true },
+        { label: 'Chronologie', soon: true },
+      ]}
+    />
   )
 }

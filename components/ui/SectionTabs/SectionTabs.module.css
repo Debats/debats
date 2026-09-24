@@ -24,7 +24,7 @@
 }
 
 .count {
-  composes: meta from '../../../../styles/text.module.css';
+  composes: meta from '../../../styles/text.module.css';
   font-size: 11px;
 }
 

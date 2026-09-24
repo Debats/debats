@@ -1,0 +1,137 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line-2);
+  background-color: var(--card);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.card {
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  padding: 0 24px;
+}
+
+.subject {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.subject:last-child {
+  border-bottom: none;
+}
+
+.subjectTitle,
+.subjectTitle:link,
+.subjectTitle:visited {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.subjectTitle:hover {
+  color: var(--signal);
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.position {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.positionLabel {
+  composes: label from '../../../../styles/text.module.css';
+}
+
+.positionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.quote {
+  composes: quote from '../../../../styles/text.module.css';
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.type {
+  composes: label from '../../../../styles/text.module.css';
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  font-size: 11px;
+}
+
+.sourceLink {
+  composes: meta from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+a.sourceLink:link,
+a.sourceLink:visited {
+  color: var(--ink-2);
+}
+
+a.sourceLink:hover {
+  color: var(--signal);
+}
+
+.separator {
+  color: var(--line-2);
+}
+
+.date {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 0 20px;
+  }
+
+  .subjectTitle {
+    font-size: 21px;
+  }
+}

@@ -1,20 +1,26 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect, Option } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
+import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
+import {
+  activityPeriod,
+  statementsPerYear,
+  themeDistribution,
+} from '../../../domain/services/figure-activity'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
-import FigureAvatar from '../../../components/figures/FigureAvatar'
 import AdminMenu from '../../../components/ui/AdminMenu'
 import Button from '../../../components/ui/Button'
-import HeaderActions from '../../../components/layout/HeaderActions'
+import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
-import styles from './personality-detail.module.css'
+import FigureHero from './FigureHero'
+import FigureStatements, { SubjectGroup } from './FigureStatements'
+import FigureAnalyses from './FigureAnalyses'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -52,26 +58,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-function groupBySubject(statements: StatementWithDetails[]) {
-  return statements.reduce(
-    (acc, { statement, position, subject }) => {
-      if (!acc[subject.id]) {
-        acc[subject.id] = { subject, entries: [] }
-      }
-      acc[subject.id].entries.push({ statement, position })
-      return acc
-    },
-    {} as Record<
-      string,
-      {
-        subject: StatementWithDetails['subject']
-        entries: {
-          statement: StatementWithDetails['statement']
-          position: StatementWithDetails['position']
-        }[]
-      }
-    >,
-  )
+/** Groupe les prises de position par sujet, du sujet le plus récemment abordé au plus ancien. */
+function groupBySubject(statements: StatementWithDetails[]): SubjectGroup[] {
+  const groups = new Map<string, SubjectGroup>()
+  for (const { statement, position, subject } of statements) {
+    const group = groups.get(subject.id) ?? { subject, entries: [] }
+    group.entries.push({ statement, position })
+    groups.set(subject.id, group)
+  }
+  const latest = (group: SubjectGroup) =>
+    Math.max(...group.entries.map((e) => e.statement.createdAt.getTime()))
+  return Array.from(groups.values()).sort((a, b) => latest(b) - latest(a))
 }
 
 export default async function PersonalityDetailPage({ params }: PageProps) {
@@ -80,22 +77,32 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   const supabase = createAdminSupabaseClient()
   const publicFigureRepo = createPublicFigureRepository(supabase)
   const statementRepo = createStatementRepository(supabase)
+  const themeRepo = createThemeRepository(supabase)
 
   const figure = await Effect.runPromise(publicFigureRepo.findBySlug(slug))
 
   if (!figure) notFound()
 
-  const [statements, contributor] = await Promise.all([
+  const [statements, contributor, themes, primaryLinks] = await Promise.all([
     Effect.runPromise(statementRepo.findByPublicFigureWithDetails(figure.id)),
     getAuthenticatedContributor(),
+    Effect.runPromise(themeRepo.findAll()),
+    Effect.runPromise(themeRepo.findAllPrimaryLinks()),
   ])
 
-  const subjectsMap = groupBySubject(statements)
-  const subjects = Object.values(subjectsMap).sort((a, b) => {
-    const latestA = Math.max(...a.entries.map((e) => e.statement.createdAt.getTime()))
-    const latestB = Math.max(...b.entries.map((e) => e.statement.createdAt.getTime()))
-    return latestB - latestA
-  })
+  const groups = groupBySubject(statements)
+  const statedDates = statements.map(({ statement }) => statement.statedAt)
+  const subjectIds = groups.map(({ subject }) => subject.id)
+  const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
+
+  const links = [
+    ...(Option.isSome(figure.wikipediaUrl)
+      ? [{ href: figure.wikipediaUrl.value, label: 'Wikipédia' }]
+      : []),
+    ...(Option.isSome(figure.websiteUrl)
+      ? [{ href: figure.websiteUrl.value, label: 'Site officiel' }]
+      : []),
+  ]
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -108,85 +115,61 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   }
 
   return (
-    <ContentWithSidebar topMargin>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className={styles.header}>
-        <FigureAvatar slug={figure.slug} name={figure.name} size={120} />
-        <div className={styles.headerInfo}>
-          <h1 className={styles.name}>{figure.name}</h1>
-          <p className={styles.presentation}>{figure.presentation}</p>
-          {Option.isSome(figure.wikipediaUrl) && (
-            <a
-              href={figure.wikipediaUrl.value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.wikiLink}
-            >
-              Voir sur Wikipedia
-            </a>
-          )}
-        </div>
-        <HeaderActions>
-          {contributor && (
-            <>
+      <FigureHero
+        slug={figure.slug}
+        name={figure.name}
+        presentation={figure.presentation}
+        links={links}
+        counts={{
+          statements: statements.length,
+          subjects: groups.length,
+          period: activityPeriod(statedDates),
+        }}
+        adminMenu={
+          canEdit && (
+            <AdminMenu actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]} />
+          )
+        }
+        actions={
+          <>
+            {contributor ? (
               <Button
                 href={`/nouvelle-prise-de-position?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`}
               >
                 Ajouter une prise de position
               </Button>
-              {canPerform(contributor.reputation, 'edit_personality') && (
-                <AdminMenu
-                  actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]}
-                />
-              )}
-            </>
-          )}
-          <ShareButton title={figure.name} />
-        </HeaderActions>
-      </header>
+            ) : (
+              <Button href="/contribuer">Ajouter une prise de position</Button>
+            )}
+            <ShareButton compact title={figure.name} />
+          </>
+        }
+      />
 
-      <section>
-        <h2 className={styles.sectionTitle}>
-          PRISES DE POSITION <span className={styles.count}>{statements.length}</span>
-        </h2>
-
-        {subjects.length === 0 ? (
-          <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
-        ) : (
-          <div className={styles.subjectsList}>
-            {subjects.map(({ subject, entries }) => (
-              <div key={subject.id} className={styles.subjectItem}>
-                <Link href={`/p/${slug}/s/${subject.slug}`} className={styles.subjectContext}>
-                  {subject.title}
-                </Link>
-                {entries.map(({ statement, position }) => (
-                  <div key={statement.id} className={styles.positionBlock}>
-                    <h3 className={styles.positionTitle}>
-                      <span className={styles.positionLabel}>Sa position :</span> {position.title}
-                    </h3>
-                    <blockquote className={styles.quote}>{statement.quote}</blockquote>
-                    {statement.sourceUrl ? (
-                      <a
-                        href={statement.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.sourceLink}
-                      >
-                        Source : {statement.sourceName}
-                      </a>
-                    ) : (
-                      <span className={styles.sourceLink}>Source : {statement.sourceName}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </ContentWithSidebar>
+      <ContentWithSidebar
+        topMargin
+        aside={
+          <FigureAnalyses
+            themes={themeDistribution(subjectIds, primaryLinks, themes)}
+            perYear={statementsPerYear(statedDates)}
+          />
+        }
+      >
+        <SectionTabs
+          ariaLabel="Sections de la personnalité"
+          active="Prises de position"
+          tabs={[
+            { label: 'Prises de position', count: statements.length },
+            { label: 'Analyses', soon: true },
+          ]}
+        />
+        <FigureStatements figureSlug={slug} groups={groups} />
+      </ContentWithSidebar>
+    </>
   )
 }
