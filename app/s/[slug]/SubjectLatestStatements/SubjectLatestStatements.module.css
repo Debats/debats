@@ -1,0 +1,72 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.title {
+  composes: label from '../../../../styles/text.module.css';
+}
+
+.all {
+  font-size: 13px;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.position,
+.position:link,
+.position:visited {
+  font-style: italic;
+  color: var(--ink);
+}
+
+.name:hover,
+.position:hover {
+  color: var(--signal);
+}
+
+.meta {
+  composes: meta from '../../../../styles/text.module.css';
+}

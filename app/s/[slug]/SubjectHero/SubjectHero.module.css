@@ -124,11 +124,13 @@
   border-radius: var(--radius-card);
 }
 
+/* Chaque statistique prend la largeur de son libellé, sans jamais se chevaucher */
 .stats {
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px 20px;
 }
 
 .stat {
@@ -142,8 +144,31 @@
   margin: 0;
 }
 
+.statValueOrg {
+  color: var(--org-dark);
+}
+
+/* Statistique annoncée mais pas encore disponible */
+.statSoon {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.soonBadge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
 .statLabel {
   composes: label from '../../../../styles/text.module.css';
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  max-width: 96px;
 }
 
 .updated {
@@ -156,7 +181,12 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
+}
+
+.secondaryAction {
+  composes: small from '../../../../styles/text.module.css';
 }
 
 @media (max-width: 768px) {
@@ -186,14 +216,11 @@
     padding-top: 0;
   }
 
-  /* Sur mobile, chaque statistique prend la largeur de son libellé */
   .statsCard {
     padding: 20px;
   }
 
   .stats {
-    display: flex;
-    justify-content: space-between;
     gap: 12px;
   }
 }

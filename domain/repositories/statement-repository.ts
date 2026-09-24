@@ -60,7 +60,7 @@ export interface StatementRepository {
   /**
    * Get the N most recent statements by date
    */
-  findLatest(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
+  findLatest(limit: number, subjectId?: string): Effect.Effect<LatestStatement[], DatabaseError>
 
   /**
    * Get the N most recently reported statements by created_at date

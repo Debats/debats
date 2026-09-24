@@ -77,13 +77,14 @@
 .nav {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 22px;
 }
 
 .navLink {
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-2);
+  white-space: nowrap;
   transition: color 0.15s ease;
 }
 
@@ -95,7 +96,27 @@
 .tools {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  color: var(--ink-3);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* La barre de recherche (annoncée) n'a sa place que sur les grands écrans */
+@media (max-width: 1500px) {
+  .searchSoon {
+    display: none;
+  }
 }
 
 @media (max-width: 1024px) {

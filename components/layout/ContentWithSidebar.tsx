@@ -5,14 +5,17 @@ import styles from './content-with-sidebar.module.css'
 interface ContentWithSidebarProps {
   children: React.ReactNode
   topMargin?: boolean
-  /** Contenu propre à la page, affiché en haut du rail avant les dernières prises de position */
+  /** Contenu propre à la page, affiché en haut du rail */
   aside?: React.ReactNode
+  /** Ne pas afficher les dernières prises de position du site (la page fournit les siennes) */
+  hideLatestStatements?: boolean
 }
 
 export default function ContentWithSidebar({
   children,
   topMargin,
   aside,
+  hideLatestStatements,
 }: ContentWithSidebarProps) {
   const className = topMargin ? `${styles.container} ${styles.withTopMargin}` : styles.container
 
@@ -21,9 +24,11 @@ export default function ContentWithSidebar({
       <div className={styles.mainContent}>{children}</div>
       <aside className={styles.sidebar}>
         {aside}
-        <Suspense fallback={null}>
-          <LastStatements />
-        </Suspense>
+        {!hideLatestStatements && (
+          <Suspense fallback={null}>
+            <LastStatements />
+          </Suspense>
+        )}
       </aside>
     </div>
   )

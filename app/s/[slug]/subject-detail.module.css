@@ -1,21 +1,3 @@
-.sectionHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-bottom: 20px;
-}
-
-.sectionTitle {
-  composes: title from '../../../styles/text.module.css';
-}
-
-.sectionHint {
-  composes: small from '../../../styles/text.module.css';
-  color: var(--ink-3);
-}
-
 .list {
   display: flex;
   flex-direction: column;
@@ -27,4 +9,18 @@
   padding: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
+}
+
+.link,
+.link:link,
+.link:visited {
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(227, 36, 63, 0.4);
+}
+
+.link:hover {
+  text-decoration-color: var(--signal);
 }

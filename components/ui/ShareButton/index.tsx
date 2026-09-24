@@ -7,7 +7,10 @@ import styles from './ShareButton.module.css'
 interface ShareButtonProps {
   title?: string
   text?: string
+  /** Icône seule et sans cadre, pour le header mobile ; ne compte pas comme bouton de page */
   iconOnly?: boolean
+  /** Icône seule dans un bouton rond, à côté de l'action principale d'une page */
+  compact?: boolean
 }
 
 const svgProps = {
@@ -21,7 +24,7 @@ const svgProps = {
   'aria-hidden': true as const,
 }
 
-export default function ShareButton({ title, text, iconOnly }: ShareButtonProps) {
+export default function ShareButton({ title, text, iconOnly, compact }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
   const { register } = useShareButtonContext()
 
@@ -47,14 +50,16 @@ export default function ShareButton({ title, text, iconOnly }: ShareButtonProps)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const size = iconOnly ? 20 : 14
+  const withoutLabel = iconOnly || compact
+  const size = iconOnly ? 20 : 16
+  const className = iconOnly ? styles.iconButton : compact ? styles.compact : styles.button
 
   return (
     <button
-      className={iconOnly ? styles.iconButton : styles.button}
+      className={className}
       onClick={handleShare}
       type="button"
-      aria-label="Partager cette page"
+      aria-label={copied ? 'Lien copié !' : 'Partager cette page'}
     >
       {copied ? (
         <svg {...svgProps} width={size} height={size}>
@@ -67,7 +72,7 @@ export default function ShareButton({ title, text, iconOnly }: ShareButtonProps)
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
       )}
-      {!iconOnly && (copied ? 'Lien copié !' : 'Partager')}
+      {!withoutLabel && (copied ? 'Lien copié !' : 'Partager')}
     </button>
   )
 }

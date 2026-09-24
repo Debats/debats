@@ -262,15 +262,16 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements with figures', error),
       }),
 
-    findLatest: (limit: number) =>
+    findLatest: (limit: number, subjectId?: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
+          const query = supabase
             .from('statements')
             .select(
               `
             id,
             stated_at,
+            source_name,
             positions!inner (
               title,
               slug,
@@ -289,6 +290,10 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             .order('stated_at', { ascending: false })
             .limit(limit)
 
+          const { data, error } = await (subjectId
+            ? query.eq('positions.subject_id', subjectId)
+            : query)
+
           if (error) throw error
 
           return data.map((row) => ({
@@ -300,6 +305,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             subjectTitle: row.positions.subjects.title,
             subjectSlug: row.positions.subjects.slug,
             statedAt: new Date(row.stated_at),
+            sourceName: row.source_name,
           }))
         },
         catch: (error) => dbError('Failed to fetch latest statements', error),
@@ -314,6 +320,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               `
             id,
             created_at,
+            source_name,
             positions!inner (
               title,
               slug,
@@ -343,6 +350,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             subjectTitle: row.positions.subjects.title,
             subjectSlug: row.positions.subjects.slug,
             statedAt: row.created_at ? new Date(row.created_at!) : new Date(),
+            sourceName: row.source_name,
           }))
         },
         catch: (error) => dbError('Failed to fetch latest reported statements', error),

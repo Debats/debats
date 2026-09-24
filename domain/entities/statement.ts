@@ -92,4 +92,5 @@ export interface LatestStatement {
   subjectTitle: string
   subjectSlug: string
   statedAt: Date
+  sourceName: string
 }

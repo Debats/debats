@@ -1,0 +1,44 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-bottom: 24px;
+}
+
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.segmentOn {
+  background-color: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(21, 23, 28, 0.06);
+}
+
+.count {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 11px;
+}
+
+.hint {
+  composes: meta from '../../../../styles/text.module.css';
+}

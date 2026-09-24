@@ -52,6 +52,16 @@
   color: var(--ink-2);
 }
 
+/* Citation : le contenu premier, sans cadre */
+.quote {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.4;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
 /* Métadonnées : dates, sources, compteurs */
 .meta {
   font-family: var(--font-mono);

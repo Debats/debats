@@ -1,8 +1,36 @@
 import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { PositionSummary } from '../../domain/read-models/subject-positions-summary'
+import {
+  PositionFigure,
+  PositionLatestStatement,
+  PositionSummary,
+} from '../../domain/read-models/subject-positions-summary'
+import { parseStatementType } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
+
+interface LatestStatementRow {
+  id: string
+  quote: string
+  stated_at: string
+  source_name: string
+  source_url: string | null
+  statement_type: string
+  figure: PositionFigure
+}
+
+function toLatestStatement(row: LatestStatementRow | null): PositionLatestStatement | null {
+  if (!row) return null
+  return {
+    id: row.id,
+    quote: row.quote,
+    statedAt: new Date(row.stated_at),
+    sourceName: row.source_name,
+    sourceUrl: row.source_url,
+    statementType: parseStatementType(row.statement_type),
+    figure: row.figure,
+  }
+}
 
 export function getSubjectPositionsSummary(
   supabase: SupabaseClient,
@@ -24,7 +52,8 @@ export function getSubjectPositionsSummary(
         positionSlug: row.position_slug as string,
         positionDescription: row.position_description as string,
         totalFiguresCount: Number(row.total_figures_count),
-        figures: (row.figures as Array<{ id: string; name: string; slug: string }>) ?? [],
+        figures: (row.figures as PositionFigure[]) ?? [],
+        latestStatement: toLatestStatement((row.latest_statement as LatestStatementRow) ?? null),
       }))
     },
     catch: (error) => {

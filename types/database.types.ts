@@ -723,6 +723,7 @@ export type Database = {
         Args: { p_figures_limit?: number; p_subject_id: string }
         Returns: {
           figures: Json
+          latest_statement: Json
           position_description: string
           position_id: string
           position_slug: string

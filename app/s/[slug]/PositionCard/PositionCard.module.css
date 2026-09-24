@@ -52,21 +52,116 @@
 }
 
 .countLabel {
-  composes: label from '../../../../styles/text.module.css';
+  composes: meta from '../../../../styles/text.module.css';
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
 }
 
 .description {
   composes: body from '../../../../styles/text.module.css';
 }
 
-.foot {
+.rule {
+  height: 1px;
+  background-color: var(--line);
+}
+
+.people {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* Prise de position mise en avant */
+.statement {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
+}
+
+.statementBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.statementHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.figure,
+.figure:link,
+.figure:visited {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.figure:hover {
+  color: var(--signal);
+}
+
+.date {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.quote {
+  composes: quote from '../../../../styles/text.module.css';
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.type {
+  composes: label from '../../../../styles/text.module.css';
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  font-size: 11px;
+}
+
+.sourceLink {
+  composes: meta from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+a.sourceLink:link,
+a.sourceLink:visited {
+  color: var(--ink-2);
+}
+
+a.sourceLink:hover {
+  color: var(--signal);
+}
+
+.separator {
+  color: var(--line-2);
 }
 
 .more,
@@ -91,5 +186,9 @@
 
   .title {
     font-size: 24px;
+  }
+
+  .statement {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,7 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { COMING_SOON_MESSAGE } from '../../../../components/ui/ComingSoon'
 import ThemeBadge from '../../../../components/ui/ThemeBadge'
-import { formatDate } from '../../../../lib/format-date'
+import { formatShortDate } from '../../../../lib/format-date'
 import styles from './SubjectHero.module.css'
 
 interface ThemeLink {
@@ -17,7 +18,6 @@ interface SubjectLink {
 }
 
 interface SubjectCounts {
-  positions: number
   publicFigures: number
   statements: number
 }
@@ -32,8 +32,10 @@ interface SubjectHeroProps {
   counts: SubjectCounts
   /** Menu d'administration affiché à côté du titre, si l'utilisateur y a droit */
   adminMenu?: React.ReactNode
-  /** Boutons d'action (ajouter, partager…) */
+  /** Action principale et partage */
   actions: React.ReactNode
+  /** Action discrète sous les boutons (proposer une position…) */
+  secondaryAction?: React.ReactNode
   /** Vue d'ensemble affichée sous la présentation (les positions du sujet) */
   overview?: React.ReactNode
 }
@@ -55,20 +57,9 @@ export default function SubjectHero({
   counts,
   adminMenu,
   actions,
+  secondaryAction,
   overview,
 }: SubjectHeroProps) {
-  const stats = [
-    { value: counts.positions, label: plural(counts.positions, 'position', 'positions') },
-    {
-      value: counts.publicFigures,
-      label: plural(counts.publicFigures, 'personnalité', 'personnalités'),
-    },
-    {
-      value: counts.statements,
-      label: plural(counts.statements, 'prise de position', 'prises de position'),
-    },
-  ]
-
   return (
     <section className={styles.hero}>
       <div className={styles.banner}>
@@ -109,16 +100,35 @@ export default function SubjectHero({
           <div className={styles.aside}>
             <div className={styles.statsCard}>
               <dl className={styles.stats}>
-                {stats.map((stat) => (
-                  <div key={stat.label} className={styles.stat}>
-                    <dd className={styles.statValue}>{stat.value}</dd>
-                    <dt className={styles.statLabel}>{stat.label}</dt>
-                  </div>
-                ))}
+                <div className={styles.stat}>
+                  <dd className={styles.statValue}>{counts.statements}</dd>
+                  <dt className={styles.statLabel}>
+                    {plural(counts.statements, 'prise de position', 'prises de position')}
+                  </dt>
+                </div>
+                <div className={styles.stat}>
+                  <dd className={styles.statValue}>{counts.publicFigures}</dd>
+                  <dt className={styles.statLabel}>
+                    {plural(counts.publicFigures, 'personnalité', 'personnalités')}
+                  </dt>
+                </div>
+                <div
+                  className={`${styles.stat} ${styles.statSoon}`}
+                  aria-disabled="true"
+                  title={COMING_SOON_MESSAGE}
+                >
+                  <dd className={`${styles.statValue} ${styles.statValueOrg}`}>–</dd>
+                  <dt className={styles.statLabel}>
+                    organisations
+                    <br />
+                    <span className={styles.soonBadge}>bientôt</span>
+                  </dt>
+                </div>
               </dl>
-              <p className={styles.updated}>Mis à jour le {formatDate(updatedAt)}</p>
+              <p className={styles.updated}>Mis à jour le {formatShortDate(updatedAt)}</p>
             </div>
             <div className={styles.actions}>{actions}</div>
+            {secondaryAction && <div className={styles.secondaryAction}>{secondaryAction}</div>}
           </div>
         </div>
 

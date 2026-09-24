@@ -1,8 +1,10 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
+import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { createRelatedSubjectsRepository } from '../../../infra/database/related-subjects-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
@@ -14,14 +16,20 @@ import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import SubjectAdminMenu from './SubjectAdminMenu'
 import SubjectHero from './SubjectHero'
+import SubjectTabs from './SubjectTabs'
 import PositionsOverview from './PositionsOverview'
+import PositionsFilter from './PositionsFilter'
 import PositionCard from './PositionCard'
 import ReadingGuide from './ReadingGuide'
+import SubjectLatestStatements from './SubjectLatestStatements'
+import OrganisationsSoon from './OrganisationsSoon'
 import styles from './subject-detail.module.css'
 
 interface PageProps {
   params: Promise<{ slug: string }>
 }
+
+const LATEST_STATEMENTS_LIMIT = 5
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
@@ -62,16 +70,19 @@ export default async function SubjectDetailPage({ params }: PageProps) {
 
   if (!subject) notFound()
 
+  const statementRepo = createStatementRepository(supabase)
   const themeRepo = createThemeRepository(supabase)
   const relatedRepo = createRelatedSubjectsRepository(supabase)
 
-  const [positions, stats, contributor, themeAssignments, relatedSubjects] = await Promise.all([
-    Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
-    Effect.runPromise(subjectRepo.getStats(subject.id)),
-    getAuthenticatedContributor(),
-    Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
-    Effect.runPromise(relatedRepo.findRelated(subject.id)),
-  ])
+  const [positions, stats, latestStatements, contributor, themeAssignments, relatedSubjects] =
+    await Promise.all([
+      Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
+      Effect.runPromise(subjectRepo.getStats(subject.id)),
+      Effect.runPromise(statementRepo.findLatest(LATEST_STATEMENTS_LIMIT, subject.id)),
+      getAuthenticatedContributor(),
+      Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
+      Effect.runPromise(relatedRepo.findRelated(subject.id)),
+    ])
 
   const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
   const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
@@ -103,7 +114,6 @@ export default async function SubjectDetailPage({ params }: PageProps) {
         themes={themeAssignments.map((assignment) => assignment.theme)}
         relatedSubjects={relatedSubjects}
         counts={{
-          positions: positions.length,
           publicFigures: stats.publicFiguresCount,
           statements: stats.statementsCount,
         }}
@@ -119,50 +129,62 @@ export default async function SubjectDetailPage({ params }: PageProps) {
         }
         actions={
           <>
-            {contributor && (
-              <>
-                <Button
-                  href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
-                >
-                  Ajouter une prise de position
-                </Button>
-                {canAddPosition && (
-                  <Button href={`/s/${slug}/nouvelle-position`} variant="secondary">
-                    Ajouter une position
-                  </Button>
-                )}
-              </>
+            {contributor ? (
+              <Button
+                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
+              >
+                Ajouter une prise de position
+              </Button>
+            ) : (
+              <Button href="/contribuer">Ajouter une prise de position</Button>
             )}
-            <ShareButton title={subject.title} text={subject.presentation} />
+            <ShareButton compact title={subject.title} text={subject.presentation} />
           </>
+        }
+        secondaryAction={
+          canAddPosition && (
+            <>
+              Aucune position ne correspond ?{' '}
+              <Link href={`/s/${slug}/nouvelle-position`} className={styles.link}>
+                Proposer une nouvelle position
+              </Link>
+            </>
+          )
         }
         overview={<PositionsOverview positions={positions} />}
       />
 
-      <ContentWithSidebar topMargin aside={<ReadingGuide />}>
-        <section>
-          <header className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Les positions</h2>
-            {positions.length > 1 && (
-              <p className={styles.sectionHint}>Triées par soutien décroissant</p>
-            )}
-          </header>
+      <ContentWithSidebar
+        topMargin
+        hideLatestStatements
+        aside={
+          <>
+            <ReadingGuide />
+            <SubjectLatestStatements statements={latestStatements} />
+            <OrganisationsSoon />
+          </>
+        }
+      >
+        <SubjectTabs positionsCount={positions.length} />
+        <PositionsFilter
+          statementsCount={stats.statementsCount}
+          positionsCount={positions.length}
+        />
 
-          {positions.length === 0 ? (
-            <p className={styles.empty}>Aucune position enregistrée pour l’instant.</p>
-          ) : (
-            <div className={styles.list}>
-              {positions.map((position, index) => (
-                <PositionCard
-                  key={position.positionId}
-                  position={position}
-                  subjectSlug={slug}
-                  featured={index === 0 && positions.length > 1}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        {positions.length === 0 ? (
+          <p className={styles.empty}>Aucune position enregistrée pour l’instant.</p>
+        ) : (
+          <div className={styles.list}>
+            {positions.map((position, index) => (
+              <PositionCard
+                key={position.positionId}
+                position={position}
+                subjectSlug={slug}
+                featured={index === 0 && positions.length > 1}
+              />
+            ))}
+          </div>
+        )}
       </ContentWithSidebar>
     </>
   )

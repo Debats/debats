@@ -2,6 +2,13 @@
   composes: button secondary from '../Button/Button.module.css';
 }
 
+.compact {
+  composes: button secondary from '../Button/Button.module.css';
+  width: 40px;
+  padding: 0;
+  border-radius: 50%;
+}
+
 .iconButton {
   background: none;
   border: none;
