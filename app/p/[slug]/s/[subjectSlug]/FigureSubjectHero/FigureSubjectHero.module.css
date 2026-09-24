@@ -1,0 +1,157 @@
+.hero {
+  background-color: var(--paper-2);
+  padding: 48px 0;
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-gutter);
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.crumb {
+  composes: label from '../../../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.crumb:hover {
+  color: var(--signal);
+}
+
+.crumbSeparator {
+  color: var(--line-2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 32px;
+  align-items: start;
+}
+
+.main {
+  grid-column: span 8;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
+
+.aside {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.title {
+  composes: displayLarge from '../../../../../../styles/text.module.css';
+  margin-bottom: 10px;
+}
+
+.figureLink,
+.figureLink:link,
+.figureLink:visited {
+  color: var(--ink);
+}
+
+.figureLink:hover {
+  color: var(--signal);
+}
+
+.subject {
+  composes: voice from '../../../../../../styles/text.module.css';
+}
+
+.subjectLink,
+.subjectLink:link,
+.subjectLink:visited {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--line-2);
+}
+
+.subjectLink:hover {
+  color: var(--signal);
+  text-decoration-color: var(--signal);
+}
+
+.stats {
+  margin: 0;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px 20px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statValue {
+  composes: number from '../../../../../../styles/text.module.css';
+  margin: 0;
+}
+
+.statLabel {
+  composes: label from '../../../../../../styles/text.module.css';
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  max-width: 96px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 32px 0;
+  }
+
+  .container {
+    padding: 0 var(--container-gutter-mobile);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .main,
+  .aside {
+    grid-column: span 1;
+  }
+
+  .main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .aside {
+    padding-top: 0;
+  }
+
+  .stats {
+    padding: 20px;
+    gap: 12px;
+  }
+}

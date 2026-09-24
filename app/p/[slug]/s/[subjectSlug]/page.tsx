@@ -10,16 +10,16 @@ import {
   StatementWithDetails,
   StatementWithFigure,
 } from '../../../../../domain/repositories/statement-repository'
+import { STATEMENT_TYPE_LABELS } from '../../../../../domain/entities/statement'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import EditLink from '../../../../../components/ui/EditLink'
-import LinkedTitle from '../../../../../components/ui/LinkedTitle'
-import HeaderActions from '../../../../../components/layout/HeaderActions'
 import ShareButton from '../../../../../components/ui/ShareButton'
-import FigureAvatar from '../../../../../components/figures/FigureAvatar'
-import FigureAvatarRow from '../../../../../components/figures/FigureAvatarRow'
+import FigureAvatarStack from '../../../../../components/figures/FigureAvatarStack'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
-import { formatDate } from '../../../../../lib/format-date'
+import { formatShortDate } from '../../../../../lib/format-date'
+import { plural } from '../../../../../lib/plural'
+import FigureSubjectHero from './FigureSubjectHero'
 import styles from './figure-subject.module.css'
 
 interface PageProps {
@@ -84,6 +84,7 @@ function groupByPosition(statements: StatementWithDetails[]) {
 }
 
 interface FigureSummary {
+  id: string
   name: string
   slug: string
 }
@@ -108,7 +109,11 @@ function groupOtherFigures(
   for (const { publicFigure, position } of subjectStatements) {
     if (publicFigure.id === currentFigureId) continue
 
-    const summary: FigureSummary = { name: publicFigure.name, slug: publicFigure.slug }
+    const summary: FigureSummary = {
+      id: publicFigure.id,
+      name: publicFigure.name,
+      slug: publicFigure.slug,
+    }
 
     if (currentPositionIds.has(position.id)) {
       if (!alliesMap.has(position.id)) alliesMap.set(position.id, new Map())
@@ -162,15 +167,16 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
 
-  const positionsMap = groupByPosition(figureStatements)
-  const positions = Object.values(positionsMap)
-
+  const positions = Object.values(groupByPosition(figureStatements))
   const currentPositionIds = new Set(positions.map(({ position }) => position.id))
   const { alliesByPosition, opponents } = groupOtherFigures(
     subjectStatements,
     figure.id,
     currentPositionIds,
   )
+  const alliesCount = new Set(
+    Array.from(alliesByPosition.values()).flatMap((figures) => figures.map((f) => f.id)),
+  ).size
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -185,123 +191,135 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   }
 
   return (
-    <ContentWithSidebar topMargin>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <nav className={styles.breadcrumb}>
-        <Link href={`/p/${figure.slug}`} className={styles.breadcrumbLink}>
-          {figure.name}
-        </Link>
-        <span className={styles.breadcrumbSeparator}>/</span>
-        <Link href={`/s/${subject.slug}`} className={styles.breadcrumbLink}>
-          {subject.title}
-        </Link>
-      </nav>
+      <FigureSubjectHero
+        figure={figure}
+        subject={subject}
+        counts={{
+          statements: figureStatements.length,
+          positions: positions.length,
+          allies: alliesCount,
+        }}
+        actions={<ShareButton compact title={`${figure.name} sur ${subject.title}`} />}
+      />
 
-      <header className={styles.header}>
-        <FigureAvatar slug={figure.slug} name={figure.name} size={100} />
-        <div>
-          <Link href={`/p/${figure.slug}`} className={styles.figureName}>
-            {figure.name}
-          </Link>
-          <p className={styles.subjectTitle}>
-            sur{' '}
-            <Link href={`/s/${subject.slug}`} className={styles.subjectLink}>
+      <ContentWithSidebar
+        topMargin
+        aside={
+          <div className={styles.subjectCard}>
+            <p className={styles.subjectCardTitle}>Le sujet</p>
+            <Link href={`/s/${subject.slug}`} className={styles.subjectCardName}>
               {subject.title}
             </Link>
-          </p>
-          <HeaderActions>
-            <ShareButton title={`${figure.name} sur ${subject.title}`} />
-          </HeaderActions>
-        </div>
-      </header>
-
-      <section>
-        <h2 className={styles.sectionTitle}>
-          <span className={styles.count}>{figureStatements.length}</span>{' '}
-          {figureStatements.length === 1 ? 'PRISE DE POSITION' : 'PRISES DE POSITION'}
-        </h2>
-
-        {positions.length === 0 ? (
-          <p className={styles.emptyMessage}>Aucune prise de position enregistrée.</p>
-        ) : (
-          <div>
-            {positions.map(({ position, statements: posStatements }) => (
-              <div key={position.id} className={styles.positionCard}>
-                <span className={styles.positionLabel}>Sa position</span>
-                <LinkedTitle
-                  href={`/s/${subjectSlug}/position/${position.slug}`}
-                  className={styles.positionTitle}
-                >
-                  {position.title}
-                </LinkedTitle>
-                {posStatements.map((st) => (
-                  <div key={st.id} className={styles.statementItem}>
-                    <blockquote className={styles.quote}>{st.quote}</blockquote>
-                    <div className={styles.statementMeta}>
-                      {st.sourceUrl ? (
-                        <a
-                          href={st.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.sourceLink}
-                        >
-                          {st.sourceName}
-                        </a>
-                      ) : (
-                        <span className={styles.sourceLink}>{st.sourceName}</span>
-                      )}
-                      <span className={styles.metaSeparator}>&mdash;</span>
-                      {formatDate(st.statedAt)}
-                      {canEdit && (
-                        <>
-                          <span className={styles.metaSeparator}>&mdash;</span>
-                          <EditLink href={`/p/${slug}/s/${subjectSlug}/modifier/${st.id}`} />
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {(alliesByPosition.get(position.id)?.length ?? 0) > 0 && (
-                  <div className={styles.allies}>
-                    <span className={styles.alliesLabel}>Même position :</span>
-                    <FigureAvatarRow
-                      figures={alliesByPosition
-                        .get(position.id)!
-                        .map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
-                      size={40}
-                      hrefSuffix={`/s/${subject.slug}`}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+            <p className={styles.subjectCardProblem}>{subject.problem}</p>
+            <Link href={`/s/${subject.slug}`} className={styles.subjectCardLink}>
+              Voir toutes les positions
+            </Link>
           </div>
-        )}
-      </section>
+        }
+      >
+        <section>
+          <header className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>
+              {figureStatements.length}{' '}
+              {plural(figureStatements.length, 'prise de position', 'prises de position')}
+            </h2>
+          </header>
 
-      {opponents.length > 0 && (
-        <section className={styles.otherFigures}>
-          <h2 className={styles.sectionTitle}>POSITIONS DIFFÉRENTES</h2>
-          {opponents.map((group) => (
-            <div key={group.title} className={styles.figureGroup}>
-              <LinkedTitle
-                href={`/s/${subject.slug}/position/${group.slug}`}
-                className={styles.figureGroupTitle}
-              >
-                {group.title}
-              </LinkedTitle>
-              <FigureAvatarRow
-                figures={group.figures.map((f) => ({ id: f.slug, name: f.name, slug: f.slug }))}
-                size={50}
-                hrefSuffix={`/s/${subject.slug}`}
-              />
+          {positions.length === 0 ? (
+            <p className={styles.empty}>Aucune prise de position enregistrée pour l’instant.</p>
+          ) : (
+            <div className={styles.list}>
+              {positions.map(({ position, statements }) => {
+                const allies = alliesByPosition.get(position.id) ?? []
+                return (
+                  <article key={position.id} className={styles.card}>
+                    <p className={styles.kicker}>Sa position</p>
+                    <h3 className={styles.positionTitle}>
+                      <Link
+                        href={`/s/${subjectSlug}/position/${position.slug}`}
+                        className={styles.positionLink}
+                      >
+                        {position.title}
+                      </Link>
+                    </h3>
+                    {statements.map((statement) => (
+                      <div key={statement.id} className={styles.statement}>
+                        <blockquote className={styles.quote}>{statement.quote}</blockquote>
+                        <div className={styles.source}>
+                          <span className={styles.type}>
+                            {STATEMENT_TYPE_LABELS[statement.statementType]}
+                          </span>
+                          {statement.sourceUrl ? (
+                            <a
+                              href={statement.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.sourceLink}
+                            >
+                              {statement.sourceName}
+                            </a>
+                          ) : (
+                            <span className={styles.sourceLink}>{statement.sourceName}</span>
+                          )}
+                          <span className={styles.separator}>·</span>
+                          <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
+                          {canEdit && (
+                            <EditLink
+                              href={`/p/${slug}/s/${subjectSlug}/modifier/${statement.id}`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {allies.length > 0 && (
+                      <div className={styles.allies}>
+                        <span className={styles.alliesLabel}>Même position</span>
+                        <FigureAvatarStack
+                          figures={allies}
+                          max={10}
+                          size={36}
+                          hrefSuffix={`/s/${subject.slug}`}
+                        />
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
             </div>
-          ))}
+          )}
         </section>
-      )}
-    </ContentWithSidebar>
+
+        {opponents.length > 0 && (
+          <section className={styles.others}>
+            <header className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>Positions différentes</h2>
+            </header>
+            <div className={styles.list}>
+              {opponents.map((group) => (
+                <div key={group.slug} className={styles.otherCard}>
+                  <Link
+                    href={`/s/${subject.slug}/position/${group.slug}`}
+                    className={styles.otherTitle}
+                  >
+                    {group.title}
+                  </Link>
+                  <FigureAvatarStack
+                    figures={group.figures}
+                    max={8}
+                    size={36}
+                    hrefSuffix={`/s/${subject.slug}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </ContentWithSidebar>
+    </>
   )
 }
