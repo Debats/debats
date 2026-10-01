@@ -1,13 +1,21 @@
-import { DraftStatement } from '../../../domain/entities/draft-statement'
+import {
+  DraftAuthor,
+  DraftStatement,
+  draftOrganisationAuthor,
+  draftPublicFigureAuthor,
+} from '../../../domain/entities/draft-statement'
+import { OrganisationType } from '../../../domain/entities/organisation'
 import { DraftResolution } from '../../../domain/use-cases/resolve-draft'
 import { DraftAmendments } from '../../actions/amend-and-validate-draft-action'
 
 export type AmendFormState = {
-  figureMode: 'existing' | 'new'
-  figureName: string
-  figurePresentation: string
-  figureWikipedia: string
-  figureNotorietySources: string[]
+  authorMode: 'existing' | 'new'
+  authorName: string
+  authorPresentation: string
+  authorWikipedia: string
+  authorNotorietySources: string[]
+  /** Only read when the author is an organisation being created. */
+  authorOrganisationType: OrganisationType
   subjectMode: 'existing' | 'new'
   subjectTitle: string
   subjectPresentation: string
@@ -20,6 +28,23 @@ export type AmendFormState = {
   quote: string
 }
 
+/** Rebuilds the author, keeping its kind and the acronym the form does not expose. */
+function authorWithData(
+  draftAuthor: DraftAuthor,
+  state: AmendFormState,
+  data: { presentation: string; wikipediaUrl?: string; notorietySources?: string[] } | null,
+): DraftAuthor {
+  if (draftAuthor.kind === 'organisation') {
+    if (data === null) return draftOrganisationAuthor(state.authorName)
+    return draftOrganisationAuthor(state.authorName, {
+      ...data,
+      organisationType: state.authorOrganisationType,
+      ...(draftAuthor.data?.acronym ? { acronym: draftAuthor.data.acronym } : {}),
+    })
+  }
+  return draftPublicFigureAuthor(state.authorName, data)
+}
+
 export function buildAmendments(
   draft: DraftStatement,
   resolution: DraftResolution,
@@ -27,32 +52,36 @@ export function buildAmendments(
 ): DraftAmendments {
   const amendments: DraftAmendments = {}
 
-  // Figure
-  if (state.figureMode === 'existing') {
-    if (state.figureName !== draft.publicFigureName) {
-      amendments.publicFigureName = state.figureName
-      amendments.publicFigureData = null
-    } else if (!resolution.publicFigure.found && draft.publicFigureData !== null) {
+  // Author
+  if (state.authorMode === 'existing') {
+    if (state.authorName !== draft.author.name) {
+      amendments.author = authorWithData(draft.author, state, null)
+    } else if (!resolution.author.found && draft.author.data !== null) {
       // Admin switched to existing mode but name matches → entity now exists, clear creation data
-      amendments.publicFigureData = null
+      amendments.author = authorWithData(draft.author, state, null)
     }
   } else {
-    if (state.figureName !== draft.publicFigureName) amendments.publicFigureName = state.figureName
-    const filteredSources = state.figureNotorietySources.filter((s) => s.trim() !== '')
+    const filteredSources = state.authorNotorietySources.filter((s) => s.trim() !== '')
     const newData = {
-      presentation: state.figurePresentation,
-      ...(state.figureWikipedia ? { wikipediaUrl: state.figureWikipedia } : {}),
+      presentation: state.authorPresentation,
+      ...(state.authorWikipedia ? { wikipediaUrl: state.authorWikipedia } : {}),
       ...(filteredSources.length > 0 ? { notorietySources: filteredSources } : {}),
     }
-    const originalSources = draft.publicFigureData?.notorietySources ?? []
+    const originalSources = draft.author.data?.notorietySources ?? []
     const sourcesChanged =
       filteredSources.length !== originalSources.length ||
       filteredSources.some((s, i) => s !== originalSources[i])
-    const changed =
-      state.figurePresentation !== (draft.publicFigureData?.presentation ?? '') ||
-      state.figureWikipedia !== (draft.publicFigureData?.wikipediaUrl ?? '') ||
-      sourcesChanged
-    if (changed) amendments.publicFigureData = newData
+    const organisationTypeChanged =
+      draft.author.kind === 'organisation' &&
+      state.authorOrganisationType !== draft.author.data?.organisationType
+    const dataChanged =
+      state.authorPresentation !== (draft.author.data?.presentation ?? '') ||
+      state.authorWikipedia !== (draft.author.data?.wikipediaUrl ?? '') ||
+      sourcesChanged ||
+      organisationTypeChanged
+    if (dataChanged || state.authorName !== draft.author.name) {
+      amendments.author = authorWithData(draft.author, state, newData)
+    }
   }
 
   // Subject

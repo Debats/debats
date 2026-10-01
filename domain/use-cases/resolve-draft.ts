@@ -1,8 +1,10 @@
 import { Effect, pipe } from 'effect'
 import { DraftStatement } from '../entities/draft-statement'
 import { generateSlug as generatePublicFigureSlug } from '../entities/public-figure'
+import { generateOrganisationSlug } from '../entities/organisation'
 import { generateSlug as generateSubjectSlug } from '../entities/subject'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
+import { OrganisationRepository } from '../repositories/organisation-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { DatabaseError } from '../repositories/errors'
@@ -11,23 +13,47 @@ type FoundEntity<T> = { found: true; entity: T }
 type NotFoundEntity = { found: false; canCreate: boolean }
 export type ResolvedEntity<T> = FoundEntity<T> | NotFoundEntity
 
+type Named = { id: string; name: string; slug: string }
+
+export type ResolvedAuthor = ResolvedEntity<Named>
+
 export type DraftResolution = {
-  publicFigure: ResolvedEntity<{ id: string; name: string; slug: string }>
+  author: ResolvedAuthor
   subject: ResolvedEntity<{ id: string; title: string; slug: string }>
   position: ResolvedEntity<{ id: string; title: string }>
   canValidate: boolean
 }
 
-function resolvePublicFigure(
+function resolveAuthor(
   draft: DraftStatement,
-  repo: PublicFigureRepository,
-): Effect.Effect<DraftResolution['publicFigure'], DatabaseError> {
+  repos: {
+    publicFigureRepo: PublicFigureRepository
+    organisationRepo: OrganisationRepository
+  },
+): Effect.Effect<ResolvedAuthor, DatabaseError> {
+  const { author } = draft
+
+  /** Figures and organisations share the shape the resolution exposes. */
+  const named = (entity: { id: string; name: string; slug: string } | null) =>
+    entity ? { id: entity.id, name: entity.name, slug: entity.slug } : null
+
+  const lookup: Effect.Effect<Named | null, DatabaseError> =
+    author.kind === 'public_figure'
+      ? pipe(
+          repos.publicFigureRepo.findBySlug(generatePublicFigureSlug(author.name)),
+          Effect.map(named),
+        )
+      : pipe(
+          repos.organisationRepo.findBySlug(generateOrganisationSlug(author.name)),
+          Effect.map(named),
+        )
+
   return pipe(
-    repo.findBySlug(generatePublicFigureSlug(draft.publicFigureName)),
-    Effect.map((figure) =>
-      figure
-        ? { found: true as const, entity: { id: figure.id, name: figure.name, slug: figure.slug } }
-        : { found: false as const, canCreate: draft.publicFigureData !== null },
+    lookup,
+    Effect.map((entity) =>
+      entity
+        ? { found: true as const, entity }
+        : { found: false as const, canCreate: author.data !== null },
     ),
   )
 }
@@ -75,23 +101,22 @@ export function resolveDraft(
   draft: DraftStatement,
   repos: {
     publicFigureRepo: PublicFigureRepository
+    organisationRepo: OrganisationRepository
     subjectRepo: SubjectRepository
     positionRepo: PositionRepository
   },
 ): Effect.Effect<DraftResolution, DatabaseError> {
   return pipe(
     Effect.all({
-      publicFigure: resolvePublicFigure(draft, repos.publicFigureRepo),
+      author: resolveAuthor(draft, repos),
       subject: resolveSubject(draft, repos.subjectRepo),
     }),
-    Effect.flatMap(({ publicFigure, subject }) =>
+    Effect.flatMap(({ author, subject }) =>
       Effect.map(resolvePosition(draft, subject, repos.positionRepo), (position) => ({
-        publicFigure,
+        author,
         subject,
         position,
-        canValidate: [publicFigure, subject, position].every(
-          (r) => r.found || (!r.found && r.canCreate),
-        ),
+        canValidate: [author, subject, position].every((r) => r.found || (!r.found && r.canCreate)),
       })),
     ),
   )

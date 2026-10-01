@@ -14,6 +14,7 @@ import {
 import { deleteDraftAction } from '../../../actions/delete-draft-action'
 import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
+import AuthorCreationPreview from '../AuthorCreationPreview'
 import CreationPreview from '../CreationPreview'
 import RejectForm from '../RejectForm'
 import DraftAmendForm from '../DraftAmendForm'
@@ -100,48 +101,15 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
 
       <div className={styles.resolution}>
         <EntityStatus
-          label={draft.publicFigureName}
-          resolution={resolution.publicFigure}
-          linkPrefix="/p/"
+          label={draft.author.name}
+          resolution={resolution.author}
+          linkPrefix={draft.author.kind === 'organisation' ? '/o/' : '/p/'}
         />
         <EntityStatus label={draft.subjectTitle} resolution={resolution.subject} linkPrefix="/s/" />
         <EntityStatus label={draft.positionTitle} resolution={resolution.position} />
       </div>
 
-      {draft.publicFigureData && !resolution.publicFigure.found && (
-        <CreationPreview title={draft.publicFigureName}>
-          <p>{draft.publicFigureData.presentation}</p>
-          {draft.publicFigureData.wikipediaUrl && (
-            <p>
-              <strong>Wikipedia :</strong>{' '}
-              <a
-                href={draft.publicFigureData.wikipediaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {draft.publicFigureData.wikipediaUrl}
-              </a>
-            </p>
-          )}
-          {draft.publicFigureData.notorietySources &&
-            draft.publicFigureData.notorietySources.length > 0 && (
-              <>
-                <p>
-                  <strong>Sources de notoriété :</strong>
-                </p>
-                <ul className={styles.notorietySources}>
-                  {draft.publicFigureData.notorietySources.map((url, index) => (
-                    <li key={index}>
-                      <a href={url} target="_blank" rel="noopener noreferrer">
-                        {url}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-        </CreationPreview>
-      )}
+      {!resolution.author.found && <AuthorCreationPreview author={draft.author} />}
 
       {draft.subjectData && !resolution.subject.found && (
         <CreationPreview title={draft.subjectTitle}>

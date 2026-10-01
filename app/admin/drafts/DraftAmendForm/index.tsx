@@ -5,6 +5,12 @@ import { DraftStatement } from '../../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../../domain/use-cases/resolve-draft'
 import { DraftAmendments } from '../../../actions/amend-and-validate-draft-action'
 import { searchPublicFigures } from '../../../actions/search-public-figures'
+import { searchOrganisations } from '../../../actions/search-organisations'
+import {
+  ORGANISATION_TYPE_LABELS,
+  ORGANISATION_TYPES,
+  OrganisationType,
+} from '../../../../domain/entities/organisation'
 import { searchSubjects } from '../../../actions/search-subjects'
 import { getPositionsForSubject, PositionOption } from '../../../actions/get-positions-for-subject'
 import TextField from '../../../../components/ui/TextField'
@@ -38,24 +44,27 @@ export default function DraftAmendForm({
   onCancel,
   disabled,
 }: DraftAmendFormProps) {
-  const figureInitial = resolution.publicFigure.found
-    ? { id: resolution.publicFigure.entity.id, label: resolution.publicFigure.entity.name }
+  const { author } = draft
+  const isOrganisation = author.kind === 'organisation'
+  const authorInitial = resolution.author.found
+    ? { id: resolution.author.entity.id, label: resolution.author.entity.name }
     : undefined
   const subjectInitial = resolution.subject.found
     ? { id: resolution.subject.entity.id, label: resolution.subject.entity.title }
     : undefined
 
-  // Figure
-  const [figureMode, setFigureMode] = useState<EntityFieldValue['mode']>(
-    figureInitial ? 'existing' : 'new',
+  // Author: a public figure or an organisation
+  const [authorMode, setAuthorMode] = useState<EntityFieldValue['mode']>(
+    authorInitial ? 'existing' : 'new',
   )
-  const [figureName, setFigureName] = useState(draft.publicFigureName)
-  const [figurePresentation, setFigurePresentation] = useState(
-    draft.publicFigureData?.presentation ?? '',
+  const [authorName, setAuthorName] = useState(author.name)
+  const [authorPresentation, setAuthorPresentation] = useState(author.data?.presentation ?? '')
+  const [authorWikipedia, setAuthorWikipedia] = useState(author.data?.wikipediaUrl ?? '')
+  const [authorNotorietySources, setAuthorNotorietySources] = useState<string[]>(
+    author.data?.notorietySources ?? ['', ''],
   )
-  const [figureWikipedia, setFigureWikipedia] = useState(draft.publicFigureData?.wikipediaUrl ?? '')
-  const [figureNotorietySources, setFigureNotorietySources] = useState<string[]>(
-    draft.publicFigureData?.notorietySources ?? ['', ''],
+  const [authorOrganisationType, setAuthorOrganisationType] = useState<OrganisationType>(
+    author.kind === 'organisation' ? (author.data?.organisationType ?? 'association') : 'association',
   )
 
   // Subject
@@ -99,9 +108,9 @@ export default function DraftAmendForm({
     return () => controller.abort()
   }, [subjectMode, subjectId, draft.positionTitle])
 
-  const handleFigureChange = useCallback((value: EntityFieldValue) => {
-    setFigureMode(value.mode)
-    setFigureName(value.name)
+  const handleAuthorChange = useCallback((value: EntityFieldValue) => {
+    setAuthorMode(value.mode)
+    setAuthorName(value.name)
   }, [])
 
   const handleSubjectChange = useCallback((value: EntityFieldValue) => {
@@ -113,10 +122,12 @@ export default function DraftAmendForm({
     setAvailablePositions([])
   }, [])
 
-  const searchFigures = useCallback(
+  const searchAuthors = useCallback(
     async (query: string) =>
-      (await searchPublicFigures(query)).map((f) => ({ id: f.id, label: f.name })),
-    [],
+      isOrganisation
+        ? (await searchOrganisations(query)).map((o) => ({ id: o.id, label: o.name }))
+        : (await searchPublicFigures(query)).map((f) => ({ id: f.id, label: f.name })),
+    [isOrganisation],
   )
 
   const searchSubjectsAction = useCallback(
@@ -128,11 +139,12 @@ export default function DraftAmendForm({
   const handleSubmit = useCallback(async () => {
     const selectedPosition = availablePositions.find((p) => p.id === selectedPositionId)
     const amendments = buildAmendments(draft, resolution, {
-      figureMode,
-      figureName,
-      figurePresentation,
-      figureWikipedia,
-      figureNotorietySources,
+      authorMode,
+      authorName,
+      authorPresentation,
+      authorWikipedia,
+      authorNotorietySources,
+      authorOrganisationType,
       subjectMode,
       subjectTitle,
       subjectPresentation,
@@ -148,11 +160,12 @@ export default function DraftAmendForm({
   }, [
     draft,
     resolution,
-    figureMode,
-    figureName,
-    figurePresentation,
-    figureWikipedia,
-    figureNotorietySources,
+    authorMode,
+    authorName,
+    authorPresentation,
+    authorWikipedia,
+    authorNotorietySources,
+    authorOrganisationType,
     subjectMode,
     subjectTitle,
     subjectPresentation,
@@ -170,59 +183,78 @@ export default function DraftAmendForm({
   return (
     <div className={styles.form}>
       <EntityField
-        label="Personnalité"
-        draftName={draft.publicFigureName}
-        initialSelection={figureInitial}
-        onSearch={searchFigures}
-        onChange={handleFigureChange}
+        label={isOrganisation ? 'Organisation' : 'Personnalité'}
+        draftName={author.name}
+        initialSelection={authorInitial}
+        onSearch={searchAuthors}
+        onChange={handleAuthorChange}
       >
         <TextField
           label="Nom"
-          id="amend-figure-name"
-          name="figureName"
-          value={figureName}
-          onChange={(e) => setFigureName(e.target.value)}
+          id="amend-author-name"
+          name="authorName"
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
         />
+        {isOrganisation && (
+          <div className={styles.selectField}>
+            <label className={styles.selectLabel} htmlFor="amend-author-organisation-type">
+              Type d’organisation
+            </label>
+            <select
+              id="amend-author-organisation-type"
+              className={styles.select}
+              value={authorOrganisationType}
+              onChange={(e) => setAuthorOrganisationType(e.target.value as OrganisationType)}
+            >
+              {ORGANISATION_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {ORGANISATION_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <TextArea
           label="Présentation"
-          id="amend-figure-presentation"
-          name="figurePresentation"
-          value={figurePresentation}
-          onChange={(e) => setFigurePresentation(e.target.value)}
+          id="amend-author-presentation"
+          name="authorPresentation"
+          value={authorPresentation}
+          onChange={(e) => setAuthorPresentation(e.target.value)}
           rows={2}
         />
         <TextField
           label="URL Wikipedia"
-          id="amend-figure-wikipedia"
-          name="figureWikipedia"
-          value={figureWikipedia}
-          onChange={(e) => setFigureWikipedia(e.target.value)}
+          id="amend-author-wikipedia"
+          name="authorWikipedia"
+          value={authorWikipedia}
+          onChange={(e) => setAuthorWikipedia(e.target.value)}
         />
-        {!figureWikipedia && (
+        {!authorWikipedia && (
           <div className={styles.notorietySources}>
             <label className={styles.notorietyLabel}>
               Sources de notoriété (min. 2, requises sans Wikipedia)
             </label>
-            {figureNotorietySources.map((url, index) => (
+            {authorNotorietySources.map((url, index) => (
               <div key={index} className={styles.notorietyRow}>
                 <TextField
                   label={`Source ${index + 1}`}
-                  id={`amend-figure-notoriety-${index}`}
-                  name={`figureNotoriety${index}`}
+                  id={`amend-author-notoriety-${index}`}
+                  name={`authorNotoriety${index}`}
                   value={url}
                   onChange={(e) => {
-                    const next = [...figureNotorietySources]
+                    const next = [...authorNotorietySources]
                     next[index] = e.target.value
-                    setFigureNotorietySources(next)
+                    setAuthorNotorietySources(next)
                   }}
                 />
-                {figureNotorietySources.length > 2 && (
+                {authorNotorietySources.length > 2 && (
                   <button
                     type="button"
                     className={styles.removeSource}
                     onClick={() =>
-                      setFigureNotorietySources(
-                        figureNotorietySources.filter((_, i) => i !== index),
+                      setAuthorNotorietySources(
+                        authorNotorietySources.filter((_, i) => i !== index),
                       )
                     }
                   >
@@ -234,7 +266,7 @@ export default function DraftAmendForm({
             <button
               type="button"
               className={styles.addSource}
-              onClick={() => setFigureNotorietySources([...figureNotorietySources, ''])}
+              onClick={() => setAuthorNotorietySources([...authorNotorietySources, ''])}
             >
               + Ajouter une source
             </button>

@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Effect } from 'effect'
 import { Json } from '../../../types/database.types'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
-import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
-import { validateSlugifiableFields } from './validation'
+import {
+  authorColumns,
+  createDraftStatementRepository,
+} from '../../../infra/database/draft-statement-repository-supabase'
+import { DraftAuthor } from '../../../domain/entities/draft-statement'
+import { STATEMENT_TYPES, StatementType } from '../../../domain/entities/statement'
+import { parseDraftAuthor, validateSlugifiableFields } from './validation'
 import { checkAdminApiKey } from '../admin-auth'
 
 export async function GET(request: NextRequest) {
@@ -35,7 +40,6 @@ export async function GET(request: NextRequest) {
 }
 
 const REQUIRED_FIELDS = [
-  'publicFigureName',
   'subjectTitle',
   'positionTitle',
   'sourceName',
@@ -45,20 +49,41 @@ const REQUIRED_FIELDS = [
   'origin',
 ] as const
 
+type ValidatedDraft = { author: DraftAuthor; statementType: StatementType }
+
 function validateDraftInput(
   draft: Record<string, unknown>,
-): string | null {
+): { draft: ValidatedDraft } | { error: string } {
   for (const field of REQUIRED_FIELDS) {
     if (typeof draft[field] !== 'string' || !draft[field]) {
-      return `Missing or empty required field: ${field}`
+      return { error: `Missing or empty required field: ${field}` }
     }
   }
   const slugError = validateSlugifiableFields(draft, false)
-  if (slugError) return slugError
+  if (slugError) return { error: slugError }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date as string)) {
-    return 'Invalid date format (expected YYYY-MM-DD)'
+    return { error: 'Invalid date format (expected YYYY-MM-DD)' }
   }
-  return null
+
+  const parsedAuthor = parseDraftAuthor(draft.author)
+  if ('error' in parsedAuthor) return parsedAuthor
+
+  if (draft.statementType !== undefined && !isStatementType(draft.statementType)) {
+    return {
+      error: `Field statementType must be one of: ${STATEMENT_TYPES.join(', ')}`,
+    }
+  }
+
+  return {
+    draft: {
+      author: parsedAuthor.author,
+      statementType: (draft.statementType as StatementType) ?? 'declaration',
+    },
+  }
+}
+
+function isStatementType(value: unknown): value is StatementType {
+  return STATEMENT_TYPES.includes(value as StatementType)
 }
 
 export async function POST(request: NextRequest) {
@@ -73,17 +98,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Expected at least one draft.' }, { status: 400 })
   }
 
+  const validated: ValidatedDraft[] = []
   for (let i = 0; i < drafts.length; i++) {
-    const validationError = validateDraftInput(drafts[i])
-    if (validationError) {
-      return NextResponse.json({ error: `Draft ${i}: ${validationError}` }, { status: 400 })
+    const result = validateDraftInput(drafts[i])
+    if ('error' in result) {
+      return NextResponse.json({ error: `Draft ${i}: ${result.error}` }, { status: 400 })
     }
+    validated.push(result.draft)
   }
 
   const supabase = createAdminSupabaseClient()
 
-  const rows = drafts.map((d: Record<string, unknown>) => ({
-    public_figure_name: d.publicFigureName as string,
+  const rows = drafts.map((d: Record<string, unknown>, i: number) => ({
+    ...authorColumns(validated[i].author),
+    statement_type: validated[i].statementType,
     subject_title: d.subjectTitle as string,
     position_title: d.positionTitle as string,
     source_name: d.sourceName as string,
@@ -91,7 +119,6 @@ export async function POST(request: NextRequest) {
     quote: d.quote as string,
     date: d.date as string,
     ai_notes: (d.aiNotes as string) ?? null,
-    public_figure_data: (d.publicFigureData as Json) ?? null,
     subject_data: (d.subjectData as Json) ?? null,
     position_data: (d.positionData as Json) ?? null,
     origin: d.origin as string,

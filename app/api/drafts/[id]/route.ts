@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../../infra/database/draft-statement-repository-supabase'
-import { validateSlugifiableFields } from '../validation'
+import { parseDraftAuthor, validateSlugifiableFields } from '../validation'
 import { checkAdminApiKey } from '../../admin-auth'
 
 const ALLOWED_FIELDS = new Set([
@@ -11,10 +11,10 @@ const ALLOWED_FIELDS = new Set([
   'sourceUrl',
   'date',
   'aiNotes',
-  'publicFigureName',
+  'author',
+  'statementType',
   'subjectTitle',
   'positionTitle',
-  'publicFigureData',
   'subjectData',
   'positionData',
   'rejectionNote',
@@ -53,10 +53,19 @@ export async function PATCH(
     return NextResponse.json({ error: slugError }, { status: 400 })
   }
 
+  const fields = { ...body }
+  if ('author' in fields) {
+    const parsedAuthor = parseDraftAuthor(fields.author)
+    if ('error' in parsedAuthor) {
+      return NextResponse.json({ error: parsedAuthor.error }, { status: 400 })
+    }
+    fields.author = parsedAuthor.author
+  }
+
   const supabase = createAdminSupabaseClient()
   const draftRepo = createDraftStatementRepository(supabase)
 
-  const result = await Effect.runPromise(Effect.either(draftRepo.update(id, body)))
+  const result = await Effect.runPromise(Effect.either(draftRepo.update(id, fields)))
 
   if (result._tag === 'Left') {
     return NextResponse.json({ error: 'Failed to update draft' }, { status: 500 })

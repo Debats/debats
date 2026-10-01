@@ -11,20 +11,16 @@ import { createStatementRepository } from '../../infra/database/statement-reposi
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
+import { DraftAuthor } from '../../domain/entities/draft-statement'
 import { getAdminContributor } from './admin-guard'
 import type { ActionResult } from './validate-draft-action'
 
 export type DraftAmendments = {
-  publicFigureName?: string
+  author?: DraftAuthor
   subjectTitle?: string
   positionTitle?: string
   sourceName?: string
   quote?: string
-  publicFigureData?: {
-    presentation: string
-    wikipediaUrl?: string
-    notorietySources?: string[]
-  } | null
   subjectData?: { presentation: string; problem: string } | null
   positionData?: { description: string } | null
 }
