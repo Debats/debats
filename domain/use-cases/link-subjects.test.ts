@@ -21,6 +21,7 @@ const subjectB = fakeSubject('subject-b', 'Sujet Bravo')
 
 const fakeSubjectRepo = {
   findAll: () => Effect.succeed([]),
+  searchByTitle: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(null),
   findById: (id: string) =>
     Effect.succeed(id === 'subject-a' ? subjectA : id === 'subject-b' ? subjectB : null),

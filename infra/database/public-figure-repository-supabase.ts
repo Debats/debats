@@ -1,12 +1,18 @@
 import * as Sentry from '@sentry/nextjs'
 import { Effect, Option } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { PublicFigure } from '../../domain/entities/public-figure'
+import {
+  PublicFigure,
+  PublicFigureId,
+  PublicFigureName,
+  PublicFigureSlug,
+} from '../../domain/entities/public-figure'
 import { PublicFigureActivitySummary } from '../../domain/value-objects/public-figure-activity-summary'
 import {
   DatabaseError,
   PublicFigureRepository,
 } from '../../domain/repositories/public-figure-repository'
+import { fetchAllRows } from './fetch-all-pages'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -14,33 +20,96 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
+interface PublicFigureRow {
+  id: string
+  name: string
+  slug: string
+  presentation: string
+  website_url: string | null
+  wikipedia_url: string | null
+  notoriety_sources: string[] | null
+  created_at: string
+  updated_at: string
+  created_by: string
+}
+
+function mapRow(row: PublicFigureRow): PublicFigure {
+  return PublicFigure.make({
+    id: PublicFigureId.make(row.id),
+    name: PublicFigureName.make(row.name),
+    slug: PublicFigureSlug.make(row.slug),
+    presentation: row.presentation,
+    websiteUrl: Option.fromNullable(row.website_url),
+    wikipediaUrl: Option.fromNullable(row.wikipedia_url),
+    notorietySources: row.notoriety_sources ?? [],
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    createdBy: row.created_by,
+  })
+}
+
+interface ActivitySummaryRow {
+  id: string
+  name: string
+  slug: string
+  presentation: string
+  statements_count: number | null
+  subjects_count: number | null
+  latest_statement_at: string | null
+}
+
+function mapSummaryRow(row: ActivitySummaryRow): PublicFigureActivitySummary {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    presentation: row.presentation,
+    statementsCount: row.statements_count ?? 0,
+    subjectsCount: row.subjects_count ?? 0,
+    latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
+  }
+}
+
+/** PostgREST reports a missing row on `.single()` with this code. */
+const NO_ROW_FOUND = 'PGRST116'
+
 export function createPublicFigureRepository(supabase: SupabaseClient): PublicFigureRepository {
+  /** Reads one figure, or null when the filter matches nothing. */
+  const findOneBy = (column: string, value: string) =>
+    Effect.tryPromise({
+      try: async () => {
+        const { data, error } = await supabase
+          .from('public_figures')
+          .select('*')
+          .eq(column, value)
+          .is('deleted_at', null)
+          .single()
+
+        if (error) {
+          if (error.code === NO_ROW_FOUND) return null
+          throw error
+        }
+
+        return mapRow(data)
+      },
+      catch: (error) => dbError(`Failed to fetch public figure by ${column}`, error),
+    })
+
   return {
     findAll: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('public_figures')
-            .select('*')
-            .is('deleted_at', null)
-            .order('name')
-
-          if (error) throw error
-
-          return data.map((figure) =>
-            PublicFigure.make({
-              id: figure.id,
-              name: figure.name,
-              slug: figure.slug,
-              presentation: figure.presentation,
-              websiteUrl: Option.fromNullable(figure.website_url),
-              wikipediaUrl: Option.fromNullable(figure.wikipedia_url),
-              notorietySources: figure.notoriety_sources ?? [],
-              createdAt: new Date(figure.created_at),
-              updatedAt: new Date(figure.updated_at),
-              createdBy: figure.created_by,
-            }),
+          // Every figure is served, however many pages PostgREST needs: the
+          // sitemap and the search would otherwise lose entries without a word.
+          const rows = await fetchAllRows<PublicFigureRow>((offset, limit) =>
+            supabase
+              .from('public_figures')
+              .select('*', { count: 'exact' })
+              .is('deleted_at', null)
+              .order('name')
+              .range(offset, offset + limit - 1),
           )
+          return rows.map(mapRow)
         },
         catch: (error) => dbError('Failed to fetch public figures', error),
       }),
@@ -57,117 +126,16 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .limit(limit)
 
           if (error) throw error
-
-          return data.map((figure) =>
-            PublicFigure.make({
-              id: figure.id,
-              name: figure.name,
-              slug: figure.slug,
-              presentation: figure.presentation,
-              websiteUrl: Option.fromNullable(figure.website_url),
-              wikipediaUrl: Option.fromNullable(figure.wikipedia_url),
-              notorietySources: figure.notoriety_sources ?? [],
-              createdAt: new Date(figure.created_at),
-              updatedAt: new Date(figure.updated_at),
-              createdBy: figure.created_by,
-            }),
-          )
+          return data.map(mapRow)
         },
         catch: (error) => dbError('Failed to search public figures', error),
       }),
 
-    findBySlug: (slug: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('public_figures')
-            .select('*')
-            .eq('slug', slug)
-            .is('deleted_at', null)
-            .single()
+    findBySlug: (slug: string) => findOneBy('slug', slug),
 
-          if (error) {
-            if (error.code === 'PGRST116') return null
-            throw error
-          }
+    findById: (id: string) => findOneBy('id', id),
 
-          return PublicFigure.make({
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            presentation: data.presentation,
-            websiteUrl: Option.fromNullable(data.website_url),
-            wikipediaUrl: Option.fromNullable(data.wikipedia_url),
-            notorietySources: data.notoriety_sources ?? [],
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-            createdBy: data.created_by,
-          })
-        },
-        catch: (error) => dbError('Failed to fetch public figure', error),
-      }),
-
-    findById: (id: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('public_figures')
-            .select('*')
-            .eq('id', id)
-            .is('deleted_at', null)
-            .single()
-
-          if (error) {
-            if (error.code === 'PGRST116') return null
-            throw error
-          }
-
-          return PublicFigure.make({
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            presentation: data.presentation,
-            websiteUrl: Option.fromNullable(data.website_url),
-            wikipediaUrl: Option.fromNullable(data.wikipedia_url),
-            notorietySources: data.notoriety_sources ?? [],
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-            createdBy: data.created_by,
-          })
-        },
-        catch: (error) => dbError('Failed to fetch public figure', error),
-      }),
-
-    findByWikipediaUrl: (url: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('public_figures')
-            .select('*')
-            .eq('wikipedia_url', url)
-            .is('deleted_at', null)
-            .single()
-
-          if (error) {
-            if (error.code === 'PGRST116') return null
-            throw error
-          }
-
-          return PublicFigure.make({
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            presentation: data.presentation,
-            websiteUrl: Option.fromNullable(data.website_url),
-            wikipediaUrl: Option.fromNullable(data.wikipedia_url),
-            notorietySources: data.notoriety_sources ?? [],
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-            createdBy: data.created_by,
-          })
-        },
-        catch: (error) => dbError('Failed to fetch public figure by Wikipedia URL', error),
-      }),
+    findByWikipediaUrl: (url: string) => findOneBy('wikipedia_url', url),
 
     create: (publicFigure: PublicFigure) =>
       Effect.tryPromise({
@@ -188,19 +156,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .single()
 
           if (error) throw error
-
-          return PublicFigure.make({
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            presentation: data.presentation,
-            websiteUrl: Option.fromNullable(data.website_url),
-            wikipediaUrl: Option.fromNullable(data.wikipedia_url),
-            notorietySources: data.notoriety_sources ?? [],
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-            createdBy: data.created_by,
-          })
+          return mapRow(data)
         },
         catch: (error) => dbError('Failed to create public figure', error),
       }),
@@ -223,19 +179,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .single()
 
           if (error) throw error
-
-          return PublicFigure.make({
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            presentation: data.presentation,
-            websiteUrl: Option.fromNullable(data.website_url),
-            wikipediaUrl: Option.fromNullable(data.wikipedia_url),
-            notorietySources: data.notoriety_sources ?? [],
-            createdAt: new Date(data.created_at),
-            updatedAt: new Date(data.updated_at),
-            createdBy: data.created_by,
-          })
+          return mapRow(data)
         },
         catch: (error) => dbError('Failed to update public figure', error),
       }),
@@ -299,18 +243,7 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
             .limit(limit)
 
           if (error) throw error
-
-          return data.map(
-            (row): PublicFigureActivitySummary => ({
-              id: row.id,
-              name: row.name,
-              slug: row.slug,
-              presentation: row.presentation,
-              statementsCount: row.statements_count ?? 0,
-              subjectsCount: row.subjects_count ?? 0,
-              latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
-            }),
-          )
+          return data.map(mapSummaryRow)
         },
         catch: (error) => dbError('Failed to fetch public figure summaries', error),
       }),
@@ -318,25 +251,15 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
     findByLetter: (letter: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('v_public_figure_activity_summary')
-            .select('*')
-            .ilike('name', `${letter}%`)
-            .order('name')
-
-          if (error) throw error
-
-          return data.map(
-            (row): PublicFigureActivitySummary => ({
-              id: row.id,
-              name: row.name,
-              slug: row.slug,
-              presentation: row.presentation,
-              statementsCount: row.statements_count ?? 0,
-              subjectsCount: row.subjects_count ?? 0,
-              latestStatementAt: row.latest_statement_at ? new Date(row.latest_statement_at) : null,
-            }),
+          const rows = await fetchAllRows<ActivitySummaryRow>((offset, limit) =>
+            supabase
+              .from('v_public_figure_activity_summary')
+              .select('*', { count: 'exact' })
+              .ilike('name', `${letter}%`)
+              .order('name')
+              .range(offset, offset + limit - 1),
           )
+          return rows.map(mapSummaryRow)
         },
         catch: (error) => dbError('Failed to fetch public figures by letter', error),
       }),

@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchAllPages } from './fetch-all-pages'
+import { fetchAllPages, fetchAllRows } from './fetch-all-pages'
 
 /** Mimics a server that serves at most `serverLimit` rows per request. */
 function fakeServer(total: number, serverLimit: number) {
   return vi.fn(async (offset: number, limit: number) => ({
-    rows: Array.from({ length: Math.max(0, Math.min(limit, serverLimit, total - offset)) }, (_, i) => offset + i),
+    rows: Array.from(
+      { length: Math.max(0, Math.min(limit, serverLimit, total - offset)) },
+      (_, i) => offset + i,
+    ),
     total,
   }))
 }
@@ -39,5 +42,35 @@ describe('fetchAllPages', () => {
     await expect(fetchAllPages(fetchPage, 1000)).rejects.toThrow(
       'Pagination stalled: read 0 of 10 rows',
     )
+  })
+})
+
+describe('fetchAllRows', () => {
+  /** Mimics a PostgREST response, capped at `serverLimit` rows per request. */
+  function fakeQuery(total: number, serverLimit: number) {
+    return vi.fn(async (offset: number, limit: number) => ({
+      data: Array.from(
+        { length: Math.max(0, Math.min(limit, serverLimit, total - offset)) },
+        (_, i) => ({ id: offset + i }),
+      ),
+      error: null,
+      count: total,
+    }))
+  }
+
+  it('reads every row across the pages the server is willing to serve', async () => {
+    const rows = await fetchAllRows(fakeQuery(1500, 500))
+    expect(rows).toHaveLength(1500)
+    expect(rows[1499]).toEqual({ id: 1499 })
+  })
+
+  it('throws the query error instead of returning a partial list', async () => {
+    const failing = async () => ({ data: null, error: new Error('boom'), count: null })
+    await expect(fetchAllRows(failing)).rejects.toThrow('boom')
+  })
+
+  it('treats a null payload as no rows', async () => {
+    const empty = async () => ({ data: null, error: null, count: 0 })
+    expect(await fetchAllRows(empty)).toEqual([])
   })
 })

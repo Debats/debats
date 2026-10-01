@@ -6,6 +6,7 @@ import { Subject } from '../entities/subject'
 const fakeSubjectRepo = {
   create: (subject: Subject) => Effect.succeed(subject),
   findAll: () => Effect.succeed([]),
+  searchByTitle: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(null),
   findById: () => Effect.succeed(null),
   update: (s: Subject) => Effect.succeed(s),

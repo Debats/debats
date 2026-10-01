@@ -15,6 +15,7 @@ const fakeSubjectRepo = {
   update: (s: Subject) => Effect.succeed(s),
   create: (s: Subject) => Effect.succeed(s),
   findAll: () => Effect.succeed([]),
+  searchByTitle: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(null),
   delete: () => Effect.succeed(undefined as void),
   getStats: () =>

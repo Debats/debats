@@ -34,6 +34,7 @@ const testSubject = Subject.make({
 
 const fakeSubjectRepo = {
   findAll: () => Effect.succeed([]),
+  searchByTitle: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(null),
   findById: (id: string) => Effect.succeed(id === 'subject-1' ? testSubject : null),
   create: () => Effect.succeed(null as never),

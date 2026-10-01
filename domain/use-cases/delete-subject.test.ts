@@ -20,6 +20,7 @@ const fakeSubjectRepo = {
   delete: () => Effect.succeed(undefined as void),
   create: (s: Subject) => Effect.succeed(s),
   findAll: () => Effect.succeed([]),
+  searchByTitle: () => Effect.succeed([]),
   findBySlug: () => Effect.succeed(null),
   update: (s: Subject) => Effect.succeed(s),
   getStats: () =>
