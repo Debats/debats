@@ -15,10 +15,10 @@ export default function AuthorCreationPreview({ author }: AuthorCreationPreviewP
 
   return (
     <CreationPreview title={author.name}>
-      {author.kind === 'organisation' && (
+      {'organisationType' in data && (
         <p>
-          <strong>Type :</strong> {ORGANISATION_TYPE_LABELS[author.data.organisationType]}
-          {author.data.acronym && ` — ${author.data.acronym}`}
+          <strong>Type :</strong> {ORGANISATION_TYPE_LABELS[data.organisationType]}
+          {data.acronym && ` — ${data.acronym}`}
         </p>
       )}
       <p>{data.presentation}</p>
