@@ -4,6 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { ContentCatalogRepository } from '../../domain/repositories/content-catalog-repository'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { buildContentCatalog } from '../../domain/read-models/content-catalog'
+import { fetchAllPages } from './fetch-all-pages'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -11,26 +12,24 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
-/** PostgREST caps a response at 1000 rows, so pages are read until exhaustion. */
 const PAGE_SIZE = 1000
 
-async function fetchLiveRows<Row>(
+/** Every row of a table that has not been soft-deleted, however many pages it takes. */
+function fetchLiveRows<Row>(
   supabase: SupabaseClient,
   table: string,
   columns: string,
 ): Promise<Row[]> {
-  const rows: Row[] = []
-  for (let page = 0; ; page++) {
-    const { data, error } = await supabase
+  return fetchAllPages<Row>(async (offset, limit) => {
+    const { data, error, count } = await supabase
       .from(table)
-      .select(columns)
+      .select(columns, { count: 'exact' })
       .is('deleted_at', null)
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+      .range(offset, offset + limit - 1)
 
     if (error) throw error
-    rows.push(...(data as Row[]))
-    if (data.length < PAGE_SIZE) return rows
-  }
+    return { rows: data as Row[], total: count }
+  }, PAGE_SIZE)
 }
 
 export function createContentCatalogRepository(
