@@ -54,10 +54,11 @@ export function buildAmendments(
 
   // Author
   if (state.authorMode === 'existing') {
-    if (state.authorName !== draft.author.name) {
-      amendments.author = authorWithData(draft.author, state, null)
-    } else if (!resolution.author.found && draft.author.data !== null) {
-      // Admin switched to existing mode but name matches → entity now exists, clear creation data
+    // Either the admin picked another entity, or they confirmed this one exists
+    // after all — both mean the creation data must go.
+    const nameChanged = state.authorName !== draft.author.name
+    const staleCreationData = !resolution.author.found && draft.author.data !== null
+    if (nameChanged || staleCreationData) {
       amendments.author = authorWithData(draft.author, state, null)
     }
   } else {

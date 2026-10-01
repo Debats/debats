@@ -11,7 +11,10 @@ import {
 } from '../../domain/entities/draft-statement'
 import { StatementType } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
-import { DraftStatementRepository } from '../../domain/repositories/draft-statement-repository'
+import {
+  DraftStatementRepository,
+  NewDraftStatement,
+} from '../../domain/repositories/draft-statement-repository'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -34,7 +37,7 @@ function mapAuthor(row: Record<string, unknown>): DraftAuthor {
 }
 
 /** Columns for the author side being written, clearing the other side. */
-export function authorColumns(author: DraftAuthor): Record<string, unknown> {
+function authorColumns(author: DraftAuthor): Record<string, unknown> {
   return author.kind === 'organisation'
     ? {
         organisation_name: author.name,
@@ -74,6 +77,35 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
 
 export function createDraftStatementRepository(supabase: SupabaseClient): DraftStatementRepository {
   return {
+    createMany: (drafts: NewDraftStatement[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          const rows = drafts.map((draft) => ({
+            ...authorColumns(draft.author),
+            statement_type: draft.statementType,
+            subject_title: draft.subjectTitle,
+            position_title: draft.positionTitle,
+            source_name: draft.sourceName,
+            source_url: draft.sourceUrl,
+            quote: draft.quote,
+            date: draft.date,
+            ai_notes: draft.aiNotes,
+            subject_data: draft.subjectData,
+            position_data: draft.positionData,
+            origin: draft.origin,
+          }))
+
+          const { data, error } = await supabase
+            .from('draft_statements')
+            .insert(rows)
+            .select('id')
+
+          if (error) throw error
+          return data.map((row) => row.id as string)
+        },
+        catch: (error) => dbError('Failed to create drafts', error),
+      }),
+
     findByStatus: (status: DraftStatement['status']) =>
       Effect.tryPromise({
         try: async () => {

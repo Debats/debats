@@ -22,6 +22,9 @@
             nativeBuildInputs = [
               pkgs.nodejs_22
               unstable.supabase-cli
+              # Fetches video subtitles, to extract statements from a debate or
+              # an interview (see the extract-positions-from-media skill)
+              pkgs.yt-dlp
             ];
 
             shellHook = ''
