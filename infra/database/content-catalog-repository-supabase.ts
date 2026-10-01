@@ -32,9 +32,7 @@ function fetchLiveRows<Row>(
   }, PAGE_SIZE)
 }
 
-export function createContentCatalogRepository(
-  supabase: SupabaseClient,
-): ContentCatalogRepository {
+export function createContentCatalogRepository(supabase: SupabaseClient): ContentCatalogRepository {
   return {
     getCatalog: () =>
       Effect.tryPromise({

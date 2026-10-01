@@ -26,6 +26,7 @@ const fakePositionRepo = {
 
 const fakeSubjectRepo = {
   findAll: () => Effect.succeed([fakeSubject]),
+  searchByTitle: () => Effect.succeed([fakeSubject]),
   findBySlug: () => Effect.succeed(fakeSubject as Subject | null),
   findById: () => Effect.succeed(fakeSubject as Subject | null),
   create: (s: Subject) => Effect.succeed(s),

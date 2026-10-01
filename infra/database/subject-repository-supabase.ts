@@ -9,6 +9,7 @@ import {
   SubjectRepository,
 } from '../../domain/repositories/subject-repository'
 import { Database } from '../../types/database.types'
+import { fetchAllRows } from './fetch-all-pages'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -48,16 +49,38 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     findAll: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('subjects')
-            .select('*')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
+          const rows = await fetchAllRows<SubjectRow>((offset, limit) =>
+            supabase
+              .from('subjects')
+              .select('*', { count: 'exact' })
+              .is('deleted_at', null)
+              .order('created_at', { ascending: false })
+              .range(offset, offset + limit - 1),
+          )
+          return rows.map(mapRowToEntity)
+        },
+        catch: (error) => dbError('Failed to fetch subjects', error),
+      }),
+
+    searchByTitle: (query: string, limit = 10) =>
+      Effect.tryPromise({
+        try: async () => {
+          // Every word must appear in the title, in any order, so that
+          // « budget école » finds « Le budget de l'école ».
+          const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+          if (words.length === 0) return []
+
+          let search = supabase.from('subjects').select('*').is('deleted_at', null)
+          for (const word of words) {
+            search = search.ilike('title', `%${word}%`)
+          }
+
+          const { data, error } = await search.order('title').limit(limit)
 
           if (error) throw error
           return data.map(mapRowToEntity)
         },
-        catch: (error) => dbError('Failed to fetch subjects', error),
+        catch: (error) => dbError('Failed to search subjects', error),
       }),
 
     findById: (id: string) =>
@@ -222,14 +245,15 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
     findAllIds: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('subjects')
-            .select('id')
-            .is('deleted_at', null)
-            .order('id')
-
-          if (error) throw error
-          return data.map((row) => row.id)
+          const rows = await fetchAllRows<{ id: string }>((offset, limit) =>
+            supabase
+              .from('subjects')
+              .select('id', { count: 'exact' })
+              .is('deleted_at', null)
+              .order('id')
+              .range(offset, offset + limit - 1),
+          )
+          return rows.map((row) => row.id)
         },
         catch: (error) => dbError('Failed to fetch subject ids', error),
       }),

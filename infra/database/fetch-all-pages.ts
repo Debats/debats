@@ -33,3 +33,31 @@ export async function fetchAllPages<Row>(
     if (total !== null && rows.length >= total) return rows
   }
 }
+
+/** PostgREST caps a response at `max_rows`; ask for a full page and let paging adapt. */
+export const DEFAULT_PAGE_SIZE = 1000
+
+type QueryResult<Row> = { data: Row[] | null; error: unknown; count: number | null }
+
+/**
+ * Reads every row of a Supabase query that scans a whole table.
+ *
+ * `buildPage` must apply `.range(offset, offset + limit - 1)` and ask for an
+ * exact count, so paging knows when to stop:
+ *
+ * ```ts
+ * fetchAllRows((offset, limit) =>
+ *   supabase.from('public_figures').select('*', { count: 'exact' })
+ *     .is('deleted_at', null).order('name').range(offset, offset + limit - 1))
+ * ```
+ */
+export function fetchAllRows<Row>(
+  buildPage: (offset: number, limit: number) => PromiseLike<QueryResult<Row>>,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<Row[]> {
+  return fetchAllPages<Row>(async (offset, limit) => {
+    const { data, error, count } = await buildPage(offset, limit)
+    if (error) throw error
+    return { rows: data ?? [], total: count }
+  }, pageSize)
+}

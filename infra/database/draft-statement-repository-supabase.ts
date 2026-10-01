@@ -95,10 +95,7 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
             origin: draft.origin,
           }))
 
-          const { data, error } = await supabase
-            .from('draft_statements')
-            .insert(rows)
-            .select('id')
+          const { data, error } = await supabase.from('draft_statements').insert(rows).select('id')
 
           if (error) throw error
           return data.map((row) => row.id as string)

@@ -24,6 +24,9 @@ export interface SubjectActivitySummary {
 export interface SubjectRepository {
   findAll(): Effect.Effect<Subject[], DatabaseError>
 
+  /** Subjects whose title contains every word of the query, in any order */
+  searchByTitle(query: string, limit?: number): Effect.Effect<Subject[], DatabaseError>
+
   findBySlug(slug: string): Effect.Effect<Subject | null, DatabaseError>
 
   findById(id: string): Effect.Effect<Subject | null, DatabaseError>

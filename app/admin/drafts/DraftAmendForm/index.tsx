@@ -64,7 +64,9 @@ export default function DraftAmendForm({
     author.data?.notorietySources ?? ['', ''],
   )
   const [authorOrganisationType, setAuthorOrganisationType] = useState<OrganisationType>(
-    author.kind === 'organisation' ? (author.data?.organisationType ?? 'association') : 'association',
+    author.kind === 'organisation'
+      ? (author.data?.organisationType ?? 'association')
+      : 'association',
   )
 
   // Subject

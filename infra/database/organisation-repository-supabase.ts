@@ -11,6 +11,7 @@ import {
 import { OrganisationSummary } from '../../domain/read-models/organisation-summary'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { OrganisationRepository } from '../../domain/repositories/organisation-repository'
+import { fetchAllRows } from './fetch-all-pages'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -32,6 +33,19 @@ interface OrganisationRow {
   updated_by: string
   created_at: string
   updated_at: string
+}
+
+/** Row of the v_organisation_summary view. */
+interface OrganisationSummaryRow {
+  id: string
+  name: string
+  slug: string
+  acronym: string | null
+  organisation_type: OrganisationType
+  presentation: string
+  members_count: number | null
+  statements_count: number | null
+  subjects_count: number | null
 }
 
 function mapRow(row: OrganisationRow): Organisation {
@@ -83,9 +97,15 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
     findAll: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await live().order('name')
-          if (error) throw error
-          return data.map(mapRow)
+          const rows = await fetchAllRows<OrganisationRow>((offset, limit) =>
+            supabase
+              .from('organisations')
+              .select('*', { count: 'exact' })
+              .is('deleted_at', null)
+              .order('name')
+              .range(offset, offset + limit - 1),
+          )
+          return rows.map(mapRow)
         },
         catch: (error) => dbError('Failed to fetch organisations', error),
       }),
@@ -154,12 +174,14 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
     findSummaries: () =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('v_organisation_summary')
-            .select('*')
-            .order('name')
-          if (error) throw error
-          return data.map(
+          const rows = await fetchAllRows<OrganisationSummaryRow>((offset, limit) =>
+            supabase
+              .from('v_organisation_summary')
+              .select('*', { count: 'exact' })
+              .order('name')
+              .range(offset, offset + limit - 1),
+          )
+          return rows.map(
             (row): OrganisationSummary => ({
               id: row.id,
               name: row.name,
