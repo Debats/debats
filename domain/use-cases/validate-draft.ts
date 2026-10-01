@@ -1,6 +1,7 @@
 import { Effect, Either } from 'effect'
 import { DraftStatement } from '../entities/draft-statement'
 import { generateSlug as generatePublicFigureSlug } from '../entities/public-figure'
+import { generateOrganisationSlug } from '../entities/organisation'
 import { generateSlug as generateSubjectSlug } from '../entities/subject'
 import { DraftStatementRepository } from '../repositories/draft-statement-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
@@ -11,10 +12,11 @@ import { StatementRepository } from '../repositories/statement-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { createPublicFigureUseCase } from './create-public-figure'
+import { createOrganisationUseCase } from './create-organisation'
 import { createSubjectUseCase } from './create-subject'
 import { createPositionUseCase } from './create-position'
 import { createStatementUseCase } from './create-statement'
-import { publicFigureAuthor } from '../entities/statement'
+import { organisationAuthor, publicFigureAuthor, StatementAuthor } from '../entities/statement'
 import { ContributorIdentity, FieldErrors } from './types'
 
 type ValidateDraftParams = {
@@ -22,7 +24,6 @@ type ValidateDraftParams = {
   contributor: ContributorIdentity
   draftRepo: DraftStatementRepository
   publicFigureRepo: PublicFigureRepository
-  /** Drafts only concern public figures, but the statement use case checks any author */
   organisationRepo: OrganisationRepository
   subjectRepo: SubjectRepository
   positionRepo: PositionRepository
@@ -57,13 +58,14 @@ export async function validateDraft(
   if (!draftResult.right) return Either.left('Brouillon introuvable.')
   const draft = draftResult.right
 
-  const publicFigureId = await resolveOrCreatePublicFigure(draft, {
+  const author = await resolveOrCreateAuthor(draft, {
     contributor,
     publicFigureRepo,
+    organisationRepo,
     reputationRepo,
     wikipediaValidator,
   })
-  if (Either.isLeft(publicFigureId)) return publicFigureId
+  if (Either.isLeft(author)) return author
 
   const subjectId = await resolveOrCreateSubject(draft, {
     contributor,
@@ -83,9 +85,9 @@ export async function validateDraft(
   const statementResult = await createStatementUseCase({
     contributor,
     subjectId: subjectId.right,
-    author: publicFigureAuthor(publicFigureId.right),
+    author: author.right,
     positionId: positionId.right,
-    statementType: 'declaration',
+    statementType: draft.statementType,
     sourceName: draft.sourceName,
     sourceUrl: draft.sourceUrl,
     quote: draft.quote,
@@ -110,42 +112,89 @@ export async function validateDraft(
   return Either.right(undefined)
 }
 
-async function resolveOrCreatePublicFigure(
+function resolveOrCreateAuthor(
   draft: DraftStatement,
+  deps: {
+    contributor: ContributorIdentity
+    publicFigureRepo: PublicFigureRepository
+    organisationRepo: OrganisationRepository
+    reputationRepo: ReputationRepository
+    wikipediaValidator: WikipediaValidator
+  },
+): Promise<Either.Either<StatementAuthor, string>> {
+  return draft.author.kind === 'public_figure'
+    ? resolveOrCreatePublicFigure(draft.author, deps)
+    : resolveOrCreateOrganisation(draft.author, deps)
+}
+
+async function resolveOrCreatePublicFigure(
+  author: Extract<DraftStatement['author'], { kind: 'public_figure' }>,
   deps: {
     contributor: ContributorIdentity
     publicFigureRepo: PublicFigureRepository
     reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
-): Promise<Either.Either<string, string>> {
+): Promise<Either.Either<StatementAuthor, string>> {
   const lookup = await Effect.runPromise(
-    Effect.either(
-      deps.publicFigureRepo.findBySlug(generatePublicFigureSlug(draft.publicFigureName)),
-    ),
+    Effect.either(deps.publicFigureRepo.findBySlug(generatePublicFigureSlug(author.name))),
   )
   if (lookup._tag === 'Left') return Either.left('Erreur lors de la recherche de la personnalité.')
-  if (lookup.right) return Either.right(lookup.right.id)
+  if (lookup.right) return Either.right(publicFigureAuthor(lookup.right.id))
 
-  if (!draft.publicFigureData) {
-    return Either.left(
-      `Données manquantes pour créer la personnalité « ${draft.publicFigureName} ».`,
-    )
+  if (!author.data) {
+    return Either.left(`Données manquantes pour créer la personnalité « ${author.name} ».`)
   }
 
   const result = await createPublicFigureUseCase({
     contributor: deps.contributor,
-    name: draft.publicFigureName,
-    presentation: draft.publicFigureData.presentation,
-    wikipediaUrl: draft.publicFigureData.wikipediaUrl ?? '',
-    websiteUrl: draft.publicFigureData.websiteUrl ?? '',
-    notorietySources: draft.publicFigureData.notorietySources ?? [],
+    name: author.name,
+    presentation: author.data.presentation,
+    wikipediaUrl: author.data.wikipediaUrl ?? '',
+    websiteUrl: author.data.websiteUrl ?? '',
+    notorietySources: author.data.notorietySources ?? [],
     publicFigureRepo: deps.publicFigureRepo,
     reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
-  return Either.right(result.right.id)
+  return Either.right(publicFigureAuthor(result.right.id))
+}
+
+async function resolveOrCreateOrganisation(
+  author: Extract<DraftStatement['author'], { kind: 'organisation' }>,
+  deps: {
+    contributor: ContributorIdentity
+    organisationRepo: OrganisationRepository
+    reputationRepo: ReputationRepository
+    wikipediaValidator: WikipediaValidator
+  },
+): Promise<Either.Either<StatementAuthor, string>> {
+  const lookup = await Effect.runPromise(
+    Effect.either(deps.organisationRepo.findBySlug(generateOrganisationSlug(author.name))),
+  )
+  if (lookup._tag === 'Left') return Either.left("Erreur lors de la recherche de l'organisation.")
+  if (lookup.right) return Either.right(organisationAuthor(lookup.right.id))
+
+  if (!author.data) {
+    return Either.left(`Données manquantes pour créer l'organisation « ${author.name} ».`)
+  }
+
+  const result = await createOrganisationUseCase({
+    contributor: deps.contributor,
+    name: author.name,
+    acronym: author.data.acronym ?? '',
+    organisationType: author.data.organisationType,
+    presentation: author.data.presentation,
+    wikipediaUrl: author.data.wikipediaUrl ?? '',
+    websiteUrl: author.data.websiteUrl ?? '',
+    notorietySources: author.data.notorietySources ?? [],
+    organisationRepo: deps.organisationRepo,
+    reputationRepo: deps.reputationRepo,
+    wikipediaValidator: deps.wikipediaValidator,
+  })
+  if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
+  return Either.right(organisationAuthor(result.right.id))
 }
 
 async function resolveOrCreateSubject(

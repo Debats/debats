@@ -149,15 +149,18 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          organisation_data: Json | null
+          organisation_name: string | null
           origin: string
           position_data: Json | null
           position_title: string
           public_figure_data: Json | null
-          public_figure_name: string
+          public_figure_name: string | null
           quote: string
           rejection_note: string | null
           source_name: string
           source_url: string
+          statement_type: Database["public"]["Enums"]["statement_type"]
           status: string
           subject_data: Json | null
           subject_title: string
@@ -168,15 +171,18 @@ export type Database = {
           created_at?: string
           date: string
           id?: string
+          organisation_data?: Json | null
+          organisation_name?: string | null
           origin: string
           position_data?: Json | null
           position_title: string
           public_figure_data?: Json | null
-          public_figure_name: string
+          public_figure_name?: string | null
           quote: string
           rejection_note?: string | null
           source_name: string
           source_url: string
+          statement_type?: Database["public"]["Enums"]["statement_type"]
           status?: string
           subject_data?: Json | null
           subject_title: string
@@ -187,15 +193,18 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          organisation_data?: Json | null
+          organisation_name?: string | null
           origin?: string
           position_data?: Json | null
           position_title?: string
           public_figure_data?: Json | null
-          public_figure_name?: string
+          public_figure_name?: string | null
           quote?: string
           rejection_note?: string | null
           source_name?: string
           source_url?: string
+          statement_type?: Database["public"]["Enums"]["statement_type"]
           status?: string
           subject_data?: Json | null
           subject_title?: string

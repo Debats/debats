@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import { Effect, Either } from 'effect'
 import { validateDraft } from './validate-draft'
-import { DraftStatement } from '../entities/draft-statement'
+import {
+  DraftStatement,
+  draftOrganisationAuthor,
+  draftPublicFigureAuthor,
+} from '../entities/draft-statement'
 import { DraftStatementRepository } from '../repositories/draft-statement-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
@@ -10,11 +14,18 @@ import { StatementRepository } from '../repositories/statement-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
-import { fakeOrganisationRepo } from './organisation-test-helpers'
+import { Organisation } from '../entities/organisation'
+import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
 import { Subject } from '../entities/subject'
 import { Position } from '../entities/position'
 import { ContributorIdentity } from './types'
-import { makeDraft, makePublicFigure, makeSubject, makePosition } from './draft-test-helpers'
+import {
+  makeDraft,
+  makeOrganisationDraft,
+  makePublicFigure,
+  makeSubject,
+  makePosition,
+} from './draft-test-helpers'
 
 const ADMIN: ContributorIdentity = { id: 'user-1', reputation: 1_000_000 }
 
@@ -29,6 +40,7 @@ const fakeWikipediaValidator: WikipediaValidator = {
 function makeRepos(overrides: {
   draft?: DraftStatement | null
   figure?: PublicFigure | null
+  organisation?: Organisation | null
   subject?: Subject | null
   positions?: Position[]
 }) {
@@ -60,6 +72,11 @@ function makeRepos(overrides: {
     findBySlug: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
   }
+
+  const organisationRepo = fakeOrganisationRepo(
+    overrides.organisation ? [overrides.organisation] : [],
+  )
+  vi.spyOn(organisationRepo, 'create')
 
   const subjectRepo = {
     findBySlug: vi.fn(() => Effect.succeed(overrides.subject ?? null)),
@@ -107,7 +124,9 @@ function makeRepos(overrides: {
   return {
     draftRepo,
     publicFigureRepo,
-    organisationRepo: fakeOrganisationRepo(),
+    organisationRepo: organisationRepo as typeof organisationRepo & {
+      create: ReturnType<typeof vi.fn>
+    },
     subjectRepo,
     positionRepo,
     statementRepo,
@@ -170,7 +189,7 @@ describe('validateDraft', () => {
 
   it('should fail when entity is missing and no creation data', async () => {
     const repos = makeRepos({
-      draft: makeDraft({ publicFigureData: null }),
+      draft: makeDraft({ author: draftPublicFigureAuthor('Jean-Luc Mélenchon') }),
     })
     const result = await validateDraft({
       draftId: 'draft-1',
@@ -195,5 +214,71 @@ describe('validateDraft', () => {
     })
 
     expect(repos.reputationRepo.recordEvent).toHaveBeenCalled()
+  })
+
+  it('should create the organisation when the drafted author does not exist', async () => {
+    const repos = makeRepos({ draft: makeOrganisationDraft() })
+    const result = await validateDraft({
+      draftId: 'draft-1',
+      contributor: ADMIN,
+      ...repos,
+      wikipediaValidator: fakeWikipediaValidator,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
+    expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
+    expect(repos.statementRepo.create).toHaveBeenCalledOnce()
+  })
+
+  it('should attribute the statement to the organisation', async () => {
+    const organisation = sampleOrganisation()
+    const repos = makeRepos({ draft: makeOrganisationDraft(), organisation })
+    const result = await validateDraft({
+      draftId: 'draft-1',
+      contributor: ADMIN,
+      ...repos,
+      wikipediaValidator: fakeWikipediaValidator,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(repos.organisationRepo.create).not.toHaveBeenCalled()
+    expect(repos.statementRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        author: { kind: 'organisation', id: organisation.id },
+      }),
+    )
+  })
+
+  it('should fail when the organisation is missing and no creation data', async () => {
+    const repos = makeRepos({
+      draft: makeOrganisationDraft({ author: draftOrganisationAuthor('Attac France') }),
+    })
+    const result = await validateDraft({
+      draftId: 'draft-1',
+      contributor: ADMIN,
+      ...repos,
+      wikipediaValidator: fakeWikipediaValidator,
+    })
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result)) {
+      expect(result.left).toContain('organisation')
+    }
+  })
+
+  it('should keep the drafted statement type instead of always declaring', async () => {
+    const repos = makeRepos({ draft: makeDraft({ statementType: 'program' }) })
+    const result = await validateDraft({
+      draftId: 'draft-1',
+      contributor: ADMIN,
+      ...repos,
+      wikipediaValidator: fakeWikipediaValidator,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(repos.statementRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ statementType: 'program' }),
+    )
   })
 })

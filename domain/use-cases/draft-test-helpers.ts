@@ -1,5 +1,9 @@
 import { Option } from 'effect'
-import { DraftStatement } from '../entities/draft-statement'
+import {
+  DraftStatement,
+  draftOrganisationAuthor,
+  draftPublicFigureAuthor,
+} from '../entities/draft-statement'
 import {
   PublicFigure,
   PublicFigureId,
@@ -12,18 +16,18 @@ import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/p
 export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
   return {
     id: 'draft-1',
+    author: draftPublicFigureAuthor('Jean-Luc Mélenchon', {
+      presentation: 'Homme politique français, leader de LFI.',
+      wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean-Luc_M%C3%A9lenchon',
+    }),
+    statementType: 'declaration',
     quote: 'Une citation importante sur le sujet',
     sourceName: 'Le Monde',
     sourceUrl: 'https://lemonde.fr/article',
     date: '2024-01-15',
     aiNotes: null,
-    publicFigureName: 'Jean-Luc Mélenchon',
     subjectTitle: "L'immigration",
     positionTitle: 'Régularisation des sans-papiers',
-    publicFigureData: {
-      presentation: 'Homme politique français, leader de LFI.',
-      wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean-Luc_M%C3%A9lenchon',
-    },
     subjectData: {
       presentation: "L'immigration est un sujet central du débat public.",
       problem: 'Quelle politique migratoire adopter ?',
@@ -38,6 +42,18 @@ export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStateme
     updatedAt: new Date(),
     ...overrides,
   }
+}
+
+/** A draft whose author is an organisation rather than a public figure. */
+export function makeOrganisationDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
+  return makeDraft({
+    author: draftOrganisationAuthor('Attac France', {
+      presentation: 'Mouvement altermondialiste créé en 1998.',
+      organisationType: 'association',
+      notorietySources: ['https://lemonde.fr/attac', 'https://liberation.fr/attac'],
+    }),
+    ...overrides,
+  })
 }
 
 export function makePublicFigure(): PublicFigure {

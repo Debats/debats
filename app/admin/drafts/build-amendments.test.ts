@@ -1,23 +1,27 @@
 import { describe, it, expect } from 'vitest'
 import { buildAmendments, AmendFormState } from './build-amendments'
-import { DraftStatement } from '../../../domain/entities/draft-statement'
+import {
+  DraftStatement,
+  draftOrganisationAuthor,
+  draftPublicFigureAuthor,
+} from '../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../domain/use-cases/resolve-draft'
 
 function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
   return {
     id: 'draft-1',
+    author: draftPublicFigureAuthor('Jean-Luc Mélenchon', {
+      presentation: 'Homme politique français.',
+      wikipediaUrl: 'https://fr.wikipedia.org/wiki/JLM',
+    }),
+    statementType: 'declaration',
     quote: 'Citation originale du brouillon',
     sourceName: 'Le Monde',
     sourceUrl: 'https://lemonde.fr',
     date: '2024-01-15',
     aiNotes: null,
-    publicFigureName: 'Jean-Luc Mélenchon',
     subjectTitle: "L'immigration",
     positionTitle: 'Régularisation des sans-papiers',
-    publicFigureData: {
-      presentation: 'Homme politique français.',
-      wikipediaUrl: 'https://fr.wikipedia.org/wiki/JLM',
-    },
     subjectData: {
       presentation: 'Sujet central.',
       problem: 'Quelle politique ?',
@@ -33,7 +37,7 @@ function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
 }
 
 const allFoundResolution: DraftResolution = {
-  publicFigure: {
+  author: {
     found: true,
     entity: { id: 'pf-1', name: 'Jean-Luc Mélenchon', slug: 'jean-luc-melenchon' },
   },
@@ -43,7 +47,7 @@ const allFoundResolution: DraftResolution = {
 }
 
 const noneFoundResolution: DraftResolution = {
-  publicFigure: { found: false, canCreate: true },
+  author: { found: false, canCreate: true },
   subject: { found: false, canCreate: true },
   position: { found: false, canCreate: true },
   canValidate: true,
@@ -51,11 +55,12 @@ const noneFoundResolution: DraftResolution = {
 
 function makeState(overrides: Partial<AmendFormState> = {}): AmendFormState {
   return {
-    figureMode: 'existing',
-    figureName: 'Jean-Luc Mélenchon',
-    figurePresentation: 'Homme politique français.',
-    figureWikipedia: 'https://fr.wikipedia.org/wiki/JLM',
-    figureNotorietySources: [],
+    authorMode: 'existing',
+    authorName: 'Jean-Luc Mélenchon',
+    authorPresentation: 'Homme politique français.',
+    authorWikipedia: 'https://fr.wikipedia.org/wiki/JLM',
+    authorNotorietySources: [],
+    authorOrganisationType: 'association',
     subjectMode: 'existing',
     subjectTitle: "L'immigration",
     subjectPresentation: 'Sujet central.',
@@ -94,36 +99,100 @@ describe('buildAmendments', () => {
     expect(result).toEqual({ sourceName: 'Libération' })
   })
 
-  it('should set publicFigureData to null when switching to existing with different name', () => {
+  it('should clear creation data when switching to existing with a different name', () => {
     const result = buildAmendments(
       makeDraft(),
       noneFoundResolution,
-      makeState({ figureMode: 'existing', figureName: 'Marine Le Pen' }),
+      makeState({ authorMode: 'existing', authorName: 'Marine Le Pen' }),
     )
-    expect(result.publicFigureName).toBe('Marine Le Pen')
-    expect(result.publicFigureData).toBeNull()
+    expect(result.author).toEqual({ kind: 'public_figure', name: 'Marine Le Pen', data: null })
   })
 
-  it('should not send publicFigureData null when entity already exists and name unchanged', () => {
+  it('should not touch the author when the entity already exists and the name is unchanged', () => {
     const result = buildAmendments(makeDraft(), allFoundResolution, makeState())
-    expect(result.publicFigureData).toBeUndefined()
+    expect(result.author).toBeUndefined()
   })
 
   it('should clear creation data when switching to existing with same name but entity was not found before', () => {
     const result = buildAmendments(makeDraft(), noneFoundResolution, makeState())
-    expect(result.publicFigureData).toBeNull()
-    expect(result.publicFigureName).toBeUndefined()
+    expect(result.author).toEqual({
+      kind: 'public_figure',
+      name: 'Jean-Luc Mélenchon',
+      data: null,
+    })
   })
 
   it('should include new figure creation data when in new mode with changes', () => {
     const result = buildAmendments(
       makeDraft(),
       noneFoundResolution,
-      makeState({ figureMode: 'new', figurePresentation: 'Nouvelle bio.' }),
+      makeState({ authorMode: 'new', authorPresentation: 'Nouvelle bio.' }),
     )
-    expect(result.publicFigureData).toEqual({
-      presentation: 'Nouvelle bio.',
-      wikipediaUrl: 'https://fr.wikipedia.org/wiki/JLM',
+    expect(result.author).toEqual({
+      kind: 'public_figure',
+      name: 'Jean-Luc Mélenchon',
+      data: {
+        presentation: 'Nouvelle bio.',
+        wikipediaUrl: 'https://fr.wikipedia.org/wiki/JLM',
+      },
+    })
+  })
+
+  it('should keep the organisation kind and carry over its type when amending', () => {
+    const draft = makeDraft({
+      author: draftOrganisationAuthor('Renaissance', {
+        presentation: 'Parti politique fondé en 2016.',
+        organisationType: 'political_party',
+      }),
+    })
+    const result = buildAmendments(
+      draft,
+      noneFoundResolution,
+      makeState({
+        authorMode: 'new',
+        authorName: 'Renaissance',
+        authorPresentation: 'Parti présidentiel.',
+        authorWikipedia: '',
+        authorOrganisationType: 'political_party',
+      }),
+    )
+
+    expect(result.author).toEqual({
+      kind: 'organisation',
+      name: 'Renaissance',
+      data: {
+        presentation: 'Parti présidentiel.',
+        organisationType: 'political_party',
+      },
+    })
+  })
+
+  it('should let the admin correct the organisation type', () => {
+    const draft = makeDraft({
+      author: draftOrganisationAuthor('Attac France', {
+        presentation: 'Mouvement altermondialiste.',
+        organisationType: 'political_party',
+      }),
+    })
+    const result = buildAmendments(
+      draft,
+      noneFoundResolution,
+      makeState({
+        authorMode: 'new',
+        authorName: 'Attac France',
+        authorPresentation: 'Mouvement altermondialiste.',
+        authorWikipedia: '',
+        authorOrganisationType: 'association',
+      }),
+    )
+
+    expect(result.author).toEqual({
+      kind: 'organisation',
+      name: 'Attac France',
+      data: {
+        presentation: 'Mouvement altermondialiste.',
+        organisationType: 'association',
+      },
     })
   })
 
@@ -139,41 +208,55 @@ describe('buildAmendments', () => {
 
   it('should include notoriety sources in figure creation data when provided', () => {
     const draft = makeDraft({
-      publicFigureData: { presentation: 'Bio.', notorietySources: [] },
+      author: draftPublicFigureAuthor('Jean-Luc Mélenchon', {
+        presentation: 'Bio.',
+        notorietySources: [],
+      }),
     })
     const result = buildAmendments(
       draft,
       noneFoundResolution,
       makeState({
-        figureMode: 'new',
-        figurePresentation: 'Bio.',
-        figureWikipedia: '',
-        figureNotorietySources: ['https://lemonde.fr/article', 'https://liberation.fr/article'],
+        authorMode: 'new',
+        authorPresentation: 'Bio.',
+        authorWikipedia: '',
+        authorNotorietySources: ['https://lemonde.fr/article', 'https://liberation.fr/article'],
       }),
     )
-    expect(result.publicFigureData).toEqual({
-      presentation: 'Bio.',
-      notorietySources: ['https://lemonde.fr/article', 'https://liberation.fr/article'],
+    expect(result.author).toEqual({
+      kind: 'public_figure',
+      name: 'Jean-Luc Mélenchon',
+      data: {
+        presentation: 'Bio.',
+        notorietySources: ['https://lemonde.fr/article', 'https://liberation.fr/article'],
+      },
     })
   })
 
   it('should filter out empty notoriety sources', () => {
     const draft = makeDraft({
-      publicFigureData: { presentation: 'Bio.', notorietySources: [] },
+      author: draftPublicFigureAuthor('Jean-Luc Mélenchon', {
+        presentation: 'Bio.',
+        notorietySources: [],
+      }),
     })
     const result = buildAmendments(
       draft,
       noneFoundResolution,
       makeState({
-        figureMode: 'new',
-        figurePresentation: 'Bio.',
-        figureWikipedia: '',
-        figureNotorietySources: ['https://lemonde.fr/article', '', '  '],
+        authorMode: 'new',
+        authorPresentation: 'Bio.',
+        authorWikipedia: '',
+        authorNotorietySources: ['https://lemonde.fr/article', '', '  '],
       }),
     )
-    expect(result.publicFigureData).toEqual({
-      presentation: 'Bio.',
-      notorietySources: ['https://lemonde.fr/article'],
+    expect(result.author).toEqual({
+      kind: 'public_figure',
+      name: 'Jean-Luc Mélenchon',
+      data: {
+        presentation: 'Bio.',
+        notorietySources: ['https://lemonde.fr/article'],
+      },
     })
   })
 

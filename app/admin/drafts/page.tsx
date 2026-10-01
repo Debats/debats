@@ -4,6 +4,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
+import { createOrganisationRepository } from '../../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../../infra/database/position-repository-supabase'
 import { resolveDraft } from '../../../domain/use-cases/resolve-draft'
@@ -69,6 +70,7 @@ export default async function AdminDraftsPage({ searchParams }: Props) {
   }
 
   const publicFigureRepo = createPublicFigureRepository(supabase)
+  const organisationRepo = createOrganisationRepository(supabase)
   const subjectRepo = createSubjectRepository(supabase)
   const positionRepo = createPositionRepository(supabase)
 
@@ -77,7 +79,7 @@ export default async function AdminDraftsPage({ searchParams }: Props) {
   const draftsWithResolution = await Promise.all(
     drafts.map(async (draft) => {
       const resolution = await Effect.runPromise(
-        resolveDraft(draft, { publicFigureRepo, subjectRepo, positionRepo }),
+        resolveDraft(draft, { publicFigureRepo, organisationRepo, subjectRepo, positionRepo }),
       )
       return { draft, resolution }
     }),

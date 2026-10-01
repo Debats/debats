@@ -1,7 +1,15 @@
 import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { DraftStatement } from '../../domain/entities/draft-statement'
+import {
+  DraftAuthor,
+  DraftOrganisationData,
+  DraftPublicFigureData,
+  DraftStatement,
+  draftOrganisationAuthor,
+  draftPublicFigureAuthor,
+} from '../../domain/entities/draft-statement'
+import { StatementType } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { DraftStatementRepository } from '../../domain/repositories/draft-statement-repository'
 
@@ -11,18 +19,49 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
+/** Exactly one of the two author columns is set, enforced by a check constraint. */
+function mapAuthor(row: Record<string, unknown>): DraftAuthor {
+  if (row.organisation_name) {
+    return draftOrganisationAuthor(
+      row.organisation_name as string,
+      (row.organisation_data as DraftOrganisationData) ?? null,
+    )
+  }
+  return draftPublicFigureAuthor(
+    row.public_figure_name as string,
+    (row.public_figure_data as DraftPublicFigureData) ?? null,
+  )
+}
+
+/** Columns for the author side being written, clearing the other side. */
+export function authorColumns(author: DraftAuthor): Record<string, unknown> {
+  return author.kind === 'organisation'
+    ? {
+        organisation_name: author.name,
+        organisation_data: author.data,
+        public_figure_name: null,
+        public_figure_data: null,
+      }
+    : {
+        public_figure_name: author.name,
+        public_figure_data: author.data,
+        organisation_name: null,
+        organisation_data: null,
+      }
+}
+
 function mapRow(row: Record<string, unknown>): DraftStatement {
   return {
     id: row.id as string,
+    author: mapAuthor(row),
+    statementType: row.statement_type as StatementType,
     quote: row.quote as string,
     sourceName: row.source_name as string,
     sourceUrl: row.source_url as string,
     date: row.date as string,
     aiNotes: (row.ai_notes as string) ?? null,
-    publicFigureName: row.public_figure_name as string,
     subjectTitle: row.subject_title as string,
     positionTitle: row.position_title as string,
-    publicFigureData: (row.public_figure_data as DraftStatement['publicFigureData']) ?? null,
     subjectData: (row.subject_data as DraftStatement['subjectData']) ?? null,
     positionData: (row.position_data as DraftStatement['positionData']) ?? null,
     origin: row.origin as string,
@@ -115,12 +154,10 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
           if (fields.sourceUrl !== undefined) row.source_url = fields.sourceUrl
           if (fields.date !== undefined) row.date = fields.date
           if (fields.aiNotes !== undefined) row.ai_notes = fields.aiNotes
-          if (fields.publicFigureName !== undefined)
-            row.public_figure_name = fields.publicFigureName
+          if (fields.author !== undefined) Object.assign(row, authorColumns(fields.author))
+          if (fields.statementType !== undefined) row.statement_type = fields.statementType
           if (fields.subjectTitle !== undefined) row.subject_title = fields.subjectTitle
           if (fields.positionTitle !== undefined) row.position_title = fields.positionTitle
-          if (fields.publicFigureData !== undefined)
-            row.public_figure_data = fields.publicFigureData
           if (fields.subjectData !== undefined) row.subject_data = fields.subjectData
           if (fields.positionData !== undefined) row.position_data = fields.positionData
           if (fields.rejectionNote !== undefined) row.rejection_note = fields.rejectionNote
