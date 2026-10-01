@@ -3,7 +3,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../../infra/database/draft-statement-repository-supabase'
 import { validateSlugifiableFields } from '../validation'
-import { checkAdminApiKey } from '../auth'
+import { checkAdminApiKey } from '../../admin-auth'
 
 const ALLOWED_FIELDS = new Set([
   'quote',
