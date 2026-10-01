@@ -4,7 +4,7 @@ import { Json } from '../../../types/database.types'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
 import { validateSlugifiableFields } from './validation'
-import { checkAdminApiKey } from './auth'
+import { checkAdminApiKey } from '../admin-auth'
 
 export async function GET(request: NextRequest) {
   if (!checkAdminApiKey(request)) {
