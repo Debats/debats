@@ -109,6 +109,13 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
   const statedDates = statements.map(({ statement }) => statement.statedAt)
   const subjectIds = groups.map(({ subject }) => subject.id)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
+  const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
+  const adminActions = [
+    ...(canEdit ? [{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }] : []),
+    ...(canAffiliate
+      ? [{ label: 'Affilier à une organisation', icon: '⌂', href: `/p/${slug}/affilier` }]
+      : []),
+  ]
 
   const links = [
     ...(Option.isSome(figure.wikipediaUrl)
@@ -147,11 +154,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
         }}
         occupations={occupationTags}
         affiliations={currentAffiliations(memberships)}
-        adminMenu={
-          canEdit && (
-            <AdminMenu actions={[{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }]} />
-          )
-        }
+        adminMenu={adminActions.length > 0 && <AdminMenu actions={adminActions} />}
         actions={
           <>
             {contributor ? (
