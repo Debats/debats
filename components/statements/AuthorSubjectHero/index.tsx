@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import FigureAvatar from '../../../../../../components/figures/FigureAvatar'
-import { plural } from '../../../../../../lib/plural'
-import styles from './FigureSubjectHero.module.css'
+import AuthorAvatar from '../AuthorAvatar'
+import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
+import { plural } from '../../../lib/plural'
+import styles from './AuthorSubjectHero.module.css'
 
-interface FigureSubjectHeroProps {
-  figure: { name: string; slug: string }
+interface AuthorSubjectHeroProps {
+  author: StatementAuthorRef
   subject: { title: string; slug: string }
   counts: {
     statements: number
@@ -15,19 +16,19 @@ interface FigureSubjectHeroProps {
   actions: React.ReactNode
 }
 
-/** En-tête de la page « une personnalité sur un sujet ». */
-export default function FigureSubjectHero({
-  figure,
+/** En-tête de la page « une personnalité ou une organisation sur un sujet ». */
+export default function AuthorSubjectHero({
+  author,
   subject,
   counts,
   actions,
-}: FigureSubjectHeroProps) {
+}: AuthorSubjectHeroProps) {
   return (
     <section className={styles.hero}>
       <div className={styles.container}>
         <nav className={styles.kicker} aria-label="Fil d’Ariane">
-          <Link href={`/p/${figure.slug}`} className={styles.crumb}>
-            Personnalité
+          <Link href={authorHref(author)} className={styles.crumb}>
+            {author.kind === 'organisation' ? 'Organisation' : 'Personnalité'}
           </Link>
           <span className={styles.crumbSeparator}>/</span>
           <Link href={`/s/${subject.slug}`} className={styles.crumb}>
@@ -37,11 +38,11 @@ export default function FigureSubjectHero({
 
         <div className={styles.grid}>
           <div className={styles.main}>
-            <FigureAvatar slug={figure.slug} name={figure.name} size={96} />
+            <AuthorAvatar author={author} size={96} />
             <div>
               <h1 className={styles.title}>
-                <Link href={`/p/${figure.slug}`} className={styles.figureLink}>
-                  {figure.name}
+                <Link href={authorHref(author)} className={styles.figureLink}>
+                  {author.name}
                 </Link>
               </h1>
               <p className={styles.subject}>
@@ -70,7 +71,7 @@ export default function FigureSubjectHero({
               <div className={styles.stat}>
                 <dd className={styles.statValue}>{counts.allies}</dd>
                 <dt className={styles.statLabel}>
-                  {plural(counts.allies, 'personnalité du même avis', 'personnalités du même avis')}
+                  {plural(counts.allies, 'acteur du même avis', 'acteurs du même avis')}
                 </dt>
               </div>
             </dl>

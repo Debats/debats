@@ -4,16 +4,9 @@ import { createAdminSupabaseClient } from '../../../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../../../infra/database/public-figure-repository-supabase'
 import { createSubjectRepository } from '../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
-import {
-  OG_COLORS,
-  OG_FONTS,
-  loadAvatar,
-  loadBrandMark,
-  loadOgFonts,
-  truncate,
-} from '../../../../../lib/og'
+import { loadAvatar, loadBrandMark, loadOgFonts } from '../../../../../lib/og'
 import { formatDate } from '../../../../../lib/format-date'
-import OgAvatar from '../../../../../components/og/OgAvatar'
+import OgAuthorOnSubject from '../../../../../components/og/OgAuthorOnSubject'
 import OgFrame from '../../../../../components/og/OgFrame'
 
 export const alt = 'Prises de position'
@@ -44,10 +37,7 @@ export default async function OGImage({
   const statements = await Effect.runPromise(
     statementRepo.findByPublicFigureAndSubject(figure.id, subject.id),
   )
-
   const first = statements[0] ?? null
-  const positionTitle = first?.position.title ?? null
-  const statement = first?.statement ?? null
 
   const [fonts, brandMark, avatarSrc] = await Promise.all([
     loadOgFonts(),
@@ -55,64 +45,20 @@ export default async function OGImage({
     loadAvatar(slug),
   ])
 
-  const footer = statement
-    ? [statement.sourceName, formatDate(statement.statedAt)].join(' · ')
+  const footer = first
+    ? [first.statement.sourceName, formatDate(first.statement.statedAt)].join(' · ')
     : undefined
 
   return new ImageResponse(
     <OgFrame kicker="Prise de position" brandMark={brandMark} footer={footer}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-        {avatarSrc && <OgAvatar src={avatarSrc} size={120} />}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span
-            style={{
-              fontFamily: OG_FONTS.serif,
-              fontSize: '56px',
-              lineHeight: 1.05,
-              color: OG_COLORS.ink,
-            }}
-          >
-            {figure.name}
-          </span>
-          <span
-            style={{
-              fontFamily: OG_FONTS.serif,
-              fontStyle: 'italic',
-              fontSize: '30px',
-              color: OG_COLORS.ink2,
-              marginTop: '6px',
-            }}
-          >
-            {`sur ${subject.title}`}
-          </span>
-        </div>
-      </div>
-
-      {positionTitle && (
-        <span
-          style={{
-            fontSize: '24px',
-            fontWeight: 600,
-            color: OG_COLORS.ink,
-            marginTop: '28px',
-          }}
-        >
-          {positionTitle}
-        </span>
-      )}
-      {statement && (
-        <span
-          style={{
-            fontFamily: OG_FONTS.serif,
-            fontSize: '34px',
-            lineHeight: 1.35,
-            color: OG_COLORS.ink,
-            marginTop: '12px',
-          }}
-        >
-          {truncate(statement.quote, 170)}
-        </span>
-      )}
+      <OgAuthorOnSubject
+        authorName={figure.name}
+        subjectTitle={subject.title}
+        avatarSrc={avatarSrc}
+        shape="round"
+        positionTitle={first?.position.title ?? null}
+        quote={first?.statement.quote ?? null}
+      />
     </OgFrame>,
     { ...size, fonts },
   )

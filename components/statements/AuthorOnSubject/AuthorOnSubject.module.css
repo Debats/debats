@@ -7,7 +7,7 @@
 }
 
 .sectionTitle {
-  composes: title from '../../../../../styles/text.module.css';
+  composes: title from '../../../styles/text.module.css';
 }
 
 .list {
@@ -17,7 +17,7 @@
 }
 
 .empty {
-  composes: body from '../../../../../styles/text.module.css';
+  composes: body from '../../../styles/text.module.css';
   padding: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
@@ -33,7 +33,7 @@
 }
 
 .kicker {
-  composes: label from '../../../../../styles/text.module.css';
+  composes: label from '../../../styles/text.module.css';
 }
 
 .positionTitle {
@@ -65,7 +65,7 @@
 }
 
 .quote {
-  composes: quote from '../../../../../styles/text.module.css';
+  composes: quote from '../../../styles/text.module.css';
 }
 
 .source {
@@ -76,7 +76,7 @@
 }
 
 .type {
-  composes: label from '../../../../../styles/text.module.css';
+  composes: label from '../../../styles/text.module.css';
   display: inline-flex;
   align-items: center;
   height: 24px;
@@ -87,7 +87,7 @@
 }
 
 .sourceLink {
-  composes: meta from '../../../../../styles/text.module.css';
+  composes: meta from '../../../styles/text.module.css';
   color: var(--ink-2);
 }
 
@@ -105,7 +105,7 @@ a.sourceLink:hover {
 }
 
 .date {
-  composes: meta from '../../../../../styles/text.module.css';
+  composes: meta from '../../../styles/text.module.css';
 }
 
 .allies {
@@ -118,7 +118,7 @@ a.sourceLink:hover {
 }
 
 .alliesLabel {
-  composes: label from '../../../../../styles/text.module.css';
+  composes: label from '../../../styles/text.module.css';
 }
 
 .others {
@@ -155,7 +155,7 @@ a.sourceLink:hover {
 }
 
 .subjectCardTitle {
-  composes: label from '../../../../../styles/text.module.css';
+  composes: label from '../../../styles/text.module.css';
 }
 
 .subjectCardName,
@@ -173,7 +173,7 @@ a.sourceLink:hover {
 }
 
 .subjectCardProblem {
-  composes: small from '../../../../../styles/text.module.css';
+  composes: small from '../../../styles/text.module.css';
 }
 
 .subjectCardLink,

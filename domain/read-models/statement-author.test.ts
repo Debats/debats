@@ -26,8 +26,8 @@ describe('statement author references', () => {
     expect(authorOnSubjectHref(figure, 'l-ivg')).toBe('/p/simone-veil/s/l-ivg')
   })
 
-  it('links an organisation to its page in both cases', () => {
+  it('links an organisation to its page and to its page on a subject', () => {
     expect(authorHref(organisation)).toBe('/o/attac')
-    expect(authorOnSubjectHref(organisation, 'l-ivg')).toBe('/o/attac')
+    expect(authorOnSubjectHref(organisation, 'l-ivg')).toBe('/o/attac/s/l-ivg')
   })
 })

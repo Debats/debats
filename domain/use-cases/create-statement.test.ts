@@ -44,6 +44,7 @@ const fakeStatementRepo = {
   findByPublicFigureWithDetails: () => Effect.succeed([]),
   findByOrganisationWithDetails: () => Effect.succeed([]),
   findByPublicFigureAndSubject: () => Effect.succeed([]),
+  findByOrganisationAndSubject: () => Effect.succeed([]),
   findBySubjectWithAuthors: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),
   findLatestReported: () => Effect.succeed([]),
