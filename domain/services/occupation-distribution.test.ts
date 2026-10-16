@@ -3,6 +3,7 @@ import {
   countFiguresByFamily,
   countFiguresByOccupation,
   familyDistribution,
+  familyPositionMatrix,
   OccupationAssignment,
 } from './occupation-distribution'
 import { createOccupation } from '../entities/occupation'
@@ -81,5 +82,48 @@ describe('familyDistribution', () => {
     expect(distribution.overall).toEqual([])
     expect(distribution.byPosition).toEqual([])
     expect(distribution.unassignedCount).toBe(0)
+  })
+})
+
+describe('familyPositionMatrix', () => {
+  const position = (id: string, title: string) => ({ id, title })
+  const entries = [
+    { position: position('p1', 'Pour'), authorId: 'macron' },
+    { position: position('p1', 'Pour'), authorId: 'attal' },
+    { position: position('p2', 'Contre'), authorId: 'lepen' },
+    { position: position('p2', 'Contre'), authorId: 'attal' },
+    { position: position('p3', 'Nuancé'), authorId: 'lepen' },
+  ]
+  const distribution = familyDistribution(entries, assignments, occupations, families)
+
+  it('orders positions by support and gives each family its shares across them', () => {
+    const matrix = familyPositionMatrix(distribution)
+
+    expect(matrix.positions.map((p) => [p.title, p.count])).toEqual([
+      ['Pour', 2],
+      ['Contre', 2],
+      ['Nuancé', 1],
+    ])
+    const executive = matrix.families.find((f) => f.family.name === 'Exécutif')
+    // macron and attal on Pour, attal on Contre: 2 + 1 cells
+    expect(executive?.total).toBe(3)
+    expect(executive?.cells.map((c) => c.count)).toEqual([2, 1, 0])
+    expect(executive?.cells.map((c) => Math.round(c.share * 100))).toEqual([67, 33, 0])
+    expect(executive?.small).toBe(true)
+  })
+
+  it('compares each family share to the overall share of the position', () => {
+    const matrix = familyPositionMatrix(distribution)
+    // overall: Pour 2 of 5 = 40 %; Exécutif on Pour: 67 % → +27 points
+    expect(matrix.overall.cells.map((c) => Math.round(c.share * 100))).toEqual([40, 40, 20])
+    const executive = matrix.families.find((f) => f.family.name === 'Exécutif')
+    expect(Math.round((executive?.cells[0].deviation ?? 0) * 100)).toBe(27)
+  })
+
+  it('folds the positions beyond the limit into « Autres positions »', () => {
+    const matrix = familyPositionMatrix(distribution, 2)
+
+    expect(matrix.positions.map((p) => p.title)).toEqual(['Pour', 'Contre', 'Autres positions'])
+    expect(matrix.overall.cells.map((c) => c.count)).toEqual([2, 2, 1])
   })
 })

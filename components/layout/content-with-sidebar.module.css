@@ -10,6 +10,8 @@
 
 .mainContent {
   grid-column: span 8;
+  /* Un tableau large à l'intérieur défile dans sa boîte au lieu d'élargir la colonne */
+  min-width: 0;
 }
 
 .withTopMargin {
