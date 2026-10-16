@@ -2,15 +2,19 @@ import SectionTabs from '../../../../components/ui/SectionTabs'
 
 export type SubjectTab = 'positions' | 'arguments' | 'analyses'
 
-export function parseSubjectTab(value: string | undefined): SubjectTab {
-  if (value === 'arguments' || value === 'analyses') return value
-  return 'positions'
-}
-
-const TAB_LABELS: Record<SubjectTab, string> = {
+export const SUBJECT_TAB_LABELS: Record<SubjectTab, string> = {
   positions: 'Positions',
   arguments: 'Arguments',
   analyses: 'Analyses',
+}
+
+/** Each tab is a page of its own: the positions at the subject's address, the others under it */
+export const subjectTabHref = (slug: string, tab: SubjectTab): string =>
+  tab === 'positions' ? `/s/${slug}` : `/s/${slug}/${tab}`
+
+/** The tab an old `?onglet=` link meant, if any */
+export function parseLegacyTabParam(value: string | undefined): SubjectTab | null {
+  return value === 'arguments' || value === 'analyses' ? value : null
 }
 
 interface SubjectTabsProps {
@@ -33,11 +37,19 @@ export default function SubjectTabs({
   return (
     <SectionTabs
       ariaLabel="Sections du sujet"
-      active={TAB_LABELS[active]}
+      active={SUBJECT_TAB_LABELS[active]}
       tabs={[
-        { label: 'Positions', count: positionsCount, href: `/s/${subjectSlug}` },
-        { label: 'Arguments', count: argumentsCount, href: `/s/${subjectSlug}?onglet=arguments` },
-        { label: 'Analyses', href: `/s/${subjectSlug}?onglet=analyses` },
+        {
+          label: 'Positions',
+          count: positionsCount,
+          href: subjectTabHref(subjectSlug, 'positions'),
+        },
+        {
+          label: 'Arguments',
+          count: argumentsCount,
+          href: subjectTabHref(subjectSlug, 'arguments'),
+        },
+        { label: 'Analyses', href: subjectTabHref(subjectSlug, 'analyses') },
         { label: 'Chronologie', soon: true },
       ]}
     />
