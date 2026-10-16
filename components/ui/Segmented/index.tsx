@@ -1,9 +1,12 @@
+import Link from 'next/link'
 import ComingSoon from '../ComingSoon'
 import styles from './Segmented.module.css'
 
 export interface SegmentedItem {
   label: string
   count?: number
+  /** L'option est un lien (filtre porté par l'URL) */
+  href?: string
   /** L'option est annoncée mais pas encore disponible */
   soon?: boolean
 }
@@ -13,11 +16,11 @@ interface SegmentedProps {
   /** Libellé de l'option active */
   active: string
   ariaLabel: string
-  /** Rend les options cliquables ; sans lui, le contrôle est purement indicatif */
+  /** Rend les options cliquables ; sans lui ni href, le contrôle est purement indicatif */
   onChange?: (label: string) => void
 }
 
-/** Contrôle segmenté : une option active, les autres cliquables ou annoncées. */
+/** Contrôle segmenté : une option active, les autres cliquables, liées ou annoncées. */
 export default function Segmented({ items, active, ariaLabel, onChange }: SegmentedProps) {
   return (
     <div className={styles.segmented} role="group" aria-label={ariaLabel}>
@@ -30,6 +33,19 @@ export default function Segmented({ items, active, ariaLabel, onChange }: Segmen
           </span>
         )
         if (item.soon) return <ComingSoon key={item.label}>{content}</ComingSoon>
+        if (item.href) {
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              scroll={false}
+              className={styles.button}
+              aria-current={isActive ? 'true' : undefined}
+            >
+              {content}
+            </Link>
+          )
+        }
         if (onChange) {
           return (
             <button

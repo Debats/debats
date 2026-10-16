@@ -5,10 +5,12 @@ interface OgAvatarProps {
   size: number
   /** Décalage négatif à gauche pour empiler les avatars */
   overlap?: boolean
+  /** Carré arrondi pour le logo d'une organisation, rond pour une personnalité */
+  shape?: 'round' | 'square'
 }
 
-/** Avatar rond pour les images OpenGraph : l'arrondi doit être porté par l'image elle-même. */
-export default function OgAvatar({ src, size, overlap }: OgAvatarProps) {
+/** Avatar pour les images OpenGraph : l'arrondi doit être porté par l'image elle-même. */
+export default function OgAvatar({ src, size, overlap, shape = 'round' }: OgAvatarProps) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- le moteur OpenGraph ne connaît pas next/image
     <img
@@ -19,8 +21,9 @@ export default function OgAvatar({ src, size, overlap }: OgAvatarProps) {
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        borderRadius: '50%',
-        objectFit: 'cover',
+        borderRadius: shape === 'square' ? `${Math.round(size / 6)}px` : '50%',
+        objectFit: shape === 'square' ? 'contain' : 'cover',
+        backgroundColor: shape === 'square' ? OG_COLORS.card : undefined,
         flexShrink: 0,
         marginLeft: overlap ? '-14px' : 0,
         border: `3px solid ${OG_COLORS.paper}`,

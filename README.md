@@ -217,8 +217,7 @@ Les URLs locales sont configurées sur le port **64321** (voir `supabase/config.
 - [x] CRUD sujets, personnalités, positions, prises de position
 - [x] Système de réputation des contributeurs
 - [x] Organisations et affiliations des personnalités
-- [x] Prises de position des organisations (formulaire, page organisation)
-- [ ] Organisations sur la page sujet (filtre, positions, dernières prises de position)
+- [x] Prises de position des organisations (formulaire, page organisation, page sujet et filtre)
 
 ### Phase 2 : Fonctionnalités collaboratives
 

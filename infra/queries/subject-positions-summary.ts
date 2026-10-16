@@ -2,11 +2,11 @@ import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import {
-  PositionFigure,
   PositionLatestStatement,
   PositionSummary,
 } from '../../domain/read-models/subject-positions-summary'
-import { parseStatementType } from '../../domain/entities/statement'
+import { StatementAuthorRef } from '../../domain/read-models/statement-author'
+import { parseStatementType, StatementAuthorKind } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
 
 interface LatestStatementRow {
@@ -16,7 +16,7 @@ interface LatestStatementRow {
   source_name: string
   source_url: string | null
   statement_type: string
-  figure: PositionFigure
+  author: StatementAuthorRef
 }
 
 function toLatestStatement(row: LatestStatementRow | null): PositionLatestStatement | null {
@@ -28,20 +28,28 @@ function toLatestStatement(row: LatestStatementRow | null): PositionLatestStatem
     sourceName: row.source_name,
     sourceUrl: row.source_url,
     statementType: parseStatementType(row.statement_type),
-    figure: row.figure,
+    author: row.author,
   }
+}
+
+export interface SubjectPositionsOptions {
+  /** How many authors of each kind to list per position */
+  authorsLimit?: number
+  /** Restrict counts, lists and featured statements to one kind of author */
+  authorKind?: StatementAuthorKind
 }
 
 export function getSubjectPositionsSummary(
   supabase: SupabaseClient,
   subjectId: string,
-  figuresLimit = 20,
+  { authorsLimit = 20, authorKind }: SubjectPositionsOptions = {},
 ): Effect.Effect<PositionSummary[], DatabaseError> {
   return Effect.tryPromise({
     try: async () => {
       const { data, error } = await supabase.rpc('get_subject_positions_summary', {
         p_subject_id: subjectId,
-        p_figures_limit: figuresLimit,
+        p_authors_limit: authorsLimit,
+        p_author_kind: authorKind ?? null,
       })
 
       if (error) throw error
@@ -52,13 +60,15 @@ export function getSubjectPositionsSummary(
         positionSlug: row.position_slug as string,
         positionDescription: row.position_description as string,
         totalFiguresCount: Number(row.total_figures_count),
-        figures: (row.figures as PositionFigure[]) ?? [],
+        totalOrganisationsCount: Number(row.total_organisations_count),
+        figures: (row.figures as StatementAuthorRef[]) ?? [],
+        organisations: (row.organisations as StatementAuthorRef[]) ?? [],
         latestStatement: toLatestStatement((row.latest_statement as LatestStatementRow) ?? null),
       }))
     },
     catch: (error) => {
       const msg = `Failed to fetch subject positions summary: ${error instanceof Error ? error.message : JSON.stringify(error)}`
-      Sentry.captureException(error, { extra: { subjectId } })
+      Sentry.captureException(error, { extra: { subjectId, authorKind } })
       return new DatabaseError(msg)
     },
   })

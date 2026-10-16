@@ -8,14 +8,15 @@ import { createSubjectRepository } from '../../../../../infra/database/subject-r
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
 import {
   StatementWithDetails,
-  StatementWithFigure,
+  StatementWithAuthor,
 } from '../../../../../domain/repositories/statement-repository'
 import { STATEMENT_TYPE_LABELS } from '../../../../../domain/entities/statement'
+import { StatementAuthorRef } from '../../../../../domain/read-models/statement-author'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import EditLink from '../../../../../components/ui/EditLink'
 import ShareButton from '../../../../../components/ui/ShareButton'
-import FigureAvatarStack from '../../../../../components/figures/FigureAvatarStack'
+import AuthorAvatarStack from '../../../../../components/statements/AuthorAvatarStack'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import { formatShortDate } from '../../../../../lib/format-date'
 import { plural } from '../../../../../lib/plural'
@@ -83,63 +84,52 @@ function groupByPosition(statements: StatementWithDetails[]) {
   )
 }
 
-interface FigureSummary {
-  id: string
-  name: string
-  slug: string
-}
-
 interface PositionGroup {
   title: string
   slug: string
-  figures: FigureSummary[]
+  authors: StatementAuthorRef[]
 }
 
-function groupOtherFigures(
-  subjectStatements: StatementWithFigure[],
+const authorKey = (author: StatementAuthorRef) => `${author.kind}-${author.id}`
+
+/** Who else took position on the subject: allies on the figure's positions, others elsewhere. */
+function groupOtherAuthors(
+  subjectStatements: StatementWithAuthor[],
   currentFigureId: string,
   currentPositionIds: Set<string>,
-): { alliesByPosition: Map<string, FigureSummary[]>; opponents: PositionGroup[] } {
-  const alliesMap = new Map<string, Map<string, FigureSummary>>()
+): { alliesByPosition: Map<string, StatementAuthorRef[]>; opponents: PositionGroup[] } {
+  const alliesMap = new Map<string, Map<string, StatementAuthorRef>>()
   const opponentsMap = new Map<
     string,
-    { title: string; slug: string; figures: Map<string, FigureSummary> }
+    { title: string; slug: string; authors: Map<string, StatementAuthorRef> }
   >()
 
-  for (const { publicFigure, position } of subjectStatements) {
-    if (publicFigure.id === currentFigureId) continue
-
-    const summary: FigureSummary = {
-      id: publicFigure.id,
-      name: publicFigure.name,
-      slug: publicFigure.slug,
-    }
+  for (const { author, position } of subjectStatements) {
+    if (author.kind === 'public_figure' && author.id === currentFigureId) continue
 
     if (currentPositionIds.has(position.id)) {
       if (!alliesMap.has(position.id)) alliesMap.set(position.id, new Map())
-      const posMap = alliesMap.get(position.id)!
-      if (!posMap.has(publicFigure.id)) posMap.set(publicFigure.id, summary)
+      alliesMap.get(position.id)!.set(authorKey(author), author)
     } else {
       if (!opponentsMap.has(position.id)) {
         opponentsMap.set(position.id, {
           title: position.title,
           slug: position.slug,
-          figures: new Map(),
+          authors: new Map(),
         })
       }
-      const group = opponentsMap.get(position.id)!
-      if (!group.figures.has(publicFigure.id)) group.figures.set(publicFigure.id, summary)
+      opponentsMap.get(position.id)!.authors.set(authorKey(author), author)
     }
   }
 
-  const alliesByPosition = new Map<string, FigureSummary[]>()
-  Array.from(alliesMap.entries()).forEach(([posId, figMap]) => {
-    alliesByPosition.set(posId, Array.from(figMap.values()))
+  const alliesByPosition = new Map<string, StatementAuthorRef[]>()
+  Array.from(alliesMap.entries()).forEach(([posId, authors]) => {
+    alliesByPosition.set(posId, Array.from(authors.values()))
   })
 
   const opponents = Array.from(opponentsMap.values())
-    .map((g) => ({ title: g.title, slug: g.slug, figures: Array.from(g.figures.values()) }))
-    .sort((a, b) => b.figures.length - a.figures.length)
+    .map((g) => ({ title: g.title, slug: g.slug, authors: Array.from(g.authors.values()) }))
+    .sort((a, b) => b.authors.length - a.authors.length)
 
   return { alliesByPosition, opponents }
 }
@@ -161,7 +151,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
   const [figureStatements, subjectStatements, contributor] = await Promise.all([
     Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
-    Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id)),
+    Effect.runPromise(statementRepo.findBySubjectWithAuthors(subject.id)),
     getAuthenticatedContributor(),
   ])
 
@@ -169,13 +159,13 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
   const positions = Object.values(groupByPosition(figureStatements))
   const currentPositionIds = new Set(positions.map(({ position }) => position.id))
-  const { alliesByPosition, opponents } = groupOtherFigures(
+  const { alliesByPosition, opponents } = groupOtherAuthors(
     subjectStatements,
     figure.id,
     currentPositionIds,
   )
   const alliesCount = new Set(
-    Array.from(alliesByPosition.values()).flatMap((figures) => figures.map((f) => f.id)),
+    Array.from(alliesByPosition.values()).flatMap((authors) => authors.map(authorKey)),
   ).size
 
   const jsonLd = {
@@ -279,11 +269,12 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                     {allies.length > 0 && (
                       <div className={styles.allies}>
                         <span className={styles.alliesLabel}>Même position</span>
-                        <FigureAvatarStack
-                          figures={allies}
+                        <AuthorAvatarStack
+                          authors={allies}
                           max={10}
                           size={36}
-                          hrefSuffix={`/s/${subject.slug}`}
+                          subjectSlug={subject.slug}
+                          moreHref={`/s/${subject.slug}/position/${position.slug}`}
                         />
                       </div>
                     )}
@@ -308,11 +299,12 @@ export default async function FigureSubjectPage({ params }: PageProps) {
                   >
                     {group.title}
                   </Link>
-                  <FigureAvatarStack
-                    figures={group.figures}
+                  <AuthorAvatarStack
+                    authors={group.authors}
                     max={8}
                     size={36}
-                    hrefSuffix={`/s/${subject.slug}`}
+                    subjectSlug={subject.slug}
+                    moreHref={`/s/${subject.slug}/position/${group.slug}`}
                   />
                 </div>
               ))}

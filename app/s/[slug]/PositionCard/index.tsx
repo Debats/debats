@@ -1,13 +1,17 @@
 import Link from 'next/link'
-import FigureAvatar from '../../../../components/figures/FigureAvatar'
-import FigureAvatarStack from '../../../../components/figures/FigureAvatarStack'
+import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
+import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarStack'
 import ComingSoon from '../../../../components/ui/ComingSoon'
 import { STATEMENT_TYPE_LABELS } from '../../../../domain/entities/statement'
+import { authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import {
+  positionAuthors,
+  positionAuthorsCount,
   PositionLatestStatement,
   PositionSummary,
 } from '../../../../domain/read-models/subject-positions-summary'
 import { formatShortDate } from '../../../../lib/format-date'
+import { plural } from '../../../../lib/plural'
 import { positionAnchor } from '../position-anchor'
 import styles from './PositionCard.module.css'
 
@@ -18,24 +22,44 @@ interface PositionCardProps {
   featured?: boolean
 }
 
+/** « 6 pers. », « 2 org. » ou « 6 pers. · 2 org. » */
+function authorsLabel(position: PositionSummary): string {
+  return [
+    position.totalFiguresCount > 0 ? `${position.totalFiguresCount} pers.` : null,
+    position.totalOrganisationsCount > 0 ? `${position.totalOrganisationsCount} org.` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+/** Lien vers les autres auteurs de la position, nommés selon ce qu'ils sont */
+function othersLabel(position: PositionSummary, others: number): string {
+  const mixed = position.totalOrganisationsCount > 0 && position.totalFiguresCount > 0
+  if (mixed) return `${others} ${plural(others, 'autre acteur', 'autres acteurs')}`
+  if (position.totalOrganisationsCount > 0) {
+    return `${others} ${plural(others, 'autre organisation', 'autres organisations')}`
+  }
+  return `${others} ${plural(others, 'autre personnalité', 'autres personnalités')}`
+}
+
 function FeaturedStatement({
   statement,
   subjectSlug,
   positionHref,
-  othersCount,
+  othersLabel,
 }: {
   statement: PositionLatestStatement
   subjectSlug: string
   positionHref: string
-  othersCount: number
+  othersLabel: string | null
 }) {
   return (
     <div className={styles.statement}>
-      <FigureAvatar slug={statement.figure.slug} name={statement.figure.name} size={44} />
+      <AuthorAvatar author={statement.author} size={44} />
       <div className={styles.statementBody}>
         <div className={styles.statementHead}>
-          <Link href={`/p/${statement.figure.slug}/s/${subjectSlug}`} className={styles.figure}>
-            {statement.figure.name}
+          <Link href={authorOnSubjectHref(statement.author, subjectSlug)} className={styles.figure}>
+            {statement.author.name}
           </Link>
           <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
         </div>
@@ -54,11 +78,11 @@ function FeaturedStatement({
           ) : (
             <span className={styles.sourceLink}>{statement.sourceName}</span>
           )}
-          {othersCount > 0 && (
+          {othersLabel && (
             <>
               <span className={styles.separator}>·</span>
               <Link href={positionHref} className={styles.more}>
-                {othersCount === 1 ? '1 autre personnalité' : `${othersCount} autres personnalités`}
+                {othersLabel}
               </Link>
             </>
           )}
@@ -69,8 +93,9 @@ function FeaturedStatement({
 }
 
 export default function PositionCard({ position, subjectSlug, featured }: PositionCardProps) {
-  const count = position.totalFiguresCount
+  const count = positionAuthorsCount(position)
   const positionHref = `/s/${subjectSlug}/position/${position.positionSlug}`
+  const others = count - 1
 
   return (
     <article className={styles.card} id={positionAnchor(position.positionSlug)}>
@@ -85,7 +110,7 @@ export default function PositionCard({ position, subjectSlug, featured }: Positi
         </div>
         <p className={styles.count}>
           <span className={styles.countValue}>{count}</span>
-          <span className={styles.countLabel}>{count === 1 ? '1 pers.' : `${count} pers.`}</span>
+          <span className={styles.countLabel}>{authorsLabel(position) || 'personne'}</span>
         </p>
       </div>
 
@@ -94,12 +119,13 @@ export default function PositionCard({ position, subjectSlug, featured }: Positi
       <div className={styles.rule} />
 
       <div className={styles.people}>
-        <FigureAvatarStack
-          figures={position.figures}
+        <AuthorAvatarStack
+          authors={positionAuthors(position)}
           totalCount={count}
           max={10}
           size={36}
-          hrefSuffix={`/s/${subjectSlug}`}
+          subjectSlug={subjectSlug}
+          moreHref={positionHref}
         />
         <ComingSoon>
           <span className={styles.chip}>Arguments mobilisés</span>
@@ -113,7 +139,7 @@ export default function PositionCard({ position, subjectSlug, featured }: Positi
             statement={position.latestStatement}
             subjectSlug={subjectSlug}
             positionHref={positionHref}
-            othersCount={count - 1}
+            othersLabel={others > 0 ? othersLabel(position, others) : null}
           />
         </>
       )}

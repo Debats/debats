@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import FigureAvatar from '../../../../components/figures/FigureAvatar'
+import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
 import ComingSoon from '../../../../components/ui/ComingSoon'
-import { LatestStatement } from '../../../../domain/entities/statement'
+import { LatestStatement } from '../../../../domain/read-models/latest-statement'
+import { authorHref, authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import { formatShortDate } from '../../../../lib/format-date'
 import styles from './SubjectLatestStatements.module.css'
 
@@ -24,20 +25,16 @@ export default function SubjectLatestStatements({ statements }: SubjectLatestSta
       <ul className={styles.list}>
         {statements.map((statement) => (
           <li key={statement.statementId} className={styles.item}>
-            <FigureAvatar
-              slug={statement.publicFigureSlug}
-              name={statement.publicFigureName}
-              size={36}
-            />
+            <AuthorAvatar author={statement.author} size={36} />
             <div className={styles.body}>
               <p className={styles.text}>
-                <Link href={`/p/${statement.publicFigureSlug}`} className={styles.name}>
-                  {statement.publicFigureName}
+                <Link href={authorHref(statement.author)} className={styles.name}>
+                  {statement.author.name}
                 </Link>
                 <br />
                 pour{' '}
                 <Link
-                  href={`/p/${statement.publicFigureSlug}/s/${statement.subjectSlug}`}
+                  href={authorOnSubjectHref(statement.author, statement.subjectSlug)}
                   className={styles.position}
                 >
                   {statement.positionTitle}

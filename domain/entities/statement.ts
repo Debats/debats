@@ -93,18 +93,3 @@ export const updateStatement = (
   if (params.statedAt !== undefined) updated.statedAt = params.statedAt
   return updated
 }
-
-/**
- * Lightweight projection for the "latest statements" sidebar
- */
-export interface LatestStatement {
-  statementId: string
-  publicFigureName: string
-  publicFigureSlug: string
-  positionTitle: string
-  positionSlug: string
-  subjectTitle: string
-  subjectSlug: string
-  statedAt: Date
-  sourceName: string
-}

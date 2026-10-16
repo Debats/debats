@@ -5,23 +5,22 @@ import type { Database } from '../../types/database.types'
 import {
   Statement,
   StatementId,
-  LatestStatement,
   organisationAuthor,
   publicFigureAuthor,
 } from '../../domain/entities/statement'
+import { LatestStatement } from '../../domain/read-models/latest-statement'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
-  PublicFigure,
-  PublicFigureId,
-  PublicFigureName,
-  PublicFigureSlug,
-} from '../../domain/entities/public-figure'
+  organisationRef,
+  publicFigureRef,
+  StatementAuthorRef,
+} from '../../domain/read-models/statement-author'
 import {
   DatabaseError,
   StatementRepository,
   StatementWithDetails,
-  StatementWithFigure,
+  StatementWithAuthor,
 } from '../../domain/repositories/statement-repository'
 
 function toISODate(date: Date): string {
@@ -37,7 +36,6 @@ function dbError(message: string, error: unknown): DatabaseError {
 type StatementRow = Database['public']['Tables']['statements']['Row']
 type PositionRow = Database['public']['Tables']['positions']['Row']
 type SubjectRow = Database['public']['Tables']['subjects']['Row']
-type PublicFigureRow = Database['public']['Tables']['public_figures']['Row']
 
 /** The database guarantees exactly one of the two author columns is set */
 function mapAuthor(row: Pick<StatementRow, 'public_figure_id' | 'organisation_id'>) {
@@ -89,19 +87,94 @@ function mapSubjectRow(row: SubjectRow): Subject {
   })
 }
 
-function mapPublicFigureRow(row: PublicFigureRow): PublicFigure {
-  return PublicFigure.make({
-    id: PublicFigureId.make(row.id),
-    name: PublicFigureName.make(row.name),
-    slug: PublicFigureSlug.make(row.slug),
-    presentation: row.presentation,
-    wikipediaUrl: Option.fromNullable(row.wikipedia_url),
-    notorietySources: row.notoriety_sources ?? [],
-    websiteUrl: Option.fromNullable(row.website_url),
-    createdBy: row.created_by,
-    createdAt: new Date(row.created_at!),
-    updatedAt: new Date(row.updated_at!),
-  })
+interface FigureJoin {
+  id: string
+  name: string
+  slug: string
+}
+
+interface OrganisationJoin {
+  id: string
+  name: string
+  slug: string
+  acronym: string | null
+}
+
+/** Both author tables are left-joined; exactly one side is present */
+function toAuthorRef(
+  figure: FigureJoin | null,
+  organisation: OrganisationJoin | null,
+): StatementAuthorRef {
+  if (organisation) return organisationRef(organisation)
+  if (figure) return publicFigureRef(figure)
+  throw new Error('Statement without author')
+}
+
+/** Columns of a statement with its position and either author, as PostgREST embeds them */
+const STATEMENT_WITH_AUTHOR_QUERY = `
+  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
+  created_by, created_at, updated_at, deleted_at,
+  positions!inner (
+    id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
+  ),
+  public_figures (id, name, slug),
+  organisations (id, name, slug, acronym)
+`
+
+interface StatementWithAuthorRow extends StatementRow {
+  positions: PositionRow
+  public_figures: FigureJoin | null
+  organisations: OrganisationJoin | null
+}
+
+function mapStatementWithAuthorRow(row: StatementWithAuthorRow): StatementWithAuthor {
+  return {
+    statement: mapStatementRow(row),
+    position: mapPositionRow(row.positions),
+    author: toAuthorRef(row.public_figures, row.organisations),
+  }
+}
+
+/** Columns of the "latest statements" projection */
+const LATEST_STATEMENT_QUERY = `
+  id,
+  stated_at,
+  created_at,
+  source_name,
+  positions!inner (
+    title,
+    slug,
+    subjects!inner (
+      title,
+      slug
+    )
+  ),
+  public_figures (id, name, slug),
+  organisations (id, name, slug, acronym)
+`
+
+interface LatestStatementRow {
+  id: string
+  stated_at: string
+  created_at: string | null
+  source_name: string
+  positions: { title: string; slug: string; subjects: { title: string; slug: string } }
+  public_figures: FigureJoin | null
+  organisations: OrganisationJoin | null
+}
+
+function mapLatestStatementRow(row: LatestStatementRow, datedBy: 'stated_at' | 'created_at') {
+  const date = datedBy === 'stated_at' ? row.stated_at : row.created_at
+  return {
+    statementId: row.id,
+    author: toAuthorRef(row.public_figures, row.organisations),
+    positionTitle: row.positions.title,
+    positionSlug: row.positions.slug,
+    subjectTitle: row.positions.subjects.title,
+    subjectSlug: row.positions.subjects.slug,
+    statedAt: date ? new Date(date) : new Date(),
+    sourceName: row.source_name,
+  }
 }
 
 const STATEMENT_WITH_DETAILS_QUERY = `
@@ -179,37 +252,20 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements', error),
       }),
 
-    findByPositionIdWithFigures: (positionId: string) =>
+    findByPositionIdWithAuthors: (positionId: string) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select(
-              `
-            id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
-            created_by, created_at, updated_at, deleted_at,
-            positions!inner (
-              id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
-            ),
-            public_figures!inner (
-              id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
-              created_by, created_at, updated_at, deleted_at
-            )
-          `,
-            )
+            .select(STATEMENT_WITH_AUTHOR_QUERY)
             .eq('position_id', positionId)
             .is('deleted_at', null)
             .order('stated_at', { ascending: false })
 
           if (error) throw error
-
-          return data.map((row) => ({
-            statement: mapStatementRow(row),
-            position: mapPositionRow(row.positions),
-            publicFigure: mapPublicFigureRow(row.public_figures),
-          }))
+          return (data as unknown as StatementWithAuthorRow[]).map(mapStatementWithAuthorRow)
         },
-        catch: (error) => dbError('Failed to fetch statements with figures for position', error),
+        catch: (error) => dbError('Failed to fetch statements with authors for position', error),
       }),
 
     findByPublicFigureWithDetails: (publicFigureId: string) =>
@@ -258,36 +314,19 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements for figure and subject', error),
       }),
 
-    findBySubjectWithFigures: (subjectId: string) =>
+    findBySubjectWithAuthors: (subjectId: string) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select(
-              `
-            id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
-            created_by, created_at, updated_at, deleted_at,
-            positions!inner (
-              id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
-            ),
-            public_figures!inner (
-              id, name, slug, presentation, wikipedia_url, notoriety_sources, website_url,
-              created_by, created_at, updated_at, deleted_at
-            )
-          `,
-            )
+            .select(STATEMENT_WITH_AUTHOR_QUERY)
             .eq('positions.subject_id', subjectId)
             .is('deleted_at', null)
 
           if (error) throw error
-
-          return data.map((row) => ({
-            statement: mapStatementRow(row),
-            position: mapPositionRow(row.positions),
-            publicFigure: mapPublicFigureRow(row.public_figures),
-          }))
+          return (data as unknown as StatementWithAuthorRow[]).map(mapStatementWithAuthorRow)
         },
-        catch: (error) => dbError('Failed to fetch statements with figures', error),
+        catch: (error) => dbError('Failed to fetch statements with authors', error),
       }),
 
     findLatest: (limit: number, subjectId?: string) =>
@@ -295,25 +334,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         try: async () => {
           const query = supabase
             .from('statements')
-            .select(
-              `
-            id,
-            stated_at,
-            source_name,
-            positions!inner (
-              title,
-              slug,
-              subjects!inner (
-                title,
-                slug
-              )
-            ),
-            public_figures!inner (
-              name,
-              slug
-            )
-          `,
-            )
+            .select(LATEST_STATEMENT_QUERY)
             .is('deleted_at', null)
             .order('stated_at', { ascending: false })
             .limit(limit)
@@ -323,18 +344,9 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
             : query)
 
           if (error) throw error
-
-          return data.map((row) => ({
-            statementId: row.id,
-            publicFigureName: row.public_figures.name,
-            publicFigureSlug: row.public_figures.slug,
-            positionTitle: row.positions.title,
-            positionSlug: row.positions.slug,
-            subjectTitle: row.positions.subjects.title,
-            subjectSlug: row.positions.subjects.slug,
-            statedAt: new Date(row.stated_at),
-            sourceName: row.source_name,
-          }))
+          return (data as unknown as LatestStatementRow[]).map((row) =>
+            mapLatestStatementRow(row, 'stated_at'),
+          )
         },
         catch: (error) => dbError('Failed to fetch latest statements', error),
       }),
@@ -344,42 +356,15 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select(
-              `
-            id,
-            created_at,
-            source_name,
-            positions!inner (
-              title,
-              slug,
-              subjects!inner (
-                title,
-                slug
-              )
-            ),
-            public_figures!inner (
-              name,
-              slug
-            )
-          `,
-            )
+            .select(LATEST_STATEMENT_QUERY)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(limit)
 
           if (error) throw error
-
-          return data.map((row) => ({
-            statementId: row.id,
-            publicFigureName: row.public_figures.name,
-            publicFigureSlug: row.public_figures.slug,
-            positionTitle: row.positions.title,
-            positionSlug: row.positions.slug,
-            subjectTitle: row.positions.subjects.title,
-            subjectSlug: row.positions.subjects.slug,
-            statedAt: row.created_at ? new Date(row.created_at!) : new Date(),
-            sourceName: row.source_name,
-          }))
+          return (data as unknown as LatestStatementRow[]).map((row) =>
+            mapLatestStatementRow(row, 'created_at'),
+          )
         },
         catch: (error) => dbError('Failed to fetch latest reported statements', error),
       }),

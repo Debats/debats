@@ -69,6 +69,7 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_organisation')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const canRemove = !!contributor && canPerform(contributor.reputation, 'remove_membership')
+  const canEditStatement = !!contributor && canPerform(contributor.reputation, 'edit_statement')
   const acronym = Option.getOrNull(organisation.acronym)
 
   const links = [
@@ -144,7 +145,15 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
             { label: 'Analyses', soon: true },
           ]}
         />
-        <StatementsBySubject groups={groups} subjectHref={(subjectSlug) => `/s/${subjectSlug}`} />
+        <StatementsBySubject
+          groups={groups}
+          subjectHref={(subjectSlug) => `/s/${subjectSlug}`}
+          editHref={
+            canEditStatement
+              ? (statementId) => `/prise-de-position/${statementId}/modifier`
+              : undefined
+          }
+        />
       </ContentWithSidebar>
     </>
   )

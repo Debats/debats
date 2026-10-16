@@ -1,5 +1,5 @@
 /*
- * La couleur de l'anneau autour de chaque avatar suit la surface qui porte la
+ * La couleur de l'anneau autour de chaque visuel suit la surface qui porte la
  * pile : le parent la fixe via --stack-ring (carte par défaut).
  */
 .stack {
@@ -14,6 +14,11 @@
   box-shadow: 0 0 0 2px var(--stack-ring, var(--card));
   margin-left: -8px;
   transition: transform 0.15s ease;
+}
+
+/* Le logo d'une organisation garde son carré arrondi dans la pile */
+.square {
+  border-radius: var(--radius-control);
 }
 
 .item:first-child {

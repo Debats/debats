@@ -1,6 +1,10 @@
 import Link from 'next/link'
-import FigureAvatarStack from '../../../../components/figures/FigureAvatarStack'
-import { PositionSummary } from '../../../../domain/read-models/subject-positions-summary'
+import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarStack'
+import {
+  positionAuthors,
+  positionAuthorsCount,
+  PositionSummary,
+} from '../../../../domain/read-models/subject-positions-summary'
 import { positionAnchor } from '../position-anchor'
 import styles from './PositionsOverview.module.css'
 
@@ -38,14 +42,14 @@ export default function PositionsOverview({ positions }: PositionsOverviewProps)
             href={`#${positionAnchor(position.positionSlug)}`}
             className={index === 0 ? `${styles.node} ${styles.nodeMain}` : styles.node}
           >
-            <FigureAvatarStack
-              figures={position.figures}
-              totalCount={position.totalFiguresCount}
+            <AuthorAvatarStack
+              authors={positionAuthors(position)}
+              totalCount={positionAuthorsCount(position)}
               max={5}
               size={32}
               linked={false}
             />
-            <span className={styles.count}>{position.totalFiguresCount}</span>
+            <span className={styles.count}>{positionAuthorsCount(position)}</span>
             <span className={styles.title}>{position.positionTitle}</span>
           </Link>
         ))}

@@ -8,10 +8,12 @@ import {
   OG_FONTS,
   loadAvatar,
   loadBrandMark,
+  loadLogo,
   loadOgFonts,
   truncate,
 } from '../../../lib/og'
 import { plural } from '../../../lib/plural'
+import { StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import OgAvatar from '../../../components/og/OgAvatar'
 import OgFrame from '../../../components/og/OgFrame'
 
@@ -34,33 +36,46 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
     return new ImageResponse(<div>Sujet introuvable</div>, { ...size })
   }
 
-  const statements = await Effect.runPromise(statementRepo.findBySubjectWithFigures(subject.id))
+  const statements = await Effect.runPromise(statementRepo.findBySubjectWithAuthors(subject.id))
 
-  const figuresMap = new Map<string, { name: string; slug: string }>()
-  for (const s of statements) {
-    if (!figuresMap.has(s.publicFigure.id)) {
-      figuresMap.set(s.publicFigure.id, { name: s.publicFigure.name, slug: s.publicFigure.slug })
+  // Each author once, public figures first, in order of appearance
+  const authorsMap = new Map<string, StatementAuthorRef>()
+  for (const { author } of statements) {
+    if (!authorsMap.has(`${author.kind}-${author.id}`)) {
+      authorsMap.set(`${author.kind}-${author.id}`, author)
     }
   }
-  const figures = Array.from(figuresMap.values())
+  const authors = Array.from(authorsMap.values()).sort((a, b) =>
+    a.kind === b.kind ? 0 : a.kind === 'public_figure' ? -1 : 1,
+  )
+  const figuresCount = authors.filter((a) => a.kind === 'public_figure').length
+  const organisationsCount = authors.length - figuresCount
   const positionsCount = new Set(statements.map((s) => s.position.id)).size
 
-  const shown = figures.slice(0, AVATARS_SHOWN)
+  const shown = authors.slice(0, AVATARS_SHOWN)
   const [fonts, brandMark, avatarEntries] = await Promise.all([
     loadOgFonts(),
     loadBrandMark(),
-    Promise.all(shown.map((f) => loadAvatar(f.slug))),
+    Promise.all(
+      shown.map((a) => (a.kind === 'organisation' ? loadLogo(a.slug) : loadAvatar(a.slug))),
+    ),
   ])
   const avatars = shown
-    .map((figure, index) => ({ slug: figure.slug, src: avatarEntries[index] }))
-    .filter((a): a is { slug: string; src: string } => a.src !== null)
+    .map((author, index) => ({ author, src: avatarEntries[index] }))
+    .filter((a): a is { author: StatementAuthorRef; src: string } => a.src !== null)
+
+  const footer = [
+    `${positionsCount} ${plural(positionsCount, 'position', 'positions')}`,
+    `${figuresCount} ${plural(figuresCount, 'personnalité', 'personnalités')}`,
+    organisationsCount > 0
+      ? `${organisationsCount} ${plural(organisationsCount, 'organisation', 'organisations')}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return new ImageResponse(
-    <OgFrame
-      kicker="Sujet"
-      brandMark={brandMark}
-      footer={`${positionsCount} ${plural(positionsCount, 'position', 'positions')} · ${figures.length} ${plural(figures.length, 'personnalité', 'personnalités')}`}
-    >
+    <OgFrame kicker="Sujet" brandMark={brandMark} footer={footer}>
       <span
         style={{
           fontFamily: OG_FONTS.serif,
@@ -88,12 +103,18 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
         <div
           style={{ display: 'flex', alignItems: 'center', marginTop: 'auto', paddingTop: '24px' }}
         >
-          {avatars.map((avatar, index) => (
-            <OgAvatar key={avatar.slug} src={avatar.src} size={64} overlap={index > 0} />
+          {avatars.map(({ author, src }, index) => (
+            <OgAvatar
+              key={`${author.kind}-${author.id}`}
+              src={src}
+              size={64}
+              overlap={index > 0}
+              shape={author.kind === 'organisation' ? 'square' : 'round'}
+            />
           ))}
-          {figures.length > AVATARS_SHOWN && (
+          {authors.length > AVATARS_SHOWN && (
             <span style={{ fontSize: '24px', color: OG_COLORS.ink3, marginLeft: '14px' }}>
-              {`+${figures.length - AVATARS_SHOWN}`}
+              {`+${authors.length - AVATARS_SHOWN}`}
             </span>
           )}
         </div>

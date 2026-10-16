@@ -3,7 +3,8 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { dailyIndex } from '../../domain/services/daily-pick'
-import FigureAvatarStack from '../../components/figures/FigureAvatarStack'
+import AuthorAvatarStack from '../../components/statements/AuthorAvatarStack'
+import { publicFigureRef } from '../../domain/read-models/statement-author'
 import { plural } from '../../lib/plural'
 import styles from './DailySubject.module.css'
 
@@ -34,12 +35,13 @@ export default async function DailySubject() {
           {plural(subject.publicFiguresCount, 'personnalité', 'personnalités')}
         </span>
         {subject.figures.length > 0 && (
-          <FigureAvatarStack
-            figures={subject.figures}
+          <AuthorAvatarStack
+            authors={subject.figures.map(publicFigureRef)}
             totalCount={subject.publicFiguresCount}
             max={8}
             size={36}
-            hrefSuffix={`/s/${subject.slug}`}
+            subjectSlug={subject.slug}
+            moreHref={`/s/${subject.slug}`}
           />
         )}
       </div>

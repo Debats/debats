@@ -1,0 +1,58 @@
+.card {
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.title {
+  composes: label from '../../../../styles/text.module.css';
+  margin-bottom: 8px;
+}
+
+.empty {
+  composes: small from '../../../../styles/text.module.css';
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
+}
+
+.positions {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 11px;
+  color: var(--org-dark);
+}

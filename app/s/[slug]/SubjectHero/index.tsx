@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import ComingSoon from '../../../../components/ui/ComingSoon'
 import ThemeBadge from '../../../../components/ui/ThemeBadge'
 import { formatShortDate } from '../../../../lib/format-date'
 import { plural } from '../../../../lib/plural'
@@ -20,6 +19,7 @@ interface SubjectLink {
 
 interface SubjectCounts {
   publicFigures: number
+  organisations: number
   statements: number
 }
 
@@ -109,10 +109,14 @@ export default function SubjectHero({
                     {plural(counts.publicFigures, 'personnalité', 'personnalités')}
                   </dt>
                 </div>
-                <ComingSoon as="div" className={styles.stat}>
-                  <dd className={`${styles.statValue} ${styles.statValueOrg}`}>–</dd>
-                  <dt className={styles.statLabel}>organisations</dt>
-                </ComingSoon>
+                <div className={styles.stat}>
+                  <dd className={`${styles.statValue} ${styles.statValueOrg}`}>
+                    {counts.organisations}
+                  </dd>
+                  <dt className={styles.statLabel}>
+                    {plural(counts.organisations, 'organisation', 'organisations')}
+                  </dt>
+                </div>
               </dl>
               <p className={styles.updated}>Mis à jour le {formatShortDate(updatedAt)}</p>
             </div>

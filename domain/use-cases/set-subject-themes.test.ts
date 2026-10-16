@@ -41,7 +41,15 @@ const fakeSubjectRepo = {
   update: () => Effect.succeed(null as never),
   delete: () => Effect.succeed(undefined as void),
   getStats: () =>
-    Effect.succeed({ subjectId: '', positionsCount: 0, publicFiguresCount: 0, statementsCount: 0 }),
+    Effect.succeed({
+      subjectId: '',
+      positionsCount: 0,
+      publicFiguresCount: 0,
+      organisationsCount: 0,
+      statementsCount: 0,
+      figureStatementsCount: 0,
+      organisationStatementsCount: 0,
+    }),
   findSummariesByActivity: () => Effect.succeed([]),
   findSummariesByCreatedAt: () => Effect.succeed([]),
   findSummaryById: () => Effect.succeed(null),

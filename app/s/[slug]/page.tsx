@@ -9,6 +9,7 @@ import { createThemeRepository } from '../../../infra/database/theme-repository-
 import { createRelatedSubjectsRepository } from '../../../infra/database/related-subjects-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
 import { isMajorSubject } from '../../../domain/entities/subject'
+import { positionAuthorsCount } from '../../../domain/read-models/subject-positions-summary'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import Button from '../../../components/ui/Button'
@@ -18,15 +19,16 @@ import SubjectAdminMenu from './SubjectAdminMenu'
 import SubjectHero from './SubjectHero'
 import SubjectTabs from './SubjectTabs'
 import PositionsOverview from './PositionsOverview'
-import PositionsFilter from './PositionsFilter'
+import PositionsFilter, { parseAuthorKindParam } from './PositionsFilter'
 import PositionCard from './PositionCard'
 import ReadingGuide from './ReadingGuide'
 import SubjectLatestStatements from './SubjectLatestStatements'
-import OrganisationsSoon from './OrganisationsSoon'
+import SubjectOrganisations from './SubjectOrganisations'
 import styles from './subject-detail.module.css'
 
 interface PageProps {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ qui?: string }>
 }
 
 const LATEST_STATEMENTS_LIMIT = 5
@@ -60,8 +62,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function SubjectDetailPage({ params }: PageProps) {
-  const { slug } = await params
+export default async function SubjectDetailPage({ params, searchParams }: PageProps) {
+  const [{ slug }, { qui }] = await Promise.all([params, searchParams])
+  const authorKind = parseAuthorKindParam(qui)
 
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
@@ -74,15 +77,30 @@ export default async function SubjectDetailPage({ params }: PageProps) {
   const themeRepo = createThemeRepository(supabase)
   const relatedRepo = createRelatedSubjectsRepository(supabase)
 
-  const [positions, stats, latestStatements, contributor, themeAssignments, relatedSubjects] =
-    await Promise.all([
-      Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
-      Effect.runPromise(subjectRepo.getStats(subject.id)),
-      Effect.runPromise(statementRepo.findLatest(LATEST_STATEMENTS_LIMIT, subject.id)),
-      getAuthenticatedContributor(),
-      Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
-      Effect.runPromise(relatedRepo.findRelated(subject.id)),
-    ])
+  const [
+    positions,
+    filteredPositions,
+    stats,
+    latestStatements,
+    contributor,
+    themeAssignments,
+    relatedSubjects,
+  ] = await Promise.all([
+    Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
+    // The overview and the rail always show everyone; only the list follows the filter
+    authorKind
+      ? Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id, { authorKind }))
+      : null,
+    Effect.runPromise(subjectRepo.getStats(subject.id)),
+    Effect.runPromise(statementRepo.findLatest(LATEST_STATEMENTS_LIMIT, subject.id)),
+    getAuthenticatedContributor(),
+    Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
+    Effect.runPromise(relatedRepo.findRelated(subject.id)),
+  ])
+
+  const listedPositions = filteredPositions
+    ? filteredPositions.filter((position) => positionAuthorsCount(position) > 0)
+    : positions
 
   const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
   const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
@@ -115,6 +133,7 @@ export default async function SubjectDetailPage({ params }: PageProps) {
         relatedSubjects={relatedSubjects}
         counts={{
           publicFigures: stats.publicFiguresCount,
+          organisations: stats.organisationsCount,
           statements: stats.statementsCount,
         }}
         adminMenu={
@@ -161,26 +180,36 @@ export default async function SubjectDetailPage({ params }: PageProps) {
           <>
             <ReadingGuide />
             <SubjectLatestStatements statements={latestStatements} />
-            <OrganisationsSoon />
+            <SubjectOrganisations positions={positions} />
           </>
         }
       >
         <SubjectTabs positionsCount={positions.length} />
         <PositionsFilter
-          statementsCount={stats.statementsCount}
-          positionsCount={positions.length}
+          subjectSlug={slug}
+          authorKind={authorKind}
+          counts={{
+            all: stats.statementsCount,
+            publicFigures: stats.figureStatementsCount,
+            organisations: stats.organisationStatementsCount,
+          }}
+          positionsCount={listedPositions.length}
         />
 
-        {positions.length === 0 ? (
-          <p className={styles.empty}>Aucune position enregistrée pour l’instant.</p>
+        {listedPositions.length === 0 ? (
+          <p className={styles.empty}>
+            {authorKind
+              ? 'Aucune prise de position de ce type pour l’instant.'
+              : 'Aucune position enregistrée pour l’instant.'}
+          </p>
         ) : (
           <div className={styles.list}>
-            {positions.map((position, index) => (
+            {listedPositions.map((position, index) => (
               <PositionCard
                 key={position.positionId}
                 position={position}
                 subjectSlug={slug}
-                featured={index === 0 && positions.length > 1}
+                featured={index === 0 && listedPositions.length > 1}
               />
             ))}
           </div>

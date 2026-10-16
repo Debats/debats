@@ -24,7 +24,15 @@ const fakeSubjectRepo = {
   findBySlug: () => Effect.succeed(null),
   update: (s: Subject) => Effect.succeed(s),
   getStats: () =>
-    Effect.succeed({ subjectId: '', positionsCount: 0, publicFiguresCount: 0, statementsCount: 2 }),
+    Effect.succeed({
+      subjectId: '',
+      positionsCount: 0,
+      publicFiguresCount: 0,
+      organisationsCount: 0,
+      statementsCount: 2,
+      figureStatementsCount: 2,
+      organisationStatementsCount: 0,
+    }),
   findSummariesByActivity: () => Effect.succeed([]),
   findSummariesByCreatedAt: () => Effect.succeed([]),
   findSummaryById: () => Effect.succeed(null),
@@ -90,7 +98,10 @@ describe('deleteSubjectUseCase', () => {
           subjectId: '',
           positionsCount: 0,
           publicFiguresCount: 0,
+          organisationsCount: 0,
           statementsCount: 10,
+          figureStatementsCount: 10,
+          organisationStatementsCount: 0,
         }),
     }
 

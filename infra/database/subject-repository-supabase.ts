@@ -170,35 +170,26 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
 
           if (positionsError) throw positionsError
 
-          const { data: publicFiguresData, error: figuresError } = await supabase
+          // One author column is set per statement; counting both sides from one read
+          const { data: authors, error: authorsError } = await supabase
             .from('statements')
-            .select(
-              `
-            public_figure_id,
-            positions!inner(subject_id)
-          `,
-            )
+            .select('public_figure_id, organisation_id, positions!inner(subject_id)')
             .eq('positions.subject_id', subjectId)
             .is('deleted_at', null)
 
-          if (figuresError) throw figuresError
+          if (authorsError) throw authorsError
 
-          const uniquePublicFigures = new Set(publicFiguresData.map((s) => s.public_figure_id))
-          const publicFiguresCount = uniquePublicFigures.size
-
-          const { count: statementsCount, error: statementsError } = await supabase
-            .from('statements')
-            .select('*, positions!inner(subject_id)', { count: 'exact', head: true })
-            .eq('positions.subject_id', subjectId)
-            .is('deleted_at', null)
-
-          if (statementsError) throw statementsError
+          const figureIds = authors.map((s) => s.public_figure_id).filter(Boolean)
+          const organisationIds = authors.map((s) => s.organisation_id).filter(Boolean)
 
           return SubjectStats.make({
             subjectId,
             positionsCount: positionsCount || 0,
-            publicFiguresCount,
-            statementsCount: statementsCount || 0,
+            publicFiguresCount: new Set(figureIds).size,
+            organisationsCount: new Set(organisationIds).size,
+            statementsCount: authors.length,
+            figureStatementsCount: figureIds.length,
+            organisationStatementsCount: organisationIds.length,
           })
         },
         catch: (error) => dbError('Failed to get stats', error),

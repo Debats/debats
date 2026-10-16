@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import FigureAvatar from '../../figures/FigureAvatar'
+import AuthorAvatar from '../../statements/AuthorAvatar'
 import { formatShortDate } from '../../../lib/format-date'
 import styles from './StatementList.module.css'
-import { LatestStatement } from '../../../domain/entities/statement'
+import { LatestStatement } from '../../../domain/read-models/latest-statement'
+import { authorHref, authorOnSubjectHref } from '../../../domain/read-models/statement-author'
 
 interface StatementListProps {
   title: string
@@ -18,18 +19,16 @@ export default function StatementList({ title, statements }: StatementListProps)
       <ul className={styles.statementsList}>
         {statements.map((statement) => (
           <li key={statement.statementId} className={styles.statementItem}>
-            <FigureAvatar
-              slug={statement.publicFigureSlug}
-              name={statement.publicFigureName}
-              size={36}
-            />
+            <AuthorAvatar author={statement.author} size={36} />
             <div className={styles.statementContent}>
               <p className={styles.publicFigureText}>
-                <Link href={`/p/${statement.publicFigureSlug}`}>
-                  <strong>{statement.publicFigureName}</strong>
+                <Link href={authorHref(statement.author)}>
+                  <strong>{statement.author.name}</strong>
                 </Link>{' '}
-                s&apos;est déclaré·e pour{' '}
-                <Link href={`/p/${statement.publicFigureSlug}/s/${statement.subjectSlug}`}>
+                {statement.author.kind === 'organisation'
+                  ? 'a pris position pour'
+                  : 's’est déclaré·e pour'}{' '}
+                <Link href={authorOnSubjectHref(statement.author, statement.subjectSlug)}>
                   <em>{statement.positionTitle}</em>
                 </Link>{' '}
                 dans le débat{' '}

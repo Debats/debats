@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ComingSoon from '../../ui/ComingSoon'
+import EditLink from '../../ui/EditLink'
 import Segmented from '../../ui/Segmented'
 import ShowMore from '../../ui/ShowMore'
 import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
@@ -11,6 +12,8 @@ interface StatementsBySubjectProps {
   groups: SubjectGroup[]
   /** Où mène le titre d'un sujet : la page de l'auteur sur ce sujet, ou le sujet lui-même */
   subjectHref: (subjectSlug: string) => string
+  /** Lien de modification d'une prise de position, quand l'utilisateur y a droit */
+  editHref?: (statementId: string) => string
 }
 
 function ChevronIcon() {
@@ -39,7 +42,11 @@ function moreSubjectsLabel(hidden: number) {
 }
 
 /** Les prises de position d'un auteur (personnalité ou organisation), groupées par sujet. */
-export default function StatementsBySubject({ groups, subjectHref }: StatementsBySubjectProps) {
+export default function StatementsBySubject({
+  groups,
+  subjectHref,
+  editHref,
+}: StatementsBySubjectProps) {
   const subjectItems = groups.map(({ subject, entries }) => (
     <article key={subject.id} className={styles.subject}>
       <Link href={subjectHref(subject.slug)} className={styles.subjectTitle}>
@@ -68,6 +75,7 @@ export default function StatementsBySubject({ groups, subjectHref }: StatementsB
             )}
             <span className={styles.separator}>·</span>
             <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
+            {editHref && <EditLink href={editHref(statement.id)} />}
           </div>
         </div>
       ))}

@@ -9,7 +9,8 @@ import { createStatementRepository } from '../../../../../infra/database/stateme
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { STATEMENT_TYPE_LABELS } from '../../../../../domain/entities/statement'
-import FigureAvatar from '../../../../../components/figures/FigureAvatar'
+import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
+import AuthorAvatar from '../../../../../components/statements/AuthorAvatar'
 import AdminMenu from '../../../../../components/ui/AdminMenu'
 import Button from '../../../../../components/ui/Button'
 import ShareButton from '../../../../../components/ui/ShareButton'
@@ -64,7 +65,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
   if (!position) notFound()
 
   const positionStatements = await Effect.runPromise(
-    statementRepo.findByPositionIdWithFigures(position.id),
+    statementRepo.findByPositionIdWithAuthors(position.id),
   )
 
   const allPositions = await Effect.runPromise(positionRepo.findBySubjectId(subject.id))
@@ -75,7 +76,14 @@ export default async function PositionDetailPage({ params }: PageProps) {
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_position')
   const isAdmin = !!contributor && canPerform(contributor.reputation, 'admin')
 
-  const figuresCount = new Set(positionStatements.map(({ publicFigure }) => publicFigure.id)).size
+  const distinctAuthors = (kind: 'public_figure' | 'organisation') =>
+    new Set(
+      positionStatements
+        .filter(({ author }) => author.kind === kind)
+        .map(({ author }) => author.id),
+    ).size
+  const figuresCount = distinctAuthors('public_figure')
+  const organisationsCount = distinctAuthors('organisation')
 
   return (
     <>
@@ -83,7 +91,11 @@ export default async function PositionDetailPage({ params }: PageProps) {
         subject={subject}
         title={position.title}
         description={position.description}
-        counts={{ statements: positionStatements.length, figures: figuresCount }}
+        counts={{
+          statements: positionStatements.length,
+          figures: figuresCount,
+          organisations: organisationsCount,
+        }}
         adminMenu={
           (canEdit || isAdmin) && (
             <AdminMenu
@@ -172,15 +184,15 @@ export default async function PositionDetailPage({ params }: PageProps) {
             </p>
           ) : (
             <div className={styles.list}>
-              {positionStatements.map(({ statement, publicFigure }) => (
+              {positionStatements.map(({ statement, author }) => (
                 <article key={statement.id} className={styles.card}>
-                  <Link href={`/p/${publicFigure.slug}/s/${slug}`}>
-                    <FigureAvatar slug={publicFigure.slug} name={publicFigure.name} size={44} />
+                  <Link href={authorOnSubjectHref(author, slug)}>
+                    <AuthorAvatar author={author} size={44} />
                   </Link>
                   <div className={styles.body}>
                     <div className={styles.head}>
-                      <Link href={`/p/${publicFigure.slug}/s/${slug}`} className={styles.figure}>
-                        {publicFigure.name}
+                      <Link href={authorOnSubjectHref(author, slug)} className={styles.figure}>
+                        {author.name}
                       </Link>
                       <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
                     </div>

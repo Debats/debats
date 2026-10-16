@@ -910,15 +910,21 @@ export type Database = {
     }
     Functions: {
       get_subject_positions_summary: {
-        Args: { p_figures_limit?: number; p_subject_id: string }
+        Args: {
+          p_author_kind?: string
+          p_authors_limit?: number
+          p_subject_id: string
+        }
         Returns: {
           figures: Json
           latest_statement: Json
+          organisations: Json
           position_description: string
           position_id: string
           position_slug: string
           position_title: string
           total_figures_count: number
+          total_organisations_count: number
         }[]
       }
       get_user_id_by_email: { Args: { target_email: string }; Returns: string }

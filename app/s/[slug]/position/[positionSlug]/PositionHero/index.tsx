@@ -9,6 +9,7 @@ interface PositionHeroProps {
   counts: {
     statements: number
     figures: number
+    organisations: number
   }
   /** Menu d'administration affiché à côté du titre, si l'utilisateur y a droit */
   adminMenu?: React.ReactNode
@@ -57,6 +58,12 @@ export default function PositionHero({
                 <dd className={styles.statValue}>{counts.figures}</dd>
                 <dt className={styles.statLabel}>
                   {plural(counts.figures, 'personnalité', 'personnalités')}
+                </dt>
+              </div>
+              <div className={styles.stat}>
+                <dd className={styles.statValue}>{counts.organisations}</dd>
+                <dt className={styles.statLabel}>
+                  {plural(counts.organisations, 'organisation', 'organisations')}
                 </dt>
               </div>
             </dl>

@@ -1,8 +1,9 @@
 import { Context, Effect } from 'effect'
-import { Statement, LatestStatement } from '../entities/statement'
+import { Statement } from '../entities/statement'
+import { LatestStatement } from '../read-models/latest-statement'
 import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
-import { PublicFigure } from '../entities/public-figure'
+import { StatementAuthorRef } from '../read-models/statement-author'
 
 export class DatabaseError extends Error {
   readonly _tag = 'DatabaseError'
@@ -18,12 +19,12 @@ export interface StatementWithDetails {
 }
 
 /**
- * Statement with related position and public figure details
+ * Statement with its position and who took it (public figure or organisation)
  */
-export interface StatementWithFigure {
+export interface StatementWithAuthor {
   statement: Statement
   position: Position
-  publicFigure: PublicFigure
+  author: StatementAuthorRef
 }
 
 export interface StatementRepository {
@@ -33,9 +34,9 @@ export interface StatementRepository {
 
   findByPositionId(positionId: string): Effect.Effect<Statement[], DatabaseError>
 
-  findByPositionIdWithFigures(
+  findByPositionIdWithAuthors(
     positionId: string,
-  ): Effect.Effect<StatementWithFigure[], DatabaseError>
+  ): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
   /**
    * Get all statements for a public figure with position and subject details
@@ -60,9 +61,9 @@ export interface StatementRepository {
   ): Effect.Effect<StatementWithDetails[], DatabaseError>
 
   /**
-   * Get all statements for a subject with position and public figure details
+   * Get all statements for a subject with their position and author
    */
-  findBySubjectWithFigures(subjectId: string): Effect.Effect<StatementWithFigure[], DatabaseError>
+  findBySubjectWithAuthors(subjectId: string): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
   /**
    * Get the N most recent statements by date

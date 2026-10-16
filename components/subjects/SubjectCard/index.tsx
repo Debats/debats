@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import FigureAvatarStack from '../../figures/FigureAvatarStack'
+import AuthorAvatarStack from '../../statements/AuthorAvatarStack'
+import { publicFigureRef } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
 import styles from './SubjectCard.module.css'
 
@@ -35,8 +36,8 @@ export default function SubjectCard({ subject, featured }: SubjectCardProps) {
           {plural(subject.publicFiguresCount, 'personnalité', 'personnalités')}
         </span>
         {figures.length > 0 && (
-          <FigureAvatarStack
-            figures={figures}
+          <AuthorAvatarStack
+            authors={figures.map(publicFigureRef)}
             totalCount={subject.publicFiguresCount}
             max={5}
             size={28}
