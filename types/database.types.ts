@@ -602,18 +602,21 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          is_current: boolean
           occupation_id: string
           public_figure_id: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          is_current?: boolean
           occupation_id: string
           public_figure_id: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          is_current?: boolean
           occupation_id?: string
           public_figure_id?: string
         }

@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { createOccupation, Occupation } from '../entities/occupation'
 import { createOccupationFamily, OccupationFamily } from '../entities/occupation-family'
+import { OccupationAssignmentInput } from '../read-models/occupations'
 import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 
@@ -37,10 +38,11 @@ export function fakeFamilyRepo(seed: OccupationFamily[] = []): OccupationFamilyR
 /** In-memory occupation repository recording the assignments it is asked for */
 export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepository & {
   rows: Occupation[]
-  assignments: Map<string, string[]>
+  assignments: Map<string, OccupationAssignmentInput[]>
 } {
   const rows = [...seed]
-  const assignments = new Map<string, string[]>()
+  const assignments = new Map<string, OccupationAssignmentInput[]>()
+  const linksOf = (figureId: string) => assignments.get(figureId) ?? []
   return {
     rows,
     assignments,
@@ -64,30 +66,32 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
       return Effect.succeed(undefined)
     },
     findByPublicFigureId: (figureId) =>
-      Effect.succeed(rows.filter((o) => (assignments.get(figureId) ?? []).includes(o.id))),
+      Effect.succeed(
+        linksOf(figureId).flatMap(({ occupationId, current }) => {
+          const occupation = rows.find((o) => o.id === occupationId)
+          return occupation ? [{ occupation, current }] : []
+        }),
+      ),
     findPublicFigureIdsByOccupationId: (occupationId) =>
       Effect.succeed(
         Array.from(assignments.entries())
-          .filter(([, ids]) => ids.includes(occupationId))
+          .filter(([, links]) => links.some((l) => l.occupationId === occupationId))
           .map(([figureId]) => figureId),
       ),
     findAllAssignments: () =>
       Effect.succeed(
-        Array.from(assignments.entries()).flatMap(([publicFigureId, ids]) =>
-          ids.map((occupationId) => ({ publicFigureId, occupationId })),
+        Array.from(assignments.entries()).flatMap(([publicFigureId, links]) =>
+          links.map(({ occupationId }) => ({ publicFigureId, occupationId })),
         ),
       ),
     findAssignmentsByPublicFigureIds: (figureIds) =>
       Effect.succeed(
         figureIds.flatMap((publicFigureId) =>
-          (assignments.get(publicFigureId) ?? []).map((occupationId) => ({
-            publicFigureId,
-            occupationId,
-          })),
+          linksOf(publicFigureId).map(({ occupationId }) => ({ publicFigureId, occupationId })),
         ),
       ),
-    setAssignments: (figureId, occupationIds) => {
-      assignments.set(figureId, occupationIds)
+    setAssignments: (figureId, links) => {
+      assignments.set(figureId, links)
       return Effect.succeed(undefined)
     },
   }

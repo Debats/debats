@@ -10,6 +10,7 @@ import {
 import { OccupationFamilyId } from '../../domain/entities/occupation-family'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { OccupationRepository } from '../../domain/repositories/occupation-repository'
+import { sortOccupationsHeld } from '../../domain/read-models/occupations'
 import { OccupationAssignment } from '../../domain/services/occupation-distribution'
 import { fetchAllRows } from './fetch-all-pages'
 import { fetchInChunks } from './in-chunks'
@@ -153,12 +154,13 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
         try: async () => {
           const { data, error } = await supabase
             .from('public_figure_occupations')
-            .select('occupations!inner (*)')
+            .select('is_current, occupations!inner (*)')
             .eq('public_figure_id', publicFigureId)
           if (error) throw error
-          return (data as unknown as Array<{ occupations: OccupationRow }>)
-            .map((row) => mapRow(row.occupations))
-            .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+          const rows = data as unknown as Array<{ is_current: boolean; occupations: OccupationRow }>
+          return sortOccupationsHeld(
+            rows.map((row) => ({ occupation: mapRow(row.occupations), current: row.is_current })),
+          )
         },
         catch: (error) => dbError('Failed to fetch public figure occupations', error),
       }),
@@ -208,7 +210,7 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
         catch: (error) => dbError('Failed to fetch occupation assignments by figures', error),
       }),
 
-    setAssignments: (publicFigureId, occupationIds, createdBy) =>
+    setAssignments: (publicFigureId, assignments, createdBy) =>
       Effect.tryPromise({
         try: async () => {
           const { error: deleteError } = await supabase
@@ -217,12 +219,13 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
             .eq('public_figure_id', publicFigureId)
           if (deleteError) throw deleteError
 
-          if (occupationIds.length === 0) return
+          if (assignments.length === 0) return
 
           const { error: insertError } = await supabase.from('public_figure_occupations').insert(
-            occupationIds.map((occupationId) => ({
+            assignments.map(({ occupationId, current }) => ({
               public_figure_id: publicFigureId,
               occupation_id: occupationId,
+              is_current: current,
               created_by: createdBy,
             })),
           )

@@ -1,0 +1,51 @@
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 4px;
+  border-radius: var(--radius-pill);
+  background-color: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+
+.switch {
+  position: relative;
+  width: 26px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background-color: var(--ink-3);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.switch[data-state='checked'] {
+  background-color: var(--paper);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}
+
+.thumb {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--ink);
+  transform: translateX(2px);
+  transition: transform 0.15s ease;
+}
+
+.thumb[data-state='checked'] {
+  transform: translateX(12px);
+}
+
+.state {
+  composes: meta from '../../../../../styles/text.module.css';
+  font-size: 10px;
+  color: var(--paper);
+  min-width: 36px;
+}

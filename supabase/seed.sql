@@ -87,8 +87,9 @@ FROM public_figures pf WHERE pf.slug = 'sophie-binet' AND pf.deleted_at IS NULL;
 
 -- Métiers de quelques personnalités, pour voir vivre les pages /metiers et l'onglet Analyses
 -- (seulement si les personnalités existent ; les métiers viennent de la migration 20261016230000)
-INSERT INTO public_figure_occupations (public_figure_id, occupation_id, created_by)
-SELECT pf.id, o.id, '00000000-0000-0000-0000-000000000001'
+-- Un haut fonctionnaire devenu président, une députée devenue cheffe de parti : métiers passés
+INSERT INTO public_figure_occupations (public_figure_id, occupation_id, is_current, created_by)
+SELECT pf.id, o.id, o.slug NOT IN ('haut-e-fonctionnaire', 'depute-e'), '00000000-0000-0000-0000-000000000001'
 FROM public_figures pf JOIN occupations o ON
   (pf.slug = 'emmanuel-macron' AND o.slug IN ('president-e-de-la-republique', 'haut-e-fonctionnaire')) OR
   (pf.slug = 'marine-le-pen' AND o.slug IN ('depute-e', 'chef-fe-de-parti')) OR

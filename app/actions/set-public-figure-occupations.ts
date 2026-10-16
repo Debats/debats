@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import { OccupationAssignmentInput } from '../../domain/read-models/occupations'
 import { setPublicFigureOccupationsUseCase } from '../../domain/use-cases/set-public-figure-occupations'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -13,7 +14,7 @@ export type SetOccupationsResult = { success: true } | { success: false; error: 
 export async function setPublicFigureOccupationsAction(
   publicFigureId: string,
   publicFigureSlug: string,
-  occupationIds: string[],
+  assignments: OccupationAssignmentInput[],
 ): Promise<SetOccupationsResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
@@ -21,7 +22,7 @@ export async function setPublicFigureOccupationsAction(
   const result = await setPublicFigureOccupationsUseCase({
     contributor,
     publicFigureId,
-    occupationIds,
+    assignments,
     occupationRepo: createOccupationRepository(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
   })

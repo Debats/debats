@@ -20,6 +20,21 @@
   gap: 8px;
 }
 
+.pill {
+  display: inline-flex;
+}
+
+/* Une pilule cochée qui porte un réglage : la bascule et le réglage partagent le fond encre */
+.pillWithExtra {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
 .item {
   display: inline-flex;
   align-items: center;
@@ -52,4 +67,8 @@
   background-color: var(--ink);
   border-color: var(--ink);
   color: var(--paper);
+}
+
+.pillWithExtra .item {
+  padding-right: 4px;
 }

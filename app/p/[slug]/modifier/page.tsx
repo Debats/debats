@@ -76,7 +76,10 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
           figureId={figure.id}
           figureSlug={figure.slug}
           groups={occupationGroups}
-          selectedIds={figureOccupations.map((o) => o.id)}
+          initialAssignments={figureOccupations.map(({ occupation, current }) => ({
+            occupationId: occupation.id,
+            current,
+          }))}
         />
       )}
     </ContentWithSidebar>

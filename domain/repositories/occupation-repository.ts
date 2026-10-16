@@ -1,5 +1,6 @@
 import { Context, Effect } from 'effect'
 import { Occupation } from '../entities/occupation'
+import { OccupationAssignmentInput, OccupationHeld } from '../read-models/occupations'
 import { OccupationAssignment } from '../services/occupation-distribution'
 import { DatabaseError } from './errors'
 
@@ -19,8 +20,8 @@ export interface OccupationRepository {
 
   delete(id: string): Effect.Effect<void, DatabaseError>
 
-  /** The occupations a public figure holds, by name */
-  findByPublicFigureId(publicFigureId: string): Effect.Effect<Occupation[], DatabaseError>
+  /** The occupations a public figure holds or held, by name */
+  findByPublicFigureId(publicFigureId: string): Effect.Effect<OccupationHeld[], DatabaseError>
 
   /** Every public figure holding an occupation */
   findPublicFigureIdsByOccupationId(occupationId: string): Effect.Effect<string[], DatabaseError>
@@ -33,10 +34,10 @@ export interface OccupationRepository {
     publicFigureIds: string[],
   ): Effect.Effect<OccupationAssignment[], DatabaseError>
 
-  /** Replaces the set of occupations a public figure holds */
+  /** Replaces the set of occupations a public figure holds, current or former */
   setAssignments(
     publicFigureId: string,
-    occupationIds: string[],
+    assignments: OccupationAssignmentInput[],
     createdBy: string,
   ): Effect.Effect<void, DatabaseError>
 }

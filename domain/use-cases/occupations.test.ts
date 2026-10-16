@@ -160,7 +160,7 @@ describe('setPublicFigureOccupationsUseCase', () => {
     const result = await setPublicFigureOccupationsUseCase({
       contributor: meteque,
       publicFigureId: figure.id,
-      occupationIds: [],
+      assignments: [],
       occupationRepo: fakeOccupationRepo(),
       publicFigureRepo: fakeFigureRepo(true),
     })
@@ -172,7 +172,7 @@ describe('setPublicFigureOccupationsUseCase', () => {
     const result = await setPublicFigureOccupationsUseCase({
       contributor: eloquent,
       publicFigureId: figure.id,
-      occupationIds: ['unknown'],
+      assignments: [{ occupationId: 'unknown', current: true }],
       occupationRepo: fakeOccupationRepo(),
       publicFigureRepo: fakeFigureRepo(true),
     })
@@ -184,7 +184,7 @@ describe('setPublicFigureOccupationsUseCase', () => {
     const result = await setPublicFigureOccupationsUseCase({
       contributor: eloquent,
       publicFigureId: 'missing',
-      occupationIds: [],
+      assignments: [],
       occupationRepo: fakeOccupationRepo(),
       publicFigureRepo: fakeFigureRepo(false),
     })
@@ -192,18 +192,25 @@ describe('setPublicFigureOccupationsUseCase', () => {
     expect(Either.isLeft(result) && result.left).toContain('introuvable')
   })
 
-  it('replaces the assignments, without duplicates', async () => {
+  it('replaces the assignments, the last word on « current » winning over a duplicate', async () => {
     const [economist, writer] = [sampleOccupation('Économiste'), sampleOccupation('Écrivain·e')]
     const repo = fakeOccupationRepo([economist, writer])
     const result = await setPublicFigureOccupationsUseCase({
       contributor: eloquent,
       publicFigureId: figure.id,
-      occupationIds: [economist.id, writer.id, economist.id],
+      assignments: [
+        { occupationId: economist.id, current: true },
+        { occupationId: writer.id, current: false },
+        { occupationId: economist.id, current: false },
+      ],
       occupationRepo: repo,
       publicFigureRepo: fakeFigureRepo(true),
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repo.assignments.get(figure.id)).toEqual([economist.id, writer.id])
+    expect(repo.assignments.get(figure.id)).toEqual([
+      { occupationId: economist.id, current: false },
+      { occupationId: writer.id, current: false },
+    ])
   })
 })

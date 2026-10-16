@@ -100,9 +100,9 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
       Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
     ])
   const familyById = new Map(families.map((family) => [family.id, family]))
-  const occupationTags = occupations.flatMap((occupation) => {
+  const occupationTags = occupations.flatMap(({ occupation, current }) => {
     const family = familyById.get(occupation.familyId)
-    return family ? [{ name: occupation.name, href: occupationFamilyHref(family) }] : []
+    return family ? [{ name: occupation.name, href: occupationFamilyHref(family), current }] : []
   })
 
   const groups = groupStatementsBySubject(statements)

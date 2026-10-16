@@ -22,3 +22,10 @@
   border-color: var(--ink);
   color: var(--ink);
 }
+
+.former,
+.former:link,
+.former:visited {
+  border-style: dashed;
+  color: var(--ink-3);
+}
