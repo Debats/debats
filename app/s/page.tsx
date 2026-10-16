@@ -14,7 +14,8 @@ import SubjectCard from '../../components/subjects/SubjectCard'
 import SubjectSearch from '../../components/subjects/SubjectSearch'
 import styles from './subjects.module.css'
 
-const SUBJECTS_PER_THEME = 5
+/** Un nombre pair, pour remplir la grille à deux colonnes */
+const SUBJECTS_PER_THEME = 6
 
 export const metadata: Metadata = {
   title: 'Sujets',
