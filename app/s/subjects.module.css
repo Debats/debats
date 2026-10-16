@@ -5,6 +5,10 @@
   border-radius: var(--radius-card);
 }
 
+.toolbar {
+  margin-bottom: 24px;
+}
+
 .sections {
   display: flex;
   flex-direction: column;

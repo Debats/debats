@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   groupSubjectsByTheme,
   subjectIndexTotals,
+  subjectsByActivity,
   subjectsToDocument,
   SubjectIndexEntry,
 } from './subject-index'
@@ -99,6 +100,18 @@ describe('subjectsToDocument', () => {
     )
 
     expect(picked.map((s) => s.title)).toEqual(['Autruche', 'Zèbre'])
+  })
+})
+
+describe('subjectsByActivity', () => {
+  it('lists every subject, the most documented first, ties by title', () => {
+    const sorted = subjectsByActivity([
+      entry('Le SMIC', 6, economie),
+      entry('Orphelin', 36, null),
+      entry('Le cannabis', 6, sante),
+    ])
+
+    expect(sorted.map((s) => s.title)).toEqual(['Orphelin', 'Le cannabis', 'Le SMIC'])
   })
 })
 

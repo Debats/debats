@@ -58,6 +58,11 @@ export function groupSubjectsByTheme(entries: SubjectIndexEntry[]): ThemeSection
   })
 }
 
+/** The flat view of the index: every subject, the most documented first */
+export function subjectsByActivity(entries: SubjectIndexEntry[]): SubjectIndexEntry[] {
+  return [...entries].sort(byStatements)
+}
+
 /** Up to this many statements, a subject still needs documenting */
 const DOCUMENTED_THRESHOLD = 2
 
