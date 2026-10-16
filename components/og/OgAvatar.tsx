@@ -23,7 +23,8 @@ export default function OgAvatar({ src, size, overlap, shape = 'round' }: OgAvat
         height: `${size}px`,
         borderRadius: shape === 'square' ? `${Math.round(size / 6)}px` : '50%',
         objectFit: shape === 'square' ? 'contain' : 'cover',
-        backgroundColor: shape === 'square' ? OG_COLORS.card : undefined,
+        // Le moteur de rendu lit chaque propriété présente : pas de valeur `undefined`
+        ...(shape === 'square' ? { backgroundColor: OG_COLORS.card } : {}),
         flexShrink: 0,
         marginLeft: overlap ? '-14px' : 0,
         border: `3px solid ${OG_COLORS.paper}`,
