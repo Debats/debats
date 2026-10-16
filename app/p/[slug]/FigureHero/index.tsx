@@ -1,7 +1,7 @@
 import FigureAvatar from '../../../../components/figures/FigureAvatar'
 import DetailHero, { ExternalLink } from '../../../../components/layout/DetailHero'
+import OccupationTag from '../../../../components/figures/OccupationTag'
 import OrganisationTag from '../../../../components/organisations/OrganisationTag'
-import ComingSoon from '../../../../components/ui/ComingSoon'
 import { ActivityPeriod } from '../../../../domain/services/figure-activity'
 import { plural } from '../../../../lib/plural'
 import styles from './FigureHero.module.css'
@@ -25,6 +25,8 @@ interface FigureHeroProps {
   presentation: string
   links: ExternalLink[]
   counts: FigureCounts
+  /** Métiers et fonctions de la personnalité */
+  occupations: Array<{ name: string; slug: string }>
   /** Organisations dont la personnalité est membre aujourd'hui */
   affiliations: Affiliation[]
   /** Menu d'administration affiché à côté du nom, si l'utilisateur y a droit */
@@ -44,6 +46,7 @@ export default function FigureHero({
   presentation,
   links,
   counts,
+  occupations,
   affiliations,
   adminMenu,
   actions,
@@ -53,9 +56,9 @@ export default function FigureHero({
       kicker={
         <>
           <span className={styles.label}>Personnalité</span>
-          <ComingSoon>
-            <span className={styles.tag}>Rôle</span>
-          </ComingSoon>
+          {occupations.map((occupation) => (
+            <OccupationTag key={occupation.slug} name={occupation.name} slug={occupation.slug} />
+          ))}
           {affiliations.map((affiliation) => (
             <OrganisationTag
               key={affiliation.organisationSlug}

@@ -98,6 +98,7 @@ export default async function Footer() {
               { href: '/o', label: 'Organisations' },
               { href: '/arguments', label: 'Arguments' },
               { href: '/themes', label: 'Thématiques' },
+              { href: '/metiers', label: 'Métiers' },
             ]}
           />
           <FooterColumn

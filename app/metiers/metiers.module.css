@@ -1,0 +1,82 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+  margin-bottom: 40px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
+}
+
+.description {
+  composes: small from '../../styles/text.module.css';
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.newForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.newFormTitle {
+  composes: title from '../../styles/text.module.css';
+}
+
+.newFormRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.newFormRow > :first-child {
+  flex: 1;
+}
+
+.newFormRow > :nth-child(2) {
+  flex: 2;
+}
+
+.empty {
+  composes: small from '../../styles/text.module.css';
+  margin: 20px 0;
+}

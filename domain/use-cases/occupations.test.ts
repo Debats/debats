@@ -1,0 +1,137 @@
+import { describe, it, expect } from 'vitest'
+import { Either, Effect } from 'effect'
+import { createOccupationUseCase } from './create-occupation'
+import { deleteOccupationUseCase } from './delete-occupation'
+import { setPublicFigureOccupationsUseCase } from './set-public-figure-occupations'
+import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
+import { createPublicFigure } from '../entities/public-figure'
+import { PublicFigureRepository } from '../repositories/public-figure-repository'
+
+const meteque = { id: 'meteque', reputation: 0 }
+const eloquent = { id: 'eloquent', reputation: 1000 }
+const idealiste = { id: 'idealiste', reputation: 10000 }
+
+const figure = createPublicFigure({
+  name: 'Thomas Piketty',
+  presentation: 'Économiste français, auteur du Capital au XXIe siècle.',
+  createdBy: 'founder',
+})
+
+const fakeFigureRepo = (found: boolean): PublicFigureRepository =>
+  ({ findById: () => Effect.succeed(found ? figure : null) }) as unknown as PublicFigureRepository
+
+describe('createOccupationUseCase', () => {
+  it('requires the Idéaliste rank', async () => {
+    const result = await createOccupationUseCase({
+      contributor: eloquent,
+      name: 'Économiste',
+      description: '',
+      occupationRepo: fakeOccupationRepo(),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
+  })
+
+  it('refuses a name already in the list, whatever its spacing', async () => {
+    const result = await createOccupationUseCase({
+      contributor: idealiste,
+      name: ' Économiste ',
+      description: '',
+      occupationRepo: fakeOccupationRepo([sampleOccupation('Économiste')]),
+    })
+
+    expect(Either.isLeft(result) && result.left).toEqual({ name: 'Un métier porte déjà ce nom.' })
+  })
+
+  it('creates the occupation with its slug', async () => {
+    const repo = fakeOccupationRepo()
+    const result = await createOccupationUseCase({
+      contributor: idealiste,
+      name: 'Député·e',
+      description: 'Membre de l’Assemblée nationale',
+      occupationRepo: repo,
+    })
+
+    expect(Either.isRight(result) && result.right.slug).toBe('depute-e')
+    expect(repo.rows).toHaveLength(1)
+  })
+})
+
+describe('deleteOccupationUseCase', () => {
+  it('requires the Idéaliste rank', async () => {
+    const occupation = sampleOccupation()
+    const result = await deleteOccupationUseCase({
+      contributor: eloquent,
+      occupationId: occupation.id,
+      occupationRepo: fakeOccupationRepo([occupation]),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
+  })
+
+  it('removes the occupation', async () => {
+    const occupation = sampleOccupation()
+    const repo = fakeOccupationRepo([occupation])
+    const result = await deleteOccupationUseCase({
+      contributor: idealiste,
+      occupationId: occupation.id,
+      occupationRepo: repo,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(repo.rows).toHaveLength(0)
+  })
+})
+
+describe('setPublicFigureOccupationsUseCase', () => {
+  it('requires the Éloquent rank', async () => {
+    const result = await setPublicFigureOccupationsUseCase({
+      contributor: meteque,
+      publicFigureId: figure.id,
+      occupationIds: [],
+      occupationRepo: fakeOccupationRepo(),
+      publicFigureRepo: fakeFigureRepo(true),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('Éloquent')
+  })
+
+  it('refuses an occupation that is not in the list', async () => {
+    const result = await setPublicFigureOccupationsUseCase({
+      contributor: eloquent,
+      publicFigureId: figure.id,
+      occupationIds: ['unknown'],
+      occupationRepo: fakeOccupationRepo(),
+      publicFigureRepo: fakeFigureRepo(true),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('n’existe plus')
+  })
+
+  it('refuses an unknown public figure', async () => {
+    const result = await setPublicFigureOccupationsUseCase({
+      contributor: eloquent,
+      publicFigureId: 'missing',
+      occupationIds: [],
+      occupationRepo: fakeOccupationRepo(),
+      publicFigureRepo: fakeFigureRepo(false),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
+  })
+
+  it('replaces the assignments, without duplicates', async () => {
+    const [economist, writer] = [sampleOccupation('Économiste'), sampleOccupation('Écrivain·e')]
+    const repo = fakeOccupationRepo([economist, writer])
+    const result = await setPublicFigureOccupationsUseCase({
+      contributor: eloquent,
+      publicFigureId: figure.id,
+      occupationIds: [economist.id, writer.id, economist.id],
+      occupationRepo: repo,
+      publicFigureRepo: fakeFigureRepo(true),
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(repo.assignments.get(figure.id)).toEqual([economist.id, writer.id])
+  })
+})

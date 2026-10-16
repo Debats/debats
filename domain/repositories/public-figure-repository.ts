@@ -32,6 +32,9 @@ export interface PublicFigureRepository {
   ): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
 
   findByLetter(letter: string): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
+
+  /** The activity summaries of these figures, by name */
+  findSummariesByIds(ids: string[]): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
 }
 
 export const PublicFigureRepository =

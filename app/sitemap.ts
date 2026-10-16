@@ -7,6 +7,7 @@ import { createPublicFigureRepository } from '../infra/database/public-figure-re
 import { createThemeRepository } from '../infra/database/theme-repository-supabase'
 import { createOrganisationRepository } from '../infra/database/organisation-repository-supabase'
 import { createArgumentRepository } from '../infra/database/argument-repository-supabase'
+import { createOccupationRepository } from '../infra/database/occupation-repository-supabase'
 
 const BASE_URL = 'https://debats.co'
 
@@ -41,6 +42,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}/arguments`,
       changeFrequency: 'weekly',
       priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/metiers`,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
     {
       url: `${BASE_URL}/themes/autres`,
@@ -81,14 +87,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const themeRepo = createThemeRepository(supabase)
     const organisationRepo = createOrganisationRepository(supabase)
     const argumentRepo = createArgumentRepository(supabase)
+    const occupationRepo = createOccupationRepository(supabase)
 
-    const [subjects, publicFigures, themes, organisations, argumentSummaries] = await Promise.all([
-      Effect.runPromise(subjectRepo.findAll()),
-      Effect.runPromise(publicFigureRepo.findAll()),
-      Effect.runPromise(themeRepo.findAll()),
-      Effect.runPromise(organisationRepo.findAll()),
-      Effect.runPromise(argumentRepo.findSummaries()),
-    ])
+    const [subjects, publicFigures, themes, organisations, argumentSummaries, occupations] =
+      await Promise.all([
+        Effect.runPromise(subjectRepo.findAll()),
+        Effect.runPromise(publicFigureRepo.findAll()),
+        Effect.runPromise(themeRepo.findAll()),
+        Effect.runPromise(organisationRepo.findAll()),
+        Effect.runPromise(argumentRepo.findSummaries()),
+        Effect.runPromise(occupationRepo.findAll()),
+      ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
       url: `${BASE_URL}/s/${subject.slug}`,
@@ -124,6 +133,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
+    const occupationPages: MetadataRoute.Sitemap = occupations.map((occupation) => ({
+      url: `${BASE_URL}/metiers/${occupation.slug}`,
+      lastModified: occupation.updatedAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    }))
+
     return [
       ...staticPages,
       ...subjectPages,
@@ -131,6 +147,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...organisationPages,
       ...themePages,
       ...argumentPages,
+      ...occupationPages,
     ]
   } catch (error) {
     Sentry.captureException(error, { extra: { context: 'sitemap generation' } })

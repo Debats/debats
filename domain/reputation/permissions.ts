@@ -36,6 +36,7 @@ const ACTIONS = {
 
   // Éloquent (1000+)
   assign_theme: Rank.Eloquent,
+  assign_occupation: Rank.Eloquent,
   link_subjects: Rank.Eloquent,
   add_argument: Rank.Eloquent,
   add_subject: Rank.Eloquent,
@@ -56,6 +57,9 @@ const ACTIONS = {
   add_theme: Rank.Idealiste,
   edit_theme: Rank.Idealiste,
   delete_theme: Rank.Idealiste,
+  add_occupation: Rank.Idealiste,
+  edit_occupation: Rank.Idealiste,
+  delete_occupation: Rank.Idealiste,
   delete_minor_subject: Rank.Idealiste,
   delete_minor_personality: Rank.Idealiste,
   delete_argument: Rank.Idealiste,

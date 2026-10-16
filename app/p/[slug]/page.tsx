@@ -6,6 +6,7 @@ import { createPublicFigureRepository } from '../../../infra/database/public-fig
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
+import { createOccupationRepository } from '../../../infra/database/occupation-repository-supabase'
 import { MembershipWithOrganisation } from '../../../domain/repositories/organisation-membership-repository'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
 import {
@@ -86,13 +87,15 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
 
   if (!figure) notFound()
 
-  const [statements, contributor, themes, primaryLinks, memberships] = await Promise.all([
-    Effect.runPromise(statementRepo.findByPublicFigureWithDetails(figure.id)),
-    getAuthenticatedContributor(),
-    Effect.runPromise(themeRepo.findAll()),
-    Effect.runPromise(themeRepo.findAllPrimaryLinks()),
-    Effect.runPromise(membershipRepo.findByPublicFigureId(figure.id)),
-  ])
+  const [statements, contributor, themes, primaryLinks, memberships, occupations] =
+    await Promise.all([
+      Effect.runPromise(statementRepo.findByPublicFigureWithDetails(figure.id)),
+      getAuthenticatedContributor(),
+      Effect.runPromise(themeRepo.findAll()),
+      Effect.runPromise(themeRepo.findAllPrimaryLinks()),
+      Effect.runPromise(membershipRepo.findByPublicFigureId(figure.id)),
+      Effect.runPromise(createOccupationRepository(supabase).findByPublicFigureId(figure.id)),
+    ])
 
   const groups = groupStatementsBySubject(statements)
   const statedDates = statements.map(({ statement }) => statement.statedAt)
@@ -134,6 +137,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
           subjects: groups.length,
           period: activityPeriod(statedDates),
         }}
+        occupations={occupations.map(({ name, slug }) => ({ name, slug }))}
         affiliations={currentAffiliations(memberships)}
         adminMenu={
           canEdit && (

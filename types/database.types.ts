@@ -276,6 +276,54 @@ export type Database = {
           },
         ]
       }
+      occupations: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occupations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occupations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organisation_memberships: {
         Row: {
           created_at: string
@@ -485,6 +533,56 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "v_subject_index_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_figure_occupations: {
+        Row: {
+          created_at: string
+          created_by: string
+          occupation_id: string
+          public_figure_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          occupation_id: string
+          public_figure_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          occupation_id?: string
+          public_figure_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_figure_occupations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_figure_occupations_occupation_id_fkey"
+            columns: ["occupation_id"]
+            isOneToOne: false
+            referencedRelation: "occupations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_figure_occupations_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "public_figures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_figure_occupations_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "v_public_figure_activity_summary"
             referencedColumns: ["id"]
           },
         ]

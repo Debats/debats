@@ -8,6 +8,8 @@ import { canPerform } from '../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditPublicFigureForm from '../../../../components/figures/EditPublicFigureForm'
+import { createOccupationRepository } from '../../../../infra/database/occupation-repository-supabase'
+import FigureOccupations from './FigureOccupations'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -33,6 +35,13 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
 
   if (!figure) notFound()
 
+  const occupationRepo = createOccupationRepository(supabase)
+  const [allOccupations, figureOccupations] = await Promise.all([
+    Effect.runPromise(occupationRepo.findAll()),
+    Effect.runPromise(occupationRepo.findByPublicFigureId(figure.id)),
+  ])
+  const canAssignOccupations = canPerform(contributor.reputation, 'assign_occupation')
+
   return (
     <ContentWithSidebar topMargin>
       <FormPageHeader
@@ -51,6 +60,15 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
         initialWebsiteUrl={Option.isSome(figure.websiteUrl) ? figure.websiteUrl.value : ''}
         initialNotorietySources={figure.notorietySources}
       />
+
+      {canAssignOccupations && (
+        <FigureOccupations
+          figureId={figure.id}
+          figureSlug={figure.slug}
+          availableOccupations={allOccupations.map(({ id, name }) => ({ id, name }))}
+          selectedIds={figureOccupations.map((o) => o.id)}
+        />
+      )}
     </ContentWithSidebar>
   )
 }

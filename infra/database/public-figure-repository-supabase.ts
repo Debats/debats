@@ -263,5 +263,20 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
         },
         catch: (error) => dbError('Failed to fetch public figures by letter', error),
       }),
+
+    findSummariesByIds: (ids: string[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (ids.length === 0) return []
+          const { data, error } = await supabase
+            .from('v_public_figure_activity_summary')
+            .select('*')
+            .in('id', ids)
+            .order('name')
+          if (error) throw error
+          return (data as ActivitySummaryRow[]).map(mapSummaryRow)
+        },
+        catch: (error) => dbError('Failed to fetch public figure summaries by ids', error),
+      }),
   }
 }
