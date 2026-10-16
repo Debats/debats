@@ -8,15 +8,22 @@ export interface TagOption {
   name: string
 }
 
-interface TagSelectorProps {
+export interface TagGroup {
+  id: string
+  /** Intitulé du groupe ; absent pour une liste plate */
+  label?: string
   options: TagOption[]
+}
+
+interface TagSelectorProps {
+  groups: TagGroup[]
   value: string[]
   onChange: (ids: string[]) => void
   ariaLabel: string
 }
 
-/** Choix multiple parmi une liste fermée d'étiquettes, en pilules à bascule. */
-export default function TagSelector({ options, value, onChange, ariaLabel }: TagSelectorProps) {
+/** Choix multiple parmi une liste fermée d'étiquettes, en pilules à bascule, par groupe. */
+export default function TagSelector({ groups, value, onChange, ariaLabel }: TagSelectorProps) {
   return (
     <ToggleGroup.Root
       type="multiple"
@@ -25,10 +32,17 @@ export default function TagSelector({ options, value, onChange, ariaLabel }: Tag
       aria-label={ariaLabel}
       className={styles.root}
     >
-      {options.map((option) => (
-        <ToggleGroup.Item key={option.id} value={option.id} className={styles.item}>
-          {option.name}
-        </ToggleGroup.Item>
+      {groups.map((group) => (
+        <div key={group.id} className={styles.group}>
+          {group.label && <p className={styles.groupLabel}>{group.label}</p>}
+          <div className={styles.items}>
+            {group.options.map((option) => (
+              <ToggleGroup.Item key={option.id} value={option.id} className={styles.item}>
+                {option.name}
+              </ToggleGroup.Item>
+            ))}
+          </div>
+        </div>
       ))}
     </ToggleGroup.Root>
   )

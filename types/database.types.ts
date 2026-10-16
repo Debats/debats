@@ -276,13 +276,14 @@ export type Database = {
           },
         ]
       }
-      occupations: {
+      occupation_families: {
         Row: {
           created_at: string
           created_by: string
           description: string
           id: string
           name: string
+          position: number
           slug: string
           updated_at: string
           updated_by: string
@@ -293,6 +294,7 @@ export type Database = {
           description?: string
           id?: string
           name: string
+          position?: number
           slug: string
           updated_at?: string
           updated_by: string
@@ -301,6 +303,58 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string
+          id?: string
+          name?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occupation_families_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occupation_families_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occupations: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          family_id: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string
+          family_id: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          family_id?: string
           id?: string
           name?: string
           slug?: string
@@ -313,6 +367,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occupations_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "occupation_families"
             referencedColumns: ["id"]
           },
           {

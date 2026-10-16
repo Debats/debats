@@ -7,6 +7,7 @@ import {
   OccupationName,
   OccupationSlug,
 } from '../../domain/entities/occupation'
+import { OccupationFamilyId } from '../../domain/entities/occupation-family'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { OccupationRepository } from '../../domain/repositories/occupation-repository'
 
@@ -20,6 +21,7 @@ interface OccupationRow {
   id: string
   name: string
   slug: string
+  family_id: string
   description: string
   created_by: string
   updated_by: string
@@ -32,6 +34,7 @@ function mapRow(row: OccupationRow): Occupation {
     id: OccupationId.make(row.id),
     name: OccupationName.make(row.name),
     slug: OccupationSlug.make(row.slug),
+    familyId: OccupationFamilyId.make(row.family_id),
     description: row.description,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
@@ -88,6 +91,7 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
               id: occupation.id,
               name: occupation.name,
               slug: occupation.slug,
+              family_id: occupation.familyId,
               description: occupation.description,
               created_by: occupation.createdBy,
               updated_by: occupation.updatedBy,
@@ -108,6 +112,7 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
             .update({
               name: occupation.name,
               slug: occupation.slug,
+              family_id: occupation.familyId,
               description: occupation.description,
               updated_by: occupation.updatedBy,
               updated_at: new Date().toISOString(),

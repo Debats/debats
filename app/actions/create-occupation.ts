@@ -4,6 +4,7 @@ import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
+import { createOccupationFamilyRepository } from '../../infra/database/occupation-family-repository-supabase'
 import { createOccupationUseCase } from '../../domain/use-cases/create-occupation'
 import { FieldErrors } from '../../domain/use-cases/types'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -20,8 +21,10 @@ export async function createOccupationAction(formData: FormData): Promise<Create
   const result = await createOccupationUseCase({
     contributor,
     name: String(formData.get('name') ?? ''),
+    familyId: String(formData.get('familyId') ?? ''),
     description: String(formData.get('description') ?? ''),
     occupationRepo: createOccupationRepository(supabase),
+    familyRepo: createOccupationFamilyRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

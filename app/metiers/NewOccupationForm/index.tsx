@@ -6,12 +6,17 @@ import * as Sentry from '@sentry/nextjs'
 import { createOccupationAction } from '../../actions/create-occupation'
 import { FieldErrors } from '../../../domain/use-cases/types'
 import TextField from '../../../components/ui/TextField'
+import Select from '../../../components/ui/Select'
 import Button from '../../../components/ui/Button'
 import FormError from '../../../components/ui/FormError'
 import styles from '../metiers.module.css'
 
-/** Ajout d'un métier à la liste, réservé aux Idéalistes. */
-export default function NewOccupationForm() {
+interface NewOccupationFormProps {
+  families: Array<{ id: string; name: string }>
+}
+
+/** Ajout d'un métier dans une famille, réservé aux Idéalistes. */
+export default function NewOccupationForm({ families }: NewOccupationFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
@@ -47,6 +52,14 @@ export default function NewOccupationForm() {
       <p className={styles.newFormTitle}>Nouveau métier</p>
       {error && <FormError message={error} />}
       <div className={styles.newFormRow}>
+        <Select
+          label="Famille"
+          id="occupation-family"
+          name="familyId"
+          required
+          options={families.map((family) => ({ value: family.id, label: family.name }))}
+          error={fieldErrors?.familyId}
+        />
         <TextField
           label="Nom"
           id="occupation-name"
@@ -59,8 +72,7 @@ export default function NewOccupationForm() {
           label="Description"
           id="occupation-description"
           name="description"
-          placeholder="Facultative : ce que recouvre ce métier"
-          error={fieldErrors?.description}
+          placeholder="Facultative"
         />
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Ajout…' : 'Ajouter'}

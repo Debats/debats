@@ -2,34 +2,35 @@
   display: flex;
   flex-direction: column;
   padding: 0 24px;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
 }
 
-.item {
+.family {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 0;
   border-bottom: 1px solid var(--line);
 }
 
-.item:last-child {
+.family:last-child {
   border-bottom: none;
 }
 
-.info {
-  flex: 1;
-  min-width: 0;
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .name,
 .name:link,
 .name:visited {
   font-family: var(--font-serif);
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.2;
   color: var(--ink);
 }
@@ -40,13 +41,55 @@
 
 .description {
   composes: small from '../../styles/text.module.css';
-  margin-top: 4px;
 }
 
-.actions {
+.occupations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  flex-shrink: 0;
+}
+
+.occupation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: -6px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.remove:hover {
+  background-color: var(--paper-2);
+  color: var(--danger);
+}
+
+.empty {
+  composes: small from '../../styles/text.module.css';
+  color: var(--ink-3);
 }
 
 .newForm {
@@ -54,6 +97,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 24px;
+  margin-bottom: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
 }
@@ -66,17 +110,13 @@
   display: flex;
   gap: 12px;
   align-items: flex-end;
+  flex-wrap: wrap;
 }
 
-.newFormRow > :first-child {
-  flex: 1;
+.newFormRow > * {
+  flex: 1 1 180px;
 }
 
-.newFormRow > :nth-child(2) {
-  flex: 2;
-}
-
-.empty {
-  composes: small from '../../styles/text.module.css';
-  margin: 20px 0;
+.newFormRow > :last-child {
+  flex: none;
 }

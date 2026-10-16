@@ -1,5 +1,6 @@
 import * as S from 'effect/Schema'
 import { slugify } from '../value-objects/slug'
+import { OccupationFamilyId } from './occupation-family'
 
 export const OccupationId = S.String.pipe(S.brand('OccupationId'))
 export type OccupationId = S.Schema.Type<typeof OccupationId>
@@ -19,13 +20,15 @@ export type OccupationName = S.Schema.Type<typeof OccupationName>
 
 /**
  * A profession or public function a figure holds (« Député·e », « Économiste »),
- * from a closed list the Idéalistes curate. A figure can hold several, with no
- * hierarchy among them; statistics by occupation read from this link.
+ * from a closed list the Idéalistes curate, each within a family. A figure can
+ * hold several, with no hierarchy among them; statistics by family read from
+ * this link.
  */
 export const Occupation = S.Struct({
   id: OccupationId,
   name: OccupationName,
   slug: OccupationSlug,
+  familyId: OccupationFamilyId,
   /** Optional: what the occupation covers, to tell close ones apart */
   description: S.String,
   createdBy: S.String,
@@ -41,6 +44,7 @@ export const generateOccupationSlug = (name: string): OccupationSlug =>
 
 export const createOccupation = (params: {
   name: string
+  familyId: string
   description?: string
   createdBy: string
 }): Occupation => {
@@ -51,6 +55,7 @@ export const createOccupation = (params: {
     id: OccupationId.make(crypto.randomUUID()),
     name: OccupationName.make(name),
     slug: generateOccupationSlug(name),
+    familyId: OccupationFamilyId.make(params.familyId),
     description: params.description?.trim() ?? '',
     createdBy: params.createdBy,
     updatedBy: params.createdBy,

@@ -1,5 +1,6 @@
 import { Either, Effect } from 'effect'
 import { createOccupation, generateOccupationSlug, Occupation } from '../entities/occupation'
+import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
@@ -7,18 +8,20 @@ import { ContributorIdentity, FieldErrors } from './types'
 type CreateOccupationParams = {
   contributor: ContributorIdentity | null
   name: string
+  familyId: string
   description: string
   occupationRepo: OccupationRepository
+  familyRepo: OccupationFamilyRepository
 }
 
 const NAME_MIN = 2
 const NAME_MAX = 50
 
-/** Adds an occupation to the closed list; Idéalistes only, one per name. */
+/** Adds an occupation to a family of the closed list; Idéalistes only, one per name. */
 export async function createOccupationUseCase(
   params: CreateOccupationParams,
 ): Promise<Either.Either<Occupation, string | FieldErrors>> {
-  const { contributor, occupationRepo } = params
+  const { contributor, familyId, occupationRepo, familyRepo } = params
   const name = params.name.trim()
 
   if (!contributor) {
@@ -34,6 +37,11 @@ export async function createOccupationUseCase(
     return Either.left({ name: `Le nom doit faire entre ${NAME_MIN} et ${NAME_MAX} caractères.` })
   }
 
+  const family = await Effect.runPromise(familyRepo.findById(familyId))
+  if (!family) {
+    return Either.left({ familyId: 'Choisissez une famille de métiers.' })
+  }
+
   const existing = await Effect.runPromise(occupationRepo.findBySlug(generateOccupationSlug(name)))
   if (existing) {
     return Either.left({ name: 'Un métier porte déjà ce nom.' })
@@ -41,6 +49,7 @@ export async function createOccupationUseCase(
 
   const occupation = createOccupation({
     name,
+    familyId: family.id,
     description: params.description,
     createdBy: contributor.id,
   })

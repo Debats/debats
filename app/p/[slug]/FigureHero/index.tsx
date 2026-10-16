@@ -25,8 +25,8 @@ interface FigureHeroProps {
   presentation: string
   links: ExternalLink[]
   counts: FigureCounts
-  /** Métiers et fonctions de la personnalité */
-  occupations: Array<{ name: string; slug: string }>
+  /** Métiers et fonctions de la personnalité, chacun lié à la page de sa famille */
+  occupations: Array<{ name: string; href: string }>
   /** Organisations dont la personnalité est membre aujourd'hui */
   affiliations: Affiliation[]
   /** Menu d'administration affiché à côté du nom, si l'utilisateur y a droit */
@@ -57,7 +57,7 @@ export default function FigureHero({
         <>
           <span className={styles.label}>Personnalité</span>
           {occupations.map((occupation) => (
-            <OccupationTag key={occupation.slug} name={occupation.name} slug={occupation.slug} />
+            <OccupationTag key={occupation.name} name={occupation.name} href={occupation.href} />
           ))}
           {affiliations.map((affiliation) => (
             <OrganisationTag

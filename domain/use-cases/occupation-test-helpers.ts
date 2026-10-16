@@ -1,9 +1,38 @@
 import { Effect } from 'effect'
 import { createOccupation, Occupation } from '../entities/occupation'
+import { createOccupationFamily, OccupationFamily } from '../entities/occupation-family'
+import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 
-export const sampleOccupation = (name = 'Économiste'): Occupation =>
-  createOccupation({ name, createdBy: 'founder' })
+export const sampleFamily = (name = 'Chercheur·se et universitaire', position = 1) =>
+  createOccupationFamily({ name, position, createdBy: 'founder' })
+
+export const sampleOccupation = (name = 'Économiste', familyId = 'family'): Occupation =>
+  createOccupation({ name, familyId, createdBy: 'founder' })
+
+/** In-memory family repository */
+export function fakeFamilyRepo(seed: OccupationFamily[] = []): OccupationFamilyRepository & {
+  rows: OccupationFamily[]
+} {
+  const rows = [...seed]
+  return {
+    rows,
+    findAll: () => Effect.succeed(rows),
+    findBySlug: (slug) => Effect.succeed(rows.find((f) => f.slug === slug) ?? null),
+    findById: (id) => Effect.succeed(rows.find((f) => f.id === id) ?? null),
+    create: (family) => {
+      rows.push(family)
+      return Effect.succeed(family)
+    },
+    delete: (id) => {
+      rows.splice(
+        rows.findIndex((f) => f.id === id),
+        1,
+      )
+      return Effect.succeed(undefined)
+    },
+  }
+}
 
 /** In-memory occupation repository recording the assignments it is asked for */
 export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepository & {

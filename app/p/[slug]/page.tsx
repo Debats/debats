@@ -7,6 +7,8 @@ import { createStatementRepository } from '../../../infra/database/statement-rep
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
 import { createOccupationRepository } from '../../../infra/database/occupation-repository-supabase'
+import { createOccupationFamilyRepository } from '../../../infra/database/occupation-family-repository-supabase'
+import { occupationFamilyHref } from '../../../domain/read-models/occupations'
 import { MembershipWithOrganisation } from '../../../domain/repositories/organisation-membership-repository'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
 import {
@@ -87,7 +89,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
 
   if (!figure) notFound()
 
-  const [statements, contributor, themes, primaryLinks, memberships, occupations] =
+  const [statements, contributor, themes, primaryLinks, memberships, occupations, families] =
     await Promise.all([
       Effect.runPromise(statementRepo.findByPublicFigureWithDetails(figure.id)),
       getAuthenticatedContributor(),
@@ -95,7 +97,13 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
       Effect.runPromise(themeRepo.findAllPrimaryLinks()),
       Effect.runPromise(membershipRepo.findByPublicFigureId(figure.id)),
       Effect.runPromise(createOccupationRepository(supabase).findByPublicFigureId(figure.id)),
+      Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
     ])
+  const familyById = new Map(families.map((family) => [family.id, family]))
+  const occupationTags = occupations.flatMap((occupation) => {
+    const family = familyById.get(occupation.familyId)
+    return family ? [{ name: occupation.name, href: occupationFamilyHref(family) }] : []
+  })
 
   const groups = groupStatementsBySubject(statements)
   const statedDates = statements.map(({ statement }) => statement.statedAt)
@@ -137,7 +145,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
           subjects: groups.length,
           period: activityPeriod(statedDates),
         }}
-        occupations={occupations.map(({ name, slug }) => ({ name, slug }))}
+        occupations={occupationTags}
         affiliations={currentAffiliations(memberships)}
         adminMenu={
           canEdit && (

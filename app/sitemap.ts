@@ -7,7 +7,7 @@ import { createPublicFigureRepository } from '../infra/database/public-figure-re
 import { createThemeRepository } from '../infra/database/theme-repository-supabase'
 import { createOrganisationRepository } from '../infra/database/organisation-repository-supabase'
 import { createArgumentRepository } from '../infra/database/argument-repository-supabase'
-import { createOccupationRepository } from '../infra/database/occupation-repository-supabase'
+import { createOccupationFamilyRepository } from '../infra/database/occupation-family-repository-supabase'
 
 const BASE_URL = 'https://debats.co'
 
@@ -87,16 +87,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const themeRepo = createThemeRepository(supabase)
     const organisationRepo = createOrganisationRepository(supabase)
     const argumentRepo = createArgumentRepository(supabase)
-    const occupationRepo = createOccupationRepository(supabase)
+    const familyRepo = createOccupationFamilyRepository(supabase)
 
-    const [subjects, publicFigures, themes, organisations, argumentSummaries, occupations] =
+    const [subjects, publicFigures, themes, organisations, argumentSummaries, families] =
       await Promise.all([
         Effect.runPromise(subjectRepo.findAll()),
         Effect.runPromise(publicFigureRepo.findAll()),
         Effect.runPromise(themeRepo.findAll()),
         Effect.runPromise(organisationRepo.findAll()),
         Effect.runPromise(argumentRepo.findSummaries()),
-        Effect.runPromise(occupationRepo.findAll()),
+        Effect.runPromise(familyRepo.findAll()),
       ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
@@ -133,9 +133,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
-    const occupationPages: MetadataRoute.Sitemap = occupations.map((occupation) => ({
-      url: `${BASE_URL}/metiers/${occupation.slug}`,
-      lastModified: occupation.updatedAt,
+    const occupationPages: MetadataRoute.Sitemap = families.map((family) => ({
+      url: `${BASE_URL}/metiers/${family.slug}`,
+      lastModified: family.updatedAt,
       changeFrequency: 'monthly' as const,
       priority: 0.5,
     }))

@@ -1,5 +1,21 @@
 .root {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groupLabel {
+  composes: label from '../../../styles/text.module.css';
+}
+
+.items {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }

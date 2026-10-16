@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { setPublicFigureOccupationsAction } from '../../../../actions/set-public-figure-occupations'
 import FormError from '../../../../../components/ui/FormError'
-import TagSelector, { TagOption } from '../../../../../components/ui/TagSelector'
+import TagSelector, { TagGroup } from '../../../../../components/ui/TagSelector'
 import styles from './FigureOccupations.module.css'
 
 interface FigureOccupationsProps {
   figureId: string
   figureSlug: string
-  availableOccupations: TagOption[]
+  /** Les métiers disponibles, par famille */
+  groups: TagGroup[]
   selectedIds: string[]
 }
 
@@ -18,7 +19,7 @@ interface FigureOccupationsProps {
 export default function FigureOccupations({
   figureId,
   figureSlug,
-  availableOccupations,
+  groups,
   selectedIds: initialSelectedIds,
 }: FigureOccupationsProps) {
   const router = useRouter()
@@ -45,7 +46,7 @@ export default function FigureOccupations({
       </p>
       {error && <FormError message={error} />}
       <TagSelector
-        options={availableOccupations}
+        groups={groups}
         value={selectedIds}
         onChange={handleChange}
         ariaLabel="Métiers de la personnalité"

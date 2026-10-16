@@ -9,6 +9,8 @@ import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditPublicFigureForm from '../../../../components/figures/EditPublicFigureForm'
 import { createOccupationRepository } from '../../../../infra/database/occupation-repository-supabase'
+import { createOccupationFamilyRepository } from '../../../../infra/database/occupation-family-repository-supabase'
+import { groupOccupationsByFamily } from '../../../../domain/read-models/occupations'
 import FigureOccupations from './FigureOccupations'
 
 interface PageProps {
@@ -36,11 +38,19 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
   if (!figure) notFound()
 
   const occupationRepo = createOccupationRepository(supabase)
-  const [allOccupations, figureOccupations] = await Promise.all([
+  const [families, allOccupations, figureOccupations] = await Promise.all([
+    Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
     Effect.runPromise(occupationRepo.findAll()),
     Effect.runPromise(occupationRepo.findByPublicFigureId(figure.id)),
   ])
   const canAssignOccupations = canPerform(contributor.reputation, 'assign_occupation')
+  const occupationGroups = groupOccupationsByFamily(families, allOccupations).map(
+    ({ family, occupations }) => ({
+      id: family.id,
+      label: family.name,
+      options: occupations.map(({ id, name }) => ({ id, name })),
+    }),
+  )
 
   return (
     <ContentWithSidebar topMargin>
@@ -65,7 +75,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
         <FigureOccupations
           figureId={figure.id}
           figureSlug={figure.slug}
-          availableOccupations={allOccupations.map(({ id, name }) => ({ id, name }))}
+          groups={occupationGroups}
           selectedIds={figureOccupations.map((o) => o.id)}
         />
       )}
