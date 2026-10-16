@@ -14,9 +14,15 @@ interface AddStatementFormProps {
   subjectId: string
   slug: string
   positions: PositionOption[]
+  canUseArguments: boolean
 }
 
-export default function AddStatementForm({ subjectId, slug, positions }: AddStatementFormProps) {
+export default function AddStatementForm({
+  subjectId,
+  slug,
+  positions,
+  canUseArguments,
+}: AddStatementFormProps) {
   const handleSubmit = useCallback(
     (formData: FormData) => createStatementAction(subjectId, slug, formData),
     [subjectId, slug],
@@ -35,6 +41,8 @@ export default function AddStatementForm({ subjectId, slug, positions }: AddStat
       redirectTo={`/s/${slug}`}
       positions={positions}
       onSearchFigures={handleSearchFigures}
+      subjectId={subjectId}
+      canUseArguments={canUseArguments}
     />
   )
 }

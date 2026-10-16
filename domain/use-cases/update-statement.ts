@@ -5,13 +5,21 @@ import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
+import {
+  attachStatementArguments,
+  StatementArgumentsInput,
+  validateStatementArguments,
+} from './statement-arguments'
 
 type UpdateStatementParams = {
   contributor: ContributorIdentity | null
   statementId: string
   positionId: string
+  /** The full set of arguments the statement mobilises after the edit (Éloquent only) */
+  arguments: StatementArgumentsInput
   statementType: StatementType
   sourceName: string
   sourceUrl: string
@@ -19,6 +27,7 @@ type UpdateStatementParams = {
   statedAt: string
   statementRepo: StatementRepository
   positionRepo: PositionRepository
+  argumentRepo: ArgumentRepository
   reputationRepo: ReputationRepository
 }
 
@@ -38,6 +47,7 @@ export async function updateStatementUseCase(
     statedAt,
     statementRepo,
     positionRepo,
+    argumentRepo,
     reputationRepo,
   } = params
 
@@ -72,6 +82,16 @@ export async function updateStatementUseCase(
     }
   }
 
+  const validatedArguments = await validateStatementArguments({
+    contributor,
+    subjectId: newPosition.subjectId,
+    input: params.arguments,
+    argumentRepo,
+  })
+  if (Either.isLeft(validatedArguments)) {
+    return Either.left(validatedArguments.left)
+  }
+
   const updated = updateStatement(
     { ...existing, positionId },
     {
@@ -94,6 +114,15 @@ export async function updateStatementUseCase(
       relatedEntityId: saved.id,
     }),
   )
+
+  await attachStatementArguments({
+    contributor,
+    subjectId: newPosition.subjectId,
+    statementId: saved.id,
+    validated: validatedArguments.right,
+    argumentRepo,
+    reputationRepo,
+  })
 
   return Either.right(saved)
 }

@@ -11,6 +11,7 @@ const Combobox = lazy(() => import('../../ui/Combobox'))
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
+import ArgumentsPicker from '../ArgumentsPicker'
 import styles from './StatementForm.module.css'
 
 interface PositionOption {
@@ -30,6 +31,11 @@ interface StatementFormProps {
   cancelHref?: string
   positions: PositionOption[]
   onSearchFigures?: (query: string) => Promise<{ id: string; label: string }[]>
+  /** Le sujet, pour proposer ses arguments ; absent, l'étape est masquée */
+  subjectId?: string
+  /** Le contributeur a le rang pour mobiliser des arguments */
+  canUseArguments?: boolean
+  initialArgumentIds?: string[]
   initialPositionId?: string
   initialStatementType?: string
   initialSourceName?: string
@@ -46,6 +52,9 @@ export default function StatementForm({
   cancelHref,
   positions,
   onSearchFigures,
+  subjectId,
+  canUseArguments = false,
+  initialArgumentIds,
   initialPositionId = '',
   initialStatementType = 'declaration',
   initialSourceName = '',
@@ -184,6 +193,17 @@ export default function StatementForm({
         />
         {fieldErrors?.statedAt && <span className={styles.fieldError}>{fieldErrors.statedAt}</span>}
       </div>
+
+      {subjectId && canUseArguments && (
+        <div className={styles.selectField}>
+          <span className={styles.selectLabel}>Arguments mobilisés</span>
+          <ArgumentsPicker
+            subjectId={subjectId}
+            initialSelectedIds={initialArgumentIds}
+            error={fieldErrors?.arguments}
+          />
+        </div>
+      )}
 
       <div className={styles.actions}>
         <Button type="submit">{isPending ? pendingLabel : submitLabel}</Button>

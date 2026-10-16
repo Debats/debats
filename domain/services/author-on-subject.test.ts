@@ -35,7 +35,7 @@ function taken(author: typeof attac, position: typeof pour): StatementWithAuthor
     statedAt: new Date('2024-01-01'),
     createdBy: 'user',
   })
-  return { statement, position, author }
+  return { statement, position, author, arguments: [] }
 }
 
 describe('groupStatementsByPosition', () => {

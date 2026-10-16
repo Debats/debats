@@ -2,10 +2,13 @@ import { StatementAuthor } from '../entities/statement'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { StatementWithAuthor, StatementWithDetails } from '../repositories/statement-repository'
 
+/** A statement and the arguments it mobilises */
+export type StatementWithArguments = Pick<StatementWithDetails, 'statement' | 'arguments'>
+
 /** One of the author's positions on the subject, with the statements backing it */
 export interface PositionGroup {
   position: StatementWithDetails['position']
-  statements: StatementWithDetails['statement'][]
+  statements: StatementWithArguments[]
 }
 
 /** Another position on the subject and who took it */
@@ -27,9 +30,9 @@ export const authorKey = (author: { kind: string; id: string }) => `${author.kin
 /** The author's statements on a subject, grouped by position in order of first appearance */
 export function groupStatementsByPosition(statements: StatementWithDetails[]): PositionGroup[] {
   const groups = new Map<string, PositionGroup>()
-  for (const { statement, position } of statements) {
+  for (const { statement, position, arguments: used } of statements) {
     const group = groups.get(position.id) ?? { position, statements: [] }
-    group.statements.push(statement)
+    group.statements.push({ statement, arguments: used })
     groups.set(position.id, group)
   }
   return Array.from(groups.values())

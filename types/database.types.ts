@@ -37,19 +37,22 @@ export type Database = {
       argument_statements: {
         Row: {
           argument_id: string
-          created_at: string | null
+          created_at: string
+          created_by: string
           id: string
           statement_id: string
         }
         Insert: {
           argument_id: string
-          created_at?: string | null
+          created_at?: string
+          created_by: string
           id?: string
           statement_id: string
         }
         Update: {
           argument_id?: string
-          created_at?: string | null
+          created_at?: string
+          created_by?: string
           id?: string
           statement_id?: string
         }
@@ -59,6 +62,13 @@ export type Database = {
             columns: ["argument_id"]
             isOneToOne: false
             referencedRelation: "arguments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "argument_statements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
           {
@@ -72,31 +82,37 @@ export type Database = {
       }
       arguments: {
         Row: {
-          created_at: string | null
-          created_by: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
           description: string
           id: string
           subject_id: string
           title: string
-          updated_at: string | null
+          updated_at: string
+          updated_by: string
         }
         Insert: {
-          created_at?: string | null
-          created_by?: string | null
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
           description: string
           id?: string
           subject_id: string
           title: string
-          updated_at?: string | null
+          updated_at?: string
+          updated_by: string
         }
         Update: {
-          created_at?: string | null
-          created_by?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
           description?: string
           id?: string
           subject_id?: string
           title?: string
-          updated_at?: string | null
+          updated_at?: string
+          updated_by?: string
         }
         Relationships: [
           {
@@ -118,6 +134,13 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "v_subject_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arguments_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
         ]
@@ -909,6 +932,18 @@ export type Database = {
       }
     }
     Functions: {
+      get_subject_arguments_summary: {
+        Args: { p_authors_limit?: number; p_subject_id: string }
+        Returns: {
+          argument_id: string
+          authors: Json
+          description: string
+          positions: Json
+          statements_count: number
+          title: string
+          total_authors_count: number
+        }[]
+      }
       get_subject_positions_summary: {
         Args: {
           p_author_kind?: string

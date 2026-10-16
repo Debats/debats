@@ -8,8 +8,10 @@ import { createStatementRepository } from '../../../infra/database/statement-rep
 import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { createRelatedSubjectsRepository } from '../../../infra/database/related-subjects-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
+import { getSubjectArgumentsSummary } from '../../../infra/queries/subject-arguments-summary'
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { positionAuthorsCount } from '../../../domain/read-models/subject-positions-summary'
+import { argumentsByPosition } from '../../../domain/read-models/argument'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import Button from '../../../components/ui/Button'
@@ -24,11 +26,12 @@ import PositionCard from './PositionCard'
 import ReadingGuide from './ReadingGuide'
 import SubjectLatestStatements from './SubjectLatestStatements'
 import SubjectOrganisations from './SubjectOrganisations'
+import SubjectArguments from './SubjectArguments'
 import styles from './subject-detail.module.css'
 
 interface PageProps {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ qui?: string }>
+  searchParams: Promise<{ qui?: string; onglet?: string }>
 }
 
 const LATEST_STATEMENTS_LIMIT = 5
@@ -63,8 +66,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function SubjectDetailPage({ params, searchParams }: PageProps) {
-  const [{ slug }, { qui }] = await Promise.all([params, searchParams])
+  const [{ slug }, { qui, onglet }] = await Promise.all([params, searchParams])
   const authorKind = parseAuthorKindParam(qui)
+  const activeTab = onglet === 'arguments' ? 'arguments' : 'positions'
 
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
@@ -80,6 +84,7 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
   const [
     positions,
     filteredPositions,
+    subjectArguments,
     stats,
     latestStatements,
     contributor,
@@ -91,6 +96,7 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
     authorKind
       ? Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id, { authorKind }))
       : null,
+    Effect.runPromise(getSubjectArgumentsSummary(supabase, subject.id)),
     Effect.runPromise(subjectRepo.getStats(subject.id)),
     Effect.runPromise(statementRepo.findLatest(LATEST_STATEMENTS_LIMIT, subject.id)),
     getAuthenticatedContributor(),
@@ -101,7 +107,11 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
   const listedPositions = filteredPositions
     ? filteredPositions.filter((position) => positionAuthorsCount(position) > 0)
     : positions
+  const positionArguments = argumentsByPosition(subjectArguments)
 
+  const newStatementHref = contributor
+    ? `/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`
+    : '/contribuer'
   const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
   const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
   const major = isMajorSubject(subject, stats.statementsCount)
@@ -148,15 +158,7 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
         }
         actions={
           <>
-            {contributor ? (
-              <Button
-                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`}
-              >
-                Ajouter une prise de position
-              </Button>
-            ) : (
-              <Button href="/contribuer">Ajouter une prise de position</Button>
-            )}
+            <Button href={newStatementHref}>Ajouter une prise de position</Button>
             <ShareButton compact title={subject.title} text={subject.presentation} />
           </>
         }
@@ -184,35 +186,52 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
           </>
         }
       >
-        <SubjectTabs positionsCount={positions.length} />
-        <PositionsFilter
+        <SubjectTabs
           subjectSlug={slug}
-          authorKind={authorKind}
-          counts={{
-            all: stats.statementsCount,
-            publicFigures: stats.figureStatementsCount,
-            organisations: stats.organisationStatementsCount,
-          }}
-          positionsCount={listedPositions.length}
+          active={activeTab}
+          positionsCount={positions.length}
+          argumentsCount={subjectArguments.length}
         />
 
-        {listedPositions.length === 0 ? (
-          <p className={styles.empty}>
-            {authorKind
-              ? 'Aucune prise de position de ce type pour l’instant.'
-              : 'Aucune position enregistrée pour l’instant.'}
-          </p>
+        {activeTab === 'arguments' ? (
+          <SubjectArguments
+            subjectSlug={slug}
+            arguments={subjectArguments}
+            newStatementHref={newStatementHref}
+          />
         ) : (
-          <div className={styles.list}>
-            {listedPositions.map((position, index) => (
-              <PositionCard
-                key={position.positionId}
-                position={position}
-                subjectSlug={slug}
-                featured={index === 0 && listedPositions.length > 1}
-              />
-            ))}
-          </div>
+          <>
+            <PositionsFilter
+              subjectSlug={slug}
+              authorKind={authorKind}
+              counts={{
+                all: stats.statementsCount,
+                publicFigures: stats.figureStatementsCount,
+                organisations: stats.organisationStatementsCount,
+              }}
+              positionsCount={listedPositions.length}
+            />
+
+            {listedPositions.length === 0 ? (
+              <p className={styles.empty}>
+                {authorKind
+                  ? 'Aucune prise de position de ce type pour l’instant.'
+                  : 'Aucune position enregistrée pour l’instant.'}
+              </p>
+            ) : (
+              <div className={styles.list}>
+                {listedPositions.map((position, index) => (
+                  <PositionCard
+                    key={position.positionId}
+                    position={position}
+                    subjectSlug={slug}
+                    arguments={positionArguments.get(position.positionId) ?? []}
+                    featured={index === 0 && listedPositions.length > 1}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </ContentWithSidebar>
     </>

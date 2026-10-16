@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
 import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarStack'
-import ComingSoon from '../../../../components/ui/ComingSoon'
+import ArgumentChips from '../../../../components/statements/ArgumentChips'
 import { STATEMENT_TYPE_LABELS } from '../../../../domain/entities/statement'
+import { ArgumentRef } from '../../../../domain/read-models/argument'
 import { authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import {
   positionAuthors,
@@ -18,6 +19,8 @@ import styles from './PositionCard.module.css'
 interface PositionCardProps {
   position: PositionSummary
   subjectSlug: string
+  /** Les arguments que les prises de position de cette position mobilisent */
+  arguments: ArgumentRef[]
   /** La position la plus soutenue du sujet */
   featured?: boolean
 }
@@ -87,12 +90,18 @@ function FeaturedStatement({
             </>
           )}
         </div>
+        <ArgumentChips arguments={statement.arguments} subjectSlug={subjectSlug} />
       </div>
     </div>
   )
 }
 
-export default function PositionCard({ position, subjectSlug, featured }: PositionCardProps) {
+export default function PositionCard({
+  position,
+  subjectSlug,
+  arguments: used,
+  featured,
+}: PositionCardProps) {
   const count = positionAuthorsCount(position)
   const positionHref = `/s/${subjectSlug}/position/${position.positionSlug}`
   const others = count - 1
@@ -127,9 +136,11 @@ export default function PositionCard({ position, subjectSlug, featured }: Positi
           subjectSlug={subjectSlug}
           moreHref={positionHref}
         />
-        <ComingSoon>
-          <span className={styles.chip}>Arguments mobilisés</span>
-        </ComingSoon>
+        {used.length > 0 ? (
+          <ArgumentChips arguments={used} subjectSlug={subjectSlug} />
+        ) : (
+          <span className={styles.chip}>Aucun argument recensé</span>
+        )}
       </div>
 
       {position.latestStatement && (

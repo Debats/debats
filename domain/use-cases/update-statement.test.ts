@@ -3,6 +3,7 @@ import { Either, Effect } from 'effect'
 import { updateStatementUseCase } from './update-statement'
 import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
 import { Position, createPosition } from '../entities/position'
+import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 
 const existingPosition = createPosition({
   title: 'Pour la réforme',
@@ -79,12 +80,30 @@ const validParams = {
   sourceUrl: 'https://franceinter.fr/article',
   quote: 'Nouvelle citation suffisamment longue.',
   statedAt: '2024-06-20',
+  arguments: { argumentIds: [] as string[], newArguments: [] },
   statementRepo: fakeStatementRepo,
   positionRepo: fakePositionRepo,
+  argumentRepo: fakeArgumentRepo(),
   reputationRepo: fakeReputationRepo,
 }
 
 describe('updateStatementUseCase', () => {
+  it('should replace the arguments the statement mobilises', async () => {
+    const kept = sampleArgument('subject-1', 'Coût budgétaire')
+    const argumentRepo = fakeArgumentRepo([kept])
+    argumentRepo.links.set(existingStatement.id, ['old-argument'])
+
+    const result = await updateStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      arguments: { argumentIds: [kept.id], newArguments: [] },
+      argumentRepo,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(argumentRepo.links.get(existingStatement.id)).toEqual([kept.id])
+  })
+
   it('should fail when contributor is null', async () => {
     const result = await updateStatementUseCase({
       ...validParams,

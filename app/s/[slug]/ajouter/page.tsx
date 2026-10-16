@@ -6,6 +6,7 @@ import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../../../infra/database/position-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
+import { canPerform } from '../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import AddStatementForm from '../../../../components/statements/AddStatementForm'
 import styles from './ajouter.module.css'
@@ -66,6 +67,7 @@ export default async function AddStatementPage({ params }: PageProps) {
           subjectId={subject.id}
           slug={slug}
           positions={positions.map((p) => ({ id: p.id, title: p.title }))}
+          canUseArguments={canPerform(contributor.reputation, 'add_argument')}
         />
       )}
     </ContentWithSidebar>

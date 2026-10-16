@@ -27,7 +27,7 @@ function entry(subjectTitle: string, createdAt: Date): StatementWithDetails {
     statedAt: createdAt,
     createdBy: 'user',
   })
-  return { statement: { ...statement, createdAt }, position, subject }
+  return { statement: { ...statement, createdAt }, position, subject, arguments: [] }
 }
 
 describe('groupStatementsBySubject', () => {

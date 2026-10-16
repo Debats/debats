@@ -1,4 +1,5 @@
 import { StatementType } from '../entities/statement'
+import { ArgumentRef } from './argument'
 import { StatementAuthorRef } from './statement-author'
 
 /** La prise de position la plus récente d'une position, mise en avant sur la page sujet */
@@ -10,6 +11,7 @@ export interface PositionLatestStatement {
   sourceUrl: string | null
   statementType: StatementType
   author: StatementAuthorRef
+  arguments: ArgumentRef[]
 }
 
 export interface PositionSummary {

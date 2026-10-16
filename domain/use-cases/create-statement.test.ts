@@ -3,6 +3,7 @@ import { Either, Effect, Option } from 'effect'
 import { createStatementUseCase } from './create-statement'
 import { organisationAuthor, publicFigureAuthor, Statement } from '../entities/statement'
 import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
+import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import {
   PublicFigure,
@@ -93,6 +94,8 @@ const validParams = {
   subjectId: 'subject-1',
   author: publicFigureAuthor('figure-1'),
   positionId: 'pos-1',
+  arguments: { argumentIds: [] as string[], newArguments: [] },
+  argumentRepo: fakeArgumentRepo(),
   statementType: 'declaration' as const,
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
@@ -106,6 +109,41 @@ const validParams = {
 }
 
 describe('createStatementUseCase', () => {
+  it('should refuse arguments from a contributor below the Éloquent rank', async () => {
+    const argument = sampleArgument('subject-1')
+    const result = await createStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 0 },
+      arguments: { argumentIds: [argument.id], newArguments: [] },
+      argumentRepo: fakeArgumentRepo([argument]),
+    })
+
+    expect(Either.isLeft(result) && result.left).toContain('Éloquent')
+  })
+
+  it('should link chosen arguments and create proposed ones once the statement exists', async () => {
+    const argument = sampleArgument('subject-1')
+    const argumentRepo = fakeArgumentRepo([argument])
+    const result = await createStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1000 },
+      arguments: {
+        argumentIds: [argument.id],
+        newArguments: [{ title: 'Liberté de choix', description: 'Chacun décide pour lui-même.' }],
+      },
+      argumentRepo,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) {
+      expect(argumentRepo.rows).toHaveLength(2)
+      expect(argumentRepo.links.get(result.right.id)).toEqual([
+        argument.id,
+        argumentRepo.rows[1].id,
+      ])
+    }
+  })
+
   it('should fail when the organisation author is not found', async () => {
     const result = await createStatementUseCase({
       ...validParams,

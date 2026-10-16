@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Effect } from 'effect'
 import { redirect } from 'next/navigation'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
-import { getRank } from '../../domain/reputation/permissions'
+import { canPerform, getRank } from '../../domain/reputation/permissions'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
@@ -116,6 +116,7 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
           initialFigure={initialFigure}
           initialOrganisation={initialOrganisation}
           initialSubject={initialSubject}
+          canUseArguments={canPerform(contributor.reputation, 'add_argument')}
         />
       </ContentWithSidebar>
     </StatementDraftProvider>

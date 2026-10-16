@@ -4,6 +4,7 @@ import { LatestStatement } from '../read-models/latest-statement'
 import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { StatementAuthorRef } from '../read-models/statement-author'
+import { ArgumentRef } from '../read-models/argument'
 
 export class DatabaseError extends Error {
   readonly _tag = 'DatabaseError'
@@ -16,6 +17,8 @@ export interface StatementWithDetails {
   statement: Statement
   position: Position
   subject: Subject
+  /** The arguments the statement mobilises, by title */
+  arguments: ArgumentRef[]
 }
 
 /**
@@ -25,6 +28,7 @@ export interface StatementWithAuthor {
   statement: Statement
   position: Position
   author: StatementAuthorRef
+  arguments: ArgumentRef[]
 }
 
 export interface StatementRepository {

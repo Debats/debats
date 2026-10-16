@@ -9,6 +9,7 @@ import { OrganisationRepository } from '../repositories/organisation-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
+import { ArgumentRepository } from '../repositories/argument-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { createPublicFigureUseCase } from './create-public-figure'
@@ -28,6 +29,8 @@ type ValidateDraftParams = {
   subjectRepo: SubjectRepository
   positionRepo: PositionRepository
   statementRepo: StatementRepository
+  /** Drafts carry no argument yet; the statement use case still needs the repository */
+  argumentRepo: ArgumentRepository
   reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
@@ -49,6 +52,7 @@ export async function validateDraft(
     subjectRepo,
     positionRepo,
     statementRepo,
+    argumentRepo,
     reputationRepo,
     wikipediaValidator,
   } = params
@@ -92,10 +96,12 @@ export async function validateDraft(
     sourceUrl: draft.sourceUrl,
     quote: draft.quote,
     statedAt: draft.date,
+    arguments: { argumentIds: [], newArguments: [] },
     statementRepo,
     positionRepo,
     publicFigureRepo,
     organisationRepo,
+    argumentRepo,
     reputationRepo,
   })
   if (Either.isLeft(statementResult)) {

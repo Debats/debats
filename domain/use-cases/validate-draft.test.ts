@@ -16,6 +16,7 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
 import { Organisation } from '../entities/organisation'
 import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
+import { fakeArgumentRepo } from './argument-test-helpers'
 import { Subject } from '../entities/subject'
 import { Position } from '../entities/position'
 import { ContributorIdentity } from './types'
@@ -130,6 +131,7 @@ function makeRepos(overrides: {
     subjectRepo,
     positionRepo,
     statementRepo,
+    argumentRepo: fakeArgumentRepo(),
     reputationRepo,
   }
 }

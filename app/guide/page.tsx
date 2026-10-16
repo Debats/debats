@@ -151,14 +151,15 @@ export default function GuidePage() {
         <ul>
           <li>
             <b>Le Métèque</b> : Son score est neutre. Il vient d&apos;arriver sur la plateforme, et
-            doit encore faire ses preuves. Il peut soumettre des arguments et des sources.
+            doit encore faire ses preuves. Il peut soumettre des prises de position et des sources.
           </li>
           <li>
             <b>L&apos;Éloquent</b> : Son score est positif, il peut ajouter de nouvelles
-            personnalités, de nouveaux sujets, mais également suggérer l&apos;approbation ou le
-            rejet de modifications proposées par d&apos;autres utilisateurs. Par défaut, tous les
-            membres fondateurs inscrits lors de la bêta de Débats.co sont considérés comme
-            Éloquents.
+            personnalités, de nouveaux sujets, de nouvelles organisations, relier les prises de
+            position aux arguments qu&apos;elles mobilisent, mais également suggérer
+            l&apos;approbation ou le rejet de modifications proposées par d&apos;autres
+            utilisateurs. Par défaut, tous les membres fondateurs inscrits lors de la bêta de
+            Débats.co sont considérés comme Éloquents.
           </li>
           <li>
             <b>L&apos;Idéaliste</b> : Son score est élevé, il peut instantanément supprimer la

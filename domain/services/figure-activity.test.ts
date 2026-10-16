@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { activityPeriod, statementsPerYear, themeDistribution } from './figure-activity'
+import {
+  activityPeriod,
+  argumentDistribution,
+  statementsPerYear,
+  themeDistribution,
+} from './figure-activity'
 
 const d = (iso: string) => new Date(iso)
 
@@ -68,5 +73,35 @@ describe('themeDistribution', () => {
 
   it('counts each subject once even if listed twice', () => {
     expect(themeDistribution(['s1', 's1'], links, themes)).toEqual([{ theme: themes[0], count: 1 }])
+  })
+})
+
+describe('argumentDistribution', () => {
+  const cost = { id: 'a-cost', title: 'Coût budgétaire' }
+  const freedom = { id: 'a-free', title: 'Liberté de choix' }
+  const dignity = { id: 'a-dign', title: 'Dignité' }
+
+  it('counts how often each argument is mobilised, most frequent first', () => {
+    const statements = [
+      { arguments: [cost, freedom] },
+      { arguments: [freedom] },
+      { arguments: [] },
+      { arguments: [freedom, dignity] },
+    ]
+
+    expect(argumentDistribution(statements)).toEqual([
+      { argument: freedom, count: 3 },
+      { argument: cost, count: 1 },
+      { argument: dignity, count: 1 },
+    ])
+  })
+
+  it('keeps only the requested number of arguments', () => {
+    const statements = [{ arguments: [cost, freedom, dignity] }]
+
+    expect(argumentDistribution(statements, 2).map((a) => a.argument.id)).toEqual([
+      'a-cost',
+      'a-dign',
+    ])
   })
 })

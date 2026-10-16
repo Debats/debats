@@ -8,6 +8,7 @@ import { createOrganisationRepository } from '../../infra/database/organisation-
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
+import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
@@ -58,6 +59,7 @@ export async function amendAndValidateDraftAction(
     subjectRepo: createSubjectRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     statementRepo: createStatementRepository(supabase),
+    argumentRepo: createArgumentRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   })

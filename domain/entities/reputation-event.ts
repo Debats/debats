@@ -7,6 +7,7 @@ export type RelatedEntityType =
   | 'organisation_membership'
   | 'position'
   | 'statement'
+  | 'argument'
   | 'invitation'
 
 export type ReputationEvent = {

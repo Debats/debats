@@ -23,6 +23,17 @@
   border-bottom-color: var(--ink);
 }
 
+.link,
+.link:link,
+.link:visited {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:hover .tab {
+  color: var(--ink);
+}
+
 .count {
   composes: meta from '../../../styles/text.module.css';
   font-size: 11px;

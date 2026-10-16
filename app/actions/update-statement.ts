@@ -7,7 +7,9 @@ import { createPositionRepository } from '../../infra/database/position-reposito
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { parseStatementType } from '../../domain/entities/statement'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
+import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { readStatementArguments } from './statement-arguments-fields'
 
 export type ActionResult =
   | { success: true }
@@ -30,8 +32,10 @@ export async function updateStatementAction(
     sourceUrl: String(formData.get('sourceUrl') ?? ''),
     quote: String(formData.get('quote') ?? ''),
     statedAt: String(formData.get('statedAt') ?? ''),
+    arguments: readStatementArguments(formData),
     statementRepo: createStatementRepository(supabase),
     positionRepo: createPositionRepository(supabase),
+    argumentRepo: createArgumentRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
   })
 

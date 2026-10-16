@@ -15,7 +15,9 @@ import {
   StatementAuthor,
 } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
+import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { readStatementArguments } from './statement-arguments-fields'
 
 export type ActionResult =
   | { success: true; subjectSlug: string; authorHref: string; authorLabel: string }
@@ -51,10 +53,12 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
     sourceUrl: String(formData.get('sourceUrl') ?? ''),
     quote: String(formData.get('quote') ?? ''),
     statedAt: String(formData.get('statedAt') ?? ''),
+    arguments: readStatementArguments(formData),
     statementRepo: createStatementRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     publicFigureRepo,
     organisationRepo,
+    argumentRepo: createArgumentRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
   })
 

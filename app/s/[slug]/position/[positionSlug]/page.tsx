@@ -11,6 +11,7 @@ import { getAuthenticatedContributor } from '../../../../actions/get-authenticat
 import { STATEMENT_TYPE_LABELS } from '../../../../../domain/entities/statement'
 import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
 import AuthorAvatar from '../../../../../components/statements/AuthorAvatar'
+import ArgumentChips from '../../../../../components/statements/ArgumentChips'
 import AdminMenu from '../../../../../components/ui/AdminMenu'
 import Button from '../../../../../components/ui/Button'
 import ShareButton from '../../../../../components/ui/ShareButton'
@@ -184,7 +185,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
             </p>
           ) : (
             <div className={styles.list}>
-              {positionStatements.map(({ statement, author }) => (
+              {positionStatements.map(({ statement, author, arguments: used }) => (
                 <article key={statement.id} className={styles.card}>
                   <Link href={authorOnSubjectHref(author, slug)}>
                     <AuthorAvatar author={author} size={44} />
@@ -214,6 +215,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                         <span className={styles.sourceLink}>{statement.sourceName}</span>
                       )}
                     </div>
+                    <ArgumentChips arguments={used} subjectSlug={slug} />
                   </div>
                 </article>
               ))}

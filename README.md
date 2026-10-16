@@ -77,7 +77,7 @@ Contributors (Contributeurs)
 - **OrganisationMembership** : L'affiliation d'une personnalité à une organisation, avec un rôle et une période optionnels. Sans date de fin, l'affiliation est considérée comme actuelle
 - **Statement** : Les prises de position concrètes d'une personnalité ou d'une organisation sur une position (exactement un auteur)
 - **Evidence** : Les preuves et sources (citations, articles, vidéos, discours)
-- **Argument** : Les arguments développés pour défendre une position
+- **Argument** : Les raisonnements avancés dans un débat, rattachés au sujet et mobilisés par les prises de position ; les positions qu'un argument sert s'en déduisent, et un argument repris par plusieurs positions est dit polarisant
 - **Contributor** : Les utilisateurs contributeurs de la plateforme
 
 ## Architecture technique actuelle
@@ -218,6 +218,7 @@ Les URLs locales sont configurées sur le port **64321** (voir `supabase/config.
 - [x] Système de réputation des contributeurs
 - [x] Organisations et affiliations des personnalités
 - [x] Prises de position des organisations (formulaire, page organisation, page sujet et filtre)
+- [x] Arguments mobilisés par les prises de position (formulaire, onglet Arguments, analyses)
 
 ### Phase 2 : Fonctionnalités collaboratives
 

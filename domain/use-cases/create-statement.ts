@@ -7,14 +7,22 @@ import { PublicFigureRepository } from '../repositories/public-figure-repository
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
+import {
+  attachStatementArguments,
+  StatementArgumentsInput,
+  validateStatementArguments,
+} from './statement-arguments'
 
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
   subjectId: string
   author: StatementAuthor
   positionId: string
+  /** Arguments the statement mobilises, chosen or proposed (Éloquent only) */
+  arguments: StatementArgumentsInput
   statementType: StatementType
   sourceName: string
   sourceUrl: string
@@ -24,6 +32,7 @@ type CreateStatementParams = {
   positionRepo: PositionRepository
   publicFigureRepo: PublicFigureRepository
   organisationRepo: OrganisationRepository
+  argumentRepo: ArgumentRepository
   reputationRepo: ReputationRepository
 }
 
@@ -60,6 +69,7 @@ export async function createStatementUseCase(
     positionRepo,
     publicFigureRepo,
     organisationRepo,
+    argumentRepo,
     reputationRepo,
   } = params
 
@@ -91,6 +101,16 @@ export async function createStatementUseCase(
     return Either.left("La position sélectionnée n'appartient pas à ce sujet.")
   }
 
+  const validatedArguments = await validateStatementArguments({
+    contributor,
+    subjectId,
+    input: params.arguments,
+    argumentRepo,
+  })
+  if (Either.isLeft(validatedArguments)) {
+    return Either.left(validatedArguments.left)
+  }
+
   const statement = createStatement({
     author,
     positionId,
@@ -113,6 +133,15 @@ export async function createStatementUseCase(
       relatedEntityId: created.id,
     }),
   )
+
+  await attachStatementArguments({
+    contributor,
+    subjectId,
+    statementId: created.id,
+    validated: validatedArguments.right,
+    argumentRepo,
+    reputationRepo,
+  })
 
   return Either.right(created)
 }

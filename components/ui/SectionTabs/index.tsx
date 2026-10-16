@@ -1,37 +1,54 @@
+import Link from 'next/link'
 import ComingSoon from '../ComingSoon'
 import styles from './SectionTabs.module.css'
 
 export interface SectionTab {
   label: string
   count?: number
+  /** L'onglet mène à une autre vue de la page */
+  href?: string
   /** L'onglet est annoncé mais pas encore disponible */
   soon?: boolean
 }
 
 interface SectionTabsProps {
   tabs: SectionTab[]
-  /** Libellé de l'onglet actif (le seul disponible tant que les autres sont annoncés) */
+  /** Libellé de l'onglet actif */
   active: string
   ariaLabel: string
 }
 
 /**
- * Barre d'onglets d'une page de détail. Un seul onglet est actif et les
- * autres sont annoncés : la barre montre ce que la page deviendra.
+ * Barre d'onglets d'une page de détail : un onglet actif, les autres liés
+ * ou annoncés. La barre montre ce que la page est et ce qu'elle deviendra.
  */
 export default function SectionTabs({ tabs, active, ariaLabel }: SectionTabsProps) {
   return (
     <nav className={styles.tabs} aria-label={ariaLabel}>
       {tabs.map((tab) => {
+        const isActive = tab.label === active
         const content = (
-          <span className={tab.label === active ? `${styles.tab} ${styles.tabOn}` : styles.tab}>
+          <span className={isActive ? `${styles.tab} ${styles.tabOn}` : styles.tab}>
             {tab.label}
             {tab.count !== undefined && <span className={styles.count}>{tab.count}</span>}
           </span>
         )
         if (tab.soon) return <ComingSoon key={tab.label}>{content}</ComingSoon>
+        if (tab.href) {
+          return (
+            <Link
+              key={tab.label}
+              href={tab.href}
+              scroll={false}
+              className={styles.link}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {content}
+            </Link>
+          )
+        }
         return (
-          <span key={tab.label} aria-current={tab.label === active ? 'page' : undefined}>
+          <span key={tab.label} aria-current={isActive ? 'page' : undefined}>
             {content}
           </span>
         )

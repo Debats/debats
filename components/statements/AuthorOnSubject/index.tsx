@@ -2,6 +2,7 @@ import Link from 'next/link'
 import ContentWithSidebar from '../../layout/ContentWithSidebar'
 import EditLink from '../../ui/EditLink'
 import AuthorAvatarStack from '../AuthorAvatarStack'
+import ArgumentChips from '../ArgumentChips'
 import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
 import { PositionGroup, SubjectCompany } from '../../../domain/services/author-on-subject'
 import { formatShortDate } from '../../../lib/format-date'
@@ -66,7 +67,7 @@ export default function AuthorOnSubject({
                       {position.title}
                     </Link>
                   </h3>
-                  {statements.map((statement) => (
+                  {statements.map(({ statement, arguments: used }) => (
                     <div key={statement.id} className={styles.statement}>
                       <blockquote className={styles.quote}>{statement.quote}</blockquote>
                       <div className={styles.source}>
@@ -89,6 +90,7 @@ export default function AuthorOnSubject({
                         <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
                         {editHref && <EditLink href={editHref(statement.id)} />}
                       </div>
+                      <ArgumentChips arguments={used} subjectSlug={subject.slug} />
                     </div>
                   ))}
                   {allies.length > 0 && (

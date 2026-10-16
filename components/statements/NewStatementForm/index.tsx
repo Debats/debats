@@ -27,6 +27,7 @@ import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import FormSuccess from '../../ui/FormSuccess'
 import { useStatementDraft } from '../StatementDraft'
+import ArgumentsPicker from '../ArgumentsPicker'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -38,6 +39,8 @@ interface NewStatementFormProps {
   initialFigure?: NamedEntity
   initialOrganisation?: NamedEntity
   initialSubject?: { id: string; title: string; slug?: string }
+  /** Le contributeur a le rang pour mobiliser et proposer des arguments */
+  canUseArguments: boolean
 }
 
 const AUTHOR_KINDS: Record<string, StatementAuthorKind> = {
@@ -54,6 +57,7 @@ export default function NewStatementForm({
   initialFigure,
   initialOrganisation,
   initialSubject,
+  canUseArguments,
 }: NewStatementFormProps) {
   const { updateDraft } = useStatementDraft()
 
@@ -168,6 +172,11 @@ export default function NewStatementForm({
       formData.set('sourceUrl', getFieldValue(form, 'sourceUrl'))
       formData.set('quote', getFieldValue(form, 'quote'))
       formData.set('statedAt', getFieldValue(form, 'statedAt'))
+
+      // Les arguments cochés et proposés sont portés par les champs cachés du sélecteur
+      const native = new FormData(form)
+      for (const id of native.getAll('argumentIds')) formData.append('argumentIds', String(id))
+      formData.set('newArguments', String(native.get('newArguments') ?? '[]'))
 
       try {
         const result: ActionResult = await addStatementAction(formData)
@@ -441,15 +450,29 @@ export default function NewStatementForm({
         </div>
       </fieldset>
 
-      <ComingSoon as="div" className={styles.section}>
-        <p className={styles.sectionTitle}>
-          <span className={styles.step}>4</span> Arguments mobilisés
-        </p>
-        <p className={styles.hint}>
-          Cocher les arguments réellement présents dans la citation permettra de cartographier les
-          raisonnements, pas seulement les camps.
-        </p>
-      </ComingSoon>
+      {canUseArguments ? (
+        <fieldset className={styles.section}>
+          <legend className={styles.sectionTitle}>
+            <span className={styles.step}>4</span> Arguments mobilisés
+          </legend>
+          <p className={styles.hint}>
+            Cochez les arguments réellement présents dans la citation : on cartographie les
+            raisonnements, pas seulement les camps. Un argument doit être explicitement mobilisé et
+            répondre à la problématique du sujet.
+          </p>
+          <ArgumentsPicker subjectId={selectedSubjectId} error={fieldErrors?.arguments} />
+        </fieldset>
+      ) : (
+        <div className={styles.section}>
+          <p className={styles.sectionTitle}>
+            <span className={styles.step}>4</span> Arguments mobilisés
+          </p>
+          <p className={styles.hint}>
+            Relier une prise de position aux arguments qu’elle mobilise est réservé aux
+            contributeur·ices de rang Éloquent. Vous y aurez accès en gagnant de la réputation.
+          </p>
+        </div>
+      )}
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>

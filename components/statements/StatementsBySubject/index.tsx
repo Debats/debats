@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import ComingSoon from '../../ui/ComingSoon'
 import EditLink from '../../ui/EditLink'
+import ArgumentChips from '../ArgumentChips'
 import Segmented from '../../ui/Segmented'
 import ShowMore from '../../ui/ShowMore'
 import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
@@ -52,7 +53,7 @@ export default function StatementsBySubject({
       <Link href={subjectHref(subject.slug)} className={styles.subjectTitle}>
         {subject.title}
       </Link>
-      {entries.map(({ statement, position }) => (
+      {entries.map(({ statement, position, arguments: used }) => (
         <div key={statement.id} className={styles.entry}>
           <p className={styles.position}>
             <span className={styles.positionLabel}>Position</span>
@@ -77,6 +78,7 @@ export default function StatementsBySubject({
             <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
             {editHref && <EditLink href={editHref(statement.id)} />}
           </div>
+          <ArgumentChips arguments={used} subjectSlug={subject.slug} />
         </div>
       ))}
     </article>

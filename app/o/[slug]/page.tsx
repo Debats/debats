@@ -7,7 +7,12 @@ import { createOrganisationMembershipRepository } from '../../../infra/database/
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
-import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
+import {
+  groupStatementsBySubject,
+  withSubjectSlug,
+} from '../../../domain/services/statements-by-subject'
+import { argumentDistribution } from '../../../domain/services/figure-activity'
+import TopArguments from '../../../components/statements/TopArguments'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
 import AdminMenu from '../../../components/ui/AdminMenu'
@@ -128,13 +133,19 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
       <ContentWithSidebar
         topMargin
         aside={
-          <OrganisationMembers
-            organisationSlug={slug}
-            current={current}
-            former={former}
-            canAffiliate={canAffiliate}
-            canRemove={canRemove}
-          />
+          <>
+            <OrganisationMembers
+              organisationSlug={slug}
+              current={current}
+              former={former}
+              canAffiliate={canAffiliate}
+              canRemove={canRemove}
+            />
+            <TopArguments
+              arguments={argumentDistribution(withSubjectSlug(statements))}
+              who="cette organisation"
+            />
+          </>
         }
       >
         <SectionTabs

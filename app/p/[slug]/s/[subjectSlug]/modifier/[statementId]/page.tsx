@@ -6,6 +6,7 @@ import { createPublicFigureRepository } from '../../../../../../../infra/databas
 import { createSubjectRepository } from '../../../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../../../infra/database/statement-repository-supabase'
 import { createPositionRepository } from '../../../../../../../infra/database/position-repository-supabase'
+import { createArgumentRepository } from '../../../../../../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from '../../../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../../../domain/reputation/permissions'
 import ContentWithSidebar from '../../../../../../../components/layout/ContentWithSidebar'
@@ -50,7 +51,10 @@ export default async function EditStatementPage({ params }: PageProps) {
   if (!statement) notFound()
   if (statement.author.kind !== 'public_figure' || statement.author.id !== figure.id) notFound()
 
-  const positions = await Effect.runPromise(positionRepo.findBySubjectId(subject.id))
+  const [positions, argumentIds] = await Promise.all([
+    Effect.runPromise(positionRepo.findBySubjectId(subject.id)),
+    Effect.runPromise(createArgumentRepository(supabase).findIdsByStatementId(statement.id)),
+  ])
   const returnHref = `/p/${slug}/s/${subjectSlug}`
 
   return (
@@ -66,6 +70,9 @@ export default async function EditStatementPage({ params }: PageProps) {
         statementId={statement.id}
         returnHref={returnHref}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
+        subjectId={subject.id}
+        canUseArguments={canPerform(contributor.reputation, 'add_argument')}
+        initialArgumentIds={argumentIds}
         initialPositionId={statement.positionId}
         initialStatementType={statement.statementType}
         initialSourceName={statement.sourceName}

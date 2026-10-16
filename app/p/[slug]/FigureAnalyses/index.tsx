@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import ComingSoon from '../../../../components/ui/ComingSoon'
-import { ThemeCount, YearCount } from '../../../../domain/services/figure-activity'
+import TopArguments from '../../../../components/statements/TopArguments'
+import { ArgumentCount, ThemeCount, YearCount } from '../../../../domain/services/figure-activity'
 import styles from './FigureAnalyses.module.css'
 
 interface FigureAnalysesProps {
   themes: ThemeCount[]
   perYear: YearCount[]
+  topArguments: ArgumentCount<{ id: string; title: string; subjectSlug: string }>[]
 }
 
 const CHART = { width: 340, height: 120, top: 22, bottom: 30, gap: 12, maxBar: 22 }
@@ -72,7 +73,7 @@ function ActivityChart({ perYear }: { perYear: YearCount[] }) {
 }
 
 /** Analyses du rail d'une personnalité : thèmes, fréquence d'expression, arguments. */
-export default function FigureAnalyses({ themes, perYear }: FigureAnalysesProps) {
+export default function FigureAnalyses({ themes, perYear, topArguments }: FigureAnalysesProps) {
   const maxTheme = themes[0]?.count ?? 0
 
   return (
@@ -108,12 +109,7 @@ export default function FigureAnalyses({ themes, perYear }: FigureAnalysesProps)
         </div>
       )}
 
-      <ComingSoon as="div" className={styles.card}>
-        <p className={styles.title}>Arguments les plus mobilisés</p>
-        <p className={styles.empty}>
-          Les raisonnements récurrents de cette personnalité, à travers ses prises de position.
-        </p>
-      </ComingSoon>
+      <TopArguments arguments={topArguments} who="cette personnalité" />
     </>
   )
 }

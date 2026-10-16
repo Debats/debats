@@ -29,6 +29,37 @@ export interface ThemeCount<T extends ThemeLike = ThemeLike> {
   count: number
 }
 
+export interface ArgumentLike {
+  id: string
+  title: string
+}
+
+export interface ArgumentCount<T extends ArgumentLike = ArgumentLike> {
+  argument: T
+  count: number
+}
+
+/**
+ * Les arguments qu'un auteur mobilise le plus, du plus fréquent au moins
+ * fréquent, limités aux `limit` premiers. À fréquence égale, par titre.
+ */
+export function argumentDistribution<T extends ArgumentLike>(
+  statements: ReadonlyArray<{ arguments: ReadonlyArray<T> }>,
+  limit = 5,
+): ArgumentCount<T>[] {
+  const counts = new Map<string, ArgumentCount<T>>()
+  for (const { arguments: used } of statements) {
+    for (const argument of used) {
+      const entry = counts.get(argument.id) ?? { argument, count: 0 }
+      entry.count += 1
+      counts.set(argument.id, entry)
+    }
+  }
+  return Array.from(counts.values())
+    .sort((a, b) => b.count - a.count || a.argument.title.localeCompare(b.argument.title, 'fr'))
+    .slice(0, limit)
+}
+
 const years = (dates: Date[]) => dates.map((date) => date.getFullYear())
 
 /** Première et dernière année d'expression, ou null sans prise de position. */

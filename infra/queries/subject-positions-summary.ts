@@ -6,6 +6,7 @@ import {
   PositionSummary,
 } from '../../domain/read-models/subject-positions-summary'
 import { StatementAuthorRef } from '../../domain/read-models/statement-author'
+import { ArgumentRef } from '../../domain/read-models/argument'
 import { parseStatementType, StatementAuthorKind } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
 
@@ -17,6 +18,7 @@ interface LatestStatementRow {
   source_url: string | null
   statement_type: string
   author: StatementAuthorRef
+  arguments: ArgumentRef[] | null
 }
 
 function toLatestStatement(row: LatestStatementRow | null): PositionLatestStatement | null {
@@ -29,6 +31,7 @@ function toLatestStatement(row: LatestStatementRow | null): PositionLatestStatem
     sourceUrl: row.source_url,
     statementType: parseStatementType(row.statement_type),
     author: row.author,
+    arguments: row.arguments ?? [],
   }
 }
 

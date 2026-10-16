@@ -1,0 +1,145 @@
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  scroll-margin-top: 24px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.15;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+}
+
+.countValue {
+  composes: number from '../../../../styles/text.module.css';
+  font-size: 30px;
+}
+
+.countLabel {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.description {
+  composes: body from '../../../../styles/text.module.css';
+  margin-top: 10px;
+}
+
+.rule {
+  height: 1px;
+  background-color: var(--line);
+  margin: 18px 0;
+}
+
+.usage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.positions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.position,
+.position:link,
+.position:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.position:hover {
+  border-color: var(--ink);
+}
+
+.positionCount {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 11px;
+}
+
+.polarising {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.cta {
+  margin-top: 24px;
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctaTitle {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--ink);
+}
+
+.ctaText {
+  composes: small from '../../../../styles/text.module.css';
+  max-width: 520px;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}

@@ -9,6 +9,7 @@ import {
   publicFigureAuthor,
 } from '../../domain/entities/statement'
 import { LatestStatement } from '../../domain/read-models/latest-statement'
+import { ArgumentRef } from '../../domain/read-models/argument'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
@@ -111,6 +112,24 @@ function toAuthorRef(
 }
 
 /** Columns of a statement with its position and either author, as PostgREST embeds them */
+/** The arguments a statement mobilises, as PostgREST embeds them through the link table */
+const ARGUMENTS_EMBED = `argument_statements (arguments (id, title, deleted_at))`
+
+interface ArgumentLinkJoin {
+  arguments: { id: string; title: string; deleted_at: string | null } | null
+}
+
+/** Live arguments only, by title: a soft-deleted argument keeps its links */
+function toArgumentRefs(links: ArgumentLinkJoin[] | null): ArgumentRef[] {
+  return (links ?? [])
+    .flatMap((link) =>
+      link.arguments && !link.arguments.deleted_at
+        ? [{ id: link.arguments.id, title: link.arguments.title }]
+        : [],
+    )
+    .sort((a, b) => a.title.localeCompare(b.title, 'fr'))
+}
+
 const STATEMENT_WITH_AUTHOR_QUERY = `
   id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
   created_by, created_at, updated_at, deleted_at,
@@ -118,13 +137,15 @@ const STATEMENT_WITH_AUTHOR_QUERY = `
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
   ),
   public_figures (id, name, slug),
-  organisations (id, name, slug, acronym)
+  organisations (id, name, slug, acronym),
+  ${ARGUMENTS_EMBED}
 `
 
 interface StatementWithAuthorRow extends StatementRow {
   positions: PositionRow
   public_figures: FigureJoin | null
   organisations: OrganisationJoin | null
+  argument_statements: ArgumentLinkJoin[] | null
 }
 
 function mapStatementWithAuthorRow(row: StatementWithAuthorRow): StatementWithAuthor {
@@ -132,6 +153,7 @@ function mapStatementWithAuthorRow(row: StatementWithAuthorRow): StatementWithAu
     statement: mapStatementRow(row),
     position: mapPositionRow(row.positions),
     author: toAuthorRef(row.public_figures, row.organisations),
+    arguments: toArgumentRefs(row.argument_statements),
   }
 }
 
@@ -185,11 +207,13 @@ const STATEMENT_WITH_DETAILS_QUERY = `
     subjects!inner (
       id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at, deleted_at
     )
-  )
+  ),
+  ${ARGUMENTS_EMBED}
 `
 
 interface StatementWithDetailsRow extends StatementRow {
   positions: PositionRow & { subjects: SubjectRow }
+  argument_statements: ArgumentLinkJoin[] | null
 }
 
 function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWithDetails {
@@ -197,6 +221,7 @@ function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWith
     statement: mapStatementRow(row),
     position: mapPositionRow(row.positions),
     subject: mapSubjectRow(row.positions.subjects),
+    arguments: toArgumentRefs(row.argument_statements),
   }
 }
 
