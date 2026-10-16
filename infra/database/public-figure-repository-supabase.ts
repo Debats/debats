@@ -13,6 +13,7 @@ import {
   PublicFigureRepository,
 } from '../../domain/repositories/public-figure-repository'
 import { fetchAllRows } from './fetch-all-pages'
+import { fetchInChunks } from './in-chunks'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -267,14 +268,15 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
     findSummariesByIds: (ids: string[]) =>
       Effect.tryPromise({
         try: async () => {
-          if (ids.length === 0) return []
-          const { data, error } = await supabase
-            .from('v_public_figure_activity_summary')
-            .select('*')
-            .in('id', ids)
-            .order('name')
-          if (error) throw error
-          return (data as ActivitySummaryRow[]).map(mapSummaryRow)
+          const rows = await fetchInChunks(ids, async (chunk) => {
+            const { data, error } = await supabase
+              .from('v_public_figure_activity_summary')
+              .select('*')
+              .in('id', chunk)
+            if (error) throw error
+            return data as ActivitySummaryRow[]
+          })
+          return rows.map(mapSummaryRow).sort((a, b) => a.name.localeCompare(b.name, 'fr'))
         },
         catch: (error) => dbError('Failed to fetch public figure summaries by ids', error),
       }),

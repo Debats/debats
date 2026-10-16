@@ -12,6 +12,7 @@ import { DatabaseError } from '../../domain/repositories/errors'
 import { OccupationRepository } from '../../domain/repositories/occupation-repository'
 import { OccupationAssignment } from '../../domain/services/occupation-distribution'
 import { fetchAllRows } from './fetch-all-pages'
+import { fetchInChunks } from './in-chunks'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -194,13 +195,15 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
     findAssignmentsByPublicFigureIds: (publicFigureIds) =>
       Effect.tryPromise({
         try: async () => {
-          if (publicFigureIds.length === 0) return []
-          const { data, error } = await supabase
-            .from('public_figure_occupations')
-            .select('public_figure_id, occupation_id')
-            .in('public_figure_id', publicFigureIds)
-          if (error) throw error
-          return (data as AssignmentRow[]).map(mapAssignment)
+          const rows = await fetchInChunks(publicFigureIds, async (chunk) => {
+            const { data, error } = await supabase
+              .from('public_figure_occupations')
+              .select('public_figure_id, occupation_id')
+              .in('public_figure_id', chunk)
+            if (error) throw error
+            return data as AssignmentRow[]
+          })
+          return rows.map(mapAssignment)
         },
         catch: (error) => dbError('Failed to fetch occupation assignments by figures', error),
       }),
