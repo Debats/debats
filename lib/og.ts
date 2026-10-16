@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import * as Sentry from '@sentry/nextjs'
+import { detectImageFormat, imageMimeType, ImageFormat } from '../domain/services/image-format'
 
 /** Couleurs du design system, en dur : le rendu OpenGraph n'a pas accès au CSS. */
 export const OG_COLORS = {
@@ -42,28 +44,67 @@ export async function loadBrandMark(): Promise<string> {
   return `data:image/png;base64,${buffer.toString('base64')}`
 }
 
-/** Charge une image publique du stockage Supabase en data URI, ou null si elle n'existe pas. */
-async function loadStorageImage(
-  bucket: string,
-  file: string,
-  mimeType: 'image/jpeg' | 'image/png',
-): Promise<string | null> {
+/**
+ * Formats le moteur de rendu sait embarquer. Il lit le type MIME que nous
+ * annonçons et applique le parseur correspondant sans vérifier les octets :
+ * annoncer un type qui ne correspond pas le fait planter, et le WebP comme
+ * l'AVIF n'ont aucun parseur. D'où la détection sur la signature réelle.
+ */
+const EMBEDDABLE_FORMATS: ReadonlyArray<ImageFormat> = ['jpeg', 'png']
+
+/**
+ * Un logo est optionnel : son absence est normale. Un avatar est obligatoire à
+ * la création d'une personnalité : s'il manque, la donnée est en défaut et il
+ * faut le savoir.
+ */
+type Presence = 'required' | 'optional'
+
+/** Télécharge un objet public du stockage, ou null s'il est hors d'atteinte. */
+async function fetchStorageObject(path: string, presence: Presence): Promise<Buffer | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:64321'
   try {
-    const res = await fetch(`${supabaseUrl}/storage/v1/object/public/${bucket}/${file}`)
-    if (!res.ok) return null
-    const buffer = Buffer.from(await res.arrayBuffer())
-    return `data:${mimeType};base64,${buffer.toString('base64')}`
-  } catch {
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/public/${path}`)
+    if (res.ok) return Buffer.from(await res.arrayBuffer())
+
+    if (res.status !== 404 || presence === 'required') {
+      Sentry.captureException(new Error(`OpenGraph image unavailable (${res.status}): ${path}`))
+    }
+    return null
+  } catch (cause) {
+    const reason = cause instanceof Error ? cause.message : String(cause)
+    Sentry.captureException(new Error(`OpenGraph image fetch failed (${reason}): ${path}`))
     return null
   }
 }
 
-/** L'avatar d'une personnalité, ou null s'il n'existe pas. */
-export const loadAvatar = (slug: string) => loadStorageImage('avatars', `${slug}.jpg`, 'image/jpeg')
+/**
+ * Charge une image publique du stockage Supabase en data URI, en annonçant le
+ * type MIME de ses octets.
+ *
+ * Renvoie null quand l'image est absente ou illisible : une image OpenGraph
+ * amputée d'un avatar vaut mieux qu'une route en erreur. Tout ce qui n'est pas
+ * une absence légitime part dans Sentry.
+ */
+async function loadStorageImage(path: string, presence: Presence): Promise<string | null> {
+  const buffer = await fetchStorageObject(path, presence)
+  if (buffer === null) return null
+
+  const format = detectImageFormat(buffer)
+  if (format === null || !EMBEDDABLE_FORMATS.includes(format)) {
+    Sentry.captureException(
+      new Error(`OpenGraph image has an unembeddable format (${format ?? 'unknown'}): ${path}`),
+    )
+    return null
+  }
+
+  return `data:${imageMimeType(format)};base64,${buffer.toString('base64')}`
+}
+
+/** L'avatar d'une personnalité, ou null s'il est illisible. */
+export const loadAvatar = (slug: string) => loadStorageImage(`avatars/${slug}.jpg`, 'required')
 
 /** Le logo d'une organisation, ou null si elle n'en a pas. */
-export const loadLogo = (slug: string) => loadStorageImage('logos', `${slug}.png`, 'image/png')
+export const loadLogo = (slug: string) => loadStorageImage(`logos/${slug}.png`, 'optional')
 
 export function truncate(text: string, max: number): string {
   return text.length > max ? text.slice(0, max - 3) + '…' : text
