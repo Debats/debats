@@ -1,6 +1,17 @@
 import SectionTabs from '../../../../components/ui/SectionTabs'
 
-export type SubjectTab = 'positions' | 'arguments'
+export type SubjectTab = 'positions' | 'arguments' | 'analyses'
+
+export function parseSubjectTab(value: string | undefined): SubjectTab {
+  if (value === 'arguments' || value === 'analyses') return value
+  return 'positions'
+}
+
+const TAB_LABELS: Record<SubjectTab, string> = {
+  positions: 'Positions',
+  arguments: 'Arguments',
+  analyses: 'Analyses',
+}
 
 interface SubjectTabsProps {
   subjectSlug: string
@@ -10,8 +21,8 @@ interface SubjectTabsProps {
 }
 
 /**
- * Onglets de la page sujet. Positions et Arguments existent ; les autres
- * annoncent les fonctionnalités à venir (analyses, chronologie).
+ * Onglets de la page sujet. Positions, Arguments et Analyses existent ; la
+ * chronologie est annoncée.
  */
 export default function SubjectTabs({
   subjectSlug,
@@ -22,11 +33,11 @@ export default function SubjectTabs({
   return (
     <SectionTabs
       ariaLabel="Sections du sujet"
-      active={active === 'arguments' ? 'Arguments' : 'Positions'}
+      active={TAB_LABELS[active]}
       tabs={[
         { label: 'Positions', count: positionsCount, href: `/s/${subjectSlug}` },
         { label: 'Arguments', count: argumentsCount, href: `/s/${subjectSlug}?onglet=arguments` },
-        { label: 'Analyses', soon: true },
+        { label: 'Analyses', href: `/s/${subjectSlug}?onglet=analyses` },
         { label: 'Chronologie', soon: true },
       ]}
     />

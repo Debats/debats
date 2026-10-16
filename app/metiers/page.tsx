@@ -4,6 +4,10 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import { createOccupationFamilyRepository } from '../../infra/database/occupation-family-repository-supabase'
 import { groupOccupationsByFamily } from '../../domain/read-models/occupations'
+import {
+  countFiguresByFamily,
+  countFiguresByOccupation,
+} from '../../domain/services/occupation-distribution'
 import { canPerform } from '../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
@@ -21,21 +25,31 @@ export const metadata: Metadata = {
 export default async function OccupationsPage() {
   const supabase = createAdminSupabaseClient()
 
-  const [families, occupations, contributor] = await Promise.all([
+  const occupationRepo = createOccupationRepository(supabase)
+
+  const [families, occupations, assignments, contributor] = await Promise.all([
     Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
-    Effect.runPromise(createOccupationRepository(supabase).findAll()),
+    Effect.runPromise(occupationRepo.findAll()),
+    Effect.runPromise(occupationRepo.findAllAssignments()),
     getAuthenticatedContributor(),
   ])
 
   const canManage = !!contributor && canPerform(contributor.reputation, 'add_occupation')
+  const byFamily = countFiguresByFamily(assignments, occupations)
+  const byOccupation = countFiguresByOccupation(assignments)
   const groups = groupOccupationsByFamily(families, occupations).map(({ family, occupations }) => ({
     family: {
       id: family.id,
       name: family.name,
       slug: family.slug,
       description: family.description,
+      figuresCount: byFamily.get(family.id) ?? 0,
     },
-    occupations: occupations.map(({ id, name }) => ({ id, name })),
+    occupations: occupations.map(({ id, name }) => ({
+      id,
+      name,
+      figuresCount: byOccupation.get(id) ?? 0,
+    })),
   }))
 
   return (

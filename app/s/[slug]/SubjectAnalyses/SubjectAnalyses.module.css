@@ -1,0 +1,142 @@
+.analyses {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.title {
+  composes: title from '../../../../styles/text.module.css';
+}
+
+.subtitle {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink-3);
+  margin-top: -6px;
+}
+
+.note {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: 200px 1fr 32px;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel,
+.barLabel:link,
+.barLabel:visited {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink-2);
+  text-align: right;
+}
+
+.barLabel:hover {
+  color: var(--signal);
+}
+
+.track {
+  height: 12px;
+}
+
+.fill {
+  height: 12px;
+  background-color: var(--ink);
+  border-radius: 0 4px 4px 0;
+}
+
+.barValue {
+  composes: meta from '../../../../styles/text.module.css';
+  color: var(--ink);
+}
+
+.positions {
+  display: flex;
+  flex-direction: column;
+}
+
+.position {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.positionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip,
+.chip:link,
+.chip:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.chip:hover {
+  border-color: var(--ink);
+}
+
+.chipCount {
+  composes: meta from '../../../../styles/text.module.css';
+  font-size: 11px;
+}
+
+.chipMuted {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+@media (max-width: 768px) {
+  .bar {
+    grid-template-columns: 120px 1fr 28px;
+  }
+}

@@ -71,6 +71,21 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
           .filter(([, ids]) => ids.includes(occupationId))
           .map(([figureId]) => figureId),
       ),
+    findAllAssignments: () =>
+      Effect.succeed(
+        Array.from(assignments.entries()).flatMap(([publicFigureId, ids]) =>
+          ids.map((occupationId) => ({ publicFigureId, occupationId })),
+        ),
+      ),
+    findAssignmentsByPublicFigureIds: (figureIds) =>
+      Effect.succeed(
+        figureIds.flatMap((publicFigureId) =>
+          (assignments.get(publicFigureId) ?? []).map((occupationId) => ({
+            publicFigureId,
+            occupationId,
+          })),
+        ),
+      ),
     setAssignments: (figureId, occupationIds) => {
       assignments.set(figureId, occupationIds)
       return Effect.succeed(undefined)

@@ -7,6 +7,7 @@ import { deleteOccupationAction } from '../../actions/delete-occupation'
 import { deleteOccupationFamilyAction } from '../../actions/delete-occupation-family'
 import ConfirmAction from '../../../components/ui/ConfirmAction'
 import FormError from '../../../components/ui/FormError'
+import { plural } from '../../../lib/plural'
 import styles from '../metiers.module.css'
 
 export interface FamilyData {
@@ -14,11 +15,13 @@ export interface FamilyData {
   name: string
   slug: string
   description: string
+  /** Distinct public figures holding one of its occupations */
+  figuresCount: number
 }
 
 interface FamilyGroup {
   family: FamilyData
-  occupations: Array<{ id: string; name: string }>
+  occupations: Array<{ id: string; name: string; figuresCount: number }>
 }
 
 interface FamilyListProps {
@@ -54,10 +57,13 @@ export default function FamilyList({ groups, canManage }: FamilyListProps) {
       {groups.map(({ family, occupations }) => (
         <section key={family.id} className={styles.family}>
           <div className={styles.head}>
-            <h2>
+            <h2 className={styles.naming}>
               <Link href={`/metiers/${family.slug}`} className={styles.name}>
                 {family.name}
               </Link>
+              <span className={styles.count}>
+                {family.figuresCount} {plural(family.figuresCount, 'personnalité', 'personnalités')}
+              </span>
             </h2>
             {canManage && (
               <ConfirmAction
@@ -75,6 +81,9 @@ export default function FamilyList({ groups, canManage }: FamilyListProps) {
               {occupations.map((occupation) => (
                 <li key={occupation.id} className={styles.occupation}>
                   {occupation.name}
+                  {occupation.figuresCount > 0 && (
+                    <span className={styles.occupationCount}>{occupation.figuresCount}</span>
+                  )}
                   {canManage && (
                     <button
                       type="button"

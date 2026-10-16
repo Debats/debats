@@ -9,6 +9,7 @@ import { createThemeRepository } from '../../../infra/database/theme-repository-
 import { createRelatedSubjectsRepository } from '../../../infra/database/related-subjects-repository-supabase'
 import { getSubjectPositionsSummary } from '../../../infra/queries/subject-positions-summary'
 import { getSubjectArgumentsSummary } from '../../../infra/queries/subject-arguments-summary'
+import { getSubjectFamilyDistribution } from '../../../infra/queries/subject-family-distribution'
 import { isMajorSubject } from '../../../domain/entities/subject'
 import { positionAuthorsCount } from '../../../domain/read-models/subject-positions-summary'
 import { argumentsByPosition } from '../../../domain/read-models/argument'
@@ -19,7 +20,8 @@ import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import SubjectAdminMenu from './SubjectAdminMenu'
 import SubjectHero from './SubjectHero'
-import SubjectTabs from './SubjectTabs'
+import SubjectTabs, { parseSubjectTab } from './SubjectTabs'
+import SubjectAnalyses from './SubjectAnalyses'
 import PositionsOverview from './PositionsOverview'
 import PositionsFilter, { parseAuthorKindParam } from './PositionsFilter'
 import PositionCard from './PositionCard'
@@ -68,7 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function SubjectDetailPage({ params, searchParams }: PageProps) {
   const [{ slug }, { qui, onglet }] = await Promise.all([params, searchParams])
   const authorKind = parseAuthorKindParam(qui)
-  const activeTab = onglet === 'arguments' ? 'arguments' : 'positions'
+  const activeTab = parseSubjectTab(onglet)
 
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
@@ -90,6 +92,7 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
     contributor,
     themeAssignments,
     relatedSubjects,
+    familyDistribution,
   ] = await Promise.all([
     Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
     // The overview and the rail always show everyone; only the list follows the filter
@@ -102,6 +105,10 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
     getAuthenticatedContributor(),
     Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
     Effect.runPromise(relatedRepo.findRelated(subject.id)),
+    // Only the Analyses tab reads it
+    activeTab === 'analyses'
+      ? Effect.runPromise(getSubjectFamilyDistribution(supabase, subject.id))
+      : null,
   ])
 
   const listedPositions = filteredPositions
@@ -193,7 +200,9 @@ export default async function SubjectDetailPage({ params, searchParams }: PagePr
           argumentsCount={subjectArguments.length}
         />
 
-        {activeTab === 'arguments' ? (
+        {activeTab === 'analyses' && familyDistribution ? (
+          <SubjectAnalyses distribution={familyDistribution} />
+        ) : activeTab === 'arguments' ? (
           <SubjectArguments
             subjectSlug={slug}
             arguments={subjectArguments}

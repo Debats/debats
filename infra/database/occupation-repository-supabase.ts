@@ -10,6 +10,8 @@ import {
 import { OccupationFamilyId } from '../../domain/entities/occupation-family'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { OccupationRepository } from '../../domain/repositories/occupation-repository'
+import { OccupationAssignment } from '../../domain/services/occupation-distribution'
+import { fetchAllRows } from './fetch-all-pages'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -28,6 +30,16 @@ interface OccupationRow {
   created_at: string
   updated_at: string
 }
+
+interface AssignmentRow {
+  public_figure_id: string
+  occupation_id: string
+}
+
+const mapAssignment = (row: AssignmentRow): OccupationAssignment => ({
+  publicFigureId: row.public_figure_id,
+  occupationId: row.occupation_id,
+})
 
 function mapRow(row: OccupationRow): Occupation {
   return Occupation.make({
@@ -161,6 +173,36 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
           return data.map((row) => row.public_figure_id)
         },
         catch: (error) => dbError('Failed to fetch public figures by occupation', error),
+      }),
+
+    findAllAssignments: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const rows = await fetchAllRows<AssignmentRow>((offset, limit) =>
+            supabase
+              .from('public_figure_occupations')
+              .select('public_figure_id, occupation_id', { count: 'exact' })
+              .order('public_figure_id')
+              .order('occupation_id')
+              .range(offset, offset + limit - 1),
+          )
+          return rows.map(mapAssignment)
+        },
+        catch: (error) => dbError('Failed to fetch occupation assignments', error),
+      }),
+
+    findAssignmentsByPublicFigureIds: (publicFigureIds) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (publicFigureIds.length === 0) return []
+          const { data, error } = await supabase
+            .from('public_figure_occupations')
+            .select('public_figure_id, occupation_id')
+            .in('public_figure_id', publicFigureIds)
+          if (error) throw error
+          return (data as AssignmentRow[]).map(mapAssignment)
+        },
+        catch: (error) => dbError('Failed to fetch occupation assignments by figures', error),
       }),
 
     setAssignments: (publicFigureId, occupationIds, createdBy) =>

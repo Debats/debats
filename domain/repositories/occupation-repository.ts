@@ -1,5 +1,6 @@
 import { Context, Effect } from 'effect'
 import { Occupation } from '../entities/occupation'
+import { OccupationAssignment } from '../services/occupation-distribution'
 import { DatabaseError } from './errors'
 
 export interface OccupationRepository {
@@ -23,6 +24,14 @@ export interface OccupationRepository {
 
   /** Every public figure holding an occupation */
   findPublicFigureIdsByOccupationId(occupationId: string): Effect.Effect<string[], DatabaseError>
+
+  /** Every (figure, occupation) link of the site, for the counters */
+  findAllAssignments(): Effect.Effect<OccupationAssignment[], DatabaseError>
+
+  /** The (figure, occupation) links of these figures */
+  findAssignmentsByPublicFigureIds(
+    publicFigureIds: string[],
+  ): Effect.Effect<OccupationAssignment[], DatabaseError>
 
   /** Replaces the set of occupations a public figure holds */
   setAssignments(
