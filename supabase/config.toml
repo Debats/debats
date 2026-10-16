@@ -92,6 +92,7 @@ objects_path = "./seed-data/avatars"
 public = true
 file_size_limit = "5MiB"
 allowed_mime_types = ["image/png", "image/jpeg"]
+objects_path = "./seed-data/logos"
 
 # ⚠️  Ce fichier configure le Supabase LOCAL uniquement.
 # La config auth de production est gérée par scripts/push-prod-auth-config.ts

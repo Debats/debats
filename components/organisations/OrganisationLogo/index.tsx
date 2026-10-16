@@ -54,6 +54,7 @@ export default function OrganisationLogo({
       height={size}
       sizes={`${size}px`}
       className={styles.logo}
+      style={{ padding: Math.round(size * 0.06) }}
       onError={() => setMissing(true)}
     />
   )

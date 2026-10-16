@@ -1,8 +1,9 @@
+/* Le retrait intérieur est posé en pixels par le composant : un pourcentage se
+   calculerait sur la largeur du conteneur, pas sur celle du logo. */
 .logo {
   border-radius: var(--radius-control);
   object-fit: contain;
   background-color: var(--card);
-  padding: 6%;
   flex: none;
 }
 
