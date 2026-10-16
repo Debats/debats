@@ -65,11 +65,11 @@ export default async function EditStatementByIdPage({ params }: PageProps) {
   const position = await Effect.runPromise(positionRepo.findById(statement.positionId))
   if (!position) notFound()
 
-  const [subject, author, positions, argumentIds] = await Promise.all([
+  const [subject, author, positions, initialArguments] = await Promise.all([
     Effect.runPromise(createSubjectRepository(supabase).findById(position.subjectId)),
     describeAuthor(supabase, statement.author),
     Effect.runPromise(positionRepo.findBySubjectId(position.subjectId)),
-    Effect.runPromise(createArgumentRepository(supabase).findIdsByStatementId(statement.id)),
+    Effect.runPromise(createArgumentRepository(supabase).findRefsByStatementId(statement.id)),
   ])
   if (!subject || !author) notFound()
 
@@ -86,9 +86,8 @@ export default async function EditStatementByIdPage({ params }: PageProps) {
         statementId={statement.id}
         returnHref={author.href}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
-        subjectId={subject.id}
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}
-        initialArgumentIds={argumentIds}
+        initialArguments={initialArguments}
         initialPositionId={statement.positionId}
         initialStatementType={statement.statementType}
         initialSourceName={statement.sourceName}

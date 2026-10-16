@@ -1,0 +1,9 @@
+.label {
+  composes: label from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.noDescription {
+  color: var(--ink-3);
+  font-style: italic;
+}

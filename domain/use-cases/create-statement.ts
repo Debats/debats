@@ -103,7 +103,6 @@ export async function createStatementUseCase(
 
   const validatedArguments = await validateStatementArguments({
     contributor,
-    subjectId,
     input: params.arguments,
     argumentRepo,
   })
@@ -136,7 +135,6 @@ export async function createStatementUseCase(
 
   await attachStatementArguments({
     contributor,
-    subjectId,
     statementId: created.id,
     validated: validatedArguments.right,
     argumentRepo,

@@ -14,7 +14,6 @@ import {
   statementsPerYear,
   themeDistribution,
 } from '../../../domain/services/figure-activity'
-import { withSubjectSlug } from '../../../domain/services/statements-by-subject'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
 import AdminMenu from '../../../components/ui/AdminMenu'
@@ -163,7 +162,7 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
           <FigureAnalyses
             themes={themeDistribution(subjectIds, primaryLinks, themes)}
             perYear={statementsPerYear(statedDates)}
-            topArguments={argumentDistribution(withSubjectSlug(statements))}
+            topArguments={argumentDistribution(statements)}
           />
         }
       >

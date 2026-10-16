@@ -46,6 +46,7 @@ const fakeStatementRepo = {
   findByOrganisationWithDetails: () => Effect.succeed([]),
   findByPublicFigureAndSubject: () => Effect.succeed([]),
   findByOrganisationAndSubject: () => Effect.succeed([]),
+  findByArgumentWithAuthors: () => Effect.succeed([]),
   findBySubjectWithAuthors: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),
   findLatestReported: () => Effect.succeed([]),
@@ -110,7 +111,7 @@ const validParams = {
 
 describe('createStatementUseCase', () => {
   it('should refuse arguments from a contributor below the Éloquent rank', async () => {
-    const argument = sampleArgument('subject-1')
+    const argument = sampleArgument()
     const result = await createStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 0 },
@@ -122,7 +123,7 @@ describe('createStatementUseCase', () => {
   })
 
   it('should link chosen arguments and create proposed ones once the statement exists', async () => {
-    const argument = sampleArgument('subject-1')
+    const argument = sampleArgument()
     const argumentRepo = fakeArgumentRepo([argument])
     const result = await createStatementUseCase({
       ...validParams,

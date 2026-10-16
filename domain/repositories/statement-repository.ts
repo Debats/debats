@@ -31,6 +31,11 @@ export interface StatementWithAuthor {
   arguments: ArgumentRef[]
 }
 
+/** Everything an argument's page needs about one statement that mobilises it */
+export interface StatementWithAuthorAndSubject extends StatementWithAuthor {
+  subject: Subject
+}
+
 export interface StatementRepository {
   findById(id: string): Effect.Effect<Statement | null, DatabaseError>
 
@@ -71,6 +76,13 @@ export interface StatementRepository {
     organisationId: string,
     subjectId: string,
   ): Effect.Effect<StatementWithDetails[], DatabaseError>
+
+  /**
+   * Get every statement mobilising an argument, with position, subject and author
+   */
+  findByArgumentWithAuthors(
+    argumentId: string,
+  ): Effect.Effect<StatementWithAuthorAndSubject[], DatabaseError>
 
   /**
    * Get all statements for a subject with their position and author

@@ -22,6 +22,7 @@ import {
   StatementRepository,
   StatementWithDetails,
   StatementWithAuthor,
+  StatementWithAuthorAndSubject,
 } from '../../domain/repositories/statement-repository'
 
 function toISODate(date: Date): string {
@@ -113,10 +114,11 @@ function toAuthorRef(
 
 /** Columns of a statement with its position and either author, as PostgREST embeds them */
 /** The arguments a statement mobilises, as PostgREST embeds them through the link table */
-const ARGUMENTS_EMBED = `argument_statements (arguments (id, title, deleted_at))`
+const ARGUMENTS_EMBED = `argument_statements (argument_id, arguments (id, title, slug, deleted_at))`
 
 interface ArgumentLinkJoin {
-  arguments: { id: string; title: string; deleted_at: string | null } | null
+  argument_id: string
+  arguments: { id: string; title: string; slug: string; deleted_at: string | null } | null
 }
 
 /** Live arguments only, by title: a soft-deleted argument keeps its links */
@@ -124,7 +126,7 @@ function toArgumentRefs(links: ArgumentLinkJoin[] | null): ArgumentRef[] {
   return (links ?? [])
     .flatMap((link) =>
       link.arguments && !link.arguments.deleted_at
-        ? [{ id: link.arguments.id, title: link.arguments.title }]
+        ? [{ id: link.arguments.id, title: link.arguments.title, slug: link.arguments.slug }]
         : [],
     )
     .sort((a, b) => a.title.localeCompare(b.title, 'fr'))
@@ -154,6 +156,34 @@ function mapStatementWithAuthorRow(row: StatementWithAuthorRow): StatementWithAu
     position: mapPositionRow(row.positions),
     author: toAuthorRef(row.public_figures, row.organisations),
     arguments: toArgumentRefs(row.argument_statements),
+  }
+}
+
+/** The author query with the subject embedded under the position: an argument's page reads it */
+const STATEMENT_WITH_AUTHOR_AND_SUBJECT_QUERY = `
+  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
+  created_by, created_at, updated_at, deleted_at,
+  positions!inner (
+    id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
+    subjects!inner (
+      id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at, deleted_at
+    )
+  ),
+  public_figures (id, name, slug),
+  organisations (id, name, slug, acronym),
+  argument_statements!inner (argument_id, arguments (id, title, slug, deleted_at))
+`
+
+interface StatementWithAuthorAndSubjectRow extends StatementWithAuthorRow {
+  positions: PositionRow & { subjects: SubjectRow }
+}
+
+function mapStatementWithAuthorAndSubjectRow(
+  row: StatementWithAuthorAndSubjectRow,
+): StatementWithAuthorAndSubject {
+  return {
+    ...mapStatementWithAuthorRow(row),
+    subject: mapSubjectRow(row.positions.subjects),
   }
 }
 
@@ -353,6 +383,24 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           return data.map(mapStatementWithDetailsRow)
         },
         catch: (error) => dbError('Failed to fetch statements for organisation and subject', error),
+      }),
+
+    findByArgumentWithAuthors: (argumentId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select(STATEMENT_WITH_AUTHOR_AND_SUBJECT_QUERY)
+            .eq('argument_statements.argument_id', argumentId)
+            .is('deleted_at', null)
+            .order('stated_at', { ascending: false })
+
+          if (error) throw error
+          return (data as unknown as StatementWithAuthorAndSubjectRow[]).map(
+            mapStatementWithAuthorAndSubjectRow,
+          )
+        },
+        catch: (error) => dbError('Failed to fetch statements mobilising an argument', error),
       }),
 
     findBySubjectWithAuthors: (subjectId: string) =>

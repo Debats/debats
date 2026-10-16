@@ -84,7 +84,6 @@ export async function updateStatementUseCase(
 
   const validatedArguments = await validateStatementArguments({
     contributor,
-    subjectId: newPosition.subjectId,
     input: params.arguments,
     argumentRepo,
   })
@@ -117,7 +116,6 @@ export async function updateStatementUseCase(
 
   await attachStatementArguments({
     contributor,
-    subjectId: newPosition.subjectId,
     statementId: saved.id,
     validated: validatedArguments.right,
     argumentRepo,

@@ -1,0 +1,118 @@
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.card {
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  padding: 0 24px;
+}
+
+.subject {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.subject:last-child {
+  border-bottom: none;
+}
+
+.subjectHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.subjectTitle,
+.subjectTitle:link,
+.subjectTitle:visited {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.subjectTitle:hover {
+  color: var(--signal);
+}
+
+.subjectCount {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.position {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.positionTitle,
+.positionTitle:link,
+.positionTitle:visited {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.positionTitle:hover {
+  color: var(--signal);
+}
+
+.entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 16px;
+  border-left: 2px solid var(--line);
+}
+
+.author,
+.author:link,
+.author:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+}
+
+.author:hover .authorName {
+  color: var(--signal);
+}
+
+.authorName {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.quote {
+  composes: quote from '../../../../styles/text.module.css';
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 0 20px;
+  }
+
+  .subjectTitle {
+    font-size: 21px;
+  }
+}

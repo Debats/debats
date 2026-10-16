@@ -23,6 +23,7 @@ export function getSubjectArgumentsSummary(
       return (data as Record<string, unknown>[]).map((row) => ({
         id: row.argument_id as string,
         title: row.title as string,
+        slug: row.slug as string,
         description: row.description as string,
         statementsCount: Number(row.statements_count),
         positions: (row.positions as ArgumentPositionCount[]) ?? [],

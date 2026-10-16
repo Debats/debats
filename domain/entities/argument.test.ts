@@ -1,30 +1,44 @@
 import { describe, it, expect } from 'vitest'
-import { createArgument, sameArgumentTitle } from './argument'
+import { createArgument, renameArgument, sameArgumentTitle } from './argument'
 
 const valid = {
-  subjectId: 'subject-1',
   title: 'Coût pour les finances publiques',
   description: 'La mesure pèserait durablement sur le budget de l’État.',
   createdBy: 'user-1',
 }
 
 describe('Argument entity', () => {
-  it('creates an argument on a subject, trimmed, with audit fields', () => {
+  it('creates a global argument with a slug and audit fields', () => {
     const argument = createArgument({ ...valid, title: '  Coût pour les finances publiques ' })
 
-    expect(argument.subjectId).toBe('subject-1')
     expect(argument.title).toBe('Coût pour les finances publiques')
+    expect(argument.slug).toBe('cout-pour-les-finances-publiques')
+    expect(argument.description).toBe(valid.description)
     expect(argument.createdBy).toBe('user-1')
     expect(argument.updatedBy).toBe('user-1')
-    expect(argument.createdAt).toBeInstanceOf(Date)
+  })
+
+  it('accepts a missing description', () => {
+    expect(createArgument({ title: 'Liberté de choix', createdBy: 'user-1' }).description).toBe('')
   })
 
   it('rejects a title shorter than 3 characters', () => {
     expect(() => createArgument({ ...valid, title: 'Ok' })).toThrow()
   })
 
-  it('rejects a description shorter than 10 characters', () => {
-    expect(() => createArgument({ ...valid, description: 'Court' })).toThrow()
+  it('renames an argument, keeping its identity and moving its slug', () => {
+    const argument = createArgument(valid)
+    const renamed = renameArgument(argument, {
+      title: 'Coût budgétaire',
+      description: '',
+      updatedBy: 'user-2',
+    })
+
+    expect(renamed.id).toBe(argument.id)
+    expect(renamed.title).toBe('Coût budgétaire')
+    expect(renamed.slug).toBe('cout-budgetaire')
+    expect(renamed.updatedBy).toBe('user-2')
+    expect(renamed.createdBy).toBe('user-1')
   })
 
   it('considers titles equal regardless of case and surrounding spaces', () => {

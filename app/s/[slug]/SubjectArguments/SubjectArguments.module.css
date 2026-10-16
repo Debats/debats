@@ -33,6 +33,15 @@
   text-wrap: pretty;
 }
 
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
 .count {
   display: flex;
   flex-direction: column;

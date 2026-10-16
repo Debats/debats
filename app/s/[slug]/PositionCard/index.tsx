@@ -90,7 +90,7 @@ function FeaturedStatement({
             </>
           )}
         </div>
-        <ArgumentChips arguments={statement.arguments} subjectSlug={subjectSlug} />
+        <ArgumentChips arguments={statement.arguments} />
       </div>
     </div>
   )
@@ -137,7 +137,7 @@ export default function PositionCard({
           moreHref={positionHref}
         />
         {used.length > 0 ? (
-          <ArgumentChips arguments={used} subjectSlug={subjectSlug} />
+          <ArgumentChips arguments={used} />
         ) : (
           <span className={styles.chip}>Aucun argument recensé</span>
         )}

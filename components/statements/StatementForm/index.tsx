@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { STATEMENT_TYPES, STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
 import { FieldErrors } from '../../../domain/use-cases/types'
+import { ArgumentRef } from '../../../domain/read-models/argument'
 import TextField from '../../ui/TextField'
 
 const Combobox = lazy(() => import('../../ui/Combobox'))
@@ -31,11 +32,9 @@ interface StatementFormProps {
   cancelHref?: string
   positions: PositionOption[]
   onSearchFigures?: (query: string) => Promise<{ id: string; label: string }[]>
-  /** Le sujet, pour proposer ses arguments ; absent, l'étape est masquée */
-  subjectId?: string
   /** Le contributeur a le rang pour mobiliser des arguments */
   canUseArguments?: boolean
-  initialArgumentIds?: string[]
+  initialArguments?: ArgumentRef[]
   initialPositionId?: string
   initialStatementType?: string
   initialSourceName?: string
@@ -52,9 +51,8 @@ export default function StatementForm({
   cancelHref,
   positions,
   onSearchFigures,
-  subjectId,
   canUseArguments = false,
-  initialArgumentIds,
+  initialArguments,
   initialPositionId = '',
   initialStatementType = 'declaration',
   initialSourceName = '',
@@ -194,14 +192,10 @@ export default function StatementForm({
         {fieldErrors?.statedAt && <span className={styles.fieldError}>{fieldErrors.statedAt}</span>}
       </div>
 
-      {subjectId && canUseArguments && (
+      {canUseArguments && (
         <div className={styles.selectField}>
           <span className={styles.selectLabel}>Arguments mobilisés</span>
-          <ArgumentsPicker
-            subjectId={subjectId}
-            initialSelectedIds={initialArgumentIds}
-            error={fieldErrors?.arguments}
-          />
+          <ArgumentsPicker initialSelected={initialArguments} error={fieldErrors?.arguments} />
         </div>
       )}
 

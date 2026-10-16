@@ -65,6 +65,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "argument_statements_argument_id_fkey"
+            columns: ["argument_id"]
+            isOneToOne: false
+            referencedRelation: "v_argument_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "argument_statements_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -87,7 +94,7 @@ export type Database = {
           deleted_at: string | null
           description: string
           id: string
-          subject_id: string
+          slug: string
           title: string
           updated_at: string
           updated_by: string
@@ -96,9 +103,9 @@ export type Database = {
           created_at?: string
           created_by: string
           deleted_at?: string | null
-          description: string
+          description?: string
           id?: string
-          subject_id: string
+          slug: string
           title: string
           updated_at?: string
           updated_by: string
@@ -109,7 +116,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string
           id?: string
-          subject_id?: string
+          slug?: string
           title?: string
           updated_at?: string
           updated_by?: string
@@ -120,20 +127,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "contributors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "arguments_subject_id_fkey"
-            columns: ["subject_id"]
-            isOneToOne: false
-            referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "arguments_subject_id_fkey"
-            columns: ["subject_id"]
-            isOneToOne: false
-            referencedRelation: "v_subject_activity_summary"
             referencedColumns: ["id"]
           },
           {
@@ -875,6 +868,17 @@ export type Database = {
       }
     }
     Views: {
+      v_argument_summary: {
+        Row: {
+          description: string | null
+          id: string | null
+          slug: string | null
+          statements_count: number | null
+          subjects_count: number | null
+          title: string | null
+        }
+        Relationships: []
+      }
       v_organisation_summary: {
         Row: {
           acronym: string | null
@@ -939,6 +943,7 @@ export type Database = {
           authors: Json
           description: string
           positions: Json
+          slug: string
           statements_count: number
           title: string
           total_authors_count: number
@@ -963,6 +968,10 @@ export type Database = {
         }[]
       }
       get_user_id_by_email: { Args: { target_email: string }; Returns: string }
+      merge_arguments: {
+        Args: { source_id: string; target_id: string }
+        Returns: undefined
+      }
       merge_positions: {
         Args: { source_id: string; target_id: string }
         Returns: undefined

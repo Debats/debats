@@ -2,11 +2,10 @@ import Link from 'next/link'
 import ComingSoon from '../../ui/ComingSoon'
 import EditLink from '../../ui/EditLink'
 import ArgumentChips from '../ArgumentChips'
+import StatementSource from '../StatementSource'
 import Segmented from '../../ui/Segmented'
 import ShowMore from '../../ui/ShowMore'
-import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
 import { SubjectGroup } from '../../../domain/services/statements-by-subject'
-import { formatShortDate } from '../../../lib/format-date'
 import styles from './StatementsBySubject.module.css'
 
 interface StatementsBySubjectProps {
@@ -60,25 +59,10 @@ export default function StatementsBySubject({
             <span className={styles.positionTitle}>{position.title}</span>
           </p>
           <blockquote className={styles.quote}>{statement.quote}</blockquote>
-          <div className={styles.source}>
-            <span className={styles.type}>{STATEMENT_TYPE_LABELS[statement.statementType]}</span>
-            {statement.sourceUrl ? (
-              <a
-                href={statement.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.sourceLink}
-              >
-                {statement.sourceName}
-              </a>
-            ) : (
-              <span className={styles.sourceLink}>{statement.sourceName}</span>
-            )}
-            <span className={styles.separator}>·</span>
-            <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
+          <StatementSource statement={statement}>
             {editHref && <EditLink href={editHref(statement.id)} />}
-          </div>
-          <ArgumentChips arguments={used} subjectSlug={subject.slug} />
+          </StatementSource>
+          <ArgumentChips arguments={used} />
         </div>
       ))}
     </article>

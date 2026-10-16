@@ -51,9 +51,9 @@ export default async function EditStatementPage({ params }: PageProps) {
   if (!statement) notFound()
   if (statement.author.kind !== 'public_figure' || statement.author.id !== figure.id) notFound()
 
-  const [positions, argumentIds] = await Promise.all([
+  const [positions, initialArguments] = await Promise.all([
     Effect.runPromise(positionRepo.findBySubjectId(subject.id)),
-    Effect.runPromise(createArgumentRepository(supabase).findIdsByStatementId(statement.id)),
+    Effect.runPromise(createArgumentRepository(supabase).findRefsByStatementId(statement.id)),
   ])
   const returnHref = `/p/${slug}/s/${subjectSlug}`
 
@@ -70,9 +70,8 @@ export default async function EditStatementPage({ params }: PageProps) {
         statementId={statement.id}
         returnHref={returnHref}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
-        subjectId={subject.id}
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}
-        initialArgumentIds={argumentIds}
+        initialArguments={initialArguments}
         initialPositionId={statement.positionId}
         initialStatementType={statement.statementType}
         initialSourceName={statement.sourceName}

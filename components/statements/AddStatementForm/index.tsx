@@ -41,7 +41,6 @@ export default function AddStatementForm({
       redirectTo={`/s/${slug}`}
       positions={positions}
       onSearchFigures={handleSearchFigures}
-      subjectId={subjectId}
       canUseArguments={canUseArguments}
     />
   )

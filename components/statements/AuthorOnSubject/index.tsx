@@ -90,7 +90,7 @@ export default function AuthorOnSubject({
                         <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
                         {editHref && <EditLink href={editHref(statement.id)} />}
                       </div>
-                      <ArgumentChips arguments={used} subjectSlug={subject.slug} />
+                      <ArgumentChips arguments={used} />
                     </div>
                   ))}
                   {allies.length > 0 && (

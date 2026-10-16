@@ -16,7 +16,6 @@ describe('validateStatementArguments', () => {
   it('accepts an empty selection from anyone', async () => {
     const result = await validateStatementArguments({
       contributor: meteque,
-      subjectId: 'subject-1',
       input: { argumentIds: [], newArguments: [] },
       argumentRepo: fakeArgumentRepo(),
     })
@@ -28,7 +27,6 @@ describe('validateStatementArguments', () => {
     const existing = sampleArgument()
     const result = await validateStatementArguments({
       contributor: meteque,
-      subjectId: 'subject-1',
       input: { argumentIds: [existing.id], newArguments: [] },
       argumentRepo: fakeArgumentRepo([existing]),
     })
@@ -36,23 +34,20 @@ describe('validateStatementArguments', () => {
     expect(Either.isLeft(result) && result.left).toContain('Éloquent')
   })
 
-  it('refuses an argument of another subject', async () => {
-    const foreign = sampleArgument('subject-2')
+  it('refuses an argument that no longer exists', async () => {
     const result = await validateStatementArguments({
       contributor: eloquent,
-      subjectId: 'subject-1',
-      input: { argumentIds: [foreign.id], newArguments: [] },
-      argumentRepo: fakeArgumentRepo([foreign]),
+      input: { argumentIds: ['gone'], newArguments: [] },
+      argumentRepo: fakeArgumentRepo(),
     })
 
-    expect(Either.isLeft(result) && result.left).toContain('sujet')
+    expect(Either.isLeft(result) && result.left).toContain('existe plus')
   })
 
   it('reports a malformed proposal as a field error', async () => {
     const result = await validateStatementArguments({
       contributor: eloquent,
-      subjectId: 'subject-1',
-      input: { argumentIds: [], newArguments: [{ title: 'Ok', description: 'Trop court' }] },
+      input: { argumentIds: [], newArguments: [{ title: 'Ok', description: '' }] },
       argumentRepo: fakeArgumentRepo(),
     })
 
@@ -62,10 +57,9 @@ describe('validateStatementArguments', () => {
   })
 
   it('reuses an existing argument when a proposal has the same title', async () => {
-    const existing = sampleArgument('subject-1', 'Liberté de choix')
+    const existing = sampleArgument('Liberté de choix')
     const result = await validateStatementArguments({
       contributor: eloquent,
-      subjectId: 'subject-1',
       input: { argumentIds: [], newArguments: [{ ...proposed, title: ' liberté de CHOIX ' }] },
       argumentRepo: fakeArgumentRepo([existing]),
     })
@@ -80,7 +74,6 @@ describe('validateStatementArguments', () => {
     const existing = sampleArgument()
     const result = await validateStatementArguments({
       contributor: eloquent,
-      subjectId: 'subject-1',
       input: {
         argumentIds: [existing.id, existing.id],
         newArguments: [proposed, { ...proposed, title: proposed.title.toUpperCase() }],
@@ -103,7 +96,6 @@ describe('attachStatementArguments', () => {
 
     const created = await attachStatementArguments({
       contributor: eloquent,
-      subjectId: 'subject-1',
       statementId: 'statement-1',
       validated: { existingIds: [existing.id], toCreate: [proposed] },
       argumentRepo,
@@ -112,7 +104,7 @@ describe('attachStatementArguments', () => {
 
     expect(created).toHaveLength(1)
     expect(created[0].title).toBe('Liberté de choix')
-    expect(created[0].subjectId).toBe('subject-1')
+    expect(created[0].slug).toBe('liberte-de-choix')
     expect(argumentRepo.links.get('statement-1')).toEqual([existing.id, created[0].id])
     expect(reputationRepo.events.map((e) => e.action)).toEqual([
       'added_argument_validated',

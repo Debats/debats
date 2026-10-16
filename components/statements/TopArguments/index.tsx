@@ -1,15 +1,15 @@
 import Link from 'next/link'
+import { argumentHref, ArgumentRef } from '../../../domain/read-models/argument'
 import { ArgumentCount } from '../../../domain/services/figure-activity'
-import { argumentHref } from '../ArgumentChips'
 import styles from './TopArguments.module.css'
 
 interface TopArgumentsProps {
-  arguments: ArgumentCount<{ id: string; title: string; subjectSlug: string }>[]
+  arguments: ArgumentCount<ArgumentRef>[]
   /** « cette personnalité », « cette organisation » */
   who: string
 }
 
-/** Encart du rail : les arguments qu'un auteur mobilise le plus, en barres. */
+/** Encart du rail : les arguments qu'un auteur mobilise le plus, tous sujets confondus. */
 export default function TopArguments({ arguments: top, who }: TopArgumentsProps) {
   const max = top[0]?.count ?? 0
 
@@ -24,7 +24,7 @@ export default function TopArguments({ arguments: top, who }: TopArgumentsProps)
         <ul className={styles.bars}>
           {top.map(({ argument, count }) => (
             <li key={argument.id} className={styles.bar}>
-              <Link href={argumentHref(argument.subjectSlug, argument.id)} className={styles.label}>
+              <Link href={argumentHref(argument)} className={styles.label}>
                 {argument.title}
               </Link>
               <div className={styles.track}>

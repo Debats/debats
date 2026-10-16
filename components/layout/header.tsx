@@ -21,6 +21,7 @@ const navEntries: NavEntry[] = [
   { label: 'Sujets', href: '/s' },
   { label: 'Personnalités', href: '/p' },
   { label: 'Organisations', href: '/o' },
+  { label: 'Arguments', href: '/arguments' },
   { label: 'Prises de position' },
   { label: 'Méthode', href: '/guide' },
 ]

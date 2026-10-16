@@ -48,6 +48,7 @@ const fakeStatementRepo = {
   findByOrganisationWithDetails: () => Effect.succeed([]),
   findByPublicFigureAndSubject: () => Effect.succeed([]),
   findByOrganisationAndSubject: () => Effect.succeed([]),
+  findByArgumentWithAuthors: () => Effect.succeed([]),
   findBySubjectWithAuthors: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),
   findLatestReported: () => Effect.succeed([]),
@@ -89,7 +90,7 @@ const validParams = {
 
 describe('updateStatementUseCase', () => {
   it('should replace the arguments the statement mobilises', async () => {
-    const kept = sampleArgument('subject-1', 'Coût budgétaire')
+    const kept = sampleArgument('Coût budgétaire')
     const argumentRepo = fakeArgumentRepo([kept])
     argumentRepo.links.set(existingStatement.id, ['old-argument'])
 

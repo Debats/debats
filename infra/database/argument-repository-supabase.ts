@@ -1,7 +1,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Argument, ArgumentId, ArgumentTitle } from '../../domain/entities/argument'
+import { Argument, ArgumentId, ArgumentSlug, ArgumentTitle } from '../../domain/entities/argument'
+import { ArgumentRef, ArgumentSuggestion, ArgumentSummary } from '../../domain/read-models/argument'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { ArgumentRepository } from '../../domain/repositories/argument-repository'
 
@@ -13,8 +14,8 @@ function dbError(message: string, error: unknown): DatabaseError {
 
 interface ArgumentRow {
   id: string
-  subject_id: string
   title: string
+  slug: string
   description: string
   created_by: string
   updated_by: string
@@ -22,11 +23,20 @@ interface ArgumentRow {
   updated_at: string
 }
 
+interface SummaryRow {
+  id: string
+  title: string
+  slug: string
+  description: string
+  statements_count: number | null
+  subjects_count: number | null
+}
+
 function mapRow(row: ArgumentRow): Argument {
   return Argument.make({
     id: ArgumentId.make(row.id),
-    subjectId: row.subject_id,
     title: ArgumentTitle.make(row.title),
+    slug: ArgumentSlug.make(row.slug),
     description: row.description,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
@@ -35,19 +45,38 @@ function mapRow(row: ArgumentRow): Argument {
   })
 }
 
+const mapSummary = (row: SummaryRow): ArgumentSummary => ({
+  id: row.id,
+  title: row.title,
+  slug: row.slug,
+  description: row.description,
+  statementsCount: row.statements_count ?? 0,
+  subjectsCount: row.subjects_count ?? 0,
+})
+
 export function createArgumentRepository(supabase: SupabaseClient): ArgumentRepository {
   const live = () => supabase.from('arguments').select('*').is('deleted_at', null)
 
+  const findOne = (
+    apply: (q: ReturnType<typeof live>) => ReturnType<typeof live>,
+    message: string,
+  ) =>
+    Effect.tryPromise({
+      try: async () => {
+        const { data, error } = await apply(live()).maybeSingle()
+        if (error) throw error
+        return data ? mapRow(data) : null
+      },
+      catch: (error) => dbError(message, error),
+    })
+
   return {
-    findBySubjectId: (subjectId) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await live().eq('subject_id', subjectId).order('created_at')
-          if (error) throw error
-          return data.map(mapRow)
-        },
-        catch: (error) => dbError('Failed to fetch subject arguments', error),
-      }),
+    findById: (id) => findOne((q) => q.eq('id', id), 'Failed to fetch argument'),
+
+    findBySlug: (slug) => findOne((q) => q.eq('slug', slug), 'Failed to fetch argument by slug'),
+
+    findByTitle: (title) =>
+      findOne((q) => q.ilike('title', title.trim()), 'Failed to fetch argument by title'),
 
     findByIds: (ids) =>
       Effect.tryPromise({
@@ -60,15 +89,61 @@ export function createArgumentRepository(supabase: SupabaseClient): ArgumentRepo
         catch: (error) => dbError('Failed to fetch arguments by ids', error),
       }),
 
-    findIdsByStatementId: (statementId) =>
+    search: (query, limit = 8) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('v_argument_summary')
+            .select('*')
+            .ilike('title', `%${query.trim()}%`)
+            .order('statements_count', { ascending: false })
+            .order('title')
+            .limit(limit)
+          if (error) throw error
+          return (data as SummaryRow[]).map(
+            (row): ArgumentSuggestion => ({
+              id: row.id,
+              title: row.title,
+              slug: row.slug,
+              statementsCount: row.statements_count ?? 0,
+            }),
+          )
+        },
+        catch: (error) => dbError('Failed to search arguments', error),
+      }),
+
+    findSummaries: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('v_argument_summary')
+            .select('*')
+            .order('statements_count', { ascending: false })
+            .order('title')
+          if (error) throw error
+          return (data as SummaryRow[]).map(mapSummary)
+        },
+        catch: (error) => dbError('Failed to fetch argument summaries', error),
+      }),
+
+    findRefsByStatementId: (statementId) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('argument_statements')
-            .select('argument_id')
+            .select('arguments!inner (id, title, slug, deleted_at)')
             .eq('statement_id', statementId)
+            .is('arguments.deleted_at', null)
           if (error) throw error
-          return data.map((row) => row.argument_id as string)
+          return (data as unknown as Array<{ arguments: ArgumentRef }>)
+            .map(
+              (row): ArgumentRef => ({
+                id: row.arguments.id,
+                title: row.arguments.title,
+                slug: row.arguments.slug,
+              }),
+            )
+            .sort((a, b) => a.title.localeCompare(b.title, 'fr'))
         },
         catch: (error) => dbError('Failed to fetch statement arguments', error),
       }),
@@ -80,8 +155,8 @@ export function createArgumentRepository(supabase: SupabaseClient): ArgumentRepo
             .from('arguments')
             .insert({
               id: argument.id,
-              subject_id: argument.subjectId,
               title: argument.title,
+              slug: argument.slug,
               description: argument.description,
               created_by: argument.createdBy,
               updated_by: argument.updatedBy,
@@ -92,6 +167,26 @@ export function createArgumentRepository(supabase: SupabaseClient): ArgumentRepo
           return mapRow(data)
         },
         catch: (error) => dbError('Failed to create argument', error),
+      }),
+
+    update: (argument) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('arguments')
+            .update({
+              title: argument.title,
+              slug: argument.slug,
+              description: argument.description,
+              updated_by: argument.updatedBy,
+            })
+            .eq('id', argument.id)
+            .select()
+            .single()
+          if (error) throw error
+          return mapRow(data)
+        },
+        catch: (error) => dbError('Failed to update argument', error),
       }),
 
     setStatementArguments: (statementId, argumentIds, createdBy) =>
@@ -115,6 +210,30 @@ export function createArgumentRepository(supabase: SupabaseClient): ArgumentRepo
           if (insertError) throw insertError
         },
         catch: (error) => dbError('Failed to set statement arguments', error),
+      }),
+
+    mergeInto: (sourceId, targetId) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase.rpc('merge_arguments', {
+            source_id: sourceId,
+            target_id: targetId,
+          })
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to merge arguments', error),
+      }),
+
+    delete: (id) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase
+            .from('arguments')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id)
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to delete argument', error),
       }),
   }
 }

@@ -1,0 +1,39 @@
+.source {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.type {
+  composes: label from '../../../styles/text.module.css';
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  font-size: 11px;
+}
+
+.sourceLink {
+  composes: meta from '../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+a.sourceLink:link,
+a.sourceLink:visited {
+  color: var(--ink-2);
+}
+
+a.sourceLink:hover {
+  color: var(--signal);
+}
+
+.separator {
+  color: var(--line-2);
+}
+
+.date {
+  composes: meta from '../../../styles/text.module.css';
+}

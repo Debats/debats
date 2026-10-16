@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { argumentsByPosition, isPolarisingArgument, SubjectArgumentSummary } from './argument'
+import {
+  argumentHref,
+  argumentsByPosition,
+  isPolarisingArgument,
+  SubjectArgumentSummary,
+} from './argument'
 
 const summary = (
   id: string,
@@ -8,6 +13,7 @@ const summary = (
 ): SubjectArgumentSummary => ({
   id,
   title,
+  slug: id,
   description: 'Description.',
   statementsCount: positions.reduce((sum, p) => sum + p.statementsCount, 0),
   positions: positions.map((p) => ({ ...p, title: p.id, slug: p.id })),
@@ -40,10 +46,16 @@ describe('arguments read model', () => {
     ])
 
     expect(byPosition.get('pour')).toEqual([
-      { id: 'a', title: 'Dignité' },
-      { id: 'b', title: 'Liberté' },
+      { id: 'a', title: 'Dignité', slug: 'a' },
+      { id: 'b', title: 'Liberté', slug: 'b' },
     ])
-    expect(byPosition.get('contre')).toEqual([{ id: 'a', title: 'Dignité' }])
+    expect(byPosition.get('contre')).toEqual([{ id: 'a', title: 'Dignité', slug: 'a' }])
     expect(byPosition.get('autre')).toBeUndefined()
+  })
+
+  it('links an argument to its page', () => {
+    expect(argumentHref({ slug: 'dignite-de-la-personne' })).toBe(
+      '/arguments/dignite-de-la-personne',
+    )
   })
 })

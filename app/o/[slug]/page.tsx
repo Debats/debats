@@ -7,10 +7,7 @@ import { createOrganisationMembershipRepository } from '../../../infra/database/
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
-import {
-  groupStatementsBySubject,
-  withSubjectSlug,
-} from '../../../domain/services/statements-by-subject'
+import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
 import { argumentDistribution } from '../../../domain/services/figure-activity'
 import TopArguments from '../../../components/statements/TopArguments'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
@@ -141,10 +138,7 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
               canAffiliate={canAffiliate}
               canRemove={canRemove}
             />
-            <TopArguments
-              arguments={argumentDistribution(withSubjectSlug(statements))}
-              who="cette organisation"
-            />
+            <TopArguments arguments={argumentDistribution(statements)} who="cette organisation" />
           </>
         }
       >

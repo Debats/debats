@@ -19,13 +19,13 @@ export interface HeroStat {
 interface DetailHeroProps {
   /** Libellé et pastilles au-dessus du titre */
   kicker: ReactNode
-  /** Avatar ou logo à gauche du titre */
-  media: ReactNode
+  /** Avatar ou logo à gauche du titre ; absent pour une notion sans visuel (argument) */
+  media?: ReactNode
   title: string
   /** Complément affiché à côté du titre (sigle, menu d'administration…) */
   titleAside?: ReactNode
-  presentation: string
-  links: ExternalLink[]
+  presentation: ReactNode
+  links?: ExternalLink[]
   stats: HeroStat[]
   /** Action principale et partage */
   actions: ReactNode
@@ -38,7 +38,7 @@ export default function DetailHero({
   title,
   titleAside,
   presentation,
-  links,
+  links = [],
   stats,
   actions,
 }: DetailHeroProps) {

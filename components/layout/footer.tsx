@@ -95,6 +95,8 @@ export default async function Footer() {
             links={[
               { href: '/s', label: 'Sujets' },
               { href: '/p', label: 'Personnalités' },
+              { href: '/o', label: 'Organisations' },
+              { href: '/arguments', label: 'Arguments' },
               { href: '/themes', label: 'Thématiques' },
             ]}
           />

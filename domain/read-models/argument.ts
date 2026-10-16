@@ -4,6 +4,19 @@ import { StatementAuthorRef } from './statement-author'
 export interface ArgumentRef {
   id: string
   title: string
+  slug: string
+}
+
+/** An argument offered by the form's autocomplete, with how much it is used */
+export interface ArgumentSuggestion extends ArgumentRef {
+  statementsCount: number
+}
+
+/** Read model of the arguments index */
+export interface ArgumentSummary extends ArgumentRef {
+  description: string
+  statementsCount: number
+  subjectsCount: number
 }
 
 /** A position that mobilises an argument, with how many statements do */
@@ -14,10 +27,8 @@ export interface ArgumentPositionCount {
   statementsCount: number
 }
 
-/** Read model of the subject's Arguments tab */
-export interface SubjectArgumentSummary {
-  id: string
-  title: string
+/** Read model of a subject's Arguments tab */
+export interface SubjectArgumentSummary extends ArgumentRef {
   description: string
   statementsCount: number
   /** Most mobilising position first */
@@ -27,7 +38,7 @@ export interface SubjectArgumentSummary {
   authors: StatementAuthorRef[]
 }
 
-/** An argument mobilised by statements of more than one position */
+/** On this subject, the argument is mobilised by statements of more than one position */
 export const isPolarisingArgument = (argument: SubjectArgumentSummary): boolean =>
   argument.positions.length > 1
 
@@ -39,9 +50,12 @@ export function argumentsByPosition(
   for (const summary of summaries) {
     for (const position of summary.positions) {
       const list = byPosition.get(position.id) ?? []
-      list.push({ id: summary.id, title: summary.title })
+      list.push({ id: summary.id, title: summary.title, slug: summary.slug })
       byPosition.set(position.id, list)
     }
   }
   return byPosition
 }
+
+/** The page of an argument */
+export const argumentHref = (argument: { slug: string }): string => `/arguments/${argument.slug}`

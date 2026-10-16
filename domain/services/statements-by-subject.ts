@@ -9,13 +9,6 @@ export interface SubjectGroup {
   }>
 }
 
-/** Each argument tagged with the slug of its subject, to link to it from any page */
-export function withSubjectSlug(statements: StatementWithDetails[]) {
-  return statements.map(({ subject, arguments: used }) => ({
-    arguments: used.map((argument) => ({ ...argument, subjectSlug: subject.slug })),
-  }))
-}
-
 /** Groups an author's statements by subject, the most recently documented subject first. */
 export function groupStatementsBySubject(statements: StatementWithDetails[]): SubjectGroup[] {
   const groups = new Map<string, SubjectGroup>()

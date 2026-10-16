@@ -2,6 +2,7 @@ import Link from 'next/link'
 import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarStack'
 import Button from '../../../../components/ui/Button'
 import {
+  argumentHref,
   isPolarisingArgument,
   SubjectArgumentSummary,
 } from '../../../../domain/read-models/argument'
@@ -33,7 +34,11 @@ export default function SubjectArguments({
           {list.map((argument) => (
             <article key={argument.id} id={`argument-${argument.id}`} className={styles.card}>
               <div className={styles.head}>
-                <h3 className={styles.title}>{argument.title}</h3>
+                <h3 className={styles.title}>
+                  <Link href={argumentHref(argument)} className={styles.titleLink}>
+                    {argument.title}
+                  </Link>
+                </h3>
                 <p className={styles.count}>
                   <span className={styles.countValue}>{argument.statementsCount}</span>
                   <span className={styles.countLabel}>

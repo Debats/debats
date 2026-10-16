@@ -456,11 +456,11 @@ export default function NewStatementForm({
             <span className={styles.step}>4</span> Arguments mobilisés
           </legend>
           <p className={styles.hint}>
-            Cochez les arguments réellement présents dans la citation : on cartographie les
-            raisonnements, pas seulement les camps. Un argument doit être explicitement mobilisé et
-            répondre à la problématique du sujet.
+            Nommez les arguments réellement présents dans la citation : on cartographie les
+            raisonnements, pas seulement les camps. Un argument est un principe ou un raisonnement
+            qui peut servir sur plusieurs sujets, ex : « Dignité de la personne ».
           </p>
-          <ArgumentsPicker subjectId={selectedSubjectId} error={fieldErrors?.arguments} />
+          <ArgumentsPicker error={fieldErrors?.arguments} />
         </fieldset>
       ) : (
         <div className={styles.section}>

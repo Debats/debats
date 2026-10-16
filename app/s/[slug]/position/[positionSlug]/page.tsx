@@ -215,7 +215,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                         <span className={styles.sourceLink}>{statement.sourceName}</span>
                       )}
                     </div>
-                    <ArgumentChips arguments={used} subjectSlug={slug} />
+                    <ArgumentChips arguments={used} />
                   </div>
                 </article>
               ))}

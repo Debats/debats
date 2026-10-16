@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import TopArguments from '../../../../components/statements/TopArguments'
+import { ArgumentRef } from '../../../../domain/read-models/argument'
 import { ArgumentCount, ThemeCount, YearCount } from '../../../../domain/services/figure-activity'
 import styles from './FigureAnalyses.module.css'
 
 interface FigureAnalysesProps {
   themes: ThemeCount[]
   perYear: YearCount[]
-  topArguments: ArgumentCount<{ id: string; title: string; subjectSlug: string }>[]
+  topArguments: ArgumentCount<ArgumentRef>[]
 }
 
 const CHART = { width: 340, height: 120, top: 22, bottom: 30, gap: 12, maxBar: 22 }
