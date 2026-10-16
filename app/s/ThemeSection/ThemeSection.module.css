@@ -1,0 +1,75 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* En-tête collant (64px) et barre des thématiques (~59px) */
+  scroll-margin-top: 132px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.naming {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.title {
+  composes: display from '../../../styles/text.module.css';
+  font-size: 32px;
+}
+
+.titleLink,
+.titleLink:link,
+.titleLink:visited {
+  color: var(--ink);
+}
+
+.titleLink:hover {
+  color: var(--signal);
+}
+
+.description {
+  composes: small from '../../../styles/text.module.css';
+}
+
+.count {
+  composes: meta from '../../../styles/text.module.css';
+  white-space: nowrap;
+}
+
+.count:link,
+.count:visited {
+  color: var(--ink-3);
+}
+
+.count:hover {
+  color: var(--signal);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .section {
+    scroll-margin-top: 118px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,46 +5,8 @@
   border-radius: var(--radius-card);
 }
 
-.themeSection {
-  margin-bottom: 40px;
-}
-
-.themeSectionHeader {
+.sections {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.themeSectionTitle {
-  composes: title from '../../styles/text.module.css';
-}
-
-.themeSectionSeeAll,
-.themeSectionSeeAll:link,
-.themeSectionSeeAll:visited {
-  font-size: 13px;
-  color: var(--signal);
-  white-space: nowrap;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  text-decoration-color: rgba(227, 36, 63, 0.4);
-}
-
-.themeSectionSeeAll:hover {
-  text-decoration-color: var(--signal);
-}
-
-.subjectList {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-@media (max-width: 768px) {
-  .subjectList {
-    grid-template-columns: 1fr;
-  }
+  flex-direction: column;
+  gap: 48px;
 }

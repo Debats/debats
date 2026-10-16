@@ -8,6 +8,7 @@ import {
   SubjectActivitySummary,
   SubjectRepository,
 } from '../../domain/repositories/subject-repository'
+import { SubjectIndexEntry } from '../../domain/read-models/subject-index'
 import { Database } from '../../types/database.types'
 import { fetchAllRows } from './fetch-all-pages'
 
@@ -233,6 +234,21 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         catch: (error) => dbError('Failed to fetch subject summaries by ids', error),
       }),
 
+    findIndexEntries: () =>
+      Effect.tryPromise({
+        try: async () => {
+          const rows = await fetchAllRows<Record<string, unknown>>((offset, limit) =>
+            supabase
+              .from('v_subject_index_summary')
+              .select('*', { count: 'exact' })
+              .order('title')
+              .range(offset, offset + limit - 1),
+          )
+          return rows.map(mapIndexRow)
+        },
+        catch: (error) => dbError('Failed to fetch the subjects index', error),
+      }),
+
     findAllIds: () =>
       Effect.tryPromise({
         try: async () => {
@@ -271,6 +287,20 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         },
         catch: (error) => dbError('Failed to fetch unthemed subject ids', error),
       }),
+  }
+}
+
+function mapIndexRow(row: Record<string, unknown>): SubjectIndexEntry {
+  return {
+    ...mapSummaryRow(row),
+    primaryTheme: row.theme_id
+      ? {
+          id: row.theme_id as string,
+          name: row.theme_name as string,
+          slug: row.theme_slug as string,
+          description: row.theme_description as string,
+        }
+      : null,
   }
 }
 

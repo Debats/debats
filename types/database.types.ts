@@ -480,6 +480,13 @@ export type Database = {
             referencedRelation: "v_subject_activity_summary"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "positions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_subject_index_summary"
+            referencedColumns: ["id"]
+          },
         ]
       }
       public_figures: {
@@ -574,6 +581,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "related_subjects_subject_id_1_fkey"
+            columns: ["subject_id_1"]
+            isOneToOne: false
+            referencedRelation: "v_subject_index_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "related_subjects_subject_id_2_fkey"
             columns: ["subject_id_2"]
             isOneToOne: false
@@ -585,6 +599,13 @@ export type Database = {
             columns: ["subject_id_2"]
             isOneToOne: false
             referencedRelation: "v_subject_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "related_subjects_subject_id_2_fkey"
+            columns: ["subject_id_2"]
+            isOneToOne: false
+            referencedRelation: "v_subject_index_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -763,11 +784,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "subject_themes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_subject_index_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "subject_themes_theme_id_fkey"
             columns: ["theme_id"]
             isOneToOne: false
             referencedRelation: "themes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_themes_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "v_subject_index_summary"
+            referencedColumns: ["theme_id"]
           },
         ]
       }
@@ -921,6 +956,37 @@ export type Database = {
           public_figures_count: number | null
           slug: string | null
           statements_count: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_subject_index_summary: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          figures: Json | null
+          id: string | null
+          latest_statement_at: string | null
+          picture_url: string | null
+          positions_count: number | null
+          presentation: string | null
+          problem: string | null
+          public_figures_count: number | null
+          slug: string | null
+          statements_count: number | null
+          theme_description: string | null
+          theme_id: string | null
+          theme_name: string | null
+          theme_slug: string | null
           title: string | null
           updated_at: string | null
         }

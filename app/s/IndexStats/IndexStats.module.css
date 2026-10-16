@@ -1,0 +1,33 @@
+.stats {
+  margin: 0;
+  display: flex;
+  gap: 28px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.value {
+  composes: number from '../../../styles/text.module.css';
+  margin: 0;
+}
+
+.label {
+  composes: label from '../../../styles/text.module.css';
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  max-width: 96px;
+}
+
+@media (max-width: 768px) {
+  .stats {
+    gap: 20px;
+  }
+
+  .value {
+    font-size: 32px;
+  }
+}

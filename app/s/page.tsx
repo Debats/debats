@@ -1,148 +1,59 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
-import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import { canPerform } from '../../domain/reputation/permissions'
-import { SubjectActivitySummary } from '../../domain/repositories/subject-repository'
+import { groupSubjectsByTheme, subjectIndexTotals } from '../../domain/read-models/subject-index'
 import Button from '../../components/ui/Button'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
-import SubjectCard from '../../components/subjects/SubjectCard'
 import SubjectSearch from '../../components/subjects/SubjectSearch'
+import IndexStats from './IndexStats'
+import ThemeBar from './ThemeBar'
+import ThemeSection from './ThemeSection'
+import { themeSectionAnchor } from './theme-section-anchor'
 import styles from './subjects.module.css'
-
-/** Un nombre pair, pour remplir la grille à deux colonnes */
-const SUBJECTS_PER_THEME = 6
 
 export const metadata: Metadata = {
   title: 'Sujets',
   description:
-    'Tous les sujets de débat référencés sur Débats.co avec les positions et personnalités associées.',
-}
-
-interface ThemeSection {
-  themeId: string
-  themeName: string
-  themeSlug: string
-  subjects: SubjectActivitySummary[]
-  totalCount: number
-}
-
-function SubjectCardList({ subjects }: { subjects: SubjectActivitySummary[] }) {
-  return (
-    <div className={styles.subjectList}>
-      {subjects.map((subject) => (
-        <SubjectCard key={subject.id} subject={subject} />
-      ))}
-    </div>
-  )
+    'Tous les sujets de débat référencés sur Débats.co, thématique par thématique, avec les positions et personnalités associées.',
 }
 
 export default async function SubjectsPage() {
   const supabase = createAdminSupabaseClient()
-  const subjectRepo = createSubjectRepository(supabase)
-  const themeRepo = createThemeRepository(supabase)
 
-  const contributor = await getAuthenticatedContributor()
-  const canAddSubject = contributor ? canPerform(contributor.reputation, 'add_subject') : false
-
-  const [themes, primaryLinks, unthemedIds] = await Promise.all([
-    Effect.runPromise(themeRepo.findAll()),
-    Effect.runPromise(themeRepo.findAllPrimaryLinks()),
-    Effect.runPromise(subjectRepo.findIdsWithoutPrimaryTheme()),
+  const [entries, contributor] = await Promise.all([
+    Effect.runPromise(createSubjectRepository(supabase).findIndexEntries()),
+    getAuthenticatedContributor(),
   ])
-
-  const subjectIdsByTheme = new Map<string, string[]>()
-  for (const link of primaryLinks) {
-    const ids = subjectIdsByTheme.get(link.themeId) ?? []
-    ids.push(link.subjectId)
-    subjectIdsByTheme.set(link.themeId, ids)
-  }
-
-  const allNeededIds = [...primaryLinks.map((l) => l.subjectId), ...unthemedIds]
-  const summaries =
-    allNeededIds.length > 0
-      ? await Effect.runPromise(subjectRepo.findSummariesByIds(allNeededIds))
-      : []
-
-  const summaryMap = new Map(summaries.map((s) => [s.id, s]))
-
-  const unthemedSubjects = unthemedIds
-    .map((id) => summaryMap.get(id))
-    .filter((s): s is SubjectActivitySummary => s !== undefined)
-    .sort((a, b) => b.statementsCount - a.statementsCount)
-
-  const sections: ThemeSection[] = themes
-    .map((theme) => {
-      const subjectIds = subjectIdsByTheme.get(theme.id) ?? []
-      const themeSubjects = subjectIds
-        .map((id) => summaryMap.get(id))
-        .filter((s): s is SubjectActivitySummary => s !== undefined)
-        .sort((a, b) => b.statementsCount - a.statementsCount)
-
-      return {
-        themeId: theme.id,
-        themeName: theme.name,
-        themeSlug: theme.slug,
-        subjects: themeSubjects.slice(0, SUBJECTS_PER_THEME),
-        totalCount: themeSubjects.length,
-      }
-    })
-    .filter((s) => s.subjects.length > 0)
-    .sort((a, b) => b.totalCount - a.totalCount)
+  const canAddSubject = !!contributor && canPerform(contributor.reputation, 'add_subject')
+  const sections = groupSubjectsByTheme(entries)
 
   return (
     <>
       <PageHero
         kicker="Explorer"
         title="Les sujets"
-        intro="Chaque sujet pose une question qui divise, et rassemble les positions qu'on y trouve, avec les personnalités qui les défendent."
+        intro="Chaque sujet pose une question qui divise, et rassemble les positions qu'on y trouve, avec les personnalités et les organisations qui les défendent."
+        aside={<IndexStats totals={subjectIndexTotals(entries)} />}
         actions={canAddSubject && <Button href="/s/ajouter">Ajouter un sujet</Button>}
       >
         <SubjectSearch />
       </PageHero>
 
+      {sections.length > 0 && <ThemeBar sections={sections} />}
+
       <ContentWithSidebar topMargin>
-        {sections.length === 0 && unthemedSubjects.length === 0 ? (
+        {sections.length === 0 ? (
           <p className={styles.empty}>Aucun sujet pour le moment.</p>
         ) : (
-          <>
+          <div className={styles.sections}>
             {sections.map((section) => (
-              <section key={section.themeId} className={styles.themeSection}>
-                <div className={styles.themeSectionHeader}>
-                  <h2 className={styles.themeSectionTitle}>{section.themeName}</h2>
-                  {section.totalCount > SUBJECTS_PER_THEME && (
-                    <Link
-                      href={`/themes/${section.themeSlug}`}
-                      className={styles.themeSectionSeeAll}
-                    >
-                      Voir les {section.totalCount} sujets →
-                    </Link>
-                  )}
-                </div>
-
-                <SubjectCardList subjects={section.subjects} />
-              </section>
+              <ThemeSection key={themeSectionAnchor(section)} section={section} />
             ))}
-
-            {unthemedSubjects.length > 0 && (
-              <section className={styles.themeSection}>
-                <div className={styles.themeSectionHeader}>
-                  <h2 className={styles.themeSectionTitle}>Autres sujets</h2>
-                  {unthemedSubjects.length > SUBJECTS_PER_THEME && (
-                    <Link href="/themes/autres" className={styles.themeSectionSeeAll}>
-                      Voir les {unthemedSubjects.length} sujets →
-                    </Link>
-                  )}
-                </div>
-
-                <SubjectCardList subjects={unthemedSubjects.slice(0, SUBJECTS_PER_THEME)} />
-              </section>
-            )}
-          </>
+          </div>
         )}
       </ContentWithSidebar>
     </>

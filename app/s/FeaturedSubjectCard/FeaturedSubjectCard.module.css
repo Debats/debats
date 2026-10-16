@@ -1,0 +1,80 @@
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  padding: 24px 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  transition: box-shadow 0.15s ease;
+}
+
+.card:link,
+.card:visited,
+.card:hover {
+  color: var(--ink);
+}
+
+.card:hover {
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.kicker {
+  composes: label from '../../../styles/text.module.css';
+  font-size: 11px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1.15;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.problem {
+  composes: voice from '../../../styles/text.module.css';
+  font-size: 19px;
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .problem {
+    font-size: 17px;
+  }
+
+  .aside {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}

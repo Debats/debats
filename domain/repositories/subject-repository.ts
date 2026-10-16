@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import { Subject } from '../entities/subject'
+import { SubjectIndexEntry } from '../read-models/subject-index'
 import { SubjectStats } from '../value-objects/subject-stats'
 import { DatabaseError } from './errors'
 
@@ -46,6 +47,8 @@ export interface SubjectRepository {
   findSummariesByCreatedAt(limit: number): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   findSummaryById(id: string): Effect.Effect<SubjectActivitySummary | null, DatabaseError>
   findSummariesByIds(ids: string[]): Effect.Effect<SubjectActivitySummary[], DatabaseError>
+  /** Every live subject with its activity and primary theme: the subjects index */
+  findIndexEntries(): Effect.Effect<SubjectIndexEntry[], DatabaseError>
   findAllIds(): Effect.Effect<string[], DatabaseError>
   findIdsWithoutPrimaryTheme(): Effect.Effect<string[], DatabaseError>
 }

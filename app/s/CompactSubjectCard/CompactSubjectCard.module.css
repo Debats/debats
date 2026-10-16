@@ -1,0 +1,36 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  transition: box-shadow 0.15s ease;
+}
+
+.card:link,
+.card:visited,
+.card:hover {
+  color: var(--ink);
+}
+
+.card:hover {
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.card:hover .title {
+  color: var(--signal);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.2;
+  color: var(--ink);
+  text-wrap: pretty;
+  transition: color 0.15s ease;
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+}
