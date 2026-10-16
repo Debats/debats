@@ -7,6 +7,8 @@
  * read it here from the signature instead of trusting the claim.
  */
 
+import { Either } from 'effect'
+
 /** The image formats the site identifies. */
 export type ImageFormat = 'jpeg' | 'png' | 'webp'
 
@@ -37,4 +39,23 @@ const matches = (bytes: Uint8Array, signature: ReadonlyArray<number | null>): bo
 export function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
   const found = SIGNATURES.find(([, signature]) => matches(bytes, signature))
   return found ? found[0] : null
+}
+
+/**
+ * Formats a contribution may use for a photo or a logo. They are re-encoded
+ * before storage, so this says what we can read, not what we keep.
+ */
+const UPLOADABLE_FORMATS: ReadonlyArray<ImageFormat> = ['jpeg', 'png', 'webp']
+
+const UPLOADABLE_FORMAT_NAMES = 'JPEG, PNG ou WebP'
+
+/** Accepts an uploaded image on its signature, or explains the refusal to the contributor. */
+export function validateUploadedImage(bytes: Uint8Array): Either.Either<void, string> {
+  const format = detectImageFormat(bytes)
+
+  if (format === null || !UPLOADABLE_FORMATS.includes(format)) {
+    return Either.left(`Le fichier doit être une image ${UPLOADABLE_FORMAT_NAMES}.`)
+  }
+
+  return Either.right(undefined)
 }

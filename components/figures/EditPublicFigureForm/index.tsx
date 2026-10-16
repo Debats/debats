@@ -154,7 +154,7 @@ export default function EditPublicFigureForm({
             id="photo"
             name="photo"
             type="file"
-            accept="image/jpeg,image/png"
+            accept="image/jpeg,image/png,image/webp"
             ref={photoInputRef}
             onChange={handlePhotoChange}
           />

@@ -1,9 +1,14 @@
 'use server'
 
-import * as Sentry from '@sentry/nextjs'
-import sharp from 'sharp'
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import {
+  AvatarStorageError,
+  moveFigureAvatar,
+  removeFigureAvatar,
+  uploadFigureAvatar,
+} from '../../infra/storage/figure-avatar'
+import { readUploadedImage } from './read-uploaded-image'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
@@ -67,45 +72,25 @@ export async function updatePublicFigureAction(
   const hasNewPhoto = photoFile && photoFile.size > 0
 
   if (hasNewPhoto) {
-    const storagePath = `${newSlug}.jpg`
-    const rawBuffer = Buffer.from(await photoFile.arrayBuffer())
-    const resizedBuffer = await sharp(rawBuffer)
-      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer()
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(storagePath, resizedBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true,
-      })
+    const photo = await readUploadedImage(photoFile)
+    if (Either.isLeft(photo)) {
+      return { success: false, fieldErrors: { photo: photo.left } }
+    }
 
-    if (uploadError) {
-      Sentry.captureException(new Error(`Avatar upload failed: ${uploadError.message}`), {
-        extra: { storagePath },
-      })
-      return {
-        success: false,
-        error: "L'upload de la photo a échoué. Veuillez réessayer.",
+    try {
+      await uploadFigureAvatar(supabase, newSlug, photo.right)
+    } catch (error) {
+      if (error instanceof AvatarStorageError) {
+        return { success: false, error: "L'upload de la photo a échoué. Veuillez réessayer." }
       }
+      throw error
+    }
+
+    if (slugChanged) {
+      await removeFigureAvatar(supabase, oldSlug)
     }
   } else if (slugChanged) {
-    // No new photo but slug changed: copy old avatar to new path
-    const { error: copyError } = await supabase.storage
-      .from('avatars')
-      .copy(`${oldSlug}.jpg`, `${newSlug}.jpg`)
-
-    if (copyError) {
-      Sentry.captureException(new Error(`Avatar copy failed: ${copyError.message}`), {
-        extra: { from: `${oldSlug}.jpg`, to: `${newSlug}.jpg` },
-      })
-      // Non bloquant : on continue même si la copie échoue
-    }
-  }
-
-  // Clean up old avatar if slug changed
-  if (slugChanged) {
-    await supabase.storage.from('avatars').remove([`${oldSlug}.jpg`])
+    await moveFigureAvatar(supabase, oldSlug, newSlug)
   }
 
   // Phase 3: Persist

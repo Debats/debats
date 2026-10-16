@@ -190,7 +190,7 @@ export default function NewPublicFigureForm() {
             id="photo"
             name="photo"
             type="file"
-            accept="image/jpeg,image/png"
+            accept="image/jpeg,image/png,image/webp"
             required
             ref={photoInputRef}
             onChange={handlePhotoChange}
@@ -211,7 +211,7 @@ export default function NewPublicFigureForm() {
           <p className={formStyles.guideTitle}>Conseil</p>
           <p className={formStyles.guideText}>
             Une photo portrait de bonne qualité. Elle sera redimensionnée automatiquement. Formats
-            acceptés : JPEG, PNG.
+            acceptés : JPEG, PNG, WebP.
           </p>
         </div>
       </div>

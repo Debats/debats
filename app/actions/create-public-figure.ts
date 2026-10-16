@@ -1,9 +1,9 @@
 'use server'
 
-import * as Sentry from '@sentry/nextjs'
-import sharp from 'sharp'
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import { AvatarStorageError, uploadFigureAvatar } from '../../infra/storage/figure-avatar'
+import { readUploadedImage } from './read-uploaded-image'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
@@ -34,6 +34,11 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
     }
   }
 
+  const photo = await readUploadedImage(photoFile)
+  if (Either.isLeft(photo)) {
+    return { success: false, fieldErrors: { photo: photo.left } }
+  }
+
   const notorietySources = formData
     .getAll('notorietySources')
     .map((v) => String(v))
@@ -62,27 +67,13 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
   }
 
   // Phase 2: Upload photo — entity not yet created
-  const storagePath = `${generateSlug(name)}.jpg`
-  const rawBuffer = Buffer.from(await photoFile.arrayBuffer())
-  const resizedBuffer = await sharp(rawBuffer)
-    .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
-    .jpeg({ quality: 85 })
-    .toBuffer()
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(storagePath, resizedBuffer, {
-      contentType: 'image/jpeg',
-      upsert: true,
-    })
-
-  if (uploadError) {
-    Sentry.captureException(new Error(`Avatar upload failed: ${uploadError.message}`), {
-      extra: { storagePath },
-    })
-    return {
-      success: false,
-      error: "L'upload de la photo a échoué. Veuillez réessayer.",
+  try {
+    await uploadFigureAvatar(supabase, generateSlug(name), photo.right)
+  } catch (error) {
+    if (error instanceof AvatarStorageError) {
+      return { success: false, error: "L'upload de la photo a échoué. Veuillez réessayer." }
     }
+    throw error
   }
 
   // Phase 3: Persist entity + reputation — photo already uploaded

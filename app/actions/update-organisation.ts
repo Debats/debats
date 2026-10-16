@@ -19,6 +19,7 @@ import {
 import { generateOrganisationSlug } from '../../domain/entities/organisation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { readOrganisationFields } from './organisation-fields'
+import { readUploadedImage } from './read-uploaded-image'
 
 export type ActionResult =
   | { success: true; slug: string }
@@ -57,8 +58,13 @@ export async function updateOrganisationAction(
   const logo = formData.get('logo')
 
   if (logo instanceof File && logo.size > 0) {
+    const image = await readUploadedImage(logo)
+    if (Either.isLeft(image)) {
+      return { success: false, fieldErrors: { logo: image.left } }
+    }
+
     try {
-      await uploadOrganisationLogo(supabase, newSlug, logo)
+      await uploadOrganisationLogo(supabase, newSlug, image.right)
     } catch (error) {
       if (error instanceof LogoStorageError) {
         return { success: false, error: "L'upload du logo a échoué. Veuillez réessayer." }

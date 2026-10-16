@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { detectImageFormat, imageMimeType } from './image-format'
+import { Either } from 'effect'
+import { detectImageFormat, imageMimeType, validateUploadedImage } from './image-format'
 
 /** Minimal byte sequences carrying each format's signature. */
 const signatures = {
@@ -46,5 +47,39 @@ describe('imageMimeType', () => {
     expect(imageMimeType('jpeg')).toBe('image/jpeg')
     expect(imageMimeType('png')).toBe('image/png')
     expect(imageMimeType('webp')).toBe('image/webp')
+  })
+})
+
+describe('validateUploadedImage', () => {
+  it('should accept a JPEG', () => {
+    expect(Either.isRight(validateUploadedImage(bytes(signatures.jpeg)))).toBe(true)
+  })
+
+  it('should accept a PNG', () => {
+    expect(Either.isRight(validateUploadedImage(bytes(signatures.png)))).toBe(true)
+  })
+
+  it('should accept a WebP', () => {
+    expect(Either.isRight(validateUploadedImage(bytes(signatures.webp)))).toBe(true)
+  })
+
+  it('should reject a file that is not an image, naming the accepted formats', () => {
+    const result = validateUploadedImage(bytes(signatures.pdf))
+
+    expect(Either.isLeft(result)).toBe(true)
+    if (Either.isLeft(result)) {
+      expect(result.left).toContain('JPEG')
+      expect(result.left).toContain('PNG')
+      expect(result.left).toContain('WebP')
+    }
+  })
+
+  it('should reject an empty file', () => {
+    expect(Either.isLeft(validateUploadedImage(new Uint8Array()))).toBe(true)
+  })
+
+  it('should reject a file whose name lies about its content', () => {
+    // A ".jpg" holding neither JPEG nor any other accepted signature
+    expect(Either.isLeft(validateUploadedImage(bytes(signatures.wav)))).toBe(true)
   })
 })

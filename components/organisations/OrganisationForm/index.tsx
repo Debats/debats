@@ -215,11 +215,12 @@ export default function OrganisationForm({
               id="logo"
               name="logo"
               type="file"
-              accept="image/png,image/jpeg"
+              accept="image/png,image/jpeg,image/webp"
               ref={logoInputRef}
               onChange={handleLogoChange}
             />
           </div>
+          {fieldErrors?.logo && <span className={formStyles.fieldError}>{fieldErrors.logo}</span>}
         </div>
         <div className={formStyles.guide}>
           <p className={formStyles.guideTitle}>Conseil</p>

@@ -13,15 +13,19 @@ export class LogoStorageError extends Error {
 export const logoPath = (slug: string) => `${slug}.png`
 
 /**
- * Resizes a logo to fit in a 600px square, keeping transparency, and stores it.
+ * Resizes a logo to fit in a 600px square, keeping transparency, and stores it
+ * as PNG, whatever the source format was. Keeping a single stored format
+ * matters: the OpenGraph renderer announces a MIME type from the bytes it is
+ * given, and only JPEG and PNG have a parser there.
+ *
  * Throws a LogoStorageError (already reported to Sentry) when the upload fails.
  */
 export async function uploadOrganisationLogo(
   supabase: SupabaseClient,
   slug: string,
-  file: File,
+  logo: Uint8Array,
 ): Promise<void> {
-  const resized = await sharp(Buffer.from(await file.arrayBuffer()))
+  const resized = await sharp(logo)
     .resize(MAX_SIZE, MAX_SIZE, { fit: 'inside', withoutEnlargement: true })
     .png()
     .toBuffer()
