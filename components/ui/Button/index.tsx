@@ -1,7 +1,8 @@
 import styles from './Button.module.css'
 
 interface ButtonBaseProps {
-  variant?: 'primary' | 'secondary' | 'danger' | 'link'
+  /** `inverse` : papier sur encre, pour un bouton posé sur un fond sombre */
+  variant?: 'primary' | 'secondary' | 'danger' | 'link' | 'inverse'
   size?: 'default' | 'small'
   children: React.ReactNode
 }

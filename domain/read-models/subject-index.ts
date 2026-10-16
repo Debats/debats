@@ -58,6 +58,17 @@ export function groupSubjectsByTheme(entries: SubjectIndexEntry[]): ThemeSection
   })
 }
 
+/** Up to this many statements, a subject still needs documenting */
+const DOCUMENTED_THRESHOLD = 2
+
+/** The subjects a contributor could enrich with a single sourced quote, the barest first */
+export function subjectsToDocument(entries: SubjectIndexEntry[], limit = 5): SubjectIndexEntry[] {
+  return entries
+    .filter((e) => e.statementsCount <= DOCUMENTED_THRESHOLD)
+    .sort((a, b) => a.statementsCount - b.statementsCount || a.title.localeCompare(b.title, 'fr'))
+    .slice(0, limit)
+}
+
 /** The figures of the hero: how much the site covers */
 export function subjectIndexTotals(entries: SubjectIndexEntry[]): SubjectIndexTotals {
   const themes = new Set(entries.flatMap((e) => (e.primaryTheme ? [e.primaryTheme.id] : [])))

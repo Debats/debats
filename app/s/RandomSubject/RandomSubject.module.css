@@ -1,0 +1,38 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.title {
+  composes: label from '../../../styles/text.module.css';
+}
+
+.subject {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.15;
+  text-wrap: pretty;
+}
+
+.subject:link,
+.subject:visited {
+  color: var(--ink);
+}
+
+.subject:hover {
+  color: var(--signal);
+}
+
+.problem {
+  composes: voice from '../../../styles/text.module.css';
+  font-size: 17px;
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+}

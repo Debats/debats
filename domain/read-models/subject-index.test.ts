@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { groupSubjectsByTheme, subjectIndexTotals, SubjectIndexEntry } from './subject-index'
+import {
+  groupSubjectsByTheme,
+  subjectIndexTotals,
+  subjectsToDocument,
+  SubjectIndexEntry,
+} from './subject-index'
 
 const theme = (name: string) => ({
   id: `theme-${name}`,
@@ -72,6 +77,28 @@ describe('groupSubjectsByTheme', () => {
 
   it('returns nothing for no subject', () => {
     expect(groupSubjectsByTheme([])).toEqual([])
+  })
+})
+
+describe('subjectsToDocument', () => {
+  it('keeps the subjects with at most two statements, the least documented first', () => {
+    const picked = subjectsToDocument([
+      entry('Bien couvert', 12, economie),
+      entry('Deux prises', 2, sante),
+      entry('Une prise', 1, null),
+      entry('Trois prises', 3, economie),
+    ])
+
+    expect(picked.map((s) => s.title)).toEqual(['Une prise', 'Deux prises'])
+  })
+
+  it('breaks ties by title and stops at the limit', () => {
+    const picked = subjectsToDocument(
+      [entry('Zèbre', 1, null), entry('Autruche', 1, null), entry('Mouton', 2, null)],
+      2,
+    )
+
+    expect(picked.map((s) => s.title)).toEqual(['Autruche', 'Zèbre'])
   })
 })
 

@@ -1,0 +1,53 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.title {
+  composes: label from '../../../styles/text.module.css';
+}
+
+.intro {
+  composes: small from '../../../styles/text.module.css';
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.subject {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.subject:link,
+.subject:visited {
+  color: var(--ink);
+}
+
+.subject:hover {
+  color: var(--signal);
+}
+
+.count {
+  composes: meta from '../../../styles/text.module.css';
+  white-space: nowrap;
+}

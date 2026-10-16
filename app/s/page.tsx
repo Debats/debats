@@ -4,7 +4,12 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import { canPerform } from '../../domain/reputation/permissions'
-import { groupSubjectsByTheme, subjectIndexTotals } from '../../domain/read-models/subject-index'
+import {
+  groupSubjectsByTheme,
+  subjectIndexTotals,
+  subjectsToDocument,
+} from '../../domain/read-models/subject-index'
+import { dailyIndex } from '../../domain/services/daily-pick'
 import Button from '../../components/ui/Button'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
@@ -12,6 +17,9 @@ import SubjectSearch from '../../components/subjects/SubjectSearch'
 import IndexStats from './IndexStats'
 import ThemeBar from './ThemeBar'
 import ThemeSection from './ThemeSection'
+import ProposeSubject from './ProposeSubject'
+import RandomSubject from './RandomSubject'
+import SubjectsToDocument from './SubjectsToDocument'
 import { themeSectionAnchor } from './theme-section-anchor'
 import styles from './subjects.module.css'
 
@@ -30,6 +38,16 @@ export default async function SubjectsPage() {
   ])
   const canAddSubject = !!contributor && canPerform(contributor.reputation, 'add_subject')
   const sections = groupSubjectsByTheme(entries)
+  const candidates = entries.map(
+    ({ id, title, slug, problem, statementsCount, publicFiguresCount }) => ({
+      id,
+      title,
+      slug,
+      problem,
+      statementsCount,
+      publicFiguresCount,
+    }),
+  )
 
   return (
     <>
@@ -45,7 +63,17 @@ export default async function SubjectsPage() {
 
       {sections.length > 0 && <ThemeBar sections={sections} />}
 
-      <ContentWithSidebar topMargin>
+      <ContentWithSidebar
+        topMargin
+        hideLatestStatements
+        aside={
+          <>
+            <RandomSubject candidates={candidates} initialIndex={dailyIndex(candidates.length)} />
+            <SubjectsToDocument subjects={subjectsToDocument(entries)} />
+            <ProposeSubject canAddSubject={canAddSubject} />
+          </>
+        }
+      >
         {sections.length === 0 ? (
           <p className={styles.empty}>Aucun sujet pour le moment.</p>
         ) : (

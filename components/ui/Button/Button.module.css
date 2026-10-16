@@ -67,6 +67,18 @@
   color: #ffffff;
 }
 
+.inverse,
+.inverse:link,
+.inverse:visited {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.inverse:hover {
+  background-color: var(--card);
+  color: var(--ink);
+}
+
 .link,
 .link:link,
 .link:visited {
