@@ -10,7 +10,7 @@ interface FigureAnalysesProps {
   topArguments: ArgumentCount<ArgumentRef>[]
 }
 
-const CHART = { width: 340, height: 120, top: 22, bottom: 30, gap: 12, maxBar: 22 }
+const CHART = { width: 340, height: 120, top: 22, bottom: 30, gap: 12, maxBar: 22, maxLabels: 8 }
 
 /** Graphique en colonnes des prises de position par année, l'année la plus active en signal. */
 function ActivityChart({ perYear }: { perYear: YearCount[] }) {
@@ -19,6 +19,14 @@ function ActivityChart({ perYear }: { perYear: YearCount[] }) {
   const slot = CHART.width / perYear.length
   const bar = Math.min(CHART.maxBar, slot - CHART.gap)
   const baseline = CHART.top + plotHeight
+  // Beyond a handful of years the labels would overlap: keep the busiest year,
+  // then one every few years, skipping those that would collide with it
+  const labelEvery = Math.ceil(perYear.length / CHART.maxLabels)
+  const maxIndex = perYear.findIndex((y) => y.count === max)
+  const showLabel = (index: number) =>
+    index === maxIndex ||
+    (Math.abs(index - maxIndex) >= labelEvery &&
+      (index === 0 || index === perYear.length - 1 || index % labelEvery === 0))
 
   return (
     <svg
@@ -58,14 +66,18 @@ function ActivityChart({ perYear }: { perYear: YearCount[] }) {
                 {y.count}
               </text>
             )}
-            <text
-              x={x + bar / 2}
-              y={CHART.height - 8}
-              textAnchor="middle"
-              className={isMax ? `${styles.chartLabel} ${styles.chartLabelOn}` : styles.chartLabel}
-            >
-              {y.year}
-            </text>
+            {showLabel(index) && (
+              <text
+                x={x + bar / 2}
+                y={CHART.height - 8}
+                textAnchor="middle"
+                className={
+                  isMax ? `${styles.chartLabel} ${styles.chartLabelOn}` : styles.chartLabel
+                }
+              >
+                {y.year}
+              </text>
+            )}
           </g>
         )
       })}
