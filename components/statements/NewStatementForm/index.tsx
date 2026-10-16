@@ -476,7 +476,7 @@ export default function NewStatementForm({
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Ajout en cours…' : 'Proposer la prise de position'}
+          {isPending ? 'Ajout en cours…' : 'Ajouter la prise de position'}
         </Button>
         <ComingSoon>
           <span className={styles.draftAction}>Enregistrer le brouillon</span>

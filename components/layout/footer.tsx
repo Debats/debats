@@ -82,6 +82,10 @@ export default async function Footer() {
             <span className={styles.wordmark}>Débats</span>
           </Link>
           <p className={styles.tagline}>{siteDescription}</p>
+          <p className={styles.tagline}>
+            Pas de cookies, pas de traqueurs : la mesure d’audience est anonyme, d’où l’absence de
+            bandeau.
+          </p>
           <div className={styles.socialLinks}>
             {socialLinks.map((link) => (
               <SocialIcon key={link.label} {...link} />
