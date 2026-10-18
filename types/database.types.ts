@@ -159,6 +159,50 @@ export type Database = {
         }
         Relationships: []
       }
+      domain_events: {
+        Row: {
+          actor_id: string | null
+          id: number
+          metadata: Json
+          occurred_at: string
+          payload: Json
+          revision: number
+          stream_id: string
+          stream_type: string
+          type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          id?: number
+          metadata?: Json
+          occurred_at?: string
+          payload?: Json
+          revision: number
+          stream_id: string
+          stream_type: string
+          type: string
+        }
+        Update: {
+          actor_id?: string | null
+          id?: number
+          metadata?: Json
+          occurred_at?: string
+          payload?: Json
+          revision?: number
+          stream_id?: string
+          stream_type?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       draft_statements: {
         Row: {
           ai_notes: string | null

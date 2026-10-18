@@ -88,6 +88,7 @@ Contributors (Contributeurs)
 - **Frontend/Backend** : Next.js 16 (App Router)
 - **Base de données** : PostgreSQL via Supabase
 - **Authentification** : Supabase Auth
+- **Écritures** : journal d'événements (`domain_events`) et projections dans les tables, via Prisma sans moteur Rust et l'adaptateur `pg`, avec transactions (voir `docs/adr/0001-journal-des-evenements.md`)
 - **Domain** : Effect TS + Effect Schema
 - **Styling** : CSS Modules
 - **Tests** : Vitest
@@ -159,7 +160,10 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:64321
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<clé affichée par supabase start>
 SUPABASE_SECRET_KEY=<clé affichée par supabase start>
 SIGNUP_SECRET_TOKEN=<token pour l'inscription par invitation>
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:64322/postgres
 ```
+
+`DATABASE_URL` est la connexion Postgres directe de la couche d'écriture (Prisma). En production, c'est l'adresse du pooler Supabase.
 
 Voir `.env.example` pour la liste complète des variables.
 
@@ -178,7 +182,12 @@ npm run lint          # Linting (ESLint)
 npm run format        # Formatage (Prettier)
 npm run typecheck     # Vérification des types
 npm run check         # Lint + format + typecheck + build (à lancer avant chaque commit)
+npm run test:db       # Tests d'intégration contre la base locale (journal d'événements)
+npm run prisma:pull   # Réintrospecte le schéma Prisma après une migration Supabase
+npm run prisma:generate  # Régénère le client Prisma (fait aussi à l'installation)
 ```
+
+Après chaque migration Supabase : `supabase migration up`, puis `npm run prisma:pull` et `supabase gen types typescript --local > types/database.types.ts`.
 
 ### Configuration de production
 

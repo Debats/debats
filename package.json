@@ -14,8 +14,12 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run lint:css && npm run format:check && npm run typecheck && NODE_ENV=production npm run build",
     "test": "vitest",
+    "test:db": "node --env-file=.env.local node_modules/vitest/vitest.mjs run infra",
     "test:ui": "vitest --ui",
     "migrate": "supabase link --project-ref $SUPABASE_PROJECT_ID && supabase db push",
+    "postinstall": "prisma generate",
+    "prisma:pull": "node --env-file=.env.local node_modules/prisma/build/index.js db pull",
+    "prisma:generate": "prisma generate",
     "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts",
     "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts",
     "supabase:config:push": "node --env-file=.env.production --import tsx scripts/push-prod-auth-config.ts",
@@ -23,6 +27,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "@sentry/nextjs": "^10.39.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.50.3",
@@ -35,6 +41,8 @@
     "node-addon-api": "^8.5.0",
     "node-gyp": "^12.2.0",
     "nodemailer": "^8.0.2",
+    "pg": "^8.23.1",
+    "prisma": "^7.10.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -46,6 +54,7 @@
     "@storybook/nextjs-vite": "^10.3.3",
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^7.0.11",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitest/ui": "^3.2.4",
@@ -58,7 +67,7 @@
     "stylelint": "^17.15.0",
     "supabase": "^2.76.8",
     "tsx": "^4.21.0",
-    "typescript": "~5.2.2",
+    "typescript": "^5.9.3",
     "vite": "^8.0.3",
     "vitest": "^3.2.4"
   }

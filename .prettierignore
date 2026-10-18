@@ -10,3 +10,4 @@ api
 .clever.json
 .mcp.json
 next-env.d.ts
+prisma/generated

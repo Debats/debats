@@ -28,6 +28,7 @@ const eslintConfig = defineConfig([
     'content/**',
     'docs/**',
     'scripts/**',
+    'prisma/generated/**',
   ]),
   ...storybook.configs['flat/recommended'],
 ])

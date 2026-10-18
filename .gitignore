@@ -21,3 +21,6 @@ storybook-static
 
 # AI tools
 .claude
+
+# Prisma client, generated at install (npm run prisma:generate)
+prisma/generated/

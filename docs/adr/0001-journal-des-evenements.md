@@ -1,0 +1,37 @@
+# ADR 0001 — Journal des événements, CQRS et Prisma pour les écritures
+
+Date : 18 octobre 2026. Statut : accepté.
+
+## Contexte
+
+Le domaine de Débats.co est historique par nature : une personnalité change de position dans le temps, la chronologie d'un sujet est annoncée, l'historique des modifications est dans la feuille de route, la table `reputation_events` sert déjà de journal pour la réputation. Les votes de pertinence, prochain chantier, sont des événements avant d'être des compteurs.
+
+Le site est en direction CQRS côté lecture (vues `v_*`, RPC de projection, read models par page), mais la persistance des écritures est faite de tables mutables accédées par `supabase-js` via PostgREST, sans transaction : un `setAssignments` est un `delete` puis un `insert` non atomiques.
+
+Migrer vers un journal d'événements plus tard coûterait davantage : le nombre d'agrégats et de use cases croît chaque semaine.
+
+## Décision
+
+1. **Un journal d'événements devient la source de vérité des écritures, agrégat par agrégat.** Table `domain_events` : flux (`stream_type`, `stream_id`), `revision` de l'agrégat produite par l'événement, à partir de 1, avec unicité (flux, révision) pour la concurrence optimiste, `type`, `payload` JSON, `actor_id`, `metadata`, `occurred_at`. La révision est celle de l'agrégat, pas celle du format du payload : quand la forme d'un événement change, le journal n'est jamais réécrit, le schéma Effect de l'événement devient l'union des formes successives décodée vers la forme courante, avec un test de décodage de l'ancienne forme.
+2. **Les tables existantes deviennent les projections.** Elles ne disparaissent pas : chaque commande ajoute ses événements au journal et les projections sont mises à jour **dans la même transaction**, de façon synchrone. Pas de bus, pas de cohérence différée, pas de reconstruction asynchrone à outiller. Les lectures (vues, RPC, read models) ne changent pas. Ce n'est pas la cohérence à terme qui fait le CQRS, c'est la séparation des modèles : une commande charge son flux, décide à partir des événements, jamais à partir de la projection, et **rend des événements** sans connaître les tables de lecture. L'unité de travail les ajoute au journal puis appelle les projecteurs du type de flux, fonctions idempotentes de l'événement vers la table. Reconstruire une projection, c'est rejouer le journal à travers son projecteur ; la passer en asynchrone un jour, c'est déplacer le projecteur dans un abonné du journal, sans toucher aux commandes. En contrepartie, la latence d'une commande grandit avec ses projecteurs et un projecteur défaillant fait échouer l'écriture, ce qu'on préfère à une projection silencieusement fausse.
+   L'identifiant d'un nouvel agrégat est **généré par la commande** (UUID) avant toute écriture : il nomme le flux dès son premier événement et sert de clé à la ligne de projection. Jamais d'identifiant attribué par la base.
+3. **Les données existantes entrent dans le journal par un événement d'import par ligne**, portant l'état complet, au moment où leur agrégat bascule. Les projections sont déjà justes : rien à reconstruire. Chaque bascule d'agrégat livre ce backfill **dans la migration SQL du même déploiement** que les commandes qui lisent le journal, en `INSERT … SELECT` idempotent (`ON CONFLICT DO NOTHING` sur l'unicité flux/version), avec un test qui décode une ligne produite par ce SQL avec le schéma de l'événement d'import. Le déploiement laisse une fenêtre entre la migration et la bascule du trafic, pendant laquelle l'ancien build écrit encore sans événement : une commande qui charge un flux vide alors que la ligne de projection existe **importe d'abord cette ligne** (événement d'import en version 1), puis ajoute le sien. Le backfill est une accélération, l'import à la demande est la garantie. Après chaque bascule, une requête compte les lignes de projection sans flux et doit rendre zéro.
+4. **Prisma (sans moteur Rust, adaptateur `pg`) accède à Postgres pour la couche d'écriture**, avec de vraies transactions. Supabase reste l'hébergeur de Postgres, de l'authentification et du stockage ; `supabase-js` reste pour les lectures tant qu'elles n'ont pas de raison de bouger. Les migrations restent dans `supabase/migrations` ; Prisma introspecte le schéma (`npm run prisma:pull`) et génère son client (`npm run prisma:generate`).
+5. **Pas de logique métier dans le SQL** : les fonctions `merge_positions` et `merge_arguments` deviennent des commandes du domaine quand leur agrégat bascule.
+
+## Étapes
+
+1. Socle : ce document, la table `domain_events`, le port `EventStore` dans `domain/events`, l'adaptateur Prisma avec unité de travail transactionnelle dans `infra/events`. Ce socle ne fait rien basculer : la table reste vide en production jusqu'à l'étape 2.
+2. Premier agrégat : la prise de position (commandes rendant des événements, projecteurs vers `statements` et `argument_statements`, backfill et import à la demande de l'existant).
+3. Les autres agrégats un par un : sujet et positions, personnalité avec affiliations et métiers, organisation, argument, thématique, réputation.
+4. Les votes de pertinence, nés événementiels, compteurs en projection.
+5. Chronologie et historique, lus dans le journal.
+
+Chaque étape est additive et déployable seule, sur `master`.
+
+## Conséquences
+
+- Chaque écriture a une mémoire : qui, quoi, quand, dans quel ordre. Annulation, historique et analyses dans le temps deviennent des lectures du journal.
+- Deux chemins d'accès coexistent le temps de la migration : Prisma pour les écritures basculées, `supabase-js` pour le reste. La frontière est l'agrégat.
+- Sur NixOS, le moteur de schéma de Prisma vient de Nix (`prisma-engines_7`, variable `PRISMA_SCHEMA_ENGINE_BINARY` posée par le flake) ; la version npm de `prisma` doit rester égale à celle du paquet Nix.
+- En production, `DATABASE_URL` pointe sur le pooler Supabase ; le client est généré à l'installation (`postinstall`).
