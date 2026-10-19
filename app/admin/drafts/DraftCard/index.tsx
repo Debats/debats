@@ -16,6 +16,7 @@ import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
 import AuthorCreationPreview from '../AuthorCreationPreview'
 import CreationPreview from '../CreationPreview'
+import DraftEnrichment from '../DraftEnrichment'
 import RejectForm from '../RejectForm'
 import DraftAmendForm from '../DraftAmendForm'
 import styles from './DraftCard.module.css'
@@ -110,6 +111,12 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
       </div>
 
       {!resolution.author.found && <AuthorCreationPreview author={draft.author} />}
+
+      <DraftEnrichment
+        arguments={resolution.arguments}
+        occupations={resolution.occupations}
+        affiliations={resolution.affiliations}
+      />
 
       {draft.subjectData && !resolution.subject.found && (
         <CreationPreview title={draft.subjectTitle}>

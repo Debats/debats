@@ -27,6 +27,9 @@ function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
       problem: 'Quelle politique ?',
     },
     positionData: { description: 'Régulariser.' },
+    arguments: [],
+    occupations: [],
+    affiliations: [],
     origin: 'test',
     status: 'pending',
     rejectionNote: null,
@@ -43,6 +46,9 @@ const allFoundResolution: DraftResolution = {
   },
   subject: { found: true, entity: { id: 'sub-1', title: "L'immigration", slug: 'l-immigration' } },
   position: { found: true, entity: { id: 'pos-1', title: 'Régularisation des sans-papiers' } },
+  arguments: [],
+  occupations: [],
+  affiliations: [],
   canValidate: true,
 }
 
@@ -50,6 +56,9 @@ const noneFoundResolution: DraftResolution = {
   author: { found: false, canCreate: true },
   subject: { found: false, canCreate: true },
   position: { found: false, canCreate: true },
+  arguments: [],
+  occupations: [],
+  affiliations: [],
   canValidate: true,
 }
 

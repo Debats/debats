@@ -10,7 +10,14 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
+import { OccupationRepository } from '../repositories/occupation-repository'
+import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
+import { sameOccupationName } from '../entities/occupation'
+import { isCurrentMembership } from '../entities/organisation-membership'
+import { OccupationAssignmentInput } from '../read-models/occupations'
+import { setPublicFigureOccupationsUseCase } from './set-public-figure-occupations'
+import { addOrganisationMembershipUseCase } from './add-organisation-membership'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { createPublicFigureUseCase } from './create-public-figure'
 import { createOrganisationUseCase } from './create-organisation'
@@ -29,8 +36,9 @@ type ValidateDraftParams = {
   subjectRepo: SubjectRepository
   positionRepo: PositionRepository
   runUnitOfWork: RunUnitOfWork
-  /** Drafts carry no argument yet; the statement use case still needs the repository */
   argumentRepo: ArgumentRepository
+  occupationRepo: OccupationRepository
+  membershipRepo: OrganisationMembershipRepository
   reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
@@ -53,6 +61,8 @@ export async function validateDraft(
     positionRepo,
     runUnitOfWork,
     argumentRepo,
+    occupationRepo,
+    membershipRepo,
     reputationRepo,
     wikipediaValidator,
   } = params
@@ -70,6 +80,28 @@ export async function validateDraft(
     wikipediaValidator,
   })
   if (Either.isLeft(author)) return author
+
+  // What the draft says of the person herself, applied before the statement so
+  // that a wrong occupation or affiliation stops the draft instead of landing
+  // a statement whose author stays half documented.
+  if (author.right.kind === 'public_figure') {
+    const occupations = await applyOccupations(draft, author.right.id, {
+      contributor,
+      occupationRepo,
+      publicFigureRepo,
+    })
+    if (Either.isLeft(occupations)) return occupations
+
+    const affiliations = await applyAffiliations(draft, author.right.id, {
+      contributor,
+      organisationRepo,
+      publicFigureRepo,
+      membershipRepo,
+      reputationRepo,
+      wikipediaValidator,
+    })
+    if (Either.isLeft(affiliations)) return affiliations
+  }
 
   const subjectId = await resolveOrCreateSubject(draft, {
     contributor,
@@ -96,7 +128,14 @@ export async function validateDraft(
     sourceUrl: draft.sourceUrl,
     quote: draft.quote,
     statedAt: draft.date,
-    arguments: { argumentIds: [], newArguments: [] },
+    // Titles only: an existing argument is reused, a new one created.
+    arguments: {
+      argumentIds: [],
+      newArguments: draft.arguments.map(({ title, description }) => ({
+        title,
+        description: description ?? '',
+      })),
+    },
     runUnitOfWork,
     positionRepo,
     publicFigureRepo,
@@ -116,6 +155,149 @@ export async function validateDraft(
   }
 
   return Either.right(undefined)
+}
+
+/**
+ * Assigns the occupations the draft names to the public figure, keeping those
+ * she already holds: a draft documents one statement, it does not redefine a
+ * career. Every name must designate a listed occupation.
+ */
+async function applyOccupations(
+  draft: DraftStatement,
+  publicFigureId: string,
+  deps: {
+    contributor: ContributorIdentity
+    occupationRepo: OccupationRepository
+    publicFigureRepo: PublicFigureRepository
+  },
+): Promise<Either.Either<void, string>> {
+  if (draft.occupations.length === 0) return Either.right(undefined)
+
+  const listed = await Effect.runPromise(Effect.either(deps.occupationRepo.findAll()))
+  if (listed._tag === 'Left') return Either.left('Erreur lors de la lecture des métiers.')
+
+  const drafted: OccupationAssignmentInput[] = []
+  for (const occupation of draft.occupations) {
+    const match = listed.right.find((candidate) =>
+      sameOccupationName(occupation.name, candidate.name),
+    )
+    if (!match) {
+      return Either.left(`Le métier « ${occupation.name} » n’est pas dans la liste.`)
+    }
+    drafted.push({ occupationId: match.id, current: occupation.current })
+  }
+
+  const held = await Effect.runPromise(
+    Effect.either(deps.occupationRepo.findByPublicFigureId(publicFigureId)),
+  )
+  if (held._tag === 'Left') return Either.left('Erreur lors de la lecture des métiers.')
+
+  return setPublicFigureOccupationsUseCase({
+    contributor: deps.contributor,
+    publicFigureId,
+    assignments: [
+      ...held.right.map(({ occupation, current }) => ({ occupationId: occupation.id, current })),
+      ...drafted,
+    ],
+    occupationRepo: deps.occupationRepo,
+    publicFigureRepo: deps.publicFigureRepo,
+  })
+}
+
+/**
+ * Affiliates the public figure to the organisations the draft names, creating
+ * those the catalogue lacks. An affiliation already running is left as it is:
+ * restating a known fact changes nothing.
+ */
+async function applyAffiliations(
+  draft: DraftStatement,
+  publicFigureId: string,
+  deps: {
+    contributor: ContributorIdentity
+    organisationRepo: OrganisationRepository
+    publicFigureRepo: PublicFigureRepository
+    membershipRepo: OrganisationMembershipRepository
+    reputationRepo: ReputationRepository
+    wikipediaValidator: WikipediaValidator
+  },
+): Promise<Either.Either<void, string>> {
+  for (const affiliation of draft.affiliations) {
+    const organisationId = await resolveOrCreateAffiliatedOrganisation(affiliation, deps)
+    if (Either.isLeft(organisationId)) return organisationId
+
+    const memberships = await Effect.runPromise(
+      Effect.either(deps.membershipRepo.findByOrganisationId(organisationId.right)),
+    )
+    if (memberships._tag === 'Left') {
+      return Either.left('Erreur lors de la lecture des affiliations.')
+    }
+    const alreadyRunning = memberships.right.some(
+      ({ membership }) =>
+        membership.publicFigureId === publicFigureId && isCurrentMembership(membership),
+    )
+    if (alreadyRunning) continue
+
+    const added = await addOrganisationMembershipUseCase({
+      contributor: deps.contributor,
+      organisationId: organisationId.right,
+      publicFigureId,
+      role: affiliation.role ?? '',
+      startedOn: affiliation.startedOn ?? '',
+      endedOn: affiliation.endedOn ?? '',
+      organisationRepo: deps.organisationRepo,
+      publicFigureRepo: deps.publicFigureRepo,
+      membershipRepo: deps.membershipRepo,
+      reputationRepo: deps.reputationRepo,
+    })
+    if (Either.isLeft(added)) {
+      return Either.left(
+        `Affiliation à « ${affiliation.organisation} » : ${formatUseCaseError(added.left)}`,
+      )
+    }
+  }
+
+  return Either.right(undefined)
+}
+
+async function resolveOrCreateAffiliatedOrganisation(
+  affiliation: DraftStatement['affiliations'][number],
+  deps: {
+    contributor: ContributorIdentity
+    organisationRepo: OrganisationRepository
+    reputationRepo: ReputationRepository
+    wikipediaValidator: WikipediaValidator
+  },
+): Promise<Either.Either<string, string>> {
+  const lookup = await Effect.runPromise(
+    Effect.either(
+      deps.organisationRepo.findBySlug(generateOrganisationSlug(affiliation.organisation)),
+    ),
+  )
+  if (lookup._tag === 'Left') return Either.left("Erreur lors de la recherche de l'organisation.")
+  if (lookup.right) return Either.right(lookup.right.id)
+
+  const data = affiliation.organisationData
+  if (!data) {
+    return Either.left(
+      `Données manquantes pour créer l'organisation « ${affiliation.organisation} ».`,
+    )
+  }
+
+  const result = await createOrganisationUseCase({
+    contributor: deps.contributor,
+    name: affiliation.organisation,
+    acronym: data.acronym ?? '',
+    organisationType: data.organisationType,
+    presentation: data.presentation,
+    wikipediaUrl: data.wikipediaUrl ?? '',
+    websiteUrl: data.websiteUrl ?? '',
+    notorietySources: data.notorietySources ?? [],
+    organisationRepo: deps.organisationRepo,
+    reputationRepo: deps.reputationRepo,
+    wikipediaValidator: deps.wikipediaValidator,
+  })
+  if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
+  return Either.right(result.right.id)
 }
 
 function resolveOrCreateAuthor(

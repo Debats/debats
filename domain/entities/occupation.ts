@@ -42,6 +42,20 @@ export type Occupation = S.Schema.Type<typeof Occupation>
 export const generateOccupationSlug = (name: string): OccupationSlug =>
   OccupationSlug.make(slugify(name))
 
+/**
+ * How a written name may be spelt to still designate the listed occupation:
+ * « Député·e » is also written « Député », as dropping the inclusive suffix is
+ * the one variation worth accepting. Case and accents are already ignored by
+ * the slug. Everything else must match the listed name.
+ */
+const spellingsOf = (name: string): string[] => [slugify(name), slugify(name.replace(/·\S*/g, ''))]
+
+/** Whether a written name designates this listed occupation. */
+export const sameOccupationName = (written: string, listed: string): boolean => {
+  const candidate = slugify(written)
+  return spellingsOf(listed).some((spelling) => spelling === candidate)
+}
+
 export const createOccupation = (params: {
   name: string
   familyId: string

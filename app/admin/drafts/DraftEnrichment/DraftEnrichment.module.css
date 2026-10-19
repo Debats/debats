@@ -1,0 +1,69 @@
+.enrichment {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--paper-2);
+  border-radius: 6px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heading {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.name {
+  color: var(--ink);
+}
+
+/* Same colour code as EntityStatus: found, to create, blocking. */
+.known {
+  font-size: 12px;
+  color: #2e7d32;
+}
+
+.created {
+  font-size: 12px;
+  color: #1565c0;
+}
+
+.missing {
+  font-size: 12px;
+  color: #c62828;
+}
+
+.detail {
+  font-size: 12px;
+  color: var(--ink-2);
+  font-style: italic;
+}

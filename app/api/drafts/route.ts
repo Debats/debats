@@ -4,7 +4,15 @@ import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
 import { NewDraftStatement } from '../../../domain/repositories/draft-statement-repository'
 import { STATEMENT_TYPES, StatementType } from '../../../domain/entities/statement'
-import { parseDraftAuthor, validateSlugifiableFields } from './validation'
+import {
+  parseDraftAffiliations,
+  parseDraftArguments,
+  parseDraftAuthor,
+  parseDraftOccupations,
+  validateSlugifiableFields,
+} from './validation'
+import { createOccupationRepository } from '../../../infra/database/occupation-repository-supabase'
+import { sameOccupationName } from '../../../domain/entities/occupation'
 import { checkAdminApiKey } from '../admin-auth'
 
 export async function GET(request: NextRequest) {
@@ -67,9 +75,29 @@ function parseDraftInput(
     return { error: `Field statementType must be one of: ${STATEMENT_TYPES.join(', ')}` }
   }
 
+  const parsedArguments = parseDraftArguments(input.arguments)
+  if ('error' in parsedArguments) return parsedArguments
+
+  const parsedOccupations = parseDraftOccupations(input.occupations)
+  if ('error' in parsedOccupations) return parsedOccupations
+
+  const parsedAffiliations = parseDraftAffiliations(input.affiliations)
+  if ('error' in parsedAffiliations) return parsedAffiliations
+
+  // Occupations and affiliations describe the person, so an organisation has neither.
+  if (
+    parsedAuthor.author.kind === 'organisation' &&
+    (parsedOccupations.occupations.length > 0 || parsedAffiliations.affiliations.length > 0)
+  ) {
+    return { error: 'Fields occupations and affiliations only apply to a public figure author' }
+  }
+
   return {
     draft: {
       author: parsedAuthor.author,
+      arguments: parsedArguments.arguments,
+      occupations: parsedOccupations.occupations,
+      affiliations: parsedAffiliations.affiliations,
       statementType: (input.statementType as StatementType) ?? 'declaration',
       subjectTitle: input.subjectTitle as string,
       positionTitle: input.positionTitle as string,
@@ -87,6 +115,37 @@ function parseDraftInput(
 
 function isStatementType(value: unknown): value is StatementType {
   return STATEMENT_TYPES.includes(value as StatementType)
+}
+
+/**
+ * Occupations are a closed list, so a name is checked when the draft is posted
+ * rather than discovered at validation, once the batch has been reviewed.
+ */
+async function canonicaliseOccupations(
+  drafts: NewDraftStatement[],
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+): Promise<string | null> {
+  if (!drafts.some((draft) => draft.occupations.length > 0)) return null
+
+  const listed = await Effect.runPromise(
+    Effect.either(createOccupationRepository(supabase).findAll()),
+  )
+  if (listed._tag === 'Left') return 'Could not read the occupations list'
+
+  for (let index = 0; index < drafts.length; index++) {
+    for (const occupation of drafts[index].occupations) {
+      const match = listed.right.find((listedOccupation) =>
+        sameOccupationName(occupation.name, listedOccupation.name),
+      )
+      if (!match) {
+        const names = listed.right.map((o) => o.name).join(', ')
+        return `Draft ${index}: unknown occupation « ${occupation.name} ». Known occupations: ${names}`
+      }
+      occupation.name = match.name
+    }
+  }
+
+  return null
 }
 
 export async function POST(request: NextRequest) {
@@ -110,7 +169,14 @@ export async function POST(request: NextRequest) {
     parsed.push(result.draft)
   }
 
-  const draftRepo = createDraftStatementRepository(createAdminSupabaseClient())
+  const supabase = createAdminSupabaseClient()
+
+  const occupationError = await canonicaliseOccupations(parsed, supabase)
+  if (occupationError) {
+    return NextResponse.json({ error: occupationError }, { status: 400 })
+  }
+
+  const draftRepo = createDraftStatementRepository(supabase)
   const result = await Effect.runPromise(Effect.either(draftRepo.createMany(parsed)))
 
   if (result._tag === 'Left') {

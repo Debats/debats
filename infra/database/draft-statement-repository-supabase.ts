@@ -67,6 +67,9 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
     positionTitle: row.position_title as string,
     subjectData: (row.subject_data as DraftStatement['subjectData']) ?? null,
     positionData: (row.position_data as DraftStatement['positionData']) ?? null,
+    arguments: (row.arguments as DraftStatement['arguments']) ?? [],
+    occupations: (row.occupations as DraftStatement['occupations']) ?? [],
+    affiliations: (row.affiliations as DraftStatement['affiliations']) ?? [],
     origin: row.origin as string,
     status: row.status as DraftStatement['status'],
     rejectionNote: (row.rejection_note as string) ?? null,
@@ -92,6 +95,9 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
             ai_notes: draft.aiNotes,
             subject_data: draft.subjectData,
             position_data: draft.positionData,
+            arguments: draft.arguments,
+            occupations: draft.occupations,
+            affiliations: draft.affiliations,
             origin: draft.origin,
           }))
 
@@ -189,6 +195,9 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
           if (fields.positionTitle !== undefined) row.position_title = fields.positionTitle
           if (fields.subjectData !== undefined) row.subject_data = fields.subjectData
           if (fields.positionData !== undefined) row.position_data = fields.positionData
+          if (fields.arguments !== undefined) row.arguments = fields.arguments
+          if (fields.occupations !== undefined) row.occupations = fields.occupations
+          if (fields.affiliations !== undefined) row.affiliations = fields.affiliations
           if (fields.rejectionNote !== undefined) row.rejection_note = fields.rejectionNote
           if (fields.origin !== undefined) row.origin = fields.origin
 

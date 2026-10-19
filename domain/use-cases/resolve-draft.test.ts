@@ -10,6 +10,8 @@ import { Subject } from '../entities/subject'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { draftOrganisationAuthor, draftPublicFigureAuthor } from '../entities/draft-statement'
 import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
+import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
+import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
 import {
   makeDraft,
   makeOrganisationDraft,
@@ -35,6 +37,12 @@ const stubPositionRepo = (positions: Position[]): PositionRepository =>
 
 const noOrganisation: OrganisationRepository = fakeOrganisationRepo()
 
+/** A site that knows no argument and lists no occupation yet. */
+const emptyCatalogue = () => ({
+  argumentRepo: fakeArgumentRepo(),
+  occupationRepo: fakeOccupationRepo(),
+})
+
 describe('resolveDraft', () => {
   it('should mark all entities as found when they exist', async () => {
     const result = await Effect.runPromise(
@@ -43,6 +51,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(makeSubject()),
         positionRepo: stubPositionRepo([makePosition()]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -69,6 +78,7 @@ describe('resolveDraft', () => {
         organisationRepo: fakeOrganisationRepo([organisation]),
         subjectRepo: stubSubjectRepo(makeSubject()),
         positionRepo: stubPositionRepo([makePosition()]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -86,6 +96,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(makeSubject()),
         positionRepo: stubPositionRepo([makePosition()]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -100,6 +111,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(makeSubject()),
         positionRepo: stubPositionRepo([makePosition()]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -114,6 +126,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(null),
         positionRepo: stubPositionRepo([]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -135,6 +148,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(null),
         positionRepo: stubPositionRepo([]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -161,6 +175,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(makeSubject()),
         positionRepo: stubPositionRepo([otherPosition]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -176,6 +191,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(null),
         positionRepo: stubPositionRepo([]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -191,6 +207,7 @@ describe('resolveDraft', () => {
         organisationRepo: noOrganisation,
         subjectRepo: stubSubjectRepo(null),
         positionRepo: stubPositionRepo([]),
+        ...emptyCatalogue(),
       }),
     )
 
@@ -198,5 +215,102 @@ describe('resolveDraft', () => {
     expect(result.subject).toEqual({ found: false, canCreate: true })
     expect(result.position).toEqual({ found: false, canCreate: true })
     expect(result.canValidate).toBe(true)
+  })
+
+  /** What the draft says beyond the statement, so the reviewer sees it before validating. */
+  describe('what the draft adds to the statement', () => {
+    const resolveWith = (
+      draft: Parameters<typeof resolveDraft>[0],
+      catalogue: Partial<ReturnType<typeof emptyCatalogue>> = {},
+    ) =>
+      Effect.runPromise(
+        resolveDraft(draft, {
+          publicFigureRepo: stubPublicFigureRepo(makePublicFigure()),
+          organisationRepo: noOrganisation,
+          subjectRepo: stubSubjectRepo(makeSubject()),
+          positionRepo: stubPositionRepo([makePosition()]),
+          ...emptyCatalogue(),
+          ...catalogue,
+        }),
+      )
+
+    it('should tell an argument the site already has from a new one', async () => {
+      const known = sampleArgument('Coût budgétaire')
+      const result = await resolveWith(
+        makeDraft({ arguments: [{ title: 'Coût budgétaire' }, { title: 'Justice fiscale' }] }),
+        { argumentRepo: fakeArgumentRepo([known]) },
+      )
+
+      expect(result.arguments).toEqual([
+        { title: 'Coût budgétaire', known: true },
+        { title: 'Justice fiscale', known: false },
+      ])
+      expect(result.canValidate).toBe(true)
+    })
+
+    it('should refuse to validate an occupation that is not on the closed list', async () => {
+      const result = await resolveWith(
+        makeDraft({ occupations: [{ name: 'Directrice de think tank', current: true }] }),
+        { occupationRepo: fakeOccupationRepo([sampleOccupation('Économiste')]) },
+      )
+
+      expect(result.occupations).toEqual([
+        { name: 'Directrice de think tank', current: true, listed: false },
+      ])
+      expect(result.canValidate).toBe(false)
+    })
+
+    it('should accept an occupation written without its inclusive suffix', async () => {
+      const result = await resolveWith(
+        makeDraft({ occupations: [{ name: 'Député', current: true }] }),
+        { occupationRepo: fakeOccupationRepo([sampleOccupation('Député·e')]) },
+      )
+
+      expect(result.occupations).toEqual([{ name: 'Député', current: true, listed: true }])
+      expect(result.canValidate).toBe(true)
+    })
+
+    it('should refuse to validate an unknown organisation the draft cannot create', async () => {
+      const result = await resolveWith(
+        makeDraft({ affiliations: [{ organisation: 'Fondation iFRAP' }] }),
+      )
+
+      expect(result.affiliations).toEqual([
+        {
+          organisation: 'Fondation iFRAP',
+          role: undefined,
+          startedOn: undefined,
+          endedOn: undefined,
+          found: false,
+          canCreate: false,
+        },
+      ])
+      expect(result.canValidate).toBe(false)
+    })
+
+    it('should validate an unknown organisation the draft carries the data for', async () => {
+      const result = await resolveWith(
+        makeDraft({
+          affiliations: [
+            {
+              organisation: 'Fondation iFRAP',
+              role: 'directrice',
+              organisationData: {
+                presentation: 'Think tank libéral.',
+                organisationType: 'association',
+              },
+            },
+          ],
+        }),
+      )
+
+      expect(result.affiliations[0]).toMatchObject({
+        organisation: 'Fondation iFRAP',
+        role: 'directrice',
+        found: false,
+        canCreate: true,
+      })
+      expect(result.canValidate).toBe(true)
+    })
   })
 })

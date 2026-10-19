@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { Effect, Either } from 'effect'
+import { Effect, Either, Option } from 'effect'
 import { validateDraft } from './validate-draft'
 import {
   DraftStatement,
@@ -15,8 +15,16 @@ import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
 import { Organisation } from '../entities/organisation'
-import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
-import { fakeArgumentRepo } from './argument-test-helpers'
+import {
+  fakeMembershipRepo,
+  fakeOrganisationRepo,
+  sampleOrganisation,
+} from './organisation-test-helpers'
+import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
+import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
+import { Argument } from '../entities/argument'
+import { Occupation } from '../entities/occupation'
+import { createMembership, OrganisationMembership } from '../entities/organisation-membership'
 import { Subject } from '../entities/subject'
 import { Position } from '../entities/position'
 import { ContributorIdentity } from './types'
@@ -44,6 +52,9 @@ function makeRepos(overrides: {
   organisation?: Organisation | null
   subject?: Subject | null
   positions?: Position[]
+  arguments?: Argument[]
+  occupations?: Occupation[]
+  memberships?: OrganisationMembership[]
 }) {
   const createdFigures = new Map<string, PublicFigure>()
   const createdSubjects = new Map<string, Subject>()
@@ -118,6 +129,9 @@ function makeRepos(overrides: {
     recordEvent: ReturnType<typeof vi.fn>
   }
 
+  const seededFigures = overrides.figure ? [overrides.figure] : []
+  const seededOrganisations = overrides.organisation ? [overrides.organisation] : []
+
   return {
     draftRepo,
     publicFigureRepo,
@@ -128,7 +142,13 @@ function makeRepos(overrides: {
     positionRepo,
     runUnitOfWork: unit.run,
     journal: unit.journal,
-    argumentRepo: fakeArgumentRepo(),
+    argumentRepo: fakeArgumentRepo(overrides.arguments ?? []),
+    occupationRepo: fakeOccupationRepo(overrides.occupations ?? []),
+    membershipRepo: fakeMembershipRepo(
+      overrides.memberships ?? [],
+      seededFigures,
+      seededOrganisations,
+    ),
     reputationRepo,
   }
 }
@@ -275,5 +295,238 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(repos.journal.all()[0].payload).toMatchObject({ statementType: 'program' })
+  })
+
+  describe('the arguments the draft carries', () => {
+    it('should reuse an argument the site already knows, whatever its case', async () => {
+      const known = sampleArgument('Risque d’exil fiscal')
+      const repos = makeRepos({
+        arguments: [known],
+        draft: makeDraft({ arguments: [{ title: 'RISQUE D’EXIL FISCAL' }] }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.argumentRepo.rows).toHaveLength(1)
+      expect(repos.journal.all()[0].payload).toMatchObject({ argumentIds: [known.id] })
+    })
+
+    it('should create an argument the site does not know yet', async () => {
+      const repos = makeRepos({
+        draft: makeDraft({
+          arguments: [{ title: 'Baisse de la dépense publique', description: 'Dépenser moins.' }],
+        }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.argumentRepo.rows).toMatchObject([
+        { title: 'Baisse de la dépense publique', description: 'Dépenser moins.' },
+      ])
+    })
+
+    it('should mobilise nothing when the statement only asserts', async () => {
+      const repos = makeRepos({})
+
+      await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(repos.argumentRepo.rows).toHaveLength(0)
+      expect(repos.journal.all()[0].payload).toMatchObject({ argumentIds: [] })
+    })
+  })
+
+  describe('the occupations of the public figure author', () => {
+    it('should assign the occupations the draft names', async () => {
+      const figure = makePublicFigure()
+      const economist = sampleOccupation('Économiste')
+      const repos = makeRepos({
+        figure,
+        occupations: [economist],
+        draft: makeDraft({ occupations: [{ name: 'Économiste', current: true }] }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.occupationRepo.assignments.get(figure.id)).toEqual([
+        { occupationId: economist.id, current: true },
+      ])
+    })
+
+    it('should add to the occupations the figure already holds, not replace them', async () => {
+      const figure = makePublicFigure()
+      const economist = sampleOccupation('Économiste')
+      const essayist = sampleOccupation('Essayiste')
+      const repos = makeRepos({
+        figure,
+        occupations: [economist, essayist],
+        draft: makeDraft({ occupations: [{ name: 'Essayiste', current: true }] }),
+      })
+      repos.occupationRepo.assignments.set(figure.id, [
+        { occupationId: economist.id, current: true },
+      ])
+
+      await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(repos.occupationRepo.assignments.get(figure.id)).toEqual([
+        { occupationId: economist.id, current: true },
+        { occupationId: essayist.id, current: true },
+      ])
+    })
+
+    it('should refuse an occupation that is not on the closed list', async () => {
+      const repos = makeRepos({
+        figure: makePublicFigure(),
+        occupations: [sampleOccupation('Économiste')],
+        draft: makeDraft({ occupations: [{ name: 'Directrice de think tank', current: true }] }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isLeft(result)).toBe(true)
+      if (Either.isLeft(result)) {
+        expect(result.left).toContain('Directrice de think tank')
+      }
+    })
+  })
+
+  describe('the organisations the public figure author belongs to', () => {
+    it('should affiliate the figure to an organisation the catalogue knows', async () => {
+      const figure = makePublicFigure()
+      const organisation = sampleOrganisation()
+      const repos = makeRepos({
+        figure,
+        organisation,
+        draft: makeDraft({
+          affiliations: [{ organisation: organisation.name, role: 'porte-parole' }],
+        }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.membershipRepo.rows).toMatchObject([
+        {
+          organisationId: organisation.id,
+          publicFigureId: figure.id,
+          role: Option.some('porte-parole'),
+        },
+      ])
+    })
+
+    it('should create an organisation the affiliation names and the catalogue lacks', async () => {
+      const figure = makePublicFigure()
+      const repos = makeRepos({
+        figure,
+        draft: makeDraft({
+          affiliations: [
+            {
+              organisation: 'Fondation iFRAP',
+              // No Wikipedia page here: the shared validator reports a
+              // biography, which the domain refuses for an organisation.
+              organisationData: {
+                presentation: 'Think tank libéral consacré aux finances publiques.',
+                organisationType: 'association',
+                notorietySources: ['https://lemonde.fr/ifrap', 'https://liberation.fr/ifrap'],
+              },
+            },
+          ],
+        }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
+      expect(repos.membershipRepo.rows).toHaveLength(1)
+    })
+
+    it('should fail when the organisation is unknown and the draft gives no data', async () => {
+      const repos = makeRepos({
+        figure: makePublicFigure(),
+        draft: makeDraft({ affiliations: [{ organisation: 'Fondation iFRAP' }] }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isLeft(result)).toBe(true)
+      if (Either.isLeft(result)) {
+        expect(result.left).toContain('Fondation iFRAP')
+      }
+    })
+
+    it('should leave an affiliation that is already current alone', async () => {
+      const figure = makePublicFigure()
+      const organisation = sampleOrganisation()
+      const existing = createMembership({
+        organisationId: organisation.id,
+        publicFigureId: figure.id,
+        role: 'adhérente',
+        createdBy: 'founder',
+      })
+      const repos = makeRepos({
+        figure,
+        organisation,
+        memberships: [existing],
+        draft: makeDraft({ affiliations: [{ organisation: organisation.name }] }),
+      })
+
+      const result = await validateDraft({
+        draftId: 'draft-1',
+        contributor: ADMIN,
+        ...repos,
+        wikipediaValidator: fakeWikipediaValidator,
+      })
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.membershipRepo.rows).toEqual([existing])
+    })
   })
 })
