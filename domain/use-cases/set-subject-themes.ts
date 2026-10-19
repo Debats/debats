@@ -1,23 +1,35 @@
 import { Either, Effect } from 'effect'
 import { ThemeId } from '../entities/theme'
+import { setSubjectThemes } from '../aggregates/subject'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
-import { SubjectRepository } from '../repositories/subject-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { runCommand } from './run-command'
+import { decideOnSubject, SubjectSource } from './subject-stream'
 
 type SetSubjectThemesParams = {
   contributor: ContributorIdentity | null
   subjectId: string
   themeIds: ThemeId[]
   primaryThemeId: ThemeId | null
+  runUnitOfWork: RunUnitOfWork
+  subjectSource: SubjectSource
   themeRepo: ThemeRepository
-  subjectRepo: SubjectRepository
 }
 
 export async function setSubjectThemesUseCase(
   params: SetSubjectThemesParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, subjectId, themeIds, primaryThemeId, themeRepo, subjectRepo } = params
+  const {
+    contributor,
+    subjectId,
+    themeIds,
+    primaryThemeId,
+    runUnitOfWork,
+    subjectSource,
+    themeRepo,
+  } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -38,11 +50,6 @@ export async function setSubjectThemesUseCase(
     return Either.left('La thématique principale doit faire partie des thématiques sélectionnées.')
   }
 
-  const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
-  if (!subject) {
-    return Either.left('Le sujet est introuvable.')
-  }
-
   if (themeIds.length > 0) {
     const foundThemes = await Effect.runPromise(themeRepo.findByIds(themeIds))
     if (foundThemes.length !== themeIds.length) {
@@ -52,12 +59,16 @@ export async function setSubjectThemesUseCase(
     }
   }
 
-  const assignments = themeIds.map((themeId) => ({
-    themeId,
-    isPrimary: themeId === primaryThemeId,
-  }))
+  const themes = themeIds.map((themeId) => ({ themeId, isPrimary: themeId === primaryThemeId }))
 
-  await Effect.runPromise(themeRepo.setAssignments(subjectId, assignments, contributor.id))
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
+        Effect.succeed([setSubjectThemes(themes)]),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
   return Either.right(undefined)
 }

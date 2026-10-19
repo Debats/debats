@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
-import { EDITED_MEANWHILE, updateStatementUseCase } from './update-statement'
+import { updateStatementUseCase } from './update-statement'
+import { EDITED_MEANWHILE } from './run-command'
+import { fakeStatementSource } from './subject-test-helpers'
 import { createStatement, publicFigureAuthor } from '../entities/statement'
 import { Position, createPosition } from '../entities/position'
 import { addStatement, statementStream } from '../aggregates/statement'
@@ -41,22 +43,6 @@ const existingStatement = createStatement({
 
 const allPositions = [existingPosition, anotherPosition, positionOnOtherSubject]
 
-const fakeStatementRepo = {
-  findById: (id: string) => Effect.succeed(id === existingStatement.id ? existingStatement : null),
-  findByPublicFigureId: () => Effect.succeed([]),
-  findByPositionId: () => Effect.succeed([]),
-  findByPositionIdWithAuthors: () => Effect.succeed([]),
-  findByPublicFigureWithDetails: () => Effect.succeed([]),
-  findByOrganisationWithDetails: () => Effect.succeed([]),
-  findByPublicFigureAndSubject: () => Effect.succeed([]),
-  findByOrganisationAndSubject: () => Effect.succeed([]),
-  findByArgumentWithAuthors: () => Effect.succeed([]),
-  findBySubjectWithAuthors: () => Effect.succeed([]),
-  findLatest: () => Effect.succeed([]),
-  findLatestReported: () => Effect.succeed([]),
-  delete: () => Effect.succeed(undefined as void),
-}
-
 const fakePositionRepo = {
   findById: (id: string) => Effect.succeed(allPositions.find((p) => p.id === id) ?? null),
   findBySubjectAndSlug: () => Effect.succeed(null as Position | null),
@@ -83,7 +69,7 @@ const validParams = {
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
   runUnitOfWork: inMemoryUnitOfWork().run,
-  statementRepo: fakeStatementRepo,
+  statementSource: fakeStatementSource([{ statement: existingStatement, argumentIds: [] }]),
   positionRepo: fakePositionRepo,
   argumentRepo: fakeArgumentRepo(),
   reputationRepo: fakeReputationRepo,
@@ -125,14 +111,14 @@ describe('updateStatementUseCase', () => {
 
   it('should import a statement that has no stream yet, as it is, before editing it', async () => {
     const old = sampleArgument('Ancien argument')
-    const argumentRepo = fakeArgumentRepo([old])
-    argumentRepo.links.set(existingStatement.id, [old.id])
     const { run, journal } = inMemoryUnitOfWork()
 
     const result = await updateStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
-      argumentRepo,
+      statementSource: fakeStatementSource([
+        { statement: existingStatement, argumentIds: [old.id] },
+      ]),
       runUnitOfWork: run,
     })
 

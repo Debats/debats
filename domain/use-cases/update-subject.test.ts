@@ -1,41 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { updateSubjectUseCase } from './update-subject'
-import { createSubject, Subject } from '../entities/subject'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakeSubjectSource,
+  journalWithSubjects,
+  samplePosition,
+  sampleSubject,
+  subjectParts,
+} from './subject-test-helpers'
 
-const existingSubject = createSubject({
-  title: 'Sujet existant',
-  presentation: 'Une présentation suffisamment longue pour être valide.',
-  problem: 'Une problématique suffisamment longue pour être valide.',
-  createdBy: 'author-id',
-})
-
-const fakeSubjectRepo = {
-  findById: (id: string) => Effect.succeed(id === existingSubject.id ? existingSubject : null),
-  update: (s: Subject) => Effect.succeed(s),
-  create: (s: Subject) => Effect.succeed(s),
-  findAll: () => Effect.succeed([]),
-  searchByTitle: () => Effect.succeed([]),
-  findBySlug: () => Effect.succeed(null),
-  delete: () => Effect.succeed(undefined as void),
-  getStats: () =>
-    Effect.succeed({
-      subjectId: '',
-      positionsCount: 0,
-      publicFiguresCount: 0,
-      organisationsCount: 0,
-      statementsCount: 0,
-      figureStatementsCount: 0,
-      organisationStatementsCount: 0,
-    }),
-  findSummariesByActivity: () => Effect.succeed([]),
-  findSummariesByCreatedAt: () => Effect.succeed([]),
-  findSummaryById: () => Effect.succeed(null),
-  findSummariesByIds: () => Effect.succeed([]),
-  findIndexEntries: () => Effect.succeed([]),
-  findAllIds: () => Effect.succeed([]),
-  findIdsWithoutPrimaryTheme: () => Effect.succeed([]),
-}
+const subject = sampleSubject()
+const position = samplePosition(subject.id)
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
@@ -44,82 +20,94 @@ const fakeReputationRepo = {
 }
 
 const validParams = {
-  subjectId: existingSubject.id,
-  title: 'Nouveau titre valide',
-  presentation: 'Une nouvelle présentation suffisamment longue.',
-  problem: 'Une nouvelle problématique suffisamment longue.',
-  subjectRepo: fakeSubjectRepo,
+  subjectId: subject.id,
+  title: 'Le SMIC',
+  presentation: 'Une présentation revue, suffisamment longue.',
+  problem: 'Faut-il augmenter le SMIC ?',
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
   reputationRepo: fakeReputationRepo,
 }
 
 describe('updateSubjectUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const result = await updateSubjectUseCase({
-      ...validParams,
-      contributor: null,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('connecté')
-    }
+    const result = await updateSubjectUseCase({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail when contributor lacks reputation', async () => {
     const result = await updateSubjectUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 9999 },
+      contributor: { id: 'abc', reputation: 0 },
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('Idéaliste')
-    }
   })
 
   it('should fail when subject does not exist', async () => {
     const result = await updateSubjectUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
-      subjectId: 'unknown-id',
+      subjectId: 'missing',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('introuvable')
-    }
+    expect(result).toEqual(Either.left('Sujet introuvable.'))
   })
 
   it('should fail when title is invalid', async () => {
     const result = await updateSubjectUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
-      title: 'ab',
+      title: 'Ab',
     })
-
     expect(Either.isLeft(result)).toBe(true)
   })
 
   it('should update subject and award reputation on success', async () => {
-    let reputationAdded = 0
+    let reputationRecorded = false
+    const { run, journal } = await journalWithSubjects([subject, [position]])
 
     const result = await updateSubjectUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: run,
       reputationRepo: {
-        getReputation: () => Effect.succeed(10000),
-        recordEvent: (event) => {
-          reputationAdded = event.amount
+        ...fakeReputationRepo,
+        recordEvent: () => {
+          reputationRecorded = true
           return Effect.succeed(undefined as void)
         },
-        getHistory: () => Effect.succeed([]),
       },
     })
 
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      id: subject.id,
+      title: 'Le SMIC',
+      slug: 'le-smic',
+      createdBy: 'founder',
+    })
+    expect(journal.all().at(-1)).toMatchObject({
+      type: 'SubjectEdited',
+      revision: 3,
+      actorId: 'abc',
+    })
+    expect(reputationRecorded).toBe(true)
+  })
+
+  it('should import a subject that has no stream yet, positions included, before editing it', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await updateSubjectUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: run,
+    })
+
     expect(Either.isRight(result)).toBe(true)
-    if (Either.isRight(result)) {
-      expect(result.right.title).toBe('Nouveau titre valide')
-    }
-    expect(reputationAdded).toBe(5)
+    expect(journal.all().map((e) => [e.revision, e.type, e.actorId, e.metadata.source])).toEqual([
+      [1, 'SubjectImported', 'founder', 'import'],
+      [2, 'PositionImported', 'founder', 'import'],
+      [3, 'SubjectEdited', 'abc', undefined],
+    ])
+    expect(journal.all()[0].occurredAt).toEqual(subject.createdAt)
+    expect(journal.all()[1].payload).toMatchObject({ positionId: position.id, slug: position.slug })
   })
 })

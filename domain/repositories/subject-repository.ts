@@ -32,12 +32,7 @@ export interface SubjectRepository {
 
   findById(id: string): Effect.Effect<Subject | null, DatabaseError>
 
-  create(subject: Subject): Effect.Effect<Subject, DatabaseError>
-
-  update(subject: Subject): Effect.Effect<Subject, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
-
+  /** Writes go through the journal (domain/aggregates/subject.ts); this repository only reads */
   getStats(subjectId: string): Effect.Effect<SubjectStats, DatabaseError>
 
   findSummariesByActivity(

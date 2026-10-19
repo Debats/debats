@@ -414,6 +414,21 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements with authors', error),
       }),
 
+    findIdsBySubjectId: (subjectId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select('id, positions!inner (subject_id)')
+            .eq('positions.subject_id', subjectId)
+            .is('deleted_at', null)
+
+          if (error) throw error
+          return data.map((row) => row.id)
+        },
+        catch: (error) => dbError('Failed to fetch the statement ids of a subject', error),
+      }),
+
     findLatest: (limit: number, subjectId?: string) =>
       Effect.tryPromise({
         try: async () => {

@@ -3,7 +3,10 @@
 import { redirect } from 'next/navigation'
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createStatementSource, createSubjectSource } from '../../infra/events/sources'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
+import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { mergePositions } from '../../domain/use-cases/merge-positions'
 import { getAdminContributor } from './admin-guard'
 import type { ActionResult } from './validate-draft-action'
@@ -24,7 +27,11 @@ export async function mergePositionsAction(
     sourcePositionId,
     targetPositionId,
     contributor: { id: contributor.id, reputation: contributor.reputation },
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
+    statementSource: createStatementSource(supabase),
     positionRepo: createPositionRepository(supabase),
+    statementRepo: createStatementRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

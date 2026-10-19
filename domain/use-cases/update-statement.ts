@@ -1,8 +1,7 @@
 import { Either, Effect, pipe } from 'effect'
 import { Statement, StatementType } from '../entities/statement'
-import { editStatement, statementStream } from '../aggregates/statement'
+import { editStatement } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
@@ -15,7 +14,8 @@ import {
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
-import { appendToStatement, loadOrImportStatement } from './statement-stream'
+import { appendToStatement, loadOrImportStatement, StatementSource } from './statement-stream'
+import { runCommand } from './run-command'
 
 type UpdateStatementParams = {
   contributor: ContributorIdentity | null
@@ -30,16 +30,13 @@ type UpdateStatementParams = {
   statedAt: string
   runUnitOfWork: RunUnitOfWork
   /** Read side: the statement as projected, to find it and to import it on demand */
-  statementRepo: StatementRepository
+  statementSource: StatementSource
   positionRepo: PositionRepository
   argumentRepo: ArgumentRepository
   reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
-
-export const EDITED_MEANWHILE =
-  'Cette prise de position vient d’être modifiée par quelqu’un d’autre. Rechargez la page avant de la modifier.'
 
 export async function updateStatementUseCase(
   params: UpdateStatementParams,
@@ -54,7 +51,7 @@ export async function updateStatementUseCase(
     quote,
     statedAt,
     runUnitOfWork,
-    statementRepo,
+    statementSource,
     positionRepo,
     argumentRepo,
     reputationRepo,
@@ -74,10 +71,11 @@ export async function updateStatementUseCase(
     return Either.left(validationError)
   }
 
-  const existing = await Effect.runPromise(statementRepo.findById(statementId))
-  if (!existing) {
+  const parts = await Effect.runPromise(statementSource(statementId))
+  if (!parts) {
     return Either.left('Prise de position introuvable.')
   }
+  const existing = parts.statement
 
   const newPosition = await Effect.runPromise(positionRepo.findById(positionId))
   if (!newPosition) {
@@ -107,7 +105,6 @@ export async function updateStatementUseCase(
     reputationRepo,
   })
 
-  const currentArguments = await Effect.runPromise(argumentRepo.findRefsByStatementId(statementId))
   const edited = editStatement({
     positionId,
     statementType,
@@ -118,32 +115,17 @@ export async function updateStatementUseCase(
     argumentIds,
   })
 
-  const outcome = await Effect.runPromise(
-    Effect.either(
-      runUnitOfWork((events) =>
-        pipe(
-          loadOrImportStatement(
-            events,
-            existing,
-            currentArguments.map((a) => a.id),
-          ),
-          Effect.flatMap((history) =>
-            appendToStatement(
-              events,
-              statementStream(existing.id),
-              history,
-              [edited],
-              contributor.id,
-            ),
-          ),
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      pipe(
+        loadOrImportStatement(events, statementId, statementSource),
+        Effect.flatMap((history) =>
+          appendToStatement(events, statementId, history, [edited], contributor.id),
         ),
       ),
     ),
   )
-  if (Either.isLeft(outcome)) {
-    if (outcome.left._tag === 'ConcurrencyError') return Either.left(EDITED_MEANWHILE)
-    throw outcome.left
-  }
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
   await Effect.runPromise(
     reputationRepo.recordEvent({

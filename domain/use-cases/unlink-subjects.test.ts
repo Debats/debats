@@ -1,64 +1,56 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either } from 'effect'
 import { unlinkSubjectsUseCase } from './unlink-subjects'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakeSubjectSource,
+  journalWithSubjects,
+  sampleSubject,
+  subjectParts,
+} from './subject-test-helpers'
 
-function fakeRelatedRepo() {
-  const unlinked: Array<{ id1: string; id2: string }> = []
+const smic = sampleSubject('Le montant du SMIC')
+const retraites = sampleSubject('Les retraites')
 
-  return {
-    repo: {
-      findRelated: () => Effect.succeed([]),
-      link: () => Effect.succeed(undefined as void),
-      unlink: (id1: string, id2: string) => {
-        unlinked.push({ id1, id2 })
-        return Effect.succeed(undefined as void)
-      },
-    },
-    unlinked,
-  }
+const validParams = {
+  subjectId1: smic.id,
+  subjectId2: retraites.id,
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectSource: fakeSubjectSource([subjectParts(smic), subjectParts(retraites)]),
 }
 
 describe('unlinkSubjectsUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const { repo } = fakeRelatedRepo()
-    const result = await unlinkSubjectsUseCase({
-      contributor: null,
-      subjectId1: 'subject-a',
-      subjectId2: 'subject-b',
-      relatedRepo: repo,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('connecté')
-    }
+    const result = await unlinkSubjectsUseCase({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail when contributor lacks reputation', async () => {
-    const { repo } = fakeRelatedRepo()
     const result = await unlinkSubjectsUseCase({
+      ...validParams,
       contributor: { id: 'abc', reputation: 0 },
-      subjectId1: 'subject-a',
-      subjectId2: 'subject-b',
-      relatedRepo: repo,
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('Éloquent')
-    }
   })
 
-  it('should unlink two subjects on success', async () => {
-    const { repo, unlinked } = fakeRelatedRepo()
+  it('should record the unlink on both subjects on success', async () => {
+    const { run, journal } = await journalWithSubjects([smic, []], [retraites, []])
+
     const result = await unlinkSubjectsUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId1: 'subject-a',
-      subjectId2: 'subject-b',
-      relatedRepo: repo,
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: run,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(unlinked).toEqual([{ id1: 'subject-a', id2: 'subject-b' }])
+    expect(
+      journal
+        .all()
+        .slice(-2)
+        .map((e) => [e.streamId, e.type, e.payload]),
+    ).toEqual([
+      [smic.id, 'SubjectUnlinked', { subjectId: retraites.id }],
+      [retraites.id, 'SubjectUnlinked', { subjectId: smic.id }],
+    ])
   })
 })

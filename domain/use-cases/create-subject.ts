@@ -1,12 +1,13 @@
-import { Either } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { Effect } from 'effect'
 import { ArrayFormatter } from 'effect/ParseResult'
-import { createSubject, SubjectTitle, Subject } from '../entities/subject'
-import { SubjectRepository } from '../repositories/subject-repository'
+import { Subject, SubjectId, SubjectTitle } from '../entities/subject'
+import { addSubject, replaySubject, subjectStream } from '../aggregates/subject'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { requireSubjectState } from './subject-stream'
 
 const CreateSubjectInput = S.Struct({
   title: SubjectTitle,
@@ -19,7 +20,7 @@ type CreateSubjectParams = {
   title: string
   presentation: string
   problem: string
-  subjectRepo: SubjectRepository
+  runUnitOfWork: RunUnitOfWork
   reputationRepo: ReputationRepository
 }
 
@@ -28,7 +29,7 @@ export type { FieldErrors }
 export async function createSubjectUseCase(
   params: CreateSubjectParams,
 ): Promise<Either.Either<Subject, string | FieldErrors>> {
-  const { contributor, title, presentation, problem, subjectRepo, reputationRepo } = params
+  const { contributor, title, presentation, problem, runUnitOfWork, reputationRepo } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -61,16 +62,19 @@ export async function createSubjectUseCase(
     return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
   }
 
-  const input = decoded.right
-
-  const subject = createSubject({
-    title: input.title,
-    presentation: input.presentation,
-    problem: input.problem,
-    createdBy: contributor.id,
-  })
-
-  const created = await Effect.runPromise(subjectRepo.create(subject))
+  // The command names the subject: the stream exists from its first event
+  const id = SubjectId.make(crypto.randomUUID())
+  const state = await Effect.runPromise(
+    runUnitOfWork((events) =>
+      pipe(
+        events.append(subjectStream(id), 0, [addSubject(decoded.right)], {
+          actorId: contributor.id,
+        }),
+        Effect.flatMap(replaySubject),
+        Effect.flatMap(requireSubjectState),
+      ),
+    ),
+  )
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -78,9 +82,9 @@ export async function createSubjectUseCase(
       action: 'added_subject',
       amount: reputationReward('added_subject'),
       relatedEntityType: 'subject',
-      relatedEntityId: created.id,
+      relatedEntityId: state.subject.id,
     }),
   )
 
-  return Either.right(created)
+  return Either.right(state.subject)
 }

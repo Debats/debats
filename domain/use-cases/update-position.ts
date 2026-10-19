@@ -1,12 +1,15 @@
-import { Either } from 'effect'
+import { Either, Effect } from 'effect'
 import * as S from 'effect/Schema'
-import { Effect } from 'effect'
 import { ArrayFormatter } from 'effect/ParseResult'
-import { updatePositionTitle, updatePositionDescription, Position } from '../entities/position'
+import { Position } from '../entities/position'
+import { editPosition, findPosition } from '../aggregates/subject'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
-import { ContributorIdentity, FieldErrors } from './types'
+import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { runCommand } from './run-command'
+import { decideOnSubject, SubjectSource } from './subject-stream'
 
 const UpdatePositionInput = S.Struct({
   title: S.String.pipe(S.minLength(3), S.maxLength(255)),
@@ -18,6 +21,9 @@ type UpdatePositionParams = {
   positionId: string
   title: string
   description: string
+  runUnitOfWork: RunUnitOfWork
+  subjectSource: SubjectSource
+  /** Read side: which subject the position belongs to */
   positionRepo: PositionRepository
   reputationRepo: ReputationRepository
 }
@@ -27,7 +33,16 @@ export type { FieldErrors }
 export async function updatePositionUseCase(
   params: UpdatePositionParams,
 ): Promise<Either.Either<Position, string | FieldErrors>> {
-  const { contributor, positionId, title, description, positionRepo, reputationRepo } = params
+  const {
+    contributor,
+    positionId,
+    title,
+    description,
+    runUnitOfWork,
+    subjectSource,
+    positionRepo,
+    reputationRepo,
+  } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -62,9 +77,19 @@ export async function updatePositionUseCase(
     return Either.left('Position introuvable.')
   }
 
-  const updated = updatePositionDescription(updatePositionTitle(existing, title), description)
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnSubject(events, existing.subjectId, subjectSource, contributor.id, (state) =>
+        findPosition(state, positionId)
+          ? Effect.succeed([editPosition({ positionId, title, description })])
+          : Effect.fail(new Rejected('Position introuvable.')),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  const saved = await Effect.runPromise(positionRepo.update(updated))
+  const position = findPosition(outcome.right, positionId)
+  if (!position) throw new Error('The position just edited is missing from the subject')
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -72,9 +97,9 @@ export async function updatePositionUseCase(
       action: 'edited_position',
       amount: reputationReward('edited_position'),
       relatedEntityType: 'position',
-      relatedEntityId: saved.id,
+      relatedEntityId: position.id,
     }),
   )
 
-  return Either.right(saved)
+  return Either.right(position)
 }

@@ -20,13 +20,14 @@ import {
   fakeOrganisationRepo,
   sampleOrganisation,
 } from './organisation-test-helpers'
+import { fakeSubjectSource, subjectParts } from './subject-test-helpers'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
 import { Argument } from '../entities/argument'
 import { Occupation } from '../entities/occupation'
 import { createMembership, OrganisationMembership } from '../entities/organisation-membership'
 import { Subject } from '../entities/subject'
-import { Position } from '../entities/position'
+import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { ContributorIdentity } from './types'
 import {
   makeDraft,
@@ -57,8 +58,6 @@ function makeRepos(overrides: {
   memberships?: OrganisationMembership[]
 }) {
   const createdFigures = new Map<string, PublicFigure>()
-  const createdSubjects = new Map<string, Subject>()
-  const createdPositions = new Map<string, Position>()
 
   const draftRepo = {
     findById: vi.fn(() => Effect.succeed('draft' in overrides ? overrides.draft : makeDraft())),
@@ -93,35 +92,48 @@ function makeRepos(overrides: {
   const subjectRepo = {
     findBySlug: vi.fn(() => Effect.succeed(overrides.subject ?? null)),
     findById: vi.fn((id: string) =>
-      Effect.succeed(
-        overrides.subject?.id === id ? overrides.subject : (createdSubjects.get(id) ?? null),
-      ),
+      Effect.succeed(overrides.subject?.id === id ? overrides.subject : null),
     ),
-    create: vi.fn((s: Subject) => {
-      createdSubjects.set(s.id, s)
-      return Effect.succeed(s)
-    }),
   } as unknown as SubjectRepository & {
     findBySlug: ReturnType<typeof vi.fn>
-    create: ReturnType<typeof vi.fn>
+  }
+
+  const unit = inMemoryUnitOfWork()
+
+  /** A position added through the journal during the validation, as the table would then hold it */
+  const positionFromJournal = (id: string): Position | null => {
+    const added = unit.journal
+      .all()
+      .find(
+        (e) =>
+          e.type === 'PositionAdded' && (e.payload as { positionId: string }).positionId === id,
+      )
+    if (!added) return null
+    const payload = added.payload as { title: string; slug: string; description: string }
+    return Position.make({
+      id: PositionId.make(id),
+      title: PositionTitle.make(payload.title),
+      slug: PositionSlug.make(payload.slug),
+      description: payload.description,
+      subjectId: added.streamId,
+      createdAt: added.occurredAt,
+      updatedAt: added.occurredAt,
+    })
   }
 
   const positionRepo = {
     findBySubjectId: vi.fn(() => Effect.succeed(overrides.positions ?? [])),
-    findById: vi.fn((id: string) => {
-      const fromOverrides = (overrides.positions ?? []).find((p) => p.id === id)
-      return Effect.succeed(fromOverrides ?? createdPositions.get(id) ?? null)
-    }),
-    create: vi.fn((p: Position) => {
-      createdPositions.set(p.id, p)
-      return Effect.succeed(p)
-    }),
+    findById: vi.fn((id: string) =>
+      Effect.succeed(
+        (overrides.positions ?? []).find((p) => p.id === id) ?? positionFromJournal(id),
+      ),
+    ),
   } as unknown as PositionRepository & {
     findBySubjectId: ReturnType<typeof vi.fn>
-    create: ReturnType<typeof vi.fn>
   }
-
-  const unit = inMemoryUnitOfWork()
+  const subjectSource = fakeSubjectSource(
+    overrides.subject ? [subjectParts(overrides.subject, overrides.positions ?? [])] : [],
+  )
 
   const reputationRepo = {
     recordEvent: vi.fn(() => Effect.succeed(undefined)),
@@ -141,6 +153,7 @@ function makeRepos(overrides: {
     subjectRepo,
     positionRepo,
     runUnitOfWork: unit.run,
+    subjectSource,
     journal: unit.journal,
     argumentRepo: fakeArgumentRepo(overrides.arguments ?? []),
     occupationRepo: fakeOccupationRepo(overrides.occupations ?? []),
@@ -180,9 +193,11 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(repos.publicFigureRepo.create).toHaveBeenCalledOnce()
-    expect(repos.subjectRepo.create).toHaveBeenCalledOnce()
-    expect(repos.positionRepo.create).toHaveBeenCalledOnce()
-    expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
+    expect(repos.journal.all().map((e) => e.type)).toEqual([
+      'SubjectAdded',
+      'PositionAdded',
+      'StatementAdded',
+    ])
     expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
   })
 
@@ -200,8 +215,6 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
-    expect(repos.subjectRepo.create).not.toHaveBeenCalled()
-    expect(repos.positionRepo.create).not.toHaveBeenCalled()
     expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
     expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
   })
@@ -247,7 +260,7 @@ describe('validateDraft', () => {
     expect(Either.isRight(result)).toBe(true)
     expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
     expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
-    expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
+    expect(repos.journal.all().at(-1)?.type).toBe('StatementAdded')
   })
 
   it('should attribute the statement to the organisation', async () => {
@@ -262,7 +275,7 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(repos.organisationRepo.create).not.toHaveBeenCalled()
-    expect(repos.journal.all()[0].payload).toMatchObject({
+    expect(repos.journal.all().at(-1)?.payload).toMatchObject({
       author: { kind: 'organisation', id: organisation.id },
     })
   })
@@ -294,7 +307,7 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.journal.all()[0].payload).toMatchObject({ statementType: 'program' })
+    expect(repos.journal.all().at(-1)?.payload).toMatchObject({ statementType: 'program' })
   })
 
   describe('the arguments the draft carries', () => {
@@ -314,7 +327,7 @@ describe('validateDraft', () => {
 
       expect(Either.isRight(result)).toBe(true)
       expect(repos.argumentRepo.rows).toHaveLength(1)
-      expect(repos.journal.all()[0].payload).toMatchObject({ argumentIds: [known.id] })
+      expect(repos.journal.all().at(-1)?.payload).toMatchObject({ argumentIds: [known.id] })
     })
 
     it('should create an argument the site does not know yet', async () => {
@@ -348,7 +361,7 @@ describe('validateDraft', () => {
       })
 
       expect(repos.argumentRepo.rows).toHaveLength(0)
-      expect(repos.journal.all()[0].payload).toMatchObject({ argumentIds: [] })
+      expect(repos.journal.all().at(-1)?.payload).toMatchObject({ argumentIds: [] })
     })
   })
 

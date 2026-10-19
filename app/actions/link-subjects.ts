@@ -2,8 +2,8 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
-import { createRelatedSubjectsRepository } from '../../infra/database/related-subjects-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createSubjectSource } from '../../infra/events/sources'
 import { linkSubjectsUseCase } from '../../domain/use-cases/link-subjects'
 import { unlinkSubjectsUseCase } from '../../domain/use-cases/unlink-subjects'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -21,8 +21,8 @@ export async function linkSubjectsAction(
     contributor,
     subjectId1,
     subjectId2,
-    subjectRepo: createSubjectRepository(supabase),
-    relatedRepo: createRelatedSubjectsRepository(supabase),
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
   })
 
   if (Either.isLeft(result)) {
@@ -43,7 +43,8 @@ export async function unlinkSubjectsAction(
     contributor,
     subjectId1,
     subjectId2,
-    relatedRepo: createRelatedSubjectsRepository(supabase),
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
   })
 
   if (Either.isLeft(result)) {

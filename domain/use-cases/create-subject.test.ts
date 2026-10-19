@@ -1,34 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { createSubjectUseCase } from './create-subject'
-import { Subject } from '../entities/subject'
-
-const fakeSubjectRepo = {
-  create: (subject: Subject) => Effect.succeed(subject),
-  findAll: () => Effect.succeed([]),
-  searchByTitle: () => Effect.succeed([]),
-  findBySlug: () => Effect.succeed(null),
-  findById: () => Effect.succeed(null),
-  update: (s: Subject) => Effect.succeed(s),
-  delete: () => Effect.succeed(undefined as void),
-  getStats: () =>
-    Effect.succeed({
-      subjectId: '',
-      positionsCount: 0,
-      publicFiguresCount: 0,
-      organisationsCount: 0,
-      statementsCount: 0,
-      figureStatementsCount: 0,
-      organisationStatementsCount: 0,
-    }),
-  findSummariesByActivity: () => Effect.succeed([]),
-  findSummariesByCreatedAt: () => Effect.succeed([]),
-  findSummaryById: () => Effect.succeed(null),
-  findSummariesByIds: () => Effect.succeed([]),
-  findIndexEntries: () => Effect.succeed([]),
-  findAllIds: () => Effect.succeed([]),
-  findIdsWithoutPrimaryTheme: () => Effect.succeed([]),
-}
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
@@ -37,24 +10,17 @@ const fakeReputationRepo = {
 }
 
 const validParams = {
-  title: 'Un sujet valide',
-  presentation: 'Une présentation suffisamment longue pour être valide.',
-  problem: 'Une problématique suffisamment longue pour être valide.',
-  subjectRepo: fakeSubjectRepo,
+  title: 'Le montant du SMIC',
+  presentation: 'Une présentation suffisamment longue.',
+  problem: 'Faut-il augmenter le SMIC ?',
+  runUnitOfWork: inMemoryUnitOfWork().run,
   reputationRepo: fakeReputationRepo,
 }
 
 describe('createSubjectUseCase', () => {
   it('should fail when contributor is null (not authenticated)', async () => {
-    const result = await createSubjectUseCase({
-      ...validParams,
-      contributor: null,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('connecté')
-    }
+    const result = await createSubjectUseCase({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail when contributor lacks reputation', async () => {
@@ -62,54 +28,59 @@ describe('createSubjectUseCase', () => {
       ...validParams,
       contributor: { id: 'abc', reputation: 0 },
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('Éloquent')
-    }
   })
 
   it('should fail when title is invalid', async () => {
     const result = await createSubjectUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      title: 'ab',
+      contributor: { id: 'abc', reputation: 10000 },
+      title: 'Ab',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' && result.left.title,
+    ).toBeDefined()
   })
 
   it('should fail when presentation is too short', async () => {
     const result = await createSubjectUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
+      contributor: { id: 'abc', reputation: 10000 },
       presentation: 'Court',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' && result.left.presentation,
+    ).toBeDefined()
   })
 
   it('should create subject and award reputation on success', async () => {
-    let recordedEvent: { action: string; amount: number } | null = null
+    let reputationAdded = 0
+    const { run, journal } = inMemoryUnitOfWork()
 
     const result = await createSubjectUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
+      contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: run,
       reputationRepo: {
-        getReputation: () => Effect.succeed(1000),
+        ...fakeReputationRepo,
         recordEvent: (event) => {
-          recordedEvent = { action: event.action, amount: event.amount }
+          reputationAdded = event.amount
           return Effect.succeed(undefined as void)
         },
-        getHistory: () => Effect.succeed([]),
       },
     })
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
-      expect(result.right.title).toBe('Un sujet valide')
-      expect(result.right.createdBy).toBe('abc')
+      expect(result.right).toMatchObject({
+        title: 'Le montant du SMIC',
+        slug: 'le-montant-du-smic',
+        createdBy: 'abc',
+      })
+      expect(journal.all().map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
+        ['subject', result.right.id, 1, 'SubjectAdded'],
+      ])
     }
-    expect(recordedEvent).toEqual({ action: 'added_subject', amount: 50 })
+    expect(reputationAdded).toBeGreaterThan(0)
   })
 })

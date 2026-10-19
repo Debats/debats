@@ -2,6 +2,8 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createSubjectSource } from '../../infra/events/sources'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { updatePositionUseCase, FieldErrors } from '../../domain/use-cases/update-position'
@@ -24,6 +26,8 @@ export async function updatePositionAction(
     positionId,
     title: String(formData.get('title') ?? ''),
     description: String(formData.get('description') ?? ''),
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
     positionRepo: createPositionRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
   })

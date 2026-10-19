@@ -1,55 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { createPositionUseCase } from './create-position'
-import { Position, PositionId, PositionTitle } from '../entities/position'
-import { Subject, SubjectId, SubjectSlug, SubjectTitle } from '../entities/subject'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakeSubjectSource,
+  journalWithSubjects,
+  sampleSubject,
+  subjectParts,
+} from './subject-test-helpers'
 
-const fakeSubject = Subject.make({
-  id: SubjectId.make('subject-1'),
-  title: SubjectTitle.make('Faut-il interdire les SUV ?'),
-  slug: SubjectSlug.make('faut-il-interdire-les-suv'),
-  presentation: 'Un sujet de débat sur les SUV en ville.',
-  problem: 'Les SUV polluent et prennent de la place.',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-})
-
-const fakePositionRepo = {
-  findById: () => Effect.succeed(null as Position | null),
-  findBySubjectAndSlug: () => Effect.succeed(null as Position | null),
-  findBySubjectId: () => Effect.succeed([] as Position[]),
-  create: (p: Position) => Effect.succeed(p),
-  update: (p: Position) => Effect.succeed(p),
-  delete: () => Effect.succeed(undefined as void),
-  mergeInto: () => Effect.succeed(undefined as void),
-}
-
-const fakeSubjectRepo = {
-  findAll: () => Effect.succeed([fakeSubject]),
-  searchByTitle: () => Effect.succeed([fakeSubject]),
-  findBySlug: () => Effect.succeed(fakeSubject as Subject | null),
-  findById: () => Effect.succeed(fakeSubject as Subject | null),
-  create: (s: Subject) => Effect.succeed(s),
-  update: (s: Subject) => Effect.succeed(s),
-  delete: () => Effect.succeed(undefined as void),
-  getStats: () =>
-    Effect.succeed({
-      subjectId: '',
-      positionsCount: 0,
-      statementsCount: 0,
-      publicFiguresCount: 0,
-      organisationsCount: 0,
-      figureStatementsCount: 0,
-      organisationStatementsCount: 0,
-    }),
-  findSummariesByActivity: () => Effect.succeed([]),
-  findSummariesByCreatedAt: () => Effect.succeed([]),
-  findSummaryById: () => Effect.succeed(null),
-  findSummariesByIds: () => Effect.succeed([]),
-  findIndexEntries: () => Effect.succeed([]),
-  findAllIds: () => Effect.succeed([]),
-  findIdsWithoutPrimaryTheme: () => Effect.succeed([]),
-}
+const subject = sampleSubject()
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(0),
@@ -58,115 +18,94 @@ const fakeReputationRepo = {
 }
 
 const validParams = {
-  subjectId: 'subject-1',
-  title: 'Pour l\u2019interdiction',
-  description: 'Les SUV devraient être interdits dans les centres-villes.',
-  positionRepo: fakePositionRepo,
-  subjectRepo: fakeSubjectRepo,
+  subjectId: subject.id,
+  title: 'Pour une hausse',
+  description: 'Une description suffisamment longue pour être valide.',
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectSource: fakeSubjectSource([subjectParts(subject)]),
   reputationRepo: fakeReputationRepo,
 }
 
+const eloquent = { id: 'abc', reputation: 10000 }
+
 describe('createPositionUseCase', () => {
   it('should fail when contributor is null (not authenticated)', async () => {
-    const result = await createPositionUseCase({
-      ...validParams,
-      contributor: null,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('connecté')
-    }
+    const result = await createPositionUseCase({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail with field error when title is too short', async () => {
     const result = await createPositionUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: eloquent,
       title: 'Ab',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.title).toBeDefined()
-    }
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' && result.left.title,
+    ).toBeDefined()
   })
 
   it('should fail with field error when description is too short', async () => {
     const result = await createPositionUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: eloquent,
       description: 'Court',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.description).toBeDefined()
-    }
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' && result.left.description,
+    ).toBeDefined()
   })
 
   it('should fail with multiple field errors at once', async () => {
     const result = await createPositionUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
+      contributor: eloquent,
       title: 'Ab',
       description: 'Court',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result) && typeof result.left !== 'string') {
-      expect(result.left.title).toBeDefined()
-      expect(result.left.description).toBeDefined()
-    }
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' ? Object.keys(result.left) : [],
+    ).toEqual(['title', 'description'])
   })
 
   it('should fail when subject is not found', async () => {
     const result = await createPositionUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      subjectRepo: {
-        ...fakeSubjectRepo,
-        findById: () => Effect.succeed(null),
-      },
+      contributor: eloquent,
+      subjectId: 'missing',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('sujet')
-    }
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
   })
 
   it('should create position and award 50 pts on success', async () => {
-    let totalReputationAdded = 0
-    let createdPosition: Position | null = null
+    let reputationAdded = 0
+    const { run, journal } = await journalWithSubjects([subject, []])
 
     const result = await createPositionUseCase({
       ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-      positionRepo: {
-        ...fakePositionRepo,
-        create: (p: Position) => {
-          createdPosition = p
-          return Effect.succeed(p)
-        },
-      },
+      contributor: eloquent,
+      runUnitOfWork: run,
       reputationRepo: {
         ...fakeReputationRepo,
         recordEvent: (event) => {
-          totalReputationAdded += event.amount
+          reputationAdded = event.amount
           return Effect.succeed(undefined as void)
         },
       },
     })
 
-    expect(Either.isRight(result)).toBe(true)
-    if (Either.isRight(result)) {
-      expect(result.right.title).toBe('Pour l\u2019interdiction')
-      expect(result.right.subjectId).toBe('subject-1')
-      expect(result.right.createdBy).toBe('abc')
-    }
-
-    expect(createdPosition).not.toBeNull()
-    expect(totalReputationAdded).toBe(50)
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      title: 'Pour une hausse',
+      slug: 'pour-une-hausse',
+      subjectId: subject.id,
+      createdBy: 'abc',
+    })
+    expect(journal.all().at(-1)).toMatchObject({
+      streamId: subject.id,
+      type: 'PositionAdded',
+      revision: 2,
+      actorId: 'abc',
+    })
+    expect(reputationAdded).toBe(50)
   })
 })

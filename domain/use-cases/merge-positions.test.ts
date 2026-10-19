@@ -1,113 +1,118 @@
-import { describe, it, expect, vi } from 'vitest'
-import { Effect, Either } from 'effect'
+import { describe, it, expect } from 'vitest'
+import { Either, Effect } from 'effect'
 import { mergePositions } from './merge-positions'
+import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
 import { PositionRepository } from '../repositories/position-repository'
-import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
-import { slugify } from '../value-objects/slug'
+import { StatementRepository } from '../repositories/statement-repository'
+import { addStatement, statementStream } from '../aggregates/statement'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakeStatementSource,
+  fakeSubjectSource,
+  journalWithSubjects,
+  samplePosition,
+  sampleSubject,
+  subjectParts,
+} from './subject-test-helpers'
 
-function makePosition(id: string, subjectId: string, title: string): Position {
-  return Position.make({
-    id: PositionId.make(id),
-    title: PositionTitle.make(title),
-    slug: PositionSlug.make(slugify(title)),
-    description: 'Description test.',
-    subjectId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })
-}
+const subject = sampleSubject()
+const source = samplePosition(subject.id, 'Pour une hausse')
+const target = samplePosition(subject.id, 'Pour')
+const other = sampleSubject('Les retraites')
+const elsewhere = samplePosition(other.id, 'Contre')
 
-function makeRepos(overrides: { source?: Position | null; target?: Position | null }) {
-  const positionRepo = {
-    findById: vi.fn((id: string) => {
-      if (id === 'source-id') return Effect.succeed(overrides.source ?? null)
-      if (id === 'target-id') return Effect.succeed(overrides.target ?? null)
-      return Effect.succeed(null)
-    }),
-    mergeInto: vi.fn(() => Effect.succeed(undefined)),
-  } as unknown as PositionRepository & {
-    findById: ReturnType<typeof vi.fn>
-    mergeInto: ReturnType<typeof vi.fn>
-  }
+const statement = createStatement({
+  author: publicFigureAuthor('figure-1'),
+  positionId: source.id,
+  statementType: 'declaration',
+  sourceName: 'Le Monde',
+  quote: 'Une citation suffisamment longue pour être valide.',
+  statedAt: new Date('2024-01-15'),
+  createdBy: 'author-id',
+})
 
-  return { positionRepo }
+const positionRepo = {
+  findById: (id: string) =>
+    Effect.succeed([source, target, elsewhere].find((p) => p.id === id) ?? null),
+} as unknown as PositionRepository
+
+const statementRepo = (statements: Statement[]) =>
+  ({ findByPositionId: () => Effect.succeed(statements) }) as unknown as StatementRepository
+
+const founder = { id: 'founder', reputation: 1_000_000 }
+
+const validParams = {
+  sourcePositionId: source.id,
+  targetPositionId: target.id,
+  contributor: founder,
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectSource: fakeSubjectSource([subjectParts(subject, [source, target])]),
+  statementSource: fakeStatementSource([{ statement, argumentIds: [] }]),
+  positionRepo,
+  statementRepo: statementRepo([]),
 }
 
 describe('mergePositions', () => {
   it('should fail if source and target are the same', async () => {
-    const { positionRepo } = makeRepos({})
-    const result = await mergePositions({
-      sourcePositionId: 'source-id',
-      targetPositionId: 'source-id',
-      contributor: { id: 'user-1', reputation: 1_000_000 },
-      positionRepo,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) expect(result.left).toContain('identiques')
+    const result = await mergePositions({ ...validParams, targetPositionId: source.id })
+    expect(Either.isLeft(result) && result.left).toContain('identiques')
   })
 
   it('should fail if contributor lacks admin permission', async () => {
-    const { positionRepo } = makeRepos({
-      source: makePosition('source-id', 'sub-1', 'Position source'),
-      target: makePosition('target-id', 'sub-1', 'Position cible'),
-    })
     const result = await mergePositions({
-      sourcePositionId: 'source-id',
-      targetPositionId: 'target-id',
-      contributor: { id: 'user-1', reputation: 100 },
-      positionRepo,
+      ...validParams,
+      contributor: { id: 'abc', reputation: 100 },
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) expect(result.left).toContain('Fondateur')
+    expect(Either.isLeft(result) && result.left).toContain('Fondateur')
   })
 
   it('should fail if source position not found', async () => {
-    const { positionRepo } = makeRepos({
-      source: null,
-      target: makePosition('target-id', 'sub-1', 'Position cible'),
-    })
-    const result = await mergePositions({
-      sourcePositionId: 'source-id',
-      targetPositionId: 'target-id',
-      contributor: { id: 'user-1', reputation: 1_000_000 },
-      positionRepo,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) expect(result.left).toContain('source')
+    const result = await mergePositions({ ...validParams, sourcePositionId: 'missing' })
+    expect(Either.isLeft(result) && result.left).toContain('source')
   })
 
   it('should fail if positions belong to different subjects', async () => {
-    const { positionRepo } = makeRepos({
-      source: makePosition('source-id', 'sub-1', 'Position source'),
-      target: makePosition('target-id', 'sub-2', 'Position cible'),
-    })
-    const result = await mergePositions({
-      sourcePositionId: 'source-id',
-      targetPositionId: 'target-id',
-      contributor: { id: 'user-1', reputation: 1_000_000 },
-      positionRepo,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) expect(result.left).toContain('même sujet')
+    const result = await mergePositions({ ...validParams, targetPositionId: elsewhere.id })
+    expect(Either.isLeft(result) && result.left).toContain('même sujet')
   })
 
-  it('should call mergeInto and succeed', async () => {
-    const { positionRepo } = makeRepos({
-      source: makePosition('source-id', 'sub-1', 'Position source'),
-      target: makePosition('target-id', 'sub-1', 'Position cible'),
-    })
+  it('should record the merge on the subject and a move on each statement of the source', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [source, target]])
+    await Effect.runPromise(
+      journal.append(
+        statementStream(statement.id),
+        0,
+        [addStatement({ ...statement, argumentIds: [] })],
+        {
+          actorId: 'author-id',
+        },
+      ),
+    )
+
     const result = await mergePositions({
-      sourcePositionId: 'source-id',
-      targetPositionId: 'target-id',
-      contributor: { id: 'user-1', reputation: 1_000_000 },
-      positionRepo,
+      ...validParams,
+      runUnitOfWork: run,
+      statementRepo: statementRepo([statement]),
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(positionRepo.mergeInto).toHaveBeenCalledWith('source-id', 'target-id')
+    expect(
+      journal
+        .all()
+        .slice(-2)
+        .map((e) => [e.streamType, e.type, e.payload]),
+    ).toEqual([
+      ['subject', 'PositionMergedInto', { sourceId: source.id, targetId: target.id }],
+      ['statement', 'StatementMoved', { positionId: target.id }],
+    ])
+  })
+
+  it('should refuse when the source was already merged, leaving no event behind', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [target]])
+
+    const result = await mergePositions({ ...validParams, runUnitOfWork: run })
+
+    expect(Either.isLeft(result) && result.left).toContain('n’existe plus')
+    expect(journal.all().map((e) => e.type)).toEqual(['SubjectAdded', 'PositionAdded'])
   })
 })

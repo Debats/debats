@@ -2,8 +2,10 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createStatementSource, createSubjectSource } from '../../infra/events/sources'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
+import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { deleteSubjectUseCase } from '../../domain/use-cases/delete-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -16,8 +18,11 @@ export async function deleteSubjectAction(subjectId: string): Promise<ActionResu
   const result = await deleteSubjectUseCase({
     contributor,
     subjectId,
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
+    statementSource: createStatementSource(supabase),
     subjectRepo: createSubjectRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
+    statementRepo: createStatementRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

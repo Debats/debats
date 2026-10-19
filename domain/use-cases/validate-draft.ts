@@ -9,6 +9,7 @@ import { OrganisationRepository } from '../repositories/organisation-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { RunUnitOfWork } from '../events/unit-of-work'
+import { SubjectSource } from './subject-stream'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
@@ -36,6 +37,7 @@ type ValidateDraftParams = {
   subjectRepo: SubjectRepository
   positionRepo: PositionRepository
   runUnitOfWork: RunUnitOfWork
+  subjectSource: SubjectSource
   argumentRepo: ArgumentRepository
   occupationRepo: OccupationRepository
   membershipRepo: OrganisationMembershipRepository
@@ -60,6 +62,7 @@ export async function validateDraft(
     subjectRepo,
     positionRepo,
     runUnitOfWork,
+    subjectSource,
     argumentRepo,
     occupationRepo,
     membershipRepo,
@@ -106,6 +109,7 @@ export async function validateDraft(
   const subjectId = await resolveOrCreateSubject(draft, {
     contributor,
     subjectRepo,
+    runUnitOfWork,
     reputationRepo,
   })
   if (Either.isLeft(subjectId)) return subjectId
@@ -113,7 +117,8 @@ export async function validateDraft(
   const positionId = await resolveOrCreatePosition(draft, subjectId.right, {
     contributor,
     positionRepo,
-    subjectRepo,
+    runUnitOfWork,
+    subjectSource,
     reputationRepo,
   })
   if (Either.isLeft(positionId)) return positionId
@@ -390,6 +395,7 @@ async function resolveOrCreateSubject(
   deps: {
     contributor: ContributorIdentity
     subjectRepo: SubjectRepository
+    runUnitOfWork: RunUnitOfWork
     reputationRepo: ReputationRepository
   },
 ): Promise<Either.Either<string, string>> {
@@ -408,7 +414,7 @@ async function resolveOrCreateSubject(
     title: draft.subjectTitle,
     presentation: draft.subjectData.presentation,
     problem: draft.subjectData.problem,
-    subjectRepo: deps.subjectRepo,
+    runUnitOfWork: deps.runUnitOfWork,
     reputationRepo: deps.reputationRepo,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
@@ -421,7 +427,8 @@ async function resolveOrCreatePosition(
   deps: {
     contributor: ContributorIdentity
     positionRepo: PositionRepository
-    subjectRepo: SubjectRepository
+    runUnitOfWork: RunUnitOfWork
+    subjectSource: SubjectSource
     reputationRepo: ReputationRepository
   },
 ): Promise<Either.Either<string, string>> {
@@ -442,8 +449,8 @@ async function resolveOrCreatePosition(
     subjectId,
     title: draft.positionTitle,
     description: draft.positionData.description,
-    positionRepo: deps.positionRepo,
-    subjectRepo: deps.subjectRepo,
+    runUnitOfWork: deps.runUnitOfWork,
+    subjectSource: deps.subjectSource,
     reputationRepo: deps.reputationRepo,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))

@@ -35,15 +35,6 @@ export interface ThemeRepository {
   /**
    * Returns themes assigned to a subject, ordered with the primary one first.
    */
+  /** The assignments themselves are written by the subject stream (domain/aggregates/subject.ts) */
   findAssignmentsBySubjectId(subjectId: string): Effect.Effect<ThemeAssignment[], DatabaseError>
-
-  /**
-   * Atomically replaces all theme assignments for a subject.
-   * At most one assignment may have isPrimary = true.
-   */
-  setAssignments(
-    subjectId: string,
-    assignments: Array<{ themeId: string; isPrimary: boolean }>,
-    createdBy: string,
-  ): Effect.Effect<void, DatabaseError>
 }

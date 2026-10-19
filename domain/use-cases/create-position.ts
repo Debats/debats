@@ -1,13 +1,14 @@
-import { Either } from 'effect'
+import { Either, Effect } from 'effect'
 import * as S from 'effect/Schema'
-import { Effect } from 'effect'
 import { ArrayFormatter } from 'effect/ParseResult'
-import { createPosition, Position } from '../entities/position'
-import { PositionRepository } from '../repositories/position-repository'
-import { SubjectRepository } from '../repositories/subject-repository'
+import { Position, PositionId } from '../entities/position'
+import { addPosition, findPosition } from '../aggregates/subject'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { runCommand } from './run-command'
+import { decideOnSubject, SubjectSource } from './subject-stream'
 
 const CreatePositionInput = S.Struct({
   title: S.String.pipe(S.minLength(3), S.maxLength(255)),
@@ -19,8 +20,8 @@ type CreatePositionParams = {
   subjectId: string
   title: string
   description: string
-  positionRepo: PositionRepository
-  subjectRepo: SubjectRepository
+  runUnitOfWork: RunUnitOfWork
+  subjectSource: SubjectSource
   reputationRepo: ReputationRepository
 }
 
@@ -29,8 +30,15 @@ export type { FieldErrors }
 export async function createPositionUseCase(
   params: CreatePositionParams,
 ): Promise<Either.Either<Position, string | FieldErrors>> {
-  const { contributor, subjectId, title, description, positionRepo, subjectRepo, reputationRepo } =
-    params
+  const {
+    contributor,
+    subjectId,
+    title,
+    description,
+    runUnitOfWork,
+    subjectSource,
+    reputationRepo,
+  } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -60,19 +68,19 @@ export async function createPositionUseCase(
     return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
   }
 
-  const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
-  if (!subject) {
-    return Either.left('Le sujet sélectionné est introuvable.')
-  }
+  // The command names the position, inside the subject's stream
+  const positionId = PositionId.make(crypto.randomUUID())
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
+        Effect.succeed([addPosition({ positionId, title, description })]),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  const position = createPosition({
-    title,
-    description,
-    subjectId,
-    createdBy: contributor.id,
-  })
-
-  const createdPosition = await Effect.runPromise(positionRepo.create(position))
+  const position = findPosition(outcome.right, positionId)
+  if (!position) throw new Error('The position just added is missing from the subject')
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -80,9 +88,9 @@ export async function createPositionUseCase(
       action: 'added_position_validated',
       amount: reputationReward('added_position_validated'),
       relatedEntityType: 'position',
-      relatedEntityId: createdPosition.id,
+      relatedEntityId: position.id,
     }),
   )
 
-  return Either.right(createdPosition)
+  return Either.right(position)
 }

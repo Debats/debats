@@ -11,10 +11,6 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
-function orderIds(id1: string, id2: string): [string, string] {
-  return id1 < id2 ? [id1, id2] : [id2, id1]
-}
-
 export function createRelatedSubjectsRepository(
   supabase: SupabaseClient,
 ): RelatedSubjectsRepository {
@@ -48,34 +44,6 @@ export function createRelatedSubjectsRepository(
           return data.map(mapRowToEntity)
         },
         catch: (error) => dbError('Failed to fetch related subjects', error),
-      }),
-
-    link: (subjectId1: string, subjectId2: string, createdBy: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const [id1, id2] = orderIds(subjectId1, subjectId2)
-          const { error } = await supabase
-            .from('related_subjects')
-            .upsert({ subject_id_1: id1, subject_id_2: id2, created_by: createdBy })
-
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to link subjects', error),
-      }),
-
-    unlink: (subjectId1: string, subjectId2: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const [id1, id2] = orderIds(subjectId1, subjectId2)
-          const { error } = await supabase
-            .from('related_subjects')
-            .delete()
-            .eq('subject_id_1', id1)
-            .eq('subject_id_2', id2)
-
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to unlink subjects', error),
       }),
   }
 }

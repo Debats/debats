@@ -1,230 +1,135 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { setSubjectThemesUseCase } from './set-subject-themes'
-import { Theme, ThemeId, ThemeName, ThemeSlug, generateThemeSlug } from '../entities/theme'
-import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../entities/subject'
+import { Theme, ThemeId, ThemeName, ThemeSlug } from '../entities/theme'
+import { ThemeRepository } from '../repositories/theme-repository'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakeSubjectSource,
+  journalWithSubjects,
+  sampleSubject,
+  subjectParts,
+} from './subject-test-helpers'
 
 function fakeTheme(id: string, name: string): Theme {
   return Theme.make({
     id: ThemeId.make(id),
     name: ThemeName.make(name),
-    slug: generateThemeSlug(name),
-    description: 'Description suffisante',
-    createdBy: 'user-1',
-    updatedBy: 'user-1',
+    slug: ThemeSlug.make(name.toLowerCase()),
+    description: 'Une thématique de test.',
+    createdBy: 'founder',
+    updatedBy: 'founder',
     createdAt: new Date(),
     updatedAt: new Date(),
   })
 }
 
-const economie = fakeTheme('theme-1', 'Économie')
-const societe = fakeTheme('theme-2', 'Société')
-const environnement = fakeTheme('theme-3', 'Environnement')
+const economie = fakeTheme('11111111-1111-1111-1111-111111111111', 'Economie')
+const societe = fakeTheme('22222222-2222-2222-2222-222222222222', 'Societe')
+const subject = sampleSubject()
 
-const testSubject = Subject.make({
-  id: SubjectId.make('subject-1'),
-  title: SubjectTitle.make('Test Subject'),
-  slug: SubjectSlug.make('test-subject'),
-  presentation: 'Présentation test suffisamment longue',
-  problem: 'Problème test suffisamment long',
-  createdBy: 'user-1',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-})
+const themeRepo = {
+  findByIds: (ids: string[]) =>
+    Effect.succeed([economie, societe].filter((t) => ids.includes(t.id))),
+} as unknown as ThemeRepository
 
-const fakeSubjectRepo = {
-  findAll: () => Effect.succeed([]),
-  searchByTitle: () => Effect.succeed([]),
-  findBySlug: () => Effect.succeed(null),
-  findById: (id: string) => Effect.succeed(id === 'subject-1' ? testSubject : null),
-  create: () => Effect.succeed(null as never),
-  update: () => Effect.succeed(null as never),
-  delete: () => Effect.succeed(undefined as void),
-  getStats: () =>
-    Effect.succeed({
-      subjectId: '',
-      positionsCount: 0,
-      publicFiguresCount: 0,
-      organisationsCount: 0,
-      statementsCount: 0,
-      figureStatementsCount: 0,
-      organisationStatementsCount: 0,
-    }),
-  findSummariesByActivity: () => Effect.succeed([]),
-  findSummariesByCreatedAt: () => Effect.succeed([]),
-  findSummaryById: () => Effect.succeed(null),
-  findSummariesByIds: () => Effect.succeed([]),
-  findIndexEntries: () => Effect.succeed([]),
-  findAllIds: () => Effect.succeed([]),
-  findIdsWithoutPrimaryTheme: () => Effect.succeed([]),
+const validParams = {
+  subjectId: subject.id,
+  themeIds: [economie.id, societe.id],
+  primaryThemeId: economie.id,
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectSource: fakeSubjectSource([subjectParts(subject)]),
+  themeRepo,
 }
 
-function fakeThemeRepo() {
-  const savedAssignments: Array<{ subjectId: string; themeId: string; isPrimary: boolean }> = []
-
-  return {
-    repo: {
-      findAll: () => Effect.succeed([economie, societe, environnement]),
-      findBySlug: () => Effect.succeed(null),
-      findById: (id: string) =>
-        Effect.succeed([economie, societe, environnement].find((t) => t.id === id) ?? null),
-      findByIds: (ids: string[]) =>
-        Effect.succeed(
-          [economie, societe, environnement].filter((t) => ids.includes(t.id as string)),
-        ),
-      create: (t: Theme) => Effect.succeed(t),
-      update: (t: Theme) => Effect.succeed(t),
-      delete: () => Effect.succeed(undefined as void),
-      findAllPrimaryLinks: () => Effect.succeed([]),
-      findSubjectIdsByThemeId: () => Effect.succeed([]),
-      findAssignmentsBySubjectId: () => Effect.succeed([]),
-      setAssignments: (
-        subjectId: string,
-        assignments: Array<{ themeId: string; isPrimary: boolean }>,
-      ) => {
-        assignments.forEach((a) =>
-          savedAssignments.push({ subjectId, themeId: a.themeId, isPrimary: a.isPrimary }),
-        )
-        return Effect.succeed(undefined as void)
-      },
-    },
-    savedAssignments,
-  }
-}
+const eloquent = { id: 'abc', reputation: 10000 }
 
 describe('setSubjectThemesUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const { repo } = fakeThemeRepo()
-    const result = await setSubjectThemesUseCase({
-      contributor: null,
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1')],
-      primaryThemeId: null,
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('connecté')
-    }
+    const result = await setSubjectThemesUseCase({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail when contributor lacks reputation', async () => {
-    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
+      ...validParams,
       contributor: { id: 'abc', reputation: 0 },
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1')],
-      primaryThemeId: null,
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('Éloquent')
-    }
   })
 
   it('should fail when subject does not exist', async () => {
-    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId: 'nonexistent',
-      themeIds: [ThemeId.make('theme-1')],
-      primaryThemeId: ThemeId.make('theme-1'),
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
+      ...validParams,
+      contributor: eloquent,
+      subjectId: 'missing',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('introuvable')
-    }
+    expect(result).toEqual(Either.left('Sujet introuvable.'))
   })
 
   it('should fail when a theme ID does not exist', async () => {
-    const { repo } = fakeThemeRepo()
+    const missing = ThemeId.make('33333333-3333-3333-3333-333333333333')
     const result = await setSubjectThemesUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1'), ThemeId.make('nonexistent')],
-      primaryThemeId: ThemeId.make('theme-1'),
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
+      ...validParams,
+      contributor: eloquent,
+      themeIds: [economie.id, missing],
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('introuvable')
-    }
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
   })
 
   it('should fail when primaryThemeId is not in themeIds', async () => {
-    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1')],
-      primaryThemeId: ThemeId.make('theme-2'),
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
+      ...validParams,
+      contributor: eloquent,
+      themeIds: [economie.id],
+      primaryThemeId: societe.id,
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('principale')
-    }
-  })
-
-  it('should assign themes with primary flag', async () => {
-    const { repo, savedAssignments } = fakeThemeRepo()
-    const result = await setSubjectThemesUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1'), ThemeId.make('theme-2')],
-      primaryThemeId: ThemeId.make('theme-1'),
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
-    })
-
-    expect(Either.isRight(result)).toBe(true)
-    expect(savedAssignments).toEqual([
-      { subjectId: 'subject-1', themeId: 'theme-1', isPrimary: true },
-      { subjectId: 'subject-1', themeId: 'theme-2', isPrimary: false },
-    ])
   })
 
   it('should fail when themes are selected but no primary theme', async () => {
-    const { repo } = fakeThemeRepo()
     const result = await setSubjectThemesUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId: 'subject-1',
-      themeIds: [ThemeId.make('theme-1'), ThemeId.make('theme-2')],
+      ...validParams,
+      contributor: eloquent,
       primaryThemeId: null,
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('principale')
-    }
   })
 
-  it('should allow empty list (remove all themes)', async () => {
-    const { repo, savedAssignments } = fakeThemeRepo()
+  it('should record the whole set of themes with the primary flag', async () => {
+    const { run, journal } = await journalWithSubjects([subject, []])
+
     const result = await setSubjectThemesUseCase({
-      contributor: { id: 'abc', reputation: 1000 },
-      subjectId: 'subject-1',
-      themeIds: [],
-      primaryThemeId: null,
-      themeRepo: repo,
-      subjectRepo: fakeSubjectRepo,
+      ...validParams,
+      contributor: eloquent,
+      runUnitOfWork: run,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(savedAssignments).toEqual([])
+    expect(journal.all().at(-1)).toMatchObject({
+      type: 'SubjectThemesSet',
+      actorId: 'abc',
+      payload: {
+        themes: [
+          { themeId: economie.id, isPrimary: true },
+          { themeId: societe.id, isPrimary: false },
+        ],
+      },
+    })
+  })
+
+  it('should allow empty list (remove all themes)', async () => {
+    const { run, journal } = await journalWithSubjects([subject, []])
+
+    const result = await setSubjectThemesUseCase({
+      ...validParams,
+      contributor: eloquent,
+      themeIds: [],
+      primaryThemeId: null,
+      runUnitOfWork: run,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(journal.all().at(-1)?.payload).toEqual({ themes: [] })
   })
 })

@@ -3,7 +3,8 @@
 import { Either } from 'effect'
 import { ThemeId } from '../../domain/entities/theme'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createSubjectSource } from '../../infra/events/sources'
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
 import { setSubjectThemesUseCase } from '../../domain/use-cases/set-subject-themes'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -23,8 +24,9 @@ export async function setSubjectThemesAction(
     subjectId,
     themeIds: themeIds.map((id) => ThemeId.make(id)),
     primaryThemeId: primaryThemeId ? ThemeId.make(primaryThemeId) : null,
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
     themeRepo: createThemeRepository(supabase),
-    subjectRepo: createSubjectRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

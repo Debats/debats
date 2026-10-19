@@ -2,8 +2,8 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createPositionRepository } from '../../infra/database/position-repository-supabase'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createSubjectSource } from '../../infra/events/sources'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createPositionUseCase, FieldErrors } from '../../domain/use-cases/create-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -25,8 +25,8 @@ export async function createPositionAction(
     subjectId,
     title: String(formData.get('title') ?? ''),
     description: String(formData.get('description') ?? ''),
-    positionRepo: createPositionRepository(supabase),
-    subjectRepo: createSubjectRepository(supabase),
+    runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
     reputationRepo: createReputationRepository(supabase),
   })
 

@@ -1,9 +1,11 @@
 import { Effect } from 'effect'
 import { STATEMENT_STREAM } from '../../domain/aggregates/statement'
+import { SUBJECT_STREAM } from '../../domain/aggregates/subject'
 import { StoredEvent } from '../../domain/events/event-store'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { PrismaTransaction } from '../prisma/client'
 import { projectStatement } from './statement-projector'
+import { projectSubject } from './subject-projector'
 
 /**
  * Keeps one table in step with the events of one stream type. A projector
@@ -20,4 +22,5 @@ export type ProjectorRegistry = Readonly<Record<string, readonly Projector[]>>
 
 export const projectors: ProjectorRegistry = {
   [STATEMENT_STREAM]: [projectStatement],
+  [SUBJECT_STREAM]: [projectSubject],
 }

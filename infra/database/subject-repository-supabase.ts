@@ -122,44 +122,6 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         catch: (error) => dbError('Failed to fetch subject', error),
       }),
 
-    create: (subject: Subject) =>
-      Effect.tryPromise({
-        try: async () => {
-          const row = mapEntityToInsert(subject)
-          const { data, error } = await supabase.from('subjects').insert(row).select().single()
-
-          if (error) throw error
-          return mapRowToEntity(data)
-        },
-        catch: (error) => dbError('Failed to create subject', error),
-      }),
-
-    update: (subject: Subject) =>
-      Effect.tryPromise({
-        try: async () => {
-          const row = mapEntityToInsert(subject)
-          const { data, error } = await supabase
-            .from('subjects')
-            .update(row)
-            .eq('id', subject.id)
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapRowToEntity(data)
-        },
-        catch: (error) => dbError('Failed to update subject', error),
-      }),
-
-    delete: (id: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.rpc('soft_delete_subject', { p_id: id })
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete subject', error),
-      }),
-
     getStats: (subjectId: string) =>
       Effect.tryPromise({
         try: async () => {

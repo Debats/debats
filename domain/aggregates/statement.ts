@@ -54,6 +54,15 @@ export const editStatement = (input: StatementContentInput): StatementEvent => (
   payload: content(input),
 })
 
+/** Decision: the statement follows its position, merged into another one */
+export const moveStatement = (positionId: string): StatementEvent => ({
+  type: 'StatementMoved',
+  payload: { positionId },
+})
+
+/** Decision: the statement goes away with its subject */
+export const removeStatement = (): StatementEvent => ({ type: 'StatementDeleted', payload: {} })
+
 /** A statement found in the tables before its journal existed enters it as it is */
 export const importStatement = (
   statement: Statement,
@@ -109,6 +118,17 @@ function apply(
             updatedAt: stored.occurredAt,
           },
           argumentIds: event.payload.argumentIds,
+        }
+      )
+    case 'StatementMoved':
+      return (
+        state && {
+          ...state,
+          statement: {
+            ...state.statement,
+            positionId: event.payload.positionId,
+            updatedAt: stored.occurredAt,
+          },
         }
       )
     case 'StatementDeleted':

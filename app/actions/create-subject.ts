@@ -2,7 +2,7 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createSubjectUseCase, FieldErrors } from '../../domain/use-cases/create-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -21,7 +21,7 @@ export async function createSubjectAction(formData: FormData): Promise<ActionRes
     title: String(formData.get('title') ?? ''),
     presentation: String(formData.get('presentation') ?? ''),
     problem: String(formData.get('problem') ?? ''),
-    subjectRepo: createSubjectRepository(supabase),
+    runUnitOfWork,
     reputationRepo: createReputationRepository(supabase),
   })
 

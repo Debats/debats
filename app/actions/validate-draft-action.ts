@@ -8,6 +8,7 @@ import { createOrganisationRepository } from '../../infra/database/organisation-
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createSubjectSource } from '../../infra/events/sources'
 import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../infra/database/organisation-membership-repository-supabase'
@@ -35,6 +36,7 @@ export async function validateDraftAction(draftId: string): Promise<ActionResult
     subjectRepo: createSubjectRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     runUnitOfWork,
+    subjectSource: createSubjectSource(supabase),
     argumentRepo: createArgumentRepository(supabase),
     occupationRepo: createOccupationRepository(supabase),
     membershipRepo: createOrganisationMembershipRepository(supabase),

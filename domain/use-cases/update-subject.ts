@@ -1,10 +1,13 @@
-import { Either } from 'effect'
+import { Either, Effect } from 'effect'
 import * as S from 'effect/Schema'
-import { Effect } from 'effect'
-import { SubjectTitle, Subject, generateSlug } from '../entities/subject'
-import { SubjectRepository } from '../repositories/subject-repository'
+import { Subject, SubjectTitle } from '../entities/subject'
+import { editSubject } from '../aggregates/subject'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { ContributorIdentity } from './types'
+import { runCommand } from './run-command'
+import { decideOnSubject, SubjectSource } from './subject-stream'
 
 const UpdateSubjectInput = S.Struct({
   title: SubjectTitle,
@@ -12,23 +15,30 @@ const UpdateSubjectInput = S.Struct({
   problem: S.String.pipe(S.minLength(10)),
 })
 
-type Contributor = { id: string; reputation: number }
-
 type UpdateSubjectParams = {
-  contributor: Contributor | null
+  contributor: ContributorIdentity | null
   subjectId: string
   title: string
   presentation: string
   problem: string
-  subjectRepo: SubjectRepository
+  runUnitOfWork: RunUnitOfWork
+  subjectSource: SubjectSource
   reputationRepo: ReputationRepository
 }
 
 export async function updateSubjectUseCase(
   params: UpdateSubjectParams,
 ): Promise<Either.Either<Subject, string>> {
-  const { contributor, subjectId, title, presentation, problem, subjectRepo, reputationRepo } =
-    params
+  const {
+    contributor,
+    subjectId,
+    title,
+    presentation,
+    problem,
+    runUnitOfWork,
+    subjectSource,
+    reputationRepo,
+  } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -45,24 +55,14 @@ export async function updateSubjectUseCase(
     return Either.left('Données invalides. Vérifiez les champs du formulaire.')
   }
 
-  const input = decoded.right
-
-  const existing = await Effect.runPromise(subjectRepo.findById(subjectId))
-
-  if (!existing) {
-    return Either.left('Sujet introuvable.')
-  }
-
-  const updated: Subject = {
-    ...existing,
-    title: SubjectTitle.make(input.title),
-    slug: generateSlug(input.title),
-    presentation: input.presentation,
-    problem: input.problem,
-    updatedAt: new Date(),
-  }
-
-  const saved = await Effect.runPromise(subjectRepo.update(updated))
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
+        Effect.succeed([editSubject(decoded.right)]),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -70,9 +70,9 @@ export async function updateSubjectUseCase(
       action: 'edited_subject',
       amount: reputationReward('edited_subject'),
       relatedEntityType: 'subject',
-      relatedEntityId: saved.id,
+      relatedEntityId: subjectId,
     }),
   )
 
-  return Either.right(saved)
+  return Either.right(outcome.right.subject)
 }

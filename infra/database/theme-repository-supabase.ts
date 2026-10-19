@@ -200,35 +200,5 @@ export function createThemeRepository(supabase: SupabaseClient): ThemeRepository
         },
         catch: (error) => dbError('Failed to fetch theme assignments for subject', error),
       }),
-
-    setAssignments: (
-      subjectId: string,
-      assignments: Array<{ themeId: string; isPrimary: boolean }>,
-      createdBy: string,
-    ) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error: deleteError } = await supabase
-            .from('subject_themes')
-            .delete()
-            .eq('subject_id', subjectId)
-
-          if (deleteError) throw deleteError
-
-          if (assignments.length === 0) return
-
-          const rows = assignments.map((a) => ({
-            subject_id: subjectId,
-            theme_id: a.themeId,
-            is_primary: a.isPrimary,
-            created_by: createdBy,
-          }))
-
-          const { error: insertError } = await supabase.from('subject_themes').insert(rows)
-
-          if (insertError) throw insertError
-        },
-        catch: (error) => dbError('Failed to set theme assignments', error),
-      }),
   }
 }

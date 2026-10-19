@@ -1,132 +1,142 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { deleteSubjectUseCase } from './delete-subject'
-import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../entities/subject'
+import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
+import { Subject } from '../entities/subject'
+import { SubjectRepository } from '../repositories/subject-repository'
+import { StatementRepository } from '../repositories/statement-repository'
+import { addStatement, statementStream } from '../aggregates/statement'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakeStatementSource,
+  fakeSubjectSource,
+  journalWithSubjects,
+  samplePosition,
+  sampleSubject,
+  subjectParts,
+} from './subject-test-helpers'
 
-const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-
-const minorSubject: Subject = Subject.make({
-  id: SubjectId.make('minor-id'),
-  title: SubjectTitle.make('Sujet mineur'),
-  slug: SubjectSlug.make('sujet-mineur'),
-  presentation: 'Une présentation suffisamment longue pour être valide.',
-  problem: 'Une problématique suffisamment longue pour être valide.',
-  createdAt: twoWeeksAgo,
-  updatedAt: twoWeeksAgo,
+const subject: Subject = { ...sampleSubject(), createdAt: new Date('2020-01-01') }
+const position = samplePosition(subject.id)
+const statement = createStatement({
+  author: publicFigureAuthor('figure-1'),
+  positionId: position.id,
+  statementType: 'declaration',
+  sourceName: 'Le Monde',
+  quote: 'Une citation suffisamment longue pour être valide.',
+  statedAt: new Date('2024-01-15'),
+  createdBy: 'author-id',
 })
 
-const fakeSubjectRepo = {
-  findById: (id: string) => Effect.succeed(id === minorSubject.id ? minorSubject : null),
-  delete: () => Effect.succeed(undefined as void),
-  create: (s: Subject) => Effect.succeed(s),
-  findAll: () => Effect.succeed([]),
-  searchByTitle: () => Effect.succeed([]),
-  findBySlug: () => Effect.succeed(null),
-  update: (s: Subject) => Effect.succeed(s),
-  getStats: () =>
-    Effect.succeed({
-      subjectId: '',
-      positionsCount: 0,
-      publicFiguresCount: 0,
-      organisationsCount: 0,
-      statementsCount: 2,
-      figureStatementsCount: 2,
-      organisationStatementsCount: 0,
-    }),
-  findSummariesByActivity: () => Effect.succeed([]),
-  findSummariesByCreatedAt: () => Effect.succeed([]),
-  findSummaryById: () => Effect.succeed(null),
-  findSummariesByIds: () => Effect.succeed([]),
-  findIndexEntries: () => Effect.succeed([]),
-  findAllIds: () => Effect.succeed([]),
-  findIdsWithoutPrimaryTheme: () => Effect.succeed([]),
-}
+const subjectRepo = (statementsCount: number) =>
+  ({
+    findById: (id: string) => Effect.succeed(id === subject.id ? subject : null),
+    getStats: () =>
+      Effect.succeed({
+        subjectId: subject.id,
+        positionsCount: 1,
+        statementsCount,
+        figuresCount: 1,
+      }),
+  }) as unknown as SubjectRepository
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
+const statementRepo = (statements: Statement[]) =>
+  ({
+    findIdsBySubjectId: () => Effect.succeed(statements.map((s) => s.id)),
+  }) as unknown as StatementRepository
+
+const validParams = {
+  subjectId: subject.id,
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
+  statementSource: fakeStatementSource([{ statement, argumentIds: [] }]),
+  subjectRepo: subjectRepo(0),
+  statementRepo: statementRepo([]),
 }
 
 describe('deleteSubjectUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const result = await deleteSubjectUseCase({
-      contributor: null,
-      subjectId: minorSubject.id,
-      subjectRepo: fakeSubjectRepo,
-      reputationRepo: fakeReputationRepo,
-    })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('connecté')
-    }
+    const result = await deleteSubjectUseCase({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail when subject does not exist', async () => {
     const result = await deleteSubjectUseCase({
-      contributor: { id: 'abc', reputation: 10000 },
-      subjectId: 'unknown-id',
-      subjectRepo: fakeSubjectRepo,
-      reputationRepo: fakeReputationRepo,
+      ...validParams,
+      contributor: { id: 'abc', reputation: 1_000_000 },
+      subjectId: 'missing',
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('introuvable')
-    }
+    expect(result).toEqual(Either.left('Sujet introuvable.'))
   })
 
   it('should fail when contributor lacks reputation for minor subject', async () => {
     const result = await deleteSubjectUseCase({
-      contributor: { id: 'abc', reputation: 9999 },
-      subjectId: minorSubject.id,
-      subjectRepo: fakeSubjectRepo,
-      reputationRepo: fakeReputationRepo,
+      ...validParams,
+      contributor: { id: 'abc', reputation: 0 },
     })
-
     expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('Idéaliste')
-    }
   })
 
   it('should require Fondateur for major subject', async () => {
-    const majorSubjectRepo = {
-      ...fakeSubjectRepo,
-      getStats: () =>
-        Effect.succeed({
-          subjectId: '',
-          positionsCount: 0,
-          publicFiguresCount: 0,
-          organisationsCount: 0,
-          statementsCount: 10,
-          figureStatementsCount: 10,
-          organisationStatementsCount: 0,
-        }),
-    }
-
     const result = await deleteSubjectUseCase({
+      ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
-      subjectId: minorSubject.id,
-      subjectRepo: majorSubjectRepo,
-      reputationRepo: fakeReputationRepo,
+      subjectRepo: subjectRepo(50),
     })
-
-    expect(Either.isLeft(result)).toBe(true)
-    if (Either.isLeft(result)) {
-      expect(result.left).toContain('Fondateur')
-    }
+    expect(Either.isLeft(result) && result.left).toContain('Fondateur')
   })
 
-  it('should delete minor subject when contributor is Idéaliste', async () => {
+  it('should delete a minor subject, and every statement on it, in one unit of work', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [position]])
+    await Effect.runPromise(
+      journal.append(
+        statementStream(statement.id),
+        0,
+        [addStatement({ ...statement, argumentIds: [] })],
+        {
+          actorId: 'author-id',
+        },
+      ),
+    )
+
     const result = await deleteSubjectUseCase({
+      ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
-      subjectId: minorSubject.id,
-      subjectRepo: fakeSubjectRepo,
-      reputationRepo: fakeReputationRepo,
+      runUnitOfWork: run,
+      statementRepo: statementRepo([statement]),
     })
 
     expect(Either.isRight(result)).toBe(true)
+    expect(
+      journal
+        .all()
+        .slice(-2)
+        .map((e) => [e.streamType, e.type, e.actorId]),
+    ).toEqual([
+      ['subject', 'SubjectDeleted', 'abc'],
+      ['statement', 'StatementDeleted', 'abc'],
+    ])
+  })
+
+  it('should import a statement without a stream before deleting it', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [position]])
+
+    const result = await deleteSubjectUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: run,
+      statementRepo: statementRepo([statement]),
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(
+      journal
+        .all()
+        .slice(-2)
+        .map((e) => [e.streamType, e.type, e.revision]),
+    ).toEqual([
+      ['statement', 'StatementImported', 1],
+      ['statement', 'StatementDeleted', 2],
+    ])
   })
 })

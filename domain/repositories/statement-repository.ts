@@ -89,6 +89,9 @@ export interface StatementRepository {
    */
   findBySubjectWithAuthors(subjectId: string): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
+  /** The ids of the live statements on any position of a subject */
+  findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
+
   /**
    * Get the N most recent statements by date
    */

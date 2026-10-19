@@ -40,6 +40,12 @@ export const StatementEdited = S.Struct({
   payload: StatementContent,
 })
 
+/** The statement now stands on another position of the same subject: its position was merged */
+export const StatementMoved = S.Struct({
+  type: S.Literal('StatementMoved'),
+  payload: S.Struct({ positionId: S.String }),
+})
+
 export const StatementDeleted = S.Struct({
   type: S.Literal('StatementDeleted'),
   payload: S.Struct({}),
@@ -49,6 +55,7 @@ export const StatementEvent = S.Union(
   StatementAdded,
   StatementImported,
   StatementEdited,
+  StatementMoved,
   StatementDeleted,
 )
 export type StatementEvent = S.Schema.Type<typeof StatementEvent>
