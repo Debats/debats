@@ -1,5 +1,5 @@
 import { Effect, Either } from 'effect'
-import { Argument, createArgument, sameArgumentTitle } from '../entities/argument'
+import { createArgument, sameArgumentTitle } from '../entities/argument'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
@@ -83,24 +83,24 @@ export async function validateStatementArguments(params: {
 }
 
 /**
- * Creates the proposed arguments, links every argument to the statement and
- * records the contributor's reputation. Call once the statement is persisted.
+ * Creates the proposed arguments, rewarding their author, and returns every
+ * argument the statement will mobilise. The statement's own events carry the
+ * links; the argument stays a separate aggregate until it joins the journal.
  */
-export async function attachStatementArguments(params: {
+export async function createProposedArguments(params: {
   contributor: ContributorIdentity
-  statementId: string
   validated: ValidatedStatementArguments
   argumentRepo: ArgumentRepository
   reputationRepo: ReputationRepository
-}): Promise<Argument[]> {
-  const { contributor, statementId, validated, argumentRepo, reputationRepo } = params
+}): Promise<string[]> {
+  const { contributor, validated, argumentRepo, reputationRepo } = params
 
-  const created: Argument[] = []
+  const createdIds: string[] = []
   for (const proposed of validated.toCreate) {
     const argument = await Effect.runPromise(
       argumentRepo.create(createArgument({ ...proposed, createdBy: contributor.id })),
     )
-    created.push(argument)
+    createdIds.push(argument.id)
     await Effect.runPromise(
       reputationRepo.recordEvent({
         contributorId: contributor.id,
@@ -112,11 +112,16 @@ export async function attachStatementArguments(params: {
     )
   }
 
-  const argumentIds = [...validated.existingIds, ...created.map((a) => a.id)]
-  await Effect.runPromise(
-    argumentRepo.setStatementArguments(statementId, argumentIds, contributor.id),
-  )
+  return [...validated.existingIds, ...createdIds]
+}
 
+/** Rewards the contributor for each argument the statement now mobilises */
+export async function rewardArgumentLinks(params: {
+  contributor: ContributorIdentity
+  argumentIds: readonly string[]
+  reputationRepo: ReputationRepository
+}): Promise<void> {
+  const { contributor, argumentIds, reputationRepo } = params
   for (const argumentId of argumentIds) {
     await Effect.runPromise(
       reputationRepo.recordEvent({
@@ -128,6 +133,4 @@ export async function attachStatementArguments(params: {
       }),
     )
   }
-
-  return created
 }

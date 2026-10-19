@@ -1,6 +1,7 @@
-import { Either } from 'effect'
-import { Effect } from 'effect'
-import { updateStatement, Statement, StatementType } from '../entities/statement'
+import { Either, Effect, pipe } from 'effect'
+import { Statement, StatementType } from '../entities/statement'
+import { editStatement, statementStream } from '../aggregates/statement'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
@@ -9,10 +10,12 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
-  attachStatementArguments,
+  createProposedArguments,
+  rewardArgumentLinks,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
+import { appendToStatement, loadOrImportStatement } from './statement-stream'
 
 type UpdateStatementParams = {
   contributor: ContributorIdentity | null
@@ -25,6 +28,8 @@ type UpdateStatementParams = {
   sourceUrl: string
   quote: string
   statedAt: string
+  runUnitOfWork: RunUnitOfWork
+  /** Read side: the statement as projected, to find it and to import it on demand */
   statementRepo: StatementRepository
   positionRepo: PositionRepository
   argumentRepo: ArgumentRepository
@@ -32,6 +37,9 @@ type UpdateStatementParams = {
 }
 
 export type { FieldErrors }
+
+export const EDITED_MEANWHILE =
+  'Cette prise de position vient d’être modifiée par quelqu’un d’autre. Rechargez la page avant de la modifier.'
 
 export async function updateStatementUseCase(
   params: UpdateStatementParams,
@@ -45,6 +53,7 @@ export async function updateStatementUseCase(
     sourceUrl,
     quote,
     statedAt,
+    runUnitOfWork,
     statementRepo,
     positionRepo,
     argumentRepo,
@@ -91,18 +100,50 @@ export async function updateStatementUseCase(
     return Either.left(validatedArguments.left)
   }
 
-  const updated = updateStatement(
-    { ...existing, positionId },
-    {
-      statementType,
-      sourceName,
-      sourceUrl: sourceUrl || undefined,
-      quote,
-      statedAt: new Date(statedAt),
-    },
-  )
+  const argumentIds = await createProposedArguments({
+    contributor,
+    validated: validatedArguments.right,
+    argumentRepo,
+    reputationRepo,
+  })
 
-  const saved = await Effect.runPromise(statementRepo.update(updated))
+  const currentArguments = await Effect.runPromise(argumentRepo.findRefsByStatementId(statementId))
+  const edited = editStatement({
+    positionId,
+    statementType,
+    sourceName,
+    sourceUrl: sourceUrl || undefined,
+    quote,
+    statedAt: new Date(statedAt),
+    argumentIds,
+  })
+
+  const outcome = await Effect.runPromise(
+    Effect.either(
+      runUnitOfWork((events) =>
+        pipe(
+          loadOrImportStatement(
+            events,
+            existing,
+            currentArguments.map((a) => a.id),
+          ),
+          Effect.flatMap((history) =>
+            appendToStatement(
+              events,
+              statementStream(existing.id),
+              history,
+              [edited],
+              contributor.id,
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) {
+    if (outcome.left._tag === 'ConcurrencyError') return Either.left(EDITED_MEANWHILE)
+    throw outcome.left
+  }
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -110,17 +151,11 @@ export async function updateStatementUseCase(
       action: 'edited_statement',
       amount: reputationReward('edited_statement'),
       relatedEntityType: 'statement',
-      relatedEntityId: saved.id,
+      relatedEntityId: outcome.right.statement.id,
     }),
   )
 
-  await attachStatementArguments({
-    contributor,
-    statementId: saved.id,
-    validated: validatedArguments.right,
-    argumentRepo,
-    reputationRepo,
-  })
+  await rewardArgumentLinks({ contributor, argumentIds, reputationRepo })
 
-  return Either.right(saved)
+  return Either.right(outcome.right.statement)
 }

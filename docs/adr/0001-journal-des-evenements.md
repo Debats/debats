@@ -22,7 +22,7 @@ Migrer vers un journal d'événements plus tard coûterait davantage : le nombre
 ## Étapes
 
 1. Socle : ce document, la table `domain_events`, le port `EventStore` dans `domain/events`, l'adaptateur Prisma avec unité de travail transactionnelle dans `infra/events`. Ce socle ne fait rien basculer : la table reste vide en production jusqu'à l'étape 2.
-2. Premier agrégat : la prise de position (commandes rendant des événements, projecteurs vers `statements` et `argument_statements`, backfill et import à la demande de l'existant).
+2. Premier agrégat : la prise de position (commandes rendant des événements, projecteurs vers `statements` et `argument_statements`, backfill et import à la demande de l'existant). Livré le 19 octobre 2026 : événements `StatementAdded`, `StatementImported`, `StatementEdited`, `StatementDeleted` (`domain/aggregates/statement-events.ts`), rejeu et décisions (`domain/aggregates/statement.ts`), use cases `createStatementUseCase` et `updateStatementUseCase` sur `runUnitOfWork`, projecteur `infra/events/statement-projector.ts`, backfill `20261019120000_statements_journal.sql`, tests d'intégration qui rejouent les flux importés et exigent zéro ligne sans flux.
 3. Les autres agrégats un par un : sujet et positions, personnalité avec affiliations et métiers, organisation, argument, thématique, réputation.
 4. Les votes de pertinence, nés événementiels, compteurs en projection.
 5. Chronologie et historique, lus dans le journal.

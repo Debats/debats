@@ -8,7 +8,7 @@ import { PublicFigureRepository } from '../repositories/public-figure-repository
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
-import { StatementRepository } from '../repositories/statement-repository'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { WikipediaValidator } from '../services/wikipedia-validator'
@@ -28,7 +28,7 @@ type ValidateDraftParams = {
   organisationRepo: OrganisationRepository
   subjectRepo: SubjectRepository
   positionRepo: PositionRepository
-  statementRepo: StatementRepository
+  runUnitOfWork: RunUnitOfWork
   /** Drafts carry no argument yet; the statement use case still needs the repository */
   argumentRepo: ArgumentRepository
   reputationRepo: ReputationRepository
@@ -51,7 +51,7 @@ export async function validateDraft(
     organisationRepo,
     subjectRepo,
     positionRepo,
-    statementRepo,
+    runUnitOfWork,
     argumentRepo,
     reputationRepo,
     wikipediaValidator,
@@ -97,7 +97,7 @@ export async function validateDraft(
     quote: draft.quote,
     statedAt: draft.date,
     arguments: { argumentIds: [], newArguments: [] },
-    statementRepo,
+    runUnitOfWork,
     positionRepo,
     publicFigureRepo,
     organisationRepo,

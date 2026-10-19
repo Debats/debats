@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { parseStatementType } from '../../domain/entities/statement'
@@ -33,6 +34,7 @@ export async function updateStatementAction(
     quote: String(formData.get('quote') ?? ''),
     statedAt: String(formData.get('statedAt') ?? ''),
     arguments: readStatementArguments(formData),
+    runUnitOfWork,
     statementRepo: createStatementRepository(supabase),
     positionRepo: createPositionRepository(supabase),
     argumentRepo: createArgumentRepository(supabase),

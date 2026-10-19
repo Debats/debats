@@ -10,8 +10,8 @@ import { DraftStatementRepository } from '../repositories/draft-statement-reposi
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
-import { StatementRepository } from '../repositories/statement-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
 import { Organisation } from '../entities/organisation'
@@ -110,11 +110,7 @@ function makeRepos(overrides: {
     create: ReturnType<typeof vi.fn>
   }
 
-  const statementRepo = {
-    create: vi.fn((s: unknown) => Effect.succeed(s)),
-  } as unknown as StatementRepository & {
-    create: ReturnType<typeof vi.fn>
-  }
+  const unit = inMemoryUnitOfWork()
 
   const reputationRepo = {
     recordEvent: vi.fn(() => Effect.succeed(undefined)),
@@ -130,7 +126,8 @@ function makeRepos(overrides: {
     },
     subjectRepo,
     positionRepo,
-    statementRepo,
+    runUnitOfWork: unit.run,
+    journal: unit.journal,
     argumentRepo: fakeArgumentRepo(),
     reputationRepo,
   }
@@ -165,7 +162,7 @@ describe('validateDraft', () => {
     expect(repos.publicFigureRepo.create).toHaveBeenCalledOnce()
     expect(repos.subjectRepo.create).toHaveBeenCalledOnce()
     expect(repos.positionRepo.create).toHaveBeenCalledOnce()
-    expect(repos.statementRepo.create).toHaveBeenCalledOnce()
+    expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
     expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
   })
 
@@ -185,7 +182,7 @@ describe('validateDraft', () => {
     expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
     expect(repos.subjectRepo.create).not.toHaveBeenCalled()
     expect(repos.positionRepo.create).not.toHaveBeenCalled()
-    expect(repos.statementRepo.create).toHaveBeenCalledOnce()
+    expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
     expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
   })
 
@@ -230,7 +227,7 @@ describe('validateDraft', () => {
     expect(Either.isRight(result)).toBe(true)
     expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
     expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
-    expect(repos.statementRepo.create).toHaveBeenCalledOnce()
+    expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
   })
 
   it('should attribute the statement to the organisation', async () => {
@@ -245,11 +242,9 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(repos.organisationRepo.create).not.toHaveBeenCalled()
-    expect(repos.statementRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        author: { kind: 'organisation', id: organisation.id },
-      }),
-    )
+    expect(repos.journal.all()[0].payload).toMatchObject({
+      author: { kind: 'organisation', id: organisation.id },
+    })
   })
 
   it('should fail when the organisation is missing and no creation data', async () => {
@@ -279,8 +274,6 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.statementRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ statementType: 'program' }),
-    )
+    expect(repos.journal.all()[0].payload).toMatchObject({ statementType: 'program' })
   })
 })

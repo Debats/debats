@@ -99,10 +99,10 @@ export interface StatementRepository {
    */
   findLatestReported(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
 
-  create(statement: Statement): Effect.Effect<Statement, DatabaseError>
-
-  update(statement: Statement): Effect.Effect<Statement, DatabaseError>
-
+  /**
+   * Writes go through the journal (domain/aggregates/statement.ts); this
+   * repository only reads the projection. Deletion has no command yet.
+   */
   delete(id: string): Effect.Effect<void, DatabaseError>
 }
 

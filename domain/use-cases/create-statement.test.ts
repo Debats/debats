@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Option } from 'effect'
 import { createStatementUseCase } from './create-statement'
-import { organisationAuthor, publicFigureAuthor, Statement } from '../entities/statement'
+import { organisationAuthor, publicFigureAuthor } from '../entities/statement'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
@@ -34,24 +35,6 @@ const fakePublicFigure = PublicFigure.make({
   createdAt: new Date(),
   updatedAt: new Date(),
 })
-
-const fakeStatementRepo = {
-  create: (s: Statement) => Effect.succeed(s),
-  update: (s: Statement) => Effect.succeed(s),
-  findById: () => Effect.succeed(null),
-  findByPublicFigureId: () => Effect.succeed([]),
-  findByPositionId: () => Effect.succeed([]),
-  findByPositionIdWithAuthors: () => Effect.succeed([]),
-  findByPublicFigureWithDetails: () => Effect.succeed([]),
-  findByOrganisationWithDetails: () => Effect.succeed([]),
-  findByPublicFigureAndSubject: () => Effect.succeed([]),
-  findByOrganisationAndSubject: () => Effect.succeed([]),
-  findByArgumentWithAuthors: () => Effect.succeed([]),
-  findBySubjectWithAuthors: () => Effect.succeed([]),
-  findLatest: () => Effect.succeed([]),
-  findLatestReported: () => Effect.succeed([]),
-  delete: () => Effect.succeed(undefined as void),
-}
 
 const fakePositionRepo = {
   findById: () => Effect.succeed(fakePosition as Position | null),
@@ -103,7 +86,7 @@ const validParams = {
   sourceUrl: 'https://lemonde.fr/article',
   quote: 'Une citation suffisamment longue pour être valide.',
   statedAt: '2024-01-15',
-  statementRepo: fakeStatementRepo,
+  runUnitOfWork: inMemoryUnitOfWork().run,
   positionRepo: fakePositionRepo,
   publicFigureRepo: fakePublicFigureRepo,
   organisationRepo: fakeOrganisationRepo([organisation]),
@@ -123,9 +106,10 @@ describe('createStatementUseCase', () => {
     expect(Either.isLeft(result) && result.left).toContain('Éloquent')
   })
 
-  it('should link chosen arguments and create proposed ones once the statement exists', async () => {
+  it('should create proposed arguments and carry every argument in the event', async () => {
     const argument = sampleArgument()
     const argumentRepo = fakeArgumentRepo([argument])
+    const { run, journal } = inMemoryUnitOfWork()
     const result = await createStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 1000 },
@@ -134,16 +118,14 @@ describe('createStatementUseCase', () => {
         newArguments: [{ title: 'Liberté de choix', description: 'Chacun décide pour lui-même.' }],
       },
       argumentRepo,
+      runUnitOfWork: run,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    if (Either.isRight(result)) {
-      expect(argumentRepo.rows).toHaveLength(2)
-      expect(argumentRepo.links.get(result.right.id)).toEqual([
-        argument.id,
-        argumentRepo.rows[1].id,
-      ])
-    }
+    expect(argumentRepo.rows).toHaveLength(2)
+    expect(journal.all()[0].payload).toMatchObject({
+      argumentIds: [argument.id, argumentRepo.rows[1].id],
+    })
   })
 
   it('should fail when the organisation author is not found', async () => {
@@ -276,18 +258,12 @@ describe('createStatementUseCase', () => {
 
   it('should create statement and award reputation on success', async () => {
     let reputationAdded = 0
-    let createdStatement: Statement | null = null
+    const { run, journal } = inMemoryUnitOfWork()
 
     const result = await createStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 0 },
-      statementRepo: {
-        ...fakeStatementRepo,
-        create: (s: Statement) => {
-          createdStatement = s
-          return Effect.succeed(s)
-        },
-      },
+      runUnitOfWork: run,
       reputationRepo: {
         getReputation: () => Effect.succeed(0),
         recordEvent: (event) => {
@@ -305,8 +281,10 @@ describe('createStatementUseCase', () => {
       expect(result.right.sourceName).toBe('Le Monde')
       expect(result.right.quote).toBe('Une citation suffisamment longue pour être valide.')
       expect(result.right.createdBy).toBe('abc')
+      expect(journal.all().map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
+        ['statement', result.right.id, 1, 'StatementAdded'],
+      ])
     }
-    expect(createdStatement).not.toBeNull()
     expect(reputationAdded).toBe(50)
   })
 })

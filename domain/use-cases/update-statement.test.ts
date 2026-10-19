@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
-import { updateStatementUseCase } from './update-statement'
-import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
+import { EDITED_MEANWHILE, updateStatementUseCase } from './update-statement'
+import { createStatement, publicFigureAuthor } from '../entities/statement'
 import { Position, createPosition } from '../entities/position'
+import { addStatement, statementStream } from '../aggregates/statement'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 
 const existingPosition = createPosition({
@@ -52,8 +54,6 @@ const fakeStatementRepo = {
   findBySubjectWithAuthors: () => Effect.succeed([]),
   findLatest: () => Effect.succeed([]),
   findLatestReported: () => Effect.succeed([]),
-  create: (s: Statement) => Effect.succeed(s),
-  update: (s: Statement) => Effect.succeed(s),
   delete: () => Effect.succeed(undefined as void),
 }
 
@@ -82,27 +82,107 @@ const validParams = {
   quote: 'Nouvelle citation suffisamment longue.',
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
+  runUnitOfWork: inMemoryUnitOfWork().run,
   statementRepo: fakeStatementRepo,
   positionRepo: fakePositionRepo,
   argumentRepo: fakeArgumentRepo(),
   reputationRepo: fakeReputationRepo,
 }
 
+/** A journal where the statement already has its stream, as after a backfill */
+async function journalWithStream() {
+  const unit = inMemoryUnitOfWork()
+  await Effect.runPromise(
+    unit.journal.append(
+      statementStream(existingStatement.id),
+      0,
+      [addStatement({ ...existingStatement, argumentIds: ['old-argument'] })],
+      { actorId: 'author-id' },
+    ),
+  )
+  return unit
+}
+
 describe('updateStatementUseCase', () => {
-  it('should replace the arguments the statement mobilises', async () => {
+  it('should carry the new set of arguments in the edit', async () => {
     const kept = sampleArgument('Coût budgétaire')
     const argumentRepo = fakeArgumentRepo([kept])
-    argumentRepo.links.set(existingStatement.id, ['old-argument'])
+    const { run, journal } = await journalWithStream()
 
     const result = await updateStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       arguments: { argumentIds: [kept.id], newArguments: [] },
       argumentRepo,
+      runUnitOfWork: run,
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(argumentRepo.links.get(existingStatement.id)).toEqual([kept.id])
+    const last = journal.all().at(-1)
+    expect(last).toMatchObject({ type: 'StatementEdited', revision: 2, actorId: 'abc' })
+    expect(last?.payload).toMatchObject({ argumentIds: [kept.id] })
+  })
+
+  it('should import a statement that has no stream yet, as it is, before editing it', async () => {
+    const old = sampleArgument('Ancien argument')
+    const argumentRepo = fakeArgumentRepo([old])
+    argumentRepo.links.set(existingStatement.id, [old.id])
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await updateStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      argumentRepo,
+      runUnitOfWork: run,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    const [imported, edited] = journal.all()
+    expect(imported).toMatchObject({
+      type: 'StatementImported',
+      revision: 1,
+      actorId: 'author-id',
+      occurredAt: existingStatement.createdAt,
+      metadata: { source: 'import' },
+      payload: {
+        author: { kind: 'public_figure', id: 'figure-1' },
+        quote: 'Citation originale suffisamment longue.',
+        statedAt: '2024-01-15',
+        argumentIds: [old.id],
+      },
+    })
+    expect(edited).toMatchObject({ type: 'StatementEdited', revision: 2, actorId: 'abc' })
+  })
+
+  it('should tell the contributor when someone edited the statement meanwhile', async () => {
+    const { run, journal } = await journalWithStream()
+
+    const result = await updateStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: (work) =>
+        run((events) =>
+          work({
+            ...events,
+            // Another writer appends between the load and the append
+            append: (stream, expectedRevision, decided, options) =>
+              Effect.flatMap(
+                events.append(
+                  stream,
+                  expectedRevision,
+                  [{ type: 'StatementDeleted', payload: {} }],
+                  {
+                    actorId: 'someone-else',
+                  },
+                ),
+                () => events.append(stream, expectedRevision, decided, options),
+              ),
+          }),
+        ),
+    })
+
+    expect(result).toEqual(Either.left(EDITED_MEANWHILE))
+    expect(journal.all()).toHaveLength(1)
   })
 
   it('should fail when contributor is null', async () => {
@@ -189,20 +269,14 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should update statement and award reputation on success', async () => {
-    let updatedStatement: Statement | null = null
     let reputationRecorded = false
+    const { run } = await journalWithStream()
 
     const result = await updateStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       positionId: anotherPosition.id,
-      statementRepo: {
-        ...fakeStatementRepo,
-        update: (s: Statement) => {
-          updatedStatement = s
-          return Effect.succeed(s)
-        },
-      },
+      runUnitOfWork: run,
       reputationRepo: {
         ...fakeReputationRepo,
         recordEvent: () => {
@@ -213,10 +287,15 @@ describe('updateStatementUseCase', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(updatedStatement).not.toBeNull()
-    expect(updatedStatement!.positionId).toBe(anotherPosition.id)
-    expect(updatedStatement!.sourceName).toBe('France Inter')
-    expect(updatedStatement!.quote).toBe('Nouvelle citation suffisamment longue.')
+    const updated = Either.isRight(result) ? result.right : null
+    expect(updated).toMatchObject({
+      id: existingStatement.id,
+      author: existingStatement.author,
+      positionId: anotherPosition.id,
+      sourceName: 'France Inter',
+      quote: 'Nouvelle citation suffisamment longue.',
+      createdBy: 'author-id',
+    })
     expect(reputationRecorded).toBe(true)
   })
 

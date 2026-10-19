@@ -47,6 +47,21 @@ export class ConcurrencyError extends Error {
 export interface AppendOptions {
   actorId: string | null
   metadata?: Record<string, unknown>
+  /** When the fact happened, if not now: an import keeps the original date */
+  occurredAt?: Date
+}
+
+/** An event in the journal that the domain cannot read any more: the journal is corrupt */
+export class UnreadableEvent extends Error {
+  readonly _tag = 'UnreadableEvent'
+  constructor(
+    readonly event: StoredEvent,
+    cause: string,
+  ) {
+    super(
+      `Unreadable ${event.type} at ${event.streamType}/${event.streamId}#${event.revision}: ${cause}`,
+    )
+  }
 }
 
 /**

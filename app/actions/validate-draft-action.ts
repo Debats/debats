@@ -7,7 +7,7 @@ import { createPublicFigureRepository } from '../../infra/database/public-figure
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
-import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
@@ -32,7 +32,7 @@ export async function validateDraftAction(draftId: string): Promise<ActionResult
     organisationRepo: createOrganisationRepository(supabase),
     subjectRepo: createSubjectRepository(supabase),
     positionRepo: createPositionRepository(supabase),
-    statementRepo: createStatementRepository(supabase),
+    runUnitOfWork,
     argumentRepo: createArgumentRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),

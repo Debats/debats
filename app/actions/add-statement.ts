@@ -2,7 +2,7 @@
 
 import { Either, Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
@@ -54,7 +54,7 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
     quote: String(formData.get('quote') ?? ''),
     statedAt: String(formData.get('statedAt') ?? ''),
     arguments: readStatementArguments(formData),
-    statementRepo: createStatementRepository(supabase),
+    runUnitOfWork,
     positionRepo: createPositionRepository(supabase),
     publicFigureRepo,
     organisationRepo,

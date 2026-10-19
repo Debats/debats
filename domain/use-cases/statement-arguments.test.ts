@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
-import { attachStatementArguments, validateStatementArguments } from './statement-arguments'
+import {
+  createProposedArguments,
+  rewardArgumentLinks,
+  validateStatementArguments,
+} from './statement-arguments'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { fakeReputationRepo } from './organisation-test-helpers'
 
@@ -88,26 +92,34 @@ describe('validateStatementArguments', () => {
   })
 })
 
-describe('attachStatementArguments', () => {
-  it('creates the proposals, links everything to the statement and rewards the contributor', async () => {
+describe('createProposedArguments', () => {
+  it('creates the proposals, rewards their author and returns every argument to mobilise', async () => {
     const existing = sampleArgument()
     const argumentRepo = fakeArgumentRepo([existing])
     const reputationRepo = fakeReputationRepo()
 
-    const created = await attachStatementArguments({
+    const argumentIds = await createProposedArguments({
       contributor: eloquent,
-      statementId: 'statement-1',
       validated: { existingIds: [existing.id], toCreate: [proposed] },
       argumentRepo,
       reputationRepo,
     })
 
-    expect(created).toHaveLength(1)
-    expect(created[0].title).toBe('Liberté de choix')
-    expect(created[0].slug).toBe('liberte-de-choix')
-    expect(argumentRepo.links.get('statement-1')).toEqual([existing.id, created[0].id])
+    expect(argumentRepo.rows).toHaveLength(2)
+    expect(argumentRepo.rows[1].title).toBe('Liberté de choix')
+    expect(argumentRepo.rows[1].slug).toBe('liberte-de-choix')
+    expect(argumentIds).toEqual([existing.id, argumentRepo.rows[1].id])
+    expect(reputationRepo.events.map((e) => e.action)).toEqual(['added_argument_validated'])
+  })
+})
+
+describe('rewardArgumentLinks', () => {
+  it('rewards the contributor once per argument the statement mobilises', async () => {
+    const reputationRepo = fakeReputationRepo()
+
+    await rewardArgumentLinks({ contributor: eloquent, argumentIds: ['a', 'b'], reputationRepo })
+
     expect(reputationRepo.events.map((e) => e.action)).toEqual([
-      'added_argument_validated',
       'linked_argument_to_statement',
       'linked_argument_to_statement',
     ])

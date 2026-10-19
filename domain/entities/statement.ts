@@ -74,22 +74,3 @@ export const createStatement = (params: {
     updatedAt: now,
   })
 }
-
-export const updateStatement = (
-  statement: Statement,
-  params: {
-    statementType?: StatementType
-    sourceName?: string
-    sourceUrl?: string
-    quote?: string
-    statedAt?: Date
-  },
-): Statement => {
-  const updated = { ...statement, updatedAt: new Date() }
-  if (params.statementType !== undefined) updated.statementType = params.statementType
-  if (params.sourceName !== undefined) updated.sourceName = params.sourceName
-  if (params.sourceUrl !== undefined) updated.sourceUrl = params.sourceUrl
-  if (params.quote !== undefined) updated.quote = params.quote
-  if (params.statedAt !== undefined) updated.statedAt = params.statedAt
-  return updated
-}

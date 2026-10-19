@@ -25,10 +25,6 @@ import {
   StatementWithAuthorAndSubject,
 } from '../../domain/repositories/statement-repository'
 
-function toISODate(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
-
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
   Sentry.captureException(error, { extra: { message } })
@@ -456,57 +452,6 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           )
         },
         catch: (error) => dbError('Failed to fetch latest reported statements', error),
-      }),
-
-    create: (statement: Statement) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('statements')
-            .insert({
-              id: statement.id,
-              public_figure_id:
-                statement.author.kind === 'public_figure' ? statement.author.id : null,
-              organisation_id:
-                statement.author.kind === 'organisation' ? statement.author.id : null,
-              position_id: statement.positionId,
-              statement_type: statement.statementType,
-              source_name: statement.sourceName,
-              source_url: statement.sourceUrl,
-              quote: statement.quote,
-              stated_at: toISODate(statement.statedAt),
-              created_by: statement.createdBy,
-            })
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapStatementRow(data)
-        },
-        catch: (error) => dbError('Failed to create statement', error),
-      }),
-
-    update: (statement: Statement) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('statements')
-            .update({
-              position_id: statement.positionId,
-              statement_type: statement.statementType,
-              source_name: statement.sourceName,
-              source_url: statement.sourceUrl ?? null,
-              quote: statement.quote,
-              stated_at: toISODate(statement.statedAt),
-            })
-            .eq('id', statement.id)
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapStatementRow(data)
-        },
-        catch: (error) => dbError('Failed to update statement', error),
       }),
 
     delete: (id: string) =>

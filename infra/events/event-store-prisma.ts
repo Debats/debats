@@ -88,6 +88,7 @@ async function appendEvents(
     payload: event.payload as Prisma.InputJsonValue,
     actor_id: options.actorId,
     metadata: (options.metadata ?? {}) as Prisma.InputJsonValue,
+    ...(options.occurredAt ? { occurred_at: options.occurredAt } : {}),
   }))
 
   try {

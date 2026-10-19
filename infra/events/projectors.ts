@@ -1,7 +1,9 @@
 import { Effect } from 'effect'
+import { STATEMENT_STREAM } from '../../domain/aggregates/statement'
 import { StoredEvent } from '../../domain/events/event-store'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { PrismaTransaction } from '../prisma/client'
+import { projectStatement } from './statement-projector'
 
 /**
  * Keeps one table in step with the events of one stream type. A projector
@@ -16,4 +18,6 @@ export type Projector = (
 /** Projectors by stream type; an aggregate registers its own when it switches to the journal */
 export type ProjectorRegistry = Readonly<Record<string, readonly Projector[]>>
 
-export const projectors: ProjectorRegistry = {}
+export const projectors: ProjectorRegistry = {
+  [STATEMENT_STREAM]: [projectStatement],
+}

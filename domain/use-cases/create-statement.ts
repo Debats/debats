@@ -1,7 +1,7 @@
-import { Either } from 'effect'
-import { Effect } from 'effect'
-import { createStatement, Statement, StatementAuthor, StatementType } from '../entities/statement'
-import { StatementRepository } from '../repositories/statement-repository'
+import { Either, Effect, pipe } from 'effect'
+import { Statement, StatementAuthor, StatementId, StatementType } from '../entities/statement'
+import { addStatement, replayStatement, statementStream } from '../aggregates/statement'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
@@ -11,10 +11,12 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
-  attachStatementArguments,
+  createProposedArguments,
+  rewardArgumentLinks,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
+import { requireState } from './statement-stream'
 
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
@@ -28,7 +30,7 @@ type CreateStatementParams = {
   sourceUrl: string
   quote: string
   statedAt: string
-  statementRepo: StatementRepository
+  runUnitOfWork: RunUnitOfWork
   positionRepo: PositionRepository
   publicFigureRepo: PublicFigureRepository
   organisationRepo: OrganisationRepository
@@ -65,7 +67,7 @@ export async function createStatementUseCase(
     sourceUrl,
     quote,
     statedAt,
-    statementRepo,
+    runUnitOfWork,
     positionRepo,
     publicFigureRepo,
     organisationRepo,
@@ -110,7 +112,16 @@ export async function createStatementUseCase(
     return Either.left(validatedArguments.left)
   }
 
-  const statement = createStatement({
+  const argumentIds = await createProposedArguments({
+    contributor,
+    validated: validatedArguments.right,
+    argumentRepo,
+    reputationRepo,
+  })
+
+  // The command names the statement: the stream exists from its first event
+  const id = StatementId.make(crypto.randomUUID())
+  const added = addStatement({
     author,
     positionId,
     statementType,
@@ -118,10 +129,18 @@ export async function createStatementUseCase(
     sourceUrl: sourceUrl || undefined,
     quote,
     statedAt: new Date(statedAt),
-    createdBy: contributor.id,
+    argumentIds,
   })
 
-  const created = await Effect.runPromise(statementRepo.create(statement))
+  const state = await Effect.runPromise(
+    runUnitOfWork((events) =>
+      pipe(
+        events.append(statementStream(id), 0, [added], { actorId: contributor.id }),
+        Effect.flatMap(replayStatement),
+        Effect.flatMap(requireState),
+      ),
+    ),
+  )
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -129,17 +148,11 @@ export async function createStatementUseCase(
       action: 'added_statement_validated',
       amount: reputationReward('added_statement_validated'),
       relatedEntityType: 'statement',
-      relatedEntityId: created.id,
+      relatedEntityId: state.statement.id,
     }),
   )
 
-  await attachStatementArguments({
-    contributor,
-    statementId: created.id,
-    validated: validatedArguments.right,
-    argumentRepo,
-    reputationRepo,
-  })
+  await rewardArgumentLinks({ contributor, argumentIds, reputationRepo })
 
-  return Either.right(created)
+  return Either.right(state.statement)
 }
