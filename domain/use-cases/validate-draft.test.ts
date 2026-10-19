@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { Effect, Either, Option } from 'effect'
+import { Effect, Either } from 'effect'
 import { validateDraft } from './validate-draft'
 import {
   DraftStatement,
@@ -15,6 +15,9 @@ import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
 import { Organisation } from '../entities/organisation'
+import { OrganisationRepository } from '../repositories/organisation-repository'
+import { replayOrganisation } from '../aggregates/organisation'
+import { replayPublicFigure } from '../aggregates/public-figure'
 import {
   fakeMembershipRepo,
   fakeOrganisationRepo,
@@ -23,12 +26,6 @@ import {
 import { fakeSubjectSource, subjectParts } from './subject-test-helpers'
 import { figureParts } from './public-figure-test-helpers'
 import { PublicFigureSource } from './public-figure-stream'
-import {
-  generateSlug as generatePublicFigureSlug,
-  PublicFigureId,
-  PublicFigureName,
-  PublicFigureSlug,
-} from '../entities/public-figure'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
 import { Argument } from '../entities/argument'
@@ -67,25 +64,14 @@ function makeRepos(overrides: {
 }) {
   const unit = inMemoryUnitOfWork()
 
+  /** The stream of one aggregate as the journal holds it after the validation */
+  const streamOf = (streamType: string, id: string) =>
+    unit.journal.all().filter((e) => e.streamType === streamType && e.streamId === id)
+
   /** A figure added through the journal during the validation, as the table would then hold her */
   const figureFromJournal = (id: string): PublicFigure | null => {
-    const added = unit.journal
-      .all()
-      .find((e) => e.type === 'PublicFigureAdded' && e.streamId === id)
-    if (!added) return null
-    const payload = added.payload as { name: string; presentation: string }
-    return PublicFigure.make({
-      id: PublicFigureId.make(id),
-      name: PublicFigureName.make(payload.name),
-      slug: PublicFigureSlug.make(generatePublicFigureSlug(payload.name)),
-      presentation: payload.presentation,
-      wikipediaUrl: Option.none(),
-      notorietySources: [],
-      websiteUrl: Option.none(),
-      createdBy: added.actorId ?? '',
-      createdAt: added.occurredAt,
-      updatedAt: added.occurredAt,
-    })
+    const state = replayPublicFigure(streamOf('public_figure', id))
+    return Either.isRight(state) ? (state.right?.figure ?? null) : null
   }
 
   const draftRepo = {
@@ -106,10 +92,18 @@ function makeRepos(overrides: {
     findBySlug: ReturnType<typeof vi.fn>
   }
 
-  const organisationRepo = fakeOrganisationRepo(
-    overrides.organisation ? [overrides.organisation] : [],
-  )
-  vi.spyOn(organisationRepo, 'create')
+  /** An organisation added through the journal during the validation, as the table would then hold it */
+  const organisationFromJournal = (id: string): Organisation | null => {
+    const state = replayOrganisation(streamOf('organisation', id))
+    return Either.isRight(state) ? (state.right?.organisation ?? null) : null
+  }
+
+  const seededOrganisations = overrides.organisation ? [overrides.organisation] : []
+  const organisationRepo: OrganisationRepository = {
+    ...fakeOrganisationRepo(seededOrganisations),
+    findById: (id) =>
+      Effect.succeed(seededOrganisations.find((o) => o.id === id) ?? organisationFromJournal(id)),
+  }
 
   const subjectRepo = {
     findBySlug: vi.fn(() => Effect.succeed(overrides.subject ?? null)),
@@ -162,7 +156,6 @@ function makeRepos(overrides: {
   }
 
   const seededFigures = overrides.figure ? [overrides.figure] : []
-  const seededOrganisations = overrides.organisation ? [overrides.organisation] : []
   const occupationRepo = fakeOccupationRepo(overrides.occupations ?? [])
 
   /** The figure as the tables would hold her when a command imports her on demand */
@@ -179,9 +172,7 @@ function makeRepos(overrides: {
   return {
     draftRepo,
     publicFigureRepo,
-    organisationRepo: organisationRepo as typeof organisationRepo & {
-      create: ReturnType<typeof vi.fn>
-    },
+    organisationRepo,
     subjectRepo,
     positionRepo,
     runUnitOfWork: unit.run,
@@ -297,7 +288,7 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
+    expect(payloadsOf(repos.journal, 'OrganisationAdded')).toHaveLength(1)
     expect(payloadsOf(repos.journal, 'PublicFigureAdded')).toEqual([])
     expect(repos.journal.all().at(-1)?.type).toBe('StatementAdded')
   })
@@ -313,7 +304,7 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.organisationRepo.create).not.toHaveBeenCalled()
+    expect(payloadsOf(repos.journal, 'OrganisationAdded')).toEqual([])
     expect(repos.journal.all().at(-1)?.payload).toMatchObject({
       author: { kind: 'organisation', id: organisation.id },
     })
@@ -529,7 +520,7 @@ describe('validateDraft', () => {
       })
 
       expect(Either.isRight(result)).toBe(true)
-      expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
+      expect(payloadsOf(repos.journal, 'OrganisationAdded')).toHaveLength(1)
       expect(payloadsOf(repos.journal, 'MembershipAdded')).toHaveLength(1)
     })
 

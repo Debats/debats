@@ -66,20 +66,6 @@ function mapRow(row: OrganisationRow): Organisation {
   })
 }
 
-function toRow(organisation: Organisation) {
-  return {
-    name: organisation.name,
-    slug: organisation.slug,
-    acronym: Option.getOrNull(organisation.acronym),
-    organisation_type: organisation.organisationType,
-    presentation: organisation.presentation,
-    wikipedia_url: Option.getOrNull(organisation.wikipediaUrl),
-    website_url: Option.getOrNull(organisation.websiteUrl),
-    notoriety_sources: organisation.notorietySources,
-    updated_by: organisation.updatedBy,
-  }
-}
-
 export function createOrganisationRepository(supabase: SupabaseClient): OrganisationRepository {
   const live = () => supabase.from('organisations').select('*').is('deleted_at', null)
 
@@ -127,48 +113,6 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
           return data.map(mapRow)
         },
         catch: (error) => dbError('Failed to search organisations', error),
-      }),
-
-    create: (organisation) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('organisations')
-            .insert({
-              id: organisation.id,
-              ...toRow(organisation),
-              created_by: organisation.createdBy,
-            })
-            .select()
-            .single()
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to create organisation', error),
-      }),
-
-    update: (organisation) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('organisations')
-            .update(toRow(organisation))
-            .eq('id', organisation.id)
-            .select()
-            .single()
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to update organisation', error),
-      }),
-
-    delete: (id) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.rpc('soft_delete_organisation', { p_id: id })
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete organisation', error),
       }),
 
     findSummaries: () =>

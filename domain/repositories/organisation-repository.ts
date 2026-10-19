@@ -3,6 +3,7 @@ import { Organisation } from '../entities/organisation'
 import { OrganisationSummary } from '../read-models/organisation-summary'
 import { DatabaseError } from './errors'
 
+/** Read side of the organisations: writes go through the event journal */
 export interface OrganisationRepository {
   findAll(): Effect.Effect<Organisation[], DatabaseError>
 
@@ -12,12 +13,6 @@ export interface OrganisationRepository {
 
   /** Organisations whose name or acronym contains the query */
   searchByName(query: string, limit?: number): Effect.Effect<Organisation[], DatabaseError>
-
-  create(organisation: Organisation): Effect.Effect<Organisation, DatabaseError>
-
-  update(organisation: Organisation): Effect.Effect<Organisation, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
 
   /** Every organisation with its members count, ordered by name */
   findSummaries(): Effect.Effect<OrganisationSummary[], DatabaseError>

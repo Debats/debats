@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Option } from 'effect'
-import {
-  createOrganisation,
-  ORGANISATION_TYPE_LABELS,
-  parseOrganisationType,
-  updateOrganisation,
-} from './organisation'
+import { createOrganisation, ORGANISATION_TYPE_LABELS, parseOrganisationType } from './organisation'
 
 const validParams = {
   name: 'Association pour la taxation des transactions financières',
@@ -61,33 +56,6 @@ describe('Organisation entity', () => {
 
     it('rejects a presentation shorter than 10 characters', () => {
       expect(() => createOrganisation({ ...validParams, presentation: 'Court' })).toThrow()
-    })
-  })
-
-  describe('updateOrganisation', () => {
-    it('returns a new organisation with the changed fields and a fresh slug', () => {
-      const organisation = createOrganisation(validParams)
-
-      const updated = updateOrganisation(organisation, {
-        name: 'Attac France',
-        acronym: '',
-        organisationType: 'ngo',
-        presentation: 'Nouvelle présentation de cette organisation.',
-        wikipediaUrl: '',
-        websiteUrl: 'https://france.attac.org',
-        notorietySources: [],
-        updatedBy: 'user-456',
-      })
-
-      expect(updated.id).toBe(organisation.id)
-      expect(updated.name).toBe('Attac France')
-      expect(updated.slug).toBe('attac-france')
-      expect(updated.acronym).toEqual(Option.none())
-      expect(updated.organisationType).toBe('ngo')
-      expect(updated.websiteUrl).toEqual(Option.some('https://france.attac.org'))
-      expect(updated.updatedBy).toBe('user-456')
-      expect(updated.createdBy).toBe('user-123')
-      expect(organisation.name).toBe(validParams.name)
     })
   })
 

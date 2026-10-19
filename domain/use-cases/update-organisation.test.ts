@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { Either, Option } from 'effect'
 import { updateOrganisationUseCase } from './update-organisation'
 import { createOrganisation } from '../entities/organisation'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import {
   fakeOrganisationRepo,
+  fakeOrganisationSource,
   fakeReputationRepo,
   fakeWikipediaValidator,
+  journalWithOrganisations,
   sampleOrganisation,
 } from './organisation-test-helpers'
 
@@ -21,6 +24,8 @@ const validParams = (existing = sampleOrganisation()) => ({
   wikipediaUrl: '',
   websiteUrl: 'https://france.attac.org',
   notorietySources: ['https://lemonde.fr/a', 'https://liberation.fr/b'],
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  organisationSource: fakeOrganisationSource([existing]),
   organisationRepo: fakeOrganisationRepo([existing]),
   reputationRepo: fakeReputationRepo(),
   wikipediaValidator: fakeWikipediaValidator(),
@@ -63,9 +68,10 @@ describe('updateOrganisationUseCase', () => {
     )
   })
 
-  it('saves the changes, keeps the identity and rewards the contributor', async () => {
+  it('appends the edit to the stream, keeps the identity and rewards the contributor', async () => {
     const existing = sampleOrganisation()
-    const params = validParams(existing)
+    const unit = await journalWithOrganisations(existing)
+    const params = { ...validParams(existing), runUnitOfWork: unit.run }
     const result = await updateOrganisationUseCase(params)
 
     expect(Either.isRight(result)).toBe(true)
@@ -77,8 +83,27 @@ describe('updateOrganisationUseCase', () => {
       expect(result.right.updatedBy).toBe('contributor-1')
       expect(result.right.createdBy).toBe('founder')
     }
+    expect(unit.journal.all().map((e) => [e.type, e.revision])).toEqual([
+      ['OrganisationAdded', 1],
+      ['OrganisationEdited', 2],
+    ])
     expect(params.reputationRepo.events).toEqual([
       { action: 'edited_organisation', contributorId: 'contributor-1' },
+    ])
+  })
+
+  it('imports an organisation the journal does not know yet, then edits it', async () => {
+    const existing = sampleOrganisation()
+    const unit = inMemoryUnitOfWork()
+    const result = await updateOrganisationUseCase({
+      ...validParams(existing),
+      runUnitOfWork: unit.run,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(unit.journal.all().map((e) => [e.type, e.metadata])).toEqual([
+      ['OrganisationImported', { source: 'import' }],
+      ['OrganisationEdited', {}],
     ])
   })
 })

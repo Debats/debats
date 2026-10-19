@@ -1,16 +1,19 @@
-import { Effect, Either } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import {
-  createOrganisation,
   generateOrganisationSlug,
   Organisation,
+  OrganisationId,
   OrganisationType,
 } from '../entities/organisation'
+import { addOrganisation, organisationStream, replayOrganisation } from '../aggregates/organisation'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateOrganisationFields } from './validate-organisation-fields'
+import { requireOrganisationState } from './organisation-stream'
 
 export type CreateOrganisationParams = {
   contributor: ContributorIdentity | null
@@ -21,6 +24,8 @@ export type CreateOrganisationParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
+  runUnitOfWork: RunUnitOfWork
+  /** Read side: the name must be free */
   organisationRepo: OrganisationRepository
   reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
@@ -62,16 +67,19 @@ export async function validateCreateOrganisation(
 }
 
 /**
- * Persists a validated organisation and records reputation.
+ * Records a validated organisation in the journal and rewards the contributor.
  * Call only after validation has passed and any side effects (logo upload) are done.
  */
 export async function persistOrganisation(
   params: CreateOrganisationParams,
   organisationType: OrganisationType,
 ): Promise<Organisation> {
+  const { runUnitOfWork, reputationRepo } = params
   const contributor = params.contributor!
 
-  const organisation = createOrganisation({
+  // The command names the organisation: the stream exists from its first event
+  const id = OrganisationId.make(crypto.randomUUID())
+  const added = addOrganisation({
     name: params.name,
     acronym: params.acronym,
     organisationType,
@@ -79,22 +87,29 @@ export async function persistOrganisation(
     wikipediaUrl: params.wikipediaUrl,
     websiteUrl: params.websiteUrl,
     notorietySources: params.notorietySources,
-    createdBy: contributor.id,
   })
 
-  const created = await Effect.runPromise(params.organisationRepo.create(organisation))
+  const state = await Effect.runPromise(
+    runUnitOfWork((events) =>
+      pipe(
+        events.append(organisationStream(id), 0, [added], { actorId: contributor.id }),
+        Effect.flatMap(replayOrganisation),
+        Effect.flatMap(requireOrganisationState),
+      ),
+    ),
+  )
 
   await Effect.runPromise(
-    params.reputationRepo.recordEvent({
+    reputationRepo.recordEvent({
       contributorId: contributor.id,
       action: 'added_organisation_validated',
       amount: reputationReward('added_organisation_validated'),
       relatedEntityType: 'organisation',
-      relatedEntityId: created.id,
+      relatedEntityId: state.organisation.id,
     }),
   )
 
-  return created
+  return state.organisation
 }
 
 /** Validates and creates an organisation in one step. */

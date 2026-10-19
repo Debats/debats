@@ -4,9 +4,11 @@ import type { Database } from '../../types/database.types'
 import { StatementSource } from '../../domain/use-cases/statement-stream'
 import { SubjectSource } from '../../domain/use-cases/subject-stream'
 import { PublicFigureSource } from '../../domain/use-cases/public-figure-stream'
+import { OrganisationSource } from '../../domain/use-cases/organisation-stream'
 import { createArgumentRepository } from '../database/argument-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../database/organisation-membership-repository-supabase'
+import { createOrganisationRepository } from '../database/organisation-repository-supabase'
 import { createPositionRepository } from '../database/position-repository-supabase'
 import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createRelatedSubjectsRepository } from '../database/related-subjects-repository-supabase'
@@ -76,5 +78,13 @@ export function createPublicFigureSource(supabase: SupabaseClient<Database>): Pu
             }),
           )
         : Effect.succeed(null),
+    )
+}
+
+export function createOrganisationSource(supabase: SupabaseClient<Database>): OrganisationSource {
+  const organisations = createOrganisationRepository(supabase)
+  return (organisationId) =>
+    Effect.map(organisations.findById(organisationId), (organisation) =>
+      organisation ? { organisation } : null,
     )
 }

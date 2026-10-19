@@ -115,21 +115,3 @@ export const createOrganisation = (
     updatedAt: now,
   })
 }
-
-export const updateOrganisation = (
-  organisation: Organisation,
-  params: OrganisationFields & { updatedBy: string },
-): Organisation =>
-  Organisation.make({
-    ...organisation,
-    name: OrganisationName.make(params.name),
-    slug: generateOrganisationSlug(params.name),
-    acronym: optionalText(params.acronym),
-    organisationType: params.organisationType,
-    presentation: params.presentation,
-    wikipediaUrl: optionalText(params.wikipediaUrl),
-    websiteUrl: optionalText(params.websiteUrl),
-    notorietySources: params.notorietySources ?? [],
-    updatedBy: params.updatedBy,
-    updatedAt: new Date(),
-  })

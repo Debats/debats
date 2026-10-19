@@ -4,6 +4,7 @@ import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { LogoStorageError, uploadOrganisationLogo } from '../../infra/storage/organisation-logo'
 import {
@@ -29,6 +30,7 @@ export async function createOrganisationAction(formData: FormData): Promise<Acti
   const params = {
     contributor,
     ...fields,
+    runUnitOfWork,
     organisationRepo: createOrganisationRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),

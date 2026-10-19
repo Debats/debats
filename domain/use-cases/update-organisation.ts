@@ -1,16 +1,15 @@
 import { Effect, Either } from 'effect'
-import {
-  generateOrganisationSlug,
-  Organisation,
-  OrganisationType,
-  updateOrganisation,
-} from '../entities/organisation'
+import { generateOrganisationSlug, Organisation, OrganisationType } from '../entities/organisation'
+import { editOrganisation } from '../aggregates/organisation'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateOrganisationFields } from './validate-organisation-fields'
+import { runCommand } from './run-command'
+import { decideOnOrganisation, OrganisationSource } from './organisation-stream'
 
 export type UpdateOrganisationParams = {
   contributor: ContributorIdentity | null
@@ -22,6 +21,9 @@ export type UpdateOrganisationParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
+  runUnitOfWork: RunUnitOfWork
+  organisationSource: OrganisationSource
+  /** Read side: the organisation must exist and the new name must be free */
   organisationRepo: OrganisationRepository
   reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
@@ -73,14 +75,15 @@ export async function validateUpdateOrganisation(
   return Either.right({ existing, organisationType: validated.right.organisationType })
 }
 
-/** Persists the updated organisation and records reputation. */
+/** Records the edit in the journal and rewards the contributor. */
 export async function persistUpdatedOrganisation(
   params: UpdateOrganisationParams,
   { existing, organisationType }: ValidatedUpdate,
-): Promise<Organisation> {
+): Promise<Either.Either<Organisation, string>> {
+  const { runUnitOfWork, reputationRepo } = params
   const contributor = params.contributor!
 
-  const updated = updateOrganisation(existing, {
+  const edited = editOrganisation({
     name: params.name,
     acronym: params.acronym,
     organisationType,
@@ -88,22 +91,28 @@ export async function persistUpdatedOrganisation(
     wikipediaUrl: params.wikipediaUrl,
     websiteUrl: params.websiteUrl,
     notorietySources: params.notorietySources,
-    updatedBy: contributor.id,
   })
 
-  const saved = await Effect.runPromise(params.organisationRepo.update(updated))
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnOrganisation(events, existing.id, params.organisationSource, contributor.id, () =>
+        Effect.succeed([edited]),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
   await Effect.runPromise(
-    params.reputationRepo.recordEvent({
+    reputationRepo.recordEvent({
       contributorId: contributor.id,
       action: 'edited_organisation',
       amount: reputationReward('edited_organisation'),
       relatedEntityType: 'organisation',
-      relatedEntityId: saved.id,
+      relatedEntityId: existing.id,
     }),
   )
 
-  return saved
+  return Either.right(outcome.right.organisation)
 }
 
 /** Validates and updates an organisation in one step. */
@@ -115,5 +124,5 @@ export async function updateOrganisationUseCase(
     return Either.left(validation.left)
   }
 
-  return Either.right(await persistUpdatedOrganisation(params, validation.right))
+  return persistUpdatedOrganisation(params, validation.right)
 }

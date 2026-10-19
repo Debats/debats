@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { Either } from 'effect'
+import { Either, Option } from 'effect'
 import { createOrganisationUseCase } from './create-organisation'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import {
   fakeOrganisationRepo,
   fakeReputationRepo,
@@ -19,6 +20,7 @@ const validParams = () => ({
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Confédération_générale_du_travail',
   websiteUrl: 'https://www.cgt.fr',
   notorietySources: [] as string[],
+  runUnitOfWork: inMemoryUnitOfWork().run,
   organisationRepo: fakeOrganisationRepo(),
   reputationRepo: fakeReputationRepo(),
   wikipediaValidator: fakeWikipediaValidator(),
@@ -105,15 +107,26 @@ describe('createOrganisationUseCase', () => {
     expect(fieldErrorsOf(result).name).toContain('existe déjà')
   })
 
-  it('creates the organisation and rewards the contributor', async () => {
-    const params = validParams()
+  it('records the organisation in the journal and rewards the contributor', async () => {
+    const unit = inMemoryUnitOfWork()
+    const params = { ...validParams(), runUnitOfWork: unit.run }
     const result = await createOrganisationUseCase(params)
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
       expect(result.right.slug).toBe('confederation-generale-du-travail')
+      expect(result.right.acronym).toEqual(Option.some('CGT'))
       expect(result.right.organisationType).toBe('union')
       expect(result.right.createdBy).toBe('contributor-1')
+      expect(unit.journal.all()).toMatchObject([
+        {
+          streamType: 'organisation',
+          streamId: result.right.id,
+          revision: 1,
+          type: 'OrganisationAdded',
+          actorId: 'contributor-1',
+        },
+      ])
     }
     expect(params.reputationRepo.events).toEqual([
       { action: 'added_organisation_validated', contributorId: 'contributor-1' },

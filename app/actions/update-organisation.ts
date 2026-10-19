@@ -4,6 +4,8 @@ import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createOrganisationSource } from '../../infra/events/sources'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import {
   LogoStorageError,
@@ -38,6 +40,8 @@ export async function updateOrganisationAction(
     contributor,
     organisationId,
     ...fields,
+    runUnitOfWork,
+    organisationSource: createOrganisationSource(supabase),
     organisationRepo: createOrganisationRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
@@ -80,6 +84,9 @@ export async function updateOrganisationAction(
 
   // Phase 3: persist
   const saved = await persistUpdatedOrganisation(params, validation.right)
+  if (Either.isLeft(saved)) {
+    return { success: false, error: saved.left }
+  }
 
-  return { success: true, slug: saved.slug }
+  return { success: true, slug: saved.right.slug }
 }

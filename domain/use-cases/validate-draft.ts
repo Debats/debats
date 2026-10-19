@@ -278,6 +278,7 @@ async function resolveOrCreateAffiliatedOrganisation(
   deps: {
     contributor: ContributorIdentity
     organisationRepo: OrganisationRepository
+    runUnitOfWork: RunUnitOfWork
     reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
@@ -306,6 +307,7 @@ async function resolveOrCreateAffiliatedOrganisation(
     wikipediaUrl: data.wikipediaUrl ?? '',
     websiteUrl: data.websiteUrl ?? '',
     notorietySources: data.notorietySources ?? [],
+    runUnitOfWork: deps.runUnitOfWork,
     organisationRepo: deps.organisationRepo,
     reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,
@@ -371,6 +373,7 @@ async function resolveOrCreateOrganisation(
   deps: {
     contributor: ContributorIdentity
     organisationRepo: OrganisationRepository
+    runUnitOfWork: RunUnitOfWork
     reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
@@ -394,6 +397,7 @@ async function resolveOrCreateOrganisation(
     wikipediaUrl: author.data.wikipediaUrl ?? '',
     websiteUrl: author.data.websiteUrl ?? '',
     notorietySources: author.data.notorietySources ?? [],
+    runUnitOfWork: deps.runUnitOfWork,
     organisationRepo: deps.organisationRepo,
     reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,

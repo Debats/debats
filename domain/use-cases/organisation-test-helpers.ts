@@ -1,5 +1,7 @@
-import { Effect } from 'effect'
+import { Effect, Option } from 'effect'
 import { createOrganisation, Organisation } from '../entities/organisation'
+import { addOrganisation, organisationStream } from '../aggregates/organisation'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OrganisationMembership } from '../entities/organisation-membership'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import {
@@ -10,6 +12,7 @@ import {
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { createPublicFigure, PublicFigure } from '../entities/public-figure'
+import { OrganisationParts, OrganisationSource } from './organisation-stream'
 
 export const sampleOrganisation = (): Organisation =>
   createOrganisation({
@@ -29,24 +32,45 @@ export const sampleFigure = (): PublicFigure =>
 
 /** In-memory organisation repository seeded with the given organisations. */
 export function fakeOrganisationRepo(seed: Organisation[] = []): OrganisationRepository {
-  const rows = [...seed]
   return {
-    findAll: () => Effect.succeed(rows),
-    findBySlug: (slug) => Effect.succeed(rows.find((o) => o.slug === slug) ?? null),
-    findById: (id) => Effect.succeed(rows.find((o) => o.id === id) ?? null),
-    searchByName: () => Effect.succeed(rows),
-    create: (organisation) => {
-      rows.push(organisation)
-      return Effect.succeed(organisation)
-    },
-    update: (organisation) => {
-      const index = rows.findIndex((o) => o.id === organisation.id)
-      rows[index] = organisation
-      return Effect.succeed(organisation)
-    },
-    delete: () => Effect.succeed(undefined),
+    findAll: () => Effect.succeed(seed),
+    findBySlug: (slug) => Effect.succeed(seed.find((o) => o.slug === slug) ?? null),
+    findById: (id) => Effect.succeed(seed.find((o) => o.id === id) ?? null),
+    searchByName: () => Effect.succeed(seed),
     findSummaries: () => Effect.succeed([]),
   }
+}
+
+/** What the tables would hold of these organisations, for an import on demand */
+export function fakeOrganisationSource(organisations: Organisation[]): OrganisationSource {
+  return (organisationId) => {
+    const organisation = organisations.find((o) => o.id === organisationId)
+    return Effect.succeed<OrganisationParts | null>(organisation ? { organisation } : null)
+  }
+}
+
+/** An in-memory journal where these organisations already have their streams */
+export async function journalWithOrganisations(...organisations: Organisation[]) {
+  const unit = inMemoryUnitOfWork()
+  for (const organisation of organisations) {
+    await Effect.runPromise(
+      unit.journal.append(
+        organisationStream(organisation.id),
+        0,
+        [
+          addOrganisation({
+            name: organisation.name,
+            acronym: Option.getOrUndefined(organisation.acronym),
+            organisationType: organisation.organisationType,
+            presentation: organisation.presentation,
+            notorietySources: organisation.notorietySources,
+          }),
+        ],
+        { actorId: organisation.createdBy },
+      ),
+    )
+  }
+  return unit
 }
 
 /** In-memory membership repository; joins are stubbed with the seeded entities. */
