@@ -1,12 +1,18 @@
-import { Either } from 'effect'
-import { Effect } from 'effect'
-import { createPublicFigure, generateSlug, PublicFigure } from '../entities/public-figure'
+import { Either, Effect, pipe } from 'effect'
+import { generateSlug, PublicFigure, PublicFigureId } from '../entities/public-figure'
+import {
+  addPublicFigure,
+  publicFigureStream,
+  replayPublicFigure,
+} from '../aggregates/public-figure'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
+import { requirePublicFigureState } from './public-figure-stream'
 
 type CreatePublicFigureParams = {
   contributor: ContributorIdentity | null
@@ -15,6 +21,8 @@ type CreatePublicFigureParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
+  runUnitOfWork: RunUnitOfWork
+  /** Read side: the name must be free */
   publicFigureRepo: PublicFigureRepository
   reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
@@ -61,25 +69,32 @@ export async function validateCreatePublicFigure(
 }
 
 /**
- * Persists a validated public figure and records reputation.
+ * Records a validated public figure in the journal and rewards the contributor.
  * Call only after validation has passed and any side effects (photo upload) are done.
  */
 export async function persistPublicFigure(params: CreatePublicFigureParams): Promise<PublicFigure> {
-  const { name, presentation, notorietySources, websiteUrl, publicFigureRepo, reputationRepo } =
-    params
-  const wikipediaUrl = params.wikipediaUrl.trim()
+  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork, reputationRepo } = params
   const contributor = params.contributor!
 
-  const publicFigure = createPublicFigure({
+  // The command names the figure: the stream exists from its first event
+  const id = PublicFigureId.make(crypto.randomUUID())
+  const added = addPublicFigure({
     name,
     presentation,
-    wikipediaUrl: wikipediaUrl || undefined,
-    notorietySources,
+    wikipediaUrl: params.wikipediaUrl.trim() || undefined,
     websiteUrl: websiteUrl || undefined,
-    createdBy: contributor.id,
+    notorietySources,
   })
 
-  const createdFigure = await Effect.runPromise(publicFigureRepo.create(publicFigure))
+  const state = await Effect.runPromise(
+    runUnitOfWork((events) =>
+      pipe(
+        events.append(publicFigureStream(id), 0, [added], { actorId: contributor.id }),
+        Effect.flatMap(replayPublicFigure),
+        Effect.flatMap(requirePublicFigureState),
+      ),
+    ),
+  )
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -87,11 +102,11 @@ export async function persistPublicFigure(params: CreatePublicFigureParams): Pro
       action: 'added_personality_validated',
       amount: reputationReward('added_personality_validated'),
       relatedEntityType: 'public_figure',
-      relatedEntityId: createdFigure.id,
+      relatedEntityId: state.figure.id,
     }),
   )
 
-  return createdFigure
+  return state.figure
 }
 
 /**

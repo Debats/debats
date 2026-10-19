@@ -10,6 +10,7 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { SubjectSource } from './subject-stream'
+import { PublicFigureSource } from './public-figure-stream'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
@@ -38,6 +39,7 @@ type ValidateDraftParams = {
   positionRepo: PositionRepository
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
+  publicFigureSource: PublicFigureSource
   argumentRepo: ArgumentRepository
   occupationRepo: OccupationRepository
   membershipRepo: OrganisationMembershipRepository
@@ -63,6 +65,7 @@ export async function validateDraft(
     positionRepo,
     runUnitOfWork,
     subjectSource,
+    publicFigureSource,
     argumentRepo,
     occupationRepo,
     membershipRepo,
@@ -79,6 +82,7 @@ export async function validateDraft(
     contributor,
     publicFigureRepo,
     organisationRepo,
+    runUnitOfWork,
     reputationRepo,
     wikipediaValidator,
   })
@@ -91,15 +95,17 @@ export async function validateDraft(
     const occupations = await applyOccupations(draft, author.right.id, {
       contributor,
       occupationRepo,
-      publicFigureRepo,
+      runUnitOfWork,
+      publicFigureSource,
     })
     if (Either.isLeft(occupations)) return occupations
 
     const affiliations = await applyAffiliations(draft, author.right.id, {
       contributor,
       organisationRepo,
-      publicFigureRepo,
       membershipRepo,
+      runUnitOfWork,
+      publicFigureSource,
       reputationRepo,
       wikipediaValidator,
     })
@@ -173,7 +179,8 @@ async function applyOccupations(
   deps: {
     contributor: ContributorIdentity
     occupationRepo: OccupationRepository
-    publicFigureRepo: PublicFigureRepository
+    runUnitOfWork: RunUnitOfWork
+    publicFigureSource: PublicFigureSource
   },
 ): Promise<Either.Either<void, string>> {
   if (draft.occupations.length === 0) return Either.right(undefined)
@@ -205,7 +212,8 @@ async function applyOccupations(
       ...drafted,
     ],
     occupationRepo: deps.occupationRepo,
-    publicFigureRepo: deps.publicFigureRepo,
+    runUnitOfWork: deps.runUnitOfWork,
+    publicFigureSource: deps.publicFigureSource,
   })
 }
 
@@ -220,8 +228,9 @@ async function applyAffiliations(
   deps: {
     contributor: ContributorIdentity
     organisationRepo: OrganisationRepository
-    publicFigureRepo: PublicFigureRepository
     membershipRepo: OrganisationMembershipRepository
+    runUnitOfWork: RunUnitOfWork
+    publicFigureSource: PublicFigureSource
     reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
@@ -250,8 +259,8 @@ async function applyAffiliations(
       startedOn: affiliation.startedOn ?? '',
       endedOn: affiliation.endedOn ?? '',
       organisationRepo: deps.organisationRepo,
-      publicFigureRepo: deps.publicFigureRepo,
-      membershipRepo: deps.membershipRepo,
+      runUnitOfWork: deps.runUnitOfWork,
+      publicFigureSource: deps.publicFigureSource,
       reputationRepo: deps.reputationRepo,
     })
     if (Either.isLeft(added)) {
@@ -311,6 +320,7 @@ function resolveOrCreateAuthor(
     contributor: ContributorIdentity
     publicFigureRepo: PublicFigureRepository
     organisationRepo: OrganisationRepository
+    runUnitOfWork: RunUnitOfWork
     reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
@@ -325,6 +335,7 @@ async function resolveOrCreatePublicFigure(
   deps: {
     contributor: ContributorIdentity
     publicFigureRepo: PublicFigureRepository
+    runUnitOfWork: RunUnitOfWork
     reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
@@ -346,6 +357,7 @@ async function resolveOrCreatePublicFigure(
     wikipediaUrl: author.data.wikipediaUrl ?? '',
     websiteUrl: author.data.websiteUrl ?? '',
     notorietySources: author.data.notorietySources ?? [],
+    runUnitOfWork: deps.runUnitOfWork,
     publicFigureRepo: deps.publicFigureRepo,
     reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,

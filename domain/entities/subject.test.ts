@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  createSubject,
-  isMajorSubject,
-  updateSubjectTitle,
-  updateSubjectPresentation,
-  generateSlug,
-} from './subject'
+import { createSubject, isMajorSubject, generateSlug } from './subject'
 
 describe('Subject Entity', () => {
   describe('createSubject', () => {
@@ -102,45 +96,6 @@ describe('Subject Entity', () => {
       }
 
       expect(isMajorSubject(oldSubject, 2)).toBe(false)
-    })
-  })
-
-  describe('updateSubjectTitle', () => {
-    it('should update title and slug while preserving other fields', () => {
-      const original = createSubject({
-        title: 'Original Title',
-        presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length',
-      })
-
-      const updated = updateSubjectTitle(original, 'New Title')
-
-      expect(updated.title).toBe('New Title')
-      expect(updated.slug).toBe('new-title')
-      expect(updated.presentation).toBe(original.presentation)
-      expect(updated.problem).toBe(original.problem)
-      expect(updated.id).toBe(original.id)
-      expect(updated.createdAt).toBe(original.createdAt)
-      expect(updated.updatedAt).not.toBe(original.updatedAt)
-    })
-  })
-
-  describe('updateSubjectPresentation', () => {
-    it('should update presentation while preserving other fields', () => {
-      const original = createSubject({
-        title: 'Test Title',
-        presentation: 'Original presentation with minimum length',
-        problem: 'Test problem with minimum length',
-      })
-
-      const updated = updateSubjectPresentation(original, 'New presentation with updated content')
-
-      expect(updated.presentation).toBe('New presentation with updated content')
-      expect(updated.title).toBe(original.title)
-      expect(updated.slug).toBe(original.slug)
-      expect(updated.id).toBe(original.id)
-      expect(updated.createdAt).toBe(original.createdAt)
-      expect(updated.updatedAt).not.toBe(original.updatedAt)
     })
   })
 })

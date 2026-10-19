@@ -2,14 +2,18 @@ import { describe, it, expect } from 'vitest'
 import { Either, Option } from 'effect'
 import { addOrganisationMembershipUseCase } from './add-organisation-membership'
 import { createMembership } from '../entities/organisation-membership'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import {
-  fakeMembershipRepo,
   fakeOrganisationRepo,
-  fakePublicFigureRepo,
   fakeReputationRepo,
   sampleFigure,
   sampleOrganisation,
 } from './organisation-test-helpers'
+import {
+  fakePublicFigureSource,
+  figureParts,
+  journalWithFigures,
+} from './public-figure-test-helpers'
 
 const eloquent = { id: 'contributor-1', reputation: 1000 }
 
@@ -26,9 +30,9 @@ const setup = () => {
       role: 'Porte-parole',
       startedOn: '2020-01-15',
       endedOn: '',
+      runUnitOfWork: inMemoryUnitOfWork().run,
+      publicFigureSource: fakePublicFigureSource([figureParts(figure)]),
       organisationRepo: fakeOrganisationRepo([organisation]),
-      publicFigureRepo: fakePublicFigureRepo([figure]),
-      membershipRepo: fakeMembershipRepo([], [figure], [organisation]),
       reputationRepo: fakeReputationRepo(),
     },
   }
@@ -89,7 +93,7 @@ describe('addOrganisationMembershipUseCase', () => {
     })
     const result = await addOrganisationMembershipUseCase({
       ...params,
-      membershipRepo: fakeMembershipRepo([current], [figure], [organisation]),
+      publicFigureSource: fakePublicFigureSource([figureParts(figure, { memberships: [current] })]),
     })
 
     expect(fieldErrorsOf(result).publicFigureId).toContain('déjà')
@@ -105,24 +109,32 @@ describe('addOrganisationMembershipUseCase', () => {
     })
     const result = await addOrganisationMembershipUseCase({
       ...params,
-      membershipRepo: fakeMembershipRepo([former], [figure], [organisation]),
+      publicFigureSource: fakePublicFigureSource([figureParts(figure, { memberships: [former] })]),
     })
 
     expect(Either.isRight(result)).toBe(true)
   })
 
-  it('creates the membership and rewards the contributor', async () => {
-    const { params } = setup()
-    const result = await addOrganisationMembershipUseCase(params)
+  it('records the membership in the figure stream and rewards the contributor', async () => {
+    const { params, figure } = setup()
+    const { run, journal } = await journalWithFigures(figure)
+    const result = await addOrganisationMembershipUseCase({ ...params, runUnitOfWork: run })
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
+      expect(result.right.publicFigureId).toBe(figure.id)
       expect(result.right.role).toEqual(Option.some('Porte-parole'))
       expect(result.right.startedOn).toEqual(Option.some(new Date('2020-01-15')))
       expect(result.right.endedOn).toEqual(Option.none())
       expect(result.right.createdBy).toBe('contributor-1')
+      expect(journal.all().at(-1)).toMatchObject({
+        streamId: figure.id,
+        type: 'MembershipAdded',
+        revision: 2,
+        actorId: 'contributor-1',
+        payload: { membershipId: result.right.id, role: 'Porte-parole', startedOn: '2020-01-15' },
+      })
     }
-    expect(params.membershipRepo.rows).toHaveLength(1)
     expect(params.reputationRepo.events).toEqual([
       { action: 'added_membership', contributorId: 'contributor-1' },
     ])

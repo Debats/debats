@@ -3,9 +3,9 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createPublicFigureSource } from '../../infra/events/sources'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
-import { createOrganisationMembershipRepository } from '../../infra/database/organisation-membership-repository-supabase'
-import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
   addOrganisationMembershipUseCase,
@@ -33,9 +33,9 @@ export async function addOrganisationMembershipAction(
     role: String(formData.get('role') ?? ''),
     startedOn: String(formData.get('startedOn') ?? ''),
     endedOn: String(formData.get('endedOn') ?? ''),
+    runUnitOfWork,
+    publicFigureSource: createPublicFigureSource(supabase),
     organisationRepo: createOrganisationRepository(supabase),
-    publicFigureRepo: createPublicFigureRepository(supabase),
-    membershipRepo: createOrganisationMembershipRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
   })
 

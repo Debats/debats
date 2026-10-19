@@ -18,12 +18,7 @@ export interface PublicFigureRepository {
 
   findByWikipediaUrl(url: string): Effect.Effect<PublicFigure | null, DatabaseError>
 
-  create(publicFigure: PublicFigure): Effect.Effect<PublicFigure, DatabaseError>
-
-  update(publicFigure: PublicFigure): Effect.Effect<PublicFigure, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
-
+  /** Writes go through the journal (domain/aggregates/public-figure.ts); this repository only reads */
   getStats(publicFigureId: string): Effect.Effect<PublicFigureStats, DatabaseError>
 
   findSummariesByActivity(

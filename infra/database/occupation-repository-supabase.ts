@@ -209,29 +209,5 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
         },
         catch: (error) => dbError('Failed to fetch occupation assignments by figures', error),
       }),
-
-    setAssignments: (publicFigureId, assignments, createdBy) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error: deleteError } = await supabase
-            .from('public_figure_occupations')
-            .delete()
-            .eq('public_figure_id', publicFigureId)
-          if (deleteError) throw deleteError
-
-          if (assignments.length === 0) return
-
-          const { error: insertError } = await supabase.from('public_figure_occupations').insert(
-            assignments.map(({ occupationId, current }) => ({
-              public_figure_id: publicFigureId,
-              occupation_id: occupationId,
-              is_current: current,
-              created_by: createdBy,
-            })),
-          )
-          if (insertError) throw insertError
-        },
-        catch: (error) => dbError('Failed to set public figure occupations', error),
-      }),
   }
 }

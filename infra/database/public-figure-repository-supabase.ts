@@ -138,62 +138,6 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
 
     findByWikipediaUrl: (url: string) => findOneBy('wikipedia_url', url),
 
-    create: (publicFigure: PublicFigure) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('public_figures')
-            .insert({
-              id: publicFigure.id,
-              name: publicFigure.name,
-              slug: publicFigure.slug,
-              presentation: publicFigure.presentation,
-              website_url: Option.getOrNull(publicFigure.websiteUrl),
-              wikipedia_url: Option.getOrNull(publicFigure.wikipediaUrl),
-              notoriety_sources: publicFigure.notorietySources,
-              created_by: publicFigure.createdBy,
-            })
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to create public figure', error),
-      }),
-
-    update: (publicFigure: PublicFigure) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('public_figures')
-            .update({
-              name: publicFigure.name,
-              slug: publicFigure.slug,
-              presentation: publicFigure.presentation,
-              website_url: Option.getOrNull(publicFigure.websiteUrl),
-              wikipedia_url: Option.getOrNull(publicFigure.wikipediaUrl),
-              notoriety_sources: publicFigure.notorietySources,
-            })
-            .eq('id', publicFigure.id)
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to update public figure', error),
-      }),
-
-    delete: (id: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.rpc('soft_delete_public_figure', { p_id: id })
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete public figure', error),
-      }),
-
     getStats: (publicFigureId: string) =>
       Effect.tryPromise({
         try: async () => {

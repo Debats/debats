@@ -7,6 +7,12 @@ import {
   PublicFigureName,
   PublicFigureSlug,
 } from '../entities/public-figure'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakePublicFigureSource,
+  figureParts,
+  journalWithFigures,
+} from './public-figure-test-helpers'
 
 const existingFigure = PublicFigure.make({
   id: PublicFigureId.make('figure-1'),
@@ -27,9 +33,6 @@ const fakePublicFigureRepo = {
   findBySlug: (slug: string) => Effect.succeed(slug === 'jean-dupont' ? existingFigure : null),
   findById: (id: string) => Effect.succeed(id === existingFigure.id ? existingFigure : null),
   findByWikipediaUrl: () => Effect.succeed(null as PublicFigure | null),
-  create: (f: PublicFigure) => Effect.succeed(f),
-  update: (f: PublicFigure) => Effect.succeed(f),
-  delete: () => Effect.succeed(undefined as void),
   getStats: () =>
     Effect.succeed({ publicFigureId: '', subjectsCount: 0, positionsCount: 0, statementsCount: 0 }),
   findSummariesByActivity: () => Effect.succeed([]),
@@ -58,6 +61,8 @@ const validParams = {
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   websiteUrl: '',
   notorietySources: [],
+  runUnitOfWork: inMemoryUnitOfWork().run,
+  publicFigureSource: fakePublicFigureSource([figureParts(existingFigure)]),
   publicFigureRepo: fakePublicFigureRepo,
   reputationRepo: fakeReputationRepo,
   wikipediaValidator: fakeWikipediaValidator,
@@ -179,23 +184,20 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should update figure and award reputation on success', async () => {
-    let updatedFigure: PublicFigure | null = null
     let reputationRecorded = false
+    const { run, journal } = await journalWithFigures(existingFigure)
 
     const result = await updatePublicFigureUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       name: 'Jean-Pierre Dupont',
       presentation: 'Nouvelle présentation suffisamment longue.',
+      runUnitOfWork: run,
       publicFigureRepo: {
         ...fakePublicFigureRepo,
         findBySlug: (slug: string) => {
           if (slug === 'jean-dupont') return Effect.succeed(existingFigure)
           return Effect.succeed(null)
-        },
-        update: (f: PublicFigure) => {
-          updatedFigure = f
-          return Effect.succeed(f)
         },
       },
       reputationRepo: {
@@ -207,11 +209,18 @@ describe('updatePublicFigureUseCase', () => {
       },
     })
 
-    expect(Either.isRight(result)).toBe(true)
-    expect(updatedFigure).not.toBeNull()
-    expect(updatedFigure!.name).toBe('Jean-Pierre Dupont')
-    expect(updatedFigure!.slug).toBe('jean-pierre-dupont')
-    expect(updatedFigure!.presentation).toBe('Nouvelle présentation suffisamment longue.')
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      id: existingFigure.id,
+      name: 'Jean-Pierre Dupont',
+      slug: 'jean-pierre-dupont',
+      presentation: 'Nouvelle présentation suffisamment longue.',
+      createdBy: 'author-id',
+    })
+    expect(journal.all().at(-1)).toMatchObject({
+      type: 'PublicFigureEdited',
+      revision: 2,
+      actorId: 'abc',
+    })
     expect(reputationRecorded).toBe(true)
   })
 })

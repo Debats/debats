@@ -86,15 +86,6 @@ export function fakeMembershipRepo(
             }
           }),
       ),
-    create: (membership) => {
-      rows.push(membership)
-      return Effect.succeed(membership)
-    },
-    delete: (id) => {
-      const index = rows.findIndex((m) => m.id === id)
-      if (index >= 0) rows.splice(index, 1)
-      return Effect.succeed(undefined)
-    },
   }
 }
 
@@ -105,9 +96,6 @@ export function fakePublicFigureRepo(seed: PublicFigure[] = []): PublicFigureRep
     findById: (id) => Effect.succeed(seed.find((f) => f.id === id) ?? null),
     findByWikipediaUrl: () => Effect.succeed(null),
     searchByName: () => Effect.succeed(seed),
-    create: (f) => Effect.succeed(f),
-    update: (f) => Effect.succeed(f),
-    delete: () => Effect.succeed(undefined),
     getStats: () => Effect.succeed({ publicFigureId: '', subjectsCount: 0, statementsCount: 0 }),
     findSummariesByActivity: () => Effect.succeed([]),
     findByLetter: () => Effect.succeed([]),

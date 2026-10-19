@@ -30,16 +30,10 @@ export interface OccupationRepository {
   findAllAssignments(): Effect.Effect<OccupationAssignment[], DatabaseError>
 
   /** The (figure, occupation) links of these figures */
+  /** The links themselves are written by the public figure stream (domain/aggregates/public-figure.ts) */
   findAssignmentsByPublicFigureIds(
     publicFigureIds: string[],
   ): Effect.Effect<OccupationAssignment[], DatabaseError>
-
-  /** Replaces the set of occupations a public figure holds, current or former */
-  setAssignments(
-    publicFigureId: string,
-    assignments: OccupationAssignmentInput[],
-    createdBy: string,
-  ): Effect.Effect<void, DatabaseError>
 }
 
 export const OccupationRepository = Context.GenericTag<OccupationRepository>('OccupationRepository')

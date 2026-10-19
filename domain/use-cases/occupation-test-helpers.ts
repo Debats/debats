@@ -90,9 +90,5 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
           linksOf(publicFigureId).map(({ occupationId }) => ({ publicFigureId, occupationId })),
         ),
       ),
-    setAssignments: (figureId, links) => {
-      assignments.set(figureId, links)
-      return Effect.succeed(undefined)
-    },
   }
 }

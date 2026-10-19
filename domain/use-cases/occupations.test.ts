@@ -12,7 +12,12 @@ import {
   sampleOccupation,
 } from './occupation-test-helpers'
 import { createPublicFigure } from '../entities/public-figure'
-import { PublicFigureRepository } from '../repositories/public-figure-repository'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import {
+  fakePublicFigureSource,
+  figureParts,
+  journalWithFigures,
+} from './public-figure-test-helpers'
 
 const meteque = { id: 'meteque', reputation: 0 }
 const eloquent = { id: 'eloquent', reputation: 1000 }
@@ -23,9 +28,6 @@ const figure = createPublicFigure({
   presentation: 'Économiste français, auteur du Capital au XXIe siècle.',
   createdBy: 'founder',
 })
-
-const fakeFigureRepo = (found: boolean): PublicFigureRepository =>
-  ({ findById: () => Effect.succeed(found ? figure : null) }) as unknown as PublicFigureRepository
 
 describe('createOccupationFamilyUseCase', () => {
   it('requires the Idéaliste rank', async () => {
@@ -156,13 +158,18 @@ describe('deleteOccupationFamilyUseCase', () => {
 })
 
 describe('setPublicFigureOccupationsUseCase', () => {
+  const onFigure = {
+    runUnitOfWork: inMemoryUnitOfWork().run,
+    publicFigureSource: fakePublicFigureSource([figureParts(figure)]),
+  }
+
   it('requires the Éloquent rank', async () => {
     const result = await setPublicFigureOccupationsUseCase({
+      ...onFigure,
       contributor: meteque,
       publicFigureId: figure.id,
       assignments: [],
       occupationRepo: fakeOccupationRepo(),
-      publicFigureRepo: fakeFigureRepo(true),
     })
 
     expect(Either.isLeft(result) && result.left).toContain('Éloquent')
@@ -170,11 +177,11 @@ describe('setPublicFigureOccupationsUseCase', () => {
 
   it('refuses an occupation that is not in the list', async () => {
     const result = await setPublicFigureOccupationsUseCase({
+      ...onFigure,
       contributor: eloquent,
       publicFigureId: figure.id,
       assignments: [{ occupationId: 'unknown', current: true }],
       occupationRepo: fakeOccupationRepo(),
-      publicFigureRepo: fakeFigureRepo(true),
     })
 
     expect(Either.isLeft(result) && result.left).toContain('n’existe plus')
@@ -182,20 +189,22 @@ describe('setPublicFigureOccupationsUseCase', () => {
 
   it('refuses an unknown public figure', async () => {
     const result = await setPublicFigureOccupationsUseCase({
+      ...onFigure,
       contributor: eloquent,
       publicFigureId: 'missing',
       assignments: [],
       occupationRepo: fakeOccupationRepo(),
-      publicFigureRepo: fakeFigureRepo(false),
     })
 
     expect(Either.isLeft(result) && result.left).toContain('introuvable')
   })
 
-  it('replaces the assignments, the last word on « current » winning over a duplicate', async () => {
+  it('records the assignments, the last word on « current » winning over a duplicate', async () => {
     const [economist, writer] = [sampleOccupation('Économiste'), sampleOccupation('Écrivain·e')]
-    const repo = fakeOccupationRepo([economist, writer])
+    const { run, journal } = await journalWithFigures(figure)
     const result = await setPublicFigureOccupationsUseCase({
+      ...onFigure,
+      runUnitOfWork: run,
       contributor: eloquent,
       publicFigureId: figure.id,
       assignments: [
@@ -203,14 +212,19 @@ describe('setPublicFigureOccupationsUseCase', () => {
         { occupationId: writer.id, current: false },
         { occupationId: economist.id, current: false },
       ],
-      occupationRepo: repo,
-      publicFigureRepo: fakeFigureRepo(true),
+      occupationRepo: fakeOccupationRepo([economist, writer]),
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repo.assignments.get(figure.id)).toEqual([
-      { occupationId: economist.id, current: false },
-      { occupationId: writer.id, current: false },
-    ])
+    expect(journal.all().at(-1)).toMatchObject({
+      type: 'OccupationsSet',
+      actorId: 'eloquent',
+      payload: {
+        occupations: [
+          { occupationId: economist.id, current: false },
+          { occupationId: writer.id, current: false },
+        ],
+      },
+    })
   })
 })

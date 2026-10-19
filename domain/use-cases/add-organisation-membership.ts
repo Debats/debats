@@ -1,15 +1,13 @@
 import { Effect, Either } from 'effect'
-import {
-  createMembership,
-  isCurrentMembership,
-  OrganisationMembership,
-} from '../entities/organisation-membership'
+import { MembershipId, OrganisationMembership } from '../entities/organisation-membership'
+import { addMembership, findMembership, hasCurrentMembership } from '../aggregates/public-figure'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
-import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
-import { ContributorIdentity, FieldErrors } from './types'
+import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { runFormCommand } from './run-command'
+import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
 
 export type AddOrganisationMembershipParams = {
   contributor: ContributorIdentity | null
@@ -20,15 +18,18 @@ export type AddOrganisationMembershipParams = {
   startedOn: string
   /** ISO date (YYYY-MM-DD) or empty */
   endedOn: string
+  runUnitOfWork: RunUnitOfWork
+  publicFigureSource: PublicFigureSource
+  /** Read side: the organisation must exist */
   organisationRepo: OrganisationRepository
-  publicFigureRepo: PublicFigureRepository
-  membershipRepo: OrganisationMembershipRepository
   reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+const ALREADY_MEMBER = 'Cette personnalité est déjà membre de cette organisation.'
 
 /** Parses an optional ISO date field; `undefined` when empty, `null` when malformed. */
 function parseOptionalDate(value: string): Date | undefined | null {
@@ -39,11 +40,15 @@ function parseOptionalDate(value: string): Date | undefined | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-/** Affiliates a public figure to an organisation, with an optional role and period. */
+/**
+ * Affiliates a public figure to an organisation, with an optional role and
+ * period. The affiliation lives in the figure's stream; a current one to the
+ * same organisation is refused.
+ */
 export async function addOrganisationMembershipUseCase(
   params: AddOrganisationMembershipParams,
 ): Promise<Either.Either<OrganisationMembership, string | FieldErrors>> {
-  const { contributor, organisationId, publicFigureId } = params
+  const { contributor, organisationId, publicFigureId, runUnitOfWork, publicFigureSource } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -61,10 +66,8 @@ export async function addOrganisationMembershipUseCase(
 
   const fieldErrors: FieldErrors = {}
 
-  const figure = publicFigureId
-    ? await Effect.runPromise(params.publicFigureRepo.findById(publicFigureId))
-    : null
-  if (!figure) {
+  const parts = publicFigureId ? await Effect.runPromise(publicFigureSource(publicFigureId)) : null
+  if (!parts) {
     fieldErrors.publicFigureId = 'Choisissez une personnalité.'
   }
 
@@ -86,29 +89,28 @@ export async function addOrganisationMembershipUseCase(
     return Either.left(fieldErrors)
   }
 
-  const memberships = await Effect.runPromise(
-    params.membershipRepo.findByOrganisationId(organisationId),
+  const membershipId = MembershipId.make(crypto.randomUUID())
+  const outcome = await runFormCommand(
+    runUnitOfWork((events) =>
+      decideOnPublicFigure(events, publicFigureId, publicFigureSource, contributor.id, (state) =>
+        hasCurrentMembership(state, organisationId)
+          ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
+          : Effect.succeed([
+              addMembership({
+                membershipId,
+                organisationId,
+                role: params.role.trim() || undefined,
+                startedOn: startedOn ?? undefined,
+                endedOn: endedOn ?? undefined,
+              }),
+            ]),
+      ),
+    ),
   )
-  const alreadyMember = memberships.some(
-    ({ membership }) =>
-      membership.publicFigureId === publicFigureId && isCurrentMembership(membership),
-  )
-  if (alreadyMember) {
-    return Either.left({
-      publicFigureId: 'Cette personnalité est déjà membre de cette organisation.',
-    })
-  }
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  const membership = createMembership({
-    organisationId,
-    publicFigureId,
-    role: params.role,
-    startedOn: startedOn ?? undefined,
-    endedOn: endedOn ?? undefined,
-    createdBy: contributor.id,
-  })
-
-  const created = await Effect.runPromise(params.membershipRepo.create(membership))
+  const created = findMembership(outcome.right, membershipId)
+  if (!created) throw new Error('The membership just added is missing from the figure')
 
   await Effect.runPromise(
     params.reputationRepo.recordEvent({

@@ -1,12 +1,15 @@
-import { Either } from 'effect'
-import { Effect, Option } from 'effect'
-import { generateSlug, PublicFigure, PublicFigureName } from '../entities/public-figure'
+import { Either, Effect } from 'effect'
+import { generateSlug, PublicFigure } from '../entities/public-figure'
+import { editPublicFigure } from '../aggregates/public-figure'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
+import { runCommand } from './run-command'
+import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
 
 type UpdatePublicFigureParams = {
   contributor: ContributorIdentity | null
@@ -16,6 +19,9 @@ type UpdatePublicFigureParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
+  runUnitOfWork: RunUnitOfWork
+  publicFigureSource: PublicFigureSource
+  /** Read side: the figure must exist and the new name must be free */
   publicFigureRepo: PublicFigureRepository
   reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
@@ -70,29 +76,31 @@ export async function validateUpdatePublicFigure(
 }
 
 /**
- * Persists the updated public figure and records reputation.
+ * Records the edit in the journal and rewards the contributor.
  */
 export async function persistUpdatedPublicFigure(
   params: UpdatePublicFigureParams,
   existing: PublicFigure,
-): Promise<PublicFigure> {
-  const { name, presentation, notorietySources, websiteUrl, publicFigureRepo, reputationRepo } =
-    params
-  const wikipediaUrl = params.wikipediaUrl.trim()
+): Promise<Either.Either<PublicFigure, string>> {
+  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork, reputationRepo } = params
   const contributor = params.contributor!
 
-  const updated: PublicFigure = {
-    ...existing,
-    name: PublicFigureName.make(name),
-    slug: generateSlug(name),
+  const edited = editPublicFigure({
+    name,
     presentation,
-    wikipediaUrl: wikipediaUrl ? Option.some(wikipediaUrl) : Option.none(),
+    wikipediaUrl: params.wikipediaUrl.trim() || undefined,
+    websiteUrl: websiteUrl || undefined,
     notorietySources,
-    websiteUrl: websiteUrl ? Option.some(websiteUrl) : Option.none(),
-    updatedAt: new Date(),
-  }
+  })
 
-  const saved = await Effect.runPromise(publicFigureRepo.update(updated))
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnPublicFigure(events, existing.id, params.publicFigureSource, contributor.id, () =>
+        Effect.succeed([edited]),
+      ),
+    ),
+  )
+  if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -100,11 +108,11 @@ export async function persistUpdatedPublicFigure(
       action: 'edited_personality',
       amount: reputationReward('edited_personality'),
       relatedEntityType: 'public_figure',
-      relatedEntityId: saved.id,
+      relatedEntityId: existing.id,
     }),
   )
 
-  return saved
+  return Either.right(outcome.right.figure)
 }
 
 /**
@@ -118,6 +126,5 @@ export async function updatePublicFigureUseCase(
     return Either.left(validation.left)
   }
 
-  const saved = await persistUpdatedPublicFigure(params, validation.right)
-  return Either.right(saved)
+  return persistUpdatedPublicFigure(params, validation.right)
 }

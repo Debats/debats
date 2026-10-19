@@ -21,6 +21,14 @@ import {
   sampleOrganisation,
 } from './organisation-test-helpers'
 import { fakeSubjectSource, subjectParts } from './subject-test-helpers'
+import { figureParts } from './public-figure-test-helpers'
+import { PublicFigureSource } from './public-figure-stream'
+import {
+  generateSlug as generatePublicFigureSlug,
+  PublicFigureId,
+  PublicFigureName,
+  PublicFigureSlug,
+} from '../entities/public-figure'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
 import { Argument } from '../entities/argument'
@@ -57,7 +65,28 @@ function makeRepos(overrides: {
   occupations?: Occupation[]
   memberships?: OrganisationMembership[]
 }) {
-  const createdFigures = new Map<string, PublicFigure>()
+  const unit = inMemoryUnitOfWork()
+
+  /** A figure added through the journal during the validation, as the table would then hold her */
+  const figureFromJournal = (id: string): PublicFigure | null => {
+    const added = unit.journal
+      .all()
+      .find((e) => e.type === 'PublicFigureAdded' && e.streamId === id)
+    if (!added) return null
+    const payload = added.payload as { name: string; presentation: string }
+    return PublicFigure.make({
+      id: PublicFigureId.make(id),
+      name: PublicFigureName.make(payload.name),
+      slug: PublicFigureSlug.make(generatePublicFigureSlug(payload.name)),
+      presentation: payload.presentation,
+      wikipediaUrl: Option.none(),
+      notorietySources: [],
+      websiteUrl: Option.none(),
+      createdBy: added.actorId ?? '',
+      createdAt: added.occurredAt,
+      updatedAt: added.occurredAt,
+    })
+  }
 
   const draftRepo = {
     findById: vi.fn(() => Effect.succeed('draft' in overrides ? overrides.draft : makeDraft())),
@@ -70,18 +99,11 @@ function makeRepos(overrides: {
   const publicFigureRepo = {
     findBySlug: vi.fn(() => Effect.succeed(overrides.figure ?? null)),
     findById: vi.fn((id: string) =>
-      Effect.succeed(
-        overrides.figure?.id === id ? overrides.figure : (createdFigures.get(id) ?? null),
-      ),
+      Effect.succeed(overrides.figure?.id === id ? overrides.figure : figureFromJournal(id)),
     ),
     findByWikipediaUrl: vi.fn(() => Effect.succeed(null)),
-    create: vi.fn((pf: PublicFigure) => {
-      createdFigures.set(pf.id, pf)
-      return Effect.succeed(pf)
-    }),
   } as unknown as PublicFigureRepository & {
     findBySlug: ReturnType<typeof vi.fn>
-    create: ReturnType<typeof vi.fn>
   }
 
   const organisationRepo = fakeOrganisationRepo(
@@ -97,8 +119,6 @@ function makeRepos(overrides: {
   } as unknown as SubjectRepository & {
     findBySlug: ReturnType<typeof vi.fn>
   }
-
-  const unit = inMemoryUnitOfWork()
 
   /** A position added through the journal during the validation, as the table would then hold it */
   const positionFromJournal = (id: string): Position | null => {
@@ -143,6 +163,18 @@ function makeRepos(overrides: {
 
   const seededFigures = overrides.figure ? [overrides.figure] : []
   const seededOrganisations = overrides.organisation ? [overrides.organisation] : []
+  const occupationRepo = fakeOccupationRepo(overrides.occupations ?? [])
+
+  /** The figure as the tables would hold her when a command imports her on demand */
+  const publicFigureSource: PublicFigureSource = (id) =>
+    Effect.succeed(
+      overrides.figure?.id === id
+        ? figureParts(overrides.figure, {
+            occupations: occupationRepo.assignments.get(id) ?? [],
+            memberships: overrides.memberships ?? [],
+          })
+        : null,
+    )
 
   return {
     draftRepo,
@@ -154,9 +186,10 @@ function makeRepos(overrides: {
     positionRepo,
     runUnitOfWork: unit.run,
     subjectSource,
+    publicFigureSource,
     journal: unit.journal,
     argumentRepo: fakeArgumentRepo(overrides.arguments ?? []),
-    occupationRepo: fakeOccupationRepo(overrides.occupations ?? []),
+    occupationRepo,
     membershipRepo: fakeMembershipRepo(
       overrides.memberships ?? [],
       seededFigures,
@@ -165,6 +198,13 @@ function makeRepos(overrides: {
     reputationRepo,
   }
 }
+
+/** The events of one type the validation wrote, by payload */
+const payloadsOf = (journal: { all(): Array<{ type: string; payload: unknown }> }, type: string) =>
+  journal
+    .all()
+    .filter((e) => e.type === type)
+    .map((e) => e.payload)
 
 describe('validateDraft', () => {
   it('should fail when draft is not found', async () => {
@@ -192,8 +232,8 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.publicFigureRepo.create).toHaveBeenCalledOnce()
     expect(repos.journal.all().map((e) => e.type)).toEqual([
+      'PublicFigureAdded',
       'SubjectAdded',
       'PositionAdded',
       'StatementAdded',
@@ -214,7 +254,6 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
     expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
     expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
   })
@@ -259,7 +298,7 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
-    expect(repos.publicFigureRepo.create).not.toHaveBeenCalled()
+    expect(payloadsOf(repos.journal, 'PublicFigureAdded')).toEqual([])
     expect(repos.journal.all().at(-1)?.type).toBe('StatementAdded')
   })
 
@@ -383,8 +422,8 @@ describe('validateDraft', () => {
       })
 
       expect(Either.isRight(result)).toBe(true)
-      expect(repos.occupationRepo.assignments.get(figure.id)).toEqual([
-        { occupationId: economist.id, current: true },
+      expect(payloadsOf(repos.journal, 'OccupationsSet')).toEqual([
+        { occupations: [{ occupationId: economist.id, current: true }] },
       ])
     })
 
@@ -408,10 +447,12 @@ describe('validateDraft', () => {
         wikipediaValidator: fakeWikipediaValidator,
       })
 
-      expect(repos.occupationRepo.assignments.get(figure.id)).toEqual([
-        { occupationId: economist.id, current: true },
-        { occupationId: essayist.id, current: true },
-      ])
+      expect(payloadsOf(repos.journal, 'OccupationsSet').at(-1)).toEqual({
+        occupations: [
+          { occupationId: economist.id, current: true },
+          { occupationId: essayist.id, current: true },
+        ],
+      })
     })
 
     it('should refuse an occupation that is not on the closed list', async () => {
@@ -455,12 +496,8 @@ describe('validateDraft', () => {
       })
 
       expect(Either.isRight(result)).toBe(true)
-      expect(repos.membershipRepo.rows).toMatchObject([
-        {
-          organisationId: organisation.id,
-          publicFigureId: figure.id,
-          role: Option.some('porte-parole'),
-        },
+      expect(repos.journal.all().filter((e) => e.type === 'MembershipAdded')).toMatchObject([
+        { streamId: figure.id, payload: { organisationId: organisation.id, role: 'porte-parole' } },
       ])
     })
 
@@ -493,7 +530,7 @@ describe('validateDraft', () => {
 
       expect(Either.isRight(result)).toBe(true)
       expect(repos.organisationRepo.create).toHaveBeenCalledOnce()
-      expect(repos.membershipRepo.rows).toHaveLength(1)
+      expect(payloadsOf(repos.journal, 'MembershipAdded')).toHaveLength(1)
     })
 
     it('should fail when the organisation is unknown and the draft gives no data', async () => {
@@ -539,7 +576,7 @@ describe('validateDraft', () => {
       })
 
       expect(Either.isRight(result)).toBe(true)
-      expect(repos.membershipRepo.rows).toEqual([existing])
+      expect(payloadsOf(repos.journal, 'MembershipAdded')).toEqual([])
     })
   })
 })

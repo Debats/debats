@@ -36,13 +36,10 @@ export interface OrganisationMembershipRepository {
   findByOrganisationId(organisationId: string): Effect.Effect<MembershipWithFigure[], DatabaseError>
 
   /** Memberships of a public figure with their organisation, most recent first */
+  /** Memberships are written by the public figure stream (domain/aggregates/public-figure.ts) */
   findByPublicFigureId(
     publicFigureId: string,
   ): Effect.Effect<MembershipWithOrganisation[], DatabaseError>
-
-  create(membership: OrganisationMembership): Effect.Effect<OrganisationMembership, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
 }
 
 export const OrganisationMembershipRepository =

@@ -4,6 +4,7 @@ import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { AvatarStorageError, uploadFigureAvatar } from '../../infra/storage/figure-avatar'
 import { readUploadedImage } from './read-uploaded-image'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
@@ -51,6 +52,7 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
     wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
+    runUnitOfWork,
     publicFigureRepo: createPublicFigureRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),

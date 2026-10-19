@@ -9,6 +9,8 @@ import {
   uploadFigureAvatar,
 } from '../../infra/storage/figure-avatar'
 import { readUploadedImage } from './read-uploaded-image'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createPublicFigureSource } from '../../infra/events/sources'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
@@ -47,6 +49,8 @@ export async function updatePublicFigureAction(
     wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
+    runUnitOfWork,
+    publicFigureSource: createPublicFigureSource(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
     reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
@@ -95,6 +99,9 @@ export async function updatePublicFigureAction(
 
   // Phase 3: Persist
   const saved = await persistUpdatedPublicFigure(useCaseParams, existing)
+  if (Either.isLeft(saved)) {
+    return { success: false, error: saved.left }
+  }
 
-  return { success: true, slug: saved.slug }
+  return { success: true, slug: saved.right.slug }
 }

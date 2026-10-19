@@ -58,10 +58,6 @@ function mapRow(row: MembershipRow): OrganisationMembership {
   })
 }
 
-/** ISO date (YYYY-MM-DD) for a DATE column, or null */
-const toDateColumn = (date: Option.Option<Date>): string | null =>
-  Option.match(date, { onNone: () => null, onSome: (d) => d.toISOString().slice(0, 10) })
-
 export function createOrganisationMembershipRepository(
   supabase: SupabaseClient,
 ): OrganisationMembershipRepository {
@@ -129,38 +125,6 @@ export function createOrganisationMembershipRepository(
           })
         },
         catch: (error) => dbError('Failed to fetch public figure memberships', error),
-      }),
-
-    create: (membership) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('organisation_memberships')
-            .insert({
-              id: membership.id,
-              organisation_id: membership.organisationId,
-              public_figure_id: membership.publicFigureId,
-              role: Option.getOrNull(membership.role),
-              started_on: toDateColumn(membership.startedOn),
-              ended_on: toDateColumn(membership.endedOn),
-              created_by: membership.createdBy,
-              updated_by: membership.updatedBy,
-            })
-            .select()
-            .single()
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to create membership', error),
-      }),
-
-    delete: (id) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.from('organisation_memberships').delete().eq('id', id)
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete membership', error),
       }),
   }
 }

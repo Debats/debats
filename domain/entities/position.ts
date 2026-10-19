@@ -51,19 +51,3 @@ export const createPosition = (params: {
     updatedAt: now,
   })
 }
-
-export const updatePositionTitle = (position: Position, newTitle: string): Position => ({
-  ...position,
-  title: PositionTitle.make(newTitle),
-  slug: generateSlug(newTitle),
-  updatedAt: new Date(),
-})
-
-export const updatePositionDescription = (
-  position: Position,
-  newDescription: string,
-): Position => ({
-  ...position,
-  description: newDescription,
-  updatedAt: new Date(),
-})

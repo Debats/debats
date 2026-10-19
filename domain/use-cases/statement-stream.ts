@@ -1,15 +1,20 @@
-import { Effect, pipe } from 'effect'
+import { Effect } from 'effect'
 import {
   importStatement,
   replayStatement,
+  STATEMENT_STREAM,
   StatementState,
-  statementStream,
 } from '../aggregates/statement'
 import { StatementEvent } from '../aggregates/statement-events'
 import { Statement } from '../entities/statement'
-import { ConcurrencyError, EventStore, StoredEvent, streamRevision } from '../events/event-store'
-import { DatabaseError } from '../repositories/errors'
-import { Rejected } from './types'
+import { EventStore, StoredEvent } from '../events/event-store'
+import {
+  AggregateStream,
+  appendAndReplay,
+  loadOrImport,
+  requireState as requireStateOf,
+  Source,
+} from './aggregate-stream'
 
 /** What the tables hold of a statement, enough to import it into the journal */
 export interface StatementParts {
@@ -17,54 +22,40 @@ export interface StatementParts {
   argumentIds: readonly string[]
 }
 
-/** Reads a statement from the projection; null when there is none */
-export type StatementSource = (
-  statementId: string,
-) => Effect.Effect<StatementParts | null, DatabaseError>
+export type StatementSource = Source<StatementParts>
 
-/**
- * The stream of a statement. A statement written before its journal existed,
- * or in the window of a deployment, has an empty stream: it enters the
- * journal first, as it is, dated and signed as its row. Unknown everywhere:
- * the command is refused.
- */
-export function loadOrImportStatement(
+export const statementAggregate: AggregateStream<StatementState, StatementEvent, StatementParts> = {
+  streamType: STATEMENT_STREAM,
+  notFound: 'Prise de position introuvable.',
+  replay: replayStatement,
+  importBatches: ({ statement, argumentIds }) => [
+    {
+      events: [importStatement(statement, argumentIds)],
+      options: {
+        actorId: statement.createdBy ?? null,
+        metadata: { source: 'import' },
+        occurredAt: statement.createdAt,
+      },
+    },
+  ],
+}
+
+export const loadOrImportStatement = (
   events: EventStore,
   statementId: string,
   source: StatementSource,
-): Effect.Effect<StoredEvent[], DatabaseError | ConcurrencyError | Rejected> {
-  const stream = statementStream(statementId)
-  return Effect.flatMap(events.load(stream), (history) =>
-    history.length > 0
-      ? Effect.succeed(history)
-      : Effect.flatMap(
-          source(statementId),
-          (parts): Effect.Effect<StoredEvent[], DatabaseError | ConcurrencyError | Rejected> =>
-            parts
-              ? events.append(stream, 0, [importStatement(parts.statement, parts.argumentIds)], {
-                  actorId: parts.statement.createdBy ?? null,
-                  metadata: { source: 'import' },
-                  occurredAt: parts.statement.createdAt,
-                })
-              : Effect.fail(new Rejected('Prise de position introuvable.')),
-        ),
-  )
-}
+) => loadOrImport(statementAggregate, events, statementId, source)
 
-/** Appends the decision after the history, and rebuilds what the statement now is */
-export function appendToStatement(
+export const appendToStatement = (
   events: EventStore,
   statementId: string,
   history: StoredEvent[],
   decided: StatementEvent[],
   actorId: string,
-) {
-  return pipe(
-    events.append(statementStream(statementId), streamRevision(history), decided, { actorId }),
-    Effect.flatMap((stored) => replayStatement([...history, ...stored])),
-    Effect.flatMap(requireState),
-  )
-}
+) => appendAndReplay(statementAggregate, events, statementId, history, decided, actorId)
+
+export const requireState = (state: StatementState | null) =>
+  requireStateOf(statementAggregate, state)
 
 /**
  * The same decision on each of several statements, each in its own stream:
@@ -85,9 +76,4 @@ export function decideOnEachStatement(
       ),
     { discard: true },
   )
-}
-
-/** A stream that was just appended to cannot be empty */
-export function requireState(state: StatementState | null): Effect.Effect<StatementState> {
-  return state ? Effect.succeed(state) : Effect.dieMessage('The statement stream is empty')
 }

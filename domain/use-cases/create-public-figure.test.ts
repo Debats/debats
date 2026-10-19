@@ -7,6 +7,7 @@ import {
   PublicFigureName,
   PublicFigureSlug,
 } from '../entities/public-figure'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 
 const fakePublicFigureRepo = {
   findAll: () => Effect.succeed([]),
@@ -14,9 +15,6 @@ const fakePublicFigureRepo = {
   findById: () => Effect.succeed(null as PublicFigure | null),
   findByWikipediaUrl: () => Effect.succeed(null as PublicFigure | null),
   searchByName: () => Effect.succeed([]),
-  create: (f: PublicFigure) => Effect.succeed(f),
-  update: (f: PublicFigure) => Effect.succeed(f),
-  delete: () => Effect.succeed(undefined as void),
   getStats: () =>
     Effect.succeed({
       publicFigureId: '',
@@ -49,6 +47,7 @@ const validParams = {
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   websiteUrl: '',
   notorietySources: [] as string[],
+  runUnitOfWork: inMemoryUnitOfWork().run,
   publicFigureRepo: fakePublicFigureRepo,
   reputationRepo: fakeReputationRepo,
   wikipediaValidator: fakeWikipediaValidator,
@@ -273,18 +272,12 @@ describe('createPublicFigureUseCase', () => {
 
   it('should create public figure and award 50 pts on success', async () => {
     let totalReputationAdded = 0
-    let createdFigure: PublicFigure | null = null
+    const { run, journal } = inMemoryUnitOfWork()
 
     const result = await createPublicFigureUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 1000 },
-      publicFigureRepo: {
-        ...fakePublicFigureRepo,
-        create: (f: PublicFigure) => {
-          createdFigure = f
-          return Effect.succeed(f)
-        },
-      },
+      runUnitOfWork: run,
       reputationRepo: {
         ...fakeReputationRepo,
         recordEvent: (event) => {
@@ -301,30 +294,21 @@ describe('createPublicFigureUseCase', () => {
         'https://fr.wikipedia.org/wiki/Jean_Dupont',
       )
       expect(result.right.createdBy).toBe('abc')
+      expect(journal.all().map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
+        ['public_figure', result.right.id, 1, 'PublicFigureAdded'],
+      ])
     }
 
-    expect(createdFigure).not.toBeNull()
     expect(totalReputationAdded).toBe(50)
   })
 
   it('should pass notoriety sources to created figure', async () => {
-    let createdFigure: PublicFigure | null = null
-
     const result = await createPublicFigureUseCase({
       ...validParamsWithoutWikipedia,
       contributor: { id: 'abc', reputation: 1000 },
-      publicFigureRepo: {
-        ...fakePublicFigureRepo,
-        create: (f: PublicFigure) => {
-          createdFigure = f
-          return Effect.succeed(f)
-        },
-      },
     })
 
-    expect(Either.isRight(result)).toBe(true)
-    expect(createdFigure).not.toBeNull()
-    expect(createdFigure!.notorietySources).toEqual([
+    expect(Either.isRight(result) && result.right.notorietySources).toEqual([
       'https://lemonde.fr/article-notoriete',
       'https://liberation.fr/article-notoriete',
     ])

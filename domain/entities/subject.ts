@@ -56,16 +56,3 @@ export const isMajorSubject = (subject: Subject, statementCount = 0): boolean =>
   const oneWeekAgo = subDays(7)(new Date())
   return isAfter(oneWeekAgo)(subject.createdAt) || statementCount > 5
 }
-
-export const updateSubjectTitle = (subject: Subject, newTitle: string): Subject => ({
-  ...subject,
-  title: SubjectTitle.make(newTitle),
-  slug: generateSlug(newTitle),
-  updatedAt: new Date(),
-})
-
-export const updateSubjectPresentation = (subject: Subject, newPresentation: string): Subject => ({
-  ...subject,
-  presentation: newPresentation,
-  updatedAt: new Date(),
-})

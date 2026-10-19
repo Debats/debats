@@ -3,8 +3,12 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../types/database.types'
 import { StatementSource } from '../../domain/use-cases/statement-stream'
 import { SubjectSource } from '../../domain/use-cases/subject-stream'
+import { PublicFigureSource } from '../../domain/use-cases/public-figure-stream'
 import { createArgumentRepository } from '../database/argument-repository-supabase'
+import { createOccupationRepository } from '../database/occupation-repository-supabase'
+import { createOrganisationMembershipRepository } from '../database/organisation-membership-repository-supabase'
 import { createPositionRepository } from '../database/position-repository-supabase'
+import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createRelatedSubjectsRepository } from '../database/related-subjects-repository-supabase'
 import { createStatementRepository } from '../database/statement-repository-supabase'
 import { createSubjectRepository } from '../database/subject-repository-supabase'
@@ -47,6 +51,28 @@ export function createSubjectSource(supabase: SupabaseClient<Database>): Subject
               positions: subjectPositions,
               themes: assignments.map((a) => ({ themeId: a.theme.id, isPrimary: a.isPrimary })),
               relatedSubjectIds: relatedSubjects.map((s) => s.id),
+            }),
+          )
+        : Effect.succeed(null),
+    )
+}
+
+export function createPublicFigureSource(supabase: SupabaseClient<Database>): PublicFigureSource {
+  const figures = createPublicFigureRepository(supabase)
+  const occupations = createOccupationRepository(supabase)
+  const memberships = createOrganisationMembershipRepository(supabase)
+  return (publicFigureId) =>
+    Effect.flatMap(figures.findById(publicFigureId), (figure) =>
+      figure
+        ? Effect.map(
+            Effect.all([
+              occupations.findByPublicFigureId(publicFigureId),
+              memberships.findByPublicFigureId(publicFigureId),
+            ]),
+            ([held, affiliations]) => ({
+              figure,
+              occupations: held.map((h) => ({ occupationId: h.occupation.id, current: h.current })),
+              memberships: affiliations.map((a) => a.membership),
             }),
           )
         : Effect.succeed(null),

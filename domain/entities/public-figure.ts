@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
 import { Option } from 'effect'
-import { isAfter, subDays } from 'date-fns/fp'
 import { slugify } from '../value-objects/slug'
 
 export const PublicFigureId = S.String.pipe(S.brand('PublicFigureId'))
@@ -59,24 +58,3 @@ export const createPublicFigure = (params: {
     updatedAt: now,
   })
 }
-
-export const isMajorPublicFigure = (figure: PublicFigure, statementCount = 0): boolean => {
-  const oneWeekAgo = subDays(7)(new Date())
-  return isAfter(oneWeekAgo)(figure.createdAt) || statementCount > 2
-}
-
-export const updatePublicFigureName = (figure: PublicFigure, newName: string): PublicFigure => ({
-  ...figure,
-  name: PublicFigureName.make(newName),
-  slug: generateSlug(newName),
-  updatedAt: new Date(),
-})
-
-export const updatePublicFigurePresentation = (
-  figure: PublicFigure,
-  newPresentation: string,
-): PublicFigure => ({
-  ...figure,
-  presentation: newPresentation,
-  updatedAt: new Date(),
-})

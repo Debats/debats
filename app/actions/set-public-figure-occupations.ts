@@ -3,8 +3,9 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createPublicFigureSource } from '../../infra/events/sources'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
-import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { OccupationAssignmentInput } from '../../domain/read-models/occupations'
 import { setPublicFigureOccupationsUseCase } from '../../domain/use-cases/set-public-figure-occupations'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -23,8 +24,9 @@ export async function setPublicFigureOccupationsAction(
     contributor,
     publicFigureId,
     assignments,
+    runUnitOfWork,
+    publicFigureSource: createPublicFigureSource(supabase),
     occupationRepo: createOccupationRepository(supabase),
-    publicFigureRepo: createPublicFigureRepository(supabase),
   })
 
   if (Either.isLeft(result)) {
