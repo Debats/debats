@@ -60,22 +60,6 @@ export const createArgument = (params: {
   })
 }
 
-/** A renamed argument keeps its identity and links; its slug follows the title */
-export const renameArgument = (
-  argument: Argument,
-  params: { title: string; description: string; updatedBy: string },
-): Argument => {
-  const title = params.title.trim()
-  return Argument.make({
-    ...argument,
-    title: ArgumentTitle.make(title),
-    slug: generateArgumentSlug(title),
-    description: params.description.trim(),
-    updatedBy: params.updatedBy,
-    updatedAt: new Date(),
-  })
-}
-
 /** Two titles name the same argument when they only differ by case or spacing */
 export const sameArgumentTitle = (a: string, b: string): boolean =>
   a.trim().toLowerCase() === b.trim().toLowerCase()

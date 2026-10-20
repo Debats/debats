@@ -2,7 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { publicFigureAuthor } from '../entities/statement'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
-import { addStatement, editStatement, importStatement, replayStatement } from './statement'
+import {
+  addStatement,
+  editStatement,
+  importStatement,
+  replayStatement,
+  setStatementArguments,
+  withArgumentReplaced,
+} from './statement'
 
 const streamId = '6d1c6c1e-0c7c-4b0e-9b3a-0f1e2d3c4b5a'
 const at = (day: string) => new Date(`${day}T10:00:00Z`)
@@ -93,6 +100,25 @@ describe('replayStatement', () => {
       },
       argumentIds: ['arg-2', 'arg-3'],
     })
+  })
+
+  it('replaces the arguments, keeping what the statement says', () => {
+    const state = replayStatement([
+      stored(added, 1, at('2024-01-16')),
+      stored(setStatementArguments(['arg-9']), 2, at('2024-04-01')),
+    ])
+    expect(Either.isRight(state) && state.right).toMatchObject({
+      argumentIds: ['arg-9'],
+      statement: {
+        quote: 'Une citation suffisamment longue pour être valide.',
+        updatedAt: at('2024-04-01'),
+      },
+    })
+  })
+
+  it('folds a merged argument into its target without doubling it', () => {
+    expect(withArgumentReplaced(['a', 'b'], 'a', 'c')).toEqual(['b', 'c'])
+    expect(withArgumentReplaced(['a', 'c'], 'a', 'c')).toEqual(['c'])
   })
 
   it('marks a deletion', () => {

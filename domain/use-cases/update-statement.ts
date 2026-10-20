@@ -9,8 +9,8 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
-  createProposedArguments,
-  rewardArgumentLinks,
+  recordProposedArguments,
+  rewardArguments,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
@@ -98,34 +98,42 @@ export async function updateStatementUseCase(
     return Either.left(validatedArguments.left)
   }
 
-  const argumentIds = await createProposedArguments({
-    contributor,
-    validated: validatedArguments.right,
-    argumentRepo,
-    reputationRepo,
-  })
+  const edited = (argumentIds: readonly string[]) =>
+    editStatement({
+      positionId,
+      statementType,
+      sourceName,
+      sourceUrl: sourceUrl || undefined,
+      quote,
+      statedAt: new Date(statedAt),
+      argumentIds,
+    })
 
-  const edited = editStatement({
-    positionId,
-    statementType,
-    sourceName,
-    sourceUrl: sourceUrl || undefined,
-    quote,
-    statedAt: new Date(statedAt),
-    argumentIds,
-  })
-
+  // The proposed arguments open their streams in the same transaction as the edit
   const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
-        loadOrImportStatement(events, statementId, statementSource),
-        Effect.flatMap((history) =>
-          appendToStatement(events, statementId, history, [edited], contributor.id),
+        recordProposedArguments(events, contributor.id, validatedArguments.right),
+        Effect.flatMap((recorded) =>
+          pipe(
+            loadOrImportStatement(events, statementId, statementSource),
+            Effect.flatMap((history) =>
+              appendToStatement(
+                events,
+                statementId,
+                history,
+                [edited(recorded.argumentIds)],
+                contributor.id,
+              ),
+            ),
+            Effect.map((state) => ({ state, recorded })),
+          ),
         ),
       ),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
+  const { state, recorded } = outcome.right
 
   await Effect.runPromise(
     reputationRepo.recordEvent({
@@ -133,11 +141,11 @@ export async function updateStatementUseCase(
       action: 'edited_statement',
       amount: reputationReward('edited_statement'),
       relatedEntityType: 'statement',
-      relatedEntityId: outcome.right.statement.id,
+      relatedEntityId: state.statement.id,
     }),
   )
 
-  await rewardArgumentLinks({ contributor, argumentIds, reputationRepo })
+  await rewardArguments({ contributor, recorded, reputationRepo })
 
-  return Either.right(outcome.right.statement)
+  return Either.right(state.statement)
 }

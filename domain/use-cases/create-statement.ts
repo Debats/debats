@@ -11,8 +11,8 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
-  createProposedArguments,
-  rewardArgumentLinks,
+  recordProposedArguments,
+  rewardArguments,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
@@ -112,32 +112,35 @@ export async function createStatementUseCase(
     return Either.left(validatedArguments.left)
   }
 
-  const argumentIds = await createProposedArguments({
-    contributor,
-    validated: validatedArguments.right,
-    argumentRepo,
-    reputationRepo,
-  })
-
   // The command names the statement: the stream exists from its first event
   const id = StatementId.make(crypto.randomUUID())
-  const added = addStatement({
-    author,
-    positionId,
-    statementType,
-    sourceName,
-    sourceUrl: sourceUrl || undefined,
-    quote,
-    statedAt: new Date(statedAt),
-    argumentIds,
-  })
+  const added = (argumentIds: readonly string[]) =>
+    addStatement({
+      author,
+      positionId,
+      statementType,
+      sourceName,
+      sourceUrl: sourceUrl || undefined,
+      quote,
+      statedAt: new Date(statedAt),
+      argumentIds,
+    })
 
-  const state = await Effect.runPromise(
+  // The proposed arguments open their streams in the same transaction as the statement
+  const { state, recorded } = await Effect.runPromise(
     runUnitOfWork((events) =>
       pipe(
-        events.append(statementStream(id), 0, [added], { actorId: contributor.id }),
-        Effect.flatMap(replayStatement),
-        Effect.flatMap(requireState),
+        recordProposedArguments(events, contributor.id, validatedArguments.right),
+        Effect.flatMap((recorded) =>
+          pipe(
+            events.append(statementStream(id), 0, [added(recorded.argumentIds)], {
+              actorId: contributor.id,
+            }),
+            Effect.flatMap(replayStatement),
+            Effect.flatMap(requireState),
+            Effect.map((state) => ({ state, recorded })),
+          ),
+        ),
       ),
     ),
   )
@@ -152,7 +155,7 @@ export async function createStatementUseCase(
     }),
   )
 
-  await rewardArgumentLinks({ contributor, argumentIds, reputationRepo })
+  await rewardArguments({ contributor, recorded, reputationRepo })
 
   return Either.right(state.statement)
 }

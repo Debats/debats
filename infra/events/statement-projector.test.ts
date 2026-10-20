@@ -7,13 +7,16 @@ import {
   statementStream,
 } from '../../domain/aggregates/statement'
 import { decodeStatementEvent } from '../../domain/aggregates/statement-events'
+import { addArgument, argumentStream } from '../../domain/aggregates/argument'
 import { publicFigureAuthor } from '../../domain/entities/statement'
 import { getPrismaClient } from '../prisma/client'
 import { runUnitOfWork } from './unit-of-work'
 
 /**
  * Runs against the local database (`npm run test:db`), on rows the seed
- * provides: a position, a public figure, a contributor and two arguments.
+ * provides: a position, a public figure and a contributor. The two arguments
+ * are its own, opened through the journal, so that no other suite can take
+ * them away meanwhile.
  */
 const hasDatabase = Boolean(process.env.DATABASE_URL)
 const prisma = () => getPrismaClient()
@@ -23,22 +26,37 @@ const stream = statementStream(streamId)
 let positionId = ''
 let figureId = ''
 let actorId = ''
-let argumentIds: string[] = []
+const argumentIds = [crypto.randomUUID(), crypto.randomUUID()]
 
 describe.skipIf(!hasDatabase)('statement projector', () => {
   beforeAll(async () => {
     positionId = (await prisma().positions.findFirstOrThrow({ select: { id: true } })).id
     figureId = (await prisma().public_figures.findFirstOrThrow({ select: { id: true } })).id
     actorId = (await prisma().contributors.findFirstOrThrow({ select: { id: true } })).id
-    argumentIds = (await prisma().arguments.findMany({ select: { id: true }, take: 2 })).map(
-      (a) => a.id,
-    )
+    for (const argumentId of argumentIds) {
+      await Effect.runPromise(
+        runUnitOfWork((journal) =>
+          journal.append(
+            argumentStream(argumentId),
+            0,
+            [addArgument({ title: `Argument de test ${argumentId}`, description: '' })],
+            { actorId },
+          ),
+        ),
+      )
+    }
   })
 
   afterAll(async () => {
     await prisma().statements.deleteMany({ where: { id: streamId } })
+    await prisma().arguments.deleteMany({ where: { id: { in: argumentIds } } })
     await prisma().domain_events.deleteMany({
-      where: { stream_type: 'statement', stream_id: streamId },
+      where: {
+        OR: [
+          { stream_type: 'statement', stream_id: streamId },
+          { stream_type: 'argument', stream_id: { in: argumentIds } },
+        ],
+      },
     })
     await prisma().$disconnect()
   })

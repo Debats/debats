@@ -11,6 +11,7 @@ import { EventStore, StoredEvent } from '../events/event-store'
 import {
   AggregateStream,
   appendAndReplay,
+  decideOn,
   loadOrImport,
   requireState as requireStateOf,
   Source,
@@ -66,13 +67,13 @@ export function decideOnEachStatement(
   statementIds: readonly string[],
   source: StatementSource,
   actorId: string,
-  decided: StatementEvent,
+  decide: (state: StatementState) => StatementEvent[],
 ) {
   return Effect.forEach(
     statementIds,
     (id) =>
-      Effect.flatMap(loadOrImportStatement(events, id, source), (history) =>
-        appendToStatement(events, id, history, [decided], actorId),
+      decideOn(statementAggregate, events, id, source, actorId, (state) =>
+        Effect.succeed(decide(state)),
       ),
     { discard: true },
   )

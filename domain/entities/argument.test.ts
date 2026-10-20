@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createArgument, renameArgument, sameArgumentTitle } from './argument'
+import { createArgument, sameArgumentTitle } from './argument'
 
 const valid = {
   title: 'Coût pour les finances publiques',
@@ -24,21 +24,6 @@ describe('Argument entity', () => {
 
   it('rejects a title shorter than 3 characters', () => {
     expect(() => createArgument({ ...valid, title: 'Ok' })).toThrow()
-  })
-
-  it('renames an argument, keeping its identity and moving its slug', () => {
-    const argument = createArgument(valid)
-    const renamed = renameArgument(argument, {
-      title: 'Coût budgétaire',
-      description: '',
-      updatedBy: 'user-2',
-    })
-
-    expect(renamed.id).toBe(argument.id)
-    expect(renamed.title).toBe('Coût budgétaire')
-    expect(renamed.slug).toBe('cout-budgetaire')
-    expect(renamed.updatedBy).toBe('user-2')
-    expect(renamed.createdBy).toBe('user-1')
   })
 
   it('considers titles equal regardless of case and surrounding spaces', () => {

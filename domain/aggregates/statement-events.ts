@@ -46,6 +46,12 @@ export const StatementMoved = S.Struct({
   payload: S.Struct({ positionId: S.String }),
 })
 
+/** The statement now mobilises another set of arguments: one of them was merged into another */
+export const StatementArgumentsSet = S.Struct({
+  type: S.Literal('StatementArgumentsSet'),
+  payload: S.Struct({ argumentIds: S.Array(S.String) }),
+})
+
 export const StatementDeleted = S.Struct({
   type: S.Literal('StatementDeleted'),
   payload: S.Struct({}),
@@ -56,6 +62,7 @@ export const StatementEvent = S.Union(
   StatementImported,
   StatementEdited,
   StatementMoved,
+  StatementArgumentsSet,
   StatementDeleted,
 )
 export type StatementEvent = S.Schema.Type<typeof StatementEvent>

@@ -47,6 +47,10 @@ async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTra
         data: { position_id: decoded.payload.positionId, updated_at: stored.occurredAt },
       })
       return
+    case 'StatementArgumentsSet':
+      await tx.statements.update({ where: { id }, data: { updated_at: stored.occurredAt } })
+      await syncArguments(tx, id, decoded.payload.argumentIds, stored.actorId)
+      return
     case 'StatementDeleted':
       await tx.statements.update({ where: { id }, data: { deleted_at: stored.occurredAt } })
       return

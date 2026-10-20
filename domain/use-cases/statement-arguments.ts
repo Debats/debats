@@ -1,6 +1,9 @@
 import { Effect, Either } from 'effect'
-import { createArgument, sameArgumentTitle } from '../entities/argument'
+import { ArgumentId, sameArgumentTitle } from '../entities/argument'
+import { addArgument, argumentStream } from '../aggregates/argument'
+import { ConcurrencyError, EventStore } from '../events/event-store'
 import { ArgumentRepository } from '../repositories/argument-repository'
+import { DatabaseError } from '../repositories/errors'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
@@ -82,52 +85,51 @@ export async function validateStatementArguments(params: {
   return Either.right({ existingIds: Array.from(existingIds), toCreate })
 }
 
-/**
- * Creates the proposed arguments, rewarding their author, and returns every
- * argument the statement will mobilise. The statement's own events carry the
- * links; the argument stays a separate aggregate until it joins the journal.
- */
-export async function createProposedArguments(params: {
-  contributor: ContributorIdentity
-  validated: ValidatedStatementArguments
-  argumentRepo: ArgumentRepository
-  reputationRepo: ReputationRepository
-}): Promise<string[]> {
-  const { contributor, validated, argumentRepo, reputationRepo } = params
-
-  const createdIds: string[] = []
-  for (const proposed of validated.toCreate) {
-    const argument = await Effect.runPromise(
-      argumentRepo.create(createArgument({ ...proposed, createdBy: contributor.id })),
-    )
-    createdIds.push(argument.id)
-    await Effect.runPromise(
-      reputationRepo.recordEvent({
-        contributorId: contributor.id,
-        action: 'added_argument_validated',
-        amount: reputationReward('added_argument_validated'),
-        relatedEntityType: 'argument',
-        relatedEntityId: argument.id,
-      }),
-    )
-  }
-
-  return [...validated.existingIds, ...createdIds]
+/** Every argument the statement will mobilise, and among them those just proposed */
+export interface RecordedArguments {
+  argumentIds: string[]
+  createdIds: string[]
 }
 
-/** Rewards the contributor for each argument the statement now mobilises */
-export async function rewardArgumentLinks(params: {
+/**
+ * Opens a stream for each proposed argument, in the transaction of the
+ * statement that mobilises it: the command names the argument, as the stream.
+ * The statement's own events carry the links.
+ */
+export function recordProposedArguments(
+  events: EventStore,
+  actorId: string,
+  validated: ValidatedStatementArguments,
+): Effect.Effect<RecordedArguments, DatabaseError | ConcurrencyError> {
+  return Effect.map(
+    Effect.forEach(validated.toCreate, (proposed) => {
+      const id = ArgumentId.make(crypto.randomUUID())
+      return Effect.as(
+        events.append(argumentStream(id), 0, [addArgument(proposed)], { actorId }),
+        id,
+      )
+    }),
+    (createdIds) => ({ argumentIds: [...validated.existingIds, ...createdIds], createdIds }),
+  )
+}
+
+/** Rewards the contributor for each argument proposed, then for each one the statement mobilises */
+export async function rewardArguments(params: {
   contributor: ContributorIdentity
-  argumentIds: readonly string[]
+  recorded: RecordedArguments
   reputationRepo: ReputationRepository
 }): Promise<void> {
-  const { contributor, argumentIds, reputationRepo } = params
-  for (const argumentId of argumentIds) {
+  const { contributor, recorded, reputationRepo } = params
+  const rewards = [
+    ...recorded.createdIds.map((id) => ['added_argument_validated', id] as const),
+    ...recorded.argumentIds.map((id) => ['linked_argument_to_statement', id] as const),
+  ]
+  for (const [action, argumentId] of rewards) {
     await Effect.runPromise(
       reputationRepo.recordEvent({
         contributorId: contributor.id,
-        action: 'linked_argument_to_statement',
-        amount: reputationReward('linked_argument_to_statement'),
+        action,
+        amount: reputationReward(action),
         relatedEntityType: 'argument',
         relatedEntityId: argumentId,
       }),

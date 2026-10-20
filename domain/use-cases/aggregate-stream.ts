@@ -65,7 +65,10 @@ export function loadOrImport<State, Event extends DomainEvent, Parts>(
   )
 }
 
-/** Appends the decision after the history, and rebuilds what the aggregate now is */
+/**
+ * Appends the decision after the history, and rebuilds what the aggregate now
+ * is. A decision that changes nothing writes nothing.
+ */
 export function appendAndReplay<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
   events: EventStore,
@@ -76,7 +79,9 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
 ): Effect.Effect<State, DatabaseError | ConcurrencyError | UnreadableEvent> {
   const stream = { streamType: aggregate.streamType, streamId: id }
   return pipe(
-    events.append(stream, streamRevision(history), decided, { actorId }),
+    decided.length > 0
+      ? events.append(stream, streamRevision(history), decided, { actorId })
+      : Effect.succeed([]),
     Effect.flatMap((stored) => aggregate.replay([...history, ...stored])),
     Effect.flatMap((state) => requireState(aggregate, state)),
   )

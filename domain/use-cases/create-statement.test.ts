@@ -122,10 +122,14 @@ describe('createStatementUseCase', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(argumentRepo.rows).toHaveLength(2)
-    expect(journal.all()[0].payload).toMatchObject({
-      argumentIds: [argument.id, argumentRepo.rows[1].id],
+    const [proposed, statement] = journal.all()
+    expect(proposed).toMatchObject({
+      streamType: 'argument',
+      type: 'ArgumentAdded',
+      actorId: 'abc',
+      payload: { title: 'Liberté de choix', slug: 'liberte-de-choix' },
     })
+    expect(statement.payload).toMatchObject({ argumentIds: [argument.id, proposed.streamId] })
   })
 
   it('should fail when the organisation author is not found', async () => {

@@ -60,6 +60,22 @@ export const moveStatement = (positionId: string): StatementEvent => ({
   payload: { positionId },
 })
 
+/** Decision: the statement follows its arguments, one of them merged into another */
+export const setStatementArguments = (argumentIds: readonly string[]): StatementEvent => ({
+  type: 'StatementArgumentsSet',
+  payload: { argumentIds: [...argumentIds] },
+})
+
+/** The arguments mobilised once `source` is folded into `target`: never the same one twice */
+export const withArgumentReplaced = (
+  argumentIds: readonly string[],
+  source: string,
+  target: string,
+): string[] => {
+  const kept = argumentIds.filter((id) => id !== source)
+  return kept.includes(target) ? kept : [...kept, target]
+}
+
 /** Decision: the statement goes away with its subject */
 export const removeStatement = (): StatementEvent => ({ type: 'StatementDeleted', payload: {} })
 
@@ -129,6 +145,14 @@ function apply(
             positionId: event.payload.positionId,
             updatedAt: stored.occurredAt,
           },
+        }
+      )
+    case 'StatementArgumentsSet':
+      return (
+        state && {
+          ...state,
+          statement: { ...state.statement, updatedAt: stored.occurredAt },
+          argumentIds: event.payload.argumentIds,
         }
       )
     case 'StatementDeleted':

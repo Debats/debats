@@ -3,7 +3,9 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
+import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createArgumentSource, createStatementSource } from '../../infra/events/sources'
 import { mergeArgumentsUseCase } from '../../domain/use-cases/merge-arguments'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -20,7 +22,10 @@ export async function mergeArgumentsAction(
     contributor,
     sourceArgumentId,
     targetArgumentId,
-    argumentRepo: createArgumentRepository(supabase),
+    runUnitOfWork,
+    argumentSource: createArgumentSource(supabase),
+    statementSource: createStatementSource(supabase),
+    statementRepo: createStatementRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

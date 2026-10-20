@@ -5,6 +5,7 @@ import { StatementSource } from '../../domain/use-cases/statement-stream'
 import { SubjectSource } from '../../domain/use-cases/subject-stream'
 import { PublicFigureSource } from '../../domain/use-cases/public-figure-stream'
 import { OrganisationSource } from '../../domain/use-cases/organisation-stream'
+import { ArgumentSource } from '../../domain/use-cases/argument-stream'
 import { createArgumentRepository } from '../database/argument-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../database/organisation-membership-repository-supabase'
@@ -87,4 +88,10 @@ export function createOrganisationSource(supabase: SupabaseClient<Database>): Or
     Effect.map(organisations.findById(organisationId), (organisation) =>
       organisation ? { organisation } : null,
     )
+}
+
+export function createArgumentSource(supabase: SupabaseClient<Database>): ArgumentSource {
+  const argumentRepo = createArgumentRepository(supabase)
+  return (argumentId) =>
+    Effect.map(argumentRepo.findById(argumentId), (argument) => (argument ? { argument } : null))
 }

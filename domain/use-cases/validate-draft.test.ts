@@ -356,7 +356,7 @@ describe('validateDraft', () => {
       })
 
       expect(Either.isRight(result)).toBe(true)
-      expect(repos.argumentRepo.rows).toHaveLength(1)
+      expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([])
       expect(repos.journal.all().at(-1)?.payload).toMatchObject({ argumentIds: [known.id] })
     })
 
@@ -375,8 +375,12 @@ describe('validateDraft', () => {
       })
 
       expect(Either.isRight(result)).toBe(true)
-      expect(repos.argumentRepo.rows).toMatchObject([
-        { title: 'Baisse de la dépense publique', description: 'Dépenser moins.' },
+      expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([
+        {
+          title: 'Baisse de la dépense publique',
+          slug: 'baisse-de-la-depense-publique',
+          description: 'Dépenser moins.',
+        },
       ])
     })
 
@@ -390,7 +394,7 @@ describe('validateDraft', () => {
         wikipediaValidator: fakeWikipediaValidator,
       })
 
-      expect(repos.argumentRepo.rows).toHaveLength(0)
+      expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([])
       expect(repos.journal.all().at(-1)?.payload).toMatchObject({ argumentIds: [] })
     })
   })

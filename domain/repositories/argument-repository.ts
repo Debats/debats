@@ -3,6 +3,7 @@ import { Argument } from '../entities/argument'
 import { ArgumentRef, ArgumentSuggestion, ArgumentSummary } from '../read-models/argument'
 import { DatabaseError } from './errors'
 
+/** Read side of the arguments: writes go through the event journal */
 export interface ArgumentRepository {
   findById(id: string): Effect.Effect<Argument | null, DatabaseError>
 
@@ -21,22 +22,6 @@ export interface ArgumentRepository {
 
   /** The arguments a statement mobilises, by title */
   findRefsByStatementId(statementId: string): Effect.Effect<ArgumentRef[], DatabaseError>
-
-  create(argument: Argument): Effect.Effect<Argument, DatabaseError>
-
-  update(argument: Argument): Effect.Effect<Argument, DatabaseError>
-
-  /** Replaces the set of arguments a statement mobilises */
-  setStatementArguments(
-    statementId: string,
-    argumentIds: string[],
-    createdBy: string,
-  ): Effect.Effect<void, DatabaseError>
-
-  /** The source's statements now mobilise the target; the source disappears */
-  mergeInto(sourceId: string, targetId: string): Effect.Effect<void, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
 }
 
 export const ArgumentRepository = Context.GenericTag<ArgumentRepository>('ArgumentRepository')

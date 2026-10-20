@@ -72,13 +72,9 @@ export async function mergePositions(
             : Effect.fail(new Rejected('Une des deux positions n’existe plus.')),
         ),
         Effect.flatMap(() =>
-          decideOnEachStatement(
-            events,
-            statementIds,
-            statementSource,
-            contributor.id,
+          decideOnEachStatement(events, statementIds, statementSource, contributor.id, () => [
             moveStatement(targetPositionId),
-          ),
+          ]),
         ),
       ),
     ),

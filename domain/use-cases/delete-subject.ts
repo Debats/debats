@@ -66,13 +66,9 @@ export async function deleteSubjectUseCase(
           Effect.succeed([deleteSubject()]),
         ),
         Effect.flatMap(() =>
-          decideOnEachStatement(
-            events,
-            statementIds,
-            statementSource,
-            contributor.id,
+          decideOnEachStatement(events, statementIds, statementSource, contributor.id, () => [
             removeStatement(),
-          ),
+          ]),
         ),
       ),
     ),

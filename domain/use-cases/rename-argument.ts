@@ -1,14 +1,21 @@
 import { Effect, Either } from 'effect'
-import { Argument, renameArgument, sameArgumentTitle } from '../entities/argument'
+import { Argument, sameArgumentTitle } from '../entities/argument'
+import { renameArgument } from '../aggregates/argument'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { runFormCommand } from './run-command'
+import { ArgumentSource, decideOnArgument } from './argument-stream'
 
 type RenameArgumentParams = {
   contributor: ContributorIdentity | null
   argumentId: string
   title: string
   description: string
+  runUnitOfWork: RunUnitOfWork
+  argumentSource: ArgumentSource
+  /** Read side: the argument must exist and no other may bear the new title */
   argumentRepo: ArgumentRepository
 }
 
@@ -46,11 +53,13 @@ export async function renameArgumentUseCase(
     })
   }
 
-  const renamed = renameArgument(existing, {
-    title,
-    description: params.description,
-    updatedBy: contributor.id,
-  })
-
-  return Either.right(await Effect.runPromise(argumentRepo.update(renamed)))
+  const renamed = renameArgument({ title, description: params.description })
+  const outcome = await runFormCommand(
+    params.runUnitOfWork((events) =>
+      decideOnArgument(events, existing.id, params.argumentSource, contributor.id, () =>
+        Effect.succeed([renamed]),
+      ),
+    ),
+  )
+  return Either.map(outcome, (state) => state.argument)
 }

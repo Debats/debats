@@ -4,6 +4,8 @@ import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createArgumentSource } from '../../infra/events/sources'
 import { renameArgumentUseCase, FieldErrors } from '../../domain/use-cases/rename-argument'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -24,6 +26,8 @@ export async function renameArgumentAction(
     argumentId,
     title: String(formData.get('title') ?? ''),
     description: String(formData.get('description') ?? ''),
+    runUnitOfWork,
+    argumentSource: createArgumentSource(supabase),
     argumentRepo: createArgumentRepository(supabase),
   })
 

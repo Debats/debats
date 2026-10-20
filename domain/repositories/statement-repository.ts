@@ -92,6 +92,9 @@ export interface StatementRepository {
   /** The ids of the live statements on any position of a subject */
   findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
 
+  /** The ids of the live statements mobilising an argument */
+  findIdsByArgumentId(argumentId: string): Effect.Effect<string[], DatabaseError>
+
   /**
    * Get the N most recent statements by date
    */

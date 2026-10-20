@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { Either } from 'effect'
+import { Effect, Either } from 'effect'
 import {
-  createProposedArguments,
-  rewardArgumentLinks,
+  recordProposedArguments,
+  rewardArguments,
   validateStatementArguments,
 } from './statement-arguments'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { fakeReputationRepo } from './organisation-test-helpers'
+import { createInMemoryEventStore } from '../events/event-store-memory'
 
 const eloquent = { id: 'contributor-1', reputation: 1000 }
 const meteque = { id: 'contributor-2', reputation: 10 }
@@ -92,34 +93,46 @@ describe('validateStatementArguments', () => {
   })
 })
 
-describe('createProposedArguments', () => {
-  it('creates the proposals, rewards their author and returns every argument to mobilise', async () => {
+describe('recordProposedArguments', () => {
+  it('opens a stream per proposal and returns every argument to mobilise', async () => {
     const existing = sampleArgument()
-    const argumentRepo = fakeArgumentRepo([existing])
-    const reputationRepo = fakeReputationRepo()
+    const journal = createInMemoryEventStore()
 
-    const argumentIds = await createProposedArguments({
-      contributor: eloquent,
-      validated: { existingIds: [existing.id], toCreate: [proposed] },
-      argumentRepo,
-      reputationRepo,
+    const recorded = await Effect.runPromise(
+      recordProposedArguments(journal, 'contributor-1', {
+        existingIds: [existing.id],
+        toCreate: [proposed],
+      }),
+    )
+
+    expect(journal.all()).toMatchObject([
+      {
+        streamType: 'argument',
+        revision: 1,
+        type: 'ArgumentAdded',
+        actorId: 'contributor-1',
+        payload: { title: 'Liberté de choix', slug: 'liberte-de-choix' },
+      },
+    ])
+    expect(recorded).toEqual({
+      argumentIds: [existing.id, journal.all()[0].streamId],
+      createdIds: [journal.all()[0].streamId],
     })
-
-    expect(argumentRepo.rows).toHaveLength(2)
-    expect(argumentRepo.rows[1].title).toBe('Liberté de choix')
-    expect(argumentRepo.rows[1].slug).toBe('liberte-de-choix')
-    expect(argumentIds).toEqual([existing.id, argumentRepo.rows[1].id])
-    expect(reputationRepo.events.map((e) => e.action)).toEqual(['added_argument_validated'])
   })
 })
 
-describe('rewardArgumentLinks', () => {
-  it('rewards the contributor once per argument the statement mobilises', async () => {
+describe('rewardArguments', () => {
+  it('rewards each proposal, then each argument the statement mobilises', async () => {
     const reputationRepo = fakeReputationRepo()
 
-    await rewardArgumentLinks({ contributor: eloquent, argumentIds: ['a', 'b'], reputationRepo })
+    await rewardArguments({
+      contributor: eloquent,
+      recorded: { argumentIds: ['a', 'b'], createdIds: ['b'] },
+      reputationRepo,
+    })
 
     expect(reputationRepo.events.map((e) => e.action)).toEqual([
+      'added_argument_validated',
       'linked_argument_to_statement',
       'linked_argument_to_statement',
     ])
