@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { Either, Option } from 'effect'
 import { createOrganisationUseCase } from './create-organisation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   fakeOrganisationRepo,
-  fakeReputationRepo,
   fakeWikipediaValidator,
   sampleOrganisation,
 } from './organisation-test-helpers'
@@ -22,7 +22,6 @@ const validParams = () => ({
   notorietySources: [] as string[],
   runUnitOfWork: inMemoryUnitOfWork().run,
   organisationRepo: fakeOrganisationRepo(),
-  reputationRepo: fakeReputationRepo(),
   wikipediaValidator: fakeWikipediaValidator(),
 })
 
@@ -118,7 +117,7 @@ describe('createOrganisationUseCase', () => {
       expect(result.right.acronym).toEqual(Option.some('CGT'))
       expect(result.right.organisationType).toBe('union')
       expect(result.right.createdBy).toBe('contributor-1')
-      expect(unit.journal.all()).toMatchObject([
+      expect(deedsIn(unit.journal)).toMatchObject([
         {
           streamType: 'organisation',
           streamId: result.right.id,
@@ -128,8 +127,6 @@ describe('createOrganisationUseCase', () => {
         },
       ])
     }
-    expect(params.reputationRepo.events).toEqual([
-      { action: 'added_organisation_validated', contributorId: 'contributor-1' },
-    ])
+    expect(grantsIn(unit.journal)).toEqual([['contributor-1', 'added_organisation_validated', 50]])
   })
 })

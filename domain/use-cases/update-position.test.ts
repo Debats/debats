@@ -3,6 +3,7 @@ import { Either, Effect } from 'effect'
 import { updatePositionUseCase } from './update-position'
 import { PositionRepository } from '../repositories/position-repository'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   fakeSubjectSource,
   journalWithSubjects,
@@ -18,12 +19,6 @@ const positionRepo = {
   findById: (id: string) => Effect.succeed(id === position.id ? position : null),
 } as unknown as PositionRepository
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
-
 const validParams = {
   positionId: position.id,
   title: 'Pour',
@@ -31,7 +26,6 @@ const validParams = {
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
   positionRepo,
-  reputationRepo: fakeReputationRepo,
 }
 
 const eloquent = { id: 'abc', reputation: 10000 }
@@ -88,20 +82,12 @@ describe('updatePositionUseCase', () => {
   })
 
   it('should update position and award reputation on success', async () => {
-    let reputationRecorded = false
     const { run, journal } = await journalWithSubjects([subject, [position]])
 
     const result = await updatePositionUseCase({
       ...validParams,
       contributor: eloquent,
       runUnitOfWork: run,
-      reputationRepo: {
-        ...fakeReputationRepo,
-        recordEvent: () => {
-          reputationRecorded = true
-          return Effect.succeed(undefined as void)
-        },
-      },
     })
 
     expect(Either.isRight(result) && result.right).toMatchObject({
@@ -111,13 +97,13 @@ describe('updatePositionUseCase', () => {
       subjectId: subject.id,
       createdBy: 'founder',
     })
-    expect(journal.all().at(-1)).toMatchObject({
+    expect(deedsIn(journal).at(-1)).toMatchObject({
       streamId: subject.id,
       type: 'PositionEdited',
       revision: 3,
       actorId: 'abc',
       payload: { positionId: position.id, slug: 'pour' },
     })
-    expect(reputationRecorded).toBe(true)
+    expect(grantsIn(journal)).toEqual([['abc', 'edited_position', 5]])
   })
 })

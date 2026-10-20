@@ -1,13 +1,13 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ArrayFormatter } from 'effect/ParseResult'
 import { Position } from '../entities/position'
 import { editPosition, findPosition } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { grant, rewardFor } from './reward'
 import { runCommand } from './run-command'
 import { decideOnSubject, SubjectSource } from './subject-stream'
 
@@ -25,7 +25,6 @@ type UpdatePositionParams = {
   subjectSource: SubjectSource
   /** Read side: which subject the position belongs to */
   positionRepo: PositionRepository
-  reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
@@ -41,7 +40,6 @@ export async function updatePositionUseCase(
     runUnitOfWork,
     subjectSource,
     positionRepo,
-    reputationRepo,
   } = params
 
   if (!contributor) {
@@ -79,10 +77,22 @@ export async function updatePositionUseCase(
 
   const outcome = await runCommand(
     runUnitOfWork((events) =>
-      decideOnSubject(events, existing.subjectId, subjectSource, contributor.id, (state) =>
-        findPosition(state, positionId)
-          ? Effect.succeed([editPosition({ positionId, title, description })])
-          : Effect.fail(new Rejected('Position introuvable.')),
+      pipe(
+        decideOnSubject(events, existing.subjectId, subjectSource, contributor.id, (state) =>
+          findPosition(state, positionId)
+            ? Effect.succeed([editPosition({ positionId, title, description })])
+            : Effect.fail(new Rejected('Position introuvable.')),
+        ),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'edited_position', {
+              relatedEntityType: 'position',
+              relatedEntityId: positionId,
+            }),
+          ),
+        ),
       ),
     ),
   )
@@ -90,16 +100,6 @@ export async function updatePositionUseCase(
 
   const position = findPosition(outcome.right, positionId)
   if (!position) throw new Error('The position just edited is missing from the subject')
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'edited_position',
-      amount: reputationReward('edited_position'),
-      relatedEntityType: 'position',
-      relatedEntityId: position.id,
-    }),
-  )
 
   return Either.right(position)
 }

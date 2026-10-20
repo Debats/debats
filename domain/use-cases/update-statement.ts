@@ -3,17 +3,17 @@ import { Statement, StatementType } from '../entities/statement'
 import { editStatement } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
+  argumentRewards,
   recordProposedArguments,
-  rewardArguments,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
+import { grantEach, rewardFor } from './reward'
 import { appendToStatement, loadOrImportStatement, StatementSource } from './statement-stream'
 import { runCommand } from './run-command'
 
@@ -33,7 +33,6 @@ type UpdateStatementParams = {
   statementSource: StatementSource
   positionRepo: PositionRepository
   argumentRepo: ArgumentRepository
-  reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
@@ -54,7 +53,6 @@ export async function updateStatementUseCase(
     statementSource,
     positionRepo,
     argumentRepo,
-    reputationRepo,
   } = params
 
   if (!contributor) {
@@ -109,7 +107,7 @@ export async function updateStatementUseCase(
       argumentIds,
     })
 
-  // The proposed arguments open their streams in the same transaction as the edit
+  // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
   const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
@@ -126,26 +124,21 @@ export async function updateStatementUseCase(
                 contributor.id,
               ),
             ),
-            Effect.map((state) => ({ state, recorded })),
+            Effect.tap(() =>
+              grantEach(events, contributor.id, [
+                rewardFor(contributor.id, 'edited_statement', {
+                  relatedEntityType: 'statement',
+                  relatedEntityId: statementId,
+                }),
+                ...argumentRewards(contributor.id, recorded),
+              ]),
+            ),
           ),
         ),
       ),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
-  const { state, recorded } = outcome.right
 
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'edited_statement',
-      amount: reputationReward('edited_statement'),
-      relatedEntityType: 'statement',
-      relatedEntityId: state.statement.id,
-    }),
-  )
-
-  await rewardArguments({ contributor, recorded, reputationRepo })
-
-  return Either.right(state.statement)
+  return Either.right(outcome.right.statement)
 }

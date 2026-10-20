@@ -6,7 +6,6 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPublicFigureSource } from '../../infra/events/sources'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
   addOrganisationMembershipUseCase,
   FieldErrors,
@@ -36,7 +35,6 @@ export async function addOrganisationMembershipAction(
     runUnitOfWork,
     publicFigureSource: createPublicFigureSource(supabase),
     organisationRepo: createOrganisationRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

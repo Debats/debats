@@ -3,7 +3,6 @@
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createOrganisationSource } from '../../infra/events/sources'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
@@ -43,7 +42,6 @@ export async function updateOrganisationAction(
     runUnitOfWork,
     organisationSource: createOrganisationSource(supabase),
     organisationRepo: createOrganisationRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   }
 

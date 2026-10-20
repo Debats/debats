@@ -8,6 +8,7 @@ import {
   PublicFigureSlug,
 } from '../entities/public-figure'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 
 const fakePublicFigureRepo = {
   findAll: () => Effect.succeed([]),
@@ -31,12 +32,6 @@ const fakePublicFigureRepo = {
   findByLetter: () => Effect.succeed([]),
 }
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
-
 const fakeWikipediaValidator = {
   validatePage: async () => ({ exists: true, isBiography: true }),
 }
@@ -49,7 +44,6 @@ const validParams = {
   notorietySources: [] as string[],
   runUnitOfWork: inMemoryUnitOfWork().run,
   publicFigureRepo: fakePublicFigureRepo,
-  reputationRepo: fakeReputationRepo,
   wikipediaValidator: fakeWikipediaValidator,
 }
 
@@ -271,20 +265,12 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should create public figure and award 50 pts on success', async () => {
-    let totalReputationAdded = 0
     const { run, journal } = inMemoryUnitOfWork()
 
     const result = await createPublicFigureUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 1000 },
       runUnitOfWork: run,
-      reputationRepo: {
-        ...fakeReputationRepo,
-        recordEvent: (event) => {
-          totalReputationAdded += event.amount
-          return Effect.succeed(undefined as void)
-        },
-      },
     })
 
     expect(Either.isRight(result)).toBe(true)
@@ -294,12 +280,12 @@ describe('createPublicFigureUseCase', () => {
         'https://fr.wikipedia.org/wiki/Jean_Dupont',
       )
       expect(result.right.createdBy).toBe('abc')
-      expect(journal.all().map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
+      expect(deedsIn(journal).map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
         ['public_figure', result.right.id, 1, 'PublicFigureAdded'],
       ])
     }
 
-    expect(totalReputationAdded).toBe(50)
+    expect(grantsIn(journal)).toEqual([['abc', 'added_personality_validated', 50]])
   })
 
   it('should pass notoriety sources to created figure', async () => {

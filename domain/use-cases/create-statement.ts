@@ -5,17 +5,17 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
+  argumentRewards,
   recordProposedArguments,
-  rewardArguments,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
+import { grantEach, rewardFor } from './reward'
 import { requireState } from './statement-stream'
 
 type CreateStatementParams = {
@@ -35,7 +35,6 @@ type CreateStatementParams = {
   publicFigureRepo: PublicFigureRepository
   organisationRepo: OrganisationRepository
   argumentRepo: ArgumentRepository
-  reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
@@ -72,7 +71,6 @@ export async function createStatementUseCase(
     publicFigureRepo,
     organisationRepo,
     argumentRepo,
-    reputationRepo,
   } = params
 
   if (!contributor) {
@@ -126,8 +124,8 @@ export async function createStatementUseCase(
       argumentIds,
     })
 
-  // The proposed arguments open their streams in the same transaction as the statement
-  const { state, recorded } = await Effect.runPromise(
+  // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
+  const state = await Effect.runPromise(
     runUnitOfWork((events) =>
       pipe(
         recordProposedArguments(events, contributor.id, validatedArguments.right),
@@ -138,24 +136,20 @@ export async function createStatementUseCase(
             }),
             Effect.flatMap(replayStatement),
             Effect.flatMap(requireState),
-            Effect.map((state) => ({ state, recorded })),
+            Effect.tap(() =>
+              grantEach(events, contributor.id, [
+                rewardFor(contributor.id, 'added_statement_validated', {
+                  relatedEntityType: 'statement',
+                  relatedEntityId: id,
+                }),
+                ...argumentRewards(contributor.id, recorded),
+              ]),
+            ),
           ),
         ),
       ),
     ),
   )
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'added_statement_validated',
-      amount: reputationReward('added_statement_validated'),
-      relatedEntityType: 'statement',
-      relatedEntityId: state.statement.id,
-    }),
-  )
-
-  await rewardArguments({ contributor, recorded, reputationRepo })
 
   return Either.right(state.statement)
 }

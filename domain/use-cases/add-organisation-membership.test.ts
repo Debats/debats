@@ -3,12 +3,8 @@ import { Either, Option } from 'effect'
 import { addOrganisationMembershipUseCase } from './add-organisation-membership'
 import { createMembership } from '../entities/organisation-membership'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
-import {
-  fakeOrganisationRepo,
-  fakeReputationRepo,
-  sampleFigure,
-  sampleOrganisation,
-} from './organisation-test-helpers'
+import { fakeOrganisationRepo, sampleFigure, sampleOrganisation } from './organisation-test-helpers'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   fakePublicFigureSource,
   figureParts,
@@ -33,7 +29,6 @@ const setup = () => {
       runUnitOfWork: inMemoryUnitOfWork().run,
       publicFigureSource: fakePublicFigureSource([figureParts(figure)]),
       organisationRepo: fakeOrganisationRepo([organisation]),
-      reputationRepo: fakeReputationRepo(),
     },
   }
 }
@@ -127,7 +122,7 @@ describe('addOrganisationMembershipUseCase', () => {
       expect(result.right.startedOn).toEqual(Option.some(new Date('2020-01-15')))
       expect(result.right.endedOn).toEqual(Option.none())
       expect(result.right.createdBy).toBe('contributor-1')
-      expect(journal.all().at(-1)).toMatchObject({
+      expect(deedsIn(journal).at(-1)).toMatchObject({
         streamId: figure.id,
         type: 'MembershipAdded',
         revision: 2,
@@ -135,8 +130,6 @@ describe('addOrganisationMembershipUseCase', () => {
         payload: { membershipId: result.right.id, role: 'Porte-parole', startedOn: '2020-01-15' },
       })
     }
-    expect(params.reputationRepo.events).toEqual([
-      { action: 'added_membership', contributorId: 'contributor-1' },
-    ])
+    expect(grantsIn(journal)).toEqual([['contributor-1', 'added_membership', 5]])
   })
 })

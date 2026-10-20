@@ -12,7 +12,6 @@ import { readUploadedImage } from './read-uploaded-image'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPublicFigureSource } from '../../infra/events/sources'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
   validateUpdatePublicFigure,
   persistUpdatedPublicFigure,
@@ -52,7 +51,6 @@ export async function updatePublicFigureAction(
     runUnitOfWork,
     publicFigureSource: createPublicFigureSource(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   }
 

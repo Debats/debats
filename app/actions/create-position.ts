@@ -4,7 +4,6 @@ import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createSubjectSource } from '../../infra/events/sources'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createPositionUseCase, FieldErrors } from '../../domain/use-cases/create-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -27,7 +26,6 @@ export async function createPositionAction(
     description: String(formData.get('description') ?? ''),
     runUnitOfWork,
     subjectSource: createSubjectSource(supabase),
-    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

@@ -3,10 +3,10 @@ import { Either, Option } from 'effect'
 import { updateOrganisationUseCase } from './update-organisation'
 import { createOrganisation } from '../entities/organisation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   fakeOrganisationRepo,
   fakeOrganisationSource,
-  fakeReputationRepo,
   fakeWikipediaValidator,
   journalWithOrganisations,
   sampleOrganisation,
@@ -27,7 +27,6 @@ const validParams = (existing = sampleOrganisation()) => ({
   runUnitOfWork: inMemoryUnitOfWork().run,
   organisationSource: fakeOrganisationSource([existing]),
   organisationRepo: fakeOrganisationRepo([existing]),
-  reputationRepo: fakeReputationRepo(),
   wikipediaValidator: fakeWikipediaValidator(),
 })
 
@@ -83,13 +82,11 @@ describe('updateOrganisationUseCase', () => {
       expect(result.right.updatedBy).toBe('contributor-1')
       expect(result.right.createdBy).toBe('founder')
     }
-    expect(unit.journal.all().map((e) => [e.type, e.revision])).toEqual([
+    expect(deedsIn(unit.journal).map((e) => [e.type, e.revision])).toEqual([
       ['OrganisationAdded', 1],
       ['OrganisationEdited', 2],
     ])
-    expect(params.reputationRepo.events).toEqual([
-      { action: 'edited_organisation', contributorId: 'contributor-1' },
-    ])
+    expect(grantsIn(unit.journal)).toEqual([['contributor-1', 'edited_organisation', 5]])
   })
 
   it('imports an organisation the journal does not know yet, then edits it', async () => {
@@ -101,7 +98,7 @@ describe('updateOrganisationUseCase', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(unit.journal.all().map((e) => [e.type, e.metadata])).toEqual([
+    expect(deedsIn(unit.journal).map((e) => [e.type, e.metadata])).toEqual([
       ['OrganisationImported', { source: 'import' }],
       ['OrganisationEdited', {}],
     ])

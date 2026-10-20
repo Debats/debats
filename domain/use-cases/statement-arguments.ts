@@ -4,9 +4,9 @@ import { addArgument, argumentStream } from '../aggregates/argument'
 import { ConcurrencyError, EventStore } from '../events/event-store'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { DatabaseError } from '../repositories/errors'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { Grant, rewardFor } from './reward'
 
 /** A new argument proposed from the statement form */
 export interface NewArgumentInput {
@@ -113,26 +113,18 @@ export function recordProposedArguments(
   )
 }
 
-/** Rewards the contributor for each argument proposed, then for each one the statement mobilises */
-export async function rewardArguments(params: {
-  contributor: ContributorIdentity
-  recorded: RecordedArguments
-  reputationRepo: ReputationRepository
-}): Promise<void> {
-  const { contributor, recorded, reputationRepo } = params
-  const rewards = [
-    ...recorded.createdIds.map((id) => ['added_argument_validated', id] as const),
-    ...recorded.argumentIds.map((id) => ['linked_argument_to_statement', id] as const),
+/** What the contributor earns: each argument proposed, then each one the statement mobilises */
+export function argumentRewards(contributorId: string, recorded: RecordedArguments): Grant[] {
+  const on = (relatedEntityId: string) => ({
+    relatedEntityType: 'argument' as const,
+    relatedEntityId,
+  })
+  return [
+    ...recorded.createdIds.map((id) =>
+      rewardFor(contributorId, 'added_argument_validated', on(id)),
+    ),
+    ...recorded.argumentIds.map((id) =>
+      rewardFor(contributorId, 'linked_argument_to_statement', on(id)),
+    ),
   ]
-  for (const [action, argumentId] of rewards) {
-    await Effect.runPromise(
-      reputationRepo.recordEvent({
-        contributorId: contributor.id,
-        action,
-        amount: reputationReward(action),
-        relatedEntityType: 'argument',
-        relatedEntityId: argumentId,
-      }),
-    )
-  }
 }

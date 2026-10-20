@@ -5,7 +5,6 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createStatementSource } from '../../infra/events/sources'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { parseStatementType } from '../../domain/entities/statement'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
 import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
@@ -38,7 +37,6 @@ export async function updateStatementAction(
     statementSource: createStatementSource(supabase),
     positionRepo: createPositionRepository(supabase),
     argumentRepo: createArgumentRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

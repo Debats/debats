@@ -4,7 +4,6 @@ import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createSubjectSource } from '../../infra/events/sources'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { updateSubjectUseCase } from '../../domain/use-cases/update-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -25,7 +24,6 @@ export async function updateSubjectAction(
     problem: String(formData.get('problem') ?? ''),
     runUnitOfWork,
     subjectSource: createSubjectSource(supabase),
-    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

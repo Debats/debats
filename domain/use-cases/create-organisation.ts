@@ -8,10 +8,10 @@ import {
 import { addOrganisation, organisationStream, replayOrganisation } from '../aggregates/organisation'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
+import { grant, rewardFor } from './reward'
 import { validateOrganisationFields } from './validate-organisation-fields'
 import { requireOrganisationState } from './organisation-stream'
 
@@ -27,7 +27,6 @@ export type CreateOrganisationParams = {
   runUnitOfWork: RunUnitOfWork
   /** Read side: the name must be free */
   organisationRepo: OrganisationRepository
-  reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
 
@@ -74,7 +73,7 @@ export async function persistOrganisation(
   params: CreateOrganisationParams,
   organisationType: OrganisationType,
 ): Promise<Organisation> {
-  const { runUnitOfWork, reputationRepo } = params
+  const { runUnitOfWork } = params
   const contributor = params.contributor!
 
   // The command names the organisation: the stream exists from its first event
@@ -95,18 +94,18 @@ export async function persistOrganisation(
         events.append(organisationStream(id), 0, [added], { actorId: contributor.id }),
         Effect.flatMap(replayOrganisation),
         Effect.flatMap(requireOrganisationState),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'added_organisation_validated', {
+              relatedEntityType: 'organisation',
+              relatedEntityId: id,
+            }),
+          ),
+        ),
       ),
     ),
-  )
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'added_organisation_validated',
-      amount: reputationReward('added_organisation_validated'),
-      relatedEntityType: 'organisation',
-      relatedEntityId: state.organisation.id,
-    }),
   )
 
   return state.organisation

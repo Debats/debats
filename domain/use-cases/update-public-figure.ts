@@ -1,12 +1,12 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { generateSlug, PublicFigure } from '../entities/public-figure'
 import { editPublicFigure } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
+import { grant, rewardFor } from './reward'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
 import { runCommand } from './run-command'
 import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
@@ -23,7 +23,6 @@ type UpdatePublicFigureParams = {
   publicFigureSource: PublicFigureSource
   /** Read side: the figure must exist and the new name must be free */
   publicFigureRepo: PublicFigureRepository
-  reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
 
@@ -82,7 +81,7 @@ export async function persistUpdatedPublicFigure(
   params: UpdatePublicFigureParams,
   existing: PublicFigure,
 ): Promise<Either.Either<PublicFigure, string>> {
-  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork, reputationRepo } = params
+  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork } = params
   const contributor = params.contributor!
 
   const edited = editPublicFigure({
@@ -95,22 +94,24 @@ export async function persistUpdatedPublicFigure(
 
   const outcome = await runCommand(
     runUnitOfWork((events) =>
-      decideOnPublicFigure(events, existing.id, params.publicFigureSource, contributor.id, () =>
-        Effect.succeed([edited]),
+      pipe(
+        decideOnPublicFigure(events, existing.id, params.publicFigureSource, contributor.id, () =>
+          Effect.succeed([edited]),
+        ),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'edited_personality', {
+              relatedEntityType: 'public_figure',
+              relatedEntityId: existing.id,
+            }),
+          ),
+        ),
       ),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'edited_personality',
-      amount: reputationReward('edited_personality'),
-      relatedEntityType: 'public_figure',
-      relatedEntityId: existing.id,
-    }),
-  )
 
   return Either.right(outcome.right.figure)
 }

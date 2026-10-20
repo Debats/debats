@@ -1,20 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either } from 'effect'
 import { createSubjectUseCase } from './create-subject'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
-
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 
 const validParams = {
   title: 'Le montant du SMIC',
   presentation: 'Une présentation suffisamment longue.',
   problem: 'Faut-il augmenter le SMIC ?',
   runUnitOfWork: inMemoryUnitOfWork().run,
-  reputationRepo: fakeReputationRepo,
 }
 
 describe('createSubjectUseCase', () => {
@@ -54,20 +48,12 @@ describe('createSubjectUseCase', () => {
   })
 
   it('should create subject and award reputation on success', async () => {
-    let reputationAdded = 0
     const { run, journal } = inMemoryUnitOfWork()
 
     const result = await createSubjectUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       runUnitOfWork: run,
-      reputationRepo: {
-        ...fakeReputationRepo,
-        recordEvent: (event) => {
-          reputationAdded = event.amount
-          return Effect.succeed(undefined as void)
-        },
-      },
     })
 
     expect(Either.isRight(result)).toBe(true)
@@ -77,10 +63,10 @@ describe('createSubjectUseCase', () => {
         slug: 'le-montant-du-smic',
         createdBy: 'abc',
       })
-      expect(journal.all().map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
+      expect(deedsIn(journal).map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
         ['subject', result.right.id, 1, 'SubjectAdded'],
       ])
     }
-    expect(reputationAdded).toBeGreaterThan(0)
+    expect(grantsIn(journal)).toEqual([['abc', 'added_subject', 50]])
   })
 })

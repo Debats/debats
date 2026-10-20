@@ -6,6 +6,7 @@ import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   PublicFigure,
   PublicFigureId,
@@ -67,12 +68,6 @@ const fakePublicFigureRepo = {
   findByLetter: () => Effect.succeed([]),
 }
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
-
 const organisation = sampleOrganisation()
 
 const validParams = {
@@ -90,7 +85,6 @@ const validParams = {
   positionRepo: fakePositionRepo,
   publicFigureRepo: fakePublicFigureRepo,
   organisationRepo: fakeOrganisationRepo([organisation]),
-  reputationRepo: fakeReputationRepo,
 }
 
 describe('createStatementUseCase', () => {
@@ -261,21 +255,12 @@ describe('createStatementUseCase', () => {
   })
 
   it('should create statement and award reputation on success', async () => {
-    let reputationAdded = 0
     const { run, journal } = inMemoryUnitOfWork()
 
     const result = await createStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 0 },
       runUnitOfWork: run,
-      reputationRepo: {
-        getReputation: () => Effect.succeed(0),
-        recordEvent: (event) => {
-          reputationAdded = event.amount
-          return Effect.succeed(undefined as void)
-        },
-        getHistory: () => Effect.succeed([]),
-      },
     })
 
     expect(Either.isRight(result)).toBe(true)
@@ -285,10 +270,10 @@ describe('createStatementUseCase', () => {
       expect(result.right.sourceName).toBe('Le Monde')
       expect(result.right.quote).toBe('Une citation suffisamment longue pour être valide.')
       expect(result.right.createdBy).toBe('abc')
-      expect(journal.all().map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
+      expect(deedsIn(journal).map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
         ['statement', result.right.id, 1, 'StatementAdded'],
       ])
     }
-    expect(reputationAdded).toBe(50)
+    expect(grantsIn(journal)).toEqual([['abc', 'added_statement_validated', 50]])
   })
 })

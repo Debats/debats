@@ -1,11 +1,11 @@
-import { Effect, Either } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import { MembershipId, OrganisationMembership } from '../entities/organisation-membership'
 import { addMembership, findMembership, hasCurrentMembership } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { grant, rewardFor } from './reward'
 import { runFormCommand } from './run-command'
 import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
 
@@ -22,7 +22,6 @@ export type AddOrganisationMembershipParams = {
   publicFigureSource: PublicFigureSource
   /** Read side: the organisation must exist */
   organisationRepo: OrganisationRepository
-  reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
@@ -92,18 +91,30 @@ export async function addOrganisationMembershipUseCase(
   const membershipId = MembershipId.make(crypto.randomUUID())
   const outcome = await runFormCommand(
     runUnitOfWork((events) =>
-      decideOnPublicFigure(events, publicFigureId, publicFigureSource, contributor.id, (state) =>
-        hasCurrentMembership(state, organisationId)
-          ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
-          : Effect.succeed([
-              addMembership({
-                membershipId,
-                organisationId,
-                role: params.role.trim() || undefined,
-                startedOn: startedOn ?? undefined,
-                endedOn: endedOn ?? undefined,
-              }),
-            ]),
+      pipe(
+        decideOnPublicFigure(events, publicFigureId, publicFigureSource, contributor.id, (state) =>
+          hasCurrentMembership(state, organisationId)
+            ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
+            : Effect.succeed([
+                addMembership({
+                  membershipId,
+                  organisationId,
+                  role: params.role.trim() || undefined,
+                  startedOn: startedOn ?? undefined,
+                  endedOn: endedOn ?? undefined,
+                }),
+              ]),
+        ),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'added_membership', {
+              relatedEntityType: 'organisation_membership',
+              relatedEntityId: membershipId,
+            }),
+          ),
+        ),
       ),
     ),
   )
@@ -111,16 +122,6 @@ export async function addOrganisationMembershipUseCase(
 
   const created = findMembership(outcome.right, membershipId)
   if (!created) throw new Error('The membership just added is missing from the figure')
-
-  await Effect.runPromise(
-    params.reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'added_membership',
-      amount: reputationReward('added_membership'),
-      relatedEntityType: 'organisation_membership',
-      relatedEntityId: created.id,
-    }),
-  )
 
   return Either.right(created)
 }

@@ -1,12 +1,12 @@
-import { Effect, Either } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import { generateOrganisationSlug, Organisation, OrganisationType } from '../entities/organisation'
 import { editOrganisation } from '../aggregates/organisation'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
+import { grant, rewardFor } from './reward'
 import { validateOrganisationFields } from './validate-organisation-fields'
 import { runCommand } from './run-command'
 import { decideOnOrganisation, OrganisationSource } from './organisation-stream'
@@ -25,7 +25,6 @@ export type UpdateOrganisationParams = {
   organisationSource: OrganisationSource
   /** Read side: the organisation must exist and the new name must be free */
   organisationRepo: OrganisationRepository
-  reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
 
@@ -80,7 +79,7 @@ export async function persistUpdatedOrganisation(
   params: UpdateOrganisationParams,
   { existing, organisationType }: ValidatedUpdate,
 ): Promise<Either.Either<Organisation, string>> {
-  const { runUnitOfWork, reputationRepo } = params
+  const { runUnitOfWork } = params
   const contributor = params.contributor!
 
   const edited = editOrganisation({
@@ -95,22 +94,24 @@ export async function persistUpdatedOrganisation(
 
   const outcome = await runCommand(
     runUnitOfWork((events) =>
-      decideOnOrganisation(events, existing.id, params.organisationSource, contributor.id, () =>
-        Effect.succeed([edited]),
+      pipe(
+        decideOnOrganisation(events, existing.id, params.organisationSource, contributor.id, () =>
+          Effect.succeed([edited]),
+        ),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'edited_organisation', {
+              relatedEntityType: 'organisation',
+              relatedEntityId: existing.id,
+            }),
+          ),
+        ),
       ),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'edited_organisation',
-      amount: reputationReward('edited_organisation'),
-      relatedEntityType: 'organisation',
-      relatedEntityId: existing.id,
-    }),
-  )
 
   return Either.right(outcome.right.organisation)
 }

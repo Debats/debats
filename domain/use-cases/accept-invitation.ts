@@ -2,17 +2,24 @@ import { Either, Effect } from 'effect'
 import { InvitationRepository } from '../repositories/invitation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { isExpired } from '../entities/invitation'
-import { reputationReward } from '../reputation/permissions'
+import { Grant, grantEach, rewardFor } from './reward'
 
 type AcceptInvitationParams = {
   inviteeId: string
   inviteeEmail: string
   invitationRepo: InvitationRepository
+  /** Read side: the inviter's reputation sets the invitee's start */
   reputationRepo: ReputationRepository
   contributorRepo: ContributorRepository
+  runUnitOfWork: RunUnitOfWork
 }
 
+/**
+ * The invitee joins with half the inviter's reputation, and the inviter is
+ * rewarded: both grants fall in one transaction, signed by the invitee.
+ */
 export async function acceptInvitationUseCase(
   params: AcceptInvitationParams,
 ): Promise<Either.Either<void, string>> {
@@ -34,29 +41,23 @@ export async function acceptInvitationUseCase(
   const inviterReputation = await Effect.runPromise(
     reputationRepo.getReputation(invitation.inviterId),
   )
+  const on = { relatedEntityType: 'invitation' as const, relatedEntityId: invitation.id }
+  const inviteeStart = Math.floor(inviterReputation / 2)
+  const grants: Grant[] = [
+    ...(inviteeStart > 0
+      ? [
+          {
+            contributorId: inviteeId,
+            action: 'invitation_bonus' as const,
+            amount: inviteeStart,
+            ...on,
+          },
+        ]
+      : []),
+    rewardFor(invitation.inviterId, 'invitation_accepted', on),
+  ]
 
-  const inviteeInitialReputation = Math.floor(inviterReputation / 2)
-  if (inviteeInitialReputation > 0) {
-    await Effect.runPromise(
-      reputationRepo.recordEvent({
-        contributorId: inviteeId,
-        action: 'invitation_bonus',
-        amount: inviteeInitialReputation,
-        relatedEntityType: 'invitation',
-        relatedEntityId: invitation.id,
-      }),
-    )
-  }
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: invitation.inviterId,
-      action: 'invitation_accepted',
-      amount: reputationReward('invitation_accepted'),
-      relatedEntityType: 'invitation',
-      relatedEntityId: invitation.id,
-    }),
-  )
+  await Effect.runPromise(params.runUnitOfWork((events) => grantEach(events, inviteeId, grants)))
 
   return Either.right(undefined)
 }

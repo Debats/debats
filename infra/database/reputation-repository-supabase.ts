@@ -32,22 +32,6 @@ export function createReputationRepository(supabase: SupabaseClient): Reputation
         catch: (error) => dbError('Failed to get reputation', error),
       }),
 
-    recordEvent: (event) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.from('reputation_events').insert({
-            contributor_id: event.contributorId,
-            action: event.action,
-            amount: event.amount,
-            related_entity_type: event.relatedEntityType ?? null,
-            related_entity_id: event.relatedEntityId ?? null,
-          })
-
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to record reputation event', error),
-      }),
-
     getHistory: (contributorId: string) =>
       Effect.tryPromise({
         try: async () => {

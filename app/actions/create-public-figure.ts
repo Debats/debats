@@ -6,7 +6,6 @@ import { AvatarStorageError, uploadFigureAvatar } from '../../infra/storage/figu
 import { readUploadedImage } from './read-uploaded-image'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
   validateCreatePublicFigure,
   persistPublicFigure,
@@ -54,7 +53,6 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
     notorietySources,
     runUnitOfWork,
     publicFigureRepo: createPublicFigureRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   }
 

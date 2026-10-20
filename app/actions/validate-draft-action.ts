@@ -12,7 +12,6 @@ import { createPublicFigureSource, createSubjectSource } from '../../infra/event
 import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../infra/database/organisation-membership-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
 import { getAdminContributor } from './admin-guard'
@@ -41,7 +40,6 @@ export async function validateDraftAction(draftId: string): Promise<ActionResult
     argumentRepo: createArgumentRepository(supabase),
     occupationRepo: createOccupationRepository(supabase),
     membershipRepo: createOrganisationMembershipRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
     wikipediaValidator: createWikipediaValidator(),
   })
 

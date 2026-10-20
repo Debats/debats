@@ -8,6 +8,7 @@ import {
   PublicFigureSlug,
 } from '../entities/public-figure'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   fakePublicFigureSource,
   figureParts,
@@ -44,12 +45,6 @@ const fakePublicFigureRepo = {
   findByLetter: () => Effect.succeed([]),
 }
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
-
 const fakeWikipediaValidator = {
   validatePage: async () => ({ exists: true, isBiography: true }),
 }
@@ -64,7 +59,6 @@ const validParams = {
   runUnitOfWork: inMemoryUnitOfWork().run,
   publicFigureSource: fakePublicFigureSource([figureParts(existingFigure)]),
   publicFigureRepo: fakePublicFigureRepo,
-  reputationRepo: fakeReputationRepo,
   wikipediaValidator: fakeWikipediaValidator,
 }
 
@@ -184,7 +178,6 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should update figure and award reputation on success', async () => {
-    let reputationRecorded = false
     const { run, journal } = await journalWithFigures(existingFigure)
 
     const result = await updatePublicFigureUseCase({
@@ -200,13 +193,6 @@ describe('updatePublicFigureUseCase', () => {
           return Effect.succeed(null)
         },
       },
-      reputationRepo: {
-        ...fakeReputationRepo,
-        recordEvent: () => {
-          reputationRecorded = true
-          return Effect.succeed(undefined as void)
-        },
-      },
     })
 
     expect(Either.isRight(result) && result.right).toMatchObject({
@@ -216,11 +202,11 @@ describe('updatePublicFigureUseCase', () => {
       presentation: 'Nouvelle présentation suffisamment longue.',
       createdBy: 'author-id',
     })
-    expect(journal.all().at(-1)).toMatchObject({
+    expect(deedsIn(journal).at(-1)).toMatchObject({
       type: 'PublicFigureEdited',
       revision: 2,
       actorId: 'abc',
     })
-    expect(reputationRecorded).toBe(true)
+    expect(grantsIn(journal)).toEqual([['abc', 'edited_personality', 5]])
   })
 })

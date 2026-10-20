@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { acceptInvitationUseCase } from './accept-invitation'
 import { Invitation, createInvitation } from '../entities/invitation'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { grantsIn } from './contributor-test-helpers'
 
 const baseInvitation = createInvitation({
   inviterId: 'inviter-uuid',
@@ -19,7 +21,6 @@ const fakeInvitationRepo = {
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(2000),
-  recordEvent: () => Effect.succeed(undefined as void),
   getHistory: () => Effect.succeed([]),
 }
 
@@ -37,6 +38,7 @@ const baseParams = {
   },
   reputationRepo: fakeReputationRepo,
   contributorRepo: fakeContributorRepo,
+  runUnitOfWork: inMemoryUnitOfWork().run,
 }
 
 describe('acceptInvitationUseCase', () => {
@@ -91,40 +93,16 @@ describe('acceptInvitationUseCase', () => {
     expect(acceptedInviteeId).toBe('invitee-uuid')
   })
 
-  it('should initialize invitee reputation to half of inviter reputation', async () => {
-    let inviteeAmount = 0
+  it('starts the invitee at half the inviter reputation and rewards the inviter, in one go', async () => {
+    const unit = inMemoryUnitOfWork()
 
-    await acceptInvitationUseCase({
-      ...baseParams,
-      reputationRepo: {
-        getReputation: () => Effect.succeed(2000),
-        recordEvent: (event) => {
-          if (event.contributorId === 'invitee-uuid') inviteeAmount = event.amount
-          return Effect.succeed(undefined as void)
-        },
-        getHistory: () => Effect.succeed([]),
-      },
-    })
+    await acceptInvitationUseCase({ ...baseParams, runUnitOfWork: unit.run })
 
-    expect(inviteeAmount).toBe(1000)
-  })
-
-  it('should reward inviter with 50 points', async () => {
-    let inviterReward = 0
-
-    await acceptInvitationUseCase({
-      ...baseParams,
-      reputationRepo: {
-        getReputation: () => Effect.succeed(2000),
-        recordEvent: (event) => {
-          if (event.contributorId === 'inviter-uuid') inviterReward = event.amount
-          return Effect.succeed(undefined as void)
-        },
-        getHistory: () => Effect.succeed([]),
-      },
-    })
-
-    expect(inviterReward).toBe(50)
+    expect(grantsIn(unit.journal)).toEqual([
+      ['invitee-uuid', 'invitation_bonus', 1000],
+      ['inviter-uuid', 'invitation_accepted', 50],
+    ])
+    expect(unit.journal.all().map((e) => e.actorId)).toEqual(['invitee-uuid', 'invitee-uuid'])
   })
 
   it('should fail when invitation is expired', async () => {
@@ -149,22 +127,15 @@ describe('acceptInvitationUseCase', () => {
     }
   })
 
-  it('should not give negative reputation to invitee when inviter has 0', async () => {
-    let inviteeAmount = -1
+  it('gives the invitee nothing when the inviter has nothing', async () => {
+    const unit = inMemoryUnitOfWork()
 
     await acceptInvitationUseCase({
       ...baseParams,
-      reputationRepo: {
-        getReputation: () => Effect.succeed(0),
-        recordEvent: (event) => {
-          if (event.contributorId === 'invitee-uuid') inviteeAmount = event.amount
-          return Effect.succeed(undefined as void)
-        },
-        getHistory: () => Effect.succeed([]),
-      },
+      reputationRepo: { ...fakeReputationRepo, getReputation: () => Effect.succeed(0) },
+      runUnitOfWork: unit.run,
     })
 
-    // inviteeAmount should stay -1 (never called for invitee)
-    expect(inviteeAmount).toBe(-1)
+    expect(grantsIn(unit.journal)).toEqual([['inviter-uuid', 'invitation_accepted', 50]])
   })
 })

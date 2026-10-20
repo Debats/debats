@@ -7,7 +7,6 @@ import { createPositionRepository } from '../../infra/database/position-reposito
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import {
   organisationAuthor,
   parseStatementType,
@@ -59,7 +58,6 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
     publicFigureRepo,
     organisationRepo,
     argumentRepo: createArgumentRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

@@ -127,17 +127,9 @@ export function fakePublicFigureRepo(seed: PublicFigure[] = []): PublicFigureRep
   }
 }
 
-export function fakeReputationRepo(): ReputationRepository & {
-  events: Array<{ action: string; contributorId: string }>
-} {
-  const events: Array<{ action: string; contributorId: string }> = []
+export function fakeReputationRepo(): ReputationRepository {
   return {
-    events,
     getReputation: () => Effect.succeed(0),
-    recordEvent: (event) => {
-      events.push({ action: event.action, contributorId: event.contributorId })
-      return Effect.succeed(undefined)
-    },
     getHistory: () => Effect.succeed([]),
   }
 }

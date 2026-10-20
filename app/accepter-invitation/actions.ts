@@ -7,6 +7,7 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createInvitationRepository } from '../../infra/database/invitation-repository-supabase'
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createContributorRepository } from '../../infra/database/contributor-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { acceptInvitationUseCase } from '../../domain/use-cases/accept-invitation'
 import { validateResendInvitation } from '../../domain/use-cases/resend-invitation'
 
@@ -75,6 +76,7 @@ export async function acceptInvitation(
       invitationRepo: createInvitationRepository(admin),
       reputationRepo: createReputationRepository(admin),
       contributorRepo: createContributorRepository(admin),
+      runUnitOfWork,
     })
 
     if (Either.isLeft(result)) {

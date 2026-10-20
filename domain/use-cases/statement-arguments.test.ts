@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
+  argumentRewards,
   recordProposedArguments,
-  rewardArguments,
   validateStatementArguments,
 } from './statement-arguments'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
-import { fakeReputationRepo } from './organisation-test-helpers'
 import { createInMemoryEventStore } from '../events/event-store-memory'
 
 const eloquent = { id: 'contributor-1', reputation: 1000 }
@@ -121,20 +120,15 @@ describe('recordProposedArguments', () => {
   })
 })
 
-describe('rewardArguments', () => {
-  it('rewards each proposal, then each argument the statement mobilises', async () => {
-    const reputationRepo = fakeReputationRepo()
+describe('argumentRewards', () => {
+  it('rewards each proposal, then each argument the statement mobilises', () => {
+    const rewards = argumentRewards('contributor-1', { argumentIds: ['a', 'b'], createdIds: ['b'] })
 
-    await rewardArguments({
-      contributor: eloquent,
-      recorded: { argumentIds: ['a', 'b'], createdIds: ['b'] },
-      reputationRepo,
-    })
-
-    expect(reputationRepo.events.map((e) => e.action)).toEqual([
-      'added_argument_validated',
-      'linked_argument_to_statement',
-      'linked_argument_to_statement',
+    expect(rewards.map((r) => [r.action, r.amount, r.relatedEntityId])).toEqual([
+      ['added_argument_validated', 50, 'b'],
+      ['linked_argument_to_statement', 1, 'a'],
+      ['linked_argument_to_statement', 1, 'b'],
     ])
+    expect(rewards.every((r) => r.contributorId === 'contributor-1')).toBe(true)
   })
 })

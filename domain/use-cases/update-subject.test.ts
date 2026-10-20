@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { updateSubjectUseCase } from './update-subject'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   fakeSubjectSource,
   journalWithSubjects,
@@ -13,12 +14,6 @@ import {
 const subject = sampleSubject()
 const position = samplePosition(subject.id)
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
-
 const validParams = {
   subjectId: subject.id,
   title: 'Le SMIC',
@@ -26,7 +21,6 @@ const validParams = {
   problem: 'Faut-il augmenter le SMIC ?',
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
-  reputationRepo: fakeReputationRepo,
 }
 
 describe('updateSubjectUseCase', () => {
@@ -62,20 +56,12 @@ describe('updateSubjectUseCase', () => {
   })
 
   it('should update subject and award reputation on success', async () => {
-    let reputationRecorded = false
     const { run, journal } = await journalWithSubjects([subject, [position]])
 
     const result = await updateSubjectUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       runUnitOfWork: run,
-      reputationRepo: {
-        ...fakeReputationRepo,
-        recordEvent: () => {
-          reputationRecorded = true
-          return Effect.succeed(undefined as void)
-        },
-      },
     })
 
     expect(Either.isRight(result) && result.right).toMatchObject({
@@ -84,12 +70,12 @@ describe('updateSubjectUseCase', () => {
       slug: 'le-smic',
       createdBy: 'founder',
     })
-    expect(journal.all().at(-1)).toMatchObject({
+    expect(deedsIn(journal).at(-1)).toMatchObject({
       type: 'SubjectEdited',
       revision: 3,
       actorId: 'abc',
     })
-    expect(reputationRecorded).toBe(true)
+    expect(grantsIn(journal)).toEqual([['abc', 'edited_subject', 5]])
   })
 
   it('should import a subject that has no stream yet, positions included, before editing it', async () => {
@@ -102,11 +88,13 @@ describe('updateSubjectUseCase', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(journal.all().map((e) => [e.revision, e.type, e.actorId, e.metadata.source])).toEqual([
-      [1, 'SubjectImported', 'founder', 'import'],
-      [2, 'PositionImported', 'founder', 'import'],
-      [3, 'SubjectEdited', 'abc', undefined],
-    ])
+    expect(deedsIn(journal).map((e) => [e.revision, e.type, e.actorId, e.metadata.source])).toEqual(
+      [
+        [1, 'SubjectImported', 'founder', 'import'],
+        [2, 'PositionImported', 'founder', 'import'],
+        [3, 'SubjectEdited', 'abc', undefined],
+      ],
+    )
     expect(journal.all()[0].occurredAt).toEqual(subject.createdAt)
     expect(journal.all()[1].payload).toMatchObject({ positionId: position.id, slug: position.slug })
   })

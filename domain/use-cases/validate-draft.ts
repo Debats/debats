@@ -14,7 +14,6 @@ import { PublicFigureSource } from './public-figure-stream'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
 import { sameOccupationName } from '../entities/occupation'
 import { isCurrentMembership } from '../entities/organisation-membership'
 import { OccupationAssignmentInput } from '../read-models/occupations'
@@ -43,7 +42,6 @@ type ValidateDraftParams = {
   argumentRepo: ArgumentRepository
   occupationRepo: OccupationRepository
   membershipRepo: OrganisationMembershipRepository
-  reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
 
@@ -69,7 +67,6 @@ export async function validateDraft(
     argumentRepo,
     occupationRepo,
     membershipRepo,
-    reputationRepo,
     wikipediaValidator,
   } = params
 
@@ -83,7 +80,6 @@ export async function validateDraft(
     publicFigureRepo,
     organisationRepo,
     runUnitOfWork,
-    reputationRepo,
     wikipediaValidator,
   })
   if (Either.isLeft(author)) return author
@@ -106,7 +102,6 @@ export async function validateDraft(
       membershipRepo,
       runUnitOfWork,
       publicFigureSource,
-      reputationRepo,
       wikipediaValidator,
     })
     if (Either.isLeft(affiliations)) return affiliations
@@ -116,7 +111,6 @@ export async function validateDraft(
     contributor,
     subjectRepo,
     runUnitOfWork,
-    reputationRepo,
   })
   if (Either.isLeft(subjectId)) return subjectId
 
@@ -125,7 +119,6 @@ export async function validateDraft(
     positionRepo,
     runUnitOfWork,
     subjectSource,
-    reputationRepo,
   })
   if (Either.isLeft(positionId)) return positionId
 
@@ -152,7 +145,6 @@ export async function validateDraft(
     publicFigureRepo,
     organisationRepo,
     argumentRepo,
-    reputationRepo,
   })
   if (Either.isLeft(statementResult)) {
     return Either.left(formatUseCaseError(statementResult.left))
@@ -231,7 +223,6 @@ async function applyAffiliations(
     membershipRepo: OrganisationMembershipRepository
     runUnitOfWork: RunUnitOfWork
     publicFigureSource: PublicFigureSource
-    reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
 ): Promise<Either.Either<void, string>> {
@@ -261,7 +252,6 @@ async function applyAffiliations(
       organisationRepo: deps.organisationRepo,
       runUnitOfWork: deps.runUnitOfWork,
       publicFigureSource: deps.publicFigureSource,
-      reputationRepo: deps.reputationRepo,
     })
     if (Either.isLeft(added)) {
       return Either.left(
@@ -279,7 +269,6 @@ async function resolveOrCreateAffiliatedOrganisation(
     contributor: ContributorIdentity
     organisationRepo: OrganisationRepository
     runUnitOfWork: RunUnitOfWork
-    reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
 ): Promise<Either.Either<string, string>> {
@@ -309,7 +298,6 @@ async function resolveOrCreateAffiliatedOrganisation(
     notorietySources: data.notorietySources ?? [],
     runUnitOfWork: deps.runUnitOfWork,
     organisationRepo: deps.organisationRepo,
-    reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
@@ -323,7 +311,6 @@ function resolveOrCreateAuthor(
     publicFigureRepo: PublicFigureRepository
     organisationRepo: OrganisationRepository
     runUnitOfWork: RunUnitOfWork
-    reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
 ): Promise<Either.Either<StatementAuthor, string>> {
@@ -338,7 +325,6 @@ async function resolveOrCreatePublicFigure(
     contributor: ContributorIdentity
     publicFigureRepo: PublicFigureRepository
     runUnitOfWork: RunUnitOfWork
-    reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
 ): Promise<Either.Either<StatementAuthor, string>> {
@@ -361,7 +347,6 @@ async function resolveOrCreatePublicFigure(
     notorietySources: author.data.notorietySources ?? [],
     runUnitOfWork: deps.runUnitOfWork,
     publicFigureRepo: deps.publicFigureRepo,
-    reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
@@ -374,7 +359,6 @@ async function resolveOrCreateOrganisation(
     contributor: ContributorIdentity
     organisationRepo: OrganisationRepository
     runUnitOfWork: RunUnitOfWork
-    reputationRepo: ReputationRepository
     wikipediaValidator: WikipediaValidator
   },
 ): Promise<Either.Either<StatementAuthor, string>> {
@@ -399,7 +383,6 @@ async function resolveOrCreateOrganisation(
     notorietySources: author.data.notorietySources ?? [],
     runUnitOfWork: deps.runUnitOfWork,
     organisationRepo: deps.organisationRepo,
-    reputationRepo: deps.reputationRepo,
     wikipediaValidator: deps.wikipediaValidator,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
@@ -412,7 +395,6 @@ async function resolveOrCreateSubject(
     contributor: ContributorIdentity
     subjectRepo: SubjectRepository
     runUnitOfWork: RunUnitOfWork
-    reputationRepo: ReputationRepository
   },
 ): Promise<Either.Either<string, string>> {
   const lookup = await Effect.runPromise(
@@ -431,7 +413,6 @@ async function resolveOrCreateSubject(
     presentation: draft.subjectData.presentation,
     problem: draft.subjectData.problem,
     runUnitOfWork: deps.runUnitOfWork,
-    reputationRepo: deps.reputationRepo,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
   return Either.right(result.right.id)
@@ -445,7 +426,6 @@ async function resolveOrCreatePosition(
     positionRepo: PositionRepository
     runUnitOfWork: RunUnitOfWork
     subjectSource: SubjectSource
-    reputationRepo: ReputationRepository
   },
 ): Promise<Either.Either<string, string>> {
   const lookup = await Effect.runPromise(
@@ -467,7 +447,6 @@ async function resolveOrCreatePosition(
     description: draft.positionData.description,
     runUnitOfWork: deps.runUnitOfWork,
     subjectSource: deps.subjectSource,
-    reputationRepo: deps.reputationRepo,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
   return Either.right(result.right.id)

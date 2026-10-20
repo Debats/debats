@@ -10,7 +10,6 @@ import { DraftStatementRepository } from '../repositories/draft-statement-reposi
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { PublicFigure } from '../entities/public-figure'
@@ -34,6 +33,7 @@ import { createMembership, OrganisationMembership } from '../entities/organisati
 import { Subject } from '../entities/subject'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { ContributorIdentity } from './types'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   makeDraft,
   makeOrganisationDraft,
@@ -149,12 +149,6 @@ function makeRepos(overrides: {
     overrides.subject ? [subjectParts(overrides.subject, overrides.positions ?? [])] : [],
   )
 
-  const reputationRepo = {
-    recordEvent: vi.fn(() => Effect.succeed(undefined)),
-  } as unknown as ReputationRepository & {
-    recordEvent: ReturnType<typeof vi.fn>
-  }
-
   const seededFigures = overrides.figure ? [overrides.figure] : []
   const occupationRepo = fakeOccupationRepo(overrides.occupations ?? [])
 
@@ -186,7 +180,6 @@ function makeRepos(overrides: {
       seededFigures,
       seededOrganisations,
     ),
-    reputationRepo,
   }
 }
 
@@ -223,7 +216,7 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.journal.all().map((e) => e.type)).toEqual([
+    expect(deedsIn(repos.journal).map((e) => e.type)).toEqual([
       'PublicFigureAdded',
       'SubjectAdded',
       'PositionAdded',
@@ -245,7 +238,7 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.journal.all().map((e) => e.type)).toEqual(['StatementAdded'])
+    expect(deedsIn(repos.journal).map((e) => e.type)).toEqual(['StatementAdded'])
     expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
   })
 
@@ -275,7 +268,7 @@ describe('validateDraft', () => {
       wikipediaValidator: fakeWikipediaValidator,
     })
 
-    expect(repos.reputationRepo.recordEvent).toHaveBeenCalled()
+    expect(grantsIn(repos.journal).map((g) => g[1])).toContain('added_statement_validated')
   })
 
   it('should create the organisation when the drafted author does not exist', async () => {
@@ -290,7 +283,7 @@ describe('validateDraft', () => {
     expect(Either.isRight(result)).toBe(true)
     expect(payloadsOf(repos.journal, 'OrganisationAdded')).toHaveLength(1)
     expect(payloadsOf(repos.journal, 'PublicFigureAdded')).toEqual([])
-    expect(repos.journal.all().at(-1)?.type).toBe('StatementAdded')
+    expect(deedsIn(repos.journal).at(-1)?.type).toBe('StatementAdded')
   })
 
   it('should attribute the statement to the organisation', async () => {
@@ -305,7 +298,7 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(payloadsOf(repos.journal, 'OrganisationAdded')).toEqual([])
-    expect(repos.journal.all().at(-1)?.payload).toMatchObject({
+    expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({
       author: { kind: 'organisation', id: organisation.id },
     })
   })
@@ -337,7 +330,7 @@ describe('validateDraft', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repos.journal.all().at(-1)?.payload).toMatchObject({ statementType: 'program' })
+    expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ statementType: 'program' })
   })
 
   describe('the arguments the draft carries', () => {
@@ -357,7 +350,7 @@ describe('validateDraft', () => {
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([])
-      expect(repos.journal.all().at(-1)?.payload).toMatchObject({ argumentIds: [known.id] })
+      expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ argumentIds: [known.id] })
     })
 
     it('should create an argument the site does not know yet', async () => {
@@ -395,7 +388,7 @@ describe('validateDraft', () => {
       })
 
       expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([])
-      expect(repos.journal.all().at(-1)?.payload).toMatchObject({ argumentIds: [] })
+      expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ argumentIds: [] })
     })
   })
 

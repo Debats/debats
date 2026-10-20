@@ -1,12 +1,12 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ArrayFormatter } from 'effect/ParseResult'
 import { Position, PositionId } from '../entities/position'
 import { addPosition, findPosition } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { grant, rewardFor } from './reward'
 import { runCommand } from './run-command'
 import { decideOnSubject, SubjectSource } from './subject-stream'
 
@@ -22,7 +22,6 @@ type CreatePositionParams = {
   description: string
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
-  reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
@@ -30,15 +29,7 @@ export type { FieldErrors }
 export async function createPositionUseCase(
   params: CreatePositionParams,
 ): Promise<Either.Either<Position, string | FieldErrors>> {
-  const {
-    contributor,
-    subjectId,
-    title,
-    description,
-    runUnitOfWork,
-    subjectSource,
-    reputationRepo,
-  } = params
+  const { contributor, subjectId, title, description, runUnitOfWork, subjectSource } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -72,8 +63,20 @@ export async function createPositionUseCase(
   const positionId = PositionId.make(crypto.randomUUID())
   const outcome = await runCommand(
     runUnitOfWork((events) =>
-      decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
-        Effect.succeed([addPosition({ positionId, title, description })]),
+      pipe(
+        decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
+          Effect.succeed([addPosition({ positionId, title, description })]),
+        ),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'added_position_validated', {
+              relatedEntityType: 'position',
+              relatedEntityId: positionId,
+            }),
+          ),
+        ),
       ),
     ),
   )
@@ -81,16 +84,6 @@ export async function createPositionUseCase(
 
   const position = findPosition(outcome.right, positionId)
   if (!position) throw new Error('The position just added is missing from the subject')
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'added_position_validated',
-      amount: reputationReward('added_position_validated'),
-      relatedEntityType: 'position',
-      relatedEntityId: position.id,
-    }),
-  )
 
   return Either.right(position)
 }

@@ -8,6 +8,7 @@ import { Position, createPosition } from '../entities/position'
 import { addStatement, statementStream } from '../aggregates/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
 
 const existingPosition = createPosition({
   title: 'Pour la réforme',
@@ -53,12 +54,6 @@ const fakePositionRepo = {
   mergeInto: () => Effect.succeed(undefined as void),
 }
 
-const fakeReputationRepo = {
-  getReputation: () => Effect.succeed(0),
-  recordEvent: () => Effect.succeed(undefined as void),
-  getHistory: () => Effect.succeed([]),
-}
-
 const validParams = {
   statementId: existingStatement.id,
   positionId: existingPosition.id,
@@ -72,7 +67,6 @@ const validParams = {
   statementSource: fakeStatementSource([{ statement: existingStatement, argumentIds: [] }]),
   positionRepo: fakePositionRepo,
   argumentRepo: fakeArgumentRepo(),
-  reputationRepo: fakeReputationRepo,
 }
 
 /** A journal where the statement already has its stream, as after a backfill */
@@ -104,7 +98,7 @@ describe('updateStatementUseCase', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
-    const last = journal.all().at(-1)
+    const last = deedsIn(journal).at(-1)
     expect(last).toMatchObject({ type: 'StatementEdited', revision: 2, actorId: 'abc' })
     expect(last?.payload).toMatchObject({ argumentIds: [kept.id] })
   })
@@ -255,21 +249,13 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should update statement and award reputation on success', async () => {
-    let reputationRecorded = false
-    const { run } = await journalWithStream()
+    const { run, journal } = await journalWithStream()
 
     const result = await updateStatementUseCase({
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       positionId: anotherPosition.id,
       runUnitOfWork: run,
-      reputationRepo: {
-        ...fakeReputationRepo,
-        recordEvent: () => {
-          reputationRecorded = true
-          return Effect.succeed(undefined as void)
-        },
-      },
     })
 
     expect(Either.isRight(result)).toBe(true)
@@ -282,7 +268,7 @@ describe('updateStatementUseCase', () => {
       quote: 'Nouvelle citation suffisamment longue.',
       createdBy: 'author-id',
     })
-    expect(reputationRecorded).toBe(true)
+    expect(grantsIn(journal)).toEqual([['abc', 'edited_statement', 5]])
   })
 
   it('should allow keeping the same position', async () => {

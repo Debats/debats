@@ -4,9 +4,9 @@ import { ArrayFormatter } from 'effect/ParseResult'
 import { Subject, SubjectId, SubjectTitle } from '../entities/subject'
 import { addSubject, replaySubject, subjectStream } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { grant, rewardFor } from './reward'
 import { requireSubjectState } from './subject-stream'
 
 const CreateSubjectInput = S.Struct({
@@ -21,7 +21,6 @@ type CreateSubjectParams = {
   presentation: string
   problem: string
   runUnitOfWork: RunUnitOfWork
-  reputationRepo: ReputationRepository
 }
 
 export type { FieldErrors }
@@ -29,7 +28,7 @@ export type { FieldErrors }
 export async function createSubjectUseCase(
   params: CreateSubjectParams,
 ): Promise<Either.Either<Subject, string | FieldErrors>> {
-  const { contributor, title, presentation, problem, runUnitOfWork, reputationRepo } = params
+  const { contributor, title, presentation, problem, runUnitOfWork } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -72,18 +71,18 @@ export async function createSubjectUseCase(
         }),
         Effect.flatMap(replaySubject),
         Effect.flatMap(requireSubjectState),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'added_subject', {
+              relatedEntityType: 'subject',
+              relatedEntityId: id,
+            }),
+          ),
+        ),
       ),
     ),
-  )
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'added_subject',
-      amount: reputationReward('added_subject'),
-      relatedEntityType: 'subject',
-      relatedEntityId: state.subject.id,
-    }),
   )
 
   return Either.right(state.subject)

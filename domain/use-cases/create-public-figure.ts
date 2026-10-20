@@ -7,10 +7,10 @@ import {
 } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
-import { ReputationRepository } from '../repositories/reputation-repository'
-import { canPerform, requiredRank, reputationReward } from '../reputation/permissions'
+import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
+import { grant, rewardFor } from './reward'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
 import { requirePublicFigureState } from './public-figure-stream'
 
@@ -24,7 +24,6 @@ type CreatePublicFigureParams = {
   runUnitOfWork: RunUnitOfWork
   /** Read side: the name must be free */
   publicFigureRepo: PublicFigureRepository
-  reputationRepo: ReputationRepository
   wikipediaValidator: WikipediaValidator
 }
 
@@ -73,7 +72,7 @@ export async function validateCreatePublicFigure(
  * Call only after validation has passed and any side effects (photo upload) are done.
  */
 export async function persistPublicFigure(params: CreatePublicFigureParams): Promise<PublicFigure> {
-  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork, reputationRepo } = params
+  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork } = params
   const contributor = params.contributor!
 
   // The command names the figure: the stream exists from its first event
@@ -92,18 +91,18 @@ export async function persistPublicFigure(params: CreatePublicFigureParams): Pro
         events.append(publicFigureStream(id), 0, [added], { actorId: contributor.id }),
         Effect.flatMap(replayPublicFigure),
         Effect.flatMap(requirePublicFigureState),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'added_personality_validated', {
+              relatedEntityType: 'public_figure',
+              relatedEntityId: id,
+            }),
+          ),
+        ),
       ),
     ),
-  )
-
-  await Effect.runPromise(
-    reputationRepo.recordEvent({
-      contributorId: contributor.id,
-      action: 'added_personality_validated',
-      amount: reputationReward('added_personality_validated'),
-      relatedEntityType: 'public_figure',
-      relatedEntityId: state.figure.id,
-    }),
   )
 
   return state.figure

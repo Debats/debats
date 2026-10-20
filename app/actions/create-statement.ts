@@ -5,7 +5,6 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { parseStatementType, publicFigureAuthor } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
@@ -42,7 +41,6 @@ export async function createStatementAction(
     publicFigureRepo: createPublicFigureRepository(supabase),
     organisationRepo: createOrganisationRepository(supabase),
     argumentRepo: createArgumentRepository(supabase),
-    reputationRepo: createReputationRepository(supabase),
   })
 
   if (Either.isLeft(result)) {
