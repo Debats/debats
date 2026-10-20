@@ -1,10 +1,13 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ArrayFormatter } from 'effect/ParseResult'
-import { createTheme, generateThemeSlug, Theme } from '../entities/theme'
+import { generateThemeSlug, Theme, ThemeId } from '../entities/theme'
+import { addTheme, replayTheme, themeStream } from '../aggregates/theme'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { requireThemeState } from './theme-stream'
 
 const CreateThemeInput = S.Struct({
   name: S.String.pipe(S.minLength(2), S.maxLength(50)),
@@ -15,13 +18,15 @@ type CreateThemeParams = {
   contributor: ContributorIdentity | null
   name: string
   description: string
+  runUnitOfWork: RunUnitOfWork
+  /** Read side: the name must be free */
   themeRepo: ThemeRepository
 }
 
 export async function createThemeUseCase(
   params: CreateThemeParams,
 ): Promise<Either.Either<Theme, string | FieldErrors>> {
-  const { contributor, name, description, themeRepo } = params
+  const { contributor, name, description, runUnitOfWork, themeRepo } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -54,8 +59,19 @@ export async function createThemeUseCase(
     return Either.left('Une thématique avec ce nom existe déjà.')
   }
 
-  const theme = createTheme({ name, description, createdBy: contributor.id })
-  const created = await Effect.runPromise(themeRepo.create(theme))
+  // The command names the theme: the stream exists from its first event
+  const id = ThemeId.make(crypto.randomUUID())
+  const state = await Effect.runPromise(
+    runUnitOfWork((events) =>
+      pipe(
+        events.append(themeStream(id), 0, [addTheme({ name, description })], {
+          actorId: contributor.id,
+        }),
+        Effect.flatMap(replayTheme),
+        Effect.flatMap(requireThemeState),
+      ),
+    ),
+  )
 
-  return Either.right(created)
+  return Either.right(state.theme)
 }

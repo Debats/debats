@@ -6,6 +6,7 @@ import { SubjectSource } from '../../domain/use-cases/subject-stream'
 import { PublicFigureSource } from '../../domain/use-cases/public-figure-stream'
 import { OrganisationSource } from '../../domain/use-cases/organisation-stream'
 import { ArgumentSource } from '../../domain/use-cases/argument-stream'
+import { ThemeSource } from '../../domain/use-cases/theme-stream'
 import { createArgumentRepository } from '../database/argument-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../database/organisation-membership-repository-supabase'
@@ -94,4 +95,9 @@ export function createArgumentSource(supabase: SupabaseClient<Database>): Argume
   const argumentRepo = createArgumentRepository(supabase)
   return (argumentId) =>
     Effect.map(argumentRepo.findById(argumentId), (argument) => (argument ? { argument } : null))
+}
+
+export function createThemeSource(supabase: SupabaseClient<Database>): ThemeSource {
+  const themes = createThemeRepository(supabase)
+  return (themeId) => Effect.map(themes.findById(themeId), (theme) => (theme ? { theme } : null))
 }

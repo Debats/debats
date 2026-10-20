@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createThemeUseCase } from '../../domain/use-cases/create-theme'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -19,6 +20,7 @@ export async function createThemeAction(formData: FormData): Promise<CreateTheme
     contributor,
     name: String(formData.get('name') ?? ''),
     description: String(formData.get('description') ?? ''),
+    runUnitOfWork,
     themeRepo: createThemeRepository(supabase),
   })
 

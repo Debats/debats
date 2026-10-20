@@ -7,6 +7,7 @@ export interface ThemeAssignment {
   isPrimary: boolean
 }
 
+/** Read side of the themes: writes go through the event journal */
 export interface ThemeRepository {
   findAll(): Effect.Effect<Theme[], DatabaseError>
 
@@ -15,12 +16,6 @@ export interface ThemeRepository {
   findById(id: string): Effect.Effect<Theme | null, DatabaseError>
 
   findByIds(ids: string[]): Effect.Effect<Theme[], DatabaseError>
-
-  create(theme: Theme): Effect.Effect<Theme, DatabaseError>
-
-  update(theme: Theme): Effect.Effect<Theme, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
 
   /**
    * Returns all (themeId, subjectId) pairs where is_primary = true.

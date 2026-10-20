@@ -2,7 +2,8 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createThemeSource } from '../../infra/events/sources'
 import { deleteThemeUseCase } from '../../domain/use-cases/delete-theme'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -15,7 +16,8 @@ export async function deleteThemeAction(themeId: string): Promise<DeleteThemeRes
   const result = await deleteThemeUseCase({
     contributor,
     themeId,
-    themeRepo: createThemeRepository(supabase),
+    runUnitOfWork,
+    themeSource: createThemeSource(supabase),
   })
 
   if (Either.isLeft(result)) {

@@ -86,59 +86,6 @@ export function createThemeRepository(supabase: SupabaseClient): ThemeRepository
         catch: (error) => dbError('Failed to fetch themes by ids', error),
       }),
 
-    create: (theme: Theme) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('themes')
-            .insert({
-              id: theme.id,
-              name: theme.name,
-              slug: theme.slug,
-              description: theme.description,
-              created_by: theme.createdBy,
-              updated_by: theme.updatedBy,
-            })
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to create theme', error),
-      }),
-
-    update: (theme: Theme) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('themes')
-            .update({
-              name: theme.name,
-              slug: theme.slug,
-              description: theme.description,
-              updated_by: theme.updatedBy,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', theme.id)
-            .select()
-            .single()
-
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to update theme', error),
-      }),
-
-    delete: (id: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.from('themes').delete().eq('id', id)
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete theme', error),
-      }),
-
     findAllPrimaryLinks: () =>
       Effect.tryPromise({
         try: async () => {

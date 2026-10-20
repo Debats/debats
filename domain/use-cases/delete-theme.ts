@@ -1,18 +1,23 @@
 import { Either, Effect } from 'effect'
-import { ThemeRepository } from '../repositories/theme-repository'
+import { deleteTheme } from '../aggregates/theme'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity } from './types'
+import { ContributorIdentity, Rejected } from './types'
+import { runCommand } from './run-command'
+import { decideOnTheme, themeAggregate, ThemeSource } from './theme-stream'
 
 type DeleteThemeParams = {
   contributor: ContributorIdentity | null
   themeId: string
-  themeRepo: ThemeRepository
+  runUnitOfWork: RunUnitOfWork
+  themeSource: ThemeSource
 }
 
+/** Removes a theme; the subjects it gathered keep their other themes */
 export async function deleteThemeUseCase(
   params: DeleteThemeParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, themeId, themeRepo } = params
+  const { contributor, themeId, runUnitOfWork, themeSource } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -23,12 +28,14 @@ export async function deleteThemeUseCase(
     return Either.left(`Vous devez être ${rank} pour supprimer une thématique.`)
   }
 
-  const theme = await Effect.runPromise(themeRepo.findById(themeId))
-  if (!theme) {
-    return Either.left('La thématique est introuvable.')
-  }
-
-  await Effect.runPromise(themeRepo.delete(themeId))
-
-  return Either.right(undefined)
+  const outcome = await runCommand(
+    runUnitOfWork((events) =>
+      decideOnTheme(events, themeId, themeSource, contributor.id, (state) =>
+        state.deletedAt
+          ? Effect.fail(new Rejected(themeAggregate.notFound))
+          : Effect.succeed([deleteTheme()]),
+      ),
+    ),
+  )
+  return Either.map(outcome, () => undefined)
 }
