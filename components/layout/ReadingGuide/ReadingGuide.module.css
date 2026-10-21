@@ -6,7 +6,7 @@
 }
 
 .title {
-  composes: label from '../../../../styles/text.module.css';
+  composes: label from '../../../styles/text.module.css';
   margin-bottom: 12px;
 }
 
@@ -20,7 +20,7 @@
 }
 
 .step {
-  composes: small from '../../../../styles/text.module.css';
+  composes: small from '../../../styles/text.module.css';
   display: flex;
   gap: 10px;
 }

@@ -174,6 +174,33 @@ interface StatementWithAuthorAndSubjectRow extends StatementWithAuthorRow {
   positions: PositionRow & { subjects: SubjectRow }
 }
 
+/** What narrowing a feed query needs from the builder, whatever it selects */
+interface FeedQueryBuilder {
+  is(column: string, value: null): this
+  not(column: string, operator: string, value: null): this
+  eq(column: string, value: string): this
+}
+
+/**
+ * The feed query: every live statement with its author, position, subject
+ * and arguments (none required). Filtering by theme joins the subject's
+ * themes, which only then narrows to subjects that have one.
+ */
+const feedQuery = (themeSlug: string | undefined) => `
+  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
+  created_by, created_at, updated_at, deleted_at,
+  positions!inner (
+    id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
+    subjects!inner (
+      id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at, deleted_at
+      ${themeSlug ? ', subject_themes!inner (themes!inner (slug))' : ''}
+    )
+  ),
+  public_figures (id, name, slug),
+  organisations (id, name, slug, acronym),
+  ${ARGUMENTS_EMBED}
+`
+
 function mapStatementWithAuthorAndSubjectRow(
   row: StatementWithAuthorAndSubjectRow,
 ): StatementWithAuthorAndSubject {
@@ -427,6 +454,49 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           return data.map((row) => row.id)
         },
         catch: (error) => dbError('Failed to fetch the statement ids of a subject', error),
+      }),
+
+    findFeed: (filters, page) =>
+      Effect.tryPromise({
+        try: async () => {
+          // The same narrowing for the count and for the page
+          const narrowed = <Q extends FeedQueryBuilder>(query: Q): Q => {
+            let q = query
+              .is('deleted_at', null)
+              .is('positions.deleted_at', null)
+              .is('positions.subjects.deleted_at', null)
+            if (filters.authorKind === 'public_figure') q = q.not('public_figure_id', 'is', null)
+            if (filters.authorKind === 'organisation') q = q.not('organisation_id', 'is', null)
+            if (filters.statementType) q = q.eq('statement_type', filters.statementType)
+            if (filters.themeSlug) {
+              q = q.eq('positions.subjects.subject_themes.themes.slug', filters.themeSlug)
+            }
+            return q
+          }
+          const counted = await narrowed(
+            supabase
+              .from('statements')
+              .select(feedQuery(filters.themeSlug), { count: 'exact', head: true }),
+          )
+          if (counted.error) throw counted.error
+          const total = counted.count ?? 0
+          // PostgREST refuses a range past the end: a page beyond the last one is simply empty
+          if (page.offset >= total) return { entries: [], total }
+          const { data, error } = await narrowed(
+            supabase.from('statements').select(feedQuery(filters.themeSlug)),
+          )
+            .order('stated_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .range(page.offset, page.offset + page.limit - 1)
+          if (error) throw error
+          return {
+            entries: (data as unknown as StatementWithAuthorAndSubjectRow[]).map(
+              mapStatementWithAuthorAndSubjectRow,
+            ),
+            total,
+          }
+        },
+        catch: (error) => dbError('Failed to fetch the statements feed', error),
       }),
 
     findStatedSpanBySubjectId: (subjectId: string) =>

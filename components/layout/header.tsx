@@ -17,12 +17,16 @@ interface NavEntry {
 }
 
 /** Une entrée sans href est annoncée mais pas encore disponible */
+/** Whether the page lives in this section: `/p/x` under `/p`, but `/prises-de-position` not under `/p` */
+const isUnder = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`)
+
 const navEntries: NavEntry[] = [
   { label: 'Sujets', href: '/s' },
   { label: 'Personnalités', href: '/p' },
   { label: 'Organisations', href: '/o' },
   { label: 'Arguments', href: '/arguments' },
-  { label: 'Prises de position' },
+  { label: 'Prises de position', href: '/prises-de-position' },
   { label: 'Méthode', href: '/guide' },
 ]
 
@@ -92,7 +96,7 @@ export default function Header() {
                   key={label}
                   href={href}
                   className={styles.navLink}
-                  aria-current={pathname.startsWith(href) ? 'page' : undefined}
+                  aria-current={isUnder(pathname, href) ? 'page' : undefined}
                 >
                   {label}
                 </Link>

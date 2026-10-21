@@ -5,6 +5,7 @@ import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { ArgumentRef } from '../read-models/argument'
+import { FeedFilters } from '../read-models/statement-feed'
 
 export class DatabaseError extends Error {
   readonly _tag = 'DatabaseError'
@@ -29,6 +30,12 @@ export interface StatementWithAuthor {
   position: Position
   author: StatementAuthorRef
   arguments: ArgumentRef[]
+}
+
+/** One page of the feed, and how many statements the filters match in all */
+export interface FeedPage {
+  entries: StatementWithAuthorAndSubject[]
+  total: number
 }
 
 /** The first and last days an opinion was stated on a subject */
@@ -97,6 +104,12 @@ export interface StatementRepository {
 
   /** The ids of the live statements on any position of a subject */
   findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
+
+  /** The live statements of the whole site, newest stated first, narrowed and paged */
+  findFeed(
+    filters: FeedFilters,
+    page: { limit: number; offset: number },
+  ): Effect.Effect<FeedPage, DatabaseError>
 
   /** The first and last days an opinion was stated on a subject; null without any */
   findStatedSpanBySubjectId(subjectId: string): Effect.Effect<StatedSpan | null, DatabaseError>

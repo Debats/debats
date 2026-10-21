@@ -1,9 +1,5 @@
-import Link from 'next/link'
-import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
-import ArgumentChips from '../../../../components/statements/ArgumentChips'
-import StatementSource from '../../../../components/statements/StatementSource'
-import { authorHref } from '../../../../domain/read-models/statement-author'
-import { TimelineEntry, TimelineYear } from '../../../../domain/services/subject-timeline'
+import DatedStatement from '../../../../components/statements/DatedStatement'
+import { TimelineYear } from '../../../../domain/services/subject-timeline'
 import { plural } from '../../../../lib/plural'
 import styles from './SubjectTimeline.module.css'
 
@@ -18,33 +14,6 @@ const yearSummary = (year: TimelineYear) =>
     `${year.authorsCount} ${plural(year.authorsCount, 'auteur·ice', 'auteur·ices')}`,
     `${year.positionsCount} ${plural(year.positionsCount, 'position', 'positions')}`,
   ].join(' · ')
-
-function Entry({ entry, subjectSlug }: { entry: TimelineEntry; subjectSlug: string }) {
-  return (
-    <li className={styles.entry}>
-      <AuthorAvatar author={entry.author} size={44} />
-      <div className={styles.body}>
-        <p className={styles.head}>
-          <Link href={authorHref(entry.author)} className={styles.name}>
-            {entry.author.name}
-          </Link>
-          <span className={styles.for}>
-            pour{' '}
-            <Link
-              href={`/s/${subjectSlug}/position/${entry.position.slug}`}
-              className={styles.position}
-            >
-              {entry.position.title}
-            </Link>
-          </span>
-        </p>
-        <blockquote className={styles.quote}>{entry.quote}</blockquote>
-        <StatementSource statement={entry} />
-        <ArgumentChips arguments={entry.arguments} />
-      </div>
-    </li>
-  )
-}
 
 /**
  * Onglet Chronologie d'un sujet : les prises de position dans l'ordre où
@@ -69,11 +38,18 @@ export default function SubjectTimeline({ subjectSlug, years }: SubjectTimelineP
             </h3>
             <p className={styles.yearMeta}>{yearSummary(year)}</p>
           </header>
-          <ol className={styles.entries}>
-            {year.entries.map((entry) => (
-              <Entry key={entry.statementId} entry={entry} subjectSlug={subjectSlug} />
-            ))}
-          </ol>
+          {year.entries.map((entry) => (
+            <DatedStatement
+              key={entry.statementId}
+              author={entry.author}
+              position={{
+                title: entry.position.title,
+                href: `/s/${subjectSlug}/position/${entry.position.slug}`,
+              }}
+              statement={entry}
+              arguments={entry.arguments}
+            />
+          ))}
         </section>
       ))}
     </div>

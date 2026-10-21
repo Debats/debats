@@ -165,6 +165,29 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
         catch: (error) => dbError('Failed to fetch public figure occupations', error),
       }),
 
+    findCurrentHeldByPublicFigureIds: (publicFigureIds) =>
+      Effect.tryPromise({
+        try: async () => {
+          const rows = await fetchInChunks(publicFigureIds, async (chunk) => {
+            const { data, error } = await supabase
+              .from('public_figure_occupations')
+              .select('public_figure_id, occupations!inner (*)')
+              .in('public_figure_id', chunk)
+              .eq('is_current', true)
+            if (error) throw error
+            return data as unknown as Array<{
+              public_figure_id: string
+              occupations: OccupationRow
+            }>
+          })
+          return rows.map((row) => ({
+            publicFigureId: row.public_figure_id,
+            occupation: mapRow(row.occupations),
+          }))
+        },
+        catch: (error) => dbError('Failed to fetch current occupations by figures', error),
+      }),
+
     findPublicFigureIdsByOccupationId: (occupationId) =>
       Effect.tryPromise({
         try: async () => {

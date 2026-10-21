@@ -27,7 +27,7 @@ import SubjectTimeline from '../SubjectTimeline'
 import PositionsOverview from '../PositionsOverview'
 import PositionsFilter, { parseAuthorKindParam } from '../PositionsFilter'
 import PositionCard from '../PositionCard'
-import ReadingGuide from '../ReadingGuide'
+import ReadingGuide from '../../../../components/layout/ReadingGuide'
 import SubjectLatestStatements from '../SubjectLatestStatements'
 import SubjectOrganisations from '../SubjectOrganisations'
 import SubjectArguments from '../SubjectArguments'
@@ -173,7 +173,21 @@ export default async function SubjectDetail({
         hideLatestStatements
         aside={
           <>
-            <ReadingGuide />
+            <ReadingGuide
+              id="comment-lire"
+              title="Comment lire cette page ?"
+              steps={[
+                <>
+                  Une <strong>position</strong> est une réponse possible à la problématique du
+                  sujet.
+                </>,
+                <>
+                  Une <strong>prise de position</strong> est une citation datée et sourcée d’une
+                  personnalité.
+                </>,
+                <>Le site ne dit pas qui a raison. Il montre qui dit quoi, et sur quelles bases.</>,
+              ]}
+            />
             <SubjectLatestStatements statements={latestStatements} />
             <SubjectOrganisations positions={positions} />
           </>

@@ -65,6 +65,17 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
       )
       return Effect.succeed(undefined)
     },
+    findCurrentHeldByPublicFigureIds: (figureIds) =>
+      Effect.succeed(
+        figureIds.flatMap((publicFigureId) =>
+          linksOf(publicFigureId)
+            .filter((link) => link.current)
+            .flatMap((link) => {
+              const occupation = rows.find((o) => o.id === link.occupationId)
+              return occupation ? [{ publicFigureId, occupation }] : []
+            }),
+        ),
+      ),
     findByPublicFigureId: (figureId) =>
       Effect.succeed(
         linksOf(figureId).flatMap(({ occupationId, current }) => {

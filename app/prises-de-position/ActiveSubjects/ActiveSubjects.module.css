@@ -1,0 +1,41 @@
+.title {
+  composes: label from '../../../styles/text.module.css';
+  margin-bottom: 8px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.subject,
+.subject:link,
+.subject:visited {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.subject:hover {
+  color: var(--signal);
+}
+
+.count {
+  composes: meta from '../../../styles/text.module.css';
+}

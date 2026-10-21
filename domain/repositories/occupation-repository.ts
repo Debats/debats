@@ -26,6 +26,11 @@ export interface OccupationRepository {
   /** Every public figure holding an occupation */
   findPublicFigureIdsByOccupationId(occupationId: string): Effect.Effect<string[], DatabaseError>
 
+  /** The occupations these figures hold today, to name their role in a list */
+  findCurrentHeldByPublicFigureIds(
+    publicFigureIds: string[],
+  ): Effect.Effect<Array<{ publicFigureId: string; occupation: Occupation }>, DatabaseError>
+
   /** Every (figure, occupation) link of the site, for the counters */
   findAllAssignments(): Effect.Effect<OccupationAssignment[], DatabaseError>
 
