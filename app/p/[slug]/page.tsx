@@ -25,12 +25,16 @@ import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import FigureHero, { Affiliation } from './FigureHero'
-import StatementsBySubject from '../../../components/statements/StatementsBySubject'
+import StatementsBySubject, {
+  orderedHref,
+  parseStatementsOrder,
+} from '../../../components/statements/StatementsBySubject'
 import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
 import FigureAnalyses from './FigureAnalyses'
 
 interface PageProps {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ tri?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -76,8 +80,9 @@ function currentAffiliations(memberships: MembershipWithOrganisation[]): Affilia
     }))
 }
 
-export default async function PersonalityDetailPage({ params }: PageProps) {
-  const { slug } = await params
+export default async function PersonalityDetailPage({ params, searchParams }: PageProps) {
+  const [{ slug }, { tri }] = await Promise.all([params, searchParams])
+  const order = parseStatementsOrder(tri)
 
   const supabase = createAdminSupabaseClient()
   const publicFigureRepo = createPublicFigureRepository(supabase)
@@ -190,8 +195,10 @@ export default async function PersonalityDetailPage({ params }: PageProps) {
           ]}
         />
         <StatementsBySubject
-          groups={groups}
+          statements={statements}
+          order={order}
           subjectHref={(subjectSlug) => `/p/${slug}/s/${subjectSlug}`}
+          orderHref={(wanted) => orderedHref(`/p/${slug}`, wanted)}
         />
       </ContentWithSidebar>
     </>

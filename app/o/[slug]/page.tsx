@@ -17,12 +17,16 @@ import Button from '../../../components/ui/Button'
 import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
-import StatementsBySubject from '../../../components/statements/StatementsBySubject'
+import StatementsBySubject, {
+  orderedHref,
+  parseStatementsOrder,
+} from '../../../components/statements/StatementsBySubject'
 import OrganisationHero from './OrganisationHero'
 import OrganisationMembers from './OrganisationMembers'
 
 interface PageProps {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ tri?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -47,8 +51,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function OrganisationDetailPage({ params }: PageProps) {
-  const { slug } = await params
+export default async function OrganisationDetailPage({ params, searchParams }: PageProps) {
+  const [{ slug }, { tri }] = await Promise.all([params, searchParams])
+  const order = parseStatementsOrder(tri)
 
   const supabase = createAdminSupabaseClient()
   const organisationRepo = createOrganisationRepository(supabase)
@@ -151,8 +156,10 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
           ]}
         />
         <StatementsBySubject
-          groups={groups}
+          statements={statements}
+          order={order}
           subjectHref={(subjectSlug) => `/s/${subjectSlug}`}
+          orderHref={(wanted) => orderedHref(`/o/${slug}`, wanted)}
           editHref={
             canEditStatement
               ? (statementId) => `/prise-de-position/${statementId}/modifier`

@@ -2,6 +2,7 @@ import { StatementType } from '../entities/statement'
 import { ArgumentRef } from '../read-models/argument'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { StatedSpan, StatementWithAuthor } from '../repositories/statement-repository'
+import { groupStatementsByYear } from './statements-by-year'
 
 /** One statement as the timeline of a subject shows it */
 export interface TimelineEntry {
@@ -26,45 +27,28 @@ export interface TimelineYear {
   positionsCount: number
 }
 
-const toEntry = ({ statement, position, author, arguments: used }: StatementWithAuthor) => ({
-  entry: {
-    statementId: statement.id,
-    statedAt: statement.statedAt,
-    author,
-    position: { id: position.id, title: position.title, slug: position.slug },
-    statementType: statement.statementType,
-    quote: statement.quote,
-    sourceName: statement.sourceName,
-    sourceUrl: statement.sourceUrl,
-    arguments: used,
-  },
-  recordedAt: statement.createdAt,
+const toEntry = ({
+  statement,
+  position,
+  author,
+  arguments: used,
+}: StatementWithAuthor): TimelineEntry => ({
+  statementId: statement.id,
+  statedAt: statement.statedAt,
+  author,
+  position: { id: position.id, title: position.title, slug: position.slug },
+  statementType: statement.statementType,
+  quote: statement.quote,
+  sourceName: statement.sourceName,
+  sourceUrl: statement.sourceUrl,
+  arguments: used,
 })
 
-/**
- * The statements of a subject in the order they were stated, newest first,
- * one group per year. Two statements of the same day stand in the order
- * they were recorded, the latest first.
- */
+/** The statements of a subject in the order they were stated, newest first, one group per year */
 export function subjectTimeline(statements: StatementWithAuthor[]): TimelineYear[] {
-  const sorted = statements
-    .map(toEntry)
-    .sort(
-      (a, b) =>
-        b.entry.statedAt.getTime() - a.entry.statedAt.getTime() ||
-        b.recordedAt.getTime() - a.recordedAt.getTime(),
-    )
-    .map(({ entry }) => entry)
-
-  const years = new Map<number, TimelineEntry[]>()
-  for (const entry of sorted) {
-    const year = entry.statedAt.getUTCFullYear()
-    years.set(year, [...(years.get(year) ?? []), entry])
-  }
-
-  return Array.from(years, ([year, entries]) => ({
+  return groupStatementsByYear(statements).map(({ year, entries }) => ({
     year,
-    entries,
+    entries: entries.map(toEntry),
     authorsCount: new Set(entries.map((e) => `${e.author.kind}:${e.author.id}`)).size,
     positionsCount: new Set(entries.map((e) => e.position.id)).size,
   }))

@@ -95,3 +95,56 @@
     font-size: 21px;
   }
 }
+
+/* Ordre chronologique : une section par année, le millésime en grand chiffre serif */
+.year {
+  padding: 24px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.year:last-child {
+  border-bottom: none;
+}
+
+.yearHead {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.yearTitle {
+  composes: number from '../../../styles/text.module.css';
+}
+
+.yearMeta {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.dated {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dated:last-child {
+  border-bottom: none;
+}
+
+.datedSubject,
+.datedSubject:link,
+.datedSubject:visited {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.datedSubject:hover {
+  color: var(--signal);
+}
