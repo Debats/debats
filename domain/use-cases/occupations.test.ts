@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either } from 'effect'
 import { createOccupationUseCase } from './create-occupation'
 import { createOccupationFamilyUseCase } from './create-occupation-family'
 import { deleteOccupationUseCase } from './delete-occupation'
@@ -7,7 +7,9 @@ import { deleteOccupationFamilyUseCase } from './delete-occupation-family'
 import { setPublicFigureOccupationsUseCase } from './set-public-figure-occupations'
 import {
   fakeFamilyRepo,
+  fakeFamilySource,
   fakeOccupationRepo,
+  journalWithFamilies,
   sampleFamily,
   sampleOccupation,
 } from './occupation-test-helpers'
@@ -29,131 +31,214 @@ const figure = createPublicFigure({
   createdBy: 'founder',
 })
 
+const eventsOf = (unit: { journal: { all: () => { type: string; streamId: string }[] } }) =>
+  unit.journal.all().map((e) => [e.streamId, e.type])
+
 describe('createOccupationFamilyUseCase', () => {
+  const familyParams = (unit = inMemoryUnitOfWork(), seed = [sampleFamily()]) => ({
+    contributor: idealiste,
+    name: 'Religieux',
+    description: '',
+    runUnitOfWork: unit.run,
+    familyRepo: fakeFamilyRepo(seed),
+  })
+
   it('requires the Idéaliste rank', async () => {
     const result = await createOccupationFamilyUseCase({
+      ...familyParams(),
       contributor: eloquent,
-      name: 'Santé',
-      description: '',
-      familyRepo: fakeFamilyRepo(),
     })
 
     expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
   })
 
-  it('appends the family after the existing ones', async () => {
-    const repo = fakeFamilyRepo([sampleFamily('Exécutif', 1), sampleFamily('Santé', 7)])
+  it('refuses a name already in the list', async () => {
     const result = await createOccupationFamilyUseCase({
-      contributor: idealiste,
-      name: 'Religieux',
-      description: '',
-      familyRepo: repo,
+      ...familyParams(inMemoryUnitOfWork(), [sampleFamily('Religieux')]),
     })
 
-    expect(Either.isRight(result) && result.right.position).toBe(8)
-    expect(repo.rows).toHaveLength(3)
+    expect(Either.isLeft(result) && result.left).toEqual({ name: 'Une famille porte déjà ce nom.' })
+  })
+
+  it('opens the family stream after the existing families', async () => {
+    const unit = inMemoryUnitOfWork()
+    const result = await createOccupationFamilyUseCase(
+      familyParams(unit, [sampleFamily('Exécutif', 1), sampleFamily('Santé', 7)]),
+    )
+
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      slug: 'religieux',
+      position: 8,
+      createdBy: 'idealiste',
+    })
+    expect(unit.journal.all().map((e) => [e.type, e.revision])).toEqual([
+      ['OccupationFamilyAdded', 1],
+    ])
   })
 })
 
 describe('createOccupationUseCase', () => {
   const family = sampleFamily()
+  const occupationParams = (
+    unit = inMemoryUnitOfWork(),
+    listed = [] as ReturnType<typeof sampleOccupation>[],
+  ) => ({
+    contributor: idealiste,
+    name: 'Député·e',
+    familyId: family.id,
+    description: 'Membre de l’Assemblée nationale',
+    runUnitOfWork: unit.run,
+    familySource: fakeFamilySource([family], listed),
+    occupationRepo: fakeOccupationRepo(listed),
+  })
 
   it('requires the Idéaliste rank', async () => {
     const result = await createOccupationUseCase({
+      ...occupationParams(),
       contributor: eloquent,
-      name: 'Économiste',
-      familyId: family.id,
-      description: '',
-      occupationRepo: fakeOccupationRepo(),
-      familyRepo: fakeFamilyRepo([family]),
     })
 
     expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
   })
 
   it('refuses an unknown family', async () => {
-    const result = await createOccupationUseCase({
-      contributor: idealiste,
-      name: 'Économiste',
-      familyId: 'missing',
-      description: '',
-      occupationRepo: fakeOccupationRepo(),
-      familyRepo: fakeFamilyRepo([family]),
-    })
+    const result = await createOccupationUseCase({ ...occupationParams(), familyId: 'missing' })
 
     expect(Either.isLeft(result) && result.left).toEqual({
       familyId: 'Choisissez une famille de métiers.',
     })
   })
 
-  it('refuses a name already in the list, whatever its spacing', async () => {
+  it('refuses a name already in the list, whatever its spacing or family', async () => {
     const result = await createOccupationUseCase({
-      contributor: idealiste,
-      name: ' Économiste ',
-      familyId: family.id,
-      description: '',
-      occupationRepo: fakeOccupationRepo([sampleOccupation('Économiste', family.id)]),
-      familyRepo: fakeFamilyRepo([family]),
+      ...occupationParams(inMemoryUnitOfWork(), [sampleOccupation('Député·e', 'other-family')]),
+      name: ' Député·e ',
     })
 
     expect(Either.isLeft(result) && result.left).toEqual({ name: 'Un métier porte déjà ce nom.' })
   })
 
-  it('creates the occupation in its family', async () => {
-    const repo = fakeOccupationRepo()
-    const result = await createOccupationUseCase({
-      contributor: idealiste,
-      name: 'Député·e',
+  it('records the occupation in the stream of its family', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await createOccupationUseCase(occupationParams(unit))
+
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      slug: 'depute-e',
       familyId: family.id,
       description: 'Membre de l’Assemblée nationale',
-      occupationRepo: repo,
-      familyRepo: fakeFamilyRepo([family]),
+      createdBy: 'idealiste',
     })
+    expect(eventsOf(unit)).toEqual([
+      [family.id, 'OccupationFamilyAdded'],
+      [family.id, 'OccupationAdded'],
+    ])
+  })
 
-    expect(Either.isRight(result) && result.right.slug).toBe('depute-e')
-    expect(Either.isRight(result) && result.right.familyId).toBe(family.id)
-    expect(repo.rows).toHaveLength(1)
+  it('imports a family the journal does not know yet, with its occupations', async () => {
+    const unit = inMemoryUnitOfWork()
+    const listed = [sampleOccupation('Économiste', family.id)]
+    const result = await createOccupationUseCase(occupationParams(unit, listed))
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(eventsOf(unit)).toEqual([
+      [family.id, 'OccupationFamilyImported'],
+      [family.id, 'OccupationImported'],
+      [family.id, 'OccupationAdded'],
+    ])
+  })
+
+  it('refuses a family deleted meanwhile', async () => {
+    const unit = await journalWithFamilies([family])
+    await deleteOccupationFamilyUseCase({
+      contributor: idealiste,
+      familyId: family.id,
+      runUnitOfWork: unit.run,
+      familySource: fakeFamilySource([family]),
+    })
+    const result = await createOccupationUseCase(occupationParams(unit))
+
+    expect(Either.isLeft(result) && result.left).toEqual({
+      familyId: 'Choisissez une famille de métiers.',
+    })
   })
 })
 
 describe('deleteOccupationUseCase', () => {
+  const family = sampleFamily()
+  const occupation = sampleOccupation('Économiste', family.id)
+  const deleteParams = (unit = inMemoryUnitOfWork()) => ({
+    contributor: idealiste,
+    occupationId: occupation.id,
+    runUnitOfWork: unit.run,
+    familySource: fakeFamilySource([family], [occupation]),
+    occupationRepo: fakeOccupationRepo([occupation]),
+  })
+
   it('requires the Idéaliste rank', async () => {
-    const occupation = sampleOccupation()
-    const result = await deleteOccupationUseCase({
+    const result = await deleteOccupationUseCase({ ...deleteParams(), contributor: eloquent })
+
+    expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
+  })
+
+  it('refuses an occupation nobody knows', async () => {
+    const result = await deleteOccupationUseCase({ ...deleteParams(), occupationId: 'missing' })
+
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
+  })
+
+  it('records the removal in the stream of its family', async () => {
+    const unit = await journalWithFamilies([family], [occupation])
+    const result = await deleteOccupationUseCase(deleteParams(unit))
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(eventsOf(unit).at(-1)).toEqual([family.id, 'OccupationRemoved'])
+  })
+
+  it('refuses an occupation already removed from its family', async () => {
+    const unit = await journalWithFamilies([family], [occupation])
+    await deleteOccupationUseCase(deleteParams(unit))
+    const result = await deleteOccupationUseCase(deleteParams(unit))
+
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
+    expect(eventsOf(unit).filter(([, type]) => type === 'OccupationRemoved')).toHaveLength(1)
+  })
+})
+
+describe('deleteOccupationFamilyUseCase', () => {
+  const family = sampleFamily()
+  const deleteParams = (unit = inMemoryUnitOfWork()) => ({
+    contributor: idealiste,
+    familyId: family.id,
+    runUnitOfWork: unit.run,
+    familySource: fakeFamilySource([family]),
+  })
+
+  it('requires the Idéaliste rank', async () => {
+    const result = await deleteOccupationFamilyUseCase({
+      ...deleteParams(),
       contributor: eloquent,
-      occupationId: occupation.id,
-      occupationRepo: fakeOccupationRepo([occupation]),
     })
 
     expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
   })
 
-  it('removes the occupation', async () => {
-    const occupation = sampleOccupation()
-    const repo = fakeOccupationRepo([occupation])
-    const result = await deleteOccupationUseCase({
-      contributor: idealiste,
-      occupationId: occupation.id,
-      occupationRepo: repo,
-    })
+  it('records the deletion', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await deleteOccupationFamilyUseCase(deleteParams(unit))
 
     expect(Either.isRight(result)).toBe(true)
-    expect(repo.rows).toHaveLength(0)
+    expect(eventsOf(unit)).toEqual([
+      [family.id, 'OccupationFamilyAdded'],
+      [family.id, 'OccupationFamilyDeleted'],
+    ])
   })
-})
 
-describe('deleteOccupationFamilyUseCase', () => {
-  it('removes the family', async () => {
-    const family = sampleFamily()
-    const repo = fakeFamilyRepo([family])
-    const result = await deleteOccupationFamilyUseCase({
-      contributor: idealiste,
-      familyId: family.id,
-      familyRepo: repo,
-    })
+  it('refuses a family already deleted', async () => {
+    const unit = await journalWithFamilies([family])
+    await deleteOccupationFamilyUseCase(deleteParams(unit))
+    const result = await deleteOccupationFamilyUseCase(deleteParams(unit))
 
-    expect(Either.isRight(result)).toBe(true)
-    expect(repo.rows).toHaveLength(0)
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
   })
 })
 

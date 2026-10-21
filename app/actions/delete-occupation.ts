@@ -4,6 +4,8 @@ import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createOccupationFamilySource } from '../../infra/events/sources'
 import { deleteOccupationUseCase } from '../../domain/use-cases/delete-occupation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -18,6 +20,8 @@ export async function deleteOccupationAction(
   const result = await deleteOccupationUseCase({
     contributor,
     occupationId,
+    runUnitOfWork,
+    familySource: createOccupationFamilySource(supabase),
     occupationRepo: createOccupationRepository(supabase),
   })
 

@@ -126,12 +126,6 @@ export interface StatementRepository {
    * Get the N most recently reported statements by created_at date
    */
   findLatestReported(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
-
-  /**
-   * Writes go through the journal (domain/aggregates/statement.ts); this
-   * repository only reads the projection. Deletion has no command yet.
-   */
-  delete(id: string): Effect.Effect<void, DatabaseError>
 }
 
 export const StatementRepository = Context.GenericTag<StatementRepository>('StatementRepository')

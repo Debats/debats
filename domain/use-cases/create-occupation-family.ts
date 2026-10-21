@@ -1,17 +1,26 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import {
-  createOccupationFamily,
   generateOccupationFamilySlug,
   OccupationFamily,
+  OccupationFamilyId,
 } from '../entities/occupation-family'
+import {
+  addOccupationFamily,
+  occupationFamilyStream,
+  replayOccupationFamily,
+} from '../aggregates/occupation-family'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { requireOccupationFamilyState } from './occupation-family-stream'
 
 type CreateOccupationFamilyParams = {
   contributor: ContributorIdentity | null
   name: string
   description: string
+  runUnitOfWork: RunUnitOfWork
+  /** Read side: the name must be free, and the family takes the last place */
   familyRepo: OccupationFamilyRepository
 }
 
@@ -22,7 +31,7 @@ const NAME_MAX = 50
 export async function createOccupationFamilyUseCase(
   params: CreateOccupationFamilyParams,
 ): Promise<Either.Either<OccupationFamily, string | FieldErrors>> {
-  const { contributor, familyRepo } = params
+  const { contributor, description, runUnitOfWork, familyRepo } = params
   const name = params.name.trim()
 
   if (!contributor) {
@@ -48,11 +57,22 @@ export async function createOccupationFamilyUseCase(
   const families = await Effect.runPromise(familyRepo.findAll())
   const position = Math.max(0, ...families.map((f) => f.position)) + 1
 
-  const family = createOccupationFamily({
-    name,
-    description: params.description,
-    position,
-    createdBy: contributor.id,
-  })
-  return Either.right(await Effect.runPromise(familyRepo.create(family)))
+  // The command names the family: the stream exists from its first event
+  const id = OccupationFamilyId.make(crypto.randomUUID())
+  const state = await Effect.runPromise(
+    runUnitOfWork((events) =>
+      pipe(
+        events.append(
+          occupationFamilyStream(id),
+          0,
+          [addOccupationFamily({ name, description, position })],
+          { actorId: contributor.id },
+        ),
+        Effect.flatMap(replayOccupationFamily),
+        Effect.flatMap(requireOccupationFamilyState),
+      ),
+    ),
+  )
+
+  return Either.right(state.family)
 }

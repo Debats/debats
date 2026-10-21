@@ -96,59 +96,6 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
         catch: (error) => dbError('Failed to fetch occupations by ids', error),
       }),
 
-    create: (occupation) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('occupations')
-            .insert({
-              id: occupation.id,
-              name: occupation.name,
-              slug: occupation.slug,
-              family_id: occupation.familyId,
-              description: occupation.description,
-              created_by: occupation.createdBy,
-              updated_by: occupation.updatedBy,
-            })
-            .select()
-            .single()
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to create occupation', error),
-      }),
-
-    update: (occupation) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('occupations')
-            .update({
-              name: occupation.name,
-              slug: occupation.slug,
-              family_id: occupation.familyId,
-              description: occupation.description,
-              updated_by: occupation.updatedBy,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', occupation.id)
-            .select()
-            .single()
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to update occupation', error),
-      }),
-
-    delete: (id) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.from('occupations').delete().eq('id', id)
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete occupation', error),
-      }),
-
     findByPublicFigureId: (publicFigureId) =>
       Effect.tryPromise({
         try: async () => {

@@ -7,7 +7,9 @@ import { PublicFigureSource } from '../../domain/use-cases/public-figure-stream'
 import { OrganisationSource } from '../../domain/use-cases/organisation-stream'
 import { ArgumentSource } from '../../domain/use-cases/argument-stream'
 import { ThemeSource } from '../../domain/use-cases/theme-stream'
+import { OccupationFamilySource } from '../../domain/use-cases/occupation-family-stream'
 import { createArgumentRepository } from '../database/argument-repository-supabase'
+import { createOccupationFamilyRepository } from '../database/occupation-family-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../database/organisation-membership-repository-supabase'
 import { createOrganisationRepository } from '../database/organisation-repository-supabase'
@@ -100,4 +102,20 @@ export function createArgumentSource(supabase: SupabaseClient<Database>): Argume
 export function createThemeSource(supabase: SupabaseClient<Database>): ThemeSource {
   const themes = createThemeRepository(supabase)
   return (themeId) => Effect.map(themes.findById(themeId), (theme) => (theme ? { theme } : null))
+}
+
+export function createOccupationFamilySource(
+  supabase: SupabaseClient<Database>,
+): OccupationFamilySource {
+  const families = createOccupationFamilyRepository(supabase)
+  const occupations = createOccupationRepository(supabase)
+  return (familyId) =>
+    Effect.flatMap(families.findById(familyId), (family) =>
+      family
+        ? Effect.map(occupations.findAll(), (all) => ({
+            family,
+            occupations: all.filter((o) => o.familyId === familyId),
+          }))
+        : Effect.succeed(null),
+    )
 }

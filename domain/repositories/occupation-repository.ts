@@ -4,6 +4,11 @@ import { OccupationAssignmentInput, OccupationHeld } from '../read-models/occupa
 import { OccupationAssignment } from '../services/occupation-distribution'
 import { DatabaseError } from './errors'
 
+/**
+ * Reads the occupations projection. Writes go through the journal: the list
+ * itself by the family stream (domain/aggregates/occupation-family.ts), the
+ * links by the public figure stream (domain/aggregates/public-figure.ts).
+ */
 export interface OccupationRepository {
   /** Every occupation, by name */
   findAll(): Effect.Effect<Occupation[], DatabaseError>
@@ -13,12 +18,6 @@ export interface OccupationRepository {
   findById(id: string): Effect.Effect<Occupation | null, DatabaseError>
 
   findByIds(ids: string[]): Effect.Effect<Occupation[], DatabaseError>
-
-  create(occupation: Occupation): Effect.Effect<Occupation, DatabaseError>
-
-  update(occupation: Occupation): Effect.Effect<Occupation, DatabaseError>
-
-  delete(id: string): Effect.Effect<void, DatabaseError>
 
   /** The occupations a public figure holds or held, by name */
   findByPublicFigureId(publicFigureId: string): Effect.Effect<OccupationHeld[], DatabaseError>
@@ -35,7 +34,6 @@ export interface OccupationRepository {
   findAllAssignments(): Effect.Effect<OccupationAssignment[], DatabaseError>
 
   /** The (figure, occupation) links of these figures */
-  /** The links themselves are written by the public figure stream (domain/aggregates/public-figure.ts) */
   findAssignmentsByPublicFigureIds(
     publicFigureIds: string[],
   ): Effect.Effect<OccupationAssignment[], DatabaseError>

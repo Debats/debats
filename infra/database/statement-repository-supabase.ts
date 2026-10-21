@@ -575,17 +575,5 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         },
         catch: (error) => dbError('Failed to fetch latest reported statements', error),
       }),
-
-    delete: (id: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase
-            .from('statements')
-            .update({ deleted_at: new Date().toISOString() })
-            .eq('id', id)
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete statement', error),
-      }),
   }
 }

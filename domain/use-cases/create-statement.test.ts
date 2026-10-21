@@ -41,10 +41,6 @@ const fakePositionRepo = {
   findById: () => Effect.succeed(fakePosition as Position | null),
   findBySubjectAndSlug: () => Effect.succeed(null as Position | null),
   findBySubjectId: () => Effect.succeed([fakePosition]),
-  create: (p: Position) => Effect.succeed(p),
-  update: (p: Position) => Effect.succeed(p),
-  delete: () => Effect.succeed(undefined as void),
-  mergeInto: () => Effect.succeed(undefined as void),
 }
 
 const fakePublicFigureRepo = {
@@ -53,9 +49,6 @@ const fakePublicFigureRepo = {
   findBySlug: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
   findById: () => Effect.succeed(fakePublicFigure as PublicFigure | null),
   findByWikipediaUrl: () => Effect.succeed(null as PublicFigure | null),
-  create: (f: PublicFigure) => Effect.succeed(f),
-  update: (f: PublicFigure) => Effect.succeed(f),
-  delete: () => Effect.succeed(undefined as void),
   getStats: () =>
     Effect.succeed({ publicFigureId: '', subjectsCount: 0, positionsCount: 0, statementsCount: 0 }),
   findSummariesByActivity: () => Effect.succeed([]),

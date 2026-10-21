@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { ARGUMENT_STREAM } from '../../domain/aggregates/argument'
 import { CONTRIBUTOR_STREAM } from '../../domain/aggregates/contributor'
+import { OCCUPATION_FAMILY_STREAM } from '../../domain/aggregates/occupation-family'
 import { ORGANISATION_STREAM } from '../../domain/aggregates/organisation'
 import { PUBLIC_FIGURE_STREAM } from '../../domain/aggregates/public-figure'
 import { STATEMENT_STREAM } from '../../domain/aggregates/statement'
@@ -11,6 +12,7 @@ import { DatabaseError } from '../../domain/repositories/errors'
 import { PrismaTransaction } from '../prisma/client'
 import { projectArgument } from './argument-projector'
 import { projectContributor } from './contributor-projector'
+import { projectOccupationFamily } from './occupation-family-projector'
 import { projectOrganisation } from './organisation-projector'
 import { projectPublicFigure } from './public-figure-projector'
 import { projectStatement } from './statement-projector'
@@ -37,5 +39,6 @@ export const projectors: ProjectorRegistry = {
   [ORGANISATION_STREAM]: [projectOrganisation],
   [ARGUMENT_STREAM]: [projectArgument],
   [THEME_STREAM]: [projectTheme],
+  [OCCUPATION_FAMILY_STREAM]: [projectOccupationFamily],
   [CONTRIBUTOR_STREAM]: [projectContributor],
 }

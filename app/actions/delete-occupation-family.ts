@@ -3,7 +3,8 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createOccupationFamilyRepository } from '../../infra/database/occupation-family-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createOccupationFamilySource } from '../../infra/events/sources'
 import { deleteOccupationFamilyUseCase } from '../../domain/use-cases/delete-occupation-family'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -18,7 +19,8 @@ export async function deleteOccupationFamilyAction(
   const result = await deleteOccupationFamilyUseCase({
     contributor,
     familyId,
-    familyRepo: createOccupationFamilyRepository(supabase),
+    runUnitOfWork,
+    familySource: createOccupationFamilySource(supabase),
   })
 
   if (Either.isLeft(result)) {

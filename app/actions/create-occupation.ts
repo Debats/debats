@@ -4,7 +4,8 @@ import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
-import { createOccupationFamilyRepository } from '../../infra/database/occupation-family-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createOccupationFamilySource } from '../../infra/events/sources'
 import { createOccupationUseCase } from '../../domain/use-cases/create-occupation'
 import { FieldErrors } from '../../domain/use-cases/types'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -23,8 +24,9 @@ export async function createOccupationAction(formData: FormData): Promise<Create
     name: String(formData.get('name') ?? ''),
     familyId: String(formData.get('familyId') ?? ''),
     description: String(formData.get('description') ?? ''),
+    runUnitOfWork,
+    familySource: createOccupationFamilySource(supabase),
     occupationRepo: createOccupationRepository(supabase),
-    familyRepo: createOccupationFamilyRepository(supabase),
   })
 
   if (Either.isLeft(result)) {

@@ -72,36 +72,5 @@ export function createOccupationFamilyRepository(
       findOne((q) => q.eq('slug', slug), 'Failed to fetch occupation family by slug'),
 
     findById: (id) => findOne((q) => q.eq('id', id), 'Failed to fetch occupation family'),
-
-    create: (family) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('occupation_families')
-            .insert({
-              id: family.id,
-              name: family.name,
-              slug: family.slug,
-              description: family.description,
-              position: family.position,
-              created_by: family.createdBy,
-              updated_by: family.updatedBy,
-            })
-            .select()
-            .single()
-          if (error) throw error
-          return mapRow(data)
-        },
-        catch: (error) => dbError('Failed to create occupation family', error),
-      }),
-
-    delete: (id) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.from('occupation_families').delete().eq('id', id)
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete occupation family', error),
-      }),
   }
 }

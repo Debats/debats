@@ -4,6 +4,7 @@ import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createOccupationFamilyRepository } from '../../infra/database/occupation-family-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createOccupationFamilyUseCase } from '../../domain/use-cases/create-occupation-family'
 import { FieldErrors } from '../../domain/use-cases/types'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -23,6 +24,7 @@ export async function createOccupationFamilyAction(
     contributor,
     name: String(formData.get('name') ?? ''),
     description: String(formData.get('description') ?? ''),
+    runUnitOfWork,
     familyRepo: createOccupationFamilyRepository(supabase),
   })
 
