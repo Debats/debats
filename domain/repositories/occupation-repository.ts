@@ -19,11 +19,14 @@ export interface OccupationRepository {
 
   findByIds(ids: string[]): Effect.Effect<Occupation[], DatabaseError>
 
+  /** The occupations of one family, by name */
+  findByFamilyId(familyId: string): Effect.Effect<Occupation[], DatabaseError>
+
   /** The occupations a public figure holds or held, by name */
   findByPublicFigureId(publicFigureId: string): Effect.Effect<OccupationHeld[], DatabaseError>
 
-  /** Every public figure holding an occupation */
-  findPublicFigureIdsByOccupationId(occupationId: string): Effect.Effect<string[], DatabaseError>
+  /** Every (figure, occupation) link of one family, for its page */
+  findAssignmentsByFamilyId(familyId: string): Effect.Effect<OccupationAssignment[], DatabaseError>
 
   /** The occupations these figures hold today, to name their role in a list */
   findCurrentHeldByPublicFigureIds(

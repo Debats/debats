@@ -6,7 +6,10 @@ import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createOccupationRepository } from '../../../infra/database/occupation-repository-supabase'
 import { createOccupationFamilyRepository } from '../../../infra/database/occupation-family-repository-supabase'
 import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
-import { PublicFigureActivitySummary } from '../../../domain/value-objects/public-figure-activity-summary'
+import {
+  distinctFiguresCount,
+  occupationSections,
+} from '../../../domain/read-models/occupation-sections'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import PageHero from '../../../components/layout/PageHero'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
@@ -34,12 +37,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-interface OccupationSection {
-  id: string
-  name: string
-  figures: PublicFigureActivitySummary[]
-}
-
 export default async function OccupationFamilyPage({ params }: PageProps) {
   const { slug } = await params
 
@@ -52,20 +49,15 @@ export default async function OccupationFamilyPage({ params }: PageProps) {
   )
   if (!family) notFound()
 
-  const occupations = (await Effect.runPromise(occupationRepo.findAll())).filter(
-    (o) => o.familyId === family.id,
+  const [occupations, assignments] = await Promise.all([
+    Effect.runPromise(occupationRepo.findByFamilyId(family.id)),
+    Effect.runPromise(occupationRepo.findAssignmentsByFamilyId(family.id)),
+  ])
+  const figures = await Effect.runPromise(
+    figureRepo.findSummariesByIds(Array.from(new Set(assignments.map((a) => a.publicFigureId)))),
   )
-  const sections: OccupationSection[] = await Promise.all(
-    occupations.map(async (occupation) => {
-      const ids = await Effect.runPromise(
-        occupationRepo.findPublicFigureIdsByOccupationId(occupation.id),
-      )
-      const figures = await Effect.runPromise(figureRepo.findSummariesByIds(ids))
-      return { id: occupation.id, name: occupation.name, figures }
-    }),
-  )
-  const populated = sections.filter((section) => section.figures.length > 0)
-  const total = new Set(populated.flatMap((s) => s.figures.map((f) => f.id))).size
+  const populated = occupationSections(occupations, assignments, figures)
+  const total = distinctFiguresCount(populated)
 
   return (
     <>

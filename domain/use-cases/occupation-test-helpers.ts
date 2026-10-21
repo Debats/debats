@@ -40,6 +40,7 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
     findBySlug: (slug) => Effect.succeed(rows.find((o) => o.slug === slug) ?? null),
     findById: (id) => Effect.succeed(rows.find((o) => o.id === id) ?? null),
     findByIds: (ids) => Effect.succeed(rows.filter((o) => ids.includes(o.id))),
+    findByFamilyId: (familyId) => Effect.succeed(rows.filter((o) => o.familyId === familyId)),
     findCurrentHeldByPublicFigureIds: (figureIds) =>
       Effect.succeed(
         figureIds.flatMap((publicFigureId) =>
@@ -58,11 +59,13 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
           return occupation ? [{ occupation, current }] : []
         }),
       ),
-    findPublicFigureIdsByOccupationId: (occupationId) =>
+    findAssignmentsByFamilyId: (familyId) =>
       Effect.succeed(
-        Array.from(assignments.entries())
-          .filter(([, links]) => links.some((l) => l.occupationId === occupationId))
-          .map(([figureId]) => figureId),
+        Array.from(assignments.entries()).flatMap(([publicFigureId, links]) =>
+          links
+            .filter((l) => rows.find((o) => o.id === l.occupationId)?.familyId === familyId)
+            .map(({ occupationId }) => ({ publicFigureId, occupationId })),
+        ),
       ),
     findAllAssignments: () =>
       Effect.succeed(

@@ -112,9 +112,9 @@ export function createOccupationFamilySource(
   return (familyId) =>
     Effect.flatMap(families.findById(familyId), (family) =>
       family
-        ? Effect.map(occupations.findAll(), (all) => ({
+        ? Effect.map(occupations.findByFamilyId(familyId), (own) => ({
             family,
-            occupations: all.filter((o) => o.familyId === familyId),
+            occupations: own,
           }))
         : Effect.succeed(null),
     )

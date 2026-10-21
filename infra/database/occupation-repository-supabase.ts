@@ -85,6 +85,16 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
 
     findById: (id) => findOne((q) => q.eq('id', id), 'Failed to fetch occupation'),
 
+    findByFamilyId: (familyId) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await all().eq('family_id', familyId).order('name')
+          if (error) throw error
+          return data.map(mapRow)
+        },
+        catch: (error) => dbError('Failed to fetch occupations by family', error),
+      }),
+
     findByIds: (ids) =>
       Effect.tryPromise({
         try: async () => {
@@ -135,17 +145,20 @@ export function createOccupationRepository(supabase: SupabaseClient): Occupation
         catch: (error) => dbError('Failed to fetch current occupations by figures', error),
       }),
 
-    findPublicFigureIdsByOccupationId: (occupationId) =>
+    findAssignmentsByFamilyId: (familyId) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('public_figure_occupations')
-            .select('public_figure_id')
-            .eq('occupation_id', occupationId)
+            .select('public_figure_id, occupation_id, occupations!inner (family_id)')
+            .eq('occupations.family_id', familyId)
           if (error) throw error
-          return data.map((row) => row.public_figure_id)
+          return data.map((row) => ({
+            publicFigureId: row.public_figure_id,
+            occupationId: row.occupation_id,
+          }))
         },
-        catch: (error) => dbError('Failed to fetch public figures by occupation', error),
+        catch: (error) => dbError('Failed to fetch the assignments of a family', error),
       }),
 
     findAllAssignments: () =>
