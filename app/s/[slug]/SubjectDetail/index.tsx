@@ -9,9 +9,11 @@ import { createRelatedSubjectsRepository } from '../../../../infra/database/rela
 import { getSubjectPositionsSummary } from '../../../../infra/queries/subject-positions-summary'
 import { getSubjectArgumentsSummary } from '../../../../infra/queries/subject-arguments-summary'
 import { getSubjectFamilyDistribution } from '../../../../infra/queries/subject-family-distribution'
+import { getSubjectTimeline } from '../../../../infra/queries/subject-timeline'
 import { isMajorSubject } from '../../../../domain/entities/subject'
 import { positionAuthorsCount } from '../../../../domain/read-models/subject-positions-summary'
 import { argumentsByPosition } from '../../../../domain/read-models/argument'
+import { statedSpanLabel } from '../../../../domain/services/subject-timeline'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import Button from '../../../../components/ui/Button'
@@ -21,6 +23,7 @@ import SubjectAdminMenu from '../SubjectAdminMenu'
 import SubjectHero from '../SubjectHero'
 import SubjectTabs, { SubjectTab } from '../SubjectTabs'
 import SubjectAnalyses from '../SubjectAnalyses'
+import SubjectTimeline from '../SubjectTimeline'
 import PositionsOverview from '../PositionsOverview'
 import PositionsFilter, { parseAuthorKindParam } from '../PositionsFilter'
 import PositionCard from '../PositionCard'
@@ -40,7 +43,7 @@ interface SubjectDetailProps {
 
 const LATEST_STATEMENTS_LIMIT = 5
 
-/** The whole subject page; the three tab routes render it with their tab. */
+/** The whole subject page; the four tab routes render it with their tab. */
 export default async function SubjectDetail({
   slug,
   activeTab,
@@ -69,6 +72,8 @@ export default async function SubjectDetail({
     themeAssignments,
     relatedSubjects,
     familyDistribution,
+    timeline,
+    statedSpan,
   ] = await Promise.all([
     Effect.runPromise(getSubjectPositionsSummary(supabase, subject.id)),
     // The overview and the rail always show everyone; only the list follows the filter
@@ -85,6 +90,11 @@ export default async function SubjectDetail({
     activeTab === 'analyses'
       ? Effect.runPromise(getSubjectFamilyDistribution(supabase, subject.id))
       : null,
+    // Only the Chronologie tab reads it
+    activeTab === 'chronologie'
+      ? Effect.runPromise(getSubjectTimeline(supabase, subject.id))
+      : null,
+    Effect.runPromise(statementRepo.findStatedSpanBySubjectId(subject.id)),
   ])
 
   const listedPositions = filteredPositions
@@ -174,10 +184,13 @@ export default async function SubjectDetail({
           active={activeTab}
           positionsCount={positions.length}
           argumentsCount={subjectArguments.length}
+          statedSpan={statedSpanLabel(statedSpan)}
         />
 
         {activeTab === 'analyses' && familyDistribution ? (
           <SubjectAnalyses distribution={familyDistribution} />
+        ) : activeTab === 'chronologie' && timeline ? (
+          <SubjectTimeline subjectSlug={slug} years={timeline} />
         ) : activeTab === 'arguments' ? (
           <SubjectArguments
             subjectSlug={slug}

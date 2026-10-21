@@ -4,7 +4,8 @@ import styles from './SectionTabs.module.css'
 
 export interface SectionTab {
   label: string
-  count?: number
+  /** A number, or what stands for one: the years a chronology spans */
+  count?: number | string
   /** L'onglet mène à une autre vue de la page */
   href?: string
   /** L'onglet est annoncé mais pas encore disponible */

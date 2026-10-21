@@ -31,6 +31,12 @@ export interface StatementWithAuthor {
   arguments: ArgumentRef[]
 }
 
+/** The first and last days an opinion was stated on a subject */
+export interface StatedSpan {
+  from: Date
+  to: Date
+}
+
 /** Everything an argument's page needs about one statement that mobilises it */
 export interface StatementWithAuthorAndSubject extends StatementWithAuthor {
   subject: Subject
@@ -91,6 +97,9 @@ export interface StatementRepository {
 
   /** The ids of the live statements on any position of a subject */
   findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
+
+  /** The first and last days an opinion was stated on a subject; null without any */
+  findStatedSpanBySubjectId(subjectId: string): Effect.Effect<StatedSpan | null, DatabaseError>
 
   /** The ids of the live statements mobilising an argument */
   findIdsByArgumentId(argumentId: string): Effect.Effect<string[], DatabaseError>

@@ -1,0 +1,107 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+/* Une carte par année, l'année en grand chiffre serif comme un millésime */
+.year {
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  padding: 0 24px;
+}
+
+.yearHead {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 24px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.yearTitle {
+  composes: number from '../../../../styles/text.module.css';
+}
+
+.yearMeta {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.entry:last-child {
+  border-bottom: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.for {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.position,
+.position:link,
+.position:visited {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.name:hover,
+.position:hover {
+  color: var(--signal);
+}
+
+.quote {
+  composes: quote from '../../../../styles/text.module.css';
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .year {
+    padding: 0 20px;
+  }
+
+  .entry {
+    gap: 12px;
+  }
+}

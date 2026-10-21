@@ -429,6 +429,28 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch the statement ids of a subject', error),
       }),
 
+    findStatedSpanBySubjectId: (subjectId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const edge = (ascending: boolean) =>
+            supabase
+              .from('statements')
+              .select('stated_at, positions!inner (subject_id)')
+              .eq('positions.subject_id', subjectId)
+              .is('deleted_at', null)
+              .order('stated_at', { ascending })
+              .limit(1)
+              .maybeSingle()
+          const [first, last] = await Promise.all([edge(true), edge(false)])
+          if (first.error) throw first.error
+          if (last.error) throw last.error
+          return first.data && last.data
+            ? { from: new Date(first.data.stated_at), to: new Date(last.data.stated_at) }
+            : null
+        },
+        catch: (error) => dbError('Failed to fetch the stated span of a subject', error),
+      }),
+
     findIdsByArgumentId: (argumentId: string) =>
       Effect.tryPromise({
         try: async () => {
