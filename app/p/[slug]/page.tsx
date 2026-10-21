@@ -25,16 +25,19 @@ import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import FigureHero, { Affiliation } from './FigureHero'
-import StatementsBySubject, {
-  orderedHref,
-  parseStatementsOrder,
-} from '../../../components/statements/StatementsBySubject'
+import StatementsBySubject from '../../../components/statements/StatementsBySubject'
+import {
+  parseStatementsView,
+  statementsViewHref,
+} from '../../../domain/read-models/statements-view'
+import { statementsOnTheme } from '../../../domain/services/statements-on-theme'
+import { subjectIdsOnTheme } from '../../../infra/queries/subject-ids-on-theme'
 import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
 import FigureAnalyses from './FigureAnalyses'
 
 interface PageProps {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ tri?: string }>
+  searchParams: Promise<{ tri?: string; theme?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -81,8 +84,8 @@ function currentAffiliations(memberships: MembershipWithOrganisation[]): Affilia
 }
 
 export default async function PersonalityDetailPage({ params, searchParams }: PageProps) {
-  const [{ slug }, { tri }] = await Promise.all([params, searchParams])
-  const order = parseStatementsOrder(tri)
+  const [{ slug }, viewParams] = await Promise.all([params, searchParams])
+  const view = parseStatementsView(viewParams)
 
   const supabase = createAdminSupabaseClient()
   const publicFigureRepo = createPublicFigureRepository(supabase)
@@ -111,6 +114,9 @@ export default async function PersonalityDetailPage({ params, searchParams }: Pa
   })
 
   const groups = groupStatementsBySubject(statements)
+  const listed = view.themeSlug
+    ? statementsOnTheme(statements, await subjectIdsOnTheme(themeRepo, view.themeSlug))
+    : statements
   const statedDates = statements.map(({ statement }) => statement.statedAt)
   const subjectIds = groups.map(({ subject }) => subject.id)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
@@ -195,10 +201,11 @@ export default async function PersonalityDetailPage({ params, searchParams }: Pa
           ]}
         />
         <StatementsBySubject
-          statements={statements}
-          order={order}
+          statements={listed}
+          view={view}
+          themes={themes}
           subjectHref={(subjectSlug) => `/p/${slug}/s/${subjectSlug}`}
-          orderHref={(wanted) => orderedHref(`/p/${slug}`, wanted)}
+          viewHref={(wanted) => statementsViewHref(`/p/${slug}`, wanted)}
         />
       </ContentWithSidebar>
     </>

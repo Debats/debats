@@ -1,7 +1,5 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
 import Segmented from '../../../components/ui/Segmented'
+import NavSelect from '../../../components/ui/NavSelect'
 import { STATEMENT_TYPE_LABELS, STATEMENT_TYPES } from '../../../domain/entities/statement'
 import { Theme } from '../../../domain/entities/theme'
 import { FeedFilters as Filters, feedHref } from '../../../domain/read-models/statement-feed'
@@ -16,9 +14,6 @@ const KIND_LABELS = { all: 'Tout', public_figure: 'Personnalités', organisation
 
 /** Les filtres du flux, tous portés par l'adresse de la page. */
 export default function FeedFilters({ filters, themes }: FeedFiltersProps) {
-  const router = useRouter()
-  const go = (changed: Partial<Filters>) => router.push(feedHref({ ...filters, ...changed }))
-
   return (
     <div className={styles.toolbar}>
       <Segmented
@@ -37,36 +32,29 @@ export default function FeedFilters({ filters, themes }: FeedFiltersProps) {
         ]}
       />
       <div className={styles.selects}>
-        <select
-          className={styles.select}
-          aria-label="Thème"
-          value={filters.themeSlug ?? ''}
-          onChange={(event) => go({ themeSlug: event.target.value || undefined })}
-        >
-          <option value="">Tous les thèmes</option>
-          {themes.map((theme) => (
-            <option key={theme.id} value={theme.slug}>
-              {theme.name}
-            </option>
-          ))}
-        </select>
-        <select
-          className={styles.select}
-          aria-label="Type de prise de position"
-          value={filters.statementType ?? ''}
-          onChange={(event) =>
-            go({
-              statementType: STATEMENT_TYPES.find((type) => type === event.target.value),
-            })
-          }
-        >
-          <option value="">Tous les types</option>
-          {STATEMENT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {STATEMENT_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
+        <NavSelect
+          ariaLabel="Thème"
+          any={{ label: 'Tous les thèmes', href: feedHref({ ...filters, themeSlug: undefined }) }}
+          options={themes.map((theme) => ({
+            value: theme.slug,
+            label: theme.name,
+            href: feedHref({ ...filters, themeSlug: theme.slug }),
+          }))}
+          value={filters.themeSlug}
+        />
+        <NavSelect
+          ariaLabel="Type de prise de position"
+          any={{
+            label: 'Tous les types',
+            href: feedHref({ ...filters, statementType: undefined }),
+          }}
+          options={STATEMENT_TYPES.map((type) => ({
+            value: type,
+            label: STATEMENT_TYPE_LABELS[type],
+            href: feedHref({ ...filters, statementType: type }),
+          }))}
+          value={filters.statementType}
+        />
       </div>
     </div>
   )

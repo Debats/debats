@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../../infra/database/organisation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../../../infra/database/organisation-membership-repository-supabase'
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
+import { createThemeRepository } from '../../../infra/database/theme-repository-supabase'
 import { ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
 import { isCurrentMembership } from '../../../domain/entities/organisation-membership'
 import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
@@ -17,16 +18,19 @@ import Button from '../../../components/ui/Button'
 import SectionTabs from '../../../components/ui/SectionTabs'
 import ShareButton from '../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
-import StatementsBySubject, {
-  orderedHref,
-  parseStatementsOrder,
-} from '../../../components/statements/StatementsBySubject'
+import StatementsBySubject from '../../../components/statements/StatementsBySubject'
+import {
+  parseStatementsView,
+  statementsViewHref,
+} from '../../../domain/read-models/statements-view'
+import { statementsOnTheme } from '../../../domain/services/statements-on-theme'
+import { subjectIdsOnTheme } from '../../../infra/queries/subject-ids-on-theme'
 import OrganisationHero from './OrganisationHero'
 import OrganisationMembers from './OrganisationMembers'
 
 interface PageProps {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ tri?: string }>
+  searchParams: Promise<{ tri?: string; theme?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -52,8 +56,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function OrganisationDetailPage({ params, searchParams }: PageProps) {
-  const [{ slug }, { tri }] = await Promise.all([params, searchParams])
-  const order = parseStatementsOrder(tri)
+  const [{ slug }, viewParams] = await Promise.all([params, searchParams])
+  const view = parseStatementsView(viewParams)
 
   const supabase = createAdminSupabaseClient()
   const organisationRepo = createOrganisationRepository(supabase)
@@ -64,11 +68,16 @@ export default async function OrganisationDetailPage({ params, searchParams }: P
 
   if (!organisation) notFound()
 
-  const [memberships, statements, contributor] = await Promise.all([
+  const themeRepo = createThemeRepository(supabase)
+  const [memberships, statements, contributor, themes] = await Promise.all([
     Effect.runPromise(membershipRepo.findByOrganisationId(organisation.id)),
     Effect.runPromise(statementRepo.findByOrganisationWithDetails(organisation.id)),
     getAuthenticatedContributor(),
+    Effect.runPromise(themeRepo.findAll()),
   ])
+  const listed = view.themeSlug
+    ? statementsOnTheme(statements, await subjectIdsOnTheme(themeRepo, view.themeSlug))
+    : statements
 
   const current = memberships.filter(({ membership }) => isCurrentMembership(membership))
   const former = memberships.filter(({ membership }) => !isCurrentMembership(membership))
@@ -156,10 +165,11 @@ export default async function OrganisationDetailPage({ params, searchParams }: P
           ]}
         />
         <StatementsBySubject
-          statements={statements}
-          order={order}
+          statements={listed}
+          view={view}
+          themes={themes}
           subjectHref={(subjectSlug) => `/s/${subjectSlug}`}
-          orderHref={(wanted) => orderedHref(`/o/${slug}`, wanted)}
+          viewHref={(wanted) => statementsViewHref(`/o/${slug}`, wanted)}
           editHref={
             canEditStatement
               ? (statementId) => `/prise-de-position/${statementId}/modifier`

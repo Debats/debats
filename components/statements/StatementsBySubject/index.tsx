@@ -1,29 +1,17 @@
 import Link from 'next/link'
-import ComingSoon from '../../ui/ComingSoon'
 import EditLink from '../../ui/EditLink'
+import NavSelect from '../../ui/NavSelect'
 import ArgumentChips from '../ArgumentChips'
 import StatementSource from '../StatementSource'
 import Segmented from '../../ui/Segmented'
 import ShowMore from '../../ui/ShowMore'
+import { Theme } from '../../../domain/entities/theme'
+import { StatementsOrder, StatementsView } from '../../../domain/read-models/statements-view'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
 import { groupStatementsBySubject } from '../../../domain/services/statements-by-subject'
 import { groupStatementsByYear } from '../../../domain/services/statements-by-year'
 import { plural } from '../../../lib/plural'
 import styles from './StatementsBySubject.module.css'
-
-/** How an author's statements are organised: by subject, or in the order they were stated */
-export type StatementsOrder = 'subject' | 'date'
-
-/** The `tri` parameter of an author's page */
-export const ORDER_PARAM = 'tri'
-const DATE_PARAM_VALUE = 'chronologique'
-
-export const parseStatementsOrder = (value: string | undefined): StatementsOrder =>
-  value === DATE_PARAM_VALUE ? 'date' : 'subject'
-
-/** The address of an author's page in the given order */
-export const orderedHref = (base: string, order: StatementsOrder): string =>
-  order === 'date' ? `${base}?${ORDER_PARAM}=${DATE_PARAM_VALUE}` : base
 
 const ORDER_LABELS: Record<StatementsOrder, string> = {
   subject: 'Par sujet',
@@ -31,32 +19,17 @@ const ORDER_LABELS: Record<StatementsOrder, string> = {
 }
 
 interface StatementsBySubjectProps {
+  /** The statements to show, already narrowed to the theme of the view */
   statements: StatementWithDetails[]
-  order: StatementsOrder
+  view: StatementsView
+  /** The themes one can narrow to */
+  themes: Theme[]
   /** Où mène le titre d'un sujet : la page de l'auteur sur ce sujet, ou le sujet lui-même */
   subjectHref: (subjectSlug: string) => string
-  /** L'adresse de la page dans l'autre organisation */
-  orderHref: (order: StatementsOrder) => string
+  /** L'adresse de la page pour une autre vue */
+  viewHref: (view: StatementsView) => string
   /** Lien de modification d'une prise de position, quand l'utilisateur y a droit */
   editHref?: (statementId: string) => string
-}
-
-function ChevronIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  )
 }
 
 /** Nombre de sujets affichés avant le bouton « Voir les autres sujets » */
@@ -107,11 +80,13 @@ function Entry({
  */
 export default function StatementsBySubject({
   statements,
-  order,
+  view,
+  themes,
   subjectHref,
-  orderHref,
+  viewHref,
   editHref,
 }: StatementsBySubjectProps) {
+  const { order } = view
   const bySubject = groupStatementsBySubject(statements).map(({ subject, entries }) => (
     <article key={subject.id} className={styles.subject}>
       <Link href={subjectHref(subject.slug)} className={styles.subjectTitle}>
@@ -149,21 +124,28 @@ export default function StatementsBySubject({
           ariaLabel="Organiser les prises de position"
           active={ORDER_LABELS[order]}
           items={[
-            { label: ORDER_LABELS.subject, href: orderHref('subject') },
-            { label: ORDER_LABELS.date, href: orderHref('date') },
-            { label: 'Par thème', soon: true },
+            { label: ORDER_LABELS.subject, href: viewHref({ ...view, order: 'subject' }) },
+            { label: ORDER_LABELS.date, href: viewHref({ ...view, order: 'date' }) },
           ]}
         />
-        <ComingSoon>
-          <span className={styles.select}>
-            Tous les thèmes
-            <ChevronIcon />
-          </span>
-        </ComingSoon>
+        <NavSelect
+          ariaLabel="Thème"
+          any={{ label: 'Tous les thèmes', href: viewHref({ ...view, themeSlug: undefined }) }}
+          options={themes.map((theme) => ({
+            value: theme.slug,
+            label: theme.name,
+            href: viewHref({ ...view, themeSlug: theme.slug }),
+          }))}
+          value={view.themeSlug}
+        />
       </div>
 
       {statements.length === 0 ? (
-        <p className={styles.empty}>Aucune prise de position enregistrée pour l’instant.</p>
+        <p className={styles.empty}>
+          {view.themeSlug
+            ? 'Aucune prise de position sur ce thème pour l’instant.'
+            : 'Aucune prise de position enregistrée pour l’instant.'}
+        </p>
       ) : order === 'date' ? (
         <div className={styles.card}>
           <ShowMore
