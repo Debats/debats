@@ -148,14 +148,23 @@ export function replayPublicFigure(
   )
 }
 
-/** A public figure always has an author (the column is not null): a creation without one is corrupt */
+const CREATIONS = new Set<PublicFigureEvent['type']>([
+  'PublicFigureAdded',
+  'PublicFigureImported',
+  'MembershipAdded',
+  'MembershipImported',
+])
+
+/**
+ * A public figure and an affiliation always have an author (the columns are
+ * not null): a creation without one is corrupt, as the projector will say.
+ */
 function requireAuthorOfCreation(
   stored: StoredEvent,
   event: PublicFigureEvent,
 ): Either.Either<PublicFigureEvent, UnreadableEvent> {
-  const creation = event.type === 'PublicFigureAdded' || event.type === 'PublicFigureImported'
-  return creation && !stored.actorId
-    ? Either.left(new UnreadableEvent(stored, 'a public figure needs an author'))
+  return CREATIONS.has(event.type) && !stored.actorId
+    ? Either.left(new UnreadableEvent(stored, 'a public figure or an affiliation needs an author'))
     : Either.right(event)
 }
 
@@ -236,7 +245,8 @@ function membershipFrom(
   figure: PublicFigure,
   payload: MembershipContent,
 ): OrganisationMembership {
-  const actor = stored.actorId ?? figure.createdBy
+  // Checked by requireAuthorOfCreation before any event is applied
+  const actor = stored.actorId!
   return OrganisationMembership.make({
     id: MembershipId.make(payload.membershipId),
     organisationId: payload.organisationId,

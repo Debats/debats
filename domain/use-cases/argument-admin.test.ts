@@ -161,10 +161,22 @@ describe('mergeArgumentsUseCase', () => {
     ])
   })
 
-  it('refuses to merge an argument already gone', async () => {
+  it('refuses to merge an argument already merged away, as it would any deleted one', async () => {
     const unit = await journalWithArguments(a, b)
     await mergeArgumentsUseCase(mergeParams(unit))
     const result = await mergeArgumentsUseCase(mergeParams(unit))
+
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
+  })
+
+  it('refuses a target already merged away', async () => {
+    const unit = await journalWithArguments(a, b)
+    await mergeArgumentsUseCase(mergeParams(unit))
+    const result = await mergeArgumentsUseCase({
+      ...mergeParams(unit),
+      sourceArgumentId: b.id,
+      targetArgumentId: a.id,
+    })
 
     expect(Either.isLeft(result) && result.left).toContain('existe plus')
   })

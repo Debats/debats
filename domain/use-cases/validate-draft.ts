@@ -413,6 +413,7 @@ async function resolveOrCreateSubject(
     presentation: draft.subjectData.presentation,
     problem: draft.subjectData.problem,
     runUnitOfWork: deps.runUnitOfWork,
+    subjectRepo: deps.subjectRepo,
   })
   if (Either.isLeft(result)) return Either.left(formatUseCaseError(result.left))
   return Either.right(result.right.id)

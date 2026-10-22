@@ -7,6 +7,7 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { runCommand } from './run-command'
 import { requireThemeState } from './theme-stream'
 
 const CreateThemeInput = S.Struct({
@@ -61,7 +62,7 @@ export async function createThemeUseCase(
 
   // The command names the theme: the stream exists from its first event
   const id = ThemeId.make(crypto.randomUUID())
-  const state = await Effect.runPromise(
+  const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
         events.append(themeStream(id), 0, [addTheme({ name, description })], {
@@ -73,5 +74,5 @@ export async function createThemeUseCase(
     ),
   )
 
-  return Either.right(state.theme)
+  return Either.map(outcome, (state) => state.theme)
 }

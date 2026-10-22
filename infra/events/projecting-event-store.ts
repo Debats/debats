@@ -7,6 +7,8 @@ import { Projector, ProjectorRegistry } from './projectors'
 /**
  * The event store a command sees: each append also runs the projectors of
  * the stream type, in the same transaction. Commands never touch the tables.
+ * A stream type nobody registered is a defect: its tables would silently
+ * fall behind the journal.
  */
 export function withProjections(
   store: EventStore,
@@ -16,10 +18,22 @@ export function withProjections(
   return {
     load: (stream) => store.load(stream),
     append: (stream, expectedRevision, events, options) =>
-      Effect.flatMap(store.append(stream, expectedRevision, events, options), (stored) =>
-        Effect.as(project(registry[stream.streamType] ?? [], stored, tx), stored),
+      Effect.flatMap(projectorsOf(registry, stream.streamType), (projectors) =>
+        Effect.flatMap(store.append(stream, expectedRevision, events, options), (stored) =>
+          Effect.as(project(projectors, stored, tx), stored),
+        ),
       ),
   }
+}
+
+function projectorsOf(
+  registry: ProjectorRegistry,
+  streamType: string,
+): Effect.Effect<readonly Projector[]> {
+  const projectors = registry[streamType]
+  return projectors
+    ? Effect.succeed(projectors)
+    : Effect.dieMessage(`No projector is registered for the ${streamType} stream`)
 }
 
 /** Every event through every projector, in stream order */

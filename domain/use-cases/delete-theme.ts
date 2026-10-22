@@ -2,9 +2,9 @@ import { Either, Effect } from 'effect'
 import { deleteTheme } from '../aggregates/theme'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity, Rejected } from './types'
+import { ContributorIdentity } from './types'
 import { runCommand } from './run-command'
-import { decideOnTheme, themeAggregate, ThemeSource } from './theme-stream'
+import { decideOnTheme, ThemeSource } from './theme-stream'
 
 type DeleteThemeParams = {
   contributor: ContributorIdentity | null
@@ -30,10 +30,8 @@ export async function deleteThemeUseCase(
 
   const outcome = await runCommand(
     runUnitOfWork((events) =>
-      decideOnTheme(events, themeId, themeSource, contributor.id, (state) =>
-        state.deletedAt
-          ? Effect.fail(new Rejected(themeAggregate.notFound))
-          : Effect.succeed([deleteTheme()]),
+      decideOnTheme(events, themeId, themeSource, contributor.id, () =>
+        Effect.succeed([deleteTheme()]),
       ),
     ),
   )

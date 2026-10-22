@@ -63,10 +63,8 @@ export async function mergeArgumentsUseCase(
         Effect.flatMap(requireArgumentState),
         Effect.filterOrFail(isLiveArgument, () => new Rejected(GONE)),
         Effect.tap(() =>
-          decideOnArgument(events, sourceArgumentId, params.argumentSource, contributor.id, (s) =>
-            isLiveArgument(s)
-              ? Effect.succeed([mergeArgumentInto(targetArgumentId)])
-              : Effect.fail(new Rejected(GONE)),
+          decideOnArgument(events, sourceArgumentId, params.argumentSource, contributor.id, () =>
+            Effect.succeed([mergeArgumentInto(targetArgumentId)]),
           ),
         ),
         Effect.tap(() =>

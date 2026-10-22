@@ -63,6 +63,9 @@ export async function createOrganisationAction(formData: FormData): Promise<Acti
 
   // Phase 3: persist entity and reputation
   const created = await persistOrganisation(params, validation.right.organisationType)
+  if (Either.isLeft(created)) {
+    return { success: false, error: created.left }
+  }
 
-  return { success: true, slug: created.slug, name: created.name, id: created.id }
+  return { success: true, slug: created.right.slug, name: created.right.name, id: created.right.id }
 }

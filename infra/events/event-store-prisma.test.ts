@@ -11,6 +11,8 @@ import { runUnitOfWork } from './unit-of-work'
  */
 const hasDatabase = Boolean(process.env.DATABASE_URL)
 const stream = { streamType: 'test', streamId: crypto.randomUUID() }
+/** The test stream has no table to keep in step */
+const NO_PROJECTION = { test: [] }
 
 describe.skipIf(!hasDatabase)('event store on Postgres', () => {
   afterAll(async () => {
@@ -20,16 +22,18 @@ describe.skipIf(!hasDatabase)('event store on Postgres', () => {
 
   it('appends events at the revisions after the expected one and loads them in order', async () => {
     const stored = await Effect.runPromise(
-      runUnitOfWork((events) =>
-        events.append(
-          stream,
-          0,
-          [
-            { type: 'Started', payload: { title: 'A' } },
-            { type: 'Renamed', payload: { title: 'B' } },
-          ],
-          { actorId: null, metadata: { source: 'test' } },
-        ),
+      runUnitOfWork(
+        (events) =>
+          events.append(
+            stream,
+            0,
+            [
+              { type: 'Started', payload: { title: 'A' } },
+              { type: 'Renamed', payload: { title: 'B' } },
+            ],
+            { actorId: null, metadata: { source: 'test' } },
+          ),
+        NO_PROJECTION,
       ),
     )
     expect(stored.map((e) => e.revision)).toEqual([1, 2])
@@ -46,8 +50,9 @@ describe.skipIf(!hasDatabase)('event store on Postgres', () => {
   it('refuses to append after a stale revision', async () => {
     const result = await Effect.runPromise(
       Effect.either(
-        runUnitOfWork((events) =>
-          events.append(stream, 1, [{ type: 'Late', payload: {} }], { actorId: null }),
+        runUnitOfWork(
+          (events) => events.append(stream, 1, [{ type: 'Late', payload: {} }], { actorId: null }),
+          NO_PROJECTION,
         ),
       ),
     )
@@ -59,11 +64,13 @@ describe.skipIf(!hasDatabase)('event store on Postgres', () => {
     const failing = { streamType: 'test', streamId: crypto.randomUUID() }
     const result = await Effect.runPromise(
       Effect.either(
-        runUnitOfWork((events) =>
-          Effect.flatMap(
-            events.append(failing, 0, [{ type: 'Started', payload: {} }], { actorId: null }),
-            () => Effect.fail(new Error('business rule broken')),
-          ),
+        runUnitOfWork(
+          (events) =>
+            Effect.flatMap(
+              events.append(failing, 0, [{ type: 'Started', payload: {} }], { actorId: null }),
+              () => Effect.fail(new Error('business rule broken')),
+            ),
+          NO_PROJECTION,
         ),
       ),
     )

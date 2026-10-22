@@ -1,14 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import { Either } from 'effect'
+import { Effect, Either } from 'effect'
 import { createSubjectUseCase } from './create-subject'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { SubjectRepository } from '../repositories/subject-repository'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
+
+/** The read side answers the slug lookup with what it holds, or nothing */
+const subjectRepo = (existing: unknown = null) =>
+  ({ findBySlug: () => Effect.succeed(existing) }) as unknown as SubjectRepository
 
 const validParams = {
   title: 'Le montant du SMIC',
   presentation: 'Une présentation suffisamment longue.',
   problem: 'Faut-il augmenter le SMIC ?',
   runUnitOfWork: inMemoryUnitOfWork().run,
+  subjectRepo: subjectRepo(),
 }
 
 describe('createSubjectUseCase', () => {
@@ -45,6 +51,17 @@ describe('createSubjectUseCase', () => {
     expect(
       Either.isLeft(result) && typeof result.left !== 'string' && result.left.presentation,
     ).toBeDefined()
+  })
+
+  it('refuses a title another subject already bears, on the title field', async () => {
+    const result = await createSubjectUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      subjectRepo: subjectRepo({ id: 'existing', slug: 'le-montant-du-smic' }),
+    })
+    expect(Either.isLeft(result) && result.left).toEqual({
+      title: 'Un sujet porte déjà ce titre.',
+    })
   })
 
   it('should create subject and award reputation on success', async () => {

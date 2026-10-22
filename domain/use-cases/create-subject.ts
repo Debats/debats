@@ -1,12 +1,14 @@
 import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ArrayFormatter } from 'effect/ParseResult'
-import { Subject, SubjectId, SubjectTitle } from '../entities/subject'
+import { generateSlug, Subject, SubjectId, SubjectTitle } from '../entities/subject'
 import { addSubject, replaySubject, subjectStream } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
+import { SubjectRepository } from '../repositories/subject-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
+import { runCommand } from './run-command'
 import { requireSubjectState } from './subject-stream'
 
 const CreateSubjectInput = S.Struct({
@@ -21,6 +23,8 @@ type CreateSubjectParams = {
   presentation: string
   problem: string
   runUnitOfWork: RunUnitOfWork
+  /** Read side: the title must be free */
+  subjectRepo: SubjectRepository
 }
 
 export type { FieldErrors }
@@ -28,7 +32,7 @@ export type { FieldErrors }
 export async function createSubjectUseCase(
   params: CreateSubjectParams,
 ): Promise<Either.Either<Subject, string | FieldErrors>> {
-  const { contributor, title, presentation, problem, runUnitOfWork } = params
+  const { contributor, title, presentation, problem, runUnitOfWork, subjectRepo } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -61,9 +65,14 @@ export async function createSubjectUseCase(
     return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
   }
 
+  const taken = await Effect.runPromise(subjectRepo.findBySlug(generateSlug(decoded.right.title)))
+  if (taken) {
+    return Either.left({ title: 'Un sujet porte déjà ce titre.' })
+  }
+
   // The command names the subject: the stream exists from its first event
   const id = SubjectId.make(crypto.randomUUID())
-  const state = await Effect.runPromise(
+  const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
         events.append(subjectStream(id), 0, [addSubject(decoded.right)], {
@@ -85,5 +94,5 @@ export async function createSubjectUseCase(
     ),
   )
 
-  return Either.right(state.subject)
+  return Either.map(outcome, (state) => state.subject)
 }

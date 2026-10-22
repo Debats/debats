@@ -12,6 +12,7 @@ import {
   AggregateStream,
   appendAndReplay,
   decideOn,
+  IMPORT,
   loadOrImport,
   requireState as requireStateOf,
   Source,
@@ -29,12 +30,13 @@ export const statementAggregate: AggregateStream<StatementState, StatementEvent,
   streamType: STATEMENT_STREAM,
   notFound: 'Prise de position introuvable.',
   replay: replayStatement,
+  isLive: (state) => state.deletedAt === null,
   importBatches: ({ statement, argumentIds }) => [
     {
       events: [importStatement(statement, argumentIds)],
       options: {
         actorId: statement.createdBy ?? null,
-        metadata: { source: 'import' },
+        metadata: IMPORT,
         occurredAt: statement.createdAt,
       },
     },

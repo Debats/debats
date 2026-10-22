@@ -13,28 +13,32 @@ export type CommandFailure = Rejected | ConcurrencyError | DatabaseError | Unrea
  * contributor can act on: a refusal or a race become a message, anything
  * else is a failure of the system and is thrown.
  */
-export async function runCommand<A>(
+export function runCommand<A>(
   command: Effect.Effect<A, CommandFailure>,
 ): Promise<Either.Either<A, string>> {
-  const outcome = await Effect.runPromise(Effect.either(command))
-  return Either.isRight(outcome)
-    ? Either.right(outcome.right)
-    : Either.left(messageOf(outcome.left))
+  return outcomeOf(command, messageOf)
 }
 
 /**
  * The same, for a command behind a form: a refusal that blames one field
  * comes back under that field's name, so the form can show it in place.
  */
-export async function runFormCommand<A>(
+export function runFormCommand<A>(
   command: Effect.Effect<A, CommandFailure>,
 ): Promise<Either.Either<A, string | FieldErrors>> {
+  return outcomeOf(command, (failure) =>
+    failure._tag === 'Rejected' && failure.field
+      ? { [failure.field]: failure.message }
+      : messageOf(failure),
+  )
+}
+
+async function outcomeOf<A, E>(
+  command: Effect.Effect<A, CommandFailure>,
+  describe: (failure: CommandFailure) => E,
+): Promise<Either.Either<A, E>> {
   const outcome = await Effect.runPromise(Effect.either(command))
-  if (Either.isRight(outcome)) return Either.right(outcome.right)
-  const failure = outcome.left
-  return failure._tag === 'Rejected' && failure.field
-    ? Either.left({ [failure.field]: failure.message })
-    : Either.left(messageOf(failure))
+  return Either.mapLeft(outcome, describe)
 }
 
 function messageOf(failure: CommandFailure): string {

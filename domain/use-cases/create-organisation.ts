@@ -13,6 +13,7 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validateOrganisationFields } from './validate-organisation-fields'
+import { runCommand } from './run-command'
 import { requireOrganisationState } from './organisation-stream'
 
 export type CreateOrganisationParams = {
@@ -72,7 +73,7 @@ export async function validateCreateOrganisation(
 export async function persistOrganisation(
   params: CreateOrganisationParams,
   organisationType: OrganisationType,
-): Promise<Organisation> {
+): Promise<Either.Either<Organisation, string>> {
   const { runUnitOfWork } = params
   const contributor = params.contributor!
 
@@ -88,7 +89,7 @@ export async function persistOrganisation(
     notorietySources: params.notorietySources,
   })
 
-  const state = await Effect.runPromise(
+  const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
         events.append(organisationStream(id), 0, [added], { actorId: contributor.id }),
@@ -108,7 +109,7 @@ export async function persistOrganisation(
     ),
   )
 
-  return state.organisation
+  return Either.map(outcome, (state) => state.organisation)
 }
 
 /** Validates and creates an organisation in one step. */
@@ -120,5 +121,5 @@ export async function createOrganisationUseCase(
     return Either.left(validation.left)
   }
 
-  return Either.right(await persistOrganisation(params, validation.right.organisationType))
+  return persistOrganisation(params, validation.right.organisationType)
 }

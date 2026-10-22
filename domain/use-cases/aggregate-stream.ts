@@ -23,9 +23,14 @@ export interface AggregateStream<State, Event extends DomainEvent, Parts> {
   /** What the contributor reads when neither the journal nor the tables know the aggregate */
   notFound: string
   replay: (events: StoredEvent[]) => Either.Either<State | null, UnreadableEvent>
+  /** A deleted aggregate keeps its stream; a command on it is refused as on an unknown one */
+  isLive: (state: State) => boolean
   /** The events that bring what the tables hold of the aggregate into its stream */
   importBatches: (parts: Parts) => Batch<Event>[]
 }
+
+/** Metadata of an event imported on demand; the backfill migrations write `backfill` */
+export const IMPORT = { source: 'import' }
 
 /** Reads what the projections hold of an aggregate; null when there is none */
 export type Source<Parts> = (id: string) => Effect.Effect<Parts | null, DatabaseError>
@@ -90,7 +95,8 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
 /**
  * A command on an aggregate: loads its stream (importing it on demand), lets
  * the decision look at the current state, appends what it decided and
- * rebuilds what the aggregate now is. A decision refuses with a Rejected.
+ * rebuilds what the aggregate now is. A decision refuses with a Rejected;
+ * a deleted aggregate is refused before any decision.
  */
 export function decideOn<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
@@ -106,6 +112,7 @@ export function decideOn<State, Event extends DomainEvent, Parts>(
       pipe(
         aggregate.replay(history),
         Effect.flatMap((state) => requireState(aggregate, state)),
+        Effect.filterOrFail(aggregate.isLive, () => new Rejected(aggregate.notFound)),
         Effect.flatMap(decide),
         Effect.flatMap((decided) =>
           appendAndReplay(aggregate, events, id, history, decided, actorId),

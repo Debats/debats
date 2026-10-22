@@ -87,6 +87,31 @@ describe.skipIf(!hasDatabase)('organisation projector', () => {
     })
   })
 
+  it('dates the row as the event says, not as the clock: a replay stays faithful', async () => {
+    const occurredAt = new Date('2020-05-06T07:08:09.000Z')
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(
+          stream,
+          2,
+          [
+            editOrganisation({
+              name: 'Organisation Renommée',
+              organisationType: 'ngo',
+              presentation: 'Une présentation suffisamment longue.',
+              websiteUrl: 'https://example.org',
+              notorietySources: ['https://a.example', 'https://b.example'],
+            }),
+          ],
+          { actorId, occurredAt },
+        ),
+      ),
+    )
+
+    const row = await prisma().organisations.findUniqueOrThrow({ where: { id: organisationId } })
+    expect(row.updated_at).toEqual(occurredAt)
+  })
+
   it('rebuilds from the journal what the table holds', async () => {
     const history = await Effect.runPromise(runUnitOfWork((journal) => journal.load(stream)))
     const state = replayOrganisation(history)

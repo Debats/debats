@@ -12,7 +12,7 @@ import { OrganisationMembership } from '../entities/organisation-membership'
 import { PublicFigure } from '../entities/public-figure'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, loadOrImport, requireState, Source } from './aggregate-stream'
+import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
 
 /** What the tables hold of a public figure, enough to import her into the journal */
 export interface PublicFigureParts {
@@ -22,8 +22,6 @@ export interface PublicFigureParts {
 }
 
 export type PublicFigureSource = Source<PublicFigureParts>
-
-const IMPORT = { source: 'import' }
 
 /**
  * A figure enters the journal event by event, each dated and signed as its
@@ -38,6 +36,7 @@ export const publicFigureAggregate: AggregateStream<
   streamType: PUBLIC_FIGURE_STREAM,
   notFound: 'Personnalité introuvable.',
   replay: replayPublicFigure,
+  isLive: (state) => state.deletedAt === null,
   importBatches: (parts) => [
     {
       events: [importPublicFigure(parts.figure)],
@@ -65,12 +64,6 @@ export const publicFigureAggregate: AggregateStream<
       : []),
   ],
 }
-
-export const loadOrImportPublicFigure = (
-  events: EventStore,
-  publicFigureId: string,
-  source: PublicFigureSource,
-) => loadOrImport(publicFigureAggregate, events, publicFigureId, source)
 
 export const decideOnPublicFigure = (
   events: EventStore,

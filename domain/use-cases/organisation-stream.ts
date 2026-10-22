@@ -9,7 +9,7 @@ import { OrganisationEvent } from '../aggregates/organisation-events'
 import { Organisation } from '../entities/organisation'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, loadOrImport, requireState, Source } from './aggregate-stream'
+import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
 
 /** What the tables hold of an organisation, enough to import it into the journal */
 export interface OrganisationParts {
@@ -26,23 +26,18 @@ export const organisationAggregate: AggregateStream<
   streamType: ORGANISATION_STREAM,
   notFound: 'Organisation introuvable.',
   replay: replayOrganisation,
+  isLive: (state) => state.deletedAt === null,
   importBatches: ({ organisation }) => [
     {
       events: [importOrganisation(organisation)],
       options: {
         actorId: organisation.createdBy,
-        metadata: { source: 'import' },
+        metadata: IMPORT,
         occurredAt: organisation.createdAt,
       },
     },
   ],
 }
-
-export const loadOrImportOrganisation = (
-  events: EventStore,
-  organisationId: string,
-  source: OrganisationSource,
-) => loadOrImport(organisationAggregate, events, organisationId, source)
 
 export const decideOnOrganisation = (
   events: EventStore,

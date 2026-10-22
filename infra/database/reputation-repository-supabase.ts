@@ -7,7 +7,6 @@ import {
   type ReputationEvent,
   type RelatedEntityType,
 } from '../../domain/entities/reputation-event'
-import { type RewardableAction } from '../../domain/reputation/permissions'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -47,7 +46,7 @@ export function createReputationRepository(supabase: SupabaseClient): Reputation
             (row): ReputationEvent => ({
               id: row.id,
               contributorId: row.contributor_id,
-              action: row.action as RewardableAction,
+              action: row.action,
               amount: row.amount,
               relatedEntityType: (row.related_entity_type as RelatedEntityType) ?? undefined,
               relatedEntityId: row.related_entity_id ?? undefined,

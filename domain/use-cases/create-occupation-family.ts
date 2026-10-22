@@ -13,6 +13,7 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { runCommand } from './run-command'
 import { requireOccupationFamilyState } from './occupation-family-stream'
 
 type CreateOccupationFamilyParams = {
@@ -59,7 +60,7 @@ export async function createOccupationFamilyUseCase(
 
   // The command names the family: the stream exists from its first event
   const id = OccupationFamilyId.make(crypto.randomUUID())
-  const state = await Effect.runPromise(
+  const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
         events.append(
@@ -74,5 +75,5 @@ export async function createOccupationFamilyUseCase(
     ),
   )
 
-  return Either.right(state.family)
+  return Either.map(outcome, (state) => state.family)
 }

@@ -4,7 +4,7 @@ import { ThemeEvent } from '../aggregates/theme-events'
 import { Theme } from '../entities/theme'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, requireState, Source } from './aggregate-stream'
+import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
 
 /** What the table holds of a theme, enough to import it into the journal */
 export interface ThemeParts {
@@ -17,12 +17,13 @@ export const themeAggregate: AggregateStream<ThemeState, ThemeEvent, ThemeParts>
   streamType: THEME_STREAM,
   notFound: 'La thématique est introuvable.',
   replay: replayTheme,
+  isLive: (state) => state.deletedAt === null,
   importBatches: ({ theme }) => [
     {
       events: [importTheme(theme)],
       options: {
         actorId: theme.createdBy,
-        metadata: { source: 'import' },
+        metadata: IMPORT,
         occurredAt: theme.createdAt,
       },
     },

@@ -16,6 +16,7 @@ import {
   validateStatementArguments,
 } from './statement-arguments'
 import { grantEach, rewardFor } from './reward'
+import { runCommand } from './run-command'
 import { requireState } from './statement-stream'
 
 type CreateStatementParams = {
@@ -125,7 +126,7 @@ export async function createStatementUseCase(
     })
 
   // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
-  const state = await Effect.runPromise(
+  const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
         recordProposedArguments(events, contributor.id, validatedArguments.right),
@@ -151,5 +152,5 @@ export async function createStatementUseCase(
     ),
   )
 
-  return Either.right(state.statement)
+  return Either.map(outcome, (state) => state.statement)
 }

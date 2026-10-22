@@ -49,6 +49,9 @@ const ACTION_LABELS: Record<RewardableAction, string> = {
   blogged_about: 'Article de blog',
 }
 
-export function actionLabel(action: RewardableAction): string {
-  return ACTION_LABELS[action]
+const isOnTheScale = (action: string): action is RewardableAction => action in ACTION_LABELS
+
+/** An action the scale no longer names is shown as the history recorded it */
+export function actionLabel(action: string): string {
+  return isOnTheScale(action) ? ACTION_LABELS[action] : action
 }

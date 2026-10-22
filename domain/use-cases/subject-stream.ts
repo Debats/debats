@@ -13,7 +13,7 @@ import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, loadOrImport, requireState, Source } from './aggregate-stream'
+import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
 
 /** What the tables hold of a subject, enough to import it into the journal */
 export interface SubjectParts {
@@ -25,8 +25,6 @@ export interface SubjectParts {
 
 export type SubjectSource = Source<SubjectParts>
 
-const IMPORT = { source: 'import' }
-
 /**
  * A subject enters the journal event by event, each dated and signed as its
  * row: the subject, then each position, the themes, the links. Nobody is
@@ -36,6 +34,7 @@ export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent, Subje
   streamType: SUBJECT_STREAM,
   notFound: 'Sujet introuvable.',
   replay: replaySubject,
+  isLive: (state) => state.deletedAt === null,
   importBatches: (parts) => {
     const author = parts.subject.createdBy ?? null
     return [
@@ -66,9 +65,6 @@ export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent, Subje
     ]
   },
 }
-
-export const loadOrImportSubject = (events: EventStore, subjectId: string, source: SubjectSource) =>
-  loadOrImport(subjectAggregate, events, subjectId, source)
 
 export const decideOnSubject = (
   events: EventStore,

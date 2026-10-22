@@ -6,7 +6,11 @@ import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { runFormCommand } from './run-command'
-import { decideOnOccupationFamily, OccupationFamilySource } from './occupation-family-stream'
+import {
+  decideOnOccupationFamily,
+  occupationFamilyAggregate,
+  OccupationFamilySource,
+} from './occupation-family-stream'
 
 type CreateOccupationParams = {
   contributor: ContributorIdentity | null
@@ -53,15 +57,14 @@ export async function createOccupationUseCase(
   const outcome = await runFormCommand(
     runUnitOfWork((events) =>
       pipe(
-        decideOnOccupationFamily(events, familyId, familySource, contributor.id, (state) =>
-          state.deletedAt
-            ? Effect.fail(CHOOSE_A_FAMILY)
-            : Effect.succeed([addOccupation(id, { name, description })]),
+        decideOnOccupationFamily(events, familyId, familySource, contributor.id, () =>
+          Effect.succeed([addOccupation(id, { name, description })]),
         ),
-        // The form blames the family field, not a message: an unknown family is
-        // the only refusal the stream gives without naming a field
+        // A family unknown or deleted meanwhile is blamed on the field, not told as a message
         Effect.mapError((failure) =>
-          failure._tag === 'Rejected' && !failure.field ? CHOOSE_A_FAMILY : failure,
+          failure._tag === 'Rejected' && failure.message === occupationFamilyAggregate.notFound
+            ? CHOOSE_A_FAMILY
+            : failure,
         ),
       ),
     ),

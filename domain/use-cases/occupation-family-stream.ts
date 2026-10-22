@@ -11,7 +11,7 @@ import { Occupation } from '../entities/occupation'
 import { OccupationFamily } from '../entities/occupation-family'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, requireState, Source } from './aggregate-stream'
+import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
 
 /** What the tables hold of a family, enough to import it into the journal */
 export interface OccupationFamilyParts {
@@ -20,8 +20,6 @@ export interface OccupationFamilyParts {
 }
 
 export type OccupationFamilySource = Source<OccupationFamilyParts>
-
-const IMPORT = { source: 'import' }
 
 /** A family enters the journal with each of its occupations, dated and signed as their rows */
 export const occupationFamilyAggregate: AggregateStream<
@@ -32,6 +30,7 @@ export const occupationFamilyAggregate: AggregateStream<
   streamType: OCCUPATION_FAMILY_STREAM,
   notFound: 'La famille est introuvable.',
   replay: replayOccupationFamily,
+  isLive: (state) => state.deletedAt === null,
   importBatches: ({ family, occupations }) => [
     {
       events: [importOccupationFamily(family)],

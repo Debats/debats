@@ -71,27 +71,27 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
     case 'PositionMergedInto':
       await tx.positions.update({
         where: { id: decoded.payload.sourceId },
-        data: { deleted_at: stored.occurredAt },
+        data: deletedOn(stored.occurredAt),
       })
       return
     case 'PositionRemoved':
       await tx.positions.update({
         where: { id: decoded.payload.positionId },
-        data: { deleted_at: stored.occurredAt },
+        data: deletedOn(stored.occurredAt),
       })
       return
     case 'SubjectDeleted':
-      await tx.subjects.update({
-        where: { id: subjectId },
-        data: { deleted_at: stored.occurredAt },
-      })
+      await tx.subjects.update({ where: { id: subjectId }, data: deletedOn(stored.occurredAt) })
       await tx.positions.updateMany({
         where: { subject_id: subjectId, deleted_at: null },
-        data: { deleted_at: stored.occurredAt },
+        data: deletedOn(stored.occurredAt),
       })
       return
   }
 }
+
+/** A soft delete is a change of the row: it moves updated_at too */
+const deletedOn = (at: Date) => ({ deleted_at: at, updated_at: at })
 
 /** An import finds its row already there; a replay from scratch creates it */
 async function createSubjectIfMissing(

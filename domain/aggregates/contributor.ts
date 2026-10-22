@@ -54,7 +54,7 @@ function grantFrom(stored: StoredEvent, payload: GrantPayload): ReputationEvent 
   return {
     id: payload.grantId,
     contributorId: stored.streamId,
-    action: payload.action as RewardableAction,
+    action: payload.action,
     amount: payload.amount,
     relatedEntityType: payload.relatedEntityType as RelatedEntityType | undefined,
     relatedEntityId: payload.relatedEntityId,

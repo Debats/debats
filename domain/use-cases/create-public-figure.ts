@@ -12,6 +12,7 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
+import { runCommand } from './run-command'
 import { requirePublicFigureState } from './public-figure-stream'
 
 type CreatePublicFigureParams = {
@@ -71,7 +72,9 @@ export async function validateCreatePublicFigure(
  * Records a validated public figure in the journal and rewards the contributor.
  * Call only after validation has passed and any side effects (photo upload) are done.
  */
-export async function persistPublicFigure(params: CreatePublicFigureParams): Promise<PublicFigure> {
+export async function persistPublicFigure(
+  params: CreatePublicFigureParams,
+): Promise<Either.Either<PublicFigure, string>> {
   const { name, presentation, notorietySources, websiteUrl, runUnitOfWork } = params
   const contributor = params.contributor!
 
@@ -85,7 +88,7 @@ export async function persistPublicFigure(params: CreatePublicFigureParams): Pro
     notorietySources,
   })
 
-  const state = await Effect.runPromise(
+  const outcome = await runCommand(
     runUnitOfWork((events) =>
       pipe(
         events.append(publicFigureStream(id), 0, [added], { actorId: contributor.id }),
@@ -105,7 +108,7 @@ export async function persistPublicFigure(params: CreatePublicFigureParams): Pro
     ),
   )
 
-  return state.figure
+  return Either.map(outcome, (state) => state.figure)
 }
 
 /**
@@ -120,6 +123,5 @@ export async function createPublicFigureUseCase(
     return Either.left(validation.left)
   }
 
-  const createdFigure = await persistPublicFigure(params)
-  return Either.right(createdFigure)
+  return persistPublicFigure(params)
 }

@@ -1,5 +1,3 @@
-import { type RewardableAction } from '../reputation/permissions'
-
 export type RelatedEntityType =
   | 'subject'
   | 'public_figure'
@@ -13,7 +11,8 @@ export type RelatedEntityType =
 export type ReputationEvent = {
   id: string
   contributorId: string
-  action: RewardableAction
+  /** The deed rewarded, as the scale named it at the time: the history keeps actions the scale has dropped */
+  action: string
   amount: number
   relatedEntityType?: RelatedEntityType
   relatedEntityId?: string

@@ -154,4 +154,13 @@ describe('replayPublicFigure', () => {
     const state = replayPublicFigure([stored(added, 1, at('2024-01-10'), null)])
     expect(Either.isLeft(state) && state.left?.message).toContain('needs an author')
   })
+
+  it('refuses an affiliation without an author, as the table does', () => {
+    const affiliated = addMembership({ membershipId: 'm-1', organisationId: 'org-1' })
+    const state = replayPublicFigure([
+      stored(added, 1, at('2024-01-10')),
+      stored(affiliated, 2, at('2024-01-11'), null),
+    ])
+    expect(Either.isLeft(state) && state.left?.message).toContain('needs an author')
+  })
 })

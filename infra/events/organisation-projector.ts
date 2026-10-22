@@ -34,21 +34,23 @@ async function apply(decoded: OrganisationEvent, stored: StoredEvent, tx: Prisma
     case 'OrganisationEdited':
       await tx.organisations.update({
         where: { id: organisationId },
-        data: {
-          ...columns(decoded.payload),
-          ...(stored.actorId ? { updated_by: stored.actorId } : {}),
-          updated_at: stored.occurredAt,
-        },
+        data: { ...columns(decoded.payload), ...changedBy(stored) },
       })
       return
     case 'OrganisationDeleted':
       await tx.organisations.update({
         where: { id: organisationId },
-        data: { deleted_at: stored.occurredAt },
+        data: { deleted_at: stored.occurredAt, ...changedBy(stored) },
       })
       return
   }
 }
+
+/** Who changed the row and when, as the event says */
+const changedBy = (stored: StoredEvent) => ({
+  ...(stored.actorId ? { updated_by: stored.actorId } : {}),
+  updated_at: stored.occurredAt,
+})
 
 function columns(content: OrganisationContent) {
   return {

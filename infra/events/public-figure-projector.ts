@@ -51,7 +51,7 @@ async function apply(decoded: PublicFigureEvent, stored: StoredEvent, tx: Prisma
     case 'PublicFigureDeleted':
       await tx.public_figures.update({
         where: { id: figureId },
-        data: { deleted_at: stored.occurredAt },
+        data: { deleted_at: stored.occurredAt, updated_at: stored.occurredAt },
       })
       return
   }

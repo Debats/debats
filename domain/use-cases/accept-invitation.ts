@@ -5,6 +5,7 @@ import { ContributorRepository } from '../repositories/contributor-repository'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { isExpired } from '../entities/invitation'
 import { Grant, grantEach, rewardFor } from './reward'
+import { runCommand } from './run-command'
 
 type AcceptInvitationParams = {
   inviteeId: string
@@ -57,7 +58,5 @@ export async function acceptInvitationUseCase(
     rewardFor(invitation.inviterId, 'invitation_accepted', on),
   ]
 
-  await Effect.runPromise(params.runUnitOfWork((events) => grantEach(events, inviteeId, grants)))
-
-  return Either.right(undefined)
+  return runCommand(params.runUnitOfWork((events) => grantEach(events, inviteeId, grants)))
 }

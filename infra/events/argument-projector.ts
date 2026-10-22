@@ -35,19 +35,24 @@ async function apply(decoded: ArgumentEvent, stored: StoredEvent, tx: PrismaTran
     case 'ArgumentRenamed':
       await tx.arguments.update({
         where: { id },
-        data: {
-          ...columns(decoded.payload),
-          ...(stored.actorId ? { updated_by: stored.actorId } : {}),
-          updated_at: stored.occurredAt,
-        },
+        data: { ...columns(decoded.payload), ...changedBy(stored) },
       })
       return
     case 'ArgumentMergedInto':
     case 'ArgumentDeleted':
-      await tx.arguments.update({ where: { id }, data: { deleted_at: stored.occurredAt } })
+      await tx.arguments.update({
+        where: { id },
+        data: { deleted_at: stored.occurredAt, ...changedBy(stored) },
+      })
       return
   }
 }
+
+/** Who changed the row and when, as the event says */
+const changedBy = (stored: StoredEvent) => ({
+  ...(stored.actorId ? { updated_by: stored.actorId } : {}),
+  updated_at: stored.occurredAt,
+})
 
 function columns(wording: ArgumentWording) {
   return { title: wording.title, slug: wording.slug, description: wording.description }
