@@ -13,7 +13,7 @@ import {
   appendAndReplay,
   decideOn,
   IMPORT,
-  loadOrImport,
+  loadStream,
   requireState as requireStateOf,
   Source,
 } from './aggregate-stream'
@@ -43,11 +43,8 @@ export const statementAggregate: AggregateStream<StatementState, StatementEvent,
   ],
 }
 
-export const loadOrImportStatement = (
-  events: EventStore,
-  statementId: string,
-  source: StatementSource,
-) => loadOrImport(statementAggregate, events, statementId, source)
+export const loadStatement = (events: EventStore, statementId: string) =>
+  loadStream(statementAggregate, events, statementId)
 
 export const appendToStatement = (
   events: EventStore,
@@ -63,20 +60,18 @@ export const requireState = (state: StatementState | null) =>
 /**
  * The same decision on each of several statements, each in its own stream:
  * what a command on another aggregate does to the statements it reaches.
+ * Their streams were ensured before the transaction.
  */
 export function decideOnEachStatement(
   events: EventStore,
   statementIds: readonly string[],
-  source: StatementSource,
   actorId: string,
   decide: (state: StatementState) => StatementEvent[],
 ) {
   return Effect.forEach(
     statementIds,
     (id) =>
-      decideOn(statementAggregate, events, id, source, actorId, (state) =>
-        Effect.succeed(decide(state)),
-      ),
+      decideOn(statementAggregate, events, id, actorId, (state) => Effect.succeed(decide(state))),
     { discard: true },
   )
 }

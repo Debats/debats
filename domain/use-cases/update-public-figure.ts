@@ -8,8 +8,13 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
+import {
+  decideOnPublicFigure,
+  publicFigureAggregate,
+  PublicFigureSource,
+} from './public-figure-stream'
 
 type UpdatePublicFigureParams = {
   contributor: ContributorIdentity | null
@@ -93,19 +98,24 @@ export async function persistUpdatedPublicFigure(
   })
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnPublicFigure(events, existing.id, params.publicFigureSource, contributor.id, () =>
-          Effect.succeed([edited]),
-        ),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'edited_personality', {
-              relatedEntityType: 'public_figure',
-              relatedEntityId: existing.id,
-            }),
+    pipe(
+      ensureStream(publicFigureAggregate, runUnitOfWork, existing.id, params.publicFigureSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnPublicFigure(events, existing.id, contributor.id, () =>
+              Effect.succeed([edited]),
+            ),
+            Effect.tap(() =>
+              grant(
+                events,
+                contributor.id,
+                rewardFor(contributor.id, 'edited_personality', {
+                  relatedEntityType: 'public_figure',
+                  relatedEntityId: existing.id,
+                }),
+              ),
+            ),
           ),
         ),
       ),

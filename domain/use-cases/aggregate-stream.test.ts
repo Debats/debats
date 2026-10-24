@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
-import { createInMemoryEventStore } from '../events/event-store-memory'
-import { AggregateStream, decideOn, IMPORT, loadOrImport } from './aggregate-stream'
+import { createInMemoryEventStore, inMemoryUnitOfWork } from '../events/event-store-memory'
+import { AggregateStream, decideOn, ensureStream, IMPORT, loadStream } from './aggregate-stream'
 import { Rejected } from './types'
 
 /** A counter: the smallest aggregate that can be opened, moved and closed */
@@ -61,44 +61,69 @@ const closed: CounterEvent = { type: 'Closed', payload: {} }
 
 const openedAt = new Date('2024-01-10T10:00:00Z')
 
-describe('loadOrImport', () => {
-  it('loads the stream when it has events, without asking the tables', async () => {
-    const events = createInMemoryEventStore()
-    await Effect.runPromise(events.append(stream, 0, [opened(1), moved(2)], { actorId: 'alice' }))
+describe('ensureStream', () => {
+  it('leaves a stream that has events alone, without asking the tables', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+    await Effect.runPromise(journal.append(stream, 0, [opened(1), moved(2)], { actorId: 'alice' }))
     let asked = 0
     const source = () => Effect.sync(() => void asked++).pipe(Effect.as(null))
 
-    const history = await Effect.runPromise(loadOrImport(counterAggregate, events, id, source))
+    await Effect.runPromise(ensureStream(counterAggregate, run, id, source))
 
-    expect(history.map((e) => e.type)).toEqual(['Opened', 'Moved'])
+    expect(journal.all().map((e) => e.type)).toEqual(['Opened', 'Moved'])
     expect(asked).toBe(0)
   })
 
   it('imports the aggregate from the tables when its stream is empty, dated and marked', async () => {
-    const events = createInMemoryEventStore()
+    const { run, journal } = inMemoryUnitOfWork()
 
-    const history = await Effect.runPromise(
-      loadOrImport(counterAggregate, events, id, rowOf({ count: 7, openedAt })),
-    )
+    await Effect.runPromise(ensureStream(counterAggregate, run, id, rowOf({ count: 7, openedAt })))
 
-    expect(history).toMatchObject([
+    expect(journal.all()).toMatchObject([
       { streamId: id, revision: 1, type: 'Opened', payload: { count: 7 }, metadata: IMPORT },
     ])
-    expect(history[0].occurredAt).toEqual(openedAt)
-    expect(events.all()).toHaveLength(1)
+    expect(journal.all()[0].occurredAt).toEqual(openedAt)
   })
 
   it('refuses when neither the journal nor the tables know the aggregate', async () => {
-    const events = createInMemoryEventStore()
+    const { run, journal } = inMemoryUnitOfWork()
 
     const outcome = await Effect.runPromise(
-      Effect.either(loadOrImport(counterAggregate, events, id, nothing)),
+      Effect.either(ensureStream(counterAggregate, run, id, nothing)),
     )
 
     expect(Either.isLeft(outcome) && outcome.left).toEqual(
       new Rejected('Le compteur est introuvable.'),
     )
-    expect(events.all()).toEqual([])
+    expect(journal.all()).toEqual([])
+  })
+
+  it('is content with a stream another command imported meanwhile', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+    // The tables are read after the check: the other command slips in there
+    const source = () =>
+      Effect.orDie(
+        Effect.map(
+          journal.append(stream, 0, [opened(3)], { actorId: null, metadata: IMPORT }),
+          () => ({ count: 7, openedAt }),
+        ),
+      )
+
+    await Effect.runPromise(ensureStream(counterAggregate, run, id, source))
+
+    expect(journal.all().map((e) => [e.revision, e.payload])).toEqual([[1, { count: 3 }]])
+  })
+})
+
+describe('loadStream', () => {
+  it('refuses a stream nobody ensured', async () => {
+    const events = createInMemoryEventStore()
+
+    const outcome = await Effect.runPromise(Effect.either(loadStream(counterAggregate, events, id)))
+
+    expect(Either.isLeft(outcome) && outcome.left).toEqual(
+      new Rejected('Le compteur est introuvable.'),
+    )
   })
 })
 
@@ -108,7 +133,7 @@ describe('decideOn', () => {
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
     const state = await Effect.runPromise(
-      decideOn(counterAggregate, events, id, nothing, 'bob', (current) =>
+      decideOn(counterAggregate, events, id, 'bob', (current) =>
         Effect.succeed([moved(current.count + 10)]),
       ),
     )
@@ -125,7 +150,7 @@ describe('decideOn', () => {
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
     const state = await Effect.runPromise(
-      decideOn(counterAggregate, events, id, nothing, 'bob', () => Effect.succeed([])),
+      decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([])),
     )
 
     expect(state).toEqual({ count: 1, closed: false })
@@ -139,7 +164,7 @@ describe('decideOn', () => {
 
     const outcome = await Effect.runPromise(
       Effect.either(
-        decideOn(counterAggregate, events, id, nothing, 'bob', () =>
+        decideOn(counterAggregate, events, id, 'bob', () =>
           Effect.sync(() => void decided++).pipe(Effect.as([moved(1)])),
         ),
       ),
@@ -158,7 +183,7 @@ describe('decideOn', () => {
 
     const outcome = await Effect.runPromise(
       Effect.either(
-        decideOn(counterAggregate, events, id, nothing, 'bob', () =>
+        decideOn(counterAggregate, events, id, 'bob', () =>
           Effect.fail(new Rejected('Trop haut.', 'count')),
         ),
       ),

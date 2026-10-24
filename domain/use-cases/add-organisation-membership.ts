@@ -6,8 +6,13 @@ import { OrganisationRepository } from '../repositories/organisation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { grant, rewardFor } from './reward'
+import { ensureStream } from './aggregate-stream'
 import { runFormCommand } from './run-command'
-import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
+import {
+  decideOnPublicFigure,
+  publicFigureAggregate,
+  PublicFigureSource,
+} from './public-figure-stream'
 
 export type AddOrganisationMembershipParams = {
   contributor: ContributorIdentity | null
@@ -90,29 +95,34 @@ export async function addOrganisationMembershipUseCase(
 
   const membershipId = MembershipId.make(crypto.randomUUID())
   const outcome = await runFormCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnPublicFigure(events, publicFigureId, publicFigureSource, contributor.id, (state) =>
-          hasCurrentMembership(state, organisationId)
-            ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
-            : Effect.succeed([
-                addMembership({
-                  membershipId,
-                  organisationId,
-                  role: params.role.trim() || undefined,
-                  startedOn: startedOn ?? undefined,
-                  endedOn: endedOn ?? undefined,
+    pipe(
+      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnPublicFigure(events, publicFigureId, contributor.id, (state) =>
+              hasCurrentMembership(state, organisationId)
+                ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
+                : Effect.succeed([
+                    addMembership({
+                      membershipId,
+                      organisationId,
+                      role: params.role.trim() || undefined,
+                      startedOn: startedOn ?? undefined,
+                      endedOn: endedOn ?? undefined,
+                    }),
+                  ]),
+            ),
+            Effect.tap(() =>
+              grant(
+                events,
+                contributor.id,
+                rewardFor(contributor.id, 'added_membership', {
+                  relatedEntityType: 'organisation_membership',
+                  relatedEntityId: membershipId,
                 }),
-              ]),
-        ),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'added_membership', {
-              relatedEntityType: 'organisation_membership',
-              relatedEntityId: membershipId,
-            }),
+              ),
+            ),
           ),
         ),
       ),

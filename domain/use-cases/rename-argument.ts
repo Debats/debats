@@ -1,12 +1,13 @@
-import { Effect, Either } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import { Argument, sameArgumentTitle } from '../entities/argument'
 import { renameArgument } from '../aggregates/argument'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runFormCommand } from './run-command'
-import { ArgumentSource, decideOnArgument } from './argument-stream'
+import { argumentAggregate, ArgumentSource, decideOnArgument } from './argument-stream'
 
 type RenameArgumentParams = {
   contributor: ContributorIdentity | null
@@ -55,9 +56,12 @@ export async function renameArgumentUseCase(
 
   const renamed = renameArgument({ title, description: params.description })
   const outcome = await runFormCommand(
-    params.runUnitOfWork((events) =>
-      decideOnArgument(events, existing.id, params.argumentSource, contributor.id, () =>
-        Effect.succeed([renamed]),
+    pipe(
+      ensureStream(argumentAggregate, params.runUnitOfWork, existing.id, params.argumentSource),
+      Effect.andThen(
+        params.runUnitOfWork((events) =>
+          decideOnArgument(events, existing.id, contributor.id, () => Effect.succeed([renamed])),
+        ),
       ),
     ),
   )

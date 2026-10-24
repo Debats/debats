@@ -4,8 +4,9 @@ import { EventStore } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { ensureStreams } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
 type LinkSubjectsParams = {
   contributor: ContributorIdentity | null
@@ -35,11 +36,14 @@ export async function linkSubjectsUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        recordLink(events, subjectId1, subjectId2, subjectSource, contributor.id),
-        Effect.flatMap(() =>
-          recordLink(events, subjectId2, subjectId1, subjectSource, contributor.id),
+    pipe(
+      ensureStreams(subjectAggregate, runUnitOfWork, [subjectId1, subjectId2], subjectSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            recordLink(events, subjectId1, subjectId2, contributor.id),
+            Effect.flatMap(() => recordLink(events, subjectId2, subjectId1, contributor.id)),
+          ),
         ),
       ),
     ),
@@ -49,14 +53,6 @@ export async function linkSubjectsUseCase(
   return Either.right(undefined)
 }
 
-function recordLink(
-  events: EventStore,
-  subjectId: string,
-  otherId: string,
-  source: SubjectSource,
-  actorId: string,
-) {
-  return decideOnSubject(events, subjectId, source, actorId, () =>
-    Effect.succeed([linkSubject(otherId)]),
-  )
+function recordLink(events: EventStore, subjectId: string, otherId: string, actorId: string) {
+  return decideOnSubject(events, subjectId, actorId, () => Effect.succeed([linkSubject(otherId)]))
 }

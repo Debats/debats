@@ -8,8 +8,13 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validateOrganisationFields } from './validate-organisation-fields'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnOrganisation, OrganisationSource } from './organisation-stream'
+import {
+  decideOnOrganisation,
+  organisationAggregate,
+  OrganisationSource,
+} from './organisation-stream'
 
 export type UpdateOrganisationParams = {
   contributor: ContributorIdentity | null
@@ -93,19 +98,24 @@ export async function persistUpdatedOrganisation(
   })
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnOrganisation(events, existing.id, params.organisationSource, contributor.id, () =>
-          Effect.succeed([edited]),
-        ),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'edited_organisation', {
-              relatedEntityType: 'organisation',
-              relatedEntityId: existing.id,
-            }),
+    pipe(
+      ensureStream(organisationAggregate, runUnitOfWork, existing.id, params.organisationSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnOrganisation(events, existing.id, contributor.id, () =>
+              Effect.succeed([edited]),
+            ),
+            Effect.tap(() =>
+              grant(
+                events,
+                contributor.id,
+                rewardFor(contributor.id, 'edited_organisation', {
+                  relatedEntityType: 'organisation',
+                  relatedEntityId: existing.id,
+                }),
+              ),
+            ),
           ),
         ),
       ),

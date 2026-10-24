@@ -152,12 +152,13 @@ describe('mergeArgumentsUseCase', () => {
     expect(Either.isRight(result) && result.right.id).toBe(b.id)
     const events = unit.journal.all().slice(3)
     expect(events.map((e) => [e.streamType, e.streamId, e.type, e.payload])).toEqual([
+      // The statements the journal does not know yet enter it before the transaction
+      ['statement', 's-2', 'StatementImported', expect.anything()],
+      ['statement', 's-3', 'StatementImported', expect.anything()],
       ['argument', a.id, 'ArgumentMergedInto', { targetArgumentId: b.id }],
       ['statement', 's-1', 'StatementArgumentsSet', { argumentIds: ['other', b.id] }],
-      ['statement', 's-2', 'StatementImported', expect.anything()],
       ['statement', 's-2', 'StatementArgumentsSet', { argumentIds: [b.id] }],
       // s-3 dropped the source meanwhile: imported to decide, nothing to change
-      ['statement', 's-3', 'StatementImported', expect.anything()],
     ])
   })
 

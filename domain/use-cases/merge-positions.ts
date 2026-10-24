@@ -6,9 +6,10 @@ import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { canPerform } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
+import { ensureStream, ensureStreams } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
-import { decideOnEachStatement, StatementSource } from './statement-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
+import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
 
 type MergePositionsParams = {
   sourcePositionId: string
@@ -64,17 +65,25 @@ export async function mergePositions(
   const statementIds = statements.map((s) => s.id)
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnSubject(events, source.subjectId, subjectSource, contributor.id, (state) =>
-          findPosition(state, sourcePositionId) && findPosition(state, targetPositionId)
-            ? Effect.succeed([mergePosition(sourcePositionId, targetPositionId)])
-            : Effect.fail(new Rejected('Une des deux positions n’existe plus.')),
-        ),
-        Effect.flatMap(() =>
-          decideOnEachStatement(events, statementIds, statementSource, contributor.id, () => [
-            moveStatement(targetPositionId),
-          ]),
+    pipe(
+      ensureStream(subjectAggregate, runUnitOfWork, source.subjectId, subjectSource),
+      Effect.andThen(
+        ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+      ),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnSubject(events, source.subjectId, contributor.id, (state) =>
+              findPosition(state, sourcePositionId) && findPosition(state, targetPositionId)
+                ? Effect.succeed([mergePosition(sourcePositionId, targetPositionId)])
+                : Effect.fail(new Rejected('Une des deux positions n’existe plus.')),
+            ),
+            Effect.flatMap(() =>
+              decideOnEachStatement(events, statementIds, contributor.id, () => [
+                moveStatement(targetPositionId),
+              ]),
+            ),
+          ),
         ),
       ),
     ),

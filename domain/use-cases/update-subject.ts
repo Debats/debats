@@ -6,8 +6,9 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
 import { grant, rewardFor } from './reward'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
 const UpdateSubjectInput = S.Struct({
   title: SubjectTitle,
@@ -47,19 +48,24 @@ export async function updateSubjectUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
-          Effect.succeed([editSubject(decoded.right)]),
-        ),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'edited_subject', {
-              relatedEntityType: 'subject',
-              relatedEntityId: subjectId,
-            }),
+    pipe(
+      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnSubject(events, subjectId, contributor.id, () =>
+              Effect.succeed([editSubject(decoded.right)]),
+            ),
+            Effect.tap(() =>
+              grant(
+                events,
+                contributor.id,
+                rewardFor(contributor.id, 'edited_subject', {
+                  relatedEntityType: 'subject',
+                  relatedEntityId: subjectId,
+                }),
+              ),
+            ),
           ),
         ),
       ),

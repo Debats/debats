@@ -1,12 +1,13 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { ThemeId } from '../entities/theme'
 import { setSubjectThemes } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
 type SetSubjectThemesParams = {
   contributor: ContributorIdentity | null
@@ -62,9 +63,14 @@ export async function setSubjectThemesUseCase(
   const themes = themeIds.map((themeId) => ({ themeId, isPrimary: themeId === primaryThemeId }))
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
-        Effect.succeed([setSubjectThemes(themes)]),
+    pipe(
+      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnSubject(events, subjectId, contributor.id, () =>
+            Effect.succeed([setSubjectThemes(themes)]),
+          ),
+        ),
       ),
     ),
   )

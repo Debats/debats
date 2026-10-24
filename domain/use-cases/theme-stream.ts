@@ -33,9 +33,8 @@ export const themeAggregate: AggregateStream<ThemeState, ThemeEvent, ThemeParts>
 export const decideOnTheme = (
   events: EventStore,
   themeId: string,
-  source: ThemeSource,
   actorId: string,
   decide: (state: ThemeState) => Effect.Effect<ThemeEvent[], Rejected>,
-) => decideOn(themeAggregate, events, themeId, source, actorId, decide)
+) => decideOn(themeAggregate, events, themeId, actorId, decide)
 
 export const requireThemeState = (state: ThemeState | null) => requireState(themeAggregate, state)

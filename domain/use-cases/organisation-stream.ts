@@ -42,10 +42,9 @@ export const organisationAggregate: AggregateStream<
 export const decideOnOrganisation = (
   events: EventStore,
   organisationId: string,
-  source: OrganisationSource,
   actorId: string,
   decide: (state: OrganisationState) => Effect.Effect<OrganisationEvent[], Rejected>,
-) => decideOn(organisationAggregate, events, organisationId, source, actorId, decide)
+) => decideOn(organisationAggregate, events, organisationId, actorId, decide)
 
 export const requireOrganisationState = (state: OrganisationState | null) =>
   requireState(organisationAggregate, state)

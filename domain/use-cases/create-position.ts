@@ -7,8 +7,9 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
 const CreatePositionInput = S.Struct({
   title: S.String.pipe(S.minLength(3), S.maxLength(255)),
@@ -62,19 +63,24 @@ export async function createPositionUseCase(
   // The command names the position, inside the subject's stream
   const positionId = PositionId.make(crypto.randomUUID())
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
-          Effect.succeed([addPosition({ positionId, title, description })]),
-        ),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'added_position_validated', {
-              relatedEntityType: 'position',
-              relatedEntityId: positionId,
-            }),
+    pipe(
+      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnSubject(events, subjectId, contributor.id, () =>
+              Effect.succeed([addPosition({ positionId, title, description })]),
+            ),
+            Effect.tap(() =>
+              grant(
+                events,
+                contributor.id,
+                rewardFor(contributor.id, 'added_position_validated', {
+                  relatedEntityType: 'position',
+                  relatedEntityId: positionId,
+                }),
+              ),
+            ),
           ),
         ),
       ),

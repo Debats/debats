@@ -14,7 +14,13 @@ import {
   validateStatementArguments,
 } from './statement-arguments'
 import { grantEach, rewardFor } from './reward'
-import { appendToStatement, loadOrImportStatement, StatementSource } from './statement-stream'
+import {
+  appendToStatement,
+  loadStatement,
+  statementAggregate,
+  StatementSource,
+} from './statement-stream'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
 
 type UpdateStatementParams = {
@@ -109,29 +115,34 @@ export async function updateStatementUseCase(
 
   // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        recordProposedArguments(events, contributor.id, validatedArguments.right),
-        Effect.flatMap((recorded) =>
+    pipe(
+      ensureStream(statementAggregate, runUnitOfWork, statementId, statementSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
           pipe(
-            loadOrImportStatement(events, statementId, statementSource),
-            Effect.flatMap((history) =>
-              appendToStatement(
-                events,
-                statementId,
-                history,
-                [edited(recorded.argumentIds)],
-                contributor.id,
+            recordProposedArguments(events, contributor.id, validatedArguments.right),
+            Effect.flatMap((recorded) =>
+              pipe(
+                loadStatement(events, statementId),
+                Effect.flatMap((history) =>
+                  appendToStatement(
+                    events,
+                    statementId,
+                    history,
+                    [edited(recorded.argumentIds)],
+                    contributor.id,
+                  ),
+                ),
+                Effect.tap(() =>
+                  grantEach(events, contributor.id, [
+                    rewardFor(contributor.id, 'edited_statement', {
+                      relatedEntityType: 'statement',
+                      relatedEntityId: statementId,
+                    }),
+                    ...argumentRewards(contributor.id, recorded),
+                  ]),
+                ),
               ),
-            ),
-            Effect.tap(() =>
-              grantEach(events, contributor.id, [
-                rewardFor(contributor.id, 'edited_statement', {
-                  relatedEntityType: 'statement',
-                  relatedEntityId: statementId,
-                }),
-                ...argumentRewards(contributor.id, recorded),
-              ]),
             ),
           ),
         ),

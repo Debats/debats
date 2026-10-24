@@ -39,7 +39,8 @@ const toStored = (row: EventRow): StoredEvent => ({
 
 const byRevision = (a: StoredEvent, b: StoredEvent) => a.revision - b.revision
 
-const isUniqueViolation = (error: unknown) =>
+/** Whether Postgres refused a row because another one already holds a unique value */
+export const isUniqueViolation = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === UNIQUE_VIOLATION
 
 /**
@@ -68,7 +69,38 @@ export function createEventStore(tx: PrismaTransaction): EventStore {
             ? error
             : databaseError('Failed to append to the event stream', error),
       }),
+
+    appendToEnd: (stream, events, options) =>
+      Effect.tryPromise({
+        try: () => appendAfterLast(tx, stream, events, options),
+        catch: (error) => databaseError('Failed to append to the end of the event stream', error),
+      }),
   }
+}
+
+/**
+ * Serialises the writers of one stream for the rest of the transaction, so
+ * that the revision read next is still the last one when the rows go in.
+ * A transaction-scoped lock: it works through a pooler in transaction mode.
+ * $executeRaw, as Prisma cannot read the `void` the lock function returns.
+ */
+async function lockStream(tx: PrismaTransaction, stream: StreamRef): Promise<void> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${stream.streamType}/${stream.streamId}`}))`
+}
+
+async function appendAfterLast(
+  tx: PrismaTransaction,
+  stream: StreamRef,
+  events: DomainEvent[],
+  options: AppendOptions,
+): Promise<StoredEvent[]> {
+  if (events.length === 0) return []
+  await lockStream(tx, stream)
+  const last = await tx.domain_events.aggregate({
+    where: { stream_type: stream.streamType, stream_id: stream.streamId },
+    _max: { revision: true },
+  })
+  return appendEvents(tx, stream, last._max.revision ?? 0, events, options)
 }
 
 async function appendEvents(

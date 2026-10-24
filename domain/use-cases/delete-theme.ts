@@ -1,10 +1,11 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { deleteTheme } from '../aggregates/theme'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnTheme, ThemeSource } from './theme-stream'
+import { decideOnTheme, themeAggregate, ThemeSource } from './theme-stream'
 
 type DeleteThemeParams = {
   contributor: ContributorIdentity | null
@@ -29,9 +30,12 @@ export async function deleteThemeUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      decideOnTheme(events, themeId, themeSource, contributor.id, () =>
-        Effect.succeed([deleteTheme()]),
+    pipe(
+      ensureStream(themeAggregate, runUnitOfWork, themeId, themeSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnTheme(events, themeId, contributor.id, () => Effect.succeed([deleteTheme()])),
+        ),
       ),
     ),
   )

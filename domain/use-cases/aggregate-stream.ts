@@ -5,9 +5,11 @@ import {
   DomainEvent,
   EventStore,
   StoredEvent,
+  StreamRef,
   streamRevision,
   UnreadableEvent,
 } from '../events/event-store'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { DatabaseError } from '../repositories/errors'
 import { Rejected } from './types'
 
@@ -37,36 +39,68 @@ export type Source<Parts> = (id: string) => Effect.Effect<Parts | null, Database
 
 export type StreamFailure = DatabaseError | ConcurrencyError | Rejected
 
+const streamOf = (aggregate: { streamType: string }, id: string): StreamRef => ({
+  streamType: aggregate.streamType,
+  streamId: id,
+})
+
 /**
- * The stream of an aggregate. One written before its journal existed, or in
- * the window of a deployment, has an empty stream: it enters the journal
- * first, as the tables hold it. Unknown everywhere: the command is refused.
+ * Makes sure the aggregate has a stream, before the command's transaction.
+ * One written before its journal existed, or in the window of a deployment,
+ * has none: it enters the journal as the tables hold it, read outside any
+ * transaction, in a unit of work of its own. Unknown everywhere: the command
+ * is refused. Two commands importing it at once: the second finds it there.
  */
-export function loadOrImport<State, Event extends DomainEvent, Parts>(
+export function ensureStream<State, Event extends DomainEvent, Parts>(
+  aggregate: AggregateStream<State, Event, Parts>,
+  run: RunUnitOfWork,
+  id: string,
+  source: Source<Parts>,
+): Effect.Effect<void, DatabaseError | Rejected> {
+  const stream = streamOf(aggregate, id)
+  const isMissing = run((events) => Effect.map(events.load(stream), (h) => h.length === 0))
+  const imported = (parts: Parts) =>
+    run((events) =>
+      Effect.reduce(aggregate.importBatches(parts), 0, (revision, batch) =>
+        Effect.map(
+          events.append(stream, revision, batch.events, batch.options),
+          (stored) => revision + stored.length,
+        ),
+      ),
+    )
+  const importFrom = (parts: Parts | null): Effect.Effect<void, StreamFailure> =>
+    parts ? Effect.asVoid(imported(parts)) : Effect.fail(new Rejected(aggregate.notFound))
+  return pipe(
+    isMissing,
+    Effect.flatMap(
+      (missing): Effect.Effect<void, StreamFailure> =>
+        missing ? Effect.flatMap(source(id), importFrom) : Effect.void,
+    ),
+    // Imported meanwhile by another command: the stream is there, which is all that matters
+    Effect.catchTag('ConcurrencyError', () => Effect.void),
+  )
+}
+
+/** The same, for every aggregate a command reaches */
+export function ensureStreams<State, Event extends DomainEvent, Parts>(
+  aggregate: AggregateStream<State, Event, Parts>,
+  run: RunUnitOfWork,
+  ids: readonly string[],
+  source: Source<Parts>,
+): Effect.Effect<void, DatabaseError | Rejected> {
+  return Effect.forEach(ids, (id) => ensureStream(aggregate, run, id, source), { discard: true })
+}
+
+/** The stream of an aggregate, in the transaction; an aggregate nobody knows is refused */
+export function loadStream<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
   events: EventStore,
   id: string,
-  source: Source<Parts>,
-): Effect.Effect<StoredEvent[], StreamFailure> {
-  const stream = { streamType: aggregate.streamType, streamId: id }
-  return Effect.flatMap(events.load(stream), (history) =>
-    history.length > 0
-      ? Effect.succeed(history)
-      : Effect.flatMap(
-          source(id),
-          (parts): Effect.Effect<StoredEvent[], StreamFailure> =>
-            parts
-              ? Effect.reduce(
-                  aggregate.importBatches(parts),
-                  [] as StoredEvent[],
-                  (imported, batch) =>
-                    Effect.map(
-                      events.append(stream, streamRevision(imported), batch.events, batch.options),
-                      (stored) => [...imported, ...stored],
-                    ),
-                )
-              : Effect.fail(new Rejected(aggregate.notFound)),
-        ),
+): Effect.Effect<StoredEvent[], DatabaseError | Rejected> {
+  return Effect.filterOrFail(
+    events.load(streamOf(aggregate, id)),
+    (history) => history.length > 0,
+    () => new Rejected(aggregate.notFound),
   )
 }
 
@@ -82,10 +116,9 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
   decided: Event[],
   actorId: string,
 ): Effect.Effect<State, DatabaseError | ConcurrencyError | UnreadableEvent> {
-  const stream = { streamType: aggregate.streamType, streamId: id }
   return pipe(
     decided.length > 0
-      ? events.append(stream, streamRevision(history), decided, { actorId })
+      ? events.append(streamOf(aggregate, id), streamRevision(history), decided, { actorId })
       : Effect.succeed([]),
     Effect.flatMap((stored) => aggregate.replay([...history, ...stored])),
     Effect.flatMap((state) => requireState(aggregate, state)),
@@ -93,21 +126,20 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
 }
 
 /**
- * A command on an aggregate: loads its stream (importing it on demand), lets
- * the decision look at the current state, appends what it decided and
- * rebuilds what the aggregate now is. A decision refuses with a Rejected;
- * a deleted aggregate is refused before any decision.
+ * A command on an aggregate: loads its stream, lets the decision look at the
+ * current state, appends what it decided and rebuilds what the aggregate now
+ * is. A decision refuses with a Rejected; a deleted aggregate is refused
+ * before any decision.
  */
 export function decideOn<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
   events: EventStore,
   id: string,
-  source: Source<Parts>,
   actorId: string,
   decide: (state: State) => Effect.Effect<Event[], Rejected>,
 ): Effect.Effect<State, StreamFailure | UnreadableEvent> {
   return pipe(
-    loadOrImport(aggregate, events, id, source),
+    loadStream(aggregate, events, id),
     Effect.flatMap((history) =>
       pipe(
         aggregate.replay(history),

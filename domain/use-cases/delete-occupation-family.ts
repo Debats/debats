@@ -1,10 +1,15 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { deleteOccupationFamily } from '../aggregates/occupation-family'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnOccupationFamily, OccupationFamilySource } from './occupation-family-stream'
+import {
+  decideOnOccupationFamily,
+  occupationFamilyAggregate,
+  OccupationFamilySource,
+} from './occupation-family-stream'
 
 type DeleteOccupationFamilyParams = {
   contributor: ContributorIdentity | null
@@ -29,9 +34,14 @@ export async function deleteOccupationFamilyUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      decideOnOccupationFamily(events, familyId, familySource, contributor.id, () =>
-        Effect.succeed([deleteOccupationFamily()]),
+    pipe(
+      ensureStream(occupationFamilyAggregate, runUnitOfWork, familyId, familySource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnOccupationFamily(events, familyId, contributor.id, () =>
+            Effect.succeed([deleteOccupationFamily()]),
+          ),
+        ),
       ),
     ),
   )

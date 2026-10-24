@@ -68,10 +68,9 @@ export const publicFigureAggregate: AggregateStream<
 export const decideOnPublicFigure = (
   events: EventStore,
   publicFigureId: string,
-  source: PublicFigureSource,
   actorId: string,
   decide: (state: PublicFigureState) => Effect.Effect<PublicFigureEvent[], Rejected>,
-) => decideOn(publicFigureAggregate, events, publicFigureId, source, actorId, decide)
+) => decideOn(publicFigureAggregate, events, publicFigureId, actorId, decide)
 
 export const requirePublicFigureState = (state: PublicFigureState | null) =>
   requireState(publicFigureAggregate, state)

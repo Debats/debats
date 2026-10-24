@@ -69,10 +69,9 @@ export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent, Subje
 export const decideOnSubject = (
   events: EventStore,
   subjectId: string,
-  source: SubjectSource,
   actorId: string,
   decide: (state: SubjectState) => Effect.Effect<SubjectEvent[], Rejected>,
-) => decideOn(subjectAggregate, events, subjectId, source, actorId, decide)
+) => decideOn(subjectAggregate, events, subjectId, actorId, decide)
 
 export const requireSubjectState = (state: SubjectState | null) =>
   requireState(subjectAggregate, state)

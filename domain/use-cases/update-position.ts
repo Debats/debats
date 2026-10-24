@@ -8,8 +8,9 @@ import { PositionRepository } from '../repositories/position-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { grant, rewardFor } from './reward'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
 const UpdatePositionInput = S.Struct({
   title: S.String.pipe(S.minLength(3), S.maxLength(255)),
@@ -76,21 +77,26 @@ export async function updatePositionUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnSubject(events, existing.subjectId, subjectSource, contributor.id, (state) =>
-          findPosition(state, positionId)
-            ? Effect.succeed([editPosition({ positionId, title, description })])
-            : Effect.fail(new Rejected('Position introuvable.')),
-        ),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'edited_position', {
-              relatedEntityType: 'position',
-              relatedEntityId: positionId,
-            }),
+    pipe(
+      ensureStream(subjectAggregate, runUnitOfWork, existing.subjectId, subjectSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnSubject(events, existing.subjectId, contributor.id, (state) =>
+              findPosition(state, positionId)
+                ? Effect.succeed([editPosition({ positionId, title, description })])
+                : Effect.fail(new Rejected('Position introuvable.')),
+            ),
+            Effect.tap(() =>
+              grant(
+                events,
+                contributor.id,
+                rewardFor(contributor.id, 'edited_position', {
+                  relatedEntityType: 'position',
+                  relatedEntityId: positionId,
+                }),
+              ),
+            ),
           ),
         ),
       ),

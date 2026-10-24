@@ -5,6 +5,7 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runFormCommand } from './run-command'
 import {
   decideOnOccupationFamily,
@@ -55,17 +56,20 @@ export async function createOccupationUseCase(
   // The command names the occupation, within the stream of its family
   const id = OccupationId.make(crypto.randomUUID())
   const outcome = await runFormCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnOccupationFamily(events, familyId, familySource, contributor.id, () =>
-          Effect.succeed([addOccupation(id, { name, description })]),
+    pipe(
+      ensureStream(occupationFamilyAggregate, runUnitOfWork, familyId, familySource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnOccupationFamily(events, familyId, contributor.id, () =>
+            Effect.succeed([addOccupation(id, { name, description })]),
+          ),
         ),
-        // A family unknown or deleted meanwhile is blamed on the field, not told as a message
-        Effect.mapError((failure) =>
-          failure._tag === 'Rejected' && failure.message === occupationFamilyAggregate.notFound
-            ? CHOOSE_A_FAMILY
-            : failure,
-        ),
+      ),
+      // A family unknown or deleted meanwhile is blamed on the field, not told as a message
+      Effect.mapError((failure) =>
+        failure._tag === 'Rejected' && failure.message === occupationFamilyAggregate.notFound
+          ? CHOOSE_A_FAMILY
+          : failure,
       ),
     ),
   )

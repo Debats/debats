@@ -28,6 +28,14 @@ export function runUnitOfWork<A, E>(
   }).pipe(Effect.catchAll((error) => failureOf<E>(error)))
 }
 
+/**
+ * A command only reads and writes the journal and its projections: a few
+ * statements, plus one per statement a cascade reaches. The waits are
+ * explicit rather than Prisma's defaults (2 s to get a connection, 5 s to
+ * finish), so that a wide cascade fails for a reason, not for the clock.
+ */
+const TRANSACTION = { maxWait: 5_000, timeout: 30_000 }
+
 function runInTransaction<A, E>(
   work: (events: EventStore) => Effect.Effect<A, E>,
   registry: ProjectorRegistry,
@@ -36,7 +44,7 @@ function runInTransaction<A, E>(
     const exit = await Effect.runPromiseExit(work(journalOf(tx, registry)))
     if (Exit.isFailure(exit)) throw new RolledBack(exit.cause)
     return exit.value
-  })
+  }, TRANSACTION)
 }
 
 function journalOf(tx: PrismaTransaction, registry: ProjectorRegistry): EventStore {

@@ -60,6 +60,33 @@ describe.skipIf(!hasDatabase)('event store on Postgres', () => {
     expect(Either.isLeft(result) && result.left).toBeInstanceOf(ConcurrencyError)
   })
 
+  it('appends to the end of a stream, after the revisions it already holds', async () => {
+    const stored = await Effect.runPromise(
+      runUnitOfWork(
+        (events) =>
+          events.appendToEnd(stream, [{ type: 'Granted', payload: {} }], { actorId: null }),
+        NO_PROJECTION,
+      ),
+    )
+    expect(stored.map((e) => e.revision)).toEqual([3])
+  })
+
+  it('lets two transactions append to the end of the same stream at once', async () => {
+    const shared = { streamType: 'test', streamId: crypto.randomUUID() }
+    const appendOne = (type: string) =>
+      Effect.runPromise(
+        runUnitOfWork(
+          (events) => events.appendToEnd(shared, [{ type, payload: {} }], { actorId: null }),
+          NO_PROJECTION,
+        ),
+      )
+
+    await Promise.all([appendOne('First'), appendOne('Second'), appendOne('Third')])
+
+    const loaded = await Effect.runPromise(runUnitOfWork((events) => events.load(shared)))
+    expect(loaded.map((e) => e.revision)).toEqual([1, 2, 3])
+  })
+
   it('rolls the events back when the command fails', async () => {
     const failing = { streamType: 'test', streamId: crypto.randomUUID() }
     const result = await Effect.runPromise(

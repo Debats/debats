@@ -84,6 +84,17 @@ export interface EventStore {
     events: DomainEvent[],
     options: AppendOptions,
   ): Effect.Effect<StoredEvent[], DatabaseError | ConcurrencyError>
+
+  /**
+   * Appends events after whatever the stream holds, for a stream that only
+   * accumulates facts nobody decides from (a contributor's grants): two
+   * writers never conflict, the store serialises them on the stream.
+   */
+  appendToEnd(
+    stream: StreamRef,
+    events: DomainEvent[],
+    options: AppendOptions,
+  ): Effect.Effect<StoredEvent[], DatabaseError>
 }
 
 /** The revision a stream is at after these events; 0 for none */

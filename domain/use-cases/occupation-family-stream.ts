@@ -50,10 +50,9 @@ export const occupationFamilyAggregate: AggregateStream<
 export const decideOnOccupationFamily = (
   events: EventStore,
   familyId: string,
-  source: OccupationFamilySource,
   actorId: string,
   decide: (state: OccupationFamilyState) => Effect.Effect<OccupationFamilyEvent[], Rejected>,
-) => decideOn(occupationFamilyAggregate, events, familyId, source, actorId, decide)
+) => decideOn(occupationFamilyAggregate, events, familyId, actorId, decide)
 
 export const requireOccupationFamilyState = (state: OccupationFamilyState | null) =>
   requireState(occupationFamilyAggregate, state)

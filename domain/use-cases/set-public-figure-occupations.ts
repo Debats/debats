@@ -1,12 +1,17 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { OccupationAssignmentInput } from '../read-models/occupations'
 import { setOccupations } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
+import {
+  decideOnPublicFigure,
+  publicFigureAggregate,
+  PublicFigureSource,
+} from './public-figure-stream'
 
 type SetPublicFigureOccupationsParams = {
   contributor: ContributorIdentity | null
@@ -51,9 +56,14 @@ export async function setPublicFigureOccupationsUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      decideOnPublicFigure(events, publicFigureId, publicFigureSource, contributor.id, () =>
-        Effect.succeed([setOccupations(assignments)]),
+    pipe(
+      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnPublicFigure(events, publicFigureId, contributor.id, () =>
+            Effect.succeed([setOccupations(assignments)]),
+          ),
+        ),
       ),
     ),
   )

@@ -31,6 +31,18 @@ describe('in-memory event store', () => {
     expect(Either.isLeft(result) && result.left).toBeInstanceOf(ConcurrencyError)
   })
 
+  it('appends to the end of a stream whatever its revision, without a conflict', async () => {
+    const store = createInMemoryEventStore()
+    await Effect.runPromise(store.append(stream, 0, [{ type: 'Started', payload: {} }], actor))
+    const stored = await Effect.runPromise(
+      store.appendToEnd(stream, [{ type: 'Granted', payload: {} }], actor),
+    )
+
+    expect(stored[0].revision).toBe(2)
+    const loaded = await Effect.runPromise(store.load(stream))
+    expect(loaded.map((e) => e.type)).toEqual(['Started', 'Granted'])
+  })
+
   it('keeps streams apart', async () => {
     const store = createInMemoryEventStore()
     await Effect.runPromise(store.append(stream, 0, [{ type: 'Started', payload: {} }], actor))

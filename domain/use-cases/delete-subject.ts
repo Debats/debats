@@ -7,9 +7,10 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
+import { ensureStream, ensureStreams } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnSubject, SubjectSource } from './subject-stream'
-import { decideOnEachStatement, StatementSource } from './statement-stream'
+import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
+import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
 
 type DeleteSubjectParams = {
   contributor: ContributorIdentity | null
@@ -60,15 +61,23 @@ export async function deleteSubjectUseCase(
   const statementIds = await Effect.runPromise(statementRepo.findIdsBySubjectId(subjectId))
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        decideOnSubject(events, subjectId, subjectSource, contributor.id, () =>
-          Effect.succeed([deleteSubject()]),
-        ),
-        Effect.flatMap(() =>
-          decideOnEachStatement(events, statementIds, statementSource, contributor.id, () => [
-            removeStatement(),
-          ]),
+    pipe(
+      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
+      Effect.andThen(
+        ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+      ),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            decideOnSubject(events, subjectId, contributor.id, () =>
+              Effect.succeed([deleteSubject()]),
+            ),
+            Effect.flatMap(() =>
+              decideOnEachStatement(events, statementIds, contributor.id, () => [
+                removeStatement(),
+              ]),
+            ),
+          ),
         ),
       ),
     ),

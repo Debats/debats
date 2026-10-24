@@ -1,6 +1,6 @@
-import { Array as Arr, Effect, pipe } from 'effect'
+import { Array as Arr, Effect } from 'effect'
 import { contributorStream, GrantInput, grantReputation } from '../aggregates/contributor'
-import { ConcurrencyError, EventStore, streamRevision } from '../events/event-store'
+import { EventStore } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
 import { reputationReward, RewardableAction } from '../reputation/permissions'
 
@@ -18,26 +18,22 @@ export const rewardFor = (
 /**
  * Records grants on the contributors' streams, in the transaction of the deed
  * they reward: a deed and its rewards are written together or not at all.
- * One contributor's grants go in one append. The actor is the contributor
- * whose command earned them.
+ * One contributor's grants go in one append, at the end of her stream: nobody
+ * decides from it, so two deeds of hers at once never conflict. The actor is
+ * the contributor whose command earned them.
  */
 export function grantEach(
   events: EventStore,
   actorId: string,
   rewards: readonly Grant[],
-): Effect.Effect<void, DatabaseError | ConcurrencyError> {
+): Effect.Effect<void, DatabaseError> {
   const byContributor = Arr.groupBy(rewards, (reward) => reward.contributorId)
   return Effect.forEach(
     Object.entries(byContributor),
-    ([contributorId, grants]) => {
-      const stream = contributorStream(contributorId)
-      return pipe(
-        events.load(stream),
-        Effect.flatMap((history) =>
-          events.append(stream, streamRevision(history), grants.map(grantReputation), { actorId }),
-        ),
-      )
-    },
+    ([contributorId, grants]) =>
+      events.appendToEnd(contributorStream(contributorId), grants.map(grantReputation), {
+        actorId,
+      }),
     { discard: true },
   )
 }
@@ -46,4 +42,4 @@ export const grant = (
   events: EventStore,
   actorId: string,
   reward: Grant,
-): Effect.Effect<void, DatabaseError | ConcurrencyError> => grantEach(events, actorId, [reward])
+): Effect.Effect<void, DatabaseError> => grantEach(events, actorId, [reward])

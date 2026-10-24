@@ -6,14 +6,16 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
+import { ensureStreams } from './aggregate-stream'
 import { runCommand } from './run-command'
 import {
+  argumentAggregate,
   ArgumentSource,
   decideOnArgument,
-  loadOrImportArgument,
+  loadArgument,
   requireArgumentState,
 } from './argument-stream'
-import { decideOnEachStatement, StatementSource } from './statement-stream'
+import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
 
 type MergeArgumentsParams = {
   contributor: ContributorIdentity | null
@@ -55,35 +57,44 @@ export async function mergeArgumentsUseCase(
 
   const statementIds = await Effect.runPromise(statementRepo.findIdsByArgumentId(sourceArgumentId))
 
+  const { runUnitOfWork, argumentSource, statementSource } = params
   return runCommand(
-    params.runUnitOfWork((events) =>
-      pipe(
-        loadOrImportArgument(events, targetArgumentId, params.argumentSource),
-        Effect.flatMap(replayArgument),
-        Effect.flatMap(requireArgumentState),
-        Effect.filterOrFail(isLiveArgument, () => new Rejected(GONE)),
-        Effect.tap(() =>
-          decideOnArgument(events, sourceArgumentId, params.argumentSource, contributor.id, () =>
-            Effect.succeed([mergeArgumentInto(targetArgumentId)]),
+    pipe(
+      ensureStreams(
+        argumentAggregate,
+        runUnitOfWork,
+        [targetArgumentId, sourceArgumentId],
+        argumentSource,
+      ),
+      Effect.andThen(
+        ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+      ),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          pipe(
+            loadArgument(events, targetArgumentId),
+            Effect.flatMap(replayArgument),
+            Effect.flatMap(requireArgumentState),
+            Effect.filterOrFail(isLiveArgument, () => new Rejected(GONE)),
+            Effect.tap(() =>
+              decideOnArgument(events, sourceArgumentId, contributor.id, () =>
+                Effect.succeed([mergeArgumentInto(targetArgumentId)]),
+              ),
+            ),
+            Effect.tap(() =>
+              decideOnEachStatement(events, statementIds, contributor.id, (s) =>
+                s.argumentIds.includes(sourceArgumentId)
+                  ? [
+                      setStatementArguments(
+                        withArgumentReplaced(s.argumentIds, sourceArgumentId, targetArgumentId),
+                      ),
+                    ]
+                  : [],
+              ),
+            ),
+            Effect.map((target) => target.argument),
           ),
         ),
-        Effect.tap(() =>
-          decideOnEachStatement(
-            events,
-            statementIds,
-            params.statementSource,
-            contributor.id,
-            (s) =>
-              s.argumentIds.includes(sourceArgumentId)
-                ? [
-                    setStatementArguments(
-                      withArgumentReplaced(s.argumentIds, sourceArgumentId, targetArgumentId),
-                    ),
-                  ]
-                : [],
-          ),
-        ),
-        Effect.map((target) => target.argument),
       ),
     ),
   )

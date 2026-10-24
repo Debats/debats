@@ -1,11 +1,16 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { removeOccupation } from '../aggregates/occupation-family'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnOccupationFamily, OccupationFamilySource } from './occupation-family-stream'
+import {
+  decideOnOccupationFamily,
+  occupationFamilyAggregate,
+  OccupationFamilySource,
+} from './occupation-family-stream'
 
 type DeleteOccupationParams = {
   contributor: ContributorIdentity | null
@@ -39,16 +44,16 @@ export async function deleteOccupationUseCase(
   }
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      decideOnOccupationFamily(
-        events,
-        occupation.familyId,
-        familySource,
-        contributor.id,
-        (state) =>
-          state.occupations.some((o) => o.id === occupationId)
-            ? Effect.succeed([removeOccupation(occupationId)])
-            : Effect.fail(new Rejected(NOT_FOUND)),
+    pipe(
+      ensureStream(occupationFamilyAggregate, runUnitOfWork, occupation.familyId, familySource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnOccupationFamily(events, occupation.familyId, contributor.id, (state) =>
+            state.occupations.some((o) => o.id === occupationId)
+              ? Effect.succeed([removeOccupation(occupationId)])
+              : Effect.fail(new Rejected(NOT_FOUND)),
+          ),
+        ),
       ),
     ),
   )

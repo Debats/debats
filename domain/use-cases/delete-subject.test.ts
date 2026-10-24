@@ -129,13 +129,15 @@ describe('deleteSubjectUseCase', () => {
     })
 
     expect(Either.isRight(result)).toBe(true)
+    // The import comes before the transaction, the deletions inside it
     expect(
       journal
         .all()
-        .slice(-2)
+        .slice(-3)
         .map((e) => [e.streamType, e.type, e.revision]),
     ).toEqual([
       ['statement', 'StatementImported', 1],
+      ['subject', 'SubjectDeleted', 3],
       ['statement', 'StatementDeleted', 2],
     ])
   })

@@ -14,7 +14,7 @@ import {
   AggregateStream,
   decideOn,
   IMPORT,
-  loadOrImport,
+  loadStream,
   requireState,
   Source,
 } from './aggregate-stream'
@@ -43,19 +43,15 @@ export const argumentAggregate: AggregateStream<ArgumentState, ArgumentEvent, Ar
   ],
 }
 
-export const loadOrImportArgument = (
-  events: EventStore,
-  argumentId: string,
-  source: ArgumentSource,
-) => loadOrImport(argumentAggregate, events, argumentId, source)
+export const loadArgument = (events: EventStore, argumentId: string) =>
+  loadStream(argumentAggregate, events, argumentId)
 
 export const decideOnArgument = (
   events: EventStore,
   argumentId: string,
-  source: ArgumentSource,
   actorId: string,
   decide: (state: ArgumentState) => Effect.Effect<ArgumentEvent[], Rejected>,
-) => decideOn(argumentAggregate, events, argumentId, source, actorId, decide)
+) => decideOn(argumentAggregate, events, argumentId, actorId, decide)
 
 export const requireArgumentState = (state: ArgumentState | null) =>
   requireState(argumentAggregate, state)

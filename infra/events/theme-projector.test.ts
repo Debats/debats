@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import { addTheme, deleteTheme, replayTheme, themeStream } from '../../domain/aggregates/theme'
 import { decodeThemeEvent, ThemeEvent } from '../../domain/aggregates/theme-events'
+import { ConcurrencyError } from '../../domain/events/event-store'
 import { getPrismaClient } from '../prisma/client'
 import { runUnitOfWork } from './unit-of-work'
 
@@ -41,6 +42,26 @@ describe.skipIf(!hasDatabase)('theme projector', () => {
       created_by: actorId,
       updated_by: actorId,
     })
+  })
+
+  it('reports a slug another theme took meanwhile as a race, not as a defect', async () => {
+    const twin = themeStream(crypto.randomUUID())
+    const outcome = await Effect.runPromise(
+      Effect.either(
+        runUnitOfWork((journal) =>
+          journal.append(
+            twin,
+            0,
+            [addTheme({ name: `Thème de test ${themeId.slice(0, 8)}`, description: 'Doublon.' })],
+            { actorId },
+          ),
+        ),
+      ),
+    )
+
+    expect(Either.isLeft(outcome) && outcome.left).toBeInstanceOf(ConcurrencyError)
+    const loaded = await Effect.runPromise(runUnitOfWork((journal) => journal.load(twin)))
+    expect(loaded).toEqual([])
   })
 
   it('removes a deleted theme from the table', async () => {

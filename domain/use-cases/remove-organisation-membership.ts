@@ -1,11 +1,16 @@
-import { Effect, Either } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import { findMembership, removeMembership } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
+import { ensureStream } from './aggregate-stream'
 import { runCommand } from './run-command'
-import { decideOnPublicFigure, PublicFigureSource } from './public-figure-stream'
+import {
+  decideOnPublicFigure,
+  publicFigureAggregate,
+  PublicFigureSource,
+} from './public-figure-stream'
 
 export type RemoveOrganisationMembershipParams = {
   contributor: ContributorIdentity | null
@@ -38,17 +43,18 @@ export async function removeOrganisationMembershipUseCase(
     return Either.left(NOT_FOUND)
   }
 
+  const figureId = membership.publicFigureId
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      decideOnPublicFigure(
-        events,
-        membership.publicFigureId,
-        publicFigureSource,
-        contributor.id,
-        (state) =>
-          findMembership(state, membershipId)
-            ? Effect.succeed([removeMembership(membershipId)])
-            : Effect.fail(new Rejected(NOT_FOUND)),
+    pipe(
+      ensureStream(publicFigureAggregate, runUnitOfWork, figureId, publicFigureSource),
+      Effect.andThen(
+        runUnitOfWork((events) =>
+          decideOnPublicFigure(events, figureId, contributor.id, (state) =>
+            findMembership(state, membershipId)
+              ? Effect.succeed([removeMembership(membershipId)])
+              : Effect.fail(new Rejected(NOT_FOUND)),
+          ),
+        ),
       ),
     ),
   )
