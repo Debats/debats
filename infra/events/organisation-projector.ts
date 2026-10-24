@@ -1,29 +1,17 @@
-import { Effect, pipe } from 'effect'
 import {
   decodeOrganisationEvent,
   OrganisationContent,
   OrganisationEvent,
 } from '../../domain/aggregates/organisation-events'
 import { StoredEvent } from '../../domain/events/event-store'
-import { databaseError } from '../database/database-error'
 import { PrismaTransaction } from '../prisma/client'
-import type { Projector } from './projectors'
+import { auditOf, projectorOf } from './projector'
 
 /**
  * Keeps the organisations table in step with the organisation stream.
  * Idempotent: replaying the journal rebuilds it.
  */
-export const projectOrganisation: Projector = (event, tx) =>
-  pipe(
-    decodeOrganisationEvent(event),
-    Effect.mapError((unreadable) => databaseError('Unreadable organisation event', unreadable)),
-    Effect.flatMap((decoded) =>
-      Effect.tryPromise({
-        try: () => apply(decoded, event, tx),
-        catch: (error) => databaseError('Failed to project the organisation', error),
-      }),
-    ),
-  )
+export const projectOrganisation = projectorOf('organisation', decodeOrganisationEvent, apply)
 
 async function apply(decoded: OrganisationEvent, stored: StoredEvent, tx: PrismaTransaction) {
   const organisationId = stored.streamId
@@ -76,15 +64,7 @@ async function createIfMissing(
     select: { id: true },
   })
   if (found) return
-  if (!stored.actorId) throw new Error('Cannot create an organisation without an actor')
   await tx.organisations.create({
-    data: {
-      id: stored.streamId,
-      ...columns(payload),
-      created_by: stored.actorId,
-      updated_by: stored.actorId,
-      created_at: stored.occurredAt,
-      updated_at: stored.occurredAt,
-    },
+    data: { id: stored.streamId, ...columns(payload), ...auditOf(stored, 'an organisation') },
   })
 }

@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * The subject is the root of one stream that also carries its positions,
@@ -108,14 +107,5 @@ export const SubjectEvent = S.Union(
 )
 export type SubjectEvent = S.Schema.Type<typeof SubjectEvent>
 
-const decode = S.decodeUnknownEither(SubjectEvent)
-
 /** Reads a stored event as a subject event, or says why the journal is corrupt */
-export function decodeSubjectEvent(
-  event: StoredEvent,
-): Either.Either<SubjectEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeSubjectEvent = eventDecoder(SubjectEvent)

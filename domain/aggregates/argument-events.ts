@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * An argument is a stream of its own: a global tag whose wording changes and
@@ -51,14 +50,5 @@ export const ArgumentEvent = S.Union(
 )
 export type ArgumentEvent = S.Schema.Type<typeof ArgumentEvent>
 
-const decode = S.decodeUnknownEither(ArgumentEvent)
-
 /** Reads a stored event as an argument event, or says why the journal is corrupt */
-export function decodeArgumentEvent(
-  event: StoredEvent,
-): Either.Either<ArgumentEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeArgumentEvent = eventDecoder(ArgumentEvent)

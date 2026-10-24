@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * A contributor's stream carries what the site granted her: every move of
@@ -30,14 +29,5 @@ export const ReputationGranted = S.Struct({
 export const ContributorEvent = S.Union(ReputationGranted)
 export type ContributorEvent = S.Schema.Type<typeof ContributorEvent>
 
-const decode = S.decodeUnknownEither(ContributorEvent)
-
 /** Reads a stored event as a contributor event, or says why the journal is corrupt */
-export function decodeContributorEvent(
-  event: StoredEvent,
-): Either.Either<ContributorEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeContributorEvent = eventDecoder(ContributorEvent)

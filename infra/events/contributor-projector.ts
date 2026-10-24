@@ -1,13 +1,11 @@
-import { Effect, pipe } from 'effect'
 import {
   ContributorEvent,
   decodeContributorEvent,
   GrantPayload,
 } from '../../domain/aggregates/contributor-events'
 import { StoredEvent } from '../../domain/events/event-store'
-import { databaseError } from '../database/database-error'
 import { PrismaTransaction } from '../prisma/client'
-import type { Projector } from './projectors'
+import { projectorOf } from './projector'
 
 /**
  * Keeps the reputation history in step with the contributor stream. The
@@ -15,17 +13,7 @@ import type { Projector } from './projectors'
  * (`trg_sync_reputation`), in the same transaction. Idempotent: a grant
  * already in the table is left alone.
  */
-export const projectContributor: Projector = (event, tx) =>
-  pipe(
-    decodeContributorEvent(event),
-    Effect.mapError((unreadable) => databaseError('Unreadable contributor event', unreadable)),
-    Effect.flatMap((decoded) =>
-      Effect.tryPromise({
-        try: () => apply(decoded, event, tx),
-        catch: (error) => databaseError('Failed to project the contributor', error),
-      }),
-    ),
-  )
+export const projectContributor = projectorOf('contributor', decodeContributorEvent, apply)
 
 async function apply(decoded: ContributorEvent, stored: StoredEvent, tx: PrismaTransaction) {
   switch (decoded.type) {

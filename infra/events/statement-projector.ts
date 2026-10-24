@@ -1,4 +1,3 @@
-import { Effect, pipe } from 'effect'
 import {
   decodeStatementEvent,
   StatementAddedPayload,
@@ -6,25 +5,14 @@ import {
   StatementEvent,
 } from '../../domain/aggregates/statement-events'
 import { StoredEvent } from '../../domain/events/event-store'
-import { databaseError } from '../database/database-error'
 import { PrismaTransaction } from '../prisma/client'
-import type { Projector } from './projectors'
+import { projectorOf } from './projector'
 
 /**
  * Keeps the statements and argument_statements tables in step with the
  * statement stream. Idempotent: replaying the journal rebuilds both tables.
  */
-export const projectStatement: Projector = (event, tx) =>
-  pipe(
-    decodeStatementEvent(event),
-    Effect.mapError((unreadable) => databaseError('Unreadable statement event', unreadable)),
-    Effect.flatMap((decoded) =>
-      Effect.tryPromise({
-        try: () => apply(decoded, event, tx),
-        catch: (error) => databaseError('Failed to project the statement', error),
-      }),
-    ),
-  )
+export const projectStatement = projectorOf('statement', decodeStatementEvent, apply)
 
 async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTransaction) {
   const id = stored.streamId

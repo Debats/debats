@@ -9,7 +9,7 @@ import {
 import { DatabaseError } from '../../domain/repositories/errors'
 import { PrismaTransaction } from '../prisma/client'
 import { isUniqueViolation } from './event-store-prisma'
-import { Projector, ProjectorRegistry } from './projectors'
+import { Projector, ProjectorRegistry } from './projector'
 
 /**
  * The event store a command sees: each append also runs the projectors of

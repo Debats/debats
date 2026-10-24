@@ -1,4 +1,3 @@
-import { Effect, pipe } from 'effect'
 import {
   decodeSubjectEvent,
   PositionContent,
@@ -7,25 +6,14 @@ import {
   ThemeAssignmentPayload,
 } from '../../domain/aggregates/subject-events'
 import { StoredEvent } from '../../domain/events/event-store'
-import { databaseError } from '../database/database-error'
 import { PrismaTransaction } from '../prisma/client'
-import type { Projector } from './projectors'
+import { projectorOf } from './projector'
 
 /**
  * Keeps subjects, positions, subject_themes and related_subjects in step
  * with the subject stream. Idempotent: replaying the journal rebuilds them.
  */
-export const projectSubject: Projector = (event, tx) =>
-  pipe(
-    decodeSubjectEvent(event),
-    Effect.mapError((unreadable) => databaseError('Unreadable subject event', unreadable)),
-    Effect.flatMap((decoded) =>
-      Effect.tryPromise({
-        try: () => apply(decoded, event, tx),
-        catch: (error) => databaseError('Failed to project the subject', error),
-      }),
-    ),
-  )
+export const projectSubject = projectorOf('subject', decodeSubjectEvent, apply)
 
 async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTransaction) {
   const subjectId = stored.streamId

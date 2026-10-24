@@ -13,7 +13,8 @@ import {
   SubjectSlug,
   SubjectTitle,
 } from '../entities/subject'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
+import { Decoded, replayStream } from './replay'
 import {
   decodeSubjectEvent,
   PositionContent,
@@ -128,23 +129,12 @@ export const importPosition = (position: Position): SubjectEvent => ({
 })
 
 /** Rebuilds the subject from its stream; null for a stream without events */
-export function replaySubject(
-  events: StoredEvent[],
-): Either.Either<SubjectState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(events.map((stored) => Either.map(decodeSubjectEvent(stored), withMeta(stored)))),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
+export const replaySubject = replayStream(decodeSubjectEvent, apply)
 
-interface DecodedEvent {
-  event: SubjectEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: SubjectEvent) => ({ event, stored })
-
-function apply(state: SubjectState | null, { event, stored }: DecodedEvent): SubjectState | null {
+function apply(
+  state: SubjectState | null,
+  { event, stored }: Decoded<SubjectEvent>,
+): SubjectState | null {
   switch (event.type) {
     case 'SubjectAdded':
     case 'SubjectImported':

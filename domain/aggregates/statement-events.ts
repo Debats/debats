@@ -1,7 +1,6 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
 import { STATEMENT_TYPES, StatementAuthor } from '../entities/statement'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /** A calendar day, as the statement form and the stated_at column carry it */
 const IsoDate = S.String.pipe(S.pattern(/^\d{4}-\d{2}-\d{2}$/))
@@ -67,14 +66,5 @@ export const StatementEvent = S.Union(
 )
 export type StatementEvent = S.Schema.Type<typeof StatementEvent>
 
-const decode = S.decodeUnknownEither(StatementEvent)
-
 /** Reads a stored event as a statement event, or says why the journal is corrupt */
-export function decodeStatementEvent(
-  event: StoredEvent,
-): Either.Either<StatementEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeStatementEvent = eventDecoder(StatementEvent)

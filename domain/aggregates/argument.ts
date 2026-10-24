@@ -1,4 +1,3 @@
-import { Either, pipe } from 'effect'
 import {
   Argument,
   ArgumentId,
@@ -6,8 +5,9 @@ import {
   ArgumentTitle,
   generateArgumentSlug,
 } from '../entities/argument'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
 import { ArgumentEvent, ArgumentWording, decodeArgumentEvent } from './argument-events'
+import { authored, Decoded, replayStream } from './replay'
 
 export const ARGUMENT_STREAM = 'argument'
 
@@ -61,43 +61,20 @@ export const importArgument = (argument: Argument): ArgumentEvent => ({
 /** Whether the argument can still be mobilised, renamed or merged */
 export const isLiveArgument = (state: ArgumentState): boolean => state.deletedAt === null
 
-/** Rebuilds the argument from its stream; null for a stream without events */
-export function replayArgument(
-  events: StoredEvent[],
-): Either.Either<ArgumentState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(
-      events.map((stored) =>
-        pipe(
-          decodeArgumentEvent(stored),
-          Either.flatMap((event) => requireAuthorOfCreation(stored, event)),
-          Either.map(withMeta(stored)),
-        ),
-      ),
-    ),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
+/**
+ * Rebuilds the argument from its stream; null for a stream without events.
+ * An argument always has an author (the column is not null).
+ */
+export const replayArgument = replayStream(
+  decodeArgumentEvent,
+  apply,
+  authored(['ArgumentAdded', 'ArgumentImported'], 'an argument'),
+)
 
-/** An argument always has an author (the column is not null): a creation without one is corrupt */
-function requireAuthorOfCreation(
-  stored: StoredEvent,
-  event: ArgumentEvent,
-): Either.Either<ArgumentEvent, UnreadableEvent> {
-  const creation = event.type === 'ArgumentAdded' || event.type === 'ArgumentImported'
-  return creation && !stored.actorId
-    ? Either.left(new UnreadableEvent(stored, 'an argument needs an author'))
-    : Either.right(event)
-}
-
-interface DecodedEvent {
-  event: ArgumentEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: ArgumentEvent) => ({ event, stored })
-
-function apply(state: ArgumentState | null, { event, stored }: DecodedEvent): ArgumentState | null {
+function apply(
+  state: ArgumentState | null,
+  { event, stored }: Decoded<ArgumentEvent>,
+): ArgumentState | null {
   switch (event.type) {
     case 'ArgumentAdded':
     case 'ArgumentImported':

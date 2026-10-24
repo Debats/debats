@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * A theme is a stream of its own. Which subjects it gathers is in their
@@ -34,12 +33,5 @@ export const ThemeDeleted = S.Struct({
 export const ThemeEvent = S.Union(ThemeAdded, ThemeImported, ThemeDeleted)
 export type ThemeEvent = S.Schema.Type<typeof ThemeEvent>
 
-const decode = S.decodeUnknownEither(ThemeEvent)
-
 /** Reads a stored event as a theme event, or says why the journal is corrupt */
-export function decodeThemeEvent(event: StoredEvent): Either.Either<ThemeEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeThemeEvent = eventDecoder(ThemeEvent)

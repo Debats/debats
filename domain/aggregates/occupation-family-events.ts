@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * A family of occupations is one stream that also carries its occupations:
@@ -68,14 +67,5 @@ export const OccupationFamilyEvent = S.Union(
 )
 export type OccupationFamilyEvent = S.Schema.Type<typeof OccupationFamilyEvent>
 
-const decode = S.decodeUnknownEither(OccupationFamilyEvent)
-
 /** Reads a stored event as a family event, or says why the journal is corrupt */
-export function decodeOccupationFamilyEvent(
-  event: StoredEvent,
-): Either.Either<OccupationFamilyEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeOccupationFamilyEvent = eventDecoder(OccupationFamilyEvent)

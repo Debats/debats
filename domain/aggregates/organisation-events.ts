@@ -1,7 +1,6 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
 import { ORGANISATION_TYPES } from '../entities/organisation'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * An organisation is a stream of its own. Its affiliations live in the
@@ -49,14 +48,5 @@ export const OrganisationEvent = S.Union(
 )
 export type OrganisationEvent = S.Schema.Type<typeof OrganisationEvent>
 
-const decode = S.decodeUnknownEither(OrganisationEvent)
-
 /** Reads a stored event as an organisation event, or says why the journal is corrupt */
-export function decodeOrganisationEvent(
-  event: StoredEvent,
-): Either.Either<OrganisationEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodeOrganisationEvent = eventDecoder(OrganisationEvent)

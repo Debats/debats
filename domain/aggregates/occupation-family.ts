@@ -1,4 +1,3 @@
-import { Either, pipe } from 'effect'
 import {
   generateOccupationSlug,
   Occupation,
@@ -13,13 +12,14 @@ import {
   OccupationFamilyName,
   OccupationFamilySlug,
 } from '../entities/occupation-family'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
 import {
   decodeOccupationFamilyEvent,
   FamilyContent,
   OccupationContent,
   OccupationFamilyEvent,
 } from './occupation-family-events'
+import { authored, Decoded, replayStream } from './replay'
 
 export const OCCUPATION_FAMILY_STREAM = 'occupation_family'
 
@@ -102,51 +102,22 @@ function occupationContent(occupationId: string, input: OccupationInput): Occupa
   }
 }
 
-/** Rebuilds the family from its stream; null for a stream without events */
-export function replayOccupationFamily(
-  events: StoredEvent[],
-): Either.Either<OccupationFamilyState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(
-      events.map((stored) =>
-        pipe(
-          decodeOccupationFamilyEvent(stored),
-          Either.flatMap((event) => requireAuthorOfCreation(stored, event)),
-          Either.map(withMeta(stored)),
-        ),
-      ),
-    ),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
-
-const CREATIONS = new Set<OccupationFamilyEvent['type']>([
-  'OccupationFamilyAdded',
-  'OccupationFamilyImported',
-  'OccupationAdded',
-  'OccupationImported',
-])
-
-/** Families and occupations always have an author (the columns are not null) */
-function requireAuthorOfCreation(
-  stored: StoredEvent,
-  event: OccupationFamilyEvent,
-): Either.Either<OccupationFamilyEvent, UnreadableEvent> {
-  return CREATIONS.has(event.type) && !stored.actorId
-    ? Either.left(new UnreadableEvent(stored, 'a family or an occupation needs an author'))
-    : Either.right(event)
-}
-
-interface DecodedEvent {
-  event: OccupationFamilyEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: OccupationFamilyEvent) => ({ event, stored })
+/**
+ * Rebuilds the family from its stream; null for a stream without events.
+ * Families and occupations always have an author (the columns are not null).
+ */
+export const replayOccupationFamily = replayStream(
+  decodeOccupationFamilyEvent,
+  apply,
+  authored(
+    ['OccupationFamilyAdded', 'OccupationFamilyImported', 'OccupationAdded', 'OccupationImported'],
+    'a family or an occupation',
+  ),
+)
 
 function apply(
   state: OccupationFamilyState | null,
-  { event, stored }: DecodedEvent,
+  { event, stored }: Decoded<OccupationFamilyEvent>,
 ): OccupationFamilyState | null {
   switch (event.type) {
     case 'OccupationFamilyAdded':

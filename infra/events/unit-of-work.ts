@@ -5,7 +5,8 @@ import { databaseError } from '../database/database-error'
 import { getPrismaClient, PrismaTransaction } from '../prisma/client'
 import { createEventStore } from './event-store-prisma'
 import { withProjections } from './projecting-event-store'
-import { ProjectorRegistry, projectors } from './projectors'
+import { ProjectorRegistry } from './projector'
+import { projectors } from './projectors'
 
 /** Carries the command's own failure out of the transaction, which it rolls back */
 class RolledBack<E> {

@@ -1,4 +1,4 @@
-import { Either, Option, pipe } from 'effect'
+import { Option } from 'effect'
 import {
   generateOrganisationSlug,
   Organisation,
@@ -7,12 +7,13 @@ import {
   OrganisationSlug,
   OrganisationType,
 } from '../entities/organisation'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
 import {
   decodeOrganisationEvent,
   OrganisationContent,
   OrganisationEvent,
 } from './organisation-events'
+import { authored, Decoded, replayStream } from './replay'
 
 export const ORGANISATION_STREAM = 'organisation'
 
@@ -81,45 +82,19 @@ export const importOrganisation = (organisation: Organisation): OrganisationEven
   }),
 })
 
-/** Rebuilds the organisation from its stream; null for a stream without events */
-export function replayOrganisation(
-  events: StoredEvent[],
-): Either.Either<OrganisationState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(
-      events.map((stored) =>
-        pipe(
-          decodeOrganisationEvent(stored),
-          Either.flatMap((event) => requireAuthorOfCreation(stored, event)),
-          Either.map(withMeta(stored)),
-        ),
-      ),
-    ),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
-
-/** An organisation always has an author (the column is not null): a creation without one is corrupt */
-function requireAuthorOfCreation(
-  stored: StoredEvent,
-  event: OrganisationEvent,
-): Either.Either<OrganisationEvent, UnreadableEvent> {
-  const creation = event.type === 'OrganisationAdded' || event.type === 'OrganisationImported'
-  return creation && !stored.actorId
-    ? Either.left(new UnreadableEvent(stored, 'an organisation needs an author'))
-    : Either.right(event)
-}
-
-interface DecodedEvent {
-  event: OrganisationEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: OrganisationEvent) => ({ event, stored })
+/**
+ * Rebuilds the organisation from its stream; null for a stream without events.
+ * An organisation always has an author (the column is not null).
+ */
+export const replayOrganisation = replayStream(
+  decodeOrganisationEvent,
+  apply,
+  authored(['OrganisationAdded', 'OrganisationImported'], 'an organisation'),
+)
 
 function apply(
   state: OrganisationState | null,
-  { event, stored }: DecodedEvent,
+  { event, stored }: Decoded<OrganisationEvent>,
 ): OrganisationState | null {
   switch (event.type) {
     case 'OrganisationAdded':

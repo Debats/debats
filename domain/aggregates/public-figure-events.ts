@@ -1,6 +1,5 @@
 import * as S from 'effect/Schema'
-import { Either } from 'effect'
-import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { eventDecoder } from '../events/decode-event'
 
 /**
  * The public figure is the root of one stream that also carries the
@@ -87,14 +86,5 @@ export const PublicFigureEvent = S.Union(
 )
 export type PublicFigureEvent = S.Schema.Type<typeof PublicFigureEvent>
 
-const decode = S.decodeUnknownEither(PublicFigureEvent)
-
 /** Reads a stored event as a public figure event, or says why the journal is corrupt */
-export function decodePublicFigureEvent(
-  event: StoredEvent,
-): Either.Either<PublicFigureEvent, UnreadableEvent> {
-  return Either.mapLeft(
-    decode({ type: event.type, payload: event.payload }),
-    (error) => new UnreadableEvent(event, error.message),
-  )
-}
+export const decodePublicFigureEvent = eventDecoder(PublicFigureEvent)

@@ -1,4 +1,3 @@
-import { Effect, pipe } from 'effect'
 import {
   decodeOccupationFamilyEvent,
   FamilyContent,
@@ -6,9 +5,8 @@ import {
   OccupationFamilyEvent,
 } from '../../domain/aggregates/occupation-family-events'
 import { StoredEvent } from '../../domain/events/event-store'
-import { databaseError } from '../database/database-error'
 import { PrismaTransaction } from '../prisma/client'
-import type { Projector } from './projectors'
+import { auditOf, projectorOf } from './projector'
 
 /**
  * Keeps the families and occupations tables in step with the family stream.
@@ -16,19 +14,11 @@ import type { Projector } from './projectors'
  * with it (the foreign keys cascade). Idempotent: replaying the journal
  * rebuilds both tables.
  */
-export const projectOccupationFamily: Projector = (event, tx) =>
-  pipe(
-    decodeOccupationFamilyEvent(event),
-    Effect.mapError((unreadable) =>
-      databaseError('Unreadable occupation family event', unreadable),
-    ),
-    Effect.flatMap((decoded) =>
-      Effect.tryPromise({
-        try: () => apply(decoded, event, tx),
-        catch: (error) => databaseError('Failed to project the occupation family', error),
-      }),
-    ),
-  )
+export const projectOccupationFamily = projectorOf(
+  'occupation family',
+  decodeOccupationFamilyEvent,
+  apply,
+)
 
 async function apply(decoded: OccupationFamilyEvent, stored: StoredEvent, tx: PrismaTransaction) {
   switch (decoded.type) {
@@ -67,7 +57,7 @@ async function createFamilyIfMissing(
       slug: payload.slug,
       description: payload.description,
       position: payload.position,
-      ...audit(stored),
+      ...auditOf(stored, 'a family'),
     },
   })
 }
@@ -89,17 +79,7 @@ async function createOccupationIfMissing(
       name: payload.name,
       slug: payload.slug,
       description: payload.description,
-      ...audit(stored),
+      ...auditOf(stored, 'an occupation'),
     },
   })
-}
-
-function audit(stored: StoredEvent) {
-  if (!stored.actorId) throw new Error('Cannot create a family or an occupation without an actor')
-  return {
-    created_by: stored.actorId,
-    updated_by: stored.actorId,
-    created_at: stored.occurredAt,
-    updated_at: stored.occurredAt,
-  }
 }

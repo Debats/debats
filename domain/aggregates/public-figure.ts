@@ -1,4 +1,4 @@
-import { Either, Option, pipe } from 'effect'
+import { Option } from 'effect'
 import {
   MembershipId,
   OrganisationMembership,
@@ -11,7 +11,7 @@ import {
   PublicFigureName,
   PublicFigureSlug,
 } from '../entities/public-figure'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
 import {
   decodePublicFigureEvent,
   MembershipContent,
@@ -19,6 +19,7 @@ import {
   PublicFigureContent,
   PublicFigureEvent,
 } from './public-figure-events'
+import { authored, Decoded, replayStream } from './replay'
 
 export const PUBLIC_FIGURE_STREAM = 'public_figure'
 
@@ -130,54 +131,23 @@ export const findMembership = (
   membershipId: string,
 ): OrganisationMembership | undefined => state.memberships.find((m) => m.id === membershipId)
 
-/** Rebuilds the figure from her stream; null for a stream without events */
-export function replayPublicFigure(
-  events: StoredEvent[],
-): Either.Either<PublicFigureState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(
-      events.map((stored) =>
-        pipe(
-          decodePublicFigureEvent(stored),
-          Either.flatMap((event) => requireAuthorOfCreation(stored, event)),
-          Either.map(withMeta(stored)),
-        ),
-      ),
-    ),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
-
-const CREATIONS = new Set<PublicFigureEvent['type']>([
-  'PublicFigureAdded',
-  'PublicFigureImported',
-  'MembershipAdded',
-  'MembershipImported',
-])
-
 /**
+ * Rebuilds the figure from her stream; null for a stream without events.
  * A public figure and an affiliation always have an author (the columns are
- * not null): a creation without one is corrupt, as the projector will say.
+ * not null).
  */
-function requireAuthorOfCreation(
-  stored: StoredEvent,
-  event: PublicFigureEvent,
-): Either.Either<PublicFigureEvent, UnreadableEvent> {
-  return CREATIONS.has(event.type) && !stored.actorId
-    ? Either.left(new UnreadableEvent(stored, 'a public figure or an affiliation needs an author'))
-    : Either.right(event)
-}
-
-interface DecodedEvent {
-  event: PublicFigureEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: PublicFigureEvent) => ({ event, stored })
+export const replayPublicFigure = replayStream(
+  decodePublicFigureEvent,
+  apply,
+  authored(
+    ['PublicFigureAdded', 'PublicFigureImported', 'MembershipAdded', 'MembershipImported'],
+    'a public figure or an affiliation',
+  ),
+)
 
 function apply(
   state: PublicFigureState | null,
-  { event, stored }: DecodedEvent,
+  { event, stored }: Decoded<PublicFigureEvent>,
 ): PublicFigureState | null {
   switch (event.type) {
     case 'PublicFigureAdded':

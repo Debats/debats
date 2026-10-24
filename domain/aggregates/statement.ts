@@ -1,6 +1,6 @@
-import { Either } from 'effect'
 import { Statement, StatementAuthor, StatementId, StatementType } from '../entities/statement'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
+import { Decoded, replayStream } from './replay'
 import { decodeStatementEvent, StatementContent, StatementEvent } from './statement-events'
 
 export const STATEMENT_STREAM = 'statement'
@@ -89,25 +89,11 @@ export const importStatement = (
 })
 
 /** Rebuilds the statement from its stream; null for a stream without events */
-export function replayStatement(
-  events: StoredEvent[],
-): Either.Either<StatementState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(events.map((stored) => Either.map(decodeStatementEvent(stored), withMeta(stored)))),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
-
-interface DecodedEvent {
-  event: StatementEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: StatementEvent) => ({ event, stored })
+export const replayStatement = replayStream(decodeStatementEvent, apply)
 
 function apply(
   state: StatementState | null,
-  { event, stored }: DecodedEvent,
+  { event, stored }: Decoded<StatementEvent>,
 ): StatementState | null {
   switch (event.type) {
     case 'StatementAdded':

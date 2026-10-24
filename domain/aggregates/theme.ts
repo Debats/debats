@@ -1,6 +1,6 @@
-import { Either, pipe } from 'effect'
 import { generateThemeSlug, Theme, ThemeId, ThemeName, ThemeSlug } from '../entities/theme'
-import { StoredEvent, StreamRef, UnreadableEvent } from '../events/event-store'
+import { StoredEvent, StreamRef } from '../events/event-store'
+import { authored, Decoded, replayStream } from './replay'
 import { decodeThemeEvent, ThemeContent, ThemeEvent } from './theme-events'
 
 export const THEME_STREAM = 'theme'
@@ -36,43 +36,20 @@ export const importTheme = (theme: Theme): ThemeEvent => ({
   payload: { name: theme.name, slug: theme.slug, description: theme.description },
 })
 
-/** Rebuilds the theme from its stream; null for a stream without events */
-export function replayTheme(
-  events: StoredEvent[],
-): Either.Either<ThemeState | null, UnreadableEvent> {
-  return Either.map(
-    Either.all(
-      events.map((stored) =>
-        pipe(
-          decodeThemeEvent(stored),
-          Either.flatMap((event) => requireAuthorOfCreation(stored, event)),
-          Either.map(withMeta(stored)),
-        ),
-      ),
-    ),
-    (decoded) => decoded.reduce(apply, null),
-  )
-}
+/**
+ * Rebuilds the theme from its stream; null for a stream without events.
+ * A theme always has an author (the column is not null).
+ */
+export const replayTheme = replayStream(
+  decodeThemeEvent,
+  apply,
+  authored(['ThemeAdded', 'ThemeImported'], 'a theme'),
+)
 
-/** A theme always has an author (the column is not null): a creation without one is corrupt */
-function requireAuthorOfCreation(
-  stored: StoredEvent,
-  event: ThemeEvent,
-): Either.Either<ThemeEvent, UnreadableEvent> {
-  const creation = event.type === 'ThemeAdded' || event.type === 'ThemeImported'
-  return creation && !stored.actorId
-    ? Either.left(new UnreadableEvent(stored, 'a theme needs an author'))
-    : Either.right(event)
-}
-
-interface DecodedEvent {
-  event: ThemeEvent
-  stored: StoredEvent
-}
-
-const withMeta = (stored: StoredEvent) => (event: ThemeEvent) => ({ event, stored })
-
-function apply(state: ThemeState | null, { event, stored }: DecodedEvent): ThemeState | null {
+function apply(
+  state: ThemeState | null,
+  { event, stored }: Decoded<ThemeEvent>,
+): ThemeState | null {
   switch (event.type) {
     case 'ThemeAdded':
     case 'ThemeImported':

@@ -1,4 +1,3 @@
-import { Effect, pipe } from 'effect'
 import {
   decodePublicFigureEvent,
   MembershipContent,
@@ -7,26 +6,15 @@ import {
   PublicFigureEvent,
 } from '../../domain/aggregates/public-figure-events'
 import { StoredEvent } from '../../domain/events/event-store'
-import { databaseError } from '../database/database-error'
 import { PrismaTransaction } from '../prisma/client'
-import type { Projector } from './projectors'
+import { actorOf, auditOf, projectorOf } from './projector'
 
 /**
  * Keeps public_figures, public_figure_occupations and organisation_memberships
  * in step with the public figure stream. Idempotent: replaying the journal
  * rebuilds them.
  */
-export const projectPublicFigure: Projector = (event, tx) =>
-  pipe(
-    decodePublicFigureEvent(event),
-    Effect.mapError((unreadable) => databaseError('Unreadable public figure event', unreadable)),
-    Effect.flatMap((decoded) =>
-      Effect.tryPromise({
-        try: () => apply(decoded, event, tx),
-        catch: (error) => databaseError('Failed to project the public figure', error),
-      }),
-    ),
-  )
+export const projectPublicFigure = projectorOf('public figure', decodePublicFigureEvent, apply)
 
 async function apply(decoded: PublicFigureEvent, stored: StoredEvent, tx: PrismaTransaction) {
   const figureId = stored.streamId
@@ -79,12 +67,11 @@ async function createFigureIfMissing(
     select: { id: true },
   })
   if (found) return
-  if (!stored.actorId) throw new Error('Cannot create a public figure without an actor')
   await tx.public_figures.create({
     data: {
       id: stored.streamId,
       ...figureColumns(payload),
-      created_by: stored.actorId,
+      created_by: actorOf(stored, 'a public figure'),
       created_at: stored.occurredAt,
       updated_at: stored.occurredAt,
     },
@@ -101,7 +88,6 @@ async function createMembershipIfMissing(
     select: { id: true },
   })
   if (found) return
-  if (!stored.actorId) throw new Error('Cannot create a membership without an actor')
   await tx.organisation_memberships.create({
     data: {
       id: payload.membershipId,
@@ -110,10 +96,7 @@ async function createMembershipIfMissing(
       role: payload.role ?? null,
       started_on: payload.startedOn ? new Date(payload.startedOn) : null,
       ended_on: payload.endedOn ? new Date(payload.endedOn) : null,
-      created_by: stored.actorId,
-      updated_by: stored.actorId,
-      created_at: stored.occurredAt,
-      updated_at: stored.occurredAt,
+      ...auditOf(stored, 'a membership'),
     },
   })
 }
