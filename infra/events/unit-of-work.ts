@@ -1,9 +1,11 @@
 import { Cause, Effect, Exit } from 'effect'
 import { EventStore } from '../../domain/events/event-store'
+import { ProcessState } from '../../domain/events/unit-of-work'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { databaseError } from '../database/database-error'
 import { getPrismaClient, PrismaTransaction } from '../prisma/client'
 import { createEventStore } from './event-store-prisma'
+import { createProcessState } from './process-state-prisma'
 import { withProjections } from './projecting-event-store'
 import { ProjectorRegistry } from './projector'
 import { projectors } from './projectors'
@@ -14,13 +16,13 @@ class RolledBack<E> {
 }
 
 /**
- * Runs a command in one database transaction: the events it appends and the
- * projections they drive commit together, or not at all. The command only
- * sees the journal; its own failure rolls everything back and comes out
- * typed, as it went in.
+ * Runs a command in one database transaction: the events it appends, the
+ * projections they drive and the process state it writes commit together,
+ * or not at all. The command only sees the journal and the process state;
+ * its own failure rolls everything back and comes out typed, as it went in.
  */
 export function runUnitOfWork<A, E>(
-  work: (events: EventStore) => Effect.Effect<A, E>,
+  work: (events: EventStore, process: ProcessState) => Effect.Effect<A, E>,
   registry: ProjectorRegistry = projectors,
 ): Effect.Effect<A, E | DatabaseError> {
   return Effect.tryPromise<A, unknown>({
@@ -38,11 +40,11 @@ export function runUnitOfWork<A, E>(
 const TRANSACTION = { maxWait: 5_000, timeout: 30_000 }
 
 function runInTransaction<A, E>(
-  work: (events: EventStore) => Effect.Effect<A, E>,
+  work: (events: EventStore, process: ProcessState) => Effect.Effect<A, E>,
   registry: ProjectorRegistry,
 ): Promise<A> {
   return getPrismaClient().$transaction(async (tx) => {
-    const exit = await Effect.runPromiseExit(work(journalOf(tx, registry)))
+    const exit = await Effect.runPromiseExit(work(journalOf(tx, registry), createProcessState(tx)))
     if (Exit.isFailure(exit)) throw new RolledBack(exit.cause)
     return exit.value
   }, TRANSACTION)

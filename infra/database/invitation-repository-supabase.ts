@@ -101,19 +101,5 @@ export function createInvitationRepository(supabase: SupabaseClient): Invitation
         },
         catch: (error) => dbError('Failed to find pending invitations by inviter', error),
       }),
-
-    acceptByEmail: (email: string, inviteeId: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase
-            .from('invitations')
-            .update({ status: 'accepted', invitee_id: inviteeId })
-            .eq('invitee_email', email)
-            .eq('status', 'pending')
-
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to accept invitation', error),
-      }),
   }
 }

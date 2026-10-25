@@ -7,5 +7,4 @@ export interface InvitationRepository {
   deleteById(id: string): Effect.Effect<void, DatabaseError>
   findPendingByEmail(email: string): Effect.Effect<Invitation | null, DatabaseError>
   findPendingByInviter(inviterId: string): Effect.Effect<Invitation[], DatabaseError>
-  acceptByEmail(email: string, inviteeId: string): Effect.Effect<void, DatabaseError>
 }

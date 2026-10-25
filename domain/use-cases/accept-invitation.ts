@@ -19,7 +19,8 @@ type AcceptInvitationParams = {
 
 /**
  * The invitee joins with half the inviter's reputation, and the inviter is
- * rewarded: both grants fall in one transaction, signed by the invitee.
+ * rewarded. The invitation is consumed in the transaction of both grants,
+ * signed by the invitee: a failure leaves it pending, to be accepted again.
  */
 export async function acceptInvitationUseCase(
   params: AcceptInvitationParams,
@@ -37,7 +38,6 @@ export async function acceptInvitationUseCase(
   }
 
   await Effect.runPromise(contributorRepo.ensureExists(inviteeId))
-  await Effect.runPromise(invitationRepo.acceptByEmail(inviteeEmail, inviteeId))
 
   const inviterReputation = await Effect.runPromise(
     reputationRepo.getReputation(invitation.inviterId),
@@ -58,5 +58,12 @@ export async function acceptInvitationUseCase(
     rewardFor(invitation.inviterId, 'invitation_accepted', on),
   ]
 
-  return runCommand(params.runUnitOfWork((events) => grantEach(events, inviteeId, grants)))
+  return runCommand(
+    params.runUnitOfWork((events, process) =>
+      Effect.andThen(
+        process.acceptInvitation(inviteeEmail, inviteeId),
+        grantEach(events, inviteeId, grants),
+      ),
+    ),
+  )
 }

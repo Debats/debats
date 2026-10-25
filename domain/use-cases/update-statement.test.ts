@@ -137,23 +137,26 @@ describe('updateStatementUseCase', () => {
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       runUnitOfWork: (work) =>
-        run((events) =>
-          work({
-            ...events,
-            // Another writer appends between the load and the append
-            append: (stream, expectedRevision, decided, options) =>
-              Effect.flatMap(
-                events.append(
-                  stream,
-                  expectedRevision,
-                  [{ type: 'StatementDeleted', payload: {} }],
-                  {
-                    actorId: 'someone-else',
-                  },
+        run((events, process) =>
+          work(
+            {
+              ...events,
+              // Another writer appends between the load and the append
+              append: (stream, expectedRevision, decided, options) =>
+                Effect.flatMap(
+                  events.append(
+                    stream,
+                    expectedRevision,
+                    [{ type: 'StatementDeleted', payload: {} }],
+                    {
+                      actorId: 'someone-else',
+                    },
+                  ),
+                  () => events.append(stream, expectedRevision, decided, options),
                 ),
-                () => events.append(stream, expectedRevision, decided, options),
-              ),
-          }),
+            },
+            process,
+          ),
         ),
     })
 

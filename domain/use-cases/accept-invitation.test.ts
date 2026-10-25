@@ -3,6 +3,8 @@ import { Either, Effect } from 'effect'
 import { acceptInvitationUseCase } from './accept-invitation'
 import { Invitation, createInvitation } from '../entities/invitation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { RunUnitOfWork } from '../events/unit-of-work'
+import { DatabaseError } from '../repositories/errors'
 import { grantsIn } from './contributor-test-helpers'
 
 const baseInvitation = createInvitation({
@@ -16,7 +18,6 @@ const fakeInvitationRepo = {
   deleteById: () => Effect.succeed(undefined as void),
   findPendingByEmail: () => Effect.succeed(null as Invitation | null),
   findPendingByInviter: () => Effect.succeed([] as Invitation[]),
-  acceptByEmail: () => Effect.succeed(undefined as void),
 }
 
 const fakeReputationRepo = {
@@ -71,26 +72,31 @@ describe('acceptInvitationUseCase', () => {
     expect(createdContributorId).toBe('invitee-uuid')
   })
 
-  it('should mark invitation as accepted', async () => {
-    let acceptedEmail = ''
-    let acceptedInviteeId = ''
+  it('marks the invitation as accepted in the transaction of the grants', async () => {
+    const unit = inMemoryUnitOfWork()
 
-    const result = await acceptInvitationUseCase({
-      ...baseParams,
-      invitationRepo: {
-        ...fakeInvitationRepo,
-        findPendingByEmail: () => Effect.succeed(baseInvitation as Invitation | null),
-        acceptByEmail: (email, inviteeId) => {
-          acceptedEmail = email
-          acceptedInviteeId = inviteeId
-          return Effect.succeed(undefined as void)
-        },
-      },
-    })
+    const result = await acceptInvitationUseCase({ ...baseParams, runUnitOfWork: unit.run })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(acceptedEmail).toBe('invitee@example.com')
-    expect(acceptedInviteeId).toBe('invitee-uuid')
+    expect(unit.acceptedInvitations).toEqual([
+      { email: 'invitee@example.com', inviteeId: 'invitee-uuid' },
+    ])
+  })
+
+  it('leaves the invitation pending when the grants cannot be written', async () => {
+    const unit = inMemoryUnitOfWork()
+    const failing: RunUnitOfWork = (work) =>
+      unit.run((events, process) =>
+        Effect.andThen(work(events, process), Effect.fail(new DatabaseError('down'))),
+      )
+
+    // A database failure is not a refusal: it surfaces to the action, which reports it
+    await expect(
+      acceptInvitationUseCase({ ...baseParams, runUnitOfWork: failing }),
+    ).rejects.toThrow('down')
+
+    expect(unit.acceptedInvitations).toEqual([])
+    expect(unit.journal.all()).toEqual([])
   })
 
   it('starts the invitee at half the inviter reputation and rewards the inviter, in one go', async () => {
