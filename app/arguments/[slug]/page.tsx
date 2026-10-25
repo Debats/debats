@@ -6,6 +6,8 @@ import { createArgumentRepository } from '../../../infra/database/argument-repos
 import { createStatementRepository } from '../../../infra/database/statement-repository-supabase'
 import { countArgumentAuthors, groupArgumentUsage } from '../../../domain/services/argument-usage'
 import { canPerform } from '../../../domain/reputation/permissions'
+import { argumentStream } from '../../../domain/aggregates/argument'
+import { currentRevision } from '../../../infra/events/stream-revision'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import ShareButton from '../../../components/ui/ShareButton'
@@ -45,9 +47,10 @@ export default async function ArgumentDetailPage({ params }: PageProps) {
   const argument = await Effect.runPromise(createArgumentRepository(supabase).findBySlug(slug))
   if (!argument) notFound()
 
-  const [statements, contributor] = await Promise.all([
+  const [statements, contributor, revision] = await Promise.all([
     Effect.runPromise(createStatementRepository(supabase).findByArgumentWithAuthors(argument.id)),
     getAuthenticatedContributor(),
+    currentRevision(argumentStream(argument.id)),
   ])
 
   const usage = groupArgumentUsage(statements)
@@ -72,6 +75,7 @@ export default async function ArgumentDetailPage({ params }: PageProps) {
                 title: argument.title,
                 description: argument.description,
               }}
+              revision={revision}
               canRename={canRename}
               canMerge={canMerge}
             />

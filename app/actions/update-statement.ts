@@ -9,6 +9,7 @@ import { parseStatementType } from '../../domain/entities/statement'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
 import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { revisionOf } from './form-revision'
 import { readStatementArguments } from './statement-arguments-fields'
 
 export type ActionResult =
@@ -33,6 +34,7 @@ export async function updateStatementAction(
     quote: String(formData.get('quote') ?? ''),
     statedAt: String(formData.get('statedAt') ?? ''),
     arguments: readStatementArguments(formData),
+    revision: revisionOf(formData),
     runUnitOfWork,
     statementSource: createStatementSource(supabase),
     positionRepo: createPositionRepository(supabase),

@@ -16,6 +16,8 @@ type RenameArgumentParams = {
   argumentId: string
   title: string
   description: string
+  /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   argumentSource: ArgumentSource
   /** Read side: the argument must exist and no other may bear the new title */
@@ -60,7 +62,13 @@ export async function renameArgumentUseCase(
       ensureStream(argumentAggregate, params.runUnitOfWork, existing.id, params.argumentSource),
       Effect.andThen(
         params.runUnitOfWork((events) =>
-          decideOnArgument(events, existing.id, contributor.id, () => Effect.succeed([renamed])),
+          decideOnArgument(
+            events,
+            existing.id,
+            contributor.id,
+            () => Effect.succeed([renamed]),
+            params.revision,
+          ),
         ),
       ),
       uniqueTakenAs('title', TITLE_TAKEN),

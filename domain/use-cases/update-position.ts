@@ -22,6 +22,8 @@ type UpdatePositionParams = {
   positionId: string
   title: string
   description: string
+  /** The revision of the subject's stream the form was rendered from */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
   /** Read side: which subject the position belongs to */
@@ -82,10 +84,15 @@ export async function updatePositionUseCase(
       Effect.andThen(
         runUnitOfWork((events) =>
           pipe(
-            decideOnSubject(events, existing.subjectId, contributor.id, (state) =>
-              findPosition(state, positionId)
-                ? Effect.succeed([editPosition({ positionId, title, description })])
-                : Effect.fail(new Rejected('Position introuvable.')),
+            decideOnSubject(
+              events,
+              existing.subjectId,
+              contributor.id,
+              (state) =>
+                findPosition(state, positionId)
+                  ? Effect.succeed([editPosition({ positionId, title, description })])
+                  : Effect.fail(new Rejected('Position introuvable.')),
+              params.revision,
             ),
             Effect.tap(() =>
               grant(

@@ -8,6 +8,7 @@ import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createArgumentSource } from '../../infra/events/sources'
 import { renameArgumentUseCase, FieldErrors } from '../../domain/use-cases/rename-argument'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { revisionOf } from './form-revision'
 
 export type ActionResult =
   | { success: true; slug: string }
@@ -26,6 +27,7 @@ export async function renameArgumentAction(
     argumentId,
     title: String(formData.get('title') ?? ''),
     description: String(formData.get('description') ?? ''),
+    revision: revisionOf(formData),
     runUnitOfWork,
     argumentSource: createArgumentSource(supabase),
     argumentRepo: createArgumentRepository(supabase),

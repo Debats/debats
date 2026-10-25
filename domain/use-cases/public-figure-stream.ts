@@ -12,7 +12,14 @@ import { OrganisationMembership } from '../entities/organisation-membership'
 import { PublicFigure } from '../entities/public-figure'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
+import {
+  AggregateStream,
+  decideOn,
+  IMPORT,
+  RenderedFrom,
+  requireState,
+  Source,
+} from './aggregate-stream'
 
 /** What the tables hold of a public figure, enough to import her into the journal */
 export interface PublicFigureParts {
@@ -70,7 +77,8 @@ export const decideOnPublicFigure = (
   publicFigureId: string,
   actorId: string,
   decide: (state: PublicFigureState) => Effect.Effect<PublicFigureEvent[], Rejected>,
-) => decideOn(publicFigureAggregate, events, publicFigureId, actorId, decide)
+  renderedFrom?: RenderedFrom,
+) => decideOn(publicFigureAggregate, events, publicFigureId, actorId, decide, renderedFrom)
 
 export const requirePublicFigureState = (state: PublicFigureState | null) =>
   requireState(publicFigureAggregate, state)

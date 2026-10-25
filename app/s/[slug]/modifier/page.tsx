@@ -7,6 +7,8 @@ import { createThemeRepository } from '../../../../infra/database/theme-reposito
 import { createRelatedSubjectsRepository } from '../../../../infra/database/related-subjects-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { subjectStream } from '../../../../domain/aggregates/subject'
+import { currentRevision } from '../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditSubjectTabs from './EditSubjectTabs'
@@ -41,9 +43,10 @@ export default async function EditSubjectPage({ params }: PageProps) {
 
   if (!subject) notFound()
 
-  const [themeAssignments, relatedSubjects] = await Promise.all([
+  const [themeAssignments, relatedSubjects, revision] = await Promise.all([
     Effect.runPromise(themeRepo.findAssignmentsBySubjectId(subject.id)),
     Effect.runPromise(relatedRepo.findRelated(subject.id)),
+    currentRevision(subjectStream(subject.id)),
   ])
 
   return (
@@ -58,6 +61,7 @@ export default async function EditSubjectPage({ params }: PageProps) {
       <EditSubjectTabs
         subjectId={subject.id}
         subjectSlug={subject.slug}
+        revision={revision}
         subject={{
           title: subject.title,
           presentation: subject.presentation,

@@ -20,6 +20,7 @@ import {
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { generateSlug } from '../../domain/entities/public-figure'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { revisionOf } from './form-revision'
 
 export type ActionResult =
   | { success: true; slug: string }
@@ -48,6 +49,7 @@ export async function updatePublicFigureAction(
     wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
+    revision: revisionOf(formData),
     runUnitOfWork,
     publicFigureSource: createPublicFigureSource(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),

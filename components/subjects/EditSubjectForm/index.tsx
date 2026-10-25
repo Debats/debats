@@ -8,12 +8,22 @@ interface EditSubjectFormProps {
   subjectId: string
   subjectSlug: string
   subject: SubjectFormValues
+  /** The revision of the subject's stream the form shows: an edit made meanwhile is not overwritten */
+  revision: number
 }
 
-export default function EditSubjectForm({ subjectId, subjectSlug, subject }: EditSubjectFormProps) {
+export default function EditSubjectForm({
+  subjectId,
+  subjectSlug,
+  subject,
+  revision,
+}: EditSubjectFormProps) {
   const handleSubmit = useCallback(
-    (formData: FormData) => updateSubjectAction(subjectId, formData),
-    [subjectId],
+    (formData: FormData) => {
+      formData.set('revision', String(revision))
+      return updateSubjectAction(subjectId, formData)
+    },
+    [subjectId, revision],
   )
 
   return (

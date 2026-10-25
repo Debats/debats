@@ -6,6 +6,8 @@ import { createSubjectRepository } from '../../../../../../infra/database/subjec
 import { createPositionRepository } from '../../../../../../infra/database/position-repository-supabase'
 import { getAuthenticatedContributor } from '../../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../../domain/reputation/permissions'
+import { subjectStream } from '../../../../../../domain/aggregates/subject'
+import { currentRevision } from '../../../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../components/layout/FormPageHeader'
 import EditPositionForm from '../../../../../../components/positions/EditPositionForm'
@@ -40,6 +42,8 @@ export default async function EditPositionPage({ params }: PageProps) {
   )
   if (!position) notFound()
 
+  // A position lives in its subject's stream: that is the revision the form edits
+  const revision = await currentRevision(subjectStream(subject.id))
   const returnHref = `/s/${slug}/position/${positionSlug}`
 
   return (
@@ -53,6 +57,7 @@ export default async function EditPositionPage({ params }: PageProps) {
 
       <EditPositionForm
         positionId={position.id}
+        revision={revision}
         returnHref={returnHref}
         initialTitle={position.title}
         initialDescription={position.description}

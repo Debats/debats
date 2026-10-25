@@ -13,7 +13,14 @@ import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
+import {
+  AggregateStream,
+  decideOn,
+  IMPORT,
+  RenderedFrom,
+  requireState,
+  Source,
+} from './aggregate-stream'
 
 /** What the tables hold of a subject, enough to import it into the journal */
 export interface SubjectParts {
@@ -71,7 +78,8 @@ export const decideOnSubject = (
   subjectId: string,
   actorId: string,
   decide: (state: SubjectState) => Effect.Effect<SubjectEvent[], Rejected>,
-) => decideOn(subjectAggregate, events, subjectId, actorId, decide)
+  renderedFrom?: RenderedFrom,
+) => decideOn(subjectAggregate, events, subjectId, actorId, decide, renderedFrom)
 
 export const requireSubjectState = (state: SubjectState | null) =>
   requireState(subjectAggregate, state)

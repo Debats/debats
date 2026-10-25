@@ -22,6 +22,8 @@ interface EditStatementFormProps {
   initialSourceUrl: string
   initialQuote: string
   initialStatedAt: string
+  /** The revision of the statement's stream the form shows: an edit made meanwhile is not overwritten */
+  revision: number
 }
 
 export default function EditStatementForm({
@@ -36,10 +38,14 @@ export default function EditStatementForm({
   initialSourceUrl,
   initialQuote,
   initialStatedAt,
+  revision,
 }: EditStatementFormProps) {
   const handleSubmit = useCallback(
-    (formData: FormData) => updateStatementAction(statementId, formData),
-    [statementId],
+    (formData: FormData) => {
+      formData.set('revision', String(revision))
+      return updateStatementAction(statementId, formData)
+    },
+    [statementId, revision],
   )
 
   return (

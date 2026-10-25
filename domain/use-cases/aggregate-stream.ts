@@ -4,6 +4,7 @@ import {
   ConcurrencyError,
   DomainEvent,
   EventStore,
+  Revision,
   StoredEvent,
   StreamRef,
   streamRevision,
@@ -142,10 +143,20 @@ export function openStream<State, Event extends DomainEvent, Parts>(
 }
 
 /**
+ * The revision a form was rendered from, so that the command refuses to
+ * overwrite what someone else wrote meanwhile. Undefined for a command that
+ * comes from no form and decides from the current state. Zero when the page
+ * found no stream (one not imported yet): there is nothing to compare, the
+ * command goes through.
+ */
+export type RenderedFrom = Revision | undefined
+
+/**
  * A command on an aggregate: loads its stream, lets the decision look at the
  * current state, appends what it decided and rebuilds what the aggregate now
  * is. A decision refuses with a Rejected; a deleted aggregate is refused
- * before any decision.
+ * before any decision; a stream that moved past the revision the form was
+ * rendered from is a ConcurrencyError.
  */
 export function decideOn<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
@@ -153,9 +164,16 @@ export function decideOn<State, Event extends DomainEvent, Parts>(
   id: string,
   actorId: string,
   decide: (state: State) => Effect.Effect<Event[], Rejected>,
+  renderedFrom?: RenderedFrom,
 ): Effect.Effect<State, StreamFailure | UnreadableEvent> {
+  const stillAt = (history: StoredEvent[]) =>
+    !renderedFrom || streamRevision(history) === renderedFrom
   return pipe(
     loadStream(aggregate, events, id),
+    Effect.filterOrFail(
+      stillAt,
+      () => new ConcurrencyError(streamOf(aggregate, id), renderedFrom!),
+    ),
     Effect.flatMap((history) =>
       pipe(
         aggregate.replay(history),

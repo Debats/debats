@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
+import { ConcurrencyError } from '../events/event-store'
 import { createInMemoryEventStore, inMemoryUnitOfWork } from '../events/event-store-memory'
 import { AggregateStream, decideOn, ensureStream, IMPORT, loadStream } from './aggregate-stream'
 import { Rejected } from './types'
@@ -143,6 +144,35 @@ describe('decideOn', () => {
       [1, 'Opened', 'alice'],
       [2, 'Moved', 'bob'],
     ])
+  })
+
+  it('refuses a decision rendered from a revision the stream has moved past', async () => {
+    const events = createInMemoryEventStore()
+    await Effect.runPromise(events.append(stream, 0, [opened(1), moved(2)], { actorId: 'alice' }))
+
+    const outcome = await Effect.runPromise(
+      Effect.either(
+        decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([moved(1)]), 1),
+      ),
+    )
+
+    expect(Either.isLeft(outcome) && outcome.left).toBeInstanceOf(ConcurrencyError)
+    expect(events.all()).toHaveLength(2)
+  })
+
+  it('accepts a decision rendered from the current revision, or from no stream at all', async () => {
+    const events = createInMemoryEventStore()
+    await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
+
+    await Effect.runPromise(
+      decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([moved(1)]), 1),
+    )
+    // Zero: the page found no stream yet (imported since), nothing to compare
+    await Effect.runPromise(
+      decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([moved(1)]), 0),
+    )
+
+    expect(events.all()).toHaveLength(3)
   })
 
   it('writes nothing when the decision changes nothing', async () => {

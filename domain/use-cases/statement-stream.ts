@@ -15,6 +15,7 @@ import {
   decideOn,
   IMPORT,
   loadStream,
+  RenderedFrom,
   requireState as requireStateOf,
   Source,
   StreamFailure,
@@ -55,7 +56,8 @@ export const decideOnStatement = (
   statementId: string,
   actorId: string,
   decide: (state: StatementState) => Effect.Effect<StatementEvent[], Rejected>,
-) => decideOn(statementAggregate, events, statementId, actorId, decide)
+  renderedFrom?: RenderedFrom,
+) => decideOn(statementAggregate, events, statementId, actorId, decide, renderedFrom)
 
 export const appendToStatement = (
   events: EventStore,

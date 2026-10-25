@@ -19,6 +19,7 @@ import {
 } from '../../domain/use-cases/update-organisation'
 import { generateOrganisationSlug } from '../../domain/entities/organisation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { revisionOf } from './form-revision'
 import { readOrganisationFields } from './organisation-fields'
 import { readUploadedImage } from './read-uploaded-image'
 
@@ -39,6 +40,7 @@ export async function updateOrganisationAction(
     contributor,
     organisationId,
     ...fields,
+    revision: revisionOf(formData),
     runUnitOfWork,
     organisationSource: createOrganisationSource(supabase),
     organisationRepo: createOrganisationRepository(supabase),

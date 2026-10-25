@@ -15,6 +15,7 @@ import {
   decideOn,
   IMPORT,
   loadStream,
+  RenderedFrom,
   requireState,
   Source,
 } from './aggregate-stream'
@@ -51,7 +52,8 @@ export const decideOnArgument = (
   argumentId: string,
   actorId: string,
   decide: (state: ArgumentState) => Effect.Effect<ArgumentEvent[], Rejected>,
-) => decideOn(argumentAggregate, events, argumentId, actorId, decide)
+  renderedFrom?: RenderedFrom,
+) => decideOn(argumentAggregate, events, argumentId, actorId, decide, renderedFrom)
 
 export const requireArgumentState = (state: ArgumentState | null) =>
   requireState(argumentAggregate, state)

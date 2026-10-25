@@ -18,6 +18,8 @@ import styles from './ArgumentAdminMenu.module.css'
 
 interface ArgumentAdminMenuProps {
   argument: { id: string; title: string; description: string }
+  /** The revision of the argument's stream the page shows: a rename made meanwhile is not overwritten */
+  revision: number
   canRename: boolean
   canMerge: boolean
 }
@@ -27,6 +29,7 @@ type Panel = 'rename' | 'merge'
 /** Le menu « Gérer » d'un argument : le renommer ou le fusionner dans un autre. */
 export default function ArgumentAdminMenu({
   argument,
+  revision,
   canRename,
   canMerge,
 }: ArgumentAdminMenuProps) {
@@ -51,7 +54,7 @@ export default function ArgumentAdminMenu({
       ]}
     >
       {panel === 'rename' && (
-        <RenameForm argument={argument} onCancel={() => setPanel(undefined)} />
+        <RenameForm argument={argument} revision={revision} onCancel={() => setPanel(undefined)} />
       )}
       {panel === 'merge' && <MergeForm argument={argument} onCancel={() => setPanel(undefined)} />}
     </AdminMenu>
@@ -63,7 +66,7 @@ interface PanelProps {
   onCancel: () => void
 }
 
-function RenameForm({ argument, onCancel }: PanelProps) {
+function RenameForm({ argument, revision, onCancel }: PanelProps & { revision: number }) {
   const router = useRouter()
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
@@ -91,6 +94,7 @@ function RenameForm({ argument, onCancel }: PanelProps) {
 
   return (
     <form onSubmit={handleSubmit} className={styles.panel}>
+      <input type="hidden" name="revision" value={revision} />
       <TextField
         label="Titre"
         id="argument-title"

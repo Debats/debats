@@ -9,7 +9,14 @@ import { OrganisationEvent } from '../aggregates/organisation-events'
 import { Organisation } from '../entities/organisation'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
+import {
+  AggregateStream,
+  decideOn,
+  IMPORT,
+  RenderedFrom,
+  requireState,
+  Source,
+} from './aggregate-stream'
 
 /** What the tables hold of an organisation, enough to import it into the journal */
 export interface OrganisationParts {
@@ -44,7 +51,8 @@ export const decideOnOrganisation = (
   organisationId: string,
   actorId: string,
   decide: (state: OrganisationState) => Effect.Effect<OrganisationEvent[], Rejected>,
-) => decideOn(organisationAggregate, events, organisationId, actorId, decide)
+  renderedFrom?: RenderedFrom,
+) => decideOn(organisationAggregate, events, organisationId, actorId, decide, renderedFrom)
 
 export const requireOrganisationState = (state: OrganisationState | null) =>
   requireState(organisationAggregate, state)

@@ -14,6 +14,8 @@ type SetSubjectThemesParams = {
   subjectId: string
   themeIds: ThemeId[]
   primaryThemeId: ThemeId | null
+  /** The revision the selector was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
   themeRepo: ThemeRepository
@@ -67,8 +69,12 @@ export async function setSubjectThemesUseCase(
       ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
       Effect.andThen(
         runUnitOfWork((events) =>
-          decideOnSubject(events, subjectId, contributor.id, () =>
-            Effect.succeed([setSubjectThemes(themes)]),
+          decideOnSubject(
+            events,
+            subjectId,
+            contributor.id,
+            () => Effect.succeed([setSubjectThemes(themes)]),
+            params.revision,
           ),
         ),
       ),

@@ -9,6 +9,8 @@ import { createPositionRepository } from '../../../../../../../infra/database/po
 import { createArgumentRepository } from '../../../../../../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from '../../../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../../../domain/reputation/permissions'
+import { statementStream } from '../../../../../../../domain/aggregates/statement'
+import { currentRevision } from '../../../../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../../components/layout/FormPageHeader'
 import EditStatementForm from '../../../../../../../components/statements/EditStatementForm'
@@ -51,9 +53,10 @@ export default async function EditStatementPage({ params }: PageProps) {
   if (!statement) notFound()
   if (statement.author.kind !== 'public_figure' || statement.author.id !== figure.id) notFound()
 
-  const [positions, initialArguments] = await Promise.all([
+  const [positions, initialArguments, revision] = await Promise.all([
     Effect.runPromise(positionRepo.findBySubjectId(subject.id)),
     Effect.runPromise(createArgumentRepository(supabase).findRefsByStatementId(statement.id)),
+    currentRevision(statementStream(statement.id)),
   ])
   const returnHref = `/p/${slug}/s/${subjectSlug}`
 
@@ -68,6 +71,7 @@ export default async function EditStatementPage({ params }: PageProps) {
 
       <EditStatementForm
         statementId={statement.id}
+        revision={revision}
         returnHref={returnHref}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}

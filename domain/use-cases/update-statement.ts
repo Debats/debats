@@ -32,6 +32,8 @@ type UpdateStatementParams = {
   sourceUrl: string
   quote: string
   statedAt: string
+  /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   /** Read side: the statement as projected, to find it and to import it on demand */
   statementSource: StatementSource
@@ -122,10 +124,15 @@ export async function updateStatementUseCase(
             recordProposedArguments(events, contributor.id, validatedArguments.right),
             Effect.flatMap((recorded) =>
               pipe(
-                decideOnStatement(events, statementId, contributor.id, (state) =>
-                  staysOnItsSubject(state, newPosition.subjectId)
-                    ? Effect.succeed([edited(recorded.argumentIds)])
-                    : Effect.fail(new Rejected(OTHER_SUBJECT, 'positionId')),
+                decideOnStatement(
+                  events,
+                  statementId,
+                  contributor.id,
+                  (state) =>
+                    staysOnItsSubject(state, newPosition.subjectId)
+                      ? Effect.succeed([edited(recorded.argumentIds)])
+                      : Effect.fail(new Rejected(OTHER_SUBJECT, 'positionId')),
+                  params.revision,
                 ),
                 Effect.tap(() =>
                   grantEach(events, contributor.id, [

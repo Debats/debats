@@ -26,6 +26,8 @@ export type UpdateOrganisationParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
+  /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   organisationSource: OrganisationSource
   /** Read side: the organisation must exist and the new name must be free */
@@ -103,8 +105,12 @@ export async function persistUpdatedOrganisation(
       Effect.andThen(
         runUnitOfWork((events) =>
           pipe(
-            decideOnOrganisation(events, existing.id, contributor.id, () =>
-              Effect.succeed([edited]),
+            decideOnOrganisation(
+              events,
+              existing.id,
+              contributor.id,
+              () => Effect.succeed([edited]),
+              params.revision,
             ),
             Effect.tap(() =>
               grant(

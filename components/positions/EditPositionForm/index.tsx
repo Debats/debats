@@ -16,6 +16,8 @@ interface EditPositionFormProps {
   returnHref: string
   initialTitle: string
   initialDescription: string
+  /** The revision of the subject's stream the form shows: an edit made meanwhile is not overwritten */
+  revision: number
 }
 
 export default function EditPositionForm({
@@ -23,6 +25,7 @@ export default function EditPositionForm({
   returnHref,
   initialTitle,
   initialDescription,
+  revision,
 }: EditPositionFormProps) {
   const router = useRouter()
   const [title, setTitle] = useState(initialTitle)
@@ -64,6 +67,7 @@ export default function EditPositionForm({
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      <input type="hidden" name="revision" value={revision} />
       {error && <FormError message={error} />}
 
       <div className={styles.fieldGroup}>

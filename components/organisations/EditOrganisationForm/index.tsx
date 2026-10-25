@@ -9,17 +9,21 @@ interface EditOrganisationFormProps {
   organisationId: string
   organisationSlug: string
   initialValues: OrganisationFormValues
+  /** The revision of the organisation's stream the form shows: an edit made meanwhile is not overwritten */
+  revision: number
 }
 
 export default function EditOrganisationForm({
   organisationId,
   organisationSlug,
   initialValues,
+  revision,
 }: EditOrganisationFormProps) {
   const router = useRouter()
 
   const handleSubmit = useCallback(
     async (formData: FormData): Promise<SubmitOutcome> => {
+      formData.set('revision', String(revision))
       const result = await updateOrganisationAction(organisationId, formData)
       if (result.success) {
         router.push(`/o/${result.slug}`)
@@ -27,7 +31,7 @@ export default function EditOrganisationForm({
       }
       return { success: false, error: result.error, fieldErrors: result.fieldErrors }
     },
-    [organisationId, router],
+    [organisationId, revision, router],
   )
 
   return (

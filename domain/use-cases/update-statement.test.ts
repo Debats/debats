@@ -59,6 +59,7 @@ const validParams = {
   quote: 'Nouvelle citation suffisamment longue.',
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   statementSource: fakeStatementSource([
     { statement: existingStatement, argumentIds: [], subjectId: 'subject-1' },

@@ -5,16 +5,22 @@ import { ThemeId } from '../../domain/entities/theme'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createSubjectSource } from '../../infra/events/sources'
+import { currentRevision } from '../../infra/events/stream-revision'
+import { subjectStream } from '../../domain/aggregates/subject'
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
 import { setSubjectThemesUseCase } from '../../domain/use-cases/set-subject-themes'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
-export type SetThemesResult = { success: true } | { success: false; error: string }
+/** On success, the revision the next change must be rendered from */
+export type SetThemesResult =
+  | { success: true; revision: number }
+  | { success: false; error: string }
 
 export async function setSubjectThemesAction(
   subjectId: string,
   themeIds: string[],
   primaryThemeId: string | null,
+  revision: number,
 ): Promise<SetThemesResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
@@ -24,6 +30,7 @@ export async function setSubjectThemesAction(
     subjectId,
     themeIds: themeIds.map((id) => ThemeId.make(id)),
     primaryThemeId: primaryThemeId ? ThemeId.make(primaryThemeId) : null,
+    revision,
     runUnitOfWork,
     subjectSource: createSubjectSource(supabase),
     themeRepo: createThemeRepository(supabase),
@@ -33,5 +40,5 @@ export async function setSubjectThemesAction(
     return { success: false, error: result.left }
   }
 
-  return { success: true }
+  return { success: true, revision: await currentRevision(subjectStream(subjectId)) }
 }

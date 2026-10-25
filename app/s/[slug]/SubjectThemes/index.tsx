@@ -12,6 +12,8 @@ interface SubjectThemesProps {
   availableThemes: ThemeOption[]
   selectedThemeIds: string[]
   primaryThemeId: string | null
+  /** The revision of the subject's stream the selector shows; each save moves it */
+  revision: number
 }
 
 export default function SubjectThemes({
@@ -19,23 +21,26 @@ export default function SubjectThemes({
   availableThemes,
   selectedThemeIds: initialSelectedIds,
   primaryThemeId: initialPrimaryId,
+  revision: initialRevision,
 }: SubjectThemesProps) {
   const router = useRouter()
   const [error, setError] = useState<string>()
   const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds)
   const [primaryId, setPrimaryId] = useState<string | null>(initialPrimaryId)
+  const [revision, setRevision] = useState(initialRevision)
 
   const save = useCallback(
     async (themeIds: string[], primary: string | null) => {
       setError(undefined)
-      const result = await setSubjectThemesAction(subjectId, themeIds, primary)
+      const result = await setSubjectThemesAction(subjectId, themeIds, primary, revision)
       if (result.success) {
+        setRevision(result.revision)
         router.refresh()
       } else {
         setError(result.error)
       }
     },
-    [subjectId, router],
+    [subjectId, revision, router],
   )
 
   const handleToggle = useCallback(

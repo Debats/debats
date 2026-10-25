@@ -24,6 +24,7 @@ const validParams = (existing = sampleOrganisation()) => ({
   wikipediaUrl: '',
   websiteUrl: 'https://france.attac.org',
   notorietySources: ['https://lemonde.fr/a', 'https://liberation.fr/b'],
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   organisationSource: fakeOrganisationSource([existing]),
   organisationRepo: fakeOrganisationRepo([existing]),

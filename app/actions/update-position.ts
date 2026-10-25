@@ -7,6 +7,7 @@ import { createSubjectSource } from '../../infra/events/sources'
 import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import { updatePositionUseCase, FieldErrors } from '../../domain/use-cases/update-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { revisionOf } from './form-revision'
 
 export type ActionResult =
   | { success: true }
@@ -25,6 +26,7 @@ export async function updatePositionAction(
     positionId,
     title: String(formData.get('title') ?? ''),
     description: String(formData.get('description') ?? ''),
+    revision: revisionOf(formData),
     runUnitOfWork,
     subjectSource: createSubjectSource(supabase),
     positionRepo: createPositionRepository(supabase),

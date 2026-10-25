@@ -22,6 +22,8 @@ type UpdateSubjectParams = {
   title: string
   presentation: string
   problem: string
+  /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
 }
@@ -53,8 +55,12 @@ export async function updateSubjectUseCase(
       Effect.andThen(
         runUnitOfWork((events) =>
           pipe(
-            decideOnSubject(events, subjectId, contributor.id, () =>
-              Effect.succeed([editSubject(decoded.right)]),
+            decideOnSubject(
+              events,
+              subjectId,
+              contributor.id,
+              () => Effect.succeed([editSubject(decoded.right)]),
+              params.revision,
             ),
             Effect.tap(() =>
               grant(

@@ -25,6 +25,7 @@ const renameParams = (seed: Argument[], argumentId = seed[0].id) => ({
   argumentId,
   title: 'Coût pour les finances publiques',
   description: '',
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   argumentSource: fakeArgumentSource(seed),
   argumentRepo: fakeArgumentRepo(seed),

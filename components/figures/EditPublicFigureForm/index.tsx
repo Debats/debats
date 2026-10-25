@@ -22,6 +22,8 @@ interface EditPublicFigureFormProps {
   initialWikipediaUrl: string
   initialWebsiteUrl: string
   initialNotorietySources: readonly string[]
+  /** The revision of the figure's stream the form shows: an edit made meanwhile is not overwritten */
+  revision: number
 }
 
 export default function EditPublicFigureForm({
@@ -32,6 +34,7 @@ export default function EditPublicFigureForm({
   initialWikipediaUrl,
   initialWebsiteUrl,
   initialNotorietySources,
+  revision,
 }: EditPublicFigureFormProps) {
   const router = useRouter()
 
@@ -114,6 +117,7 @@ export default function EditPublicFigureForm({
 
   return (
     <form onSubmit={handleSubmit} className={formStyles.form}>
+      <input type="hidden" name="revision" value={revision} />
       {error && <FormError message={error} />}
 
       <div className={formStyles.fieldGroup}>

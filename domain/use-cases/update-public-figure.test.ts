@@ -56,6 +56,7 @@ const validParams = {
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   websiteUrl: '',
   notorietySources: [],
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   publicFigureSource: fakePublicFigureSource([figureParts(existingFigure)]),
   publicFigureRepo: fakePublicFigureRepo,

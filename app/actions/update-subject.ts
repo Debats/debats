@@ -6,6 +6,7 @@ import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createSubjectSource } from '../../infra/events/sources'
 import { updateSubjectUseCase } from '../../domain/use-cases/update-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { revisionOf } from './form-revision'
 
 export type ActionResult = { success: true; slug: string } | { success: false; error: string }
 
@@ -22,6 +23,7 @@ export async function updateSubjectAction(
     title: String(formData.get('title') ?? ''),
     presentation: String(formData.get('presentation') ?? ''),
     problem: String(formData.get('problem') ?? ''),
+    revision: revisionOf(formData),
     runUnitOfWork,
     subjectSource: createSubjectSource(supabase),
   })

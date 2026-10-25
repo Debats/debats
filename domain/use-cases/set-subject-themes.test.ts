@@ -37,6 +37,7 @@ const validParams = {
   subjectId: subject.id,
   themeIds: [economie.id, societe.id],
   primaryThemeId: economie.id,
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject)]),
   themeRepo,

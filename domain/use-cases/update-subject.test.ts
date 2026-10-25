@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { updateSubjectUseCase } from './update-subject'
+import { EDITED_MEANWHILE } from './run-command'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
@@ -19,6 +20,7 @@ const validParams = {
   title: 'Le SMIC',
   presentation: 'Une présentation revue, suffisamment longue.',
   problem: 'Faut-il augmenter le SMIC ?',
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
 }
@@ -76,6 +78,33 @@ describe('updateSubjectUseCase', () => {
       actorId: 'abc',
     })
     expect(grantsIn(journal)).toEqual([['abc', 'edited_subject', 5]])
+  })
+
+  it('accepts a form rendered from the revision the stream stands at', async () => {
+    const { run } = await journalWithSubjects([subject, [position]])
+
+    const result = await updateSubjectUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      revision: 2,
+      runUnitOfWork: run,
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+  })
+
+  it('refuses a form rendered before someone else edited, minutes ago or not', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [position]])
+
+    const result = await updateSubjectUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      revision: 1,
+      runUnitOfWork: run,
+    })
+
+    expect(result).toEqual(Either.left(EDITED_MEANWHILE))
+    expect(journal.all().map((e) => e.type)).toEqual(['SubjectAdded', 'PositionAdded'])
   })
 
   it('should import a subject that has no stream yet, positions included, before editing it', async () => {

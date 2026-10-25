@@ -23,6 +23,7 @@ const validParams = {
   positionId: position.id,
   title: 'Pour',
   description: 'Une description revue, suffisamment longue.',
+  revision: 0,
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
   positionRepo,

@@ -17,6 +17,8 @@ type SetPublicFigureOccupationsParams = {
   contributor: ContributorIdentity | null
   publicFigureId: string
   assignments: OccupationAssignmentInput[]
+  /** The revision the selector was rendered from; a draft's validation has none and decides from the current state */
+  revision?: number
   runUnitOfWork: RunUnitOfWork
   publicFigureSource: PublicFigureSource
   /** Read side: every occupation must be on the closed list */
@@ -60,8 +62,12 @@ export async function setPublicFigureOccupationsUseCase(
       ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
       Effect.andThen(
         runUnitOfWork((events) =>
-          decideOnPublicFigure(events, publicFigureId, contributor.id, () =>
-            Effect.succeed([setOccupations(assignments)]),
+          decideOnPublicFigure(
+            events,
+            publicFigureId,
+            contributor.id,
+            () => Effect.succeed([setOccupations(assignments)]),
+            params.revision,
           ),
         ),
       ),

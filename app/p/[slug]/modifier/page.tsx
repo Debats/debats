@@ -5,6 +5,8 @@ import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../../infra/database/public-figure-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { publicFigureStream } from '../../../../domain/aggregates/public-figure'
+import { currentRevision } from '../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditPublicFigureForm from '../../../../components/figures/EditPublicFigureForm'
@@ -38,10 +40,11 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
   if (!figure) notFound()
 
   const occupationRepo = createOccupationRepository(supabase)
-  const [families, allOccupations, figureOccupations] = await Promise.all([
+  const [families, allOccupations, figureOccupations, revision] = await Promise.all([
     Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
     Effect.runPromise(occupationRepo.findAll()),
     Effect.runPromise(occupationRepo.findByPublicFigureId(figure.id)),
+    currentRevision(publicFigureStream(figure.id)),
   ])
   const canAssignOccupations = canPerform(contributor.reputation, 'assign_occupation')
   const occupationGroups = groupOccupationsByFamily(families, allOccupations).map(
@@ -64,6 +67,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
       <EditPublicFigureForm
         figureId={figure.id}
         figureSlug={figure.slug}
+        revision={revision}
         initialName={figure.name}
         initialPresentation={figure.presentation}
         initialWikipediaUrl={Option.isSome(figure.wikipediaUrl) ? figure.wikipediaUrl.value : ''}
@@ -75,6 +79,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
         <FigureOccupations
           figureId={figure.id}
           figureSlug={figure.slug}
+          revision={revision}
           groups={occupationGroups}
           initialAssignments={figureOccupations.map(({ occupation, current }) => ({
             occupationId: occupation.id,

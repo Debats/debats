@@ -15,6 +15,8 @@ interface FigureOccupationsProps {
   /** Les métiers disponibles, par famille */
   groups: TagGroup[]
   initialAssignments: OccupationAssignmentInput[]
+  /** The revision of the figure's stream the selector shows; each save moves it */
+  revision: number
 }
 
 /**
@@ -26,16 +28,19 @@ export default function FigureOccupations({
   figureSlug,
   groups,
   initialAssignments,
+  revision: initialRevision,
 }: FigureOccupationsProps) {
   const router = useRouter()
   const [assignments, setAssignments] = useState(initialAssignments)
+  const [revision, setRevision] = useState(initialRevision)
   const [error, setError] = useState<string>()
 
   const save = async (next: OccupationAssignmentInput[]) => {
     setAssignments(next)
     setError(undefined)
-    const result = await setPublicFigureOccupationsAction(figureId, figureSlug, next)
+    const result = await setPublicFigureOccupationsAction(figureId, figureSlug, next, revision)
     if (result.success) {
+      setRevision(result.revision)
       router.refresh()
     } else {
       setError(result.error)

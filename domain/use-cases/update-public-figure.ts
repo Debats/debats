@@ -24,6 +24,8 @@ type UpdatePublicFigureParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
+  /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number
   runUnitOfWork: RunUnitOfWork
   publicFigureSource: PublicFigureSource
   /** Read side: the figure must exist and the new name must be free */
@@ -103,8 +105,12 @@ export async function persistUpdatedPublicFigure(
       Effect.andThen(
         runUnitOfWork((events) =>
           pipe(
-            decideOnPublicFigure(events, existing.id, contributor.id, () =>
-              Effect.succeed([edited]),
+            decideOnPublicFigure(
+              events,
+              existing.id,
+              contributor.id,
+              () => Effect.succeed([edited]),
+              params.revision,
             ),
             Effect.tap(() =>
               grant(

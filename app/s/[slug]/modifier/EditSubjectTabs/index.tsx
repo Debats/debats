@@ -17,6 +17,8 @@ interface EditSubjectTabsProps {
   selectedThemeIds: string[]
   primaryThemeId: string | null
   relatedSubjects: RelatedSubjectData[]
+  /** The revision of the subject's stream the page shows */
+  revision: number
 }
 
 export default function EditSubjectTabs({
@@ -27,6 +29,7 @@ export default function EditSubjectTabs({
   selectedThemeIds,
   primaryThemeId,
   relatedSubjects,
+  revision,
 }: EditSubjectTabsProps) {
   return (
     <Tabs.Root defaultValue="content">
@@ -40,7 +43,12 @@ export default function EditSubjectTabs({
       </Tabs.List>
 
       <Tabs.Content value="content" className={styles.tabContent}>
-        <EditSubjectForm subjectId={subjectId} subjectSlug={subjectSlug} subject={subject} />
+        <EditSubjectForm
+          subjectId={subjectId}
+          subjectSlug={subjectSlug}
+          subject={subject}
+          revision={revision}
+        />
       </Tabs.Content>
 
       <Tabs.Content value="classification" className={styles.tabContent}>
@@ -51,6 +59,7 @@ export default function EditSubjectTabs({
               availableThemes={availableThemes}
               selectedThemeIds={selectedThemeIds}
               primaryThemeId={primaryThemeId}
+              revision={revision}
             />
           )}
 

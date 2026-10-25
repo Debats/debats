@@ -5,6 +5,8 @@ import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../../../infra/database/organisation-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { organisationStream } from '../../../../domain/aggregates/organisation'
+import { currentRevision } from '../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditOrganisationForm from '../../../../components/organisations/EditOrganisationForm'
@@ -33,6 +35,7 @@ export default async function EditOrganisationPage({ params }: PageProps) {
   )
 
   if (!organisation) notFound()
+  const revision = await currentRevision(organisationStream(organisation.id))
 
   return (
     <ContentWithSidebar topMargin>
@@ -46,6 +49,7 @@ export default async function EditOrganisationPage({ params }: PageProps) {
       <EditOrganisationForm
         organisationId={organisation.id}
         organisationSlug={organisation.slug}
+        revision={revision}
         initialValues={{
           name: organisation.name,
           acronym: Option.getOrElse(organisation.acronym, () => ''),
