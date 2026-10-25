@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
+  absorbArgument,
   addArgument,
   argumentStream,
   mergeArgumentInto,
@@ -62,8 +63,24 @@ describe.skipIf(!hasDatabase)('argument projector', () => {
     })
   })
 
+  it('keeps an argument that absorbed another, dated as the merge', async () => {
+    const occurredAt = new Date('2021-02-03T04:05:06.000Z')
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(stream, 2, [absorbArgument(crypto.randomUUID())], { actorId, occurredAt }),
+      ),
+    )
+
+    const row = await prisma().arguments.findUniqueOrThrow({ where: { id: argumentId } })
+    expect(row).toMatchObject({
+      slug: 'argument-renomme',
+      deleted_at: null,
+      updated_at: occurredAt,
+    })
+  })
+
   it('retires a merged argument', async () => {
-    await append(2, [mergeArgumentInto(crypto.randomUUID())])
+    await append(3, [mergeArgumentInto(crypto.randomUUID())])
 
     const row = await prisma().arguments.findUniqueOrThrow({ where: { id: argumentId } })
     expect(row.deleted_at).not.toBeNull()

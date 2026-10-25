@@ -33,6 +33,10 @@ async function apply(decoded: ArgumentEvent, stored: StoredEvent, tx: PrismaTran
         data: { deleted_at: stored.occurredAt, ...changedBy(stored) },
       })
       return
+    case 'ArgumentAbsorbed':
+      // The row keeps its wording; the merge is a change to it all the same
+      await tx.arguments.update({ where: { id }, data: changedBy(stored) })
+      return
   }
 }
 

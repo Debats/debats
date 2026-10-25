@@ -36,6 +36,16 @@ export const ArgumentMergedInto = S.Struct({
   payload: S.Struct({ targetArgumentId: S.String }),
 })
 
+/**
+ * The argument that remains took a duplicate in. Written at the target's
+ * revision in the merge's transaction: two merges crossing each other
+ * (A into B, B into A) cannot both commit.
+ */
+export const ArgumentAbsorbed = S.Struct({
+  type: S.Literal('ArgumentAbsorbed'),
+  payload: S.Struct({ sourceArgumentId: S.String }),
+})
+
 export const ArgumentDeleted = S.Struct({
   type: S.Literal('ArgumentDeleted'),
   payload: S.Struct({}),
@@ -46,6 +56,7 @@ export const ArgumentEvent = S.Union(
   ArgumentImported,
   ArgumentRenamed,
   ArgumentMergedInto,
+  ArgumentAbsorbed,
   ArgumentDeleted,
 )
 export type ArgumentEvent = S.Schema.Type<typeof ArgumentEvent>

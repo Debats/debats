@@ -1,6 +1,6 @@
 import { Effect, Either, pipe } from 'effect'
 import { Argument } from '../entities/argument'
-import { isLiveArgument, mergeArgumentInto, replayArgument } from '../aggregates/argument'
+import { absorbArgument, mergeArgumentInto } from '../aggregates/argument'
 import { setStatementArguments, withArgumentReplaced } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
@@ -8,13 +8,7 @@ import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
 import { ensureStreams } from './aggregate-stream'
 import { runCommand } from './run-command'
-import {
-  argumentAggregate,
-  ArgumentSource,
-  decideOnArgument,
-  loadArgument,
-  requireArgumentState,
-} from './argument-stream'
+import { argumentAggregate, ArgumentSource, decideOnArgument } from './argument-stream'
 import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
 
 type MergeArgumentsParams = {
@@ -31,11 +25,11 @@ type MergeArgumentsParams = {
 const GONE = 'Un des deux arguments n’existe plus.'
 
 /**
- * Folds a duplicate into the argument that should remain: the source records
- * where it went, and every statement that mobilised it now mobilises the
- * target, each in its own stream, as its own stream says it stands. The
- * statements are read before the transaction: one that would mobilise the
- * source meanwhile keeps it.
+ * Folds a duplicate into the argument that should remain: the target records
+ * what it absorbed, the source where it went, and every statement that
+ * mobilised the source now mobilises the target, each in its own stream, as
+ * its own stream says it stands. The statements are read before the
+ * transaction: one that would mobilise the source meanwhile keeps it.
  */
 export async function mergeArgumentsUseCase(
   params: MergeArgumentsParams,
@@ -72,10 +66,15 @@ export async function mergeArgumentsUseCase(
       Effect.andThen(
         runUnitOfWork((events) =>
           pipe(
-            loadArgument(events, targetArgumentId),
-            Effect.flatMap(replayArgument),
-            Effect.flatMap(requireArgumentState),
-            Effect.filterOrFail(isLiveArgument, () => new Rejected(GONE)),
+            // The target writes too, at its revision: a merge crossing this one cannot also commit
+            decideOnArgument(events, targetArgumentId, contributor.id, () =>
+              Effect.succeed([absorbArgument(sourceArgumentId)]),
+            ),
+            Effect.mapError((failure) =>
+              failure._tag === 'Rejected' && failure.message === argumentAggregate.notFound
+                ? new Rejected(GONE)
+                : failure,
+            ),
             Effect.tap(() =>
               decideOnArgument(events, sourceArgumentId, contributor.id, () =>
                 Effect.succeed([mergeArgumentInto(targetArgumentId)]),

@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
-import { addArgument, mergeArgumentInto, renameArgument, replayArgument } from './argument'
+import {
+  absorbArgument,
+  addArgument,
+  mergeArgumentInto,
+  renameArgument,
+  replayArgument,
+} from './argument'
 
 const streamId = '9c2e1f5a-4d3b-4a8c-be9f-1a2b3c4d5e6f'
 const at = (day: string) => new Date(`${day}T10:00:00Z`)
@@ -61,6 +67,7 @@ describe('replayArgument', () => {
         updatedAt: at('2024-01-10'),
       },
       mergedInto: null,
+      absorbedIds: [],
       deletedAt: null,
     })
   })
@@ -89,6 +96,12 @@ describe('replayArgument', () => {
     const state = rebuilt(added, mergeArgumentInto('target-id'))
     expect(state.mergedInto).toBe('target-id')
     expect(state.deletedAt).toEqual(at('2024-01-11'))
+  })
+
+  it('remembers the duplicates it absorbed, and stays', () => {
+    const state = rebuilt(added, absorbArgument('dup-1'), absorbArgument('dup-2'))
+    expect(state.absorbedIds).toEqual(['dup-1', 'dup-2'])
+    expect(state.deletedAt).toBeNull()
   })
 
   it('marks a deletion with its date', () => {

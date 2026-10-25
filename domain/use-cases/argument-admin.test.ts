@@ -10,6 +10,8 @@ import {
 } from './argument-test-helpers'
 import { fakeStatementSource } from './subject-test-helpers'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { RunUnitOfWork } from '../events/unit-of-work'
+import { EDITED_MEANWHILE } from './run-command'
 import { addStatement, statementStream } from '../aggregates/statement'
 import { publicFigureAuthor, Statement, StatementId } from '../entities/statement'
 import { StatementRepository } from '../repositories/statement-repository'
@@ -155,6 +157,7 @@ describe('mergeArgumentsUseCase', () => {
       // The statements the journal does not know yet enter it before the transaction
       ['statement', 's-2', 'StatementImported', expect.anything()],
       ['statement', 's-3', 'StatementImported', expect.anything()],
+      ['argument', b.id, 'ArgumentAbsorbed', { sourceArgumentId: a.id }],
       ['argument', a.id, 'ArgumentMergedInto', { targetArgumentId: b.id }],
       ['statement', 's-1', 'StatementArgumentsSet', { argumentIds: ['other', b.id] }],
       ['statement', 's-2', 'StatementArgumentsSet', { argumentIds: [b.id] }],
@@ -168,6 +171,41 @@ describe('mergeArgumentsUseCase', () => {
     const result = await mergeArgumentsUseCase(mergeParams(unit))
 
     expect(Either.isLeft(result) && result.left).toContain('introuvable')
+  })
+
+  it('refuses when a crossing merge took the target meanwhile: the target writes too', async () => {
+    const unit = await journalWithArguments(a, b)
+    const crossing = async () => {
+      await mergeArgumentsUseCase({
+        ...mergeParams(unit),
+        sourceArgumentId: b.id,
+        targetArgumentId: a.id,
+      })
+    }
+    // The crossing merge lands between this one's load of the target and its append on it
+    const raced: RunUnitOfWork = (work) =>
+      unit.run((events, process) =>
+        work(
+          {
+            ...events,
+            append: (stream, expectedRevision, decided, options) =>
+              stream.streamId === b.id
+                ? Effect.andThen(
+                    Effect.promise(crossing),
+                    events.append(stream, expectedRevision, decided, options),
+                  )
+                : events.append(stream, expectedRevision, decided, options),
+          },
+          process,
+        ),
+      )
+
+    const result = await mergeArgumentsUseCase({ ...mergeParams(unit), runUnitOfWork: raced })
+
+    expect(result).toEqual(Either.left(EDITED_MEANWHILE))
+    // The in-memory rollback forgets the crossing writer too: only our own absence is observable
+    const ours = unit.journal.all().filter((e) => e.streamId === a.id)
+    expect(ours.map((e) => e.type)).toEqual(['ArgumentAdded'])
   })
 
   it('refuses a target already merged away', async () => {

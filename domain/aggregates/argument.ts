@@ -21,6 +21,8 @@ export interface ArgumentState {
   argument: Argument
   /** The argument this one was folded into, when it was */
   mergedInto: string | null
+  /** The duplicates folded into this one */
+  absorbedIds: readonly string[]
   deletedAt: Date | null
 }
 
@@ -52,6 +54,12 @@ export const mergeArgumentInto = (targetArgumentId: string): ArgumentEvent => ({
   payload: { targetArgumentId },
 })
 
+/** Decision: this argument takes a duplicate in, and stays */
+export const absorbArgument = (sourceArgumentId: string): ArgumentEvent => ({
+  type: 'ArgumentAbsorbed',
+  payload: { sourceArgumentId },
+})
+
 /** An argument found in the tables before its journal existed enters it as it is */
 export const importArgument = (argument: Argument): ArgumentEvent => ({
   type: 'ArgumentImported',
@@ -78,7 +86,12 @@ function apply(
   switch (event.type) {
     case 'ArgumentAdded':
     case 'ArgumentImported':
-      return { argument: argumentFrom(stored, event.payload), mergedInto: null, deletedAt: null }
+      return {
+        argument: argumentFrom(stored, event.payload),
+        mergedInto: null,
+        absorbedIds: [],
+        deletedAt: null,
+      }
   }
   if (!state) return null
   switch (event.type) {
@@ -94,6 +107,8 @@ function apply(
       }
     case 'ArgumentMergedInto':
       return { ...state, mergedInto: event.payload.targetArgumentId, deletedAt: stored.occurredAt }
+    case 'ArgumentAbsorbed':
+      return { ...state, absorbedIds: [...state.absorbedIds, event.payload.sourceArgumentId] }
     case 'ArgumentDeleted':
       return { ...state, deletedAt: stored.occurredAt }
   }
