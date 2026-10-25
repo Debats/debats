@@ -8,6 +8,7 @@ import {
 import { StatementEvent } from '../aggregates/statement-events'
 import { Statement } from '../entities/statement'
 import { EventStore, StoredEvent, UnreadableEvent } from '../events/event-store'
+import { Rejected } from './types'
 import {
   AggregateStream,
   appendAndReplay,
@@ -23,6 +24,8 @@ import {
 export interface StatementParts {
   statement: Statement
   argumentIds: readonly string[]
+  /** The subject of its position: the stream names it from its first event */
+  subjectId: string
 }
 
 export type StatementSource = Source<StatementParts>
@@ -32,9 +35,9 @@ export const statementAggregate: AggregateStream<StatementState, StatementEvent,
   notFound: 'Prise de position introuvable.',
   replay: replayStatement,
   isLive: (state) => state.deletedAt === null,
-  importBatches: ({ statement, argumentIds }) => [
+  importBatches: ({ statement, argumentIds, subjectId }) => [
     {
-      events: [importStatement(statement, argumentIds)],
+      events: [importStatement(statement, argumentIds, subjectId)],
       options: {
         actorId: statement.createdBy ?? null,
         metadata: IMPORT,
@@ -46,6 +49,13 @@ export const statementAggregate: AggregateStream<StatementState, StatementEvent,
 
 export const loadStatement = (events: EventStore, statementId: string) =>
   loadStream(statementAggregate, events, statementId)
+
+export const decideOnStatement = (
+  events: EventStore,
+  statementId: string,
+  actorId: string,
+  decide: (state: StatementState) => Effect.Effect<StatementEvent[], Rejected>,
+) => decideOn(statementAggregate, events, statementId, actorId, decide)
 
 export const appendToStatement = (
   events: EventStore,

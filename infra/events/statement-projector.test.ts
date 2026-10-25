@@ -24,13 +24,18 @@ const prisma = () => getPrismaClient()
 const streamId = crypto.randomUUID()
 const stream = statementStream(streamId)
 let positionId = ''
+let subjectId = ''
 let figureId = ''
 let actorId = ''
 const argumentIds = [crypto.randomUUID(), crypto.randomUUID()]
 
 describe.skipIf(!hasDatabase)('statement projector', () => {
   beforeAll(async () => {
-    positionId = (await prisma().positions.findFirstOrThrow({ select: { id: true } })).id
+    const position = await prisma().positions.findFirstOrThrow({
+      select: { id: true, subject_id: true },
+    })
+    positionId = position.id
+    subjectId = position.subject_id
     figureId = (await prisma().public_figures.findFirstOrThrow({ select: { id: true } })).id
     actorId = (await prisma().contributors.findFirstOrThrow({ select: { id: true } })).id
     for (const argumentId of argumentIds) {
@@ -64,6 +69,7 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
   it('writes the statement and its argument links when it is added', async () => {
     const added = addStatement({
       author: publicFigureAuthor(figureId),
+      subjectId,
       positionId,
       statementType: 'declaration',
       sourceName: 'Le Monde',

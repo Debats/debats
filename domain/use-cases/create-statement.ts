@@ -118,6 +118,7 @@ export async function createStatementUseCase(
   const added = (argumentIds: readonly string[]) =>
     addStatement({
       author,
+      subjectId,
       positionId,
       statementType,
       sourceName,

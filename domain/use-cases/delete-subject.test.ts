@@ -49,7 +49,7 @@ const validParams = {
   subjectId: subject.id,
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
-  statementSource: fakeStatementSource([{ statement, argumentIds: [] }]),
+  statementSource: fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
   subjectRepo: subjectRepo(0),
   statementRepo: statementRepo([]),
 }
@@ -66,7 +66,7 @@ describe('deleteSubjectUseCase', () => {
       journal.append(
         statementStream(statement.id),
         0,
-        [addStatement({ ...statement, argumentIds: [] }), removeStatement()],
+        [addStatement({ ...statement, subjectId: subject.id, argumentIds: [] }), removeStatement()],
         { actorId: 'author-id' },
       ),
     )
@@ -115,7 +115,7 @@ describe('deleteSubjectUseCase', () => {
       journal.append(
         statementStream(statement.id),
         0,
-        [addStatement({ ...statement, argumentIds: [] })],
+        [addStatement({ ...statement, subjectId: subject.id, argumentIds: [] })],
         {
           actorId: 'author-id',
         },

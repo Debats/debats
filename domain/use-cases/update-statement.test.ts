@@ -60,7 +60,9 @@ const validParams = {
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
   runUnitOfWork: inMemoryUnitOfWork().run,
-  statementSource: fakeStatementSource([{ statement: existingStatement, argumentIds: [] }]),
+  statementSource: fakeStatementSource([
+    { statement: existingStatement, argumentIds: [], subjectId: 'subject-1' },
+  ]),
   positionRepo: fakePositionRepo,
   argumentRepo: fakeArgumentRepo(),
 }
@@ -72,7 +74,13 @@ async function journalWithStream() {
     unit.journal.append(
       statementStream(existingStatement.id),
       0,
-      [addStatement({ ...existingStatement, argumentIds: ['old-argument'] })],
+      [
+        addStatement({
+          ...existingStatement,
+          subjectId: 'subject-1',
+          argumentIds: ['old-argument'],
+        }),
+      ],
       { actorId: 'author-id' },
     ),
   )
@@ -107,7 +115,7 @@ describe('updateStatementUseCase', () => {
       ...validParams,
       contributor: { id: 'abc', reputation: 10000 },
       statementSource: fakeStatementSource([
-        { statement: existingStatement, argumentIds: [old.id] },
+        { statement: existingStatement, argumentIds: [old.id], subjectId: 'subject-1' },
       ]),
       runUnitOfWork: run,
     })
@@ -225,6 +233,32 @@ describe('updateStatementUseCase', () => {
     if (Either.isLeft(result)) {
       expect(result.left).toContain('même sujet')
     }
+  })
+
+  it('decides the subject rule from the stream, even when the tables say otherwise', async () => {
+    const { run } = await journalWithStream()
+    // The tables now put both positions on subject-2: the stream still says subject-1
+    const movedPositions = {
+      ...fakePositionRepo,
+      findById: (id: string) =>
+        Effect.succeed(
+          id === existingPosition.id
+            ? { ...existingPosition, subjectId: 'subject-2' }
+            : (allPositions.find((p) => p.id === id) ?? null),
+        ),
+    }
+
+    const result = await updateStatementUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      positionId: positionOnOtherSubject.id,
+      positionRepo: movedPositions,
+      runUnitOfWork: run,
+    })
+
+    expect(Either.isLeft(result) && result.left).toEqual({
+      positionId: 'La nouvelle position doit appartenir au même sujet.',
+    })
   })
 
   it('should fail when quote is too short', async () => {

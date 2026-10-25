@@ -1,11 +1,11 @@
 import { Either, Effect, pipe } from 'effect'
 import { Statement, StatementType } from '../entities/statement'
-import { editStatement } from '../aggregates/statement'
+import { editStatement, staysOnItsSubject } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ArgumentRepository } from '../repositories/argument-repository'
-import { ContributorIdentity, FieldErrors } from './types'
+import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
   ARGUMENT_JUST_CREATED,
@@ -15,14 +15,11 @@ import {
   validateStatementArguments,
 } from './statement-arguments'
 import { grantEach, rewardFor } from './reward'
-import {
-  appendToStatement,
-  loadStatement,
-  statementAggregate,
-  StatementSource,
-} from './statement-stream'
+import { decideOnStatement, statementAggregate, StatementSource } from './statement-stream'
 import { ensureStream } from './aggregate-stream'
-import { runCommand, uniqueTakenAs } from './run-command'
+import { runFormCommand, uniqueTakenAs } from './run-command'
+
+const OTHER_SUBJECT = 'La nouvelle position doit appartenir au même sujet.'
 
 type UpdateStatementParams = {
   contributor: ContributorIdentity | null
@@ -87,10 +84,11 @@ export async function updateStatementUseCase(
     return Either.left('La position sélectionnée est introuvable.')
   }
 
+  // The stream decides this below; the tables answer for the streams opened before they said their subject
   if (positionId !== existing.positionId) {
     const currentPosition = await Effect.runPromise(positionRepo.findById(existing.positionId))
-    if (currentPosition && newPosition.subjectId !== currentPosition.subjectId) {
-      return Either.left('La nouvelle position doit appartenir au même sujet.')
+    if (!currentPosition || newPosition.subjectId !== currentPosition.subjectId) {
+      return Either.left(OTHER_SUBJECT)
     }
   }
 
@@ -115,7 +113,7 @@ export async function updateStatementUseCase(
     })
 
   // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
-  const outcome = await runCommand(
+  const outcome = await runFormCommand(
     pipe(
       ensureStream(statementAggregate, runUnitOfWork, statementId, statementSource),
       Effect.andThen(
@@ -124,15 +122,10 @@ export async function updateStatementUseCase(
             recordProposedArguments(events, contributor.id, validatedArguments.right),
             Effect.flatMap((recorded) =>
               pipe(
-                loadStatement(events, statementId),
-                Effect.flatMap((history) =>
-                  appendToStatement(
-                    events,
-                    statementId,
-                    history,
-                    [edited(recorded.argumentIds)],
-                    contributor.id,
-                  ),
+                decideOnStatement(events, statementId, contributor.id, (state) =>
+                  staysOnItsSubject(state, newPosition.subjectId)
+                    ? Effect.succeed([edited(recorded.argumentIds)])
+                    : Effect.fail(new Rejected(OTHER_SUBJECT, 'positionId')),
                 ),
                 Effect.tap(() =>
                   grantEach(events, contributor.id, [

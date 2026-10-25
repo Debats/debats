@@ -31,6 +31,7 @@ const stored = (
 
 const added = addStatement({
   author: publicFigureAuthor('figure-1'),
+  subjectId: 'subject-1',
   positionId: 'pos-1',
   statementType: 'declaration',
   sourceName: 'Le Monde',
@@ -132,11 +133,12 @@ describe('replayStatement', () => {
   it('treats an import like an addition', () => {
     const first = replayStatement([stored(added, 1, at('2024-01-16'))])
     const statement = Either.isRight(first) && first.right ? first.right.statement : null
-    const imported = importStatement(statement!, ['arg-1'])
+    const imported = importStatement(statement!, ['arg-1'], 'subject-1')
 
     expect(imported.type).toBe('StatementImported')
     const again = replayStatement([stored(imported, 1, at('2024-01-16'))])
     expect(Either.isRight(again) && again.right?.statement).toEqual(statement)
+    expect(Either.isRight(again) && again.right?.subjectId).toBe('subject-1')
   })
 
   it('refuses an event it cannot read', () => {

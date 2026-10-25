@@ -14,9 +14,15 @@ export const statementStream = (id: string): StreamRef => ({
 /** What the journal says a statement is right now */
 export interface StatementState {
   statement: Statement
+  /** The subject it stands on; null for a stream opened before the events said it */
+  subjectId: string | null
   argumentIds: readonly string[]
   deletedAt: Date | null
 }
+
+/** Whether a position may replace the current one: it must be on the subject the stream names */
+export const staysOnItsSubject = (state: StatementState, positionSubjectId: string): boolean =>
+  state.subjectId === null || state.subjectId === positionSubjectId
 
 export interface StatementContentInput {
   positionId: string
@@ -40,10 +46,10 @@ const content = (input: StatementContentInput): StatementContent => ({
 
 /** Decision: a contributor adds a statement (its id is chosen by the caller, as the stream's) */
 export const addStatement = (
-  input: StatementContentInput & { author: StatementAuthor },
+  input: StatementContentInput & { author: StatementAuthor; subjectId: string },
 ): StatementEvent => ({
   type: 'StatementAdded',
-  payload: { author: input.author, ...content(input) },
+  payload: { author: input.author, subjectId: input.subjectId, ...content(input) },
 })
 
 /** Decision: a contributor changes what a statement says */
@@ -81,9 +87,10 @@ export const removeStatement = (): StatementEvent => ({ type: 'StatementDeleted'
 export const importStatement = (
   statement: Statement,
   argumentIds: readonly string[],
+  subjectId: string,
 ): StatementEvent => ({
   type: 'StatementImported',
-  payload: { author: statement.author, ...content({ ...statement, argumentIds }) },
+  payload: { author: statement.author, subjectId, ...content({ ...statement, argumentIds }) },
 })
 
 /** Rebuilds the statement from its stream; null for a stream without events */
@@ -105,6 +112,7 @@ function apply(
           createdAt: stored.occurredAt,
           updatedAt: stored.occurredAt,
         }),
+        subjectId: event.payload.subjectId ?? null,
         argumentIds: event.payload.argumentIds,
         deletedAt: null,
       }

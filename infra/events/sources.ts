@@ -27,13 +27,21 @@ import { createThemeRepository } from '../database/theme-repository-supabase'
 export function createStatementSource(supabase: SupabaseClient<Database>): StatementSource {
   const statements = createStatementRepository(supabase)
   const argumentRepo = createArgumentRepository(supabase)
+  const positions = createPositionRepository(supabase)
   return (statementId) =>
     Effect.flatMap(statements.findById(statementId), (statement) =>
       statement
-        ? Effect.map(argumentRepo.findRefsByStatementId(statementId), (refs) => ({
-            statement,
-            argumentIds: refs.map((a) => a.id),
-          }))
+        ? Effect.map(
+            Effect.all([
+              argumentRepo.findRefsByStatementId(statementId),
+              positions.findById(statement.positionId),
+            ]),
+            ([refs, position]) =>
+              // A statement always stands on a position; its row says which subject
+              position
+                ? { statement, argumentIds: refs.map((a) => a.id), subjectId: position.subjectId }
+                : null,
+          )
         : Effect.succeed(null),
     )
 }

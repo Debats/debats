@@ -47,7 +47,7 @@ const validParams = {
   contributor: founder,
   runUnitOfWork: inMemoryUnitOfWork().run,
   subjectSource: fakeSubjectSource([subjectParts(subject, [source, target])]),
-  statementSource: fakeStatementSource([{ statement, argumentIds: [] }]),
+  statementSource: fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
   positionRepo,
   statementRepo: statementRepo([]),
 }
@@ -82,7 +82,7 @@ describe('mergePositions', () => {
       journal.append(
         statementStream(statement.id),
         0,
-        [addStatement({ ...statement, argumentIds: [] })],
+        [addStatement({ ...statement, subjectId: subject.id, argumentIds: [] })],
         {
           actorId: 'author-id',
         },

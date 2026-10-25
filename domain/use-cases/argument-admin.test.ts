@@ -139,15 +139,21 @@ describe('mergeArgumentsUseCase', () => {
       unit.journal.append(
         statementStream('s-1'),
         0,
-        [addStatement({ ...statementOn('s-1'), argumentIds: [a.id, 'other'] })],
+        [
+          addStatement({
+            ...statementOn('s-1'),
+            subjectId: 'subject-1',
+            argumentIds: [a.id, 'other'],
+          }),
+        ],
         { actorId: 'author-id' },
       ),
     )
     const result = await mergeArgumentsUseCase({
       ...mergeParams(unit, ['s-1', 's-2', 's-3']),
       statementSource: fakeStatementSource([
-        { statement: statementOn('s-2'), argumentIds: [a.id, b.id] },
-        { statement: statementOn('s-3'), argumentIds: ['other'] },
+        { statement: statementOn('s-2'), argumentIds: [a.id, b.id], subjectId: 'subject-1' },
+        { statement: statementOn('s-3'), argumentIds: ['other'], subjectId: 'subject-1' },
       ]),
     })
 

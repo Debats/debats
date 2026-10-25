@@ -18,7 +18,16 @@ const StatementContent = S.Struct({
 })
 export type StatementContent = S.Schema.Type<typeof StatementContent>
 
-const StatementAddedPayload = S.Struct({ author: StatementAuthor, ...StatementContent.fields })
+const StatementAddedPayload = S.Struct({
+  author: StatementAuthor,
+  /**
+   * The subject the statement stands on: a position may only change for
+   * another of the same subject. Absent from the events before 25 October
+   * 2026 and from the backfill, which the decision then cannot defend.
+   */
+  subjectId: S.optional(S.String),
+  ...StatementContent.fields,
+})
 export type StatementAddedPayload = S.Schema.Type<typeof StatementAddedPayload>
 
 /** A contributor added the statement */
