@@ -13,7 +13,7 @@ import {
   OrganisationContent,
   OrganisationEvent,
 } from './organisation-events'
-import { authored, Decoded, replayStream } from './replay'
+import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const ORGANISATION_STREAM = 'organisation'
 
@@ -135,9 +135,8 @@ function organisationFrom(stored: StoredEvent, payload: OrganisationContent): Or
   return Organisation.make({
     id: OrganisationId.make(stored.streamId),
     ...organisationFields(payload),
-    // Checked by requireAuthorOfCreation before any event is applied
-    createdBy: stored.actorId!,
-    updatedBy: stored.actorId!,
+    createdBy: authorOf(stored),
+    updatedBy: authorOf(stored),
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
   })

@@ -53,6 +53,12 @@ export function actorOf(stored: StoredEvent, what: string): string {
   return stored.actorId
 }
 
+/** Who changed the row and when, as the event says; an unsigned event only dates it */
+export const changedBy = (stored: StoredEvent) => ({
+  ...(stored.actorId ? { updated_by: stored.actorId } : {}),
+  updated_at: stored.occurredAt,
+})
+
 /** The audit columns of a row the event creates: signed and dated as the event */
 export function auditOf(stored: StoredEvent, what: string) {
   const actorId = actorOf(stored, what)

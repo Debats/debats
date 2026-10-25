@@ -14,15 +14,26 @@ export type Check<Event> = (
 
 /**
  * Rebuilds an aggregate from its stream: each event decoded and checked,
- * then folded in order from nothing. Null for a stream without events.
+ * then folded in order from nothing. Null for a stream without events. An
+ * event that leaves no state behind (the stream does not open with a
+ * creation) is corrupt: the journal, not the stream, is at fault.
  */
 export function replayStream<Event extends DomainEvent, State>(
   decode: (stored: StoredEvent) => Either.Either<Event, UnreadableEvent>,
   apply: (state: State | null, decoded: Decoded<Event>) => State | null,
   check: Check<Event> = Either.right,
 ): (events: StoredEvent[]) => Either.Either<State | null, UnreadableEvent> {
+  const applyOrRefuse = (
+    state: State | null,
+    decoded: Decoded<Event>,
+  ): Either.Either<State, UnreadableEvent> => {
+    const next = apply(state, decoded)
+    return next
+      ? Either.right(next)
+      : Either.left(new UnreadableEvent(decoded.stored, 'applies to no state: not a creation'))
+  }
   return (events) =>
-    Either.map(
+    Either.flatMap(
       Either.all(
         events.map((stored) =>
           pipe(
@@ -32,8 +43,19 @@ export function replayStream<Event extends DomainEvent, State>(
           ),
         ),
       ),
-      (decoded) => decoded.reduce(apply, null),
+      (decoded) =>
+        decoded.reduce<Either.Either<State | null, UnreadableEvent>>(
+          (state, next) => Either.flatMap(state, (current) => applyOrRefuse(current, next)),
+          Either.right(null),
+        ),
     )
+}
+
+/** The actor of a creation `authored` let through; a defect when the check was skipped */
+export function authorOf(stored: StoredEvent): string {
+  if (!stored.actorId)
+    throw new Error(`Event ${stored.type} at revision ${stored.revision} has no actor`)
+  return stored.actorId
 }
 
 /**

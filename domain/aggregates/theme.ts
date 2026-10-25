@@ -1,6 +1,6 @@
 import { generateThemeSlug, Theme, ThemeId, ThemeName, ThemeSlug } from '../entities/theme'
 import { StoredEvent, StreamRef } from '../events/event-store'
-import { authored, Decoded, replayStream } from './replay'
+import { authored, authorOf, Decoded, replayStream } from './replay'
 import { decodeThemeEvent, ThemeContent, ThemeEvent } from './theme-events'
 
 export const THEME_STREAM = 'theme'
@@ -65,9 +65,8 @@ function themeFrom(stored: StoredEvent, payload: ThemeContent): Theme {
     name: ThemeName.make(payload.name),
     slug: ThemeSlug.make(payload.slug),
     description: payload.description,
-    // Checked by requireAuthorOfCreation before any event is applied
-    createdBy: stored.actorId!,
-    updatedBy: stored.actorId!,
+    createdBy: authorOf(stored),
+    updatedBy: authorOf(stored),
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
   })

@@ -5,7 +5,7 @@ import {
 } from '../../domain/aggregates/organisation-events'
 import { StoredEvent } from '../../domain/events/event-store'
 import { PrismaTransaction } from '../prisma/client'
-import { auditOf, projectorOf } from './projector'
+import { auditOf, changedBy, projectorOf } from './projector'
 
 /**
  * Keeps the organisations table in step with the organisation stream.
@@ -33,12 +33,6 @@ async function apply(decoded: OrganisationEvent, stored: StoredEvent, tx: Prisma
       return
   }
 }
-
-/** Who changed the row and when, as the event says */
-const changedBy = (stored: StoredEvent) => ({
-  ...(stored.actorId ? { updated_by: stored.actorId } : {}),
-  updated_at: stored.occurredAt,
-})
 
 function columns(content: OrganisationContent) {
   return {

@@ -19,7 +19,7 @@ import {
   OccupationContent,
   OccupationFamilyEvent,
 } from './occupation-family-events'
-import { authored, Decoded, replayStream } from './replay'
+import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const OCCUPATION_FAMILY_STREAM = 'occupation_family'
 
@@ -150,9 +150,8 @@ function familyFrom(stored: StoredEvent, payload: FamilyContent): OccupationFami
     slug: OccupationFamilySlug.make(payload.slug),
     description: payload.description,
     position: payload.position,
-    // Checked by requireAuthorOfCreation before any event is applied
-    createdBy: stored.actorId!,
-    updatedBy: stored.actorId!,
+    createdBy: authorOf(stored),
+    updatedBy: authorOf(stored),
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
   })
@@ -165,8 +164,8 @@ function occupationFrom(stored: StoredEvent, payload: OccupationContent): Occupa
     slug: OccupationSlug.make(payload.slug),
     familyId: OccupationFamilyId.make(stored.streamId),
     description: payload.description,
-    createdBy: stored.actorId!,
-    updatedBy: stored.actorId!,
+    createdBy: authorOf(stored),
+    updatedBy: authorOf(stored),
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
   })

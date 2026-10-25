@@ -1,5 +1,6 @@
 import { Statement, StatementAuthor, StatementId, StatementType } from '../entities/statement'
 import { StoredEvent, StreamRef } from '../events/event-store'
+import { isoDate } from './iso-date'
 import { Decoded, replayStream } from './replay'
 import { decodeStatementEvent, StatementContent, StatementEvent } from './statement-events'
 
@@ -16,9 +17,6 @@ export interface StatementState {
   argumentIds: readonly string[]
   deletedAt: Date | null
 }
-
-/** The calendar day of a date, as the events carry it */
-export const isoDate = (date: Date): string => date.toISOString().slice(0, 10)
 
 export interface StatementContentInput {
   positionId: string

@@ -7,7 +7,7 @@ import {
 } from '../entities/argument'
 import { StoredEvent, StreamRef } from '../events/event-store'
 import { ArgumentEvent, ArgumentWording, decodeArgumentEvent } from './argument-events'
-import { authored, Decoded, replayStream } from './replay'
+import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const ARGUMENT_STREAM = 'argument'
 
@@ -126,9 +126,8 @@ function argumentFrom(stored: StoredEvent, payload: ArgumentWording): Argument {
   return Argument.make({
     id: ArgumentId.make(stored.streamId),
     ...argumentFields(payload),
-    // Checked by requireAuthorOfCreation before any event is applied
-    createdBy: stored.actorId!,
-    updatedBy: stored.actorId!,
+    createdBy: authorOf(stored),
+    updatedBy: authorOf(stored),
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
   })

@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect, pipe } from 'effect'
 import {
   importStatement,
   replayStatement,
@@ -7,7 +7,7 @@ import {
 } from '../aggregates/statement'
 import { StatementEvent } from '../aggregates/statement-events'
 import { Statement } from '../entities/statement'
-import { EventStore, StoredEvent } from '../events/event-store'
+import { EventStore, StoredEvent, UnreadableEvent } from '../events/event-store'
 import {
   AggregateStream,
   appendAndReplay,
@@ -16,6 +16,7 @@ import {
   loadStream,
   requireState as requireStateOf,
   Source,
+  StreamFailure,
 } from './aggregate-stream'
 
 /** What the tables hold of a statement, enough to import it into the journal */
@@ -60,7 +61,8 @@ export const requireState = (state: StatementState | null) =>
 /**
  * The same decision on each of several statements, each in its own stream:
  * what a command on another aggregate does to the statements it reaches.
- * Their streams were ensured before the transaction.
+ * Their streams were ensured before the transaction. One deleted meanwhile
+ * is skipped, not refused: a cascade has nothing to say to what is gone.
  */
 export function decideOnEachStatement(
   events: EventStore,
@@ -68,10 +70,15 @@ export function decideOnEachStatement(
   actorId: string,
   decide: (state: StatementState) => StatementEvent[],
 ) {
+  const gone = (failure: StreamFailure | UnreadableEvent) =>
+    failure._tag === 'Rejected' && failure.message === statementAggregate.notFound
   return Effect.forEach(
     statementIds,
     (id) =>
-      decideOn(statementAggregate, events, id, actorId, (state) => Effect.succeed(decide(state))),
+      pipe(
+        decideOn(statementAggregate, events, id, actorId, (state) => Effect.succeed(decide(state))),
+        Effect.catchIf(gone, () => Effect.void),
+      ),
     { discard: true },
   )
 }

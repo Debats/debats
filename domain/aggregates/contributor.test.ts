@@ -22,12 +22,8 @@ const stored = (
 
 describe('grantReputation', () => {
   it('names the grant and leaves out what the deed does not say', () => {
-    const grant = grantReputation({ action: 'edited_subject', amount: 5 })
-    expect(grant.payload).toEqual({
-      grantId: expect.any(String),
-      action: 'edited_subject',
-      amount: 5,
-    })
+    const grant = grantReputation({ grantId: 'grant-1', action: 'edited_subject', amount: 5 })
+    expect(grant.payload).toEqual({ grantId: 'grant-1', action: 'edited_subject', amount: 5 })
   })
 })
 
@@ -40,6 +36,7 @@ describe('replayContributor', () => {
     const state = replayContributor([
       stored(
         grantReputation({
+          grantId: 'grant-1',
           action: 'added_subject',
           amount: 50,
           relatedEntityType: 'subject',
@@ -48,7 +45,11 @@ describe('replayContributor', () => {
         1,
         at('2024-01-10'),
       ),
-      stored(grantReputation({ action: 'statement_rejected', amount: -100 }), 2, at('2024-01-11')),
+      stored(
+        grantReputation({ grantId: 'grant-2', action: 'statement_rejected', amount: -100 }),
+        2,
+        at('2024-01-11'),
+      ),
     ])
     expect(Either.isRight(state) && state.right).toMatchObject({
       reputation: -50,

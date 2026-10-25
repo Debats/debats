@@ -48,6 +48,7 @@ export async function acceptInvitationUseCase(
     ...(inviteeStart > 0
       ? [
           {
+            grantId: crypto.randomUUID(),
             contributorId: inviteeId,
             action: 'invitation_bonus' as const,
             amount: inviteeStart,

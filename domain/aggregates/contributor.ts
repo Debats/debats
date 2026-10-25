@@ -18,6 +18,8 @@ export interface ContributorState {
 }
 
 export interface GrantInput {
+  /** Chosen by the command, as every id: the row of the history bears it */
+  grantId: string
   action: RewardableAction
   amount: number
   relatedEntityType?: RelatedEntityType
@@ -28,7 +30,7 @@ export interface GrantInput {
 export const grantReputation = (input: GrantInput): ContributorEvent => ({
   type: 'ReputationGranted',
   payload: {
-    grantId: crypto.randomUUID(),
+    grantId: input.grantId,
     action: input.action,
     amount: input.amount,
     ...(input.relatedEntityType ? { relatedEntityType: input.relatedEntityType } : {}),

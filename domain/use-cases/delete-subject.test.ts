@@ -5,7 +5,7 @@ import { createStatement, publicFigureAuthor, Statement } from '../entities/stat
 import { Subject } from '../entities/subject'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
-import { addStatement, statementStream } from '../aggregates/statement'
+import { addStatement, removeStatement, statementStream } from '../aggregates/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import {
   fakeStatementSource,
@@ -58,6 +58,29 @@ describe('deleteSubjectUseCase', () => {
   it('should fail when contributor is null', async () => {
     const result = await deleteSubjectUseCase({ ...validParams, contributor: null })
     expect(Either.isLeft(result) && result.left).toContain('connecté')
+  })
+
+  it('skips a statement already deleted meanwhile instead of refusing the whole deletion', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [position]])
+    await Effect.runPromise(
+      journal.append(
+        statementStream(statement.id),
+        0,
+        [addStatement({ ...statement, argumentIds: [] }), removeStatement()],
+        { actorId: 'author-id' },
+      ),
+    )
+
+    const result = await deleteSubjectUseCase({
+      ...validParams,
+      contributor: { id: 'abc', reputation: 10000 },
+      runUnitOfWork: run,
+      statementRepo: statementRepo([statement]),
+    })
+
+    expect(Either.isRight(result)).toBe(true)
+    const deletions = journal.all().filter((e) => e.type === 'StatementDeleted')
+    expect(deletions).toHaveLength(1)
   })
 
   it('should fail when subject does not exist', async () => {

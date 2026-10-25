@@ -13,7 +13,13 @@ export const rewardFor = (
   contributorId: string,
   action: RewardableAction,
   related?: { relatedEntityType: Grant['relatedEntityType']; relatedEntityId: string },
-): Grant => ({ contributorId, action, amount: reputationReward(action), ...related })
+): Grant => ({
+  grantId: crypto.randomUUID(),
+  contributorId,
+  action,
+  amount: reputationReward(action),
+  ...related,
+})
 
 /**
  * Records grants on the contributors' streams, in the transaction of the deed

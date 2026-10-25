@@ -19,7 +19,8 @@ import {
   PublicFigureContent,
   PublicFigureEvent,
 } from './public-figure-events'
-import { authored, Decoded, replayStream } from './replay'
+import { isoDate } from './iso-date'
+import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const PUBLIC_FIGURE_STREAM = 'public_figure'
 
@@ -51,8 +52,6 @@ export interface MembershipInput {
   startedOn?: Date
   endedOn?: Date
 }
-
-const isoDate = (date: Date): string => date.toISOString().slice(0, 10)
 
 const content = (input: PublicFigureInput): PublicFigureContent => ({
   name: input.name,
@@ -203,8 +202,7 @@ function figureFrom(stored: StoredEvent, payload: PublicFigureContent): PublicFi
   return PublicFigure.make({
     id: PublicFigureId.make(stored.streamId),
     ...figureFields(payload),
-    // Checked by requireAuthorOfCreation before any event is applied
-    createdBy: stored.actorId!,
+    createdBy: authorOf(stored),
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
   })
@@ -215,8 +213,7 @@ function membershipFrom(
   figure: PublicFigure,
   payload: MembershipContent,
 ): OrganisationMembership {
-  // Checked by requireAuthorOfCreation before any event is applied
-  const actor = stored.actorId!
+  const actor = authorOf(stored)
   return OrganisationMembership.make({
     id: MembershipId.make(payload.membershipId),
     organisationId: payload.organisationId,

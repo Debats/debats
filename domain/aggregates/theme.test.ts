@@ -70,6 +70,12 @@ describe('replayTheme', () => {
     expect(Either.isLeft(state) && state.left).toBeInstanceOf(UnreadableEvent)
   })
 
+  it('refuses a stream that does not open with a creation: the journal is corrupt', () => {
+    const state = replayTheme([stored(deleteTheme(), 1, at('2024-01-10'))])
+    expect(Either.isLeft(state) && state.left).toBeInstanceOf(UnreadableEvent)
+    expect(Either.isLeft(state) && state.left?.message).toContain('not a creation')
+  })
+
   it('refuses a creation without an author: a theme always has one', () => {
     const state = replayTheme([stored(added, 1, at('2024-01-10'), null)])
     expect(Either.isLeft(state) && state.left?.message).toContain('needs an author')
