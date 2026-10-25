@@ -1,11 +1,17 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { createInvitation, Invitation, InviteeEmail, InviteeName } from '../entities/invitation'
+import { Invitation, InvitationId, InviteeEmail, InviteeName } from '../entities/invitation'
+import { sendInvitation } from '../aggregates/invitation'
+import { RunUnitOfWork } from '../events/unit-of-work'
 import { InvitationRepository } from '../repositories/invitation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
+import { openStream } from './aggregate-stream'
+import { invitationAggregate } from './invitation-stream'
+import { runCommand, uniqueTakenAs } from './run-command'
 
 const MAX_PENDING_INVITATIONS = 5
+const ALREADY_INVITED = 'Cette personne a déjà été invitée.'
 
 const InviteUserInput = S.Struct({
   email: InviteeEmail,
@@ -18,6 +24,8 @@ type InviteUserParams = {
   contributor: Contributor | null
   email: string
   name: string
+  runUnitOfWork: RunUnitOfWork
+  /** Read side: the inviter's pending invitations, and whether the address is already invited */
   invitationRepo: InvitationRepository
   contributorRepo: ContributorRepository
 }
@@ -25,7 +33,7 @@ type InviteUserParams = {
 export async function inviteUserUseCase(
   params: InviteUserParams,
 ): Promise<Either.Either<Invitation, string>> {
-  const { contributor, email, name, invitationRepo, contributorRepo } = params
+  const { contributor, email, name, runUnitOfWork, invitationRepo, contributorRepo } = params
 
   if (!contributor) {
     return Either.left('Vous devez être connecté·e.')
@@ -62,16 +70,25 @@ export async function inviteUserUseCase(
   const existingInvitation = await Effect.runPromise(invitationRepo.findPendingByEmail(input.email))
 
   if (existingInvitation) {
-    return Either.left('Cette personne a déjà été invitée.')
+    return Either.left(ALREADY_INVITED)
   }
 
-  const invitation = createInvitation({
-    inviterId: contributor.id,
-    inviteeEmail: input.email,
-    inviteeName: input.name,
-  })
+  // The command names the invitation: the stream exists from its first event
+  const id = InvitationId.make(crypto.randomUUID())
+  const outcome = await runCommand(
+    pipe(
+      runUnitOfWork((events) =>
+        openStream(
+          invitationAggregate,
+          events,
+          id,
+          [sendInvitation({ inviteeEmail: input.email, inviteeName: input.name })],
+          contributor.id,
+        ),
+      ),
+      uniqueTakenAs('email', ALREADY_INVITED),
+    ),
+  )
 
-  const created = await Effect.runPromise(invitationRepo.create(invitation))
-
-  return Either.right(created)
+  return Either.map(outcome, (state) => state.invitation)
 }

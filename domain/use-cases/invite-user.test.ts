@@ -2,13 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { inviteUserUseCase } from './invite-user'
 import { Invitation, createInvitation } from '../entities/invitation'
+import { inMemoryUnitOfWork } from '../events/event-store-memory'
 
 const fakeInvitationRepo = {
-  create: (invitation: Invitation) => Effect.succeed(invitation),
-  deleteById: () => Effect.succeed(undefined as void),
+  findById: () => Effect.succeed(null as Invitation | null),
   findPendingByEmail: () => Effect.succeed(null as Invitation | null),
   findPendingByInviter: () => Effect.succeed([] as Invitation[]),
-  acceptByEmail: () => Effect.succeed(undefined as void),
 }
 
 const fakeContributorRepo = {
@@ -20,6 +19,7 @@ const validParams = {
   contributor: { id: 'inviter-uuid', reputation: 1000 },
   email: 'invitee@example.com',
   name: 'Jean Dupont',
+  runUnitOfWork: inMemoryUnitOfWork().run,
   invitationRepo: fakeInvitationRepo,
   contributorRepo: fakeContributorRepo,
 }
@@ -132,15 +132,18 @@ describe('inviteUserUseCase', () => {
     }
   })
 
-  it('should create invitation on success', async () => {
-    const result = await inviteUserUseCase(validParams)
+  it('opens the invitation stream, signed by the inviter, and returns it pending', async () => {
+    const unit = inMemoryUnitOfWork()
+    const result = await inviteUserUseCase({ ...validParams, runUnitOfWork: unit.run })
 
-    expect(Either.isRight(result)).toBe(true)
-    if (Either.isRight(result)) {
-      expect(result.right.inviteeEmail).toBe('invitee@example.com')
-      expect(result.right.inviteeName).toBe('Jean Dupont')
-      expect(result.right.inviterId).toBe('inviter-uuid')
-      expect(result.right.status).toBe('pending')
-    }
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      inviteeEmail: 'invitee@example.com',
+      inviteeName: 'Jean Dupont',
+      inviterId: 'inviter-uuid',
+      status: 'pending',
+    })
+    expect(unit.journal.all().map((e) => [e.type, e.actorId, e.revision])).toEqual([
+      ['InvitationSent', 'inviter-uuid', 1],
+    ])
   })
 })

@@ -8,6 +8,8 @@ import { OrganisationSource } from '../../domain/use-cases/organisation-stream'
 import { ArgumentSource } from '../../domain/use-cases/argument-stream'
 import { ThemeSource } from '../../domain/use-cases/theme-stream'
 import { OccupationFamilySource } from '../../domain/use-cases/occupation-family-stream'
+import { InvitationSource } from '../../domain/use-cases/invitation-stream'
+import { createInvitationRepository } from '../database/invitation-repository-supabase'
 import { createArgumentRepository } from '../database/argument-repository-supabase'
 import { createOccupationFamilyRepository } from '../database/occupation-family-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
@@ -110,6 +112,14 @@ export function createArgumentSource(supabase: SupabaseClient<Database>): Argume
 export function createThemeSource(supabase: SupabaseClient<Database>): ThemeSource {
   const themes = createThemeRepository(supabase)
   return (themeId) => Effect.map(themes.findById(themeId), (theme) => (theme ? { theme } : null))
+}
+
+export function createInvitationSource(supabase: SupabaseClient<Database>): InvitationSource {
+  const invitations = createInvitationRepository(supabase)
+  return (invitationId) =>
+    Effect.map(invitations.findById(invitationId), (invitation) =>
+      invitation ? { invitation } : null,
+    )
 }
 
 export function createOccupationFamilySource(

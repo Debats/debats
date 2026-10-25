@@ -8,6 +8,7 @@ import { createInvitationRepository } from '../../infra/database/invitation-repo
 import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
 import { createContributorRepository } from '../../infra/database/contributor-repository-supabase'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createInvitationSource } from '../../infra/events/sources'
 import { acceptInvitationUseCase } from '../../domain/use-cases/accept-invitation'
 import { validateResendInvitation } from '../../domain/use-cases/resend-invitation'
 
@@ -74,6 +75,7 @@ export async function acceptInvitation(
       inviteeId: user.id,
       inviteeEmail: user.email,
       invitationRepo: createInvitationRepository(admin),
+      invitationSource: createInvitationSource(admin),
       reputationRepo: createReputationRepository(admin),
       contributorRepo: createContributorRepository(admin),
       runUnitOfWork,

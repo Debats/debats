@@ -32,39 +32,21 @@ const mapRowToEntity = (row: InvitationRow): Invitation =>
     updatedAt: new Date(row.updated_at!),
   })
 
-const mapEntityToInsert = (invitation: Invitation) => ({
-  id: invitation.id,
-  inviter_id: invitation.inviterId,
-  invitee_email: invitation.inviteeEmail,
-  invitee_name: invitation.inviteeName,
-  invitee_id: invitation.inviteeId ?? null,
-  status: invitation.status,
-  created_at: invitation.createdAt.toISOString(),
-  updated_at: invitation.updatedAt.toISOString(),
-})
-
 export function createInvitationRepository(supabase: SupabaseClient): InvitationRepository {
   return {
-    create: (invitation: Invitation) =>
+    findById: (id: string) =>
       Effect.tryPromise({
         try: async () => {
-          const row = mapEntityToInsert(invitation)
-          const { data, error } = await supabase.from('invitations').insert(row).select().single()
+          const { data, error } = await supabase
+            .from('invitations')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle()
 
           if (error) throw error
-          return mapRowToEntity(data)
+          return data ? mapRowToEntity(data) : null
         },
-        catch: (error) => dbError('Failed to create invitation', error),
-      }),
-
-    deleteById: (id: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { error } = await supabase.from('invitations').delete().eq('id', id)
-
-          if (error) throw error
-        },
-        catch: (error) => dbError('Failed to delete invitation', error),
+        catch: (error) => dbError('Failed to find invitation by id', error),
       }),
 
     findPendingByEmail: (email: string) =>

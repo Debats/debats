@@ -2,9 +2,9 @@ import { Effect } from 'effect'
 import { Invitation } from '../entities/invitation'
 import { DatabaseError } from './errors'
 
+/** Reads the invitations projection; writing goes through the journal */
 export interface InvitationRepository {
-  create(invitation: Invitation): Effect.Effect<Invitation, DatabaseError>
-  deleteById(id: string): Effect.Effect<void, DatabaseError>
+  findById(id: string): Effect.Effect<Invitation | null, DatabaseError>
   findPendingByEmail(email: string): Effect.Effect<Invitation | null, DatabaseError>
   findPendingByInviter(inviterId: string): Effect.Effect<Invitation[], DatabaseError>
 }

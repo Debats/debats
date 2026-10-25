@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect } from 'effect'
 import { acceptInvitationUseCase } from './accept-invitation'
 import { Invitation, createInvitation } from '../entities/invitation'
+import { invitationStream, sendInvitation } from '../aggregates/invitation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { DatabaseError } from '../repositories/errors'
-import { grantsIn } from './contributor-test-helpers'
+import { deedsIn, grantsIn } from './contributor-test-helpers'
+import { InvitationSource } from './invitation-stream'
 
 const baseInvitation = createInvitation({
   inviterId: 'inviter-uuid',
@@ -14,11 +16,13 @@ const baseInvitation = createInvitation({
 })
 
 const fakeInvitationRepo = {
-  create: (invitation: Invitation) => Effect.succeed(invitation),
-  deleteById: () => Effect.succeed(undefined as void),
+  findById: () => Effect.succeed(null as Invitation | null),
   findPendingByEmail: () => Effect.succeed(null as Invitation | null),
   findPendingByInviter: () => Effect.succeed([] as Invitation[]),
 }
+
+/** The tables hold the invitation as sent: the journal imports it on first use */
+const invitationSource: InvitationSource = () => Effect.succeed({ invitation: baseInvitation })
 
 const fakeReputationRepo = {
   getReputation: () => Effect.succeed(2000),
@@ -37,6 +41,7 @@ const baseParams = {
     ...fakeInvitationRepo,
     findPendingByEmail: () => Effect.succeed(baseInvitation as Invitation | null),
   },
+  invitationSource,
   reputationRepo: fakeReputationRepo,
   contributorRepo: fakeContributorRepo,
   runUnitOfWork: inMemoryUnitOfWork().run,
@@ -72,31 +77,49 @@ describe('acceptInvitationUseCase', () => {
     expect(createdContributorId).toBe('invitee-uuid')
   })
 
-  it('marks the invitation as accepted in the transaction of the grants', async () => {
+  it('accepts the invitation on its stream, signed by the invitee, with the grants', async () => {
     const unit = inMemoryUnitOfWork()
 
     const result = await acceptInvitationUseCase({ ...baseParams, runUnitOfWork: unit.run })
 
     expect(Either.isRight(result)).toBe(true)
-    expect(unit.acceptedInvitations).toEqual([
-      { email: 'invitee@example.com', inviteeId: 'invitee-uuid' },
+    expect(deedsIn(unit.journal).map((e) => [e.type, e.actorId, e.payload])).toEqual([
+      ['InvitationImported', 'inviter-uuid', expect.anything()],
+      ['InvitationAccepted', 'invitee-uuid', { inviteeId: 'invitee-uuid' }],
     ])
+  })
+
+  it('refuses a second acceptance: the stream already says it was accepted', async () => {
+    const unit = inMemoryUnitOfWork()
+    await acceptInvitationUseCase({ ...baseParams, runUnitOfWork: unit.run })
+
+    // The read side may still show it pending: the stream, not the table, decides
+    const again = await acceptInvitationUseCase({ ...baseParams, runUnitOfWork: unit.run })
+
+    expect(Either.isLeft(again) && again.left).toContain('déjà été acceptée')
+    expect(grantsIn(unit.journal)).toHaveLength(2)
   })
 
   it('leaves the invitation pending when the grants cannot be written', async () => {
     const unit = inMemoryUnitOfWork()
+    await Effect.runPromise(
+      unit.journal.append(
+        invitationStream(baseInvitation.id),
+        0,
+        [sendInvitation({ inviteeEmail: 'invitee@example.com', inviteeName: 'Jean Dupont' })],
+        { actorId: 'inviter-uuid' },
+      ),
+    )
     const failing: RunUnitOfWork = (work) =>
-      unit.run((events, process) =>
-        Effect.andThen(work(events, process), Effect.fail(new DatabaseError('down'))),
-      )
+      unit.run((events) => Effect.andThen(work(events), Effect.fail(new DatabaseError('down'))))
 
     // A database failure is not a refusal: it surfaces to the action, which reports it
     await expect(
       acceptInvitationUseCase({ ...baseParams, runUnitOfWork: failing }),
     ).rejects.toThrow('down')
 
-    expect(unit.acceptedInvitations).toEqual([])
-    expect(unit.journal.all()).toEqual([])
+    expect(deedsIn(unit.journal).map((e) => e.type)).toEqual(['InvitationSent'])
+    expect(grantsIn(unit.journal)).toEqual([])
   })
 
   it('starts the invitee at half the inviter reputation and rewards the inviter, in one go', async () => {
@@ -108,7 +131,6 @@ describe('acceptInvitationUseCase', () => {
       ['invitee-uuid', 'invitation_bonus', 1000],
       ['inviter-uuid', 'invitation_accepted', 50],
     ])
-    expect(unit.journal.all().map((e) => e.actorId)).toEqual(['invitee-uuid', 'invitee-uuid'])
   })
 
   it('should fail when invitation is expired', async () => {

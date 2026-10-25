@@ -191,20 +191,17 @@ describe('mergeArgumentsUseCase', () => {
     }
     // The crossing merge lands between this one's load of the target and its append on it
     const raced: RunUnitOfWork = (work) =>
-      unit.run((events, process) =>
-        work(
-          {
-            ...events,
-            append: (stream, expectedRevision, decided, options) =>
-              stream.streamId === b.id
-                ? Effect.andThen(
-                    Effect.promise(crossing),
-                    events.append(stream, expectedRevision, decided, options),
-                  )
-                : events.append(stream, expectedRevision, decided, options),
-          },
-          process,
-        ),
+      unit.run((events) =>
+        work({
+          ...events,
+          append: (stream, expectedRevision, decided, options) =>
+            stream.streamId === b.id
+              ? Effect.andThen(
+                  Effect.promise(crossing),
+                  events.append(stream, expectedRevision, decided, options),
+                )
+              : events.append(stream, expectedRevision, decided, options),
+        }),
       )
 
     const result = await mergeArgumentsUseCase({ ...mergeParams(unit), runUnitOfWork: raced })

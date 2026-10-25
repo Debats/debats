@@ -10,11 +10,9 @@ const baseInvitation = createInvitation({
 })
 
 const fakeInvitationRepo = {
-  create: (invitation: Invitation) => Effect.succeed(invitation),
-  deleteById: () => Effect.succeed(undefined as void),
+  findById: () => Effect.succeed(null as Invitation | null),
   findPendingByEmail: () => Effect.succeed(null as Invitation | null),
   findPendingByInviter: () => Effect.succeed([] as Invitation[]),
-  acceptByEmail: () => Effect.succeed(undefined as void),
 }
 
 const run = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(effect.pipe(Effect.either))

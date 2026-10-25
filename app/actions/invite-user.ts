@@ -1,11 +1,14 @@
 'use server'
 
 import * as Sentry from '@sentry/nextjs'
-import { Either, Effect } from 'effect'
+import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createInvitationRepository } from '../../infra/database/invitation-repository-supabase'
 import { createContributorRepository } from '../../infra/database/contributor-repository-supabase'
+import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { createInvitationSource } from '../../infra/events/sources'
 import { inviteUserUseCase } from '../../domain/use-cases/invite-user'
+import { revokeInvitationUseCase } from '../../domain/use-cases/revoke-invitation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type InviteActionResult =
@@ -26,6 +29,7 @@ export async function inviteUserAction(formData: FormData): Promise<InviteAction
       contributor,
       email,
       name,
+      runUnitOfWork,
       invitationRepo,
       contributorRepo: createContributorRepository(admin),
     })
@@ -51,8 +55,14 @@ export async function inviteUserAction(formData: FormData): Promise<InviteAction
     Sentry.captureException(inviteError, {
       extra: { email, invitationId: invitation.id, errorStatus: inviteError.status },
     })
-    await Effect.runPromise(invitationRepo.deleteById(invitation.id)).catch((deleteError) =>
-      Sentry.captureException(deleteError, {
+    // The invitation never reached anyone: it is withdrawn, on behalf of the inviter
+    await revokeInvitationUseCase({
+      invitationId: invitation.id,
+      actorId: invitation.inviterId,
+      runUnitOfWork,
+      invitationSource: createInvitationSource(admin),
+    }).catch((revokeError) =>
+      Sentry.captureException(revokeError, {
         extra: { invitationId: invitation.id, originalError: inviteError.message },
       }),
     )

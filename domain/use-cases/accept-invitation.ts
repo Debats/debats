@@ -1,26 +1,35 @@
-import { Either, Effect } from 'effect'
+import { Either, Effect, pipe } from 'effect'
 import { InvitationRepository } from '../repositories/invitation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { isExpired } from '../entities/invitation'
+import { acceptInvitation, isPendingInvitation } from '../aggregates/invitation'
+import { ensureStream } from './aggregate-stream'
+import { decideOnInvitation, invitationAggregate, InvitationSource } from './invitation-stream'
 import { Grant, grantEach, rewardFor } from './reward'
 import { runCommand } from './run-command'
+import { Rejected } from './types'
 
 type AcceptInvitationParams = {
   inviteeId: string
   inviteeEmail: string
+  /** Read side: which pending invitation the address has */
   invitationRepo: InvitationRepository
+  invitationSource: InvitationSource
   /** Read side: the inviter's reputation sets the invitee's start */
   reputationRepo: ReputationRepository
   contributorRepo: ContributorRepository
   runUnitOfWork: RunUnitOfWork
 }
 
+const ALREADY_ACCEPTED = 'Cette invitation a déjà été acceptée.'
+
 /**
  * The invitee joins with half the inviter's reputation, and the inviter is
- * rewarded. The invitation is consumed in the transaction of both grants,
- * signed by the invitee: a failure leaves it pending, to be accepted again.
+ * rewarded. The acceptance is written on the invitation's stream, at its
+ * revision, in the transaction of both grants: a second acceptance, at once
+ * or later, finds the invitation gone past pending and is refused.
  */
 export async function acceptInvitationUseCase(
   params: AcceptInvitationParams,
@@ -34,7 +43,7 @@ export async function acceptInvitationUseCase(
   }
 
   if (isExpired(invitation)) {
-    return Either.left('L\u2019invitation a expiré. Demandez une nouvelle invitation.')
+    return Either.left('L’invitation a expiré. Demandez une nouvelle invitation.')
   }
 
   await Effect.runPromise(contributorRepo.ensureExists(inviteeId))
@@ -60,10 +69,24 @@ export async function acceptInvitationUseCase(
   ]
 
   return runCommand(
-    params.runUnitOfWork((events, process) =>
+    pipe(
+      ensureStream(
+        invitationAggregate,
+        params.runUnitOfWork,
+        invitation.id,
+        params.invitationSource,
+      ),
       Effect.andThen(
-        process.acceptInvitation(inviteeEmail, inviteeId),
-        grantEach(events, inviteeId, grants),
+        params.runUnitOfWork((events) =>
+          pipe(
+            decideOnInvitation(events, invitation.id, inviteeId, (state) =>
+              isPendingInvitation(state)
+                ? Effect.succeed([acceptInvitation(inviteeId)])
+                : Effect.fail(new Rejected(ALREADY_ACCEPTED)),
+            ),
+            Effect.andThen(grantEach(events, inviteeId, grants)),
+          ),
+        ),
       ),
     ),
   )

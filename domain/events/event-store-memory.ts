@@ -8,7 +8,7 @@ import {
   StreamRef,
   streamRevision,
 } from './event-store'
-import { ProcessState, RunUnitOfWork } from './unit-of-work'
+import { RunUnitOfWork } from './unit-of-work'
 
 export interface InMemoryEventStore extends EventStore {
   /** Every stored event, in order of appending */
@@ -62,37 +62,14 @@ export function createInMemoryEventStore(): InMemoryEventStore {
   return storeOver([])
 }
 
-/** What the in-memory process state remembers: the invitations the commands accepted */
-export interface AcceptedInvitation {
-  email: string
-  inviteeId: string
-}
-
-/**
- * A unit of work over an in-memory journal and process state; a failing
- * command leaves no event and no accepted invitation behind.
- */
-export function inMemoryUnitOfWork(): {
-  run: RunUnitOfWork
-  journal: InMemoryEventStore
-  acceptedInvitations: AcceptedInvitation[]
-} {
+/** A unit of work over an in-memory journal; a failing command leaves no event behind */
+export function inMemoryUnitOfWork(): { run: RunUnitOfWork; journal: InMemoryEventStore } {
   const rows: StoredEvent[] = []
-  const acceptedInvitations: AcceptedInvitation[] = []
   const journal = storeOver(rows)
-  const process: ProcessState = {
-    acceptInvitation: (email, inviteeId) =>
-      Effect.sync(() => void acceptedInvitations.push({ email, inviteeId })),
-  }
   const run: RunUnitOfWork = (work) =>
     Effect.suspend(() => {
-      const marks = [rows.length, acceptedInvitations.length]
-      return Effect.tapError(work(journal, process), () =>
-        Effect.sync(() => {
-          rows.splice(marks[0])
-          acceptedInvitations.splice(marks[1])
-        }),
-      )
+      const mark = rows.length
+      return Effect.tapError(work(journal), () => Effect.sync(() => void rows.splice(mark)))
     })
-  return { run, journal, acceptedInvitations }
+  return { run, journal }
 }
