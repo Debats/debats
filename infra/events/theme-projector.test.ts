@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import { addTheme, deleteTheme, replayTheme, themeStream } from '../../domain/aggregates/theme'
 import { decodeThemeEvent, ThemeEvent } from '../../domain/aggregates/theme-events'
-import { ConcurrencyError } from '../../domain/events/event-store'
+import { UniqueTaken } from '../../domain/events/event-store'
 import { getPrismaClient } from '../prisma/client'
 import { runUnitOfWork } from './unit-of-work'
 
@@ -44,7 +44,7 @@ describe.skipIf(!hasDatabase)('theme projector', () => {
     })
   })
 
-  it('reports a slug another theme took meanwhile as a race, not as a defect', async () => {
+  it('reports a name another theme took meanwhile as a value taken, not as a defect', async () => {
     const twin = themeStream(crypto.randomUUID())
     const outcome = await Effect.runPromise(
       Effect.either(
@@ -59,7 +59,10 @@ describe.skipIf(!hasDatabase)('theme projector', () => {
       ),
     )
 
-    expect(Either.isLeft(outcome) && outcome.left).toBeInstanceOf(ConcurrencyError)
+    expect(Either.isLeft(outcome) && outcome.left).toBeInstanceOf(UniqueTaken)
+    expect(Either.isLeft(outcome) && (outcome.left as UniqueTaken).constraint).toBe(
+      'themes_name_key',
+    )
     const loaded = await Effect.runPromise(runUnitOfWork((journal) => journal.load(twin)))
     expect(loaded).toEqual([])
   })

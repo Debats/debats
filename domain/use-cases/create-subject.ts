@@ -2,14 +2,15 @@ import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ArrayFormatter } from 'effect/ParseResult'
 import { generateSlug, Subject, SubjectId, SubjectTitle } from '../entities/subject'
-import { addSubject, replaySubject, subjectStream } from '../aggregates/subject'
+import { addSubject } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { runCommand } from './run-command'
-import { requireSubjectState } from './subject-stream'
+import { openStream } from './aggregate-stream'
+import { runFormCommand, uniqueTakenAs } from './run-command'
+import { subjectAggregate } from './subject-stream'
 
 const CreateSubjectInput = S.Struct({
   title: SubjectTitle,
@@ -72,25 +73,24 @@ export async function createSubjectUseCase(
 
   // The command names the subject: the stream exists from its first event
   const id = SubjectId.make(crypto.randomUUID())
-  const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        events.append(subjectStream(id), 0, [addSubject(decoded.right)], {
-          actorId: contributor.id,
-        }),
-        Effect.flatMap(replaySubject),
-        Effect.flatMap(requireSubjectState),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'added_subject', {
-              relatedEntityType: 'subject',
-              relatedEntityId: id,
-            }),
+  const outcome = await runFormCommand(
+    pipe(
+      runUnitOfWork((events) =>
+        pipe(
+          openStream(subjectAggregate, events, id, [addSubject(decoded.right)], contributor.id),
+          Effect.tap(() =>
+            grant(
+              events,
+              contributor.id,
+              rewardFor(contributor.id, 'added_subject', {
+                relatedEntityType: 'subject',
+                relatedEntityId: id,
+              }),
+            ),
           ),
         ),
       ),
+      uniqueTakenAs('title', 'Un sujet porte déjà ce titre.'),
     ),
   )
 

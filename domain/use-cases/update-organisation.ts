@@ -9,7 +9,7 @@ import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validateOrganisationFields } from './validate-organisation-fields'
 import { ensureStream } from './aggregate-stream'
-import { runCommand } from './run-command'
+import { runCommand, uniqueTakenAs } from './run-command'
 import {
   decideOnOrganisation,
   organisationAggregate,
@@ -119,6 +119,7 @@ export async function persistUpdatedOrganisation(
           ),
         ),
       ),
+      uniqueTakenAs('name', 'Une organisation avec ce nom existe déjà.'),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)

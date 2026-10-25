@@ -7,7 +7,7 @@ import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
-import { runCommand } from './run-command'
+import { runCommand, uniqueTakenAs } from './run-command'
 import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
 const UpdateSubjectInput = S.Struct({
@@ -69,6 +69,7 @@ export async function updateSubjectUseCase(
           ),
         ),
       ),
+      uniqueTakenAs('title', 'Un sujet porte déjà ce titre.'),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)

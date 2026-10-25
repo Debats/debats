@@ -1,6 +1,6 @@
 import { Array as Arr, Effect } from 'effect'
 import { contributorStream, GrantInput, grantReputation } from '../aggregates/contributor'
-import { EventStore } from '../events/event-store'
+import { EventStore, UniqueTaken } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
 import { reputationReward, RewardableAction } from '../reputation/permissions'
 
@@ -26,7 +26,7 @@ export function grantEach(
   events: EventStore,
   actorId: string,
   rewards: readonly Grant[],
-): Effect.Effect<void, DatabaseError> {
+): Effect.Effect<void, DatabaseError | UniqueTaken> {
   const byContributor = Arr.groupBy(rewards, (reward) => reward.contributorId)
   return Effect.forEach(
     Object.entries(byContributor),
@@ -42,4 +42,4 @@ export const grant = (
   events: EventStore,
   actorId: string,
   reward: Grant,
-): Effect.Effect<void, DatabaseError> => grantEach(events, actorId, [reward])
+): Effect.Effect<void, DatabaseError | UniqueTaken> => grantEach(events, actorId, [reward])

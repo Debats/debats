@@ -44,6 +44,21 @@ export class ConcurrencyError extends Error {
   }
 }
 
+/**
+ * A projection refused a value another row already holds (a title, a slug):
+ * the command checked it before, someone took it meanwhile. Not a race on
+ * the stream, not a defect: the contributor must choose another value.
+ */
+export class UniqueTaken extends Error {
+  readonly _tag = 'UniqueTaken'
+  constructor(
+    /** The constraint, as the database names it (`themes_slug_key`); empty when unknown */
+    readonly constraint: string,
+  ) {
+    super(`A unique value is already taken: ${constraint || 'unknown constraint'}`)
+  }
+}
+
 export interface AppendOptions {
   actorId: string | null
   metadata?: Record<string, unknown>
@@ -76,14 +91,15 @@ export interface EventStore {
   /**
    * Appends events after `expectedRevision`, the revision the writer decided
    * from, numbering them from there. Fails with ConcurrencyError when the
-   * stream has moved past it.
+   * stream has moved past it, with UniqueTaken when a projection the events
+   * drive refuses a value another row holds.
    */
   append(
     stream: StreamRef,
     expectedRevision: Revision,
     events: DomainEvent[],
     options: AppendOptions,
-  ): Effect.Effect<StoredEvent[], DatabaseError | ConcurrencyError>
+  ): Effect.Effect<StoredEvent[], DatabaseError | ConcurrencyError | UniqueTaken>
 
   /**
    * Appends events after whatever the stream holds, for a stream that only
@@ -94,7 +110,7 @@ export interface EventStore {
     stream: StreamRef,
     events: DomainEvent[],
     options: AppendOptions,
-  ): Effect.Effect<StoredEvent[], DatabaseError>
+  ): Effect.Effect<StoredEvent[], DatabaseError | UniqueTaken>
 }
 
 /** The revision a stream is at after these events; 0 for none */

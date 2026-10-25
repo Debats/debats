@@ -1,7 +1,7 @@
 import { Effect, Either } from 'effect'
 import { ArgumentId, sameArgumentTitle } from '../entities/argument'
 import { addArgument, argumentStream } from '../aggregates/argument'
-import { ConcurrencyError, EventStore } from '../events/event-store'
+import { ConcurrencyError, EventStore, UniqueTaken } from '../events/event-store'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { DatabaseError } from '../repositories/errors'
 import { canPerform, requiredRank } from '../reputation/permissions'
@@ -27,6 +27,10 @@ export interface ValidatedStatementArguments {
 }
 
 const NONE: ValidatedStatementArguments = { existingIds: [], toCreate: [] }
+
+/** A proposed title was taken between the check and the transaction: the list now has it */
+export const ARGUMENT_JUST_CREATED =
+  'Un argument de ce titre vient d’être créé : choisissez-le dans la liste.'
 
 const TITLE_MIN = 3
 const TITLE_MAX = 255
@@ -100,7 +104,7 @@ export function recordProposedArguments(
   events: EventStore,
   actorId: string,
   validated: ValidatedStatementArguments,
-): Effect.Effect<RecordedArguments, DatabaseError | ConcurrencyError> {
+): Effect.Effect<RecordedArguments, DatabaseError | ConcurrencyError | UniqueTaken> {
   return Effect.map(
     Effect.forEach(validated.toCreate, (proposed) => {
       const id = ArgumentId.make(crypto.randomUUID())

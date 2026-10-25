@@ -8,6 +8,7 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
+  ARGUMENT_JUST_CREATED,
   argumentRewards,
   recordProposedArguments,
   StatementArgumentsInput,
@@ -21,7 +22,7 @@ import {
   StatementSource,
 } from './statement-stream'
 import { ensureStream } from './aggregate-stream'
-import { runCommand } from './run-command'
+import { runCommand, uniqueTakenAs } from './run-command'
 
 type UpdateStatementParams = {
   contributor: ContributorIdentity | null
@@ -147,6 +148,7 @@ export async function updateStatementUseCase(
           ),
         ),
       ),
+      uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)

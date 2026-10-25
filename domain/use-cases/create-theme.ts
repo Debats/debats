@@ -2,13 +2,14 @@ import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ArrayFormatter } from 'effect/ParseResult'
 import { generateThemeSlug, Theme, ThemeId } from '../entities/theme'
-import { addTheme, replayTheme, themeStream } from '../aggregates/theme'
+import { addTheme } from '../aggregates/theme'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
-import { runCommand } from './run-command'
-import { requireThemeState } from './theme-stream'
+import { openStream } from './aggregate-stream'
+import { runCommand, uniqueTakenAs } from './run-command'
+import { themeAggregate } from './theme-stream'
 
 const CreateThemeInput = S.Struct({
   name: S.String.pipe(S.minLength(2), S.maxLength(50)),
@@ -63,14 +64,11 @@ export async function createThemeUseCase(
   // The command names the theme: the stream exists from its first event
   const id = ThemeId.make(crypto.randomUUID())
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        events.append(themeStream(id), 0, [addTheme({ name, description })], {
-          actorId: contributor.id,
-        }),
-        Effect.flatMap(replayTheme),
-        Effect.flatMap(requireThemeState),
+    pipe(
+      runUnitOfWork((events) =>
+        openStream(themeAggregate, events, id, [addTheme({ name, description })], contributor.id),
       ),
+      uniqueTakenAs('name', 'Une thématique avec ce nom existe déjà.'),
     ),
   )
 

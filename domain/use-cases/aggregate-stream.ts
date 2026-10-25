@@ -7,6 +7,7 @@ import {
   StoredEvent,
   StreamRef,
   streamRevision,
+  UniqueTaken,
   UnreadableEvent,
 } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
@@ -37,7 +38,7 @@ export const IMPORT = { source: 'import' }
 /** Reads what the projections hold of an aggregate; null when there is none */
 export type Source<Parts> = (id: string) => Effect.Effect<Parts | null, DatabaseError>
 
-export type StreamFailure = DatabaseError | ConcurrencyError | Rejected
+export type StreamFailure = DatabaseError | ConcurrencyError | UniqueTaken | Rejected
 
 const streamOf = (aggregate: { streamType: string }, id: string): StreamRef => ({
   streamType: aggregate.streamType,
@@ -56,7 +57,7 @@ export function ensureStream<State, Event extends DomainEvent, Parts>(
   run: RunUnitOfWork,
   id: string,
   source: Source<Parts>,
-): Effect.Effect<void, DatabaseError | Rejected> {
+): Effect.Effect<void, DatabaseError | UniqueTaken | Rejected> {
   const stream = streamOf(aggregate, id)
   const isMissing = run((events) => Effect.map(events.load(stream), (h) => h.length === 0))
   const imported = (parts: Parts) =>
@@ -87,7 +88,7 @@ export function ensureStreams<State, Event extends DomainEvent, Parts>(
   run: RunUnitOfWork,
   ids: readonly string[],
   source: Source<Parts>,
-): Effect.Effect<void, DatabaseError | Rejected> {
+): Effect.Effect<void, DatabaseError | UniqueTaken | Rejected> {
   return Effect.forEach(ids, (id) => ensureStream(aggregate, run, id, source), { discard: true })
 }
 
@@ -115,7 +116,7 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
   history: StoredEvent[],
   decided: Event[],
   actorId: string,
-): Effect.Effect<State, DatabaseError | ConcurrencyError | UnreadableEvent> {
+): Effect.Effect<State, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
   return pipe(
     decided.length > 0
       ? events.append(streamOf(aggregate, id), streamRevision(history), decided, { actorId })
@@ -123,6 +124,21 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
     Effect.flatMap((stored) => aggregate.replay([...history, ...stored])),
     Effect.flatMap((state) => requireState(aggregate, state)),
   )
+}
+
+/**
+ * Opens the stream of a new aggregate with its first events, and rebuilds
+ * what it is. The command names the aggregate: the stream exists from its
+ * first event, which a concurrent creation with the same id would refuse.
+ */
+export function openStream<State, Event extends DomainEvent, Parts>(
+  aggregate: AggregateStream<State, Event, Parts>,
+  events: EventStore,
+  id: string,
+  decided: Event[],
+  actorId: string,
+): Effect.Effect<State, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
+  return appendAndReplay(aggregate, events, id, [], decided, actorId)
 }
 
 /**

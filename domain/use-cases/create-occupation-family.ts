@@ -4,17 +4,14 @@ import {
   OccupationFamily,
   OccupationFamilyId,
 } from '../entities/occupation-family'
-import {
-  addOccupationFamily,
-  occupationFamilyStream,
-  replayOccupationFamily,
-} from '../aggregates/occupation-family'
+import { addOccupationFamily } from '../aggregates/occupation-family'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
-import { runCommand } from './run-command'
-import { requireOccupationFamilyState } from './occupation-family-stream'
+import { openStream } from './aggregate-stream'
+import { runFormCommand, uniqueTakenAs } from './run-command'
+import { occupationFamilyAggregate } from './occupation-family-stream'
 
 type CreateOccupationFamilyParams = {
   contributor: ContributorIdentity | null
@@ -60,18 +57,18 @@ export async function createOccupationFamilyUseCase(
 
   // The command names the family: the stream exists from its first event
   const id = OccupationFamilyId.make(crypto.randomUUID())
-  const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        events.append(
-          occupationFamilyStream(id),
-          0,
+  const outcome = await runFormCommand(
+    pipe(
+      runUnitOfWork((events) =>
+        openStream(
+          occupationFamilyAggregate,
+          events,
+          id,
           [addOccupationFamily({ name, description, position })],
-          { actorId: contributor.id },
+          contributor.id,
         ),
-        Effect.flatMap(replayOccupationFamily),
-        Effect.flatMap(requireOccupationFamilyState),
       ),
+      uniqueTakenAs('name', 'Une famille porte déjà ce nom.'),
     ),
   )
 

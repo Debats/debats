@@ -6,7 +6,9 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
 import { ensureStream } from './aggregate-stream'
-import { runFormCommand } from './run-command'
+import { runFormCommand, uniqueTakenAs } from './run-command'
+
+const TITLE_TAKEN = 'Un argument porte déjà ce titre : fusionnez-les plutôt.'
 import { argumentAggregate, ArgumentSource, decideOnArgument } from './argument-stream'
 
 type RenameArgumentParams = {
@@ -49,9 +51,7 @@ export async function renameArgumentUseCase(
 
   const homonym = await Effect.runPromise(argumentRepo.findByTitle(title))
   if (homonym && homonym.id !== existing.id && !sameArgumentTitle(homonym.title, existing.title)) {
-    return Either.left({
-      title: 'Un argument porte déjà ce titre : fusionnez-les plutôt.',
-    })
+    return Either.left({ title: TITLE_TAKEN })
   }
 
   const renamed = renameArgument({ title, description: params.description })
@@ -63,6 +63,7 @@ export async function renameArgumentUseCase(
           decideOnArgument(events, existing.id, contributor.id, () => Effect.succeed([renamed])),
         ),
       ),
+      uniqueTakenAs('title', TITLE_TAKEN),
     ),
   )
   return Either.map(outcome, (state) => state.argument)

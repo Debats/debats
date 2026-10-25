@@ -1,6 +1,6 @@
 import { Either, Effect, pipe } from 'effect'
 import { Statement, StatementAuthor, StatementId, StatementType } from '../entities/statement'
-import { addStatement, replayStatement, statementStream } from '../aggregates/statement'
+import { addStatement } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
@@ -10,14 +10,16 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { validateStatementFields } from './validate-statement-fields'
 import {
+  ARGUMENT_JUST_CREATED,
   argumentRewards,
   recordProposedArguments,
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
 import { grantEach, rewardFor } from './reward'
-import { runCommand } from './run-command'
-import { requireState } from './statement-stream'
+import { openStream } from './aggregate-stream'
+import { runFormCommand, uniqueTakenAs } from './run-command'
+import { statementAggregate } from './statement-stream'
 
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
@@ -126,29 +128,34 @@ export async function createStatementUseCase(
     })
 
   // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
-  const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        recordProposedArguments(events, contributor.id, validatedArguments.right),
-        Effect.flatMap((recorded) =>
-          pipe(
-            events.append(statementStream(id), 0, [added(recorded.argumentIds)], {
-              actorId: contributor.id,
-            }),
-            Effect.flatMap(replayStatement),
-            Effect.flatMap(requireState),
-            Effect.tap(() =>
-              grantEach(events, contributor.id, [
-                rewardFor(contributor.id, 'added_statement_validated', {
-                  relatedEntityType: 'statement',
-                  relatedEntityId: id,
-                }),
-                ...argumentRewards(contributor.id, recorded),
-              ]),
+  const outcome = await runFormCommand(
+    pipe(
+      runUnitOfWork((events) =>
+        pipe(
+          recordProposedArguments(events, contributor.id, validatedArguments.right),
+          Effect.flatMap((recorded) =>
+            pipe(
+              openStream(
+                statementAggregate,
+                events,
+                id,
+                [added(recorded.argumentIds)],
+                contributor.id,
+              ),
+              Effect.tap(() =>
+                grantEach(events, contributor.id, [
+                  rewardFor(contributor.id, 'added_statement_validated', {
+                    relatedEntityType: 'statement',
+                    relatedEntityId: id,
+                  }),
+                  ...argumentRewards(contributor.id, recorded),
+                ]),
+              ),
             ),
           ),
         ),
       ),
+      uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
     ),
   )
 

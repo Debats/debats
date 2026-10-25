@@ -6,7 +6,7 @@ import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { ensureStream } from './aggregate-stream'
-import { runFormCommand } from './run-command'
+import { runFormCommand, uniqueTakenAs } from './run-command'
 import {
   decideOnOccupationFamily,
   occupationFamilyAggregate,
@@ -71,6 +71,7 @@ export async function createOccupationUseCase(
           ? CHOOSE_A_FAMILY
           : failure,
       ),
+      uniqueTakenAs('name', 'Un métier porte déjà ce nom.'),
     ),
   )
 

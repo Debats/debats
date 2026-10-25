@@ -1,10 +1,6 @@
 import { Either, Effect, pipe } from 'effect'
 import { generateSlug, PublicFigure, PublicFigureId } from '../entities/public-figure'
-import {
-  addPublicFigure,
-  publicFigureStream,
-  replayPublicFigure,
-} from '../aggregates/public-figure'
+import { addPublicFigure } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
@@ -12,8 +8,9 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
-import { runCommand } from './run-command'
-import { requirePublicFigureState } from './public-figure-stream'
+import { openStream } from './aggregate-stream'
+import { runCommand, uniqueTakenAs } from './run-command'
+import { publicFigureAggregate } from './public-figure-stream'
 
 type CreatePublicFigureParams = {
   contributor: ContributorIdentity | null
@@ -89,22 +86,23 @@ export async function persistPublicFigure(
   })
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        events.append(publicFigureStream(id), 0, [added], { actorId: contributor.id }),
-        Effect.flatMap(replayPublicFigure),
-        Effect.flatMap(requirePublicFigureState),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'added_personality_validated', {
-              relatedEntityType: 'public_figure',
-              relatedEntityId: id,
-            }),
+    pipe(
+      runUnitOfWork((events) =>
+        pipe(
+          openStream(publicFigureAggregate, events, id, [added], contributor.id),
+          Effect.tap(() =>
+            grant(
+              events,
+              contributor.id,
+              rewardFor(contributor.id, 'added_personality_validated', {
+                relatedEntityType: 'public_figure',
+                relatedEntityId: id,
+              }),
+            ),
           ),
         ),
       ),
+      uniqueTakenAs('name', 'Une personnalité avec ce nom existe déjà.'),
     ),
   )
 

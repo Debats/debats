@@ -9,7 +9,7 @@ import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validatePublicFigureFields } from './validate-public-figure-fields'
 import { ensureStream } from './aggregate-stream'
-import { runCommand } from './run-command'
+import { runCommand, uniqueTakenAs } from './run-command'
 import {
   decideOnPublicFigure,
   publicFigureAggregate,
@@ -119,6 +119,7 @@ export async function persistUpdatedPublicFigure(
           ),
         ),
       ),
+      uniqueTakenAs('name', 'Une personnalité avec ce nom existe déjà.'),
     ),
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)

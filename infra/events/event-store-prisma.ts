@@ -44,6 +44,18 @@ export const isUniqueViolation = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === UNIQUE_VIOLATION
 
 /**
+ * The unique constraint Prisma reports; through the pg adapter it comes as
+ * `meta.driverAdapterError.cause.constraint.index`, empty when unknown.
+ */
+export function uniqueConstraintOf(error: unknown): string {
+  if (!isUniqueViolation(error)) return ''
+  const meta = (error as Prisma.PrismaClientKnownRequestError).meta ?? {}
+  const adapter = meta.driverAdapterError as { cause?: { constraint?: { index?: unknown } } }
+  const index = adapter?.cause?.constraint?.index
+  return typeof index === 'string' ? index : ''
+}
+
+/**
  * The journal on the domain_events table, bound to one transaction so that
  * appending and projecting commit or roll back together.
  */

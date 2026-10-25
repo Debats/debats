@@ -5,7 +5,7 @@ import {
   OrganisationId,
   OrganisationType,
 } from '../entities/organisation'
-import { addOrganisation, organisationStream, replayOrganisation } from '../aggregates/organisation'
+import { addOrganisation } from '../aggregates/organisation'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
@@ -13,8 +13,9 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { validateOrganisationFields } from './validate-organisation-fields'
-import { runCommand } from './run-command'
-import { requireOrganisationState } from './organisation-stream'
+import { openStream } from './aggregate-stream'
+import { runCommand, uniqueTakenAs } from './run-command'
+import { organisationAggregate } from './organisation-stream'
 
 export type CreateOrganisationParams = {
   contributor: ContributorIdentity | null
@@ -90,22 +91,23 @@ export async function persistOrganisation(
   })
 
   const outcome = await runCommand(
-    runUnitOfWork((events) =>
-      pipe(
-        events.append(organisationStream(id), 0, [added], { actorId: contributor.id }),
-        Effect.flatMap(replayOrganisation),
-        Effect.flatMap(requireOrganisationState),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'added_organisation_validated', {
-              relatedEntityType: 'organisation',
-              relatedEntityId: id,
-            }),
+    pipe(
+      runUnitOfWork((events) =>
+        pipe(
+          openStream(organisationAggregate, events, id, [added], contributor.id),
+          Effect.tap(() =>
+            grant(
+              events,
+              contributor.id,
+              rewardFor(contributor.id, 'added_organisation_validated', {
+                relatedEntityType: 'organisation',
+                relatedEntityId: id,
+              }),
+            ),
           ),
         ),
       ),
+      uniqueTakenAs('name', 'Une organisation avec ce nom existe déjà.'),
     ),
   )
 

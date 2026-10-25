@@ -1,12 +1,33 @@
 import { Effect, Either } from 'effect'
-import { ConcurrencyError, UnreadableEvent } from '../events/event-store'
+import { ConcurrencyError, UniqueTaken, UnreadableEvent } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
 import { FieldErrors, Rejected } from './types'
 
 export const EDITED_MEANWHILE =
   'Quelqu’un d’autre vient de modifier ceci. Rechargez la page avant de recommencer.'
 
-export type CommandFailure = Rejected | ConcurrencyError | DatabaseError | UnreadableEvent
+/** What the contributor reads when a command does not say which value was taken */
+export const VALUE_TAKEN = 'Cette valeur est déjà prise par un autre élément.'
+
+export type CommandFailure =
+  | Rejected
+  | ConcurrencyError
+  | UniqueTaken
+  | DatabaseError
+  | UnreadableEvent
+
+/**
+ * Names the field and the message of a value taken meanwhile: the command
+ * checked it before its transaction, a projection refused it in there.
+ */
+export const uniqueTakenAs =
+  (field: string, message: string) =>
+  <A, E>(command: Effect.Effect<A, E>): Effect.Effect<A, Exclude<E, UniqueTaken> | Rejected> =>
+    Effect.mapError(command, (failure) =>
+      failure instanceof UniqueTaken
+        ? new Rejected(message, field)
+        : (failure as Exclude<E, UniqueTaken>),
+    )
 
 /**
  * Runs a command against the journal and turns its outcome into what the
@@ -47,6 +68,8 @@ function messageOf(failure: CommandFailure): string {
       return failure.message
     case 'ConcurrencyError':
       return EDITED_MEANWHILE
+    case 'UniqueTaken':
+      return VALUE_TAKEN
     default:
       throw failure
   }
