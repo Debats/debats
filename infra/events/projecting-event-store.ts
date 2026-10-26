@@ -5,7 +5,7 @@ import { PrismaTransaction } from '../prisma/client'
 import { Projector, ProjectorRegistry } from './projector'
 
 /**
- * The event store a command sees: each append also runs the projectors of
+ * The event store a command sees: each append also runs the projector of
  * the stream type, in the same transaction. Commands never touch the tables.
  * A stream type nobody registered is a defect: its tables would silently
  * fall behind the journal.
@@ -19,8 +19,8 @@ export function withProjections(
     stream: StreamRef,
     appended: Effect.Effect<StoredEvent[], E>,
   ): Effect.Effect<StoredEvent[], E | DatabaseError | UniqueTaken> =>
-    Effect.flatMap(projectorsOf(registry, stream.streamType), (projectors) =>
-      Effect.flatMap(appended, (stored) => Effect.as(project(projectors, stored, tx), stored)),
+    Effect.flatMap(projectorOf(registry, stream.streamType), (projector) =>
+      Effect.flatMap(appended, (stored) => Effect.as(project(projector, stored, tx), stored)),
     )
   return {
     load: (stream) => store.load(stream),
@@ -31,25 +31,18 @@ export function withProjections(
   }
 }
 
-function projectorsOf(
-  registry: ProjectorRegistry,
-  streamType: string,
-): Effect.Effect<readonly Projector[]> {
-  const projectors = registry[streamType]
-  return projectors
-    ? Effect.succeed(projectors)
+function projectorOf(registry: ProjectorRegistry, streamType: string): Effect.Effect<Projector> {
+  const projector = registry[streamType]
+  return projector
+    ? Effect.succeed(projector)
     : Effect.dieMessage(`No projector is registered for the ${streamType} stream`)
 }
 
-/** Every event through every projector, in stream order */
+/** Every event through the projector, in stream order */
 function project(
-  projectors: readonly Projector[],
+  projector: Projector,
   events: StoredEvent[],
   tx: PrismaTransaction,
 ): Effect.Effect<void, DatabaseError | UniqueTaken> {
-  return Effect.forEach(
-    events,
-    (event) => Effect.forEach(projectors, (projector) => projector(event, tx), { discard: true }),
-    { discard: true },
-  )
+  return Effect.forEach(events, (event) => projector(event, tx), { discard: true })
 }

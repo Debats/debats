@@ -24,9 +24,12 @@ export const rewardFor = (
 /**
  * Records grants on the contributors' streams, in the transaction of the deed
  * they reward: a deed and its rewards are written together or not at all.
- * One contributor's grants go in one append, at the end of her stream: nobody
- * decides from it, so two deeds of hers at once never conflict. The actor is
- * the contributor whose command earned them.
+ * One contributor's grants go in one append, at the end of her stream: nothing
+ * is decided from the stream at a revision (permissions and the invitee's start
+ * read the projected total, on purpose), so two deeds of hers at once never
+ * conflict. Streams are taken in id order: two commands rewarding the same two
+ * contributors lock them the same way round. The actor is the contributor
+ * whose command earned them.
  */
 export function grantEach(
   events: EventStore,
@@ -35,7 +38,7 @@ export function grantEach(
 ): Effect.Effect<void, DatabaseError | UniqueTaken> {
   const byContributor = Arr.groupBy(rewards, (reward) => reward.contributorId)
   return Effect.forEach(
-    Object.entries(byContributor),
+    Object.entries(byContributor).sort(([a], [b]) => a.localeCompare(b)),
     ([contributorId, grants]) =>
       events.appendToEnd(contributorStream(contributorId), grants.map(grantReputation), {
         actorId,

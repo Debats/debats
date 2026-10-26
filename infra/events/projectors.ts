@@ -18,15 +18,15 @@ import { projectSubject } from './subject-projector'
 import { projectTheme } from './theme-projector'
 import { ProjectorRegistry } from './projector'
 
-/** The projectors of every stream type; an aggregate registers its own when it switches to the journal */
+/** The projector of every stream type; an aggregate registers its own when it switches to the journal */
 export const projectors: ProjectorRegistry = {
-  [STATEMENT_STREAM]: [projectStatement],
-  [SUBJECT_STREAM]: [projectSubject],
-  [PUBLIC_FIGURE_STREAM]: [projectPublicFigure],
-  [ORGANISATION_STREAM]: [projectOrganisation],
-  [ARGUMENT_STREAM]: [projectArgument],
-  [THEME_STREAM]: [projectTheme],
-  [OCCUPATION_FAMILY_STREAM]: [projectOccupationFamily],
-  [CONTRIBUTOR_STREAM]: [projectContributor],
-  [INVITATION_STREAM]: [projectInvitation],
+  [STATEMENT_STREAM]: projectStatement,
+  [SUBJECT_STREAM]: projectSubject,
+  [PUBLIC_FIGURE_STREAM]: projectPublicFigure,
+  [ORGANISATION_STREAM]: projectOrganisation,
+  [ARGUMENT_STREAM]: projectArgument,
+  [THEME_STREAM]: projectTheme,
+  [OCCUPATION_FAMILY_STREAM]: projectOccupationFamily,
+  [CONTRIBUTOR_STREAM]: projectContributor,
+  [INVITATION_STREAM]: projectInvitation,
 }

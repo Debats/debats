@@ -145,20 +145,18 @@ function apply(
         relatedSubjectIds: [],
         deletedAt: null,
       }
-    case 'SubjectDeleted':
-      // The positions go with their subject
-      return (
-        state && {
-          ...state,
-          deletedAt: stored.occurredAt,
-          positions: state.positions.map((p) =>
-            p.deletedAt ? p : { ...p, deletedAt: stored.occurredAt },
-          ),
-        }
-      )
   }
   if (!state) return null
   switch (event.type) {
+    case 'SubjectDeleted':
+      // The positions go with their subject
+      return {
+        ...state,
+        deletedAt: stored.occurredAt,
+        positions: state.positions.map((p) =>
+          p.deletedAt ? p : { ...p, deletedAt: stored.occurredAt },
+        ),
+      }
     case 'SubjectEdited':
       return {
         ...state,

@@ -4,9 +4,10 @@
  * contributor's mistake: it is thrown, not reported as a refusal.
  */
 export function revisionOf(formData: FormData): number {
-  const revision = Number(formData.get('revision'))
-  if (!Number.isInteger(revision) || revision < 0) {
+  const field = formData.get('revision')
+  // Number(null) and Number('') are 0: an absent field must not pass as revision 0
+  if (typeof field !== 'string' || !/^\d+$/.test(field)) {
     throw new Error('The form carries no revision: the page must read currentRevision')
   }
-  return revision
+  return Number(field)
 }

@@ -1,4 +1,5 @@
 import * as S from 'effect/Schema'
+import { RELATED_ENTITY_TYPES } from '../entities/reputation-event'
 import { eventDecoder } from '../events/decode-event'
 
 /**
@@ -16,7 +17,7 @@ const Grant = S.Struct({
   grantId: S.String,
   action: S.String,
   amount: S.Int,
-  relatedEntityType: S.optional(S.String),
+  relatedEntityType: S.optional(S.Literal(...RELATED_ENTITY_TYPES)),
   relatedEntityId: S.optional(S.String),
 })
 export type GrantPayload = S.Schema.Type<typeof Grant>

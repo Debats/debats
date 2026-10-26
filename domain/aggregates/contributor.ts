@@ -58,7 +58,7 @@ function grantFrom(stored: StoredEvent, payload: GrantPayload): ReputationEvent 
     contributorId: stored.streamId,
     action: payload.action,
     amount: payload.amount,
-    relatedEntityType: payload.relatedEntityType as RelatedEntityType | undefined,
+    relatedEntityType: payload.relatedEntityType,
     relatedEntityId: payload.relatedEntityId,
     createdAt: stored.occurredAt,
   }

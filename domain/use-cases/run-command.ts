@@ -24,10 +24,11 @@ export const uniqueTakenAs =
   (field: string, message: string) =>
   <A, E>(command: Effect.Effect<A, E>): Effect.Effect<A, Exclude<E, UniqueTaken> | Rejected> =>
     Effect.mapError(command, (failure) =>
-      failure instanceof UniqueTaken
-        ? new Rejected(message, field)
-        : (failure as Exclude<E, UniqueTaken>),
+      isUniqueTaken(failure) ? new Rejected(message, field) : (failure as Exclude<E, UniqueTaken>),
     )
+
+const isUniqueTaken = (failure: unknown): failure is UniqueTaken =>
+  typeof failure === 'object' && failure !== null && (failure as UniqueTaken)._tag === 'UniqueTaken'
 
 /**
  * Runs a command against the journal and turns its outcome into what the

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Effect, Either } from 'effect'
+import { Effect, Either, Exit } from 'effect'
 import { ConcurrencyError } from './event-store'
 import { createInMemoryEventStore, inMemoryUnitOfWork } from './event-store-memory'
 
@@ -64,6 +64,19 @@ describe('in-memory unit of work', () => {
       ),
     )
     expect(Either.isLeft(result)).toBe(true)
+    expect(journal.all()).toEqual([])
+  })
+
+  it('forgets the events of a command that dies, as the database rolls back a throw', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+    const exit = await Effect.runPromiseExit(
+      run((events) =>
+        Effect.flatMap(events.append(stream, 0, [{ type: 'Started', payload: {} }], actor), () =>
+          Effect.dieMessage('defect'),
+        ),
+      ),
+    )
+    expect(Exit.isFailure(exit)).toBe(true)
     expect(journal.all()).toEqual([])
   })
 

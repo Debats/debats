@@ -12,7 +12,7 @@ import { runUnitOfWork } from './unit-of-work'
 const hasDatabase = Boolean(process.env.DATABASE_URL)
 const stream = { streamType: 'test', streamId: crypto.randomUUID() }
 /** The test stream has no table to keep in step */
-const NO_PROJECTION = { test: [] }
+const NO_PROJECTION = { test: () => Effect.void }
 
 describe.skipIf(!hasDatabase)('event store on Postgres', () => {
   afterAll(async () => {
@@ -107,10 +107,10 @@ describe.skipIf(!hasDatabase)('event store on Postgres', () => {
     expect(loaded).toEqual([])
   })
 
-  it('hands each appended event to the projectors of its stream type', async () => {
+  it('hands each appended event to the projector of its stream type', async () => {
     const projected: StoredEvent[] = []
     const registry = {
-      test: [(event: StoredEvent) => Effect.sync(() => void projected.push(event))],
+      test: (event: StoredEvent) => Effect.sync(() => void projected.push(event)),
     }
     const own = { streamType: 'test', streamId: crypto.randomUUID() }
 
@@ -137,7 +137,7 @@ describe.skipIf(!hasDatabase)('event store on Postgres', () => {
   })
 
   it('rolls the events back when a projector fails', async () => {
-    const registry = { test: [() => Effect.fail(new DatabaseError('projection broken'))] }
+    const registry = { test: () => Effect.fail(new DatabaseError('projection broken')) }
     const own = { streamType: 'test', streamId: crypto.randomUUID() }
 
     const result = await Effect.runPromise(

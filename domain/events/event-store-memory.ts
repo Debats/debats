@@ -62,14 +62,14 @@ export function createInMemoryEventStore(): InMemoryEventStore {
   return storeOver([])
 }
 
-/** A unit of work over an in-memory journal; a failing command leaves no event behind */
+/** A unit of work over an in-memory journal; a command that fails or dies leaves no event behind */
 export function inMemoryUnitOfWork(): { run: RunUnitOfWork; journal: InMemoryEventStore } {
   const rows: StoredEvent[] = []
   const journal = storeOver(rows)
   const run: RunUnitOfWork = (work) =>
     Effect.suspend(() => {
       const mark = rows.length
-      return Effect.tapError(work(journal), () => Effect.sync(() => void rows.splice(mark)))
+      return Effect.onError(work(journal), () => Effect.sync(() => void rows.splice(mark)))
     })
   return { run, journal }
 }

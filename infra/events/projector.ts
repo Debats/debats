@@ -17,8 +17,8 @@ export type Projector = (
   tx: PrismaTransaction,
 ) => Effect.Effect<void, DatabaseError | UniqueTaken>
 
-/** Projectors by stream type; an aggregate registers its own when it switches to the journal */
-export type ProjectorRegistry = Readonly<Record<string, readonly Projector[]>>
+/** The projector of each stream type; an aggregate registers its own when it switches to the journal */
+export type ProjectorRegistry = Readonly<Record<string, Projector>>
 
 /**
  * A projector over the decoded events of one stream type: the event is read
