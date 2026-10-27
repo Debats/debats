@@ -2,9 +2,9 @@ import { Effect, Either, pipe } from 'effect'
 import { findMembership, removeMembership } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo, found } from './preconditions'
 import { runCommand } from './run-command'
 import {
   decideOnPublicFigure,
@@ -24,30 +24,24 @@ export type RemoveOrganisationMembershipParams = {
 const NOT_FOUND = 'Affiliation introuvable.'
 
 /** Removes a wrong affiliation. Ending a real one is done by setting its end date. */
-export async function removeOrganisationMembershipUseCase(
+export function removeOrganisationMembershipUseCase(
   params: RemoveOrganisationMembershipParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, membershipId, runUnitOfWork, publicFigureSource, membershipRepo } = params
+  const { membershipId, runUnitOfWork, publicFigureSource, membershipRepo } = params
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'remove_membership')) {
-    const rank = requiredRank('remove_membership')
-    return Either.left(`Vous devez être ${rank} pour retirer une affiliation.`)
-  }
-
-  const membership = await Effect.runPromise(membershipRepo.findById(membershipId))
-  if (!membership) {
-    return Either.left(NOT_FOUND)
-  }
-
-  const figureId = membership.publicFigureId
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
-      ensureStream(publicFigureAggregate, runUnitOfWork, figureId, publicFigureSource),
-      Effect.andThen(
+      Effect.all({
+        contributor: allowedTo(params.contributor, 'remove_membership', 'retirer une affiliation'),
+        figureId: Effect.map(
+          Effect.flatMap(membershipRepo.findById(membershipId), found(NOT_FOUND)),
+          (membership) => membership.publicFigureId,
+        ),
+      }),
+      Effect.tap(({ figureId }) =>
+        ensureStream(publicFigureAggregate, runUnitOfWork, figureId, publicFigureSource),
+      ),
+      Effect.flatMap(({ contributor, figureId }) =>
         runUnitOfWork((events) =>
           decideOnPublicFigure(events, figureId, contributor.id, (state) =>
             findMembership(state, membershipId)
@@ -56,9 +50,7 @@ export async function removeOrganisationMembershipUseCase(
           ),
         ),
       ),
+      Effect.asVoid,
     ),
   )
-  if (Either.isLeft(outcome)) return outcome
-
-  return Either.right(undefined)
 }

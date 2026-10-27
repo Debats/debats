@@ -4,9 +4,9 @@ import { setOccupations } from '../aggregates/public-figure'
 import { Revision } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity } from './types'
+import { ContributorIdentity, Rejected } from './types'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo } from './preconditions'
 import { runCommand } from './run-command'
 import {
   decideOnPublicFigure,
@@ -38,38 +38,34 @@ function dedupe(assignments: OccupationAssignmentInput[]): OccupationAssignmentI
  * must name a listed occupation. On success, the revision the next change of
  * the selector must be rendered from.
  */
-export async function setPublicFigureOccupationsUseCase(
+export function setPublicFigureOccupationsUseCase(
   params: SetPublicFigureOccupationsParams,
 ): Promise<Either.Either<Revision, string>> {
-  const { contributor, publicFigureId, runUnitOfWork, publicFigureSource, occupationRepo } = params
+  const { publicFigureId, revision, runUnitOfWork, publicFigureSource, occupationRepo } = params
   const assignments = dedupe(params.assignments)
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'assign_occupation')) {
-    const rank = requiredRank('assign_occupation')
-    return Either.left(`Vous devez être ${rank} pour modifier les métiers d’une personnalité.`)
-  }
-
   const ids = assignments.map((a) => a.occupationId)
-  const found = await Effect.runPromise(occupationRepo.findByIds(ids))
-  if (found.length !== ids.length) {
-    return Either.left('Un des métiers choisis n’existe plus.')
-  }
 
   return runCommand(
     pipe(
-      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
-      Effect.andThen(
+      allowedTo(params.contributor, 'assign_occupation', 'modifier les métiers d’une personnalité'),
+      Effect.tap(() =>
+        Effect.filterOrFail(
+          occupationRepo.findByIds(ids),
+          (listed) => listed.length === ids.length,
+          () => new Rejected('Un des métiers choisis n’existe plus.'),
+        ),
+      ),
+      Effect.tap(() =>
+        ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
+      ),
+      Effect.flatMap((contributor) =>
         runUnitOfWork((events) =>
           decideOnPublicFigure(
             events,
             publicFigureId,
             contributor.id,
             () => Effect.succeed([setOccupations(assignments)]),
-            params.revision,
+            revision,
           ),
         ),
       ),

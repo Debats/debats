@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import {
+  findMembership,
   importMembership,
   importPublicFigure,
   PUBLIC_FIGURE_STREAM,
@@ -14,6 +15,7 @@ import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
 import {
   AggregateStream,
+  Decided,
   decideOn,
   IMPORT,
   RenderedFrom,
@@ -82,3 +84,13 @@ export const decideOnPublicFigure = (
 
 export const requirePublicFigureState = (state: PublicFigureState | null) =>
   requireState(publicFigureAggregate, state)
+
+/** The affiliation the decision just wrote: a figure without it has a broken replay */
+export const writtenMembership =
+  (membershipId: string) =>
+  ({ state }: Decided<PublicFigureState>): Effect.Effect<OrganisationMembership> => {
+    const membership = findMembership(state, membershipId)
+    return membership
+      ? Effect.succeed(membership)
+      : Effect.dieMessage(`The membership ${membershipId} just written is missing from the figure`)
+  }

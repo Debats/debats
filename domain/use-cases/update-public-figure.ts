@@ -3,13 +3,13 @@ import { generateSlug, PublicFigure } from '../entities/public-figure'
 import { editPublicFigure } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { validatePublicFigureFields } from './validate-public-figure-fields'
+import { publicFigureFields } from './validate-public-figure-fields'
 import { ensureStream } from './aggregate-stream'
-import { runCommand, uniqueTakenAs } from './run-command'
+import { allowedTo, found, free, signedIn } from './preconditions'
+import { runCommand, runFormCommand, uniqueTakenAs } from './run-command'
 import {
   decideOnPublicFigure,
   publicFigureAggregate,
@@ -35,114 +35,104 @@ type UpdatePublicFigureParams = {
 
 export type { FieldErrors }
 
-/**
- * Validates update inputs without persisting.
- * Call before side effects (photo re-upload) to fail fast.
- */
-export async function validateUpdatePublicFigure(
-  params: UpdatePublicFigureParams,
-): Promise<Either.Either<PublicFigure, string | FieldErrors>> {
-  const { contributor, figureId, name, publicFigureRepo } = params
+const NAME_TAKEN = 'Une personnalité avec ce nom existe déjà.'
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
+/** Who may edit the figure, which figure, with a form that holds up and a new name still free */
+const checked = (params: UpdatePublicFigureParams) => {
+  const { publicFigureRepo } = params
+  const nameFree = (existing: PublicFigure) => {
+    const newSlug = generateSlug(params.name)
+    return newSlug === existing.slug
+      ? Effect.void
+      : Effect.flatMap(publicFigureRepo.findBySlug(newSlug), free(NAME_TAKEN, 'name'))
   }
-
-  if (!canPerform(contributor.reputation, 'edit_personality')) {
-    const rank = requiredRank('edit_personality')
-    return Either.left(`Vous devez être ${rank} pour modifier une personnalité.`)
-  }
-
-  const existing = await Effect.runPromise(publicFigureRepo.findById(figureId))
-  if (!existing) {
-    return Either.left('Personnalité introuvable.')
-  }
-
-  const fieldErrors = await validatePublicFigureFields({
-    name,
-    presentation: params.presentation,
-    wikipediaUrl: params.wikipediaUrl,
-    notorietySources: params.notorietySources,
-    wikipediaValidator: params.wikipediaValidator,
-  })
-
-  if (fieldErrors) {
-    return Either.left(fieldErrors)
-  }
-
-  const newSlug = generateSlug(name)
-  if (newSlug !== existing.slug) {
-    const conflicting = await Effect.runPromise(publicFigureRepo.findBySlug(newSlug))
-    if (conflicting) {
-      return Either.left({ name: 'Une personnalité avec ce nom existe déjà.' })
-    }
-  }
-
-  return Either.right(existing)
+  return pipe(
+    allowedTo(params.contributor, 'edit_personality', 'modifier une personnalité'),
+    Effect.bindTo('contributor'),
+    Effect.bind('existing', () =>
+      Effect.flatMap(
+        publicFigureRepo.findById(params.figureId),
+        found(publicFigureAggregate.notFound),
+      ),
+    ),
+    Effect.tap(() => publicFigureFields(params)),
+    Effect.tap(({ existing }) => nameFree(existing)),
+  )
 }
 
-/**
- * Records the edit in the journal and rewards the contributor.
- */
-export async function persistUpdatedPublicFigure(
+/** Records the edit in the figure's stream and rewards the contributor */
+const persisted = (
   params: UpdatePublicFigureParams,
+  contributor: ContributorIdentity,
   existing: PublicFigure,
-): Promise<Either.Either<PublicFigure, string>> {
-  const { name, presentation, notorietySources, websiteUrl, runUnitOfWork } = params
-  const contributor = params.contributor!
-
+) => {
+  const { runUnitOfWork, publicFigureSource, revision } = params
   const edited = editPublicFigure({
-    name,
-    presentation,
+    name: params.name,
+    presentation: params.presentation,
     wikipediaUrl: params.wikipediaUrl.trim() || undefined,
-    websiteUrl: websiteUrl || undefined,
-    notorietySources,
+    websiteUrl: params.websiteUrl || undefined,
+    notorietySources: params.notorietySources,
   })
-
-  const outcome = await runCommand(
-    pipe(
-      ensureStream(publicFigureAggregate, runUnitOfWork, existing.id, params.publicFigureSource),
-      Effect.andThen(
-        runUnitOfWork((events) =>
-          pipe(
-            decideOnPublicFigure(
+  return pipe(
+    ensureStream(publicFigureAggregate, runUnitOfWork, existing.id, publicFigureSource),
+    Effect.andThen(
+      runUnitOfWork((events) =>
+        pipe(
+          decideOnPublicFigure(
+            events,
+            existing.id,
+            contributor.id,
+            () => Effect.succeed([edited]),
+            revision,
+          ),
+          Effect.tap(() =>
+            grant(
               events,
-              existing.id,
               contributor.id,
-              () => Effect.succeed([edited]),
-              params.revision,
-            ),
-            Effect.tap(() =>
-              grant(
-                events,
-                contributor.id,
-                rewardFor(contributor.id, 'edited_personality', {
-                  relatedEntityType: 'public_figure',
-                  relatedEntityId: existing.id,
-                }),
-              ),
+              rewardFor(contributor.id, 'edited_personality', {
+                relatedEntityType: 'public_figure',
+                relatedEntityId: existing.id,
+              }),
             ),
           ),
         ),
       ),
-      uniqueTakenAs('name', 'Une personnalité avec ce nom existe déjà.'),
     ),
+    uniqueTakenAs('name', NAME_TAKEN),
+    Effect.map(({ state }) => state.figure),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  return Either.right(outcome.right.state.figure)
 }
 
 /**
- * Validates and updates a public figure in one step.
+ * Validates update inputs without persisting; hands the figure as it stands.
+ * Call before side effects (photo re-upload) to fail fast.
  */
-export async function updatePublicFigureUseCase(
+export function validateUpdatePublicFigure(
   params: UpdatePublicFigureParams,
 ): Promise<Either.Either<PublicFigure, string | FieldErrors>> {
-  const validation = await validateUpdatePublicFigure(params)
-  if (Either.isLeft(validation)) {
-    return Either.left(validation.left)
-  }
+  return runFormCommand(Effect.map(checked(params), ({ existing }) => existing))
+}
 
-  return persistUpdatedPublicFigure(params, validation.right)
+/** Records the edit in the journal and rewards the contributor. */
+export function persistUpdatedPublicFigure(
+  params: UpdatePublicFigureParams,
+  existing: PublicFigure,
+): Promise<Either.Either<PublicFigure, string>> {
+  return runCommand(
+    Effect.flatMap(signedIn(params.contributor), (contributor) =>
+      persisted(params, contributor, existing),
+    ),
+  )
+}
+
+/** Validates and updates a public figure in one step. */
+export function updatePublicFigureUseCase(
+  params: UpdatePublicFigureParams,
+): Promise<Either.Either<PublicFigure, string | FieldErrors>> {
+  return runFormCommand(
+    Effect.flatMap(checked(params), ({ contributor, existing }) =>
+      persisted(params, contributor, existing),
+    ),
+  )
 }

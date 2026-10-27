@@ -8,13 +8,13 @@ import {
 import { addOrganisation } from '../aggregates/organisation'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { validateOrganisationFields } from './validate-organisation-fields'
+import { organisationFields } from './validate-organisation-fields'
 import { openStream } from './aggregate-stream'
-import { runCommand, uniqueTakenAs } from './run-command'
+import { allowedTo, free, signedIn } from './preconditions'
+import { runCommand, runFormCommand, uniqueTakenAs } from './run-command'
 import { organisationAggregate } from './organisation-stream'
 
 export type CreateOrganisationParams = {
@@ -34,51 +34,33 @@ export type CreateOrganisationParams = {
 
 export type { FieldErrors }
 
-/**
- * Validates all inputs without persisting anything.
- * Call this before side effects (logo upload) to fail fast.
- */
-export async function validateCreateOrganisation(
-  params: CreateOrganisationParams,
-): Promise<Either.Either<{ organisationType: OrganisationType }, string | FieldErrors>> {
-  const { contributor, organisationRepo } = params
+const NAME_TAKEN = 'Une organisation avec ce nom existe déjà.'
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'add_organisation')) {
-    const rank = requiredRank('add_organisation')
-    return Either.left(`Vous devez être ${rank} pour proposer une nouvelle organisation.`)
-  }
-
-  const validated = await validateOrganisationFields(params)
-  if (Either.isLeft(validated)) {
-    return Either.left(validated.left)
-  }
-
-  const existing = await Effect.runPromise(
-    organisationRepo.findBySlug(generateOrganisationSlug(params.name)),
+/** Who may propose the organisation, with a form that holds up and a name still free */
+const checked = (params: CreateOrganisationParams) =>
+  pipe(
+    Effect.all({
+      contributor: allowedTo(
+        params.contributor,
+        'add_organisation',
+        'proposer une nouvelle organisation',
+      ),
+      validated: organisationFields(params),
+    }),
+    Effect.tap(() =>
+      Effect.flatMap(
+        params.organisationRepo.findBySlug(generateOrganisationSlug(params.name)),
+        free(NAME_TAKEN, 'name'),
+      ),
+    ),
   )
-  if (existing) {
-    return Either.left({ name: 'Une organisation avec ce nom existe déjà.' })
-  }
 
-  return Either.right(validated.right)
-}
-
-/**
- * Records a validated organisation in the journal and rewards the contributor.
- * Call only after validation has passed and any side effects (logo upload) are done.
- */
-export async function persistOrganisation(
+/** Opens the organisation's stream and rewards the contributor; the command names it */
+const persisted = (
   params: CreateOrganisationParams,
+  contributor: ContributorIdentity,
   organisationType: OrganisationType,
-): Promise<Either.Either<Organisation, string>> {
-  const { runUnitOfWork } = params
-  const contributor = params.contributor!
-
-  // The command names the organisation: the stream exists from its first event
+) => {
   const id = OrganisationId.make(crypto.randomUUID())
   const added = addOrganisation({
     name: params.name,
@@ -89,39 +71,59 @@ export async function persistOrganisation(
     websiteUrl: params.websiteUrl,
     notorietySources: params.notorietySources,
   })
-
-  const outcome = await runCommand(
-    pipe(
-      runUnitOfWork((events) =>
-        pipe(
-          openStream(organisationAggregate, events, id, [added], contributor.id),
-          Effect.tap(() =>
-            grant(
-              events,
-              contributor.id,
-              rewardFor(contributor.id, 'added_organisation_validated', {
-                relatedEntityType: 'organisation',
-                relatedEntityId: id,
-              }),
-            ),
+  return pipe(
+    params.runUnitOfWork((events) =>
+      pipe(
+        openStream(organisationAggregate, events, id, [added], contributor.id),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'added_organisation_validated', {
+              relatedEntityType: 'organisation',
+              relatedEntityId: id,
+            }),
           ),
         ),
       ),
-      uniqueTakenAs('name', 'Une organisation avec ce nom existe déjà.'),
+    ),
+    uniqueTakenAs('name', NAME_TAKEN),
+    Effect.map(({ state }) => state.organisation),
+  )
+}
+
+/**
+ * Validates all inputs without persisting anything; hands the parsed type.
+ * Call this before side effects (logo upload) to fail fast.
+ */
+export function validateCreateOrganisation(
+  params: CreateOrganisationParams,
+): Promise<Either.Either<{ organisationType: OrganisationType }, string | FieldErrors>> {
+  return runFormCommand(Effect.map(checked(params), ({ validated }) => validated))
+}
+
+/**
+ * Records a validated organisation in the journal and rewards the contributor.
+ * Call only after validation has passed and any side effects (logo upload) are done.
+ */
+export function persistOrganisation(
+  params: CreateOrganisationParams,
+  organisationType: OrganisationType,
+): Promise<Either.Either<Organisation, string>> {
+  return runCommand(
+    Effect.flatMap(signedIn(params.contributor), (contributor) =>
+      persisted(params, contributor, organisationType),
     ),
   )
-
-  return Either.map(outcome, ({ state }) => state.organisation)
 }
 
 /** Validates and creates an organisation in one step. */
-export async function createOrganisationUseCase(
+export function createOrganisationUseCase(
   params: CreateOrganisationParams,
 ): Promise<Either.Either<Organisation, string | FieldErrors>> {
-  const validation = await validateCreateOrganisation(params)
-  if (Either.isLeft(validation)) {
-    return Either.left(validation.left)
-  }
-
-  return persistOrganisation(params, validation.right.organisationType)
+  return runFormCommand(
+    Effect.flatMap(checked(params), ({ contributor, validated }) =>
+      persisted(params, contributor, validated.organisationType),
+    ),
+  )
 }

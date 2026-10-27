@@ -1,17 +1,18 @@
 import { Effect, Either, pipe } from 'effect'
 import { MembershipId, OrganisationMembership } from '../entities/organisation-membership'
-import { addMembership, findMembership, hasCurrentMembership } from '../aggregates/public-figure'
+import { addMembership, hasCurrentMembership } from '../aggregates/public-figure'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo, faultless, found } from './preconditions'
 import { runFormCommand } from './run-command'
 import {
   decideOnPublicFigure,
   publicFigureAggregate,
   PublicFigureSource,
+  writtenMembership,
 } from './public-figure-stream'
 
 export type AddOrganisationMembershipParams = {
@@ -34,6 +35,7 @@ export type { FieldErrors }
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 const ALREADY_MEMBER = 'Cette personnalité est déjà membre de cette organisation.'
+const ROLE_MAX = 100
 
 /** Parses an optional ISO date field; `undefined` when empty, `null` when malformed. */
 function parseOptionalDate(value: string): Date | undefined | null {
@@ -44,60 +46,63 @@ function parseOptionalDate(value: string): Date | undefined | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+/** The faults of the form, gathered: the figure, the role, the period */
+function membershipFaults(
+  figureKnown: boolean,
+  role: string,
+  startedOn: Date | undefined | null,
+  endedOn: Date | undefined | null,
+): FieldErrors {
+  return {
+    ...(figureKnown ? {} : { publicFigureId: 'Choisissez une personnalité.' }),
+    ...(role.length > ROLE_MAX
+      ? { role: `Le rôle ne doit pas dépasser ${ROLE_MAX} caractères.` }
+      : {}),
+    ...(startedOn === null ? { startedOn: 'La date de début est invalide.' } : {}),
+    ...(endedOn === null
+      ? { endedOn: 'La date de fin est invalide.' }
+      : startedOn && endedOn && endedOn < startedOn
+        ? { endedOn: 'La date de fin doit être postérieure à la date de début.' }
+        : {}),
+  }
+}
+
 /**
  * Affiliates a public figure to an organisation, with an optional role and
  * period. The affiliation lives in the figure's stream; a current one to the
  * same organisation is refused.
  */
-export async function addOrganisationMembershipUseCase(
+export function addOrganisationMembershipUseCase(
   params: AddOrganisationMembershipParams,
 ): Promise<Either.Either<OrganisationMembership, string | FieldErrors>> {
-  const { contributor, organisationId, publicFigureId, runUnitOfWork, publicFigureSource } = params
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'add_membership')) {
-    const rank = requiredRank('add_membership')
-    return Either.left(`Vous devez être ${rank} pour affilier une personnalité.`)
-  }
-
-  const organisation = await Effect.runPromise(params.organisationRepo.findById(organisationId))
-  if (!organisation) {
-    return Either.left('Cette organisation est introuvable.')
-  }
-
-  const fieldErrors: FieldErrors = {}
-
-  const parts = publicFigureId ? await Effect.runPromise(publicFigureSource(publicFigureId)) : null
-  if (!parts) {
-    fieldErrors.publicFigureId = 'Choisissez une personnalité.'
-  }
-
-  if (params.role.trim().length > 100) {
-    fieldErrors.role = 'Le rôle ne doit pas dépasser 100 caractères.'
-  }
-
+  const { organisationId, publicFigureId, runUnitOfWork, publicFigureSource } = params
+  const role = params.role.trim()
   const startedOn = parseOptionalDate(params.startedOn)
-  if (startedOn === null) fieldErrors.startedOn = 'La date de début est invalide.'
-
   const endedOn = parseOptionalDate(params.endedOn)
-  if (endedOn === null) {
-    fieldErrors.endedOn = 'La date de fin est invalide.'
-  } else if (startedOn && endedOn && endedOn < startedOn) {
-    fieldErrors.endedOn = 'La date de fin doit être postérieure à la date de début.'
-  }
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return Either.left(fieldErrors)
-  }
-
   const membershipId = MembershipId.make(crypto.randomUUID())
-  const outcome = await runFormCommand(
+
+  const figureKnown = publicFigureId
+    ? Effect.map(publicFigureSource(publicFigureId), (parts) => parts !== null)
+    : Effect.succeed(false)
+
+  return runFormCommand(
     pipe(
-      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
-      Effect.andThen(
+      allowedTo(params.contributor, 'add_membership', 'affilier une personnalité'),
+      Effect.tap(() =>
+        Effect.flatMap(
+          params.organisationRepo.findById(organisationId),
+          found('Cette organisation est introuvable.'),
+        ),
+      ),
+      Effect.tap(() =>
+        Effect.flatMap(figureKnown, (known) =>
+          faultless(membershipFaults(known, role, startedOn, endedOn)),
+        ),
+      ),
+      Effect.tap(() =>
+        ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
+      ),
+      Effect.flatMap((contributor) =>
         runUnitOfWork((events) =>
           pipe(
             decideOnPublicFigure(events, publicFigureId, contributor.id, (state) =>
@@ -107,7 +112,7 @@ export async function addOrganisationMembershipUseCase(
                     addMembership({
                       membershipId,
                       organisationId,
-                      role: params.role.trim() || undefined,
+                      role: role || undefined,
                       startedOn: startedOn ?? undefined,
                       endedOn: endedOn ?? undefined,
                     }),
@@ -126,12 +131,7 @@ export async function addOrganisationMembershipUseCase(
           ),
         ),
       ),
+      Effect.flatMap(writtenMembership(membershipId)),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  const created = findMembership(outcome.right.state, membershipId)
-  if (!created) throw new Error('The membership just added is missing from the figure')
-
-  return Either.right(created)
 }

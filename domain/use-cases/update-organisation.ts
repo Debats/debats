@@ -3,13 +3,13 @@ import { generateOrganisationSlug, Organisation, OrganisationType } from '../ent
 import { editOrganisation } from '../aggregates/organisation'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { validateOrganisationFields } from './validate-organisation-fields'
+import { organisationFields } from './validate-organisation-fields'
 import { ensureStream } from './aggregate-stream'
-import { runCommand, uniqueTakenAs } from './run-command'
+import { allowedTo, found, free, signedIn } from './preconditions'
+import { runCommand, runFormCommand, uniqueTakenAs } from './run-command'
 import {
   decideOnOrganisation,
   organisationAggregate,
@@ -42,53 +42,40 @@ export interface ValidatedUpdate {
   organisationType: OrganisationType
 }
 
-/**
- * Validates update inputs without persisting.
- * Call before side effects (logo re-upload) to fail fast.
- */
-export async function validateUpdateOrganisation(
-  params: UpdateOrganisationParams,
-): Promise<Either.Either<ValidatedUpdate, string | FieldErrors>> {
-  const { contributor, organisationId, organisationRepo } = params
+const NAME_TAKEN = 'Une organisation avec ce nom existe déjà.'
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
+/** Who may edit the organisation, which one, with a form that holds up and a new name still free */
+const checked = (params: UpdateOrganisationParams) => {
+  const { organisationRepo } = params
+  const nameFree = (existing: Organisation) => {
+    const newSlug = generateOrganisationSlug(params.name)
+    return newSlug === existing.slug
+      ? Effect.void
+      : Effect.flatMap(organisationRepo.findBySlug(newSlug), free(NAME_TAKEN, 'name'))
   }
-
-  if (!canPerform(contributor.reputation, 'edit_organisation')) {
-    const rank = requiredRank('edit_organisation')
-    return Either.left(`Vous devez être ${rank} pour modifier une organisation.`)
-  }
-
-  const existing = await Effect.runPromise(organisationRepo.findById(organisationId))
-  if (!existing) {
-    return Either.left('Organisation introuvable.')
-  }
-
-  const validated = await validateOrganisationFields(params)
-  if (Either.isLeft(validated)) {
-    return Either.left(validated.left)
-  }
-
-  const newSlug = generateOrganisationSlug(params.name)
-  if (newSlug !== existing.slug) {
-    const conflicting = await Effect.runPromise(organisationRepo.findBySlug(newSlug))
-    if (conflicting) {
-      return Either.left({ name: 'Une organisation avec ce nom existe déjà.' })
-    }
-  }
-
-  return Either.right({ existing, organisationType: validated.right.organisationType })
+  return pipe(
+    allowedTo(params.contributor, 'edit_organisation', 'modifier une organisation'),
+    Effect.bindTo('contributor'),
+    Effect.bind('existing', () =>
+      Effect.flatMap(
+        organisationRepo.findById(params.organisationId),
+        found(organisationAggregate.notFound),
+      ),
+    ),
+    Effect.bind('organisationType', () =>
+      Effect.map(organisationFields(params), (validated) => validated.organisationType),
+    ),
+    Effect.tap(({ existing }) => nameFree(existing)),
+  )
 }
 
-/** Records the edit in the journal and rewards the contributor. */
-export async function persistUpdatedOrganisation(
+/** Records the edit in the organisation's stream and rewards the contributor */
+const persisted = (
   params: UpdateOrganisationParams,
+  contributor: ContributorIdentity,
   { existing, organisationType }: ValidatedUpdate,
-): Promise<Either.Either<Organisation, string>> {
-  const { runUnitOfWork } = params
-  const contributor = params.contributor!
-
+) => {
+  const { runUnitOfWork, organisationSource, revision } = params
   const edited = editOrganisation({
     name: params.name,
     acronym: params.acronym,
@@ -98,49 +85,70 @@ export async function persistUpdatedOrganisation(
     websiteUrl: params.websiteUrl,
     notorietySources: params.notorietySources,
   })
-
-  const outcome = await runCommand(
-    pipe(
-      ensureStream(organisationAggregate, runUnitOfWork, existing.id, params.organisationSource),
-      Effect.andThen(
-        runUnitOfWork((events) =>
-          pipe(
-            decideOnOrganisation(
+  return pipe(
+    ensureStream(organisationAggregate, runUnitOfWork, existing.id, organisationSource),
+    Effect.andThen(
+      runUnitOfWork((events) =>
+        pipe(
+          decideOnOrganisation(
+            events,
+            existing.id,
+            contributor.id,
+            () => Effect.succeed([edited]),
+            revision,
+          ),
+          Effect.tap(() =>
+            grant(
               events,
-              existing.id,
               contributor.id,
-              () => Effect.succeed([edited]),
-              params.revision,
-            ),
-            Effect.tap(() =>
-              grant(
-                events,
-                contributor.id,
-                rewardFor(contributor.id, 'edited_organisation', {
-                  relatedEntityType: 'organisation',
-                  relatedEntityId: existing.id,
-                }),
-              ),
+              rewardFor(contributor.id, 'edited_organisation', {
+                relatedEntityType: 'organisation',
+                relatedEntityId: existing.id,
+              }),
             ),
           ),
         ),
       ),
-      uniqueTakenAs('name', 'Une organisation avec ce nom existe déjà.'),
+    ),
+    uniqueTakenAs('name', NAME_TAKEN),
+    Effect.map(({ state }) => state.organisation),
+  )
+}
+
+/**
+ * Validates update inputs without persisting; hands the organisation as it
+ * stands and the parsed type. Call before side effects (logo re-upload) to fail fast.
+ */
+export function validateUpdateOrganisation(
+  params: UpdateOrganisationParams,
+): Promise<Either.Either<ValidatedUpdate, string | FieldErrors>> {
+  return runFormCommand(
+    Effect.map(checked(params), ({ existing, organisationType }) => ({
+      existing,
+      organisationType,
+    })),
+  )
+}
+
+/** Records the edit in the journal and rewards the contributor. */
+export function persistUpdatedOrganisation(
+  params: UpdateOrganisationParams,
+  validated: ValidatedUpdate,
+): Promise<Either.Either<Organisation, string>> {
+  return runCommand(
+    Effect.flatMap(signedIn(params.contributor), (contributor) =>
+      persisted(params, contributor, validated),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  return Either.right(outcome.right.state.organisation)
 }
 
 /** Validates and updates an organisation in one step. */
-export async function updateOrganisationUseCase(
+export function updateOrganisationUseCase(
   params: UpdateOrganisationParams,
 ): Promise<Either.Either<Organisation, string | FieldErrors>> {
-  const validation = await validateUpdateOrganisation(params)
-  if (Either.isLeft(validation)) {
-    return Either.left(validation.left)
-  }
-
-  return persistUpdatedOrganisation(params, validation.right)
+  return runFormCommand(
+    Effect.flatMap(checked(params), ({ contributor, existing, organisationType }) =>
+      persisted(params, contributor, { existing, organisationType }),
+    ),
+  )
 }
