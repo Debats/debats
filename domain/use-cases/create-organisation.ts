@@ -121,9 +121,12 @@ export function persistOrganisation(
 export function createOrganisationUseCase(
   params: CreateOrganisationParams,
 ): Promise<Either.Either<Organisation, string | FieldErrors>> {
-  return runFormCommand(
-    Effect.flatMap(checked(params), ({ contributor, validated }) =>
-      persisted(params, contributor, validated.organisationType),
-    ),
+  return runFormCommand(createOrganisationCommand(params))
+}
+
+/** The one-step command itself, for a process that runs it among others */
+export function createOrganisationCommand(params: CreateOrganisationParams) {
+  return Effect.flatMap(checked(params), ({ contributor, validated }) =>
+    persisted(params, contributor, validated.organisationType),
   )
 }

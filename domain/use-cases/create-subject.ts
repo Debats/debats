@@ -40,41 +40,41 @@ export type { FieldErrors }
 export function createSubjectUseCase(
   params: CreateSubjectParams,
 ): Promise<Either.Either<Subject, string | FieldErrors>> {
+  return runFormCommand(createSubjectCommand(params))
+}
+
+/** The command itself, for a process that runs it among others */
+export function createSubjectCommand(params: CreateSubjectParams) {
   const { title, presentation, problem, runUnitOfWork, subjectRepo } = params
   // The command names the subject: the stream exists from its first event
   const id = SubjectId.make(crypto.randomUUID())
 
-  return runFormCommand(
-    pipe(
-      Effect.all({
-        contributor: allowedTo(params.contributor, 'add_subject', 'créer un sujet'),
-        input: fieldsOf(CreateSubjectInput, FIELD_MESSAGES)({ title, presentation, problem }),
-      }),
-      Effect.tap(({ input }) =>
-        Effect.flatMap(
-          subjectRepo.findBySlug(generateSlug(input.title)),
-          free(TITLE_TAKEN, 'title'),
-        ),
-      ),
-      Effect.flatMap(({ contributor, input }) =>
-        runUnitOfWork((events) =>
-          pipe(
-            openStream(subjectAggregate, events, id, [addSubject(input)], contributor.id),
-            Effect.tap(() =>
-              grant(
-                events,
-                contributor.id,
-                rewardFor(contributor.id, 'added_subject', {
-                  relatedEntityType: 'subject',
-                  relatedEntityId: id,
-                }),
-              ),
+  return pipe(
+    Effect.all({
+      contributor: allowedTo(params.contributor, 'add_subject', 'créer un sujet'),
+      input: fieldsOf(CreateSubjectInput, FIELD_MESSAGES)({ title, presentation, problem }),
+    }),
+    Effect.tap(({ input }) =>
+      Effect.flatMap(subjectRepo.findBySlug(generateSlug(input.title)), free(TITLE_TAKEN, 'title')),
+    ),
+    Effect.flatMap(({ contributor, input }) =>
+      runUnitOfWork((events) =>
+        pipe(
+          openStream(subjectAggregate, events, id, [addSubject(input)], contributor.id),
+          Effect.tap(() =>
+            grant(
+              events,
+              contributor.id,
+              rewardFor(contributor.id, 'added_subject', {
+                relatedEntityType: 'subject',
+                relatedEntityId: id,
+              }),
             ),
           ),
         ),
       ),
-      uniqueTakenAs('title', TITLE_TAKEN),
-      Effect.map(({ state }) => state.subject),
     ),
+    uniqueTakenAs('title', TITLE_TAKEN),
+    Effect.map(({ state }) => state.subject),
   )
 }

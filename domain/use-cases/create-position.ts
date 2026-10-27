@@ -34,41 +34,40 @@ export type { FieldErrors }
 export function createPositionUseCase(
   params: CreatePositionParams,
 ): Promise<Either.Either<Position, string | FieldErrors>> {
+  return runFormCommand(createPositionCommand(params))
+}
+
+/** The command itself, for a process that runs it among others */
+export function createPositionCommand(params: CreatePositionParams) {
   const { subjectId, title, description, runUnitOfWork, subjectSource } = params
   // The command names the position, inside the subject's stream
   const positionId = PositionId.make(crypto.randomUUID())
 
-  return runFormCommand(
-    pipe(
-      Effect.all({
-        contributor: allowedTo(
-          params.contributor,
-          'add_position',
-          'proposer une nouvelle position',
-        ),
-        input: fieldsOf(CreatePositionInput, FIELD_MESSAGES)({ title, description }),
-      }),
-      Effect.tap(() => ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource)),
-      Effect.flatMap(({ contributor, input }) =>
-        runUnitOfWork((events) =>
-          pipe(
-            decideOnSubject(events, subjectId, contributor.id, () =>
-              Effect.succeed([addPosition({ positionId, ...input })]),
-            ),
-            Effect.tap(() =>
-              grant(
-                events,
-                contributor.id,
-                rewardFor(contributor.id, 'added_position_validated', {
-                  relatedEntityType: 'position',
-                  relatedEntityId: positionId,
-                }),
-              ),
+  return pipe(
+    Effect.all({
+      contributor: allowedTo(params.contributor, 'add_position', 'proposer une nouvelle position'),
+      input: fieldsOf(CreatePositionInput, FIELD_MESSAGES)({ title, description }),
+    }),
+    Effect.tap(() => ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource)),
+    Effect.flatMap(({ contributor, input }) =>
+      runUnitOfWork((events) =>
+        pipe(
+          decideOnSubject(events, subjectId, contributor.id, () =>
+            Effect.succeed([addPosition({ positionId, ...input })]),
+          ),
+          Effect.tap(() =>
+            grant(
+              events,
+              contributor.id,
+              rewardFor(contributor.id, 'added_position_validated', {
+                relatedEntityType: 'position',
+                relatedEntityId: positionId,
+              }),
             ),
           ),
         ),
       ),
-      Effect.flatMap(writtenPosition(positionId)),
     ),
+    Effect.flatMap(writtenPosition(positionId)),
   )
 }

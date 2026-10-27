@@ -41,35 +41,38 @@ function dedupe(assignments: OccupationAssignmentInput[]): OccupationAssignmentI
 export function setPublicFigureOccupationsUseCase(
   params: SetPublicFigureOccupationsParams,
 ): Promise<Either.Either<Revision, string>> {
+  return runCommand(setPublicFigureOccupationsCommand(params))
+}
+
+/** The command itself, for a process that runs it among others */
+export function setPublicFigureOccupationsCommand(params: SetPublicFigureOccupationsParams) {
   const { publicFigureId, revision, runUnitOfWork, publicFigureSource, occupationRepo } = params
   const assignments = dedupe(params.assignments)
   const ids = assignments.map((a) => a.occupationId)
 
-  return runCommand(
-    pipe(
-      allowedTo(params.contributor, 'assign_occupation', 'modifier les métiers d’une personnalité'),
-      Effect.tap(() =>
-        Effect.filterOrFail(
-          occupationRepo.findByIds(ids),
-          (listed) => listed.length === ids.length,
-          () => new Rejected('Un des métiers choisis n’existe plus.'),
-        ),
+  return pipe(
+    allowedTo(params.contributor, 'assign_occupation', 'modifier les métiers d’une personnalité'),
+    Effect.tap(() =>
+      Effect.filterOrFail(
+        occupationRepo.findByIds(ids),
+        (listed) => listed.length === ids.length,
+        () => new Rejected('Un des métiers choisis n’existe plus.'),
       ),
-      Effect.tap(() =>
-        ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
-      ),
-      Effect.flatMap((contributor) =>
-        runUnitOfWork((events) =>
-          decideOnPublicFigure(
-            events,
-            publicFigureId,
-            contributor.id,
-            () => Effect.succeed([setOccupations(assignments)]),
-            revision,
-          ),
-        ),
-      ),
-      Effect.map(({ revision }) => revision),
     ),
+    Effect.tap(() =>
+      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
+    ),
+    Effect.flatMap((contributor) =>
+      runUnitOfWork((events) =>
+        decideOnPublicFigure(
+          events,
+          publicFigureId,
+          contributor.id,
+          () => Effect.succeed([setOccupations(assignments)]),
+          revision,
+        ),
+      ),
+    ),
+    Effect.map(({ revision }) => revision),
   )
 }

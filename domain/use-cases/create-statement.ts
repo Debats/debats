@@ -61,6 +61,11 @@ const authorKnown = (
 export function createStatementUseCase(
   params: CreateStatementParams,
 ): Promise<Either.Either<Statement, string | FieldErrors>> {
+  return runFormCommand(createStatementCommand(params))
+}
+
+/** The command itself, for a process that runs it among others */
+export function createStatementCommand(params: CreateStatementParams) {
   const { subjectId, author, positionId, statementType, runUnitOfWork, argumentRepo } = params
   const { sourceName, sourceUrl, quote, statedAt } = params
   // The command names the statement: the stream exists from its first event
@@ -75,63 +80,57 @@ export function createStatementUseCase(
     ),
   )
 
-  return runFormCommand(
-    pipe(
-      Effect.all({
-        contributor: allowedTo(
-          params.contributor,
-          'add_statement',
-          'ajouter une prise de position',
-        ),
-        fields: statementFields({ sourceName, sourceUrl, quote, statedAt }),
-      }),
-      Effect.tap(() => authorKnown(author, params.publicFigureRepo, params.organisationRepo)),
-      Effect.tap(() => positionOnSubject),
-      Effect.bind('validated', ({ contributor }) =>
-        validateStatementArguments({ contributor, input: params.arguments, argumentRepo }),
-      ),
-      // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
-      Effect.flatMap(({ contributor, fields, validated }) =>
-        runUnitOfWork((events) =>
-          pipe(
-            recordProposedArguments(events, contributor.id, validated),
-            Effect.flatMap((recorded) =>
-              pipe(
-                openStream(
-                  statementAggregate,
-                  events,
-                  id,
-                  [
-                    addStatement({
-                      author,
-                      subjectId,
-                      positionId,
-                      statementType,
-                      sourceName: fields.sourceName,
-                      sourceUrl: fields.sourceUrl,
-                      quote: fields.quote,
-                      statedAt: new Date(fields.statedAt),
-                      argumentIds: recorded.argumentIds,
-                    }),
-                  ],
-                  contributor.id,
-                ),
-                Effect.tap(() =>
-                  grantEach(events, contributor.id, [
-                    rewardFor(contributor.id, 'added_statement_validated', {
-                      relatedEntityType: 'statement',
-                      relatedEntityId: id,
-                    }),
-                    ...argumentRewards(contributor.id, recorded),
-                  ]),
-                ),
+  return pipe(
+    Effect.all({
+      contributor: allowedTo(params.contributor, 'add_statement', 'ajouter une prise de position'),
+      fields: statementFields({ sourceName, sourceUrl, quote, statedAt }),
+    }),
+    Effect.tap(() => authorKnown(author, params.publicFigureRepo, params.organisationRepo)),
+    Effect.tap(() => positionOnSubject),
+    Effect.bind('validated', ({ contributor }) =>
+      validateStatementArguments({ contributor, input: params.arguments, argumentRepo }),
+    ),
+    // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
+    Effect.flatMap(({ contributor, fields, validated }) =>
+      runUnitOfWork((events) =>
+        pipe(
+          recordProposedArguments(events, contributor.id, validated),
+          Effect.flatMap((recorded) =>
+            pipe(
+              openStream(
+                statementAggregate,
+                events,
+                id,
+                [
+                  addStatement({
+                    author,
+                    subjectId,
+                    positionId,
+                    statementType,
+                    sourceName: fields.sourceName,
+                    sourceUrl: fields.sourceUrl,
+                    quote: fields.quote,
+                    statedAt: new Date(fields.statedAt),
+                    argumentIds: recorded.argumentIds,
+                  }),
+                ],
+                contributor.id,
+              ),
+              Effect.tap(() =>
+                grantEach(events, contributor.id, [
+                  rewardFor(contributor.id, 'added_statement_validated', {
+                    relatedEntityType: 'statement',
+                    relatedEntityId: id,
+                  }),
+                  ...argumentRewards(contributor.id, recorded),
+                ]),
               ),
             ),
           ),
         ),
       ),
-      uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
-      Effect.map(({ state }) => state.statement),
     ),
+    uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
+    Effect.map(({ state }) => state.statement),
   )
 }

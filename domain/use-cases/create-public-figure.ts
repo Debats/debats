@@ -102,7 +102,10 @@ export function persistPublicFigure(
 export function createPublicFigureUseCase(
   params: CreatePublicFigureParams,
 ): Promise<Either.Either<PublicFigure, string | FieldErrors>> {
-  return runFormCommand(
-    Effect.flatMap(checked(params), (contributor) => persisted(params, contributor)),
-  )
+  return runFormCommand(createPublicFigureCommand(params))
+}
+
+/** The one-step command itself, for a process that runs it among others */
+export function createPublicFigureCommand(params: CreatePublicFigureParams) {
+  return Effect.flatMap(checked(params), (contributor) => persisted(params, contributor))
 }

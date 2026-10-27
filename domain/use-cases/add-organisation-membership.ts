@@ -75,6 +75,11 @@ function membershipFaults(
 export function addOrganisationMembershipUseCase(
   params: AddOrganisationMembershipParams,
 ): Promise<Either.Either<OrganisationMembership, string | FieldErrors>> {
+  return runFormCommand(addOrganisationMembershipCommand(params))
+}
+
+/** The command itself, for a process that runs it among others */
+export function addOrganisationMembershipCommand(params: AddOrganisationMembershipParams) {
   const { organisationId, publicFigureId, runUnitOfWork, publicFigureSource } = params
   const role = params.role.trim()
   const startedOn = parseOptionalDate(params.startedOn)
@@ -85,53 +90,51 @@ export function addOrganisationMembershipUseCase(
     ? Effect.map(publicFigureSource(publicFigureId), (parts) => parts !== null)
     : Effect.succeed(false)
 
-  return runFormCommand(
-    pipe(
-      allowedTo(params.contributor, 'add_membership', 'affilier une personnalité'),
-      Effect.tap(() =>
-        Effect.flatMap(
-          params.organisationRepo.findById(organisationId),
-          found('Cette organisation est introuvable.'),
-        ),
+  return pipe(
+    allowedTo(params.contributor, 'add_membership', 'affilier une personnalité'),
+    Effect.tap(() =>
+      Effect.flatMap(
+        params.organisationRepo.findById(organisationId),
+        found('Cette organisation est introuvable.'),
       ),
-      Effect.tap(() =>
-        Effect.flatMap(figureKnown, (known) =>
-          faultless(membershipFaults(known, role, startedOn, endedOn)),
-        ),
+    ),
+    Effect.tap(() =>
+      Effect.flatMap(figureKnown, (known) =>
+        faultless(membershipFaults(known, role, startedOn, endedOn)),
       ),
-      Effect.tap(() =>
-        ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
-      ),
-      Effect.flatMap((contributor) =>
-        runUnitOfWork((events) =>
-          pipe(
-            decideOnPublicFigure(events, publicFigureId, contributor.id, (state) =>
-              hasCurrentMembership(state, organisationId)
-                ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
-                : Effect.succeed([
-                    addMembership({
-                      membershipId,
-                      organisationId,
-                      role: role || undefined,
-                      startedOn: startedOn ?? undefined,
-                      endedOn: endedOn ?? undefined,
-                    }),
-                  ]),
-            ),
-            Effect.tap(() =>
-              grant(
-                events,
-                contributor.id,
-                rewardFor(contributor.id, 'added_membership', {
-                  relatedEntityType: 'organisation_membership',
-                  relatedEntityId: membershipId,
-                }),
-              ),
+    ),
+    Effect.tap(() =>
+      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
+    ),
+    Effect.flatMap((contributor) =>
+      runUnitOfWork((events) =>
+        pipe(
+          decideOnPublicFigure(events, publicFigureId, contributor.id, (state) =>
+            hasCurrentMembership(state, organisationId)
+              ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
+              : Effect.succeed([
+                  addMembership({
+                    membershipId,
+                    organisationId,
+                    role: role || undefined,
+                    startedOn: startedOn ?? undefined,
+                    endedOn: endedOn ?? undefined,
+                  }),
+                ]),
+          ),
+          Effect.tap(() =>
+            grant(
+              events,
+              contributor.id,
+              rewardFor(contributor.id, 'added_membership', {
+                relatedEntityType: 'organisation_membership',
+                relatedEntityId: membershipId,
+              }),
             ),
           ),
         ),
       ),
-      Effect.flatMap(writtenMembership(membershipId)),
     ),
+    Effect.flatMap(writtenMembership(membershipId)),
   )
 }
