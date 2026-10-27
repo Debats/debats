@@ -1,12 +1,12 @@
 import { Either, Effect, pipe } from 'effect'
+import { Position } from '../entities/position'
 import { Statement, StatementType } from '../entities/statement'
 import { editStatement, staysOnItsSubject } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
-import { validateStatementFields } from './validate-statement-fields'
+import { statementFields } from './validate-statement-fields'
 import {
   ARGUMENT_JUST_CREATED,
   argumentRewards,
@@ -17,6 +17,7 @@ import {
 import { grantEach, rewardFor } from './reward'
 import { decideOnStatement, statementAggregate, StatementSource } from './statement-stream'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo, found } from './preconditions'
 import { runFormCommand, uniqueTakenAs } from './run-command'
 
 const OTHER_SUBJECT = 'La nouvelle position doit appartenir au même sujet.'
@@ -43,85 +44,56 @@ type UpdateStatementParams = {
 
 export type { FieldErrors }
 
-export async function updateStatementUseCase(
+export function updateStatementUseCase(
   params: UpdateStatementParams,
 ): Promise<Either.Either<Statement, string | FieldErrors>> {
-  const {
-    contributor,
-    statementId,
-    positionId,
-    statementType,
-    sourceName,
-    sourceUrl,
-    quote,
-    statedAt,
-    runUnitOfWork,
-    statementSource,
-    positionRepo,
-    argumentRepo,
-  } = params
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'edit_statement')) {
-    const rank = requiredRank('edit_statement')
-    return Either.left(`Vous devez être ${rank} pour modifier une prise de position.`)
-  }
-
-  const validationError = validateStatementFields({ sourceName, sourceUrl, quote, statedAt })
-  if (validationError) {
-    return Either.left(validationError)
-  }
-
-  const parts = await Effect.runPromise(statementSource(statementId))
-  if (!parts) {
-    return Either.left('Prise de position introuvable.')
-  }
-  const existing = parts.statement
-
-  const newPosition = await Effect.runPromise(positionRepo.findById(positionId))
-  if (!newPosition) {
-    return Either.left('La position sélectionnée est introuvable.')
-  }
+  const { statementId, positionId, statementType, revision, runUnitOfWork } = params
+  const { sourceName, sourceUrl, quote, statedAt, statementSource, positionRepo } = params
 
   // The stream decides this below; the tables answer for the streams opened before they said their subject
-  if (positionId !== existing.positionId) {
-    const currentPosition = await Effect.runPromise(positionRepo.findById(existing.positionId))
-    if (!currentPosition || newPosition.subjectId !== currentPosition.subjectId) {
-      return Either.left(OTHER_SUBJECT)
-    }
-  }
+  const onTheSameSubject = (existing: Statement, newPosition: Position) =>
+    positionId === existing.positionId
+      ? Effect.void
+      : Effect.filterOrFail(
+          positionRepo.findById(existing.positionId),
+          (current) => current !== null && current.subjectId === newPosition.subjectId,
+          () => new Rejected(OTHER_SUBJECT),
+        )
 
-  const validatedArguments = await validateStatementArguments({
-    contributor,
-    input: params.arguments,
-    argumentRepo,
-  })
-  if (Either.isLeft(validatedArguments)) {
-    return Either.left(validatedArguments.left)
-  }
-
-  const edited = (argumentIds: readonly string[]) =>
-    editStatement({
-      positionId,
-      statementType,
-      sourceName,
-      sourceUrl: sourceUrl || undefined,
-      quote,
-      statedAt: new Date(statedAt),
-      argumentIds,
-    })
-
-  // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
-  const outcome = await runFormCommand(
+  return runFormCommand(
     pipe(
-      ensureStream(statementAggregate, runUnitOfWork, statementId, statementSource),
-      Effect.andThen(
+      Effect.all({
+        contributor: allowedTo(
+          params.contributor,
+          'edit_statement',
+          'modifier une prise de position',
+        ),
+        fields: statementFields({ sourceName, sourceUrl, quote, statedAt }),
+        existing: Effect.map(
+          Effect.flatMap(statementSource(statementId), found(statementAggregate.notFound)),
+          (parts) => parts.statement,
+        ),
+        newPosition: Effect.flatMap(
+          positionRepo.findById(positionId),
+          found('La position sélectionnée est introuvable.'),
+        ),
+      }),
+      Effect.tap(({ existing, newPosition }) => onTheSameSubject(existing, newPosition)),
+      Effect.bind('validated', ({ contributor }) =>
+        validateStatementArguments({
+          contributor,
+          input: params.arguments,
+          argumentRepo: params.argumentRepo,
+        }),
+      ),
+      Effect.tap(() =>
+        ensureStream(statementAggregate, runUnitOfWork, statementId, statementSource),
+      ),
+      // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
+      Effect.flatMap(({ contributor, fields, newPosition, validated }) =>
         runUnitOfWork((events) =>
           pipe(
-            recordProposedArguments(events, contributor.id, validatedArguments.right),
+            recordProposedArguments(events, contributor.id, validated),
             Effect.flatMap((recorded) =>
               pipe(
                 decideOnStatement(
@@ -130,9 +102,19 @@ export async function updateStatementUseCase(
                   contributor.id,
                   (state) =>
                     staysOnItsSubject(state, newPosition.subjectId)
-                      ? Effect.succeed([edited(recorded.argumentIds)])
+                      ? Effect.succeed([
+                          editStatement({
+                            positionId,
+                            statementType,
+                            sourceName: fields.sourceName,
+                            sourceUrl: fields.sourceUrl,
+                            quote: fields.quote,
+                            statedAt: new Date(fields.statedAt),
+                            argumentIds: recorded.argumentIds,
+                          }),
+                        ])
                       : Effect.fail(new Rejected(OTHER_SUBJECT, 'positionId')),
-                  params.revision,
+                  revision,
                 ),
                 Effect.tap(() =>
                   grantEach(events, contributor.id, [
@@ -149,9 +131,7 @@ export async function updateStatementUseCase(
         ),
       ),
       uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
+      Effect.map(({ state }) => state.statement),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  return Either.right(outcome.right.state.statement)
 }

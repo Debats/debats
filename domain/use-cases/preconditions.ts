@@ -1,6 +1,6 @@
-import { Effect, pipe } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { ArrayFormatter } from 'effect/ParseResult'
+import { ArrayFormatter, ParseError } from 'effect/ParseResult'
 import { Action, canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors, Invalid, Rejected } from './types'
 
@@ -56,13 +56,35 @@ export const fieldsOf =
   <A, I>(schema: S.Schema<A, I>, messages: Record<string, string>) =>
   (input: unknown): Effect.Effect<A, Invalid | Rejected> =>
     Effect.mapError(S.decodeUnknown(schema, { errors: 'all' })(input), (error) => {
-      const fields: FieldErrors = {}
-      for (const issue of ArrayFormatter.formatErrorSync(error)) {
-        const field = issue.path.join('.')
-        if (messages[field]) fields[field] = messages[field]
-      }
-      return Object.keys(fields).length > 0 ? new Invalid(fields) : new Rejected(INVALID_FORM)
+      const faults = faultsIn(error, messages)
+      return Object.keys(faults).length > 0 ? new Invalid(faults) : new Rejected(INVALID_FORM)
     })
+
+/**
+ * The fields of the input a schema finds at fault, named with the messages
+ * of the form, for a form that gathers faults from more than one check
+ * before refusing. Empty when the input holds up.
+ */
+export const faultsOf =
+  <A, I>(schema: S.Schema<A, I>, messages: Record<string, string>) =>
+  (input: unknown): FieldErrors =>
+    Either.match(S.decodeUnknownEither(schema, { errors: 'all' })(input), {
+      onLeft: (error) => faultsIn(error, messages),
+      onRight: () => ({}),
+    })
+
+/** A form refused on the faults gathered, or nothing to say */
+export const faultless = (faults: FieldErrors): Effect.Effect<void, Invalid> =>
+  Object.keys(faults).length > 0 ? Effect.fail(new Invalid(faults)) : Effect.void
+
+function faultsIn(error: ParseError, messages: Record<string, string>): FieldErrors {
+  const faults: FieldErrors = {}
+  for (const issue of ArrayFormatter.formatErrorSync(error)) {
+    const field = issue.path.join('.')
+    if (messages[field]) faults[field] = messages[field]
+  }
+  return faults
+}
 
 /** What the read side must find: nothing is refused with the message, on the field if one is to blame */
 export const found =

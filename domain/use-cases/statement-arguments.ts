@@ -1,11 +1,11 @@
-import { Effect, Either } from 'effect'
+import { Effect, pipe } from 'effect'
 import { ArgumentId, sameArgumentTitle } from '../entities/argument'
 import { addArgument, argumentStream } from '../aggregates/argument'
 import { ConcurrencyError, EventStore, UniqueTaken } from '../events/event-store'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { DatabaseError } from '../repositories/errors'
-import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity, FieldErrors } from './types'
+import { ContributorIdentity, Rejected } from './types'
+import { mayPerform } from './preconditions'
 import { Grant, rewardFor } from './reward'
 
 /** A new argument proposed from the statement form */
@@ -35,16 +35,19 @@ export const ARGUMENT_JUST_CREATED =
 const TITLE_MIN = 3
 const TITLE_MAX = 255
 
+const wellFormed = (proposed: NewArgumentInput) =>
+  proposed.title.length >= TITLE_MIN && proposed.title.length <= TITLE_MAX
+
 /**
  * Checks that the contributor may mobilise arguments, that the chosen ones
  * exist, and that the proposed ones are well-formed. A proposed title that
  * already exists anywhere on the site is reused rather than duplicated.
  */
-export async function validateStatementArguments(params: {
+export function validateStatementArguments(params: {
   contributor: ContributorIdentity
   input: StatementArgumentsInput
   argumentRepo: ArgumentRepository
-}): Promise<Either.Either<ValidatedStatementArguments, string | FieldErrors>> {
+}): Effect.Effect<ValidatedStatementArguments, Rejected | DatabaseError> {
   const { contributor, input, argumentRepo } = params
   const argumentIds = Array.from(new Set(input.argumentIds.filter(Boolean)))
   const newArguments = input.newArguments.map((a) => ({
@@ -53,40 +56,51 @@ export async function validateStatementArguments(params: {
   }))
 
   if (argumentIds.length === 0 && newArguments.length === 0) {
-    return Either.right(NONE)
+    return Effect.succeed(NONE)
   }
 
-  if (!canPerform(contributor.reputation, 'add_argument')) {
-    const rank = requiredRank('add_argument')
-    return Either.left(`Vous devez être ${rank} pour mobiliser des arguments.`)
-  }
-
-  const malformed = newArguments.find(
-    (a) => a.title.length < TITLE_MIN || a.title.length > TITLE_MAX,
+  return pipe(
+    mayPerform('add_argument', 'mobiliser des arguments')(contributor),
+    Effect.filterOrFail(
+      () => newArguments.every(wellFormed),
+      () =>
+        new Rejected(
+          `Le titre d’un argument fait de ${TITLE_MIN} à ${TITLE_MAX} caractères.`,
+          'arguments',
+        ),
+    ),
+    Effect.andThen(argumentRepo.findByIds(argumentIds)),
+    Effect.filterOrFail(
+      (known) => known.length === argumentIds.length,
+      () => new Rejected('Un des arguments choisis n’existe plus.'),
+    ),
+    Effect.andThen(
+      Effect.forEach(newArguments, (proposed) =>
+        Effect.map(argumentRepo.findByTitle(proposed.title), (existing) => ({
+          proposed,
+          existing,
+        })),
+      ),
+    ),
+    Effect.map((proposals) => sortedOut(argumentIds, proposals)),
   )
-  if (malformed) {
-    return Either.left({
-      arguments: `Le titre d’un argument fait de ${TITLE_MIN} à ${TITLE_MAX} caractères.`,
-    })
-  }
+}
 
-  const known = await Effect.runPromise(argumentRepo.findByIds(argumentIds))
-  if (known.length !== argumentIds.length) {
-    return Either.left('Un des arguments choisis n’existe plus.')
-  }
-
+/** A proposal whose title the site knows is that argument; the others are proposed once each */
+function sortedOut(
+  argumentIds: string[],
+  proposals: readonly { proposed: NewArgumentInput; existing: { id: string } | null }[],
+): ValidatedStatementArguments {
   const existingIds = new Set(argumentIds)
   const toCreate: NewArgumentInput[] = []
-  for (const proposed of newArguments) {
-    const existing = await Effect.runPromise(argumentRepo.findByTitle(proposed.title))
+  for (const { proposed, existing } of proposals) {
     if (existing) {
       existingIds.add(existing.id)
     } else if (!toCreate.some((a) => sameArgumentTitle(a.title, proposed.title))) {
       toCreate.push(proposed)
     }
   }
-
-  return Either.right({ existingIds: Array.from(existingIds), toCreate })
+  return { existingIds: Array.from(existingIds), toCreate }
 }
 
 /** Every argument the statement will mobilise, and among them those just proposed */

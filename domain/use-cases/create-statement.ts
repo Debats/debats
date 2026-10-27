@@ -5,10 +5,9 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ArgumentRepository } from '../repositories/argument-repository'
-import { ContributorIdentity, FieldErrors } from './types'
-import { validateStatementFields } from './validate-statement-fields'
+import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { statementFields } from './validate-statement-fields'
 import {
   ARGUMENT_JUST_CREATED,
   argumentRewards,
@@ -18,6 +17,7 @@ import {
 } from './statement-arguments'
 import { grantEach, rewardFor } from './reward'
 import { openStream } from './aggregate-stream'
+import { allowedTo, found } from './preconditions'
 import { runFormCommand, uniqueTakenAs } from './run-command'
 import { statementAggregate } from './statement-stream'
 
@@ -42,123 +42,96 @@ type CreateStatementParams = {
 
 export type { FieldErrors }
 
-/** The author must exist; the message names what was looked for. */
-async function findAuthorError(
+/** The author must exist; the message names what was looked for */
+const authorKnown = (
   author: StatementAuthor,
   publicFigureRepo: PublicFigureRepository,
   organisationRepo: OrganisationRepository,
-): Promise<string | null> {
-  if (author.kind === 'organisation') {
-    const organisation = await Effect.runPromise(organisationRepo.findById(author.id))
-    return organisation ? null : 'L’organisation sélectionnée est introuvable.'
-  }
-  const publicFigure = await Effect.runPromise(publicFigureRepo.findById(author.id))
-  return publicFigure ? null : 'La personnalité sélectionnée est introuvable.'
-}
+) =>
+  author.kind === 'organisation'
+    ? Effect.flatMap(
+        organisationRepo.findById(author.id),
+        found('L’organisation sélectionnée est introuvable.'),
+      )
+    : Effect.flatMap(
+        publicFigureRepo.findById(author.id),
+        found('La personnalité sélectionnée est introuvable.'),
+      )
 
-export async function createStatementUseCase(
+export function createStatementUseCase(
   params: CreateStatementParams,
 ): Promise<Either.Either<Statement, string | FieldErrors>> {
-  const {
-    contributor,
-    subjectId,
-    author,
-    positionId,
-    statementType,
-    sourceName,
-    sourceUrl,
-    quote,
-    statedAt,
-    runUnitOfWork,
-    positionRepo,
-    publicFigureRepo,
-    organisationRepo,
-    argumentRepo,
-  } = params
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'add_statement')) {
-    const rank = requiredRank('add_statement')
-    return Either.left(`Vous devez être ${rank} pour ajouter une prise de position.`)
-  }
-
-  const validationError = validateStatementFields({ sourceName, sourceUrl, quote, statedAt })
-  if (validationError) {
-    return Either.left(validationError)
-  }
-
-  const authorError = await findAuthorError(author, publicFigureRepo, organisationRepo)
-  if (authorError) {
-    return Either.left(authorError)
-  }
-
-  const position = await Effect.runPromise(positionRepo.findById(positionId))
-  if (!position) {
-    return Either.left('La position sélectionnée est introuvable.')
-  }
-
-  if (position.subjectId !== subjectId) {
-    return Either.left("La position sélectionnée n'appartient pas à ce sujet.")
-  }
-
-  const validatedArguments = await validateStatementArguments({
-    contributor,
-    input: params.arguments,
-    argumentRepo,
-  })
-  if (Either.isLeft(validatedArguments)) {
-    return Either.left(validatedArguments.left)
-  }
-
+  const { subjectId, author, positionId, statementType, runUnitOfWork, argumentRepo } = params
+  const { sourceName, sourceUrl, quote, statedAt } = params
   // The command names the statement: the stream exists from its first event
   const id = StatementId.make(crypto.randomUUID())
-  const added = (argumentIds: readonly string[]) =>
-    addStatement({
-      author,
-      subjectId,
-      positionId,
-      statementType,
-      sourceName,
-      sourceUrl: sourceUrl || undefined,
-      quote,
-      statedAt: new Date(statedAt),
-      argumentIds,
-    })
 
-  // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
-  const outcome = await runFormCommand(
+  const positionOnSubject = pipe(
+    params.positionRepo.findById(positionId),
+    Effect.flatMap(found('La position sélectionnée est introuvable.')),
+    Effect.filterOrFail(
+      (position) => position.subjectId === subjectId,
+      () => new Rejected("La position sélectionnée n'appartient pas à ce sujet."),
+    ),
+  )
+
+  return runFormCommand(
     pipe(
-      runUnitOfWork((events) =>
-        pipe(
-          recordProposedArguments(events, contributor.id, validatedArguments.right),
-          Effect.flatMap((recorded) =>
-            pipe(
-              openStream(
-                statementAggregate,
-                events,
-                id,
-                [added(recorded.argumentIds)],
-                contributor.id,
-              ),
-              Effect.tap(() =>
-                grantEach(events, contributor.id, [
-                  rewardFor(contributor.id, 'added_statement_validated', {
-                    relatedEntityType: 'statement',
-                    relatedEntityId: id,
-                  }),
-                  ...argumentRewards(contributor.id, recorded),
-                ]),
+      Effect.all({
+        contributor: allowedTo(
+          params.contributor,
+          'add_statement',
+          'ajouter une prise de position',
+        ),
+        fields: statementFields({ sourceName, sourceUrl, quote, statedAt }),
+      }),
+      Effect.tap(() => authorKnown(author, params.publicFigureRepo, params.organisationRepo)),
+      Effect.tap(() => positionOnSubject),
+      Effect.bind('validated', ({ contributor }) =>
+        validateStatementArguments({ contributor, input: params.arguments, argumentRepo }),
+      ),
+      // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
+      Effect.flatMap(({ contributor, fields, validated }) =>
+        runUnitOfWork((events) =>
+          pipe(
+            recordProposedArguments(events, contributor.id, validated),
+            Effect.flatMap((recorded) =>
+              pipe(
+                openStream(
+                  statementAggregate,
+                  events,
+                  id,
+                  [
+                    addStatement({
+                      author,
+                      subjectId,
+                      positionId,
+                      statementType,
+                      sourceName: fields.sourceName,
+                      sourceUrl: fields.sourceUrl,
+                      quote: fields.quote,
+                      statedAt: new Date(fields.statedAt),
+                      argumentIds: recorded.argumentIds,
+                    }),
+                  ],
+                  contributor.id,
+                ),
+                Effect.tap(() =>
+                  grantEach(events, contributor.id, [
+                    rewardFor(contributor.id, 'added_statement_validated', {
+                      relatedEntityType: 'statement',
+                      relatedEntityId: id,
+                    }),
+                    ...argumentRewards(contributor.id, recorded),
+                  ]),
+                ),
               ),
             ),
           ),
         ),
       ),
       uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
+      Effect.map(({ state }) => state.statement),
     ),
   )
-
-  return Either.map(outcome, ({ state }) => state.statement)
 }

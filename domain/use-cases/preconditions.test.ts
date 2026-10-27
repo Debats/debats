@@ -5,6 +5,8 @@ import { Invalid, Rejected } from './types'
 import {
   allowedTo,
   decoded,
+  faultless,
+  faultsOf,
   fieldsOf,
   found,
   free,
@@ -75,6 +77,23 @@ describe('fieldsOf', () => {
   it('refuses the whole form when the field at fault has no message', async () => {
     expect(await run(fieldsOf(Input, messages)({ title: 'Le SMIC', body: 3 }))).toEqual(
       Either.left(new Rejected(INVALID_FORM)),
+    )
+  })
+})
+
+describe('faultsOf and faultless', () => {
+  const Input = S.Struct({ title: S.String.pipe(S.minLength(3)) })
+  const messages = { title: 'Le titre est trop court.' }
+
+  it('gathers the faults a form adds to before refusing', async () => {
+    expect(faultsOf(Input, messages)({ title: 'Le SMIC' })).toEqual({})
+    expect(faultsOf(Input, messages)({ title: 'Ab' })).toEqual({
+      title: 'Le titre est trop court.',
+    })
+
+    expect(await run(faultless({}))).toEqual(Either.right(undefined))
+    expect(await run(faultless({ title: 'Trop court.' }))).toEqual(
+      Either.left(new Invalid({ title: 'Trop court.' })),
     )
   })
 })

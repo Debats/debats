@@ -16,67 +16,70 @@ const proposed = {
   description: 'Chacun doit pouvoir décider pour lui-même en fin de vie.',
 }
 
+const validate = (params: Parameters<typeof validateStatementArguments>[0]) =>
+  Effect.runPromise(Effect.either(validateStatementArguments(params)))
+
 describe('validateStatementArguments', () => {
   it('accepts an empty selection from anyone', async () => {
-    const result = await validateStatementArguments({
+    const result = await validate({
       contributor: meteque,
       input: { argumentIds: [], newArguments: [] },
       argumentRepo: fakeArgumentRepo(),
     })
 
-    expect(Either.isRight(result) && result.right).toEqual({ existingIds: [], toCreate: [] })
+    expect(result).toEqual(Either.right({ existingIds: [], toCreate: [] }))
   })
 
   it('requires the Éloquent rank as soon as an argument is involved', async () => {
     const existing = sampleArgument()
-    const result = await validateStatementArguments({
+    const result = await validate({
       contributor: meteque,
       input: { argumentIds: [existing.id], newArguments: [] },
       argumentRepo: fakeArgumentRepo([existing]),
     })
 
-    expect(Either.isLeft(result) && result.left).toContain('Éloquent')
+    expect(Either.isLeft(result) && result.left).toMatchObject({
+      _tag: 'Rejected',
+      message: expect.stringContaining('Éloquent'),
+    })
   })
 
   it('refuses an argument that no longer exists', async () => {
-    const result = await validateStatementArguments({
+    const result = await validate({
       contributor: eloquent,
       input: { argumentIds: ['gone'], newArguments: [] },
       argumentRepo: fakeArgumentRepo(),
     })
 
-    expect(Either.isLeft(result) && result.left).toContain('existe plus')
+    expect(Either.isLeft(result) && result.left).toMatchObject({
+      message: expect.stringContaining('existe plus'),
+    })
   })
 
-  it('reports a malformed proposal as a field error', async () => {
-    const result = await validateStatementArguments({
+  it('blames a malformed proposal on the arguments field', async () => {
+    const result = await validate({
       contributor: eloquent,
       input: { argumentIds: [], newArguments: [{ title: 'Ok', description: '' }] },
       argumentRepo: fakeArgumentRepo(),
     })
 
-    expect(
-      Either.isLeft(result) && typeof result.left !== 'string' && result.left.arguments,
-    ).toBeDefined()
+    expect(Either.isLeft(result) && result.left).toMatchObject({ field: 'arguments' })
   })
 
   it('reuses an existing argument when a proposal has the same title', async () => {
     const existing = sampleArgument('Liberté de choix')
-    const result = await validateStatementArguments({
+    const result = await validate({
       contributor: eloquent,
       input: { argumentIds: [], newArguments: [{ ...proposed, title: ' liberté de CHOIX ' }] },
       argumentRepo: fakeArgumentRepo([existing]),
     })
 
-    expect(Either.isRight(result) && result.right).toEqual({
-      existingIds: [existing.id],
-      toCreate: [],
-    })
+    expect(result).toEqual(Either.right({ existingIds: [existing.id], toCreate: [] }))
   })
 
   it('keeps one proposal per title and the chosen arguments once', async () => {
     const existing = sampleArgument()
-    const result = await validateStatementArguments({
+    const result = await validate({
       contributor: eloquent,
       input: {
         argumentIds: [existing.id, existing.id],
@@ -85,10 +88,7 @@ describe('validateStatementArguments', () => {
       argumentRepo: fakeArgumentRepo([existing]),
     })
 
-    expect(Either.isRight(result) && result.right).toEqual({
-      existingIds: [existing.id],
-      toCreate: [proposed],
-    })
+    expect(result).toEqual(Either.right({ existingIds: [existing.id], toCreate: [proposed] }))
   })
 })
 
