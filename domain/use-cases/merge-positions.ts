@@ -4,9 +4,9 @@ import { moveStatement } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
-import { canPerform } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
 import { ensureStream, ensureStreams } from './aggregate-stream'
+import { found, mayPerform } from './preconditions'
 import { runCommand } from './run-command'
 import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
@@ -29,48 +29,50 @@ type MergePositionsParams = {
  * stream stays the whole truth of its projection. The statements to move
  * are read before the transaction: one added in between would stay behind.
  */
-export async function mergePositions(
-  params: MergePositionsParams,
-): Promise<Either.Either<void, string>> {
-  const {
-    sourcePositionId,
-    targetPositionId,
-    contributor,
-    runUnitOfWork,
-    subjectSource,
-    statementSource,
-    positionRepo,
-    statementRepo,
-  } = params
+export function mergePositions(params: MergePositionsParams): Promise<Either.Either<void, string>> {
+  const { sourcePositionId, targetPositionId, runUnitOfWork, subjectSource, statementSource } =
+    params
+  const { positionRepo, statementRepo } = params
 
-  if (sourcePositionId === targetPositionId) {
-    return Either.left('Les deux positions sont identiques.')
-  }
-
-  if (!canPerform(contributor.reputation, 'admin')) {
-    return Either.left('Vous devez être Fondateur pour fusionner des positions.')
-  }
-
-  const source = await Effect.runPromise(positionRepo.findById(sourcePositionId))
-  if (!source) return Either.left('La position source est introuvable.')
-
-  const target = await Effect.runPromise(positionRepo.findById(targetPositionId))
-  if (!target) return Either.left('La position cible est introuvable.')
-
-  if (source.subjectId !== target.subjectId) {
-    return Either.left('Les deux positions doivent appartenir au même sujet.')
-  }
-
-  const statements = await Effect.runPromise(statementRepo.findByPositionId(sourcePositionId))
-  const statementIds = statements.map((s) => s.id)
-
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
-      ensureStream(subjectAggregate, runUnitOfWork, source.subjectId, subjectSource),
-      Effect.andThen(
-        ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+      Effect.succeed(params.contributor),
+      Effect.filterOrFail(
+        () => sourcePositionId !== targetPositionId,
+        () => new Rejected('Les deux positions sont identiques.'),
       ),
-      Effect.andThen(
+      Effect.flatMap(mayPerform('admin', 'fusionner des positions')),
+      Effect.bindTo('contributor'),
+      Effect.bind('source', () =>
+        Effect.flatMap(
+          positionRepo.findById(sourcePositionId),
+          found('La position source est introuvable.'),
+        ),
+      ),
+      Effect.bind('target', () =>
+        Effect.flatMap(
+          positionRepo.findById(targetPositionId),
+          found('La position cible est introuvable.'),
+        ),
+      ),
+      Effect.filterOrFail(
+        ({ source, target }) => source.subjectId === target.subjectId,
+        () => new Rejected('Les deux positions doivent appartenir au même sujet.'),
+      ),
+      Effect.bind('statementIds', () =>
+        Effect.map(statementRepo.findByPositionId(sourcePositionId), (statements) =>
+          statements.map((s) => s.id),
+        ),
+      ),
+      Effect.tap(({ source, statementIds }) =>
+        pipe(
+          ensureStream(subjectAggregate, runUnitOfWork, source.subjectId, subjectSource),
+          Effect.andThen(
+            ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+          ),
+        ),
+      ),
+      Effect.flatMap(({ contributor, source, statementIds }) =>
         runUnitOfWork((events) =>
           pipe(
             decideOnSubject(events, source.subjectId, contributor.id, (state) =>
@@ -78,7 +80,7 @@ export async function mergePositions(
                 ? Effect.succeed([mergePosition(sourcePositionId, targetPositionId)])
                 : Effect.fail(new Rejected('Une des deux positions n’existe plus.')),
             ),
-            Effect.flatMap(() =>
+            Effect.andThen(
               decideOnEachStatement(events, statementIds, contributor.id, () => [
                 moveStatement(targetPositionId),
               ]),
@@ -88,7 +90,4 @@ export async function mergePositions(
       ),
     ),
   )
-  if (Either.isLeft(outcome)) return outcome
-
-  return Either.right(undefined)
 }

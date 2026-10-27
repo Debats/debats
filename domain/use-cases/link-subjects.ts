@@ -2,9 +2,9 @@ import { Either, Effect, pipe } from 'effect'
 import { linkSubject } from '../aggregates/subject'
 import { EventStore } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity } from './types'
+import { ContributorIdentity, Rejected } from './types'
 import { ensureStreams } from './aggregate-stream'
+import { allowedTo } from './preconditions'
 import { runCommand } from './run-command'
 import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
@@ -17,40 +17,32 @@ type LinkSubjectsParams = {
 }
 
 /** A link is symmetric: each subject records it in its own stream, in one transaction */
-export async function linkSubjectsUseCase(
+export function linkSubjectsUseCase(
   params: LinkSubjectsParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, subjectId1, subjectId2, runUnitOfWork, subjectSource } = params
+  const { subjectId1, subjectId2, runUnitOfWork, subjectSource } = params
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'link_subjects')) {
-    const rank = requiredRank('link_subjects')
-    return Either.left(`Vous devez être ${rank} pour lier des sujets.`)
-  }
-
-  if (subjectId1 === subjectId2) {
-    return Either.left('Impossible de lier un sujet au même sujet.')
-  }
-
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
-      ensureStreams(subjectAggregate, runUnitOfWork, [subjectId1, subjectId2], subjectSource),
-      Effect.andThen(
+      allowedTo(params.contributor, 'link_subjects', 'lier des sujets'),
+      Effect.filterOrFail(
+        () => subjectId1 !== subjectId2,
+        () => new Rejected('Impossible de lier un sujet au même sujet.'),
+      ),
+      Effect.tap(() =>
+        ensureStreams(subjectAggregate, runUnitOfWork, [subjectId1, subjectId2], subjectSource),
+      ),
+      Effect.flatMap((contributor) =>
         runUnitOfWork((events) =>
           pipe(
             recordLink(events, subjectId1, subjectId2, contributor.id),
-            Effect.flatMap(() => recordLink(events, subjectId2, subjectId1, contributor.id)),
+            Effect.andThen(recordLink(events, subjectId2, subjectId1, contributor.id)),
           ),
         ),
       ),
+      Effect.asVoid,
     ),
   )
-  if (Either.isLeft(outcome)) return outcome
-
-  return Either.right(undefined)
 }
 
 function recordLink(events: EventStore, subjectId: string, otherId: string, actorId: string) {

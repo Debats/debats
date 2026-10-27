@@ -1,20 +1,24 @@
 import { Either, Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { ArrayFormatter } from 'effect/ParseResult'
 import { Position, PositionId } from '../entities/position'
-import { addPosition, findPosition } from '../aggregates/subject'
+import { addPosition } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
-import { runCommand } from './run-command'
-import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
+import { allowedTo, fieldsOf } from './preconditions'
+import { runFormCommand } from './run-command'
+import { decideOnSubject, subjectAggregate, SubjectSource, writtenPosition } from './subject-stream'
 
 const CreatePositionInput = S.Struct({
   title: S.String.pipe(S.minLength(3), S.maxLength(255)),
   description: S.String.pipe(S.minLength(10)),
 })
+
+const FIELD_MESSAGES = {
+  title: 'Le titre doit faire entre 3 et 255 caractères.',
+  description: 'La description doit faire au moins 10 caractères.',
+}
 
 type CreatePositionParams = {
   contributor: ContributorIdentity | null
@@ -27,49 +31,29 @@ type CreatePositionParams = {
 
 export type { FieldErrors }
 
-export async function createPositionUseCase(
+export function createPositionUseCase(
   params: CreatePositionParams,
 ): Promise<Either.Either<Position, string | FieldErrors>> {
-  const { contributor, subjectId, title, description, runUnitOfWork, subjectSource } = params
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'add_position')) {
-    const rank = requiredRank('add_position')
-    return Either.left(`Vous devez être ${rank} pour proposer une nouvelle position.`)
-  }
-
-  const decoded = S.decodeUnknownEither(CreatePositionInput, { errors: 'all' })({
-    title,
-    description,
-  })
-
-  if (Either.isLeft(decoded)) {
-    const issues = ArrayFormatter.formatErrorSync(decoded.left)
-    const fieldErrors: FieldErrors = {}
-    for (const issue of issues) {
-      const field = issue.path.join('.')
-      if (field === 'title') {
-        fieldErrors.title = 'Le titre doit faire entre 3 et 255 caractères.'
-      } else if (field === 'description') {
-        fieldErrors.description = 'La description doit faire au moins 10 caractères.'
-      }
-    }
-    return Either.left(Object.keys(fieldErrors).length > 0 ? fieldErrors : 'Données invalides.')
-  }
-
+  const { subjectId, title, description, runUnitOfWork, subjectSource } = params
   // The command names the position, inside the subject's stream
   const positionId = PositionId.make(crypto.randomUUID())
-  const outcome = await runCommand(
+
+  return runFormCommand(
     pipe(
-      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
-      Effect.andThen(
+      Effect.all({
+        contributor: allowedTo(
+          params.contributor,
+          'add_position',
+          'proposer une nouvelle position',
+        ),
+        input: fieldsOf(CreatePositionInput, FIELD_MESSAGES)({ title, description }),
+      }),
+      Effect.tap(() => ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource)),
+      Effect.flatMap(({ contributor, input }) =>
         runUnitOfWork((events) =>
           pipe(
             decideOnSubject(events, subjectId, contributor.id, () =>
-              Effect.succeed([addPosition({ positionId, title, description })]),
+              Effect.succeed([addPosition({ positionId, ...input })]),
             ),
             Effect.tap(() =>
               grant(
@@ -84,12 +68,7 @@ export async function createPositionUseCase(
           ),
         ),
       ),
+      Effect.flatMap(writtenPosition(positionId)),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  const position = findPosition(outcome.right.state, positionId)
-  if (!position) throw new Error('The position just added is missing from the subject')
-
-  return Either.right(position)
 }

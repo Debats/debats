@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
 import {
+  findPosition,
   importPosition,
   importSubject,
   linkSubject,
@@ -15,6 +16,7 @@ import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
 import {
   AggregateStream,
+  Decided,
   decideOn,
   IMPORT,
   RenderedFrom,
@@ -83,3 +85,13 @@ export const decideOnSubject = (
 
 export const requireSubjectState = (state: SubjectState | null) =>
   requireState(subjectAggregate, state)
+
+/** The position the decision just wrote: a subject without it has a broken replay */
+export const writtenPosition =
+  (positionId: string) =>
+  ({ state }: Decided<SubjectState>): Effect.Effect<Position> => {
+    const position = findPosition(state, positionId)
+    return position
+      ? Effect.succeed(position)
+      : Effect.dieMessage(`The position ${positionId} just written is missing from the subject`)
+  }

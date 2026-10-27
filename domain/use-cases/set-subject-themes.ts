@@ -4,9 +4,9 @@ import { setSubjectThemes } from '../aggregates/subject'
 import { Revision } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity } from './types'
+import { ContributorIdentity, Rejected } from './types'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo } from './preconditions'
 import { runCommand } from './run-command'
 import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
@@ -19,68 +19,58 @@ type SetSubjectThemesParams = {
   revision: number
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
+  /** Read side: every theme must exist */
   themeRepo: ThemeRepository
 }
 
+const PRIMARY_REQUIRED =
+  'Une thématique principale doit être définie quand des thématiques sont sélectionnées.'
+const PRIMARY_AMONG_CHOSEN =
+  'La thématique principale doit faire partie des thématiques sélectionnées.'
+
 /** On success, the revision the next change of the selector must be rendered from */
-export async function setSubjectThemesUseCase(
+export function setSubjectThemesUseCase(
   params: SetSubjectThemesParams,
 ): Promise<Either.Either<Revision, string>> {
-  const {
-    contributor,
-    subjectId,
-    themeIds,
-    primaryThemeId,
-    runUnitOfWork,
-    subjectSource,
-    themeRepo,
-  } = params
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'assign_theme')) {
-    const rank = requiredRank('assign_theme')
-    return Either.left(`Vous devez être ${rank} pour modifier les thématiques d'un sujet.`)
-  }
-
-  if (themeIds.length > 0 && primaryThemeId === null) {
-    return Either.left(
-      'Une thématique principale doit être définie quand des thématiques sont sélectionnées.',
-    )
-  }
-
-  if (primaryThemeId !== null && !themeIds.includes(primaryThemeId)) {
-    return Either.left('La thématique principale doit faire partie des thématiques sélectionnées.')
-  }
-
-  if (themeIds.length > 0) {
-    const foundThemes = await Effect.runPromise(themeRepo.findByIds(themeIds))
-    if (foundThemes.length !== themeIds.length) {
-      const foundIds = new Set(foundThemes.map((t) => t.id))
-      const missing = themeIds.find((id) => !foundIds.has(id))
-      return Either.left(`La thématique ${missing} est introuvable.`)
-    }
-  }
-
+  const { subjectId, themeIds, primaryThemeId, revision, runUnitOfWork, subjectSource } = params
   const themes = themeIds.map((themeId) => ({ themeId, isPrimary: themeId === primaryThemeId }))
 
   return runCommand(
     pipe(
-      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
-      Effect.andThen(
+      allowedTo(params.contributor, 'assign_theme', "modifier les thématiques d'un sujet"),
+      Effect.filterOrFail(
+        () => themeIds.length === 0 || primaryThemeId !== null,
+        () => new Rejected(PRIMARY_REQUIRED),
+      ),
+      Effect.filterOrFail(
+        () => primaryThemeId === null || themeIds.includes(primaryThemeId),
+        () => new Rejected(PRIMARY_AMONG_CHOSEN),
+      ),
+      Effect.tap(() => (themeIds.length > 0 ? allKnown(params.themeRepo, themeIds) : Effect.void)),
+      Effect.tap(() => ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource)),
+      Effect.flatMap((contributor) =>
         runUnitOfWork((events) =>
           decideOnSubject(
             events,
             subjectId,
             contributor.id,
             () => Effect.succeed([setSubjectThemes(themes)]),
-            params.revision,
+            revision,
           ),
         ),
       ),
       Effect.map(({ revision }) => revision),
     ),
   )
+}
+
+/** Every chosen theme is on the list; the first missing one is named */
+function allKnown(themeRepo: ThemeRepository, themeIds: ThemeId[]) {
+  return Effect.flatMap(themeRepo.findByIds(themeIds), (found) => {
+    const foundIds = new Set(found.map((t) => t.id))
+    const missing = themeIds.find((id) => !foundIds.has(id))
+    return missing
+      ? Effect.fail(new Rejected(`La thématique ${missing} est introuvable.`))
+      : Effect.void
+  })
 }
