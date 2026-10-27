@@ -111,7 +111,7 @@ export async function persistOrganisation(
     ),
   )
 
-  return Either.map(outcome, (state) => state.organisation)
+  return Either.map(outcome, ({ state }) => state.organisation)
 }
 
 /** Validates and creates an organisation in one step. */

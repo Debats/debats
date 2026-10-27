@@ -90,5 +90,5 @@ export async function inviteUserUseCase(
     ),
   )
 
-  return Either.map(outcome, (state) => state.invitation)
+  return Either.map(outcome, ({ state }) => state.invitation)
 }

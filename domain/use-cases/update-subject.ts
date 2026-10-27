@@ -80,5 +80,5 @@ export async function updateSubjectUseCase(
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  return Either.right(outcome.right.subject)
+  return Either.right(outcome.right.state.subject)
 }

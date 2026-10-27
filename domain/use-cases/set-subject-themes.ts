@@ -1,6 +1,7 @@
 import { Either, Effect, pipe } from 'effect'
 import { ThemeId } from '../entities/theme'
 import { setSubjectThemes } from '../aggregates/subject'
+import { Revision } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
@@ -21,9 +22,10 @@ type SetSubjectThemesParams = {
   themeRepo: ThemeRepository
 }
 
+/** On success, the revision the next change of the selector must be rendered from */
 export async function setSubjectThemesUseCase(
   params: SetSubjectThemesParams,
-): Promise<Either.Either<void, string>> {
+): Promise<Either.Either<Revision, string>> {
   const {
     contributor,
     subjectId,
@@ -64,7 +66,7 @@ export async function setSubjectThemesUseCase(
 
   const themes = themeIds.map((themeId) => ({ themeId, isPrimary: themeId === primaryThemeId }))
 
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
       ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
       Effect.andThen(
@@ -78,9 +80,7 @@ export async function setSubjectThemesUseCase(
           ),
         ),
       ),
+      Effect.map(({ revision }) => revision),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  return Either.right(undefined)
 }

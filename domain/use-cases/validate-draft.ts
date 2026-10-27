@@ -196,7 +196,8 @@ async function applyOccupations(
   )
   if (held._tag === 'Left') return Either.left('Erreur lors de la lecture des métiers.')
 
-  return setPublicFigureOccupationsUseCase({
+  // The revision reached is of no use here: nothing edits the figure after the draft
+  const assigned = await setPublicFigureOccupationsUseCase({
     contributor: deps.contributor,
     publicFigureId,
     assignments: [
@@ -207,6 +208,7 @@ async function applyOccupations(
     runUnitOfWork: deps.runUnitOfWork,
     publicFigureSource: deps.publicFigureSource,
   })
+  return Either.map(assigned, () => undefined)
 }
 
 /**

@@ -87,7 +87,7 @@ export async function mergeArgumentsUseCase(
                   : [],
               ),
             ),
-            Effect.map((target) => target.argument),
+            Effect.map(({ state }) => state.argument),
           ),
         ),
       ),

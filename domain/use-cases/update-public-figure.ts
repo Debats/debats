@@ -130,7 +130,7 @@ export async function persistUpdatedPublicFigure(
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  return Either.right(outcome.right.figure)
+  return Either.right(outcome.right.state.figure)
 }
 
 /**

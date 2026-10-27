@@ -153,5 +153,5 @@ export async function updateStatementUseCase(
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  return Either.right(outcome.right.statement)
+  return Either.right(outcome.right.state.statement)
 }

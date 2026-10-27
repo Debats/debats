@@ -88,7 +88,7 @@ export async function createPositionUseCase(
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  const position = findPosition(outcome.right, positionId)
+  const position = findPosition(outcome.right.state, positionId)
   if (!position) throw new Error('The position just added is missing from the subject')
 
   return Either.right(position)

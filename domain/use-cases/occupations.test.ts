@@ -300,7 +300,8 @@ describe('setPublicFigureOccupationsUseCase', () => {
       occupationRepo: fakeOccupationRepo([economist, writer]),
     })
 
-    expect(Either.isRight(result)).toBe(true)
+    // The selector renders its next change from the revision the command reached
+    expect(result).toEqual(Either.right(journal.all().at(-1)!.revision))
     expect(journal.all().at(-1)).toMatchObject({
       type: 'OccupationsSet',
       actorId: 'eloquent',

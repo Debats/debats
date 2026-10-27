@@ -160,5 +160,5 @@ export async function createStatementUseCase(
     ),
   )
 
-  return Either.map(outcome, (state) => state.statement)
+  return Either.map(outcome, ({ state }) => state.statement)
 }

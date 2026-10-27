@@ -71,5 +71,5 @@ export async function createOccupationUseCase(
     ),
   )
 
-  return Either.map(outcome, (state) => state.occupations.find((o) => o.id === id)!)
+  return Either.map(outcome, ({ state }) => state.occupations.find((o) => o.id === id)!)
 }

@@ -74,5 +74,5 @@ export async function renameArgumentUseCase(
       uniqueTakenAs('title', TITLE_TAKEN),
     ),
   )
-  return Either.map(outcome, (state) => state.argument)
+  return Either.map(outcome, ({ state }) => state.argument)
 }

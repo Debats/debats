@@ -1,6 +1,7 @@
 import { Either, Effect, pipe } from 'effect'
 import { OccupationAssignmentInput } from '../read-models/occupations'
 import { setOccupations } from '../aggregates/public-figure'
+import { Revision } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { canPerform, requiredRank } from '../reputation/permissions'
@@ -34,11 +35,12 @@ function dedupe(assignments: OccupationAssignmentInput[]): OccupationAssignmentI
 
 /**
  * Replaces the occupations a public figure holds, current or former; every id
- * must name a listed occupation.
+ * must name a listed occupation. On success, the revision the next change of
+ * the selector must be rendered from.
  */
 export async function setPublicFigureOccupationsUseCase(
   params: SetPublicFigureOccupationsParams,
-): Promise<Either.Either<void, string>> {
+): Promise<Either.Either<Revision, string>> {
   const { contributor, publicFigureId, runUnitOfWork, publicFigureSource, occupationRepo } = params
   const assignments = dedupe(params.assignments)
 
@@ -57,7 +59,7 @@ export async function setPublicFigureOccupationsUseCase(
     return Either.left('Un des métiers choisis n’existe plus.')
   }
 
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
       ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
       Effect.andThen(
@@ -71,9 +73,7 @@ export async function setPublicFigureOccupationsUseCase(
           ),
         ),
       ),
+      Effect.map(({ revision }) => revision),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  return Either.right(undefined)
 }

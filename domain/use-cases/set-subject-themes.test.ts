@@ -97,7 +97,7 @@ describe('setSubjectThemesUseCase', () => {
     expect(Either.isLeft(result)).toBe(true)
   })
 
-  it('should record the whole set of themes with the primary flag', async () => {
+  it('should record the whole set of themes with the primary flag, and tell the revision reached', async () => {
     const { run, journal } = await journalWithSubjects([subject, []])
 
     const result = await setSubjectThemesUseCase({
@@ -106,9 +106,10 @@ describe('setSubjectThemesUseCase', () => {
       runUnitOfWork: run,
     })
 
-    expect(Either.isRight(result)).toBe(true)
+    expect(result).toEqual(Either.right(2))
     expect(journal.all().at(-1)).toMatchObject({
       type: 'SubjectThemesSet',
+      revision: 2,
       actorId: 'abc',
       payload: {
         themes: [

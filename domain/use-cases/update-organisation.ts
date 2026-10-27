@@ -130,7 +130,7 @@ export async function persistUpdatedOrganisation(
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  return Either.right(outcome.right.organisation)
+  return Either.right(outcome.right.state.organisation)
 }
 
 /** Validates and updates an organisation in one step. */

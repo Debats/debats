@@ -112,6 +112,15 @@ export function loadStream<State, Event extends DomainEvent, Parts>(
 }
 
 /**
+ * What a write on a stream leaves: the aggregate as it now is, and the
+ * revision its stream stands at, for a page that edits again to render from.
+ */
+export interface Decided<State> {
+  state: State
+  revision: Revision
+}
+
+/**
  * Appends the decision after the history, and rebuilds what the aggregate now
  * is. A decision that changes nothing writes nothing.
  */
@@ -122,13 +131,19 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
   history: StoredEvent[],
   decided: Event[],
   actorId: string,
-): Effect.Effect<State, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
+): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
   return pipe(
     decided.length > 0
       ? events.append(streamOf(aggregate, id), streamRevision(history), decided, { actorId })
       : Effect.succeed([]),
-    Effect.flatMap((stored) => aggregate.replay([...history, ...stored])),
-    Effect.flatMap((state) => requireState(aggregate, state)),
+    Effect.map((stored) => [...history, ...stored]),
+    Effect.flatMap((whole) =>
+      pipe(
+        aggregate.replay(whole),
+        Effect.flatMap((state) => requireState(aggregate, state)),
+        Effect.map((state) => ({ state, revision: streamRevision(whole) })),
+      ),
+    ),
   )
 }
 
@@ -143,7 +158,7 @@ export function openStream<State, Event extends DomainEvent, Parts>(
   id: string,
   decided: Event[],
   actorId: string,
-): Effect.Effect<State, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
+): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
   return appendAndReplay(aggregate, events, id, [], decided, actorId)
 }
 
@@ -159,7 +174,7 @@ export type RenderedFrom = Revision | undefined
 /**
  * A command on an aggregate: loads its stream, lets the decision look at the
  * current state, appends what it decided and rebuilds what the aggregate now
- * is. A decision refuses with a Rejected; a deleted aggregate is NotFound
+ * is, at the revision it stands at. A decision refuses with a Rejected; a deleted aggregate is NotFound
  * before any decision; a stream that moved past the revision the form was
  * rendered from is a ConcurrencyError.
  */
@@ -170,7 +185,7 @@ export function decideOn<State, Event extends DomainEvent, Parts>(
   actorId: string,
   decide: (state: State) => Effect.Effect<Event[], Rejected>,
   renderedFrom?: RenderedFrom,
-): Effect.Effect<State, StreamFailure | UnreadableEvent> {
+): Effect.Effect<Decided<State>, StreamFailure | UnreadableEvent> {
   const stillAt = (history: StoredEvent[]) =>
     !renderedFrom || streamRevision(history) === renderedFrom
   return pipe(

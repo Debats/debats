@@ -129,17 +129,17 @@ describe('loadStream', () => {
 })
 
 describe('decideOn', () => {
-  it('appends the decision after the history and rebuilds the state', async () => {
+  it('appends the decision after the history, rebuilds the state and tells the revision', async () => {
     const events = createInMemoryEventStore()
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
-    const state = await Effect.runPromise(
+    const decided = await Effect.runPromise(
       decideOn(counterAggregate, events, id, 'bob', (current) =>
         Effect.succeed([moved(current.count + 10)]),
       ),
     )
 
-    expect(state).toEqual({ count: 12, closed: false })
+    expect(decided).toEqual({ state: { count: 12, closed: false }, revision: 2 })
     expect(events.all().map((e) => [e.revision, e.type, e.actorId])).toEqual([
       [1, 'Opened', 'alice'],
       [2, 'Moved', 'bob'],
@@ -179,11 +179,11 @@ describe('decideOn', () => {
     const events = createInMemoryEventStore()
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
-    const state = await Effect.runPromise(
+    const decided = await Effect.runPromise(
       decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([])),
     )
 
-    expect(state).toEqual({ count: 1, closed: false })
+    expect(decided).toEqual({ state: { count: 1, closed: false }, revision: 1 })
     expect(events.all()).toHaveLength(1)
   })
 

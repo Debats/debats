@@ -5,8 +5,6 @@ import { ThemeId } from '../../domain/entities/theme'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createSubjectSource } from '../../infra/events/sources'
-import { currentRevision } from '../../infra/events/stream-revision'
-import { subjectStream } from '../../domain/aggregates/subject'
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
 import { setSubjectThemesUseCase } from '../../domain/use-cases/set-subject-themes'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -40,5 +38,5 @@ export async function setSubjectThemesAction(
     return { success: false, error: result.left }
   }
 
-  return { success: true, revision: await currentRevision(subjectStream(subjectId)) }
+  return { success: true, revision: result.right }
 }

@@ -5,8 +5,6 @@ import { revalidatePath } from 'next/cache'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { runUnitOfWork } from '../../infra/events/unit-of-work'
 import { createPublicFigureSource } from '../../infra/events/sources'
-import { currentRevision } from '../../infra/events/stream-revision'
-import { publicFigureStream } from '../../domain/aggregates/public-figure'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import { OccupationAssignmentInput } from '../../domain/read-models/occupations'
 import { setPublicFigureOccupationsUseCase } from '../../domain/use-cases/set-public-figure-occupations'
@@ -41,5 +39,5 @@ export async function setPublicFigureOccupationsAction(
   }
 
   revalidatePath(`/p/${publicFigureSlug}`)
-  return { success: true, revision: await currentRevision(publicFigureStream(publicFigureId)) }
+  return { success: true, revision: result.right }
 }

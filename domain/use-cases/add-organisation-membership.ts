@@ -130,7 +130,7 @@ export async function addOrganisationMembershipUseCase(
   )
   if (Either.isLeft(outcome)) return Either.left(outcome.left)
 
-  const created = findMembership(outcome.right, membershipId)
+  const created = findMembership(outcome.right.state, membershipId)
   if (!created) throw new Error('The membership just added is missing from the figure')
 
   return Either.right(created)

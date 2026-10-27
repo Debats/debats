@@ -106,7 +106,7 @@ export async function persistPublicFigure(
     ),
   )
 
-  return Either.map(outcome, (state) => state.figure)
+  return Either.map(outcome, ({ state }) => state.figure)
 }
 
 /**

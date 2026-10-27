@@ -72,5 +72,5 @@ export async function createThemeUseCase(
     ),
   )
 
-  return Either.map(outcome, (state) => state.theme)
+  return Either.map(outcome, ({ state }) => state.theme)
 }

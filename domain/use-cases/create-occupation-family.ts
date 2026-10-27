@@ -72,5 +72,5 @@ export async function createOccupationFamilyUseCase(
     ),
   )
 
-  return Either.map(outcome, (state) => state.family)
+  return Either.map(outcome, ({ state }) => state.family)
 }

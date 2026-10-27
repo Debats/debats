@@ -94,5 +94,5 @@ export async function createSubjectUseCase(
     ),
   )
 
-  return Either.map(outcome, (state) => state.subject)
+  return Either.map(outcome, ({ state }) => state.subject)
 }
