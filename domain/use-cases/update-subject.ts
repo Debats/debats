@@ -3,10 +3,10 @@ import * as S from 'effect/Schema'
 import { Subject, SubjectTitle } from '../entities/subject'
 import { editSubject } from '../aggregates/subject'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo, decoded } from './preconditions'
 import { runCommand, uniqueTakenAs } from './run-command'
 import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 
@@ -28,39 +28,27 @@ type UpdateSubjectParams = {
   subjectSource: SubjectSource
 }
 
-export async function updateSubjectUseCase(
+export function updateSubjectUseCase(
   params: UpdateSubjectParams,
 ): Promise<Either.Either<Subject, string>> {
-  const { contributor, subjectId, title, presentation, problem, runUnitOfWork, subjectSource } =
-    params
+  const { subjectId, title, presentation, problem, revision, runUnitOfWork, subjectSource } = params
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'edit_subject')) {
-    const rank = requiredRank('edit_subject')
-    return Either.left(`Vous devez être ${rank} pour modifier un sujet.`)
-  }
-
-  const decoded = S.decodeUnknownEither(UpdateSubjectInput)({ title, presentation, problem })
-
-  if (Either.isLeft(decoded)) {
-    return Either.left('Données invalides. Vérifiez les champs du formulaire.')
-  }
-
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
-      ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource),
-      Effect.andThen(
+      Effect.all({
+        contributor: allowedTo(params.contributor, 'edit_subject', 'modifier un sujet'),
+        edited: decoded(UpdateSubjectInput)({ title, presentation, problem }),
+      }),
+      Effect.tap(() => ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource)),
+      Effect.flatMap(({ contributor, edited }) =>
         runUnitOfWork((events) =>
           pipe(
             decideOnSubject(
               events,
               subjectId,
               contributor.id,
-              () => Effect.succeed([editSubject(decoded.right)]),
-              params.revision,
+              () => Effect.succeed([editSubject(edited)]),
+              revision,
             ),
             Effect.tap(() =>
               grant(
@@ -76,9 +64,7 @@ export async function updateSubjectUseCase(
         ),
       ),
       uniqueTakenAs('title', 'Un sujet porte déjà ce titre.'),
+      Effect.map(({ state }) => state.subject),
     ),
   )
-  if (Either.isLeft(outcome)) return Either.left(outcome.left)
-
-  return Either.right(outcome.right.state.subject)
 }

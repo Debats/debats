@@ -1,7 +1,7 @@
 import { Effect, Either } from 'effect'
 import { ConcurrencyError, UniqueTaken, UnreadableEvent } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
-import { FieldErrors, NotFound, Rejected } from './types'
+import { FieldErrors, Invalid, NotFound, Rejected } from './types'
 
 export const EDITED_MEANWHILE =
   'Quelqu’un d’autre vient de modifier ceci. Rechargez la page avant de recommencer.'
@@ -16,6 +16,9 @@ export type CommandFailure =
   | UniqueTaken
   | DatabaseError
   | UnreadableEvent
+
+/** What a command behind a form can also fail with: several fields at fault */
+export type FormFailure = CommandFailure | Invalid
 
 /**
  * Names the field and the message of a value taken meanwhile: the command
@@ -43,22 +46,23 @@ export function runCommand<A>(
 }
 
 /**
- * The same, for a command behind a form: a refusal that blames one field
- * comes back under that field's name, so the form can show it in place.
+ * The same, for a command behind a form: a refusal that blames one field, or
+ * several, comes back under the fields' names, so the form can show it in place.
  */
 export function runFormCommand<A>(
-  command: Effect.Effect<A, CommandFailure>,
+  command: Effect.Effect<A, FormFailure>,
 ): Promise<Either.Either<A, string | FieldErrors>> {
-  return outcomeOf(command, (failure) =>
-    failure._tag === 'Rejected' && failure.field
+  return outcomeOf(command, (failure) => {
+    if (failure._tag === 'Invalid') return failure.fields
+    return failure._tag === 'Rejected' && failure.field
       ? { [failure.field]: failure.message }
-      : messageOf(failure),
-  )
+      : messageOf(failure)
+  })
 }
 
-async function outcomeOf<A, E>(
-  command: Effect.Effect<A, CommandFailure>,
-  describe: (failure: CommandFailure) => E,
+async function outcomeOf<A, F, E>(
+  command: Effect.Effect<A, F>,
+  describe: (failure: F) => E,
 ): Promise<Either.Either<A, E>> {
   const outcome = await Effect.runPromise(Effect.either(command))
   return Either.mapLeft(outcome, describe)
