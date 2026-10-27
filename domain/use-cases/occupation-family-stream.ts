@@ -11,7 +11,14 @@ import { Occupation } from '../entities/occupation'
 import { OccupationFamily } from '../entities/occupation-family'
 import { EventStore } from '../events/event-store'
 import { Rejected } from './types'
-import { AggregateStream, decideOn, IMPORT, requireState, Source } from './aggregate-stream'
+import {
+  AggregateStream,
+  Decided,
+  decideOn,
+  IMPORT,
+  requireState,
+  Source,
+} from './aggregate-stream'
 
 /** What the tables hold of a family, enough to import it into the journal */
 export interface OccupationFamilyParts {
@@ -56,3 +63,13 @@ export const decideOnOccupationFamily = (
 
 export const requireOccupationFamilyState = (state: OccupationFamilyState | null) =>
   requireState(occupationFamilyAggregate, state)
+
+/** The occupation the decision just wrote: a family without it has a broken replay */
+export const writtenOccupation =
+  (occupationId: string) =>
+  ({ state }: Decided<OccupationFamilyState>): Effect.Effect<Occupation> => {
+    const occupation = state.occupations.find((o) => o.id === occupationId)
+    return occupation
+      ? Effect.succeed(occupation)
+      : Effect.dieMessage(`The occupation ${occupationId} just written is missing from the family`)
+  }

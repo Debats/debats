@@ -2,9 +2,9 @@ import { Either, Effect, pipe } from 'effect'
 import { removeOccupation } from '../aggregates/occupation-family'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo, found } from './preconditions'
 import { runCommand } from './run-command'
 import {
   decideOnOccupationFamily,
@@ -24,38 +24,33 @@ type DeleteOccupationParams = {
 const NOT_FOUND = 'Le métier est introuvable.'
 
 /** Removes an occupation from the list; the figures holding it simply lose it. */
-export async function deleteOccupationUseCase(
+export function deleteOccupationUseCase(
   params: DeleteOccupationParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, occupationId, runUnitOfWork, familySource, occupationRepo } = params
+  const { occupationId, runUnitOfWork, familySource, occupationRepo } = params
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'delete_occupation')) {
-    const rank = requiredRank('delete_occupation')
-    return Either.left(`Vous devez être ${rank} pour supprimer un métier.`)
-  }
-
-  const occupation = await Effect.runPromise(occupationRepo.findById(occupationId))
-  if (!occupation) {
-    return Either.left(NOT_FOUND)
-  }
-
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
-      ensureStream(occupationFamilyAggregate, runUnitOfWork, occupation.familyId, familySource),
-      Effect.andThen(
+      Effect.all({
+        contributor: allowedTo(params.contributor, 'delete_occupation', 'supprimer un métier'),
+        familyId: Effect.map(
+          Effect.flatMap(occupationRepo.findById(occupationId), found(NOT_FOUND)),
+          (occupation) => occupation.familyId,
+        ),
+      }),
+      Effect.tap(({ familyId }) =>
+        ensureStream(occupationFamilyAggregate, runUnitOfWork, familyId, familySource),
+      ),
+      Effect.flatMap(({ contributor, familyId }) =>
         runUnitOfWork((events) =>
-          decideOnOccupationFamily(events, occupation.familyId, contributor.id, (state) =>
+          decideOnOccupationFamily(events, familyId, contributor.id, (state) =>
             state.occupations.some((o) => o.id === occupationId)
               ? Effect.succeed([removeOccupation(occupationId)])
               : Effect.fail(new Rejected(NOT_FOUND)),
           ),
         ),
       ),
+      Effect.asVoid,
     ),
   )
-  return Either.map(outcome, () => undefined)
 }

@@ -5,8 +5,9 @@ import { sendInvitation } from '../aggregates/invitation'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { InvitationRepository } from '../repositories/invitation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
+import { ContributorIdentity, Rejected } from './types'
 import { openStream } from './aggregate-stream'
+import { allowedTo, decoded, free } from './preconditions'
 import { invitationAggregate } from './invitation-stream'
 import { runCommand, uniqueTakenAs } from './run-command'
 
@@ -18,10 +19,8 @@ const InviteUserInput = S.Struct({
   name: InviteeName,
 })
 
-type Contributor = { id: string; reputation: number }
-
 type InviteUserParams = {
-  contributor: Contributor | null
+  contributor: ContributorIdentity | null
   email: string
   name: string
   runUnitOfWork: RunUnitOfWork
@@ -30,65 +29,52 @@ type InviteUserParams = {
   contributorRepo: ContributorRepository
 }
 
-export async function inviteUserUseCase(
+export function inviteUserUseCase(
   params: InviteUserParams,
 ): Promise<Either.Either<Invitation, string>> {
-  const { contributor, email, name, runUnitOfWork, invitationRepo, contributorRepo } = params
-
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'invite_user')) {
-    const rank = requiredRank('invite_user')
-    return Either.left(`Vous devez être ${rank} pour inviter.`)
-  }
-
-  const decoded = S.decodeUnknownEither(InviteUserInput)({ email, name })
-
-  if (Either.isLeft(decoded)) {
-    return Either.left('Données invalides. Vérifiez les champs du formulaire.')
-  }
-
-  const input = decoded.right
-
-  const emailExists = await Effect.runPromise(contributorRepo.existsByEmail(input.email))
-  if (emailExists) {
-    return Either.left('Un compte avec cette adresse courriel existe déjà.')
-  }
-
-  const pendingInvitations = await Effect.runPromise(
-    invitationRepo.findPendingByInviter(contributor.id),
-  )
-
-  if (pendingInvitations.length >= MAX_PENDING_INVITATIONS) {
-    return Either.left(
-      `Vous avez déjà ${MAX_PENDING_INVITATIONS} invitations en attente. Attendez qu'elles soient acceptées.`,
-    )
-  }
-
-  const existingInvitation = await Effect.runPromise(invitationRepo.findPendingByEmail(input.email))
-
-  if (existingInvitation) {
-    return Either.left(ALREADY_INVITED)
-  }
-
+  const { email, name, runUnitOfWork, invitationRepo, contributorRepo } = params
   // The command names the invitation: the stream exists from its first event
   const id = InvitationId.make(crypto.randomUUID())
-  const outcome = await runCommand(
+
+  const underTheQuota = (inviterId: string) =>
+    Effect.filterOrFail(
+      invitationRepo.findPendingByInviter(inviterId),
+      (pending) => pending.length < MAX_PENDING_INVITATIONS,
+      () =>
+        new Rejected(
+          `Vous avez déjà ${MAX_PENDING_INVITATIONS} invitations en attente. Attendez qu'elles soient acceptées.`,
+        ),
+    )
+
+  return runCommand(
     pipe(
-      runUnitOfWork((events) =>
-        openStream(
-          invitationAggregate,
-          events,
-          id,
-          [sendInvitation({ inviteeEmail: input.email, inviteeName: input.name })],
-          contributor.id,
+      Effect.all({
+        contributor: allowedTo(params.contributor, 'invite_user', 'inviter'),
+        input: decoded(InviteUserInput)({ email, name }),
+      }),
+      Effect.tap(({ input }) =>
+        Effect.flatMap(
+          contributorRepo.existsByEmail(input.email),
+          free('Un compte avec cette adresse courriel existe déjà.'),
+        ),
+      ),
+      Effect.tap(({ contributor }) => underTheQuota(contributor.id)),
+      Effect.tap(({ input }) =>
+        Effect.flatMap(invitationRepo.findPendingByEmail(input.email), free(ALREADY_INVITED)),
+      ),
+      Effect.flatMap(({ contributor, input }) =>
+        runUnitOfWork((events) =>
+          openStream(
+            invitationAggregate,
+            events,
+            id,
+            [sendInvitation({ inviteeEmail: input.email, inviteeName: input.name })],
+            contributor.id,
+          ),
         ),
       ),
       uniqueTakenAs('email', ALREADY_INVITED),
+      Effect.map(({ state }) => state.invitation),
     ),
   )
-
-  return Either.map(outcome, ({ state }) => state.invitation)
 }

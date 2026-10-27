@@ -1,9 +1,9 @@
 import { Either, Effect, pipe } from 'effect'
 import { deleteTheme } from '../aggregates/theme'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity } from './types'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo } from './preconditions'
 import { runCommand } from './run-command'
 import { decideOnTheme, themeAggregate, ThemeSource } from './theme-stream'
 
@@ -15,29 +15,21 @@ type DeleteThemeParams = {
 }
 
 /** Removes a theme; the subjects it gathered keep their other themes */
-export async function deleteThemeUseCase(
+export function deleteThemeUseCase(
   params: DeleteThemeParams,
 ): Promise<Either.Either<void, string>> {
-  const { contributor, themeId, runUnitOfWork, themeSource } = params
+  const { themeId, runUnitOfWork, themeSource } = params
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'delete_theme')) {
-    const rank = requiredRank('delete_theme')
-    return Either.left(`Vous devez être ${rank} pour supprimer une thématique.`)
-  }
-
-  const outcome = await runCommand(
+  return runCommand(
     pipe(
-      ensureStream(themeAggregate, runUnitOfWork, themeId, themeSource),
-      Effect.andThen(
+      allowedTo(params.contributor, 'delete_theme', 'supprimer une thématique'),
+      Effect.tap(() => ensureStream(themeAggregate, runUnitOfWork, themeId, themeSource)),
+      Effect.flatMap((contributor) =>
         runUnitOfWork((events) =>
           decideOnTheme(events, themeId, contributor.id, () => Effect.succeed([deleteTheme()])),
         ),
       ),
+      Effect.asVoid,
     ),
   )
-  return Either.map(outcome, () => undefined)
 }

@@ -3,13 +3,15 @@ import { Argument, sameArgumentTitle } from '../entities/argument'
 import { renameArgument } from '../aggregates/argument'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
-import { ContributorIdentity, FieldErrors } from './types'
+import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { ensureStream } from './aggregate-stream'
+import { allowedTo, found } from './preconditions'
 import { runFormCommand, uniqueTakenAs } from './run-command'
+import { argumentAggregate, ArgumentSource, decideOnArgument } from './argument-stream'
 
 const TITLE_TAKEN = 'Un argument porte déjà ce titre : fusionnez-les plutôt.'
-import { argumentAggregate, ArgumentSource, decideOnArgument } from './argument-stream'
+const TITLE_MIN = 3
+const TITLE_MAX = 255
 
 type RenameArgumentParams = {
   contributor: ContributorIdentity | null
@@ -27,52 +29,53 @@ type RenameArgumentParams = {
 export type { FieldErrors }
 
 /** Corrects an argument's wording; its links to statements are untouched. */
-export async function renameArgumentUseCase(
+export function renameArgumentUseCase(
   params: RenameArgumentParams,
 ): Promise<Either.Either<Argument, string | FieldErrors>> {
-  const { contributor, argumentId, argumentRepo } = params
+  const { argumentId, description, revision, runUnitOfWork, argumentSource, argumentRepo } = params
   const title = params.title.trim()
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
+  // Another argument under the same title is a duplicate to merge, not to rename into
+  const titleFree = (existing: Argument) =>
+    Effect.filterOrFail(
+      argumentRepo.findByTitle(title),
+      (homonym) =>
+        !homonym || homonym.id === existing.id || sameArgumentTitle(homonym.title, existing.title),
+      () => new Rejected(TITLE_TAKEN, 'title'),
+    )
 
-  if (!canPerform(contributor.reputation, 'edit_argument')) {
-    const rank = requiredRank('edit_argument')
-    return Either.left(`Vous devez être ${rank} pour modifier un argument.`)
-  }
-
-  if (title.length < 3 || title.length > 255) {
-    return Either.left({ title: 'Le titre doit faire entre 3 et 255 caractères.' })
-  }
-
-  const existing = await Effect.runPromise(argumentRepo.findById(argumentId))
-  if (!existing) {
-    return Either.left('Argument introuvable.')
-  }
-
-  const homonym = await Effect.runPromise(argumentRepo.findByTitle(title))
-  if (homonym && homonym.id !== existing.id && !sameArgumentTitle(homonym.title, existing.title)) {
-    return Either.left({ title: TITLE_TAKEN })
-  }
-
-  const renamed = renameArgument({ title, description: params.description })
-  const outcome = await runFormCommand(
+  return runFormCommand(
     pipe(
-      ensureStream(argumentAggregate, params.runUnitOfWork, existing.id, params.argumentSource),
-      Effect.andThen(
-        params.runUnitOfWork((events) =>
+      allowedTo(params.contributor, 'edit_argument', 'modifier un argument'),
+      Effect.filterOrFail(
+        () => title.length >= TITLE_MIN && title.length <= TITLE_MAX,
+        () =>
+          new Rejected(
+            `Le titre doit faire entre ${TITLE_MIN} et ${TITLE_MAX} caractères.`,
+            'title',
+          ),
+      ),
+      Effect.bindTo('contributor'),
+      Effect.bind('existing', () =>
+        Effect.flatMap(argumentRepo.findById(argumentId), found(argumentAggregate.notFound)),
+      ),
+      Effect.tap(({ existing }) => titleFree(existing)),
+      Effect.tap(({ existing }) =>
+        ensureStream(argumentAggregate, runUnitOfWork, existing.id, argumentSource),
+      ),
+      Effect.flatMap(({ contributor, existing }) =>
+        runUnitOfWork((events) =>
           decideOnArgument(
             events,
             existing.id,
             contributor.id,
-            () => Effect.succeed([renamed]),
-            params.revision,
+            () => Effect.succeed([renameArgument({ title, description })]),
+            revision,
           ),
         ),
       ),
       uniqueTakenAs('title', TITLE_TAKEN),
+      Effect.map(({ state }) => state.argument),
     ),
   )
-  return Either.map(outcome, ({ state }) => state.argument)
 }

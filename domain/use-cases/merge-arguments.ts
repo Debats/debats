@@ -4,9 +4,9 @@ import { absorbArgument, mergeArgumentInto } from '../aggregates/argument'
 import { setStatementArguments, withArgumentReplaced } from '../aggregates/statement'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
-import { canPerform, requiredRank } from '../reputation/permissions'
 import { ContributorIdentity, Rejected } from './types'
 import { ensureStreams } from './aggregate-stream'
+import { allowedTo } from './preconditions'
 import { runCommand } from './run-command'
 import { argumentAggregate, ArgumentSource, decideOnArgument } from './argument-stream'
 import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
@@ -31,39 +31,35 @@ const GONE = 'Un des deux arguments n’existe plus.'
  * its own stream says it stands. The statements are read before the
  * transaction: one that would mobilise the source meanwhile keeps it.
  */
-export async function mergeArgumentsUseCase(
+export function mergeArgumentsUseCase(
   params: MergeArgumentsParams,
 ): Promise<Either.Either<Argument, string>> {
-  const { contributor, sourceArgumentId, targetArgumentId, statementRepo } = params
+  const { sourceArgumentId, targetArgumentId, runUnitOfWork } = params
+  const { argumentSource, statementSource, statementRepo } = params
 
-  if (!contributor) {
-    return Either.left('Vous devez être connecté·e.')
-  }
-
-  if (!canPerform(contributor.reputation, 'delete_argument')) {
-    const rank = requiredRank('delete_argument')
-    return Either.left(`Vous devez être ${rank} pour fusionner des arguments.`)
-  }
-
-  if (sourceArgumentId === targetArgumentId) {
-    return Either.left('Un argument ne peut pas être fusionné avec lui-même.')
-  }
-
-  const statementIds = await Effect.runPromise(statementRepo.findIdsByArgumentId(sourceArgumentId))
-
-  const { runUnitOfWork, argumentSource, statementSource } = params
   return runCommand(
     pipe(
-      ensureStreams(
-        argumentAggregate,
-        runUnitOfWork,
-        [targetArgumentId, sourceArgumentId],
-        argumentSource,
+      allowedTo(params.contributor, 'delete_argument', 'fusionner des arguments'),
+      Effect.filterOrFail(
+        () => sourceArgumentId !== targetArgumentId,
+        () => new Rejected('Un argument ne peut pas être fusionné avec lui-même.'),
       ),
-      Effect.andThen(
-        ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+      Effect.bindTo('contributor'),
+      Effect.bind('statementIds', () => statementRepo.findIdsByArgumentId(sourceArgumentId)),
+      Effect.tap(({ statementIds }) =>
+        pipe(
+          ensureStreams(
+            argumentAggregate,
+            runUnitOfWork,
+            [targetArgumentId, sourceArgumentId],
+            argumentSource,
+          ),
+          Effect.andThen(
+            ensureStreams(statementAggregate, runUnitOfWork, statementIds, statementSource),
+          ),
+        ),
       ),
-      Effect.andThen(
+      Effect.flatMap(({ contributor, statementIds }) =>
         runUnitOfWork((events) =>
           pipe(
             // The target writes too, at its revision: a merge crossing this one cannot also commit

@@ -14,11 +14,12 @@ type RevokeInvitationParams = {
 }
 
 /** Withdraws an invitation whose e-mail could not leave: it never reached anyone */
-export async function revokeInvitationUseCase(
+export function revokeInvitationUseCase(
   params: RevokeInvitationParams,
 ): Promise<Either.Either<void, string>> {
   const { invitationId, actorId, runUnitOfWork, invitationSource } = params
-  const outcome = await runCommand(
+
+  return runCommand(
     pipe(
       ensureStream(invitationAggregate, runUnitOfWork, invitationId, invitationSource),
       Effect.andThen(
@@ -28,7 +29,7 @@ export async function revokeInvitationUseCase(
           ),
         ),
       ),
+      Effect.asVoid,
     ),
   )
-  return Either.map(outcome, () => undefined)
 }

@@ -3,9 +3,10 @@ import { InvitationRepository } from '../repositories/invitation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
 import { RunUnitOfWork } from '../events/unit-of-work'
-import { isExpired } from '../entities/invitation'
+import { Invitation, isExpired } from '../entities/invitation'
 import { acceptInvitation, isPendingInvitation } from '../aggregates/invitation'
 import { ensureStream } from './aggregate-stream'
+import { found } from './preconditions'
 import { decideOnInvitation, invitationAggregate, InvitationSource } from './invitation-stream'
 import { Grant, grantEach, rewardFor } from './reward'
 import { runCommand } from './run-command'
@@ -25,35 +26,11 @@ type AcceptInvitationParams = {
 
 const ALREADY_ACCEPTED = 'Cette invitation a déjà été acceptée.'
 
-/**
- * The invitee joins with half the inviter's reputation, and the inviter is
- * rewarded. The acceptance is written on the invitation's stream, at its
- * revision, in the transaction of both grants: a second acceptance, at once
- * or later, finds the invitation gone past pending and is refused.
- */
-export async function acceptInvitationUseCase(
-  params: AcceptInvitationParams,
-): Promise<Either.Either<void, string>> {
-  const { inviteeId, inviteeEmail, invitationRepo, reputationRepo, contributorRepo } = params
-
-  const invitation = await Effect.runPromise(invitationRepo.findPendingByEmail(inviteeEmail))
-
-  if (!invitation) {
-    return Either.left('Aucune invitation en attente pour cette adresse e-mail.')
-  }
-
-  if (isExpired(invitation)) {
-    return Either.left('L’invitation a expiré. Demandez une nouvelle invitation.')
-  }
-
-  await Effect.runPromise(contributorRepo.ensureExists(inviteeId))
-
-  const inviterReputation = await Effect.runPromise(
-    reputationRepo.getReputation(invitation.inviterId),
-  )
+/** The invitee starts with half the inviter's reputation, the inviter is rewarded */
+function grantsFor(invitation: Invitation, inviteeId: string, inviterReputation: number): Grant[] {
   const on = { relatedEntityType: 'invitation' as const, relatedEntityId: invitation.id }
   const inviteeStart = Math.floor(inviterReputation / 2)
-  const grants: Grant[] = [
+  return [
     ...(inviteeStart > 0
       ? [
           {
@@ -67,17 +44,41 @@ export async function acceptInvitationUseCase(
       : []),
     rewardFor(invitation.inviterId, 'invitation_accepted', on),
   ]
+}
+
+/**
+ * The invitee joins with half the inviter's reputation, and the inviter is
+ * rewarded. The acceptance is written on the invitation's stream, at its
+ * revision, in the transaction of both grants: a second acceptance, at once
+ * or later, finds the invitation gone past pending and is refused.
+ */
+export function acceptInvitationUseCase(
+  params: AcceptInvitationParams,
+): Promise<Either.Either<void, string>> {
+  const { inviteeId, inviteeEmail, invitationRepo, reputationRepo, contributorRepo } = params
+  const { runUnitOfWork, invitationSource } = params
 
   return runCommand(
     pipe(
-      ensureStream(
-        invitationAggregate,
-        params.runUnitOfWork,
-        invitation.id,
-        params.invitationSource,
+      invitationRepo.findPendingByEmail(inviteeEmail),
+      Effect.flatMap(found('Aucune invitation en attente pour cette adresse e-mail.')),
+      Effect.filterOrFail(
+        (invitation) => !isExpired(invitation),
+        () => new Rejected('L’invitation a expiré. Demandez une nouvelle invitation.'),
       ),
-      Effect.andThen(
-        params.runUnitOfWork((events) =>
+      Effect.bindTo('invitation'),
+      // The profile is written outside the journal, by choice: it belongs to authentication
+      Effect.tap(() => contributorRepo.ensureExists(inviteeId)),
+      Effect.bind('grants', ({ invitation }) =>
+        Effect.map(reputationRepo.getReputation(invitation.inviterId), (inviterReputation) =>
+          grantsFor(invitation, inviteeId, inviterReputation),
+        ),
+      ),
+      Effect.tap(({ invitation }) =>
+        ensureStream(invitationAggregate, runUnitOfWork, invitation.id, invitationSource),
+      ),
+      Effect.flatMap(({ invitation, grants }) =>
+        runUnitOfWork((events) =>
           pipe(
             decideOnInvitation(events, invitation.id, inviteeId, (state) =>
               isPendingInvitation(state)
