@@ -1,7 +1,7 @@
 import { Effect, Either } from 'effect'
 import { ConcurrencyError, UniqueTaken, UnreadableEvent } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
-import { FieldErrors, Rejected } from './types'
+import { FieldErrors, NotFound, Rejected } from './types'
 
 export const EDITED_MEANWHILE =
   'Quelqu’un d’autre vient de modifier ceci. Rechargez la page avant de recommencer.'
@@ -11,6 +11,7 @@ export const VALUE_TAKEN = 'Cette valeur est déjà prise par un autre élément
 
 export type CommandFailure =
   | Rejected
+  | NotFound
   | ConcurrencyError
   | UniqueTaken
   | DatabaseError
@@ -66,6 +67,7 @@ async function outcomeOf<A, E>(
 function messageOf(failure: CommandFailure): string {
   switch (failure._tag) {
     case 'Rejected':
+    case 'NotFound':
       return failure.message
     case 'ConcurrencyError':
       return EDITED_MEANWHILE

@@ -16,3 +16,13 @@ export class Rejected {
     readonly field?: string,
   ) {}
 }
+
+/**
+ * The aggregate a command names is unknown to the journal and the tables, or
+ * was deleted: refused before any decision, with the aggregate's own message.
+ * A command reaching another aggregate can tell this apart from a refusal.
+ */
+export class NotFound {
+  readonly _tag = 'NotFound'
+  constructor(readonly message: string) {}
+}

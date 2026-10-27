@@ -3,7 +3,7 @@ import { Effect, Either } from 'effect'
 import { ConcurrencyError } from '../events/event-store'
 import { createInMemoryEventStore, inMemoryUnitOfWork } from '../events/event-store-memory'
 import { AggregateStream, decideOn, ensureStream, IMPORT, loadStream } from './aggregate-stream'
-import { Rejected } from './types'
+import { NotFound, Rejected } from './types'
 
 /** A counter: the smallest aggregate that can be opened, moved and closed */
 interface Counter {
@@ -94,7 +94,7 @@ describe('ensureStream', () => {
     )
 
     expect(Either.isLeft(outcome) && outcome.left).toEqual(
-      new Rejected('Le compteur est introuvable.'),
+      new NotFound('Le compteur est introuvable.'),
     )
     expect(journal.all()).toEqual([])
   })
@@ -123,7 +123,7 @@ describe('loadStream', () => {
     const outcome = await Effect.runPromise(Effect.either(loadStream(counterAggregate, events, id)))
 
     expect(Either.isLeft(outcome) && outcome.left).toEqual(
-      new Rejected('Le compteur est introuvable.'),
+      new NotFound('Le compteur est introuvable.'),
     )
   })
 })
@@ -201,7 +201,7 @@ describe('decideOn', () => {
     )
 
     expect(Either.isLeft(outcome) && outcome.left).toEqual(
-      new Rejected('Le compteur est introuvable.'),
+      new NotFound('Le compteur est introuvable.'),
     )
     expect(decided).toBe(0)
     expect(events.all()).toHaveLength(2)

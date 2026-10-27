@@ -13,7 +13,7 @@ import {
 } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { DatabaseError } from '../repositories/errors'
-import { Rejected } from './types'
+import { NotFound, Rejected } from './types'
 
 /** Events to append together, dated and signed as the rows they come from */
 export interface Batch<Event extends DomainEvent> {
@@ -39,7 +39,10 @@ export const IMPORT = { source: 'import' }
 /** Reads what the projections hold of an aggregate; null when there is none */
 export type Source<Parts> = (id: string) => Effect.Effect<Parts | null, DatabaseError>
 
-export type StreamFailure = DatabaseError | ConcurrencyError | UniqueTaken | Rejected
+export type StreamFailure = DatabaseError | ConcurrencyError | UniqueTaken | Rejected | NotFound
+
+/** What ensuring a stream can fail with: the import writes, and the aggregate may be unknown */
+type EnsureFailure = DatabaseError | UniqueTaken | NotFound
 
 const streamOf = (aggregate: { streamType: string }, id: string): StreamRef => ({
   streamType: aggregate.streamType,
@@ -58,7 +61,7 @@ export function ensureStream<State, Event extends DomainEvent, Parts>(
   run: RunUnitOfWork,
   id: string,
   source: Source<Parts>,
-): Effect.Effect<void, DatabaseError | UniqueTaken | Rejected> {
+): Effect.Effect<void, EnsureFailure> {
   const stream = streamOf(aggregate, id)
   const isMissing = run((events) => Effect.map(events.load(stream), (h) => h.length === 0))
   const imported = (parts: Parts) =>
@@ -70,12 +73,14 @@ export function ensureStream<State, Event extends DomainEvent, Parts>(
         ),
       ),
     )
-  const importFrom = (parts: Parts | null): Effect.Effect<void, StreamFailure> =>
-    parts ? Effect.asVoid(imported(parts)) : Effect.fail(new Rejected(aggregate.notFound))
+  const importFrom = (
+    parts: Parts | null,
+  ): Effect.Effect<void, EnsureFailure | ConcurrencyError> =>
+    parts ? Effect.asVoid(imported(parts)) : Effect.fail(new NotFound(aggregate.notFound))
   return pipe(
     isMissing,
     Effect.flatMap(
-      (missing): Effect.Effect<void, StreamFailure> =>
+      (missing): Effect.Effect<void, EnsureFailure | ConcurrencyError> =>
         missing ? Effect.flatMap(source(id), importFrom) : Effect.void,
     ),
     // Imported meanwhile by another command: the stream is there, which is all that matters
@@ -89,7 +94,7 @@ export function ensureStreams<State, Event extends DomainEvent, Parts>(
   run: RunUnitOfWork,
   ids: readonly string[],
   source: Source<Parts>,
-): Effect.Effect<void, DatabaseError | UniqueTaken | Rejected> {
+): Effect.Effect<void, EnsureFailure> {
   return Effect.forEach(ids, (id) => ensureStream(aggregate, run, id, source), { discard: true })
 }
 
@@ -98,11 +103,11 @@ export function loadStream<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
   events: EventStore,
   id: string,
-): Effect.Effect<StoredEvent[], DatabaseError | Rejected> {
+): Effect.Effect<StoredEvent[], DatabaseError | NotFound> {
   return Effect.filterOrFail(
     events.load(streamOf(aggregate, id)),
     (history) => history.length > 0,
-    () => new Rejected(aggregate.notFound),
+    () => new NotFound(aggregate.notFound),
   )
 }
 
@@ -154,7 +159,7 @@ export type RenderedFrom = Revision | undefined
 /**
  * A command on an aggregate: loads its stream, lets the decision look at the
  * current state, appends what it decided and rebuilds what the aggregate now
- * is. A decision refuses with a Rejected; a deleted aggregate is refused
+ * is. A decision refuses with a Rejected; a deleted aggregate is NotFound
  * before any decision; a stream that moved past the revision the form was
  * rendered from is a ConcurrencyError.
  */
@@ -178,7 +183,7 @@ export function decideOn<State, Event extends DomainEvent, Parts>(
       pipe(
         aggregate.replay(history),
         Effect.flatMap((state) => requireState(aggregate, state)),
-        Effect.filterOrFail(aggregate.isLive, () => new Rejected(aggregate.notFound)),
+        Effect.filterOrFail(aggregate.isLive, () => new NotFound(aggregate.notFound)),
         Effect.flatMap(decide),
         Effect.flatMap((decided) =>
           appendAndReplay(aggregate, events, id, history, decided, actorId),

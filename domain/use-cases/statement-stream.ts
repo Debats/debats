@@ -7,7 +7,7 @@ import {
 } from '../aggregates/statement'
 import { StatementEvent } from '../aggregates/statement-events'
 import { Statement } from '../entities/statement'
-import { EventStore, StoredEvent, UnreadableEvent } from '../events/event-store'
+import { EventStore, StoredEvent } from '../events/event-store'
 import { Rejected } from './types'
 import {
   AggregateStream,
@@ -18,7 +18,6 @@ import {
   RenderedFrom,
   requireState as requireStateOf,
   Source,
-  StreamFailure,
 } from './aggregate-stream'
 
 /** What the tables hold of a statement, enough to import it into the journal */
@@ -82,14 +81,12 @@ export function decideOnEachStatement(
   actorId: string,
   decide: (state: StatementState) => StatementEvent[],
 ) {
-  const gone = (failure: StreamFailure | UnreadableEvent) =>
-    failure._tag === 'Rejected' && failure.message === statementAggregate.notFound
   return Effect.forEach(
     statementIds,
     (id) =>
       pipe(
         decideOn(statementAggregate, events, id, actorId, (state) => Effect.succeed(decide(state))),
-        Effect.catchIf(gone, () => Effect.void),
+        Effect.catchTag('NotFound', () => Effect.void),
       ),
     { discard: true },
   )

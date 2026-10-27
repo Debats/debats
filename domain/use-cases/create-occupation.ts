@@ -66,11 +66,7 @@ export async function createOccupationUseCase(
         ),
       ),
       // A family unknown or deleted meanwhile is blamed on the field, not told as a message
-      Effect.mapError((failure) =>
-        failure._tag === 'Rejected' && failure.message === occupationFamilyAggregate.notFound
-          ? CHOOSE_A_FAMILY
-          : failure,
-      ),
+      Effect.catchTag('NotFound', () => Effect.fail(CHOOSE_A_FAMILY)),
       uniqueTakenAs('name', 'Un métier porte déjà ce nom.'),
     ),
   )

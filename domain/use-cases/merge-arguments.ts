@@ -70,11 +70,7 @@ export async function mergeArgumentsUseCase(
             decideOnArgument(events, targetArgumentId, contributor.id, () =>
               Effect.succeed([absorbArgument(sourceArgumentId)]),
             ),
-            Effect.mapError((failure) =>
-              failure._tag === 'Rejected' && failure.message === argumentAggregate.notFound
-                ? new Rejected(GONE)
-                : failure,
-            ),
+            Effect.catchTag('NotFound', () => Effect.fail(new Rejected(GONE))),
             Effect.tap(() =>
               decideOnArgument(events, sourceArgumentId, contributor.id, () =>
                 Effect.succeed([mergeArgumentInto(targetArgumentId)]),
