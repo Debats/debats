@@ -108,9 +108,10 @@ describe.skipIf(!hasDatabase)('argument journal after the backfill', () => {
     expect(Number(orphans[0].count)).toBe(0)
   })
 
-  it('decodes every argument event the backfill wrote, one stream per row', async () => {
+  // One stream per row is the previous test's, in one query: counting rows apart from
+  // the events races with the suites that write arguments meanwhile
+  it('decodes every argument event the backfill wrote', async () => {
     const events = await prisma().domain_events.findMany({ where: { stream_type: 'argument' } })
-    const rows = await prisma().arguments.count()
     const unreadable = events
       .map((row) =>
         decodeArgumentEvent({
@@ -126,7 +127,6 @@ describe.skipIf(!hasDatabase)('argument journal after the backfill', () => {
       )
       .filter(Either.isLeft)
     expect(unreadable.map((e) => e.left.message)).toEqual([])
-    expect(new Set(events.map((e) => e.stream_id)).size).toBe(rows)
   })
 
   it('replays every backfilled argument to what its row holds', async () => {
