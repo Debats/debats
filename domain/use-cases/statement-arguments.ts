@@ -69,7 +69,7 @@ export function validateStatementArguments(params: {
           'arguments',
         ),
     ),
-    Effect.andThen(argumentRepo.findByIds(argumentIds)),
+    Effect.andThen(() => argumentRepo.findByIds(argumentIds)),
     Effect.filterOrFail(
       (known) => known.length === argumentIds.length,
       () => new Rejected('Un des arguments choisis n’existe plus.'),

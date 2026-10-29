@@ -6,7 +6,7 @@ import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
 import { ensureStream, ensureStreams } from './aggregate-stream'
-import { found, mayPerform } from './preconditions'
+import { allowedTo, found } from './preconditions'
 import { runCommand } from './run-command'
 import { decideOnSubject, subjectAggregate, SubjectSource } from './subject-stream'
 import { decideOnEachStatement, statementAggregate, StatementSource } from './statement-stream'
@@ -14,7 +14,7 @@ import { decideOnEachStatement, statementAggregate, StatementSource } from './st
 type MergePositionsParams = {
   sourcePositionId: string
   targetPositionId: string
-  contributor: ContributorIdentity
+  contributor: ContributorIdentity | null
   runUnitOfWork: RunUnitOfWork
   subjectSource: SubjectSource
   statementSource: StatementSource
@@ -36,12 +36,11 @@ export function mergePositions(params: MergePositionsParams): Promise<Either.Eit
 
   return runCommand(
     pipe(
-      Effect.succeed(params.contributor),
+      allowedTo(params.contributor, 'admin', 'fusionner des positions'),
       Effect.filterOrFail(
         () => sourcePositionId !== targetPositionId,
         () => new Rejected('Les deux positions sont identiques.'),
       ),
-      Effect.flatMap(mayPerform('admin', 'fusionner des positions')),
       Effect.bindTo('contributor'),
       Effect.bind('source', () =>
         Effect.flatMap(

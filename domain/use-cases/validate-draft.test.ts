@@ -191,6 +191,27 @@ const payloadsOf = (journal: { all(): Array<{ type: string; payload: unknown }> 
     .map((e) => e.payload)
 
 describe('validateDraft', () => {
+  it('refuses a visitor, and a contributor below the founder rank, before reading the draft', async () => {
+    const repos = makeRepos({})
+    const visitor = await validateDraft({
+      draftId: 'draft-1',
+      contributor: null,
+      ...repos,
+      wikipediaValidator: fakeWikipediaValidator,
+    })
+    const ideologue = await validateDraft({
+      draftId: 'draft-1',
+      contributor: { id: 'user-2', reputation: 1_000 },
+      ...repos,
+      wikipediaValidator: fakeWikipediaValidator,
+    })
+
+    expect(Either.isLeft(visitor) && visitor.left).toContain('connecté')
+    expect(Either.isLeft(ideologue) && ideologue.left).toContain('Fondateur')
+    expect(repos.journal.all()).toEqual([])
+    expect(repos.draftRepo.updateStatus).not.toHaveBeenCalled()
+  })
+
   it('should fail when draft is not found', async () => {
     const repos = makeRepos({ draft: null })
     const result = await validateDraft({

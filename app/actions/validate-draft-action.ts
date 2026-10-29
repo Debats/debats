@@ -14,21 +14,17 @@ import { createOccupationRepository } from '../../infra/database/occupation-repo
 import { createOrganisationMembershipRepository } from '../../infra/database/organisation-membership-repository-supabase'
 import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
-import { getAdminContributor } from './admin-guard'
+import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult = { success: true } | { success: false; error: string }
 
 export async function validateDraftAction(draftId: string): Promise<ActionResult> {
-  const contributor = await getAdminContributor()
-  if (!contributor) {
-    return { success: false, error: 'Accès refusé.' }
-  }
-
   const supabase = createAdminSupabaseClient()
+  const contributor = await getAuthenticatedContributor()
 
   const result = await validateDraft({
     draftId,
-    contributor: { id: contributor.id, reputation: contributor.reputation },
+    contributor,
     draftRepo: createDraftStatementRepository(supabase),
     publicFigureRepo: createPublicFigureRepository(supabase),
     organisationRepo: createOrganisationRepository(supabase),

@@ -32,12 +32,12 @@ import { createPositionCommand } from './create-position'
 import { createStatementCommand } from './create-statement'
 import { organisationAuthor, publicFigureAuthor, StatementAuthor } from '../entities/statement'
 import { ContributorIdentity, Rejected } from './types'
-import { found } from './preconditions'
+import { allowedTo, found } from './preconditions'
 import { CommandFailure, FormFailure, runCommand } from './run-command'
 
 type ValidateDraftParams = {
   draftId: string
-  contributor: ContributorIdentity
+  contributor: ContributorIdentity | null
   draftRepo: DraftStatementRepository
   publicFigureRepo: PublicFigureRepository
   organisationRepo: OrganisationRepository
@@ -81,7 +81,8 @@ export function validateDraft(params: ValidateDraftParams): Promise<Either.Eithe
 
   return runCommand(
     pipe(
-      Effect.flatMap(draftRepo.findById(draftId), found('Brouillon introuvable.')),
+      allowedTo(contributor, 'admin', 'valider un brouillon'),
+      Effect.andThen(Effect.flatMap(draftRepo.findById(draftId), found('Brouillon introuvable.'))),
       Effect.bindTo('draft'),
       Effect.bind('author', ({ draft }) => authorOf(draft.author, params)),
       // What the draft says of the person herself, applied before the statement so
@@ -125,7 +126,7 @@ export function validateDraft(params: ValidateDraftParams): Promise<Either.Eithe
           }),
         ),
       ),
-      Effect.andThen(draftRepo.updateStatus(draftId, 'validated')),
+      Effect.andThen(() => draftRepo.updateStatus(draftId, 'validated')),
       Effect.asVoid,
     ),
   )

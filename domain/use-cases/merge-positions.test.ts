@@ -58,6 +58,11 @@ describe('mergePositions', () => {
     expect(Either.isLeft(result) && result.left).toContain('identiques')
   })
 
+  it('refuses a visitor who is not signed in', async () => {
+    const result = await mergePositions({ ...validParams, contributor: null })
+    expect(Either.isLeft(result) && result.left).toContain('connecté')
+  })
+
   it('should fail if contributor lacks admin permission', async () => {
     const result = await mergePositions({
       ...validParams,
