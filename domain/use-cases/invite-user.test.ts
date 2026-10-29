@@ -15,6 +15,7 @@ const fakeInvitationRepo: InvitationRepository = {
 }
 
 const fakeContributorRepo: ContributorRepository = {
+  findById: () => Effect.succeed(null),
   ensureExists: () => Effect.succeed(undefined as void),
   existsByEmail: () => Effect.succeed(false),
 }

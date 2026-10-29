@@ -1,5 +1,12 @@
+import { Effect } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
+import { createContributorRepository } from '../../infra/database/contributor-repository-supabase'
 
+/**
+ * Who is signed in, as the commands know her (id and reputation, through the
+ * contributor repository), with the name and e-mail authentication holds.
+ * Null without a session or before the profile row exists.
+ */
 export async function getAuthenticatedContributor() {
   const supabase = await createSSRSupabaseClient()
 
@@ -9,17 +16,14 @@ export async function getAuthenticatedContributor() {
 
   if (!user) return null
 
-  const { data } = await supabase
-    .from('contributors')
-    .select('id, reputation')
-    .eq('id', user.id)
-    .single()
+  const contributor = await Effect.runPromise(
+    createContributorRepository(supabase).findById(user.id),
+  )
 
-  if (!data) return null
+  if (!contributor) return null
 
   return {
-    id: data.id,
-    reputation: data.reputation ?? 0,
+    ...contributor,
     name: (user.user_metadata?.name as string) ?? null,
     email: user.email ?? null,
   }

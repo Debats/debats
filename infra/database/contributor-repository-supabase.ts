@@ -12,6 +12,23 @@ function dbError(message: string, error: unknown): DatabaseError {
 
 export function createContributorRepository(supabase: SupabaseClient): ContributorRepository {
   return {
+    findById: (id: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('contributors')
+            .select('id, reputation')
+            .eq('id', id)
+            .maybeSingle()
+
+          if (error) throw error
+          return data
+            ? { id: data.id as string, reputation: (data.reputation as number) ?? 0 }
+            : null
+        },
+        catch: (error) => dbError('Failed to find contributor', error),
+      }),
+
     ensureExists: (id: string) =>
       Effect.tryPromise({
         try: async () => {
