@@ -5,10 +5,7 @@ import { Effect, Either } from 'effect'
 import { createSSRSupabaseClient } from '../../infra/supabase/ssr'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createInvitationRepository } from '../../infra/database/invitation-repository-supabase'
-import { createReputationRepository } from '../../infra/database/reputation-repository-supabase'
-import { createContributorRepository } from '../../infra/database/contributor-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createInvitationSource } from '../../infra/events/sources'
+import { runLive } from '../../infra/live-services'
 import { acceptInvitationUseCase } from '../../domain/use-cases/accept-invitation'
 import { validateResendInvitation } from '../../domain/use-cases/resend-invitation'
 
@@ -71,15 +68,10 @@ export async function acceptInvitation(
   const admin = createAdminSupabaseClient()
 
   try {
-    const result = await acceptInvitationUseCase({
-      inviteeId: user.id,
-      inviteeEmail: user.email,
-      invitationRepo: createInvitationRepository(admin),
-      invitationSource: createInvitationSource(admin),
-      reputationRepo: createReputationRepository(admin),
-      contributorRepo: createContributorRepository(admin),
-      runUnitOfWork,
-    })
+    const result = await runLive(
+      acceptInvitationUseCase({ inviteeId: user.id, inviteeEmail: user.email }),
+      admin,
+    )
 
     if (Either.isLeft(result)) {
       return { success: false, error: result.left }

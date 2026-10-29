@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either, Effect, Layer } from 'effect'
 import { updateStatementUseCase } from './update-statement'
 import { EDITED_MEANWHILE } from './run-command'
 import { fakeStatementSource } from './subject-test-helpers'
@@ -7,8 +7,13 @@ import { createStatement, publicFigureAuthor } from '../entities/statement'
 import { Position, createPosition } from '../entities/position'
 import { addStatement, statementStream } from '../aggregates/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { RunUnitOfWork } from '../events/unit-of-work'
+import { ArgumentRepository } from '../repositories/argument-repository'
+import { PositionRepository } from '../repositories/position-repository'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
+import { runFormWith } from './command-test-helpers'
+import { StatementSource } from './statement-stream'
 
 const existingPosition = createPosition({
   title: 'Pour la réforme',
@@ -44,7 +49,7 @@ const existingStatement = createStatement({
 
 const allPositions = [existingPosition, anotherPosition, positionOnOtherSubject]
 
-const fakePositionRepo = {
+const fakePositionRepo: PositionRepository = {
   findById: (id: string) => Effect.succeed(allPositions.find((p) => p.id === id) ?? null),
   findBySubjectAndSlug: () => Effect.succeed(null as Position | null),
   findBySubjectId: () => Effect.succeed([]),
@@ -60,13 +65,29 @@ const validParams = {
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
   revision: 0,
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  statementSource: fakeStatementSource([
-    { statement: existingStatement, argumentIds: [], subjectId: 'subject-1' },
-  ]),
-  positionRepo: fakePositionRepo,
-  argumentRepo: fakeArgumentRepo(),
 }
+
+/** The read side as the test wants it */
+const fakes = (
+  overrides: {
+    source?: StatementSource
+    positions?: PositionRepository
+    arguments?: ArgumentRepository
+  } = {},
+) =>
+  Layer.mergeAll(
+    Layer.succeed(
+      StatementSource,
+      overrides.source ??
+        fakeStatementSource([
+          { statement: existingStatement, argumentIds: [], subjectId: 'subject-1' },
+        ]),
+    ),
+    Layer.succeed(PositionRepository, overrides.positions ?? fakePositionRepo),
+    Layer.succeed(ArgumentRepository, overrides.arguments ?? fakeArgumentRepo()),
+  )
+
+const execute = runFormWith(fakes())
 
 /** A journal where the statement already has its stream, as after a backfill */
 async function journalWithStream() {
@@ -91,16 +112,16 @@ async function journalWithStream() {
 describe('updateStatementUseCase', () => {
   it('should carry the new set of arguments in the edit', async () => {
     const kept = sampleArgument('Coût budgétaire')
-    const argumentRepo = fakeArgumentRepo([kept])
     const { run, journal } = await journalWithStream()
 
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      arguments: { argumentIds: [kept.id], newArguments: [] },
-      argumentRepo,
-      runUnitOfWork: run,
-    })
+    const result = await runFormWith(fakes({ arguments: fakeArgumentRepo([kept]) }))(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        arguments: { argumentIds: [kept.id], newArguments: [] },
+      }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     const last = deedsIn(journal).at(-1)
@@ -112,14 +133,16 @@ describe('updateStatementUseCase', () => {
     const old = sampleArgument('Ancien argument')
     const { run, journal } = inMemoryUnitOfWork()
 
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      statementSource: fakeStatementSource([
-        { statement: existingStatement, argumentIds: [old.id], subjectId: 'subject-1' },
-      ]),
-      runUnitOfWork: run,
-    })
+    const result = await runFormWith(
+      fakes({
+        source: fakeStatementSource([
+          { statement: existingStatement, argumentIds: [old.id], subjectId: 'subject-1' },
+        ]),
+      }),
+    )(
+      updateStatementUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     const [imported, edited] = journal.all()
@@ -141,40 +164,32 @@ describe('updateStatementUseCase', () => {
 
   it('should tell the contributor when someone edited the statement meanwhile', async () => {
     const { run, journal } = await journalWithStream()
+    // Another writer appends between the load and the append
+    const raced: RunUnitOfWork = (work) =>
+      run((events) =>
+        work({
+          ...events,
+          append: (stream, expectedRevision, decided, options) =>
+            Effect.flatMap(
+              events.append(stream, expectedRevision, [{ type: 'StatementDeleted', payload: {} }], {
+                actorId: 'someone-else',
+              }),
+              () => events.append(stream, expectedRevision, decided, options),
+            ),
+        }),
+      )
 
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      runUnitOfWork: (work) =>
-        run((events) =>
-          work({
-            ...events,
-            // Another writer appends between the load and the append
-            append: (stream, expectedRevision, decided, options) =>
-              Effect.flatMap(
-                events.append(
-                  stream,
-                  expectedRevision,
-                  [{ type: 'StatementDeleted', payload: {} }],
-                  {
-                    actorId: 'someone-else',
-                  },
-                ),
-                () => events.append(stream, expectedRevision, decided, options),
-              ),
-          }),
-        ),
-    })
+    const result = await execute(
+      updateStatementUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      raced,
+    )
 
     expect(result).toEqual(Either.left(EDITED_MEANWHILE))
     expect(journal.all()).toHaveLength(1)
   })
 
   it('should fail when contributor is null', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: null,
-    })
+    const result = await execute(updateStatementUseCase({ ...validParams, contributor: null }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -183,10 +198,9 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should fail when contributor lacks reputation', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 9999 },
-    })
+    const result = await execute(
+      updateStatementUseCase({ ...validParams, contributor: { id: 'abc', reputation: 9999 } }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -195,11 +209,13 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should fail when statement does not exist', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      statementId: 'unknown-id',
-    })
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        statementId: 'unknown-id',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -208,11 +224,13 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should fail when position does not exist', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      positionId: 'unknown-position',
-    })
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        positionId: 'unknown-position',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -221,11 +239,13 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should fail when new position belongs to a different subject', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      positionId: positionOnOtherSubject.id,
-    })
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        positionId: positionOnOtherSubject.id,
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -236,7 +256,7 @@ describe('updateStatementUseCase', () => {
   it('decides the subject rule from the stream, even when the tables say otherwise', async () => {
     const { run } = await journalWithStream()
     // The tables now put both positions on subject-2: the stream still says subject-1
-    const movedPositions = {
+    const movedPositions: PositionRepository = {
       ...fakePositionRepo,
       findById: (id: string) =>
         Effect.succeed(
@@ -246,13 +266,14 @@ describe('updateStatementUseCase', () => {
         ),
     }
 
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      positionId: positionOnOtherSubject.id,
-      positionRepo: movedPositions,
-      runUnitOfWork: run,
-    })
+    const result = await runFormWith(fakes({ positions: movedPositions }))(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        positionId: positionOnOtherSubject.id,
+      }),
+      run,
+    )
 
     expect(Either.isLeft(result) && result.left).toEqual({
       positionId: 'La nouvelle position doit appartenir au même sujet.',
@@ -260,21 +281,25 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should fail when quote is too short', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      quote: 'Court',
-    })
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        quote: 'Court',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
   })
 
   it('should fail when statedAt is invalid', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      statedAt: 'pas-une-date',
-    })
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        statedAt: 'pas-une-date',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
   })
@@ -282,12 +307,14 @@ describe('updateStatementUseCase', () => {
   it('should update statement and award reputation on success', async () => {
     const { run, journal } = await journalWithStream()
 
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      positionId: anotherPosition.id,
-      runUnitOfWork: run,
-    })
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        positionId: anotherPosition.id,
+      }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     const updated = Either.isRight(result) ? result.right : null
@@ -303,10 +330,9 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should allow keeping the same position', async () => {
-    const result = await updateStatementUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-    })
+    const result = await execute(
+      updateStatementUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+    )
 
     expect(Either.isRight(result)).toBe(true)
   })

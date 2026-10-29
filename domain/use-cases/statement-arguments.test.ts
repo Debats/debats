@@ -7,6 +7,9 @@ import {
 } from './statement-arguments'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { createInMemoryEventStore } from '../events/event-store-memory'
+import { ArgumentRepository } from '../repositories/argument-repository'
+import { ContributorIdentity } from './types'
+import { StatementArgumentsInput } from './statement-arguments'
 
 const eloquent = { id: 'contributor-1', reputation: 1000 }
 const meteque = { id: 'contributor-2', reputation: 10 }
@@ -16,8 +19,20 @@ const proposed = {
   description: 'Chacun doit pouvoir décider pour lui-même en fin de vie.',
 }
 
-const validate = (params: Parameters<typeof validateStatementArguments>[0]) =>
-  Effect.runPromise(Effect.either(validateStatementArguments(params)))
+const validate = (params: {
+  contributor: ContributorIdentity
+  input: StatementArgumentsInput
+  argumentRepo: ArgumentRepository
+}) =>
+  Effect.runPromise(
+    Effect.either(
+      Effect.provideService(
+        validateStatementArguments(params.contributor, params.input),
+        ArgumentRepository,
+        params.argumentRepo,
+      ),
+    ),
+  )
 
 describe('validateStatementArguments', () => {
   it('accepts an empty selection from anyone', async () => {

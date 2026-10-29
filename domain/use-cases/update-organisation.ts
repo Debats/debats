@@ -1,20 +1,15 @@
-import { Effect, Either, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import { generateOrganisationSlug, Organisation, OrganisationType } from '../entities/organisation'
 import { editOrganisation } from '../aggregates/organisation'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { organisationFields } from './validate-organisation-fields'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, found, free, signedIn } from './preconditions'
-import { runCommand, runFormCommand, uniqueTakenAs } from './run-command'
-import {
-  decideOnOrganisation,
-  organisationAggregate,
-  OrganisationSource,
-} from './organisation-stream'
+import { uniqueTakenAs } from './run-command'
+import { decideOnOrganisation, organisationAggregate } from './organisation-stream'
 
 export type UpdateOrganisationParams = {
   contributor: ContributorIdentity | null
@@ -28,11 +23,6 @@ export type UpdateOrganisationParams = {
   notorietySources: string[]
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
-  runUnitOfWork: RunUnitOfWork
-  organisationSource: OrganisationSource
-  /** Read side: the organisation must exist and the new name must be free */
-  organisationRepo: OrganisationRepository
-  wikipediaValidator: WikipediaValidator
 }
 
 export type { FieldErrors }
@@ -44,21 +34,23 @@ export interface ValidatedUpdate {
 
 const NAME_TAKEN = 'Une organisation avec ce nom existe déjà.'
 
+/** Read side: the organisation must exist and the new name must be free */
+const organisations = Effect.serviceFunctions(OrganisationRepository)
+
 /** Who may edit the organisation, which one, with a form that holds up and a new name still free */
 const checked = (params: UpdateOrganisationParams) => {
-  const { organisationRepo } = params
   const nameFree = (existing: Organisation) => {
     const newSlug = generateOrganisationSlug(params.name)
     return newSlug === existing.slug
       ? Effect.void
-      : Effect.flatMap(organisationRepo.findBySlug(newSlug), free(NAME_TAKEN, 'name'))
+      : Effect.flatMap(organisations.findBySlug(newSlug), free(NAME_TAKEN, 'name'))
   }
   return pipe(
     allowedTo(params.contributor, 'edit_organisation', 'modifier une organisation'),
     Effect.bindTo('contributor'),
     Effect.bind('existing', () =>
       Effect.flatMap(
-        organisationRepo.findById(params.organisationId),
+        organisations.findById(params.organisationId),
         found(organisationAggregate.notFound),
       ),
     ),
@@ -75,7 +67,6 @@ const persisted = (
   contributor: ContributorIdentity,
   { existing, organisationType }: ValidatedUpdate,
 ) => {
-  const { runUnitOfWork, organisationSource, revision } = params
   const edited = editOrganisation({
     name: params.name,
     acronym: params.acronym,
@@ -86,7 +77,7 @@ const persisted = (
     notorietySources: params.notorietySources,
   })
   return pipe(
-    ensureStream(organisationAggregate, runUnitOfWork, existing.id, organisationSource),
+    ensureStream(organisationAggregate, existing.id),
     Effect.andThen(
       runUnitOfWork((events) =>
         pipe(
@@ -95,7 +86,7 @@ const persisted = (
             existing.id,
             contributor.id,
             () => Effect.succeed([edited]),
-            revision,
+            params.revision,
           ),
           Effect.tap(() =>
             grant(
@@ -117,16 +108,12 @@ const persisted = (
 
 /**
  * Validates update inputs without persisting; hands the organisation as it
- * stands and the parsed type. Call before side effects (logo re-upload) to fail fast.
+ * stands and the parsed type. Run before side effects (logo re-upload) to fail fast.
  */
-export function validateUpdateOrganisation(
-  params: UpdateOrganisationParams,
-): Promise<Either.Either<ValidatedUpdate, string | FieldErrors>> {
-  return runFormCommand(
-    Effect.map(checked(params), ({ existing, organisationType }) => ({
-      existing,
-      organisationType,
-    })),
+export function validateUpdateOrganisation(params: UpdateOrganisationParams) {
+  return Effect.map(
+    checked(params),
+    ({ existing, organisationType }): ValidatedUpdate => ({ existing, organisationType }),
   )
 }
 
@@ -134,21 +121,15 @@ export function validateUpdateOrganisation(
 export function persistUpdatedOrganisation(
   params: UpdateOrganisationParams,
   validated: ValidatedUpdate,
-): Promise<Either.Either<Organisation, string>> {
-  return runCommand(
-    Effect.flatMap(signedIn(params.contributor), (contributor) =>
-      persisted(params, contributor, validated),
-    ),
+) {
+  return Effect.flatMap(signedIn(params.contributor), (contributor) =>
+    persisted(params, contributor, validated),
   )
 }
 
 /** Validates and updates an organisation in one step. */
-export function updateOrganisationUseCase(
-  params: UpdateOrganisationParams,
-): Promise<Either.Either<Organisation, string | FieldErrors>> {
-  return runFormCommand(
-    Effect.flatMap(checked(params), ({ contributor, existing, organisationType }) =>
-      persisted(params, contributor, { existing, organisationType }),
-    ),
+export function updateOrganisationUseCase(params: UpdateOrganisationParams) {
+  return Effect.flatMap(checked(params), ({ contributor, existing, organisationType }) =>
+    persisted(params, contributor, { existing, organisationType }),
   )
 }

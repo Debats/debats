@@ -2,9 +2,7 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
+import { runLive, runLiveForm } from '../../infra/live-services'
 import { LogoStorageError, uploadOrganisationLogo } from '../../infra/storage/organisation-logo'
 import {
   validateCreateOrganisation,
@@ -26,16 +24,10 @@ export async function createOrganisationAction(formData: FormData): Promise<Acti
   const contributor = await getAuthenticatedContributor()
   const fields = readOrganisationFields(formData)
 
-  const params = {
-    contributor,
-    ...fields,
-    runUnitOfWork,
-    organisationRepo: createOrganisationRepository(supabase),
-    wikipediaValidator: createWikipediaValidator(),
-  }
+  const params = { contributor, ...fields }
 
   // Phase 1: validate, nothing persisted yet
-  const validation = await validateCreateOrganisation(params)
+  const validation = await runLiveForm(validateCreateOrganisation(params), supabase)
   if (Either.isLeft(validation)) {
     const err = validation.left
     return typeof err === 'string'
@@ -62,7 +54,10 @@ export async function createOrganisationAction(formData: FormData): Promise<Acti
   }
 
   // Phase 3: persist entity and reputation
-  const created = await persistOrganisation(params, validation.right.organisationType)
+  const created = await runLive(
+    persistOrganisation(params, validation.right.organisationType),
+    supabase,
+  )
   if (Either.isLeft(created)) {
     return { success: false, error: created.left }
   }

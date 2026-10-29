@@ -38,17 +38,18 @@ const TITLE_MAX = 255
 const wellFormed = (proposed: NewArgumentInput) =>
   proposed.title.length >= TITLE_MIN && proposed.title.length <= TITLE_MAX
 
+/** Read side: the chosen arguments must exist, a proposed title may already be one */
+const argumentsRead = Effect.serviceFunctions(ArgumentRepository)
+
 /**
  * Checks that the contributor may mobilise arguments, that the chosen ones
  * exist, and that the proposed ones are well-formed. A proposed title that
  * already exists anywhere on the site is reused rather than duplicated.
  */
-export function validateStatementArguments(params: {
-  contributor: ContributorIdentity
-  input: StatementArgumentsInput
-  argumentRepo: ArgumentRepository
-}): Effect.Effect<ValidatedStatementArguments, Rejected | DatabaseError> {
-  const { contributor, input, argumentRepo } = params
+export function validateStatementArguments(
+  contributor: ContributorIdentity,
+  input: StatementArgumentsInput,
+): Effect.Effect<ValidatedStatementArguments, Rejected | DatabaseError, ArgumentRepository> {
   const argumentIds = Array.from(new Set(input.argumentIds.filter(Boolean)))
   const newArguments = input.newArguments.map((a) => ({
     title: a.title.trim(),
@@ -69,14 +70,14 @@ export function validateStatementArguments(params: {
           'arguments',
         ),
     ),
-    Effect.andThen(() => argumentRepo.findByIds(argumentIds)),
+    Effect.andThen(() => argumentsRead.findByIds(argumentIds)),
     Effect.filterOrFail(
       (known) => known.length === argumentIds.length,
       () => new Rejected('Un des arguments choisis n’existe plus.'),
     ),
     Effect.andThen(
       Effect.forEach(newArguments, (proposed) =>
-        Effect.map(argumentRepo.findByTitle(proposed.title), (existing) => ({
+        Effect.map(argumentsRead.findByTitle(proposed.title), (existing) => ({
           proposed,
           existing,
         })),

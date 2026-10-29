@@ -1,14 +1,14 @@
-import { Either, Effect, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { generateSlug, Subject, SubjectId, SubjectTitle } from '../entities/subject'
+import { generateSlug, SubjectId, SubjectTitle } from '../entities/subject'
 import { addSubject } from '../aggregates/subject'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { openStream } from './aggregate-stream'
 import { allowedTo, fieldsOf, free } from './preconditions'
-import { runFormCommand, uniqueTakenAs } from './run-command'
+import { uniqueTakenAs } from './run-command'
 import { subjectAggregate } from './subject-stream'
 
 const CreateSubjectInput = S.Struct({
@@ -30,22 +30,15 @@ type CreateSubjectParams = {
   title: string
   presentation: string
   problem: string
-  runUnitOfWork: RunUnitOfWork
-  /** Read side: the title must be free */
-  subjectRepo: SubjectRepository
 }
 
 export type { FieldErrors }
 
-export function createSubjectUseCase(
-  params: CreateSubjectParams,
-): Promise<Either.Either<Subject, string | FieldErrors>> {
-  return runFormCommand(createSubjectCommand(params))
-}
+/** Read side: the title must be free */
+const subjects = Effect.serviceFunctions(SubjectRepository)
 
-/** The command itself, for a process that runs it among others */
-export function createSubjectCommand(params: CreateSubjectParams) {
-  const { title, presentation, problem, runUnitOfWork, subjectRepo } = params
+export function createSubjectUseCase(params: CreateSubjectParams) {
+  const { title, presentation, problem } = params
   // The command names the subject: the stream exists from its first event
   const id = SubjectId.make(crypto.randomUUID())
 
@@ -55,7 +48,7 @@ export function createSubjectCommand(params: CreateSubjectParams) {
       input: fieldsOf(CreateSubjectInput, FIELD_MESSAGES)({ title, presentation, problem }),
     }),
     Effect.tap(({ input }) =>
-      Effect.flatMap(subjectRepo.findBySlug(generateSlug(input.title)), free(TITLE_TAKEN, 'title')),
+      Effect.flatMap(subjects.findBySlug(generateSlug(input.title)), free(TITLE_TAKEN, 'title')),
     ),
     Effect.flatMap(({ contributor, input }) =>
       runUnitOfWork((events) =>

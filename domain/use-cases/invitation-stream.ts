@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import {
   acceptInvitation as accepted,
   importInvitation,
@@ -26,6 +26,7 @@ export interface InvitationParts {
 }
 
 export type InvitationSource = Source<InvitationParts>
+export const InvitationSource = Context.GenericTag<InvitationSource>('InvitationSource')
 
 /** An invitation enters the journal as sent, then as accepted if it was */
 export const invitationAggregate: AggregateStream<
@@ -35,6 +36,7 @@ export const invitationAggregate: AggregateStream<
 > = {
   streamType: INVITATION_STREAM,
   notFound: 'Invitation introuvable.',
+  source: InvitationSource,
   replay: replayInvitation,
   isLive: (state) => state.revokedAt === null,
   importBatches: ({ invitation }) => [

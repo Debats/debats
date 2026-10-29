@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { Subject } from '../entities/subject'
 import { SubjectIndexEntry } from '../read-models/subject-index'
 import { SubjectStats } from '../value-objects/subject-stats'
@@ -47,3 +47,5 @@ export interface SubjectRepository {
   findAllIds(): Effect.Effect<string[], DatabaseError>
   findIdsWithoutPrimaryTheme(): Effect.Effect<string[], DatabaseError>
 }
+
+export const SubjectRepository = Context.GenericTag<SubjectRepository>('SubjectRepository')

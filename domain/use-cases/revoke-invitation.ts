@@ -1,35 +1,28 @@
-import { Effect, Either, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import { revokeInvitation } from '../aggregates/invitation'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { ensureStream } from './aggregate-stream'
-import { decideOnInvitation, invitationAggregate, InvitationSource } from './invitation-stream'
-import { runCommand } from './run-command'
+import { decideOnInvitation, invitationAggregate } from './invitation-stream'
 
 type RevokeInvitationParams = {
   invitationId: string
   /** The inviter, on whose behalf the site withdraws what it could not send */
   actorId: string
-  runUnitOfWork: RunUnitOfWork
-  invitationSource: InvitationSource
 }
 
 /** Withdraws an invitation whose e-mail could not leave: it never reached anyone */
-export function revokeInvitationUseCase(
-  params: RevokeInvitationParams,
-): Promise<Either.Either<void, string>> {
-  const { invitationId, actorId, runUnitOfWork, invitationSource } = params
+export function revokeInvitationUseCase(params: RevokeInvitationParams) {
+  const { invitationId, actorId } = params
 
-  return runCommand(
-    pipe(
-      ensureStream(invitationAggregate, runUnitOfWork, invitationId, invitationSource),
-      Effect.andThen(
-        runUnitOfWork((events) =>
-          decideOnInvitation(events, invitationId, actorId, () =>
-            Effect.succeed([revokeInvitation()]),
-          ),
+  return pipe(
+    ensureStream(invitationAggregate, invitationId),
+    Effect.andThen(
+      runUnitOfWork((events) =>
+        decideOnInvitation(events, invitationId, actorId, () =>
+          Effect.succeed([revokeInvitation()]),
         ),
       ),
-      Effect.asVoid,
     ),
+    Effect.asVoid,
   )
 }

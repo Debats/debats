@@ -1,9 +1,7 @@
 'use server'
 
 import { Either } from 'effect'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createSubjectSource } from '../../infra/events/sources'
+import { runLiveForm } from '../../infra/live-services'
 import { createPositionUseCase, FieldErrors } from '../../domain/use-cases/create-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -16,17 +14,16 @@ export async function createPositionAction(
   subjectId: string,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await createPositionUseCase({
-    contributor,
-    subjectId,
-    title: String(formData.get('title') ?? ''),
-    description: String(formData.get('description') ?? ''),
-    runUnitOfWork,
-    subjectSource: createSubjectSource(supabase),
-  })
+  const result = await runLiveForm(
+    createPositionUseCase({
+      contributor,
+      subjectId,
+      title: String(formData.get('title') ?? ''),
+      description: String(formData.get('description') ?? ''),
+    }),
+  )
 
   if (Either.isLeft(result)) {
     const err = result.left

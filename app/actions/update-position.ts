@@ -1,10 +1,7 @@
 'use server'
 
 import { Either } from 'effect'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createSubjectSource } from '../../infra/events/sources'
-import { createPositionRepository } from '../../infra/database/position-repository-supabase'
+import { runLiveForm } from '../../infra/live-services'
 import { updatePositionUseCase, FieldErrors } from '../../domain/use-cases/update-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { revisionOf } from './form-revision'
@@ -18,19 +15,17 @@ export async function updatePositionAction(
   positionId: string,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await updatePositionUseCase({
-    contributor,
-    positionId,
-    title: String(formData.get('title') ?? ''),
-    description: String(formData.get('description') ?? ''),
-    revision: revisionOf(formData),
-    runUnitOfWork,
-    subjectSource: createSubjectSource(supabase),
-    positionRepo: createPositionRepository(supabase),
-  })
+  const result = await runLiveForm(
+    updatePositionUseCase({
+      contributor,
+      positionId,
+      title: String(formData.get('title') ?? ''),
+      description: String(formData.get('description') ?? ''),
+      revision: revisionOf(formData),
+    }),
+  )
 
   if (Either.isLeft(result)) {
     const err = result.left

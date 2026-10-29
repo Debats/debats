@@ -1,13 +1,12 @@
-import { Effect, Either, pipe } from 'effect'
-import { MembershipId, OrganisationMembership } from '../entities/organisation-membership'
+import { Effect, pipe } from 'effect'
+import { MembershipId } from '../entities/organisation-membership'
 import { addMembership, hasCurrentMembership } from '../aggregates/public-figure'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, faultless, found } from './preconditions'
-import { runFormCommand } from './run-command'
 import {
   decideOnPublicFigure,
   publicFigureAggregate,
@@ -24,10 +23,6 @@ export type AddOrganisationMembershipParams = {
   startedOn: string
   /** ISO date (YYYY-MM-DD) or empty */
   endedOn: string
-  runUnitOfWork: RunUnitOfWork
-  publicFigureSource: PublicFigureSource
-  /** Read side: the organisation must exist */
-  organisationRepo: OrganisationRepository
 }
 
 export type { FieldErrors }
@@ -36,6 +31,9 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 const ALREADY_MEMBER = 'Cette personnalité est déjà membre de cette organisation.'
 const ROLE_MAX = 100
+
+/** Read side: the organisation must exist */
+const organisations = Effect.serviceFunctions(OrganisationRepository)
 
 /** Parses an optional ISO date field; `undefined` when empty, `null` when malformed. */
 function parseOptionalDate(value: string): Date | undefined | null {
@@ -72,29 +70,24 @@ function membershipFaults(
  * period. The affiliation lives in the figure's stream; a current one to the
  * same organisation is refused.
  */
-export function addOrganisationMembershipUseCase(
-  params: AddOrganisationMembershipParams,
-): Promise<Either.Either<OrganisationMembership, string | FieldErrors>> {
-  return runFormCommand(addOrganisationMembershipCommand(params))
-}
-
-/** The command itself, for a process that runs it among others */
-export function addOrganisationMembershipCommand(params: AddOrganisationMembershipParams) {
-  const { organisationId, publicFigureId, runUnitOfWork, publicFigureSource } = params
+export function addOrganisationMembershipUseCase(params: AddOrganisationMembershipParams) {
+  const { organisationId, publicFigureId } = params
   const role = params.role.trim()
   const startedOn = parseOptionalDate(params.startedOn)
   const endedOn = parseOptionalDate(params.endedOn)
   const membershipId = MembershipId.make(crypto.randomUUID())
 
   const figureKnown = publicFigureId
-    ? Effect.map(publicFigureSource(publicFigureId), (parts) => parts !== null)
+    ? Effect.flatMap(PublicFigureSource, (source) =>
+        Effect.map(source(publicFigureId), (parts) => parts !== null),
+      )
     : Effect.succeed(false)
 
   return pipe(
     allowedTo(params.contributor, 'add_membership', 'affilier une personnalité'),
     Effect.tap(() =>
       Effect.flatMap(
-        params.organisationRepo.findById(organisationId),
+        organisations.findById(organisationId),
         found('Cette organisation est introuvable.'),
       ),
     ),
@@ -103,9 +96,7 @@ export function addOrganisationMembershipCommand(params: AddOrganisationMembersh
         faultless(membershipFaults(known, role, startedOn, endedOn)),
       ),
     ),
-    Effect.tap(() =>
-      ensureStream(publicFigureAggregate, runUnitOfWork, publicFigureId, publicFigureSource),
-    ),
+    Effect.tap(() => ensureStream(publicFigureAggregate, publicFigureId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         pipe(

@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import {
   findPosition,
   importPosition,
@@ -33,6 +33,7 @@ export interface SubjectParts {
 }
 
 export type SubjectSource = Source<SubjectParts>
+export const SubjectSource = Context.GenericTag<SubjectSource>('SubjectSource')
 
 /**
  * A subject enters the journal event by event, each dated and signed as its
@@ -42,6 +43,7 @@ export type SubjectSource = Source<SubjectParts>
 export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent, SubjectParts> = {
   streamType: SUBJECT_STREAM,
   notFound: 'Sujet introuvable.',
+  source: SubjectSource,
   replay: replaySubject,
   isLive: (state) => state.deletedAt === null,
   importBatches: (parts) => {

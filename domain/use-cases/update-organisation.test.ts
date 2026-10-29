@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Option } from 'effect'
+import { Either, Layer, Option } from 'effect'
 import { updateOrganisationUseCase } from './update-organisation'
-import { createOrganisation } from '../entities/organisation'
+import { createOrganisation, Organisation } from '../entities/organisation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { OrganisationRepository } from '../repositories/organisation-repository'
+import { WikipediaValidator } from '../services/wikipedia-validator'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
+import { runFormWith } from './command-test-helpers'
+import { OrganisationSource } from './organisation-stream'
 import {
   fakeOrganisationRepo,
   fakeOrganisationSource,
@@ -25,27 +29,34 @@ const validParams = (existing = sampleOrganisation()) => ({
   websiteUrl: 'https://france.attac.org',
   notorietySources: ['https://lemonde.fr/a', 'https://liberation.fr/b'],
   revision: 0,
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  organisationSource: fakeOrganisationSource([existing]),
-  organisationRepo: fakeOrganisationRepo([existing]),
-  wikipediaValidator: fakeWikipediaValidator(),
 })
+
+/** The read side as the test wants it: the organisations the tables hold */
+const fakes = (known: Organisation[]) =>
+  Layer.mergeAll(
+    Layer.succeed(OrganisationSource, fakeOrganisationSource(known)),
+    Layer.succeed(OrganisationRepository, fakeOrganisationRepo(known)),
+    Layer.succeed(WikipediaValidator, fakeWikipediaValidator()),
+  )
 
 describe('updateOrganisationUseCase', () => {
   it('requires the Idéaliste rank', async () => {
-    const result = await updateOrganisationUseCase({
-      ...validParams(),
-      contributor: { id: 'c', reputation: 1000 },
-    })
+    const existing = sampleOrganisation()
+    const result = await runFormWith(fakes([existing]))(
+      updateOrganisationUseCase({
+        ...validParams(existing),
+        contributor: { id: 'c', reputation: 1000 },
+      }),
+    )
 
     expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
   })
 
   it('fails when the organisation does not exist', async () => {
-    const result = await updateOrganisationUseCase({
-      ...validParams(),
-      organisationId: 'missing',
-    })
+    const existing = sampleOrganisation()
+    const result = await runFormWith(fakes([existing]))(
+      updateOrganisationUseCase({ ...validParams(existing), organisationId: 'missing' }),
+    )
 
     expect(Either.isLeft(result) && result.left).toContain('introuvable')
   })
@@ -58,10 +69,9 @@ describe('updateOrganisationUseCase', () => {
       presentation: 'Une autre organisation portant déjà ce nom.',
       createdBy: 'founder',
     })
-    const result = await updateOrganisationUseCase({
-      ...validParams(existing),
-      organisationRepo: fakeOrganisationRepo([existing, other]),
-    })
+    const result = await runFormWith(fakes([existing, other]))(
+      updateOrganisationUseCase(validParams(existing)),
+    )
 
     expect(Either.isLeft(result) && typeof result.left !== 'string' && result.left.name).toContain(
       'existe déjà',
@@ -71,8 +81,10 @@ describe('updateOrganisationUseCase', () => {
   it('appends the edit to the stream, keeps the identity and rewards the contributor', async () => {
     const existing = sampleOrganisation()
     const unit = await journalWithOrganisations(existing)
-    const params = { ...validParams(existing), runUnitOfWork: unit.run }
-    const result = await updateOrganisationUseCase(params)
+    const result = await runFormWith(fakes([existing]))(
+      updateOrganisationUseCase(validParams(existing)),
+      unit.run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
@@ -93,10 +105,10 @@ describe('updateOrganisationUseCase', () => {
   it('imports an organisation the journal does not know yet, then edits it', async () => {
     const existing = sampleOrganisation()
     const unit = inMemoryUnitOfWork()
-    const result = await updateOrganisationUseCase({
-      ...validParams(existing),
-      runUnitOfWork: unit.run,
-    })
+    const result = await runFormWith(fakes([existing]))(
+      updateOrganisationUseCase(validParams(existing)),
+      unit.run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     expect(deedsIn(unit.journal).map((e) => [e.type, e.metadata])).toEqual([

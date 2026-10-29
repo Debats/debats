@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import {
   importOrganisation,
   ORGANISATION_STREAM,
@@ -24,6 +24,7 @@ export interface OrganisationParts {
 }
 
 export type OrganisationSource = Source<OrganisationParts>
+export const OrganisationSource = Context.GenericTag<OrganisationSource>('OrganisationSource')
 
 export const organisationAggregate: AggregateStream<
   OrganisationState,
@@ -32,6 +33,7 @@ export const organisationAggregate: AggregateStream<
 > = {
   streamType: ORGANISATION_STREAM,
   notFound: 'Organisation introuvable.',
+  source: OrganisationSource,
   replay: replayOrganisation,
   isLive: (state) => state.deletedAt === null,
   importBatches: ({ organisation }) => [

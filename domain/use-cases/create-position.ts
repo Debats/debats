@@ -1,14 +1,13 @@
-import { Either, Effect, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { Position, PositionId } from '../entities/position'
+import { PositionId } from '../entities/position'
 import { addPosition } from '../aggregates/subject'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, fieldsOf } from './preconditions'
-import { runFormCommand } from './run-command'
-import { decideOnSubject, subjectAggregate, SubjectSource, writtenPosition } from './subject-stream'
+import { decideOnSubject, subjectAggregate, writtenPosition } from './subject-stream'
 
 const CreatePositionInput = S.Struct({
   title: S.String.pipe(S.minLength(3), S.maxLength(255)),
@@ -25,21 +24,12 @@ type CreatePositionParams = {
   subjectId: string
   title: string
   description: string
-  runUnitOfWork: RunUnitOfWork
-  subjectSource: SubjectSource
 }
 
 export type { FieldErrors }
 
-export function createPositionUseCase(
-  params: CreatePositionParams,
-): Promise<Either.Either<Position, string | FieldErrors>> {
-  return runFormCommand(createPositionCommand(params))
-}
-
-/** The command itself, for a process that runs it among others */
-export function createPositionCommand(params: CreatePositionParams) {
-  const { subjectId, title, description, runUnitOfWork, subjectSource } = params
+export function createPositionUseCase(params: CreatePositionParams) {
+  const { subjectId, title, description } = params
   // The command names the position, inside the subject's stream
   const positionId = PositionId.make(crypto.randomUUID())
 
@@ -48,7 +38,7 @@ export function createPositionCommand(params: CreatePositionParams) {
       contributor: allowedTo(params.contributor, 'add_position', 'proposer une nouvelle position'),
       input: fieldsOf(CreatePositionInput, FIELD_MESSAGES)({ title, description }),
     }),
-    Effect.tap(() => ensureStream(subjectAggregate, runUnitOfWork, subjectId, subjectSource)),
+    Effect.tap(() => ensureStream(subjectAggregate, subjectId)),
     Effect.flatMap(({ contributor, input }) =>
       runUnitOfWork((events) =>
         pipe(

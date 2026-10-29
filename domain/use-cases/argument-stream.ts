@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import {
   ARGUMENT_STREAM,
   ArgumentState,
@@ -26,10 +26,12 @@ export interface ArgumentParts {
 }
 
 export type ArgumentSource = Source<ArgumentParts>
+export const ArgumentSource = Context.GenericTag<ArgumentSource>('ArgumentSource')
 
 export const argumentAggregate: AggregateStream<ArgumentState, ArgumentEvent, ArgumentParts> = {
   streamType: ARGUMENT_STREAM,
   notFound: 'Argument introuvable.',
+  source: ArgumentSource,
   replay: replayArgument,
   isLive: isLiveArgument,
   importBatches: ({ argument }) => [

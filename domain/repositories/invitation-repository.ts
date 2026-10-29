@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { Invitation } from '../entities/invitation'
 import { DatabaseError } from './errors'
 
@@ -8,3 +8,5 @@ export interface InvitationRepository {
   findPendingByEmail(email: string): Effect.Effect<Invitation | null, DatabaseError>
   findPendingByInviter(inviterId: string): Effect.Effect<Invitation[], DatabaseError>
 }
+
+export const InvitationRepository = Context.GenericTag<InvitationRepository>('InvitationRepository')

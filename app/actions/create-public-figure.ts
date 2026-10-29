@@ -4,14 +4,12 @@ import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { AvatarStorageError, uploadFigureAvatar } from '../../infra/storage/figure-avatar'
 import { readUploadedImage } from './read-uploaded-image'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import { runLive, runLiveForm } from '../../infra/live-services'
 import {
   validateCreatePublicFigure,
   persistPublicFigure,
   FieldErrors,
 } from '../../domain/use-cases/create-public-figure'
-import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { generateSlug } from '../../domain/entities/public-figure'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -51,13 +49,10 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
     wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
-    runUnitOfWork,
-    publicFigureRepo: createPublicFigureRepository(supabase),
-    wikipediaValidator: createWikipediaValidator(),
   }
 
   // Phase 1: Validate — nothing persisted yet
-  const validation = await validateCreatePublicFigure(useCaseParams)
+  const validation = await runLiveForm(validateCreatePublicFigure(useCaseParams), supabase)
   if (Either.isLeft(validation)) {
     const err = validation.left
     if (typeof err === 'string') {
@@ -77,7 +72,7 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
   }
 
   // Phase 3: Persist entity + reputation — photo already uploaded
-  const created = await persistPublicFigure(useCaseParams, validation.right)
+  const created = await runLive(persistPublicFigure(useCaseParams, validation.right), supabase)
   if (Either.isLeft(created)) {
     return { success: false, error: created.left }
   }

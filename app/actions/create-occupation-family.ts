@@ -2,9 +2,7 @@
 
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createOccupationFamilyRepository } from '../../infra/database/occupation-family-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { runLiveForm } from '../../infra/live-services'
 import { createOccupationFamilyUseCase } from '../../domain/use-cases/create-occupation-family'
 import { FieldErrors } from '../../domain/use-cases/types'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -17,16 +15,15 @@ export type CreateOccupationFamilyResult =
 export async function createOccupationFamilyAction(
   formData: FormData,
 ): Promise<CreateOccupationFamilyResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await createOccupationFamilyUseCase({
-    contributor,
-    name: String(formData.get('name') ?? ''),
-    description: String(formData.get('description') ?? ''),
-    runUnitOfWork,
-    familyRepo: createOccupationFamilyRepository(supabase),
-  })
+  const result = await runLiveForm(
+    createOccupationFamilyUseCase({
+      contributor,
+      name: String(formData.get('name') ?? ''),
+      description: String(formData.get('description') ?? ''),
+    }),
+  )
 
   if (Either.isLeft(result)) {
     const err = result.left

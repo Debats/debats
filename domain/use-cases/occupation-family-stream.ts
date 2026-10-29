@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import {
   importOccupation,
   importOccupationFamily,
@@ -27,6 +27,8 @@ export interface OccupationFamilyParts {
 }
 
 export type OccupationFamilySource = Source<OccupationFamilyParts>
+export const OccupationFamilySource =
+  Context.GenericTag<OccupationFamilySource>('OccupationFamilySource')
 
 /** A family enters the journal with each of its occupations, dated and signed as their rows */
 export const occupationFamilyAggregate: AggregateStream<
@@ -36,6 +38,7 @@ export const occupationFamilyAggregate: AggregateStream<
 > = {
   streamType: OCCUPATION_FAMILY_STREAM,
   notFound: 'La famille est introuvable.',
+  source: OccupationFamilySource,
   replay: replayOccupationFamily,
   isLive: (state) => state.deletedAt === null,
   importBatches: ({ family, occupations }) => [

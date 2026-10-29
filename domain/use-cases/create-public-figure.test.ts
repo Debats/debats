@@ -1,14 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect, Option } from 'effect'
+import { Either, Effect, Layer, Option } from 'effect'
 import { createPublicFigureUseCase } from './create-public-figure'
-import {
-  PublicFigure,
-  PublicFigureId,
-  PublicFigureName,
-  PublicFigureSlug,
-} from '../entities/public-figure'
+import { PublicFigure } from '../entities/public-figure'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { PublicFigureRepository } from '../repositories/public-figure-repository'
+import { WikipediaValidator } from '../services/wikipedia-validator'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
+import { runFormWith } from './command-test-helpers'
 
 const fakePublicFigureRepo = {
   findAll: () => Effect.succeed([]),
@@ -30,9 +28,9 @@ const fakePublicFigureRepo = {
   findIndexEntries: () => Effect.succeed([]),
   findAllIds: () => Effect.succeed([]),
   findByLetter: () => Effect.succeed([]),
-}
+} as unknown as PublicFigureRepository
 
-const fakeWikipediaValidator = {
+const fakeWikipediaValidator: WikipediaValidator = {
   validatePage: async () => ({ exists: true, isBiography: true }),
 }
 
@@ -42,9 +40,6 @@ const validParams = {
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   websiteUrl: '',
   notorietySources: [] as string[],
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  publicFigureRepo: fakePublicFigureRepo,
-  wikipediaValidator: fakeWikipediaValidator,
 }
 
 const validParamsWithoutWikipedia = {
@@ -56,12 +51,20 @@ const validParamsWithoutWikipedia = {
   ],
 }
 
+/** The read side and Wikipedia as the test wants them */
+const fakes = (
+  overrides: { figures?: PublicFigureRepository; wikipedia?: WikipediaValidator } = {},
+) =>
+  Layer.mergeAll(
+    Layer.succeed(PublicFigureRepository, overrides.figures ?? fakePublicFigureRepo),
+    Layer.succeed(WikipediaValidator, overrides.wikipedia ?? fakeWikipediaValidator),
+  )
+
+const execute = runFormWith(fakes())
+
 describe('createPublicFigureUseCase', () => {
   it('should fail when contributor is null (not authenticated)', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: null,
-    })
+    const result = await execute(createPublicFigureUseCase({ ...validParams, contributor: null }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -70,10 +73,9 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail when reputation is insufficient (< 1000)', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 999 },
-    })
+    const result = await execute(
+      createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 999 } }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -82,11 +84,13 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with field error when name is too short', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      name: 'A',
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        name: 'A',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -95,11 +99,13 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with field error when presentation is too short', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      presentation: 'Court',
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        presentation: 'Court',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -108,11 +114,13 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with field error when Wikipedia URL is invalid', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaUrl: 'https://google.com',
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        wikipediaUrl: 'https://google.com',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -121,13 +129,15 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with multiple field errors at once', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      name: 'A',
-      presentation: 'Court',
-      wikipediaUrl: 'invalid',
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        name: 'A',
+        presentation: 'Court',
+        wikipediaUrl: 'invalid',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -138,12 +148,14 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with field error when no Wikipedia and no notoriety sources', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaUrl: '',
-      notorietySources: [],
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        wikipediaUrl: '',
+        notorietySources: [],
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -152,12 +164,14 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with field error when no Wikipedia and only 1 notoriety source', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaUrl: '',
-      notorietySources: ['https://lemonde.fr/article'],
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        wikipediaUrl: '',
+        notorietySources: ['https://lemonde.fr/article'],
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -166,12 +180,14 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail with field error when no Wikipedia and invalid notoriety URLs', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaUrl: '',
-      notorietySources: ['pas-une-url', 'aussi-invalide'],
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        wikipediaUrl: '',
+        notorietySources: ['pas-une-url', 'aussi-invalide'],
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -180,13 +196,9 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail when Wikipedia page does not exist', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaValidator: {
-        validatePage: async () => ({ exists: false, isBiography: false }),
-      },
-    })
+    const result = await runFormWith(
+      fakes({ wikipedia: { validatePage: async () => ({ exists: false, isBiography: false }) } }),
+    )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -195,13 +207,9 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should fail when Wikipedia page is not a biography', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaValidator: {
-        validatePage: async () => ({ exists: true, isBiography: false }),
-      },
-    })
+    const result = await runFormWith(
+      fakes({ wikipedia: { validatePage: async () => ({ exists: true, isBiography: false }) } }),
+    )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -210,15 +218,15 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should accept gracefully when Wikipedia validator throws (network error)', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaValidator: {
-        validatePage: async () => {
-          throw new Error('Network timeout')
+    const result = await runFormWith(
+      fakes({
+        wikipedia: {
+          validatePage: async () => {
+            throw new Error('Network timeout')
+          },
         },
-      },
-    })
+      }),
+    )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
     expect(Either.isRight(result)).toBe(true)
   })
@@ -230,11 +238,12 @@ describe('createPublicFigureUseCase', () => {
       },
     }
 
-    const result = await createPublicFigureUseCase({
-      ...validParamsWithoutWikipedia,
-      contributor: { id: 'abc', reputation: 1000 },
-      wikipediaValidator: throwingWikipediaValidator,
-    })
+    const result = await runFormWith(fakes({ wikipedia: throwingWikipediaValidator }))(
+      createPublicFigureUseCase({
+        ...validParamsWithoutWikipedia,
+        contributor: { id: 'abc', reputation: 1000 },
+      }),
+    )
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
@@ -249,14 +258,11 @@ describe('createPublicFigureUseCase', () => {
       slug: 'jean-dupont',
     } as PublicFigure
 
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      publicFigureRepo: {
-        ...fakePublicFigureRepo,
-        findBySlug: () => Effect.succeed(existingFigure),
-      },
-    })
+    const result = await runFormWith(
+      fakes({
+        figures: { ...fakePublicFigureRepo, findBySlug: () => Effect.succeed(existingFigure) },
+      }),
+    )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -267,11 +273,10 @@ describe('createPublicFigureUseCase', () => {
   it('should create public figure and award 50 pts on success', async () => {
     const { run, journal } = inMemoryUnitOfWork()
 
-    const result = await createPublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1000 },
-      runUnitOfWork: run,
-    })
+    const result = await execute(
+      createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) {
@@ -289,10 +294,12 @@ describe('createPublicFigureUseCase', () => {
   })
 
   it('should pass notoriety sources to created figure', async () => {
-    const result = await createPublicFigureUseCase({
-      ...validParamsWithoutWikipedia,
-      contributor: { id: 'abc', reputation: 1000 },
-    })
+    const result = await execute(
+      createPublicFigureUseCase({
+        ...validParamsWithoutWikipedia,
+        contributor: { id: 'abc', reputation: 1000 },
+      }),
+    )
 
     expect(Either.isRight(result) && result.right.notorietySources).toEqual([
       'https://lemonde.fr/article-notoriete',

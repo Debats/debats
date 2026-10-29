@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { Theme, ThemeId } from '../entities/theme'
 import { DatabaseError } from './errors'
 
@@ -33,3 +33,5 @@ export interface ThemeRepository {
   /** The assignments themselves are written by the subject stream (domain/aggregates/subject.ts) */
   findAssignmentsBySubjectId(subjectId: string): Effect.Effect<ThemeAssignment[], DatabaseError>
 }
+
+export const ThemeRepository = Context.GenericTag<ThemeRepository>('ThemeRepository')

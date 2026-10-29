@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect, Option } from 'effect'
+import { Either, Effect, Layer, Option } from 'effect'
 import { updatePublicFigureUseCase } from './update-public-figure'
 import {
   PublicFigure,
@@ -7,8 +7,11 @@ import {
   PublicFigureName,
   PublicFigureSlug,
 } from '../entities/public-figure'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { PublicFigureRepository } from '../repositories/public-figure-repository'
+import { WikipediaValidator } from '../services/wikipedia-validator'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
+import { runFormWith } from './command-test-helpers'
+import { PublicFigureSource } from './public-figure-stream'
 import {
   fakePublicFigureSource,
   figureParts,
@@ -43,9 +46,9 @@ const fakePublicFigureRepo = {
   findIndexEntries: () => Effect.succeed([]),
   findAllIds: () => Effect.succeed([]),
   findByLetter: () => Effect.succeed([]),
-}
+} as unknown as PublicFigureRepository
 
-const fakeWikipediaValidator = {
+const fakeWikipediaValidator: WikipediaValidator = {
   validatePage: async () => ({ exists: true, isBiography: true }),
 }
 
@@ -57,18 +60,21 @@ const validParams = {
   websiteUrl: '',
   notorietySources: [],
   revision: 0,
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  publicFigureSource: fakePublicFigureSource([figureParts(existingFigure)]),
-  publicFigureRepo: fakePublicFigureRepo,
-  wikipediaValidator: fakeWikipediaValidator,
 }
+
+/** The read side as the test wants it */
+const fakes = (figures: PublicFigureRepository = fakePublicFigureRepo) =>
+  Layer.mergeAll(
+    Layer.succeed(PublicFigureSource, fakePublicFigureSource([figureParts(existingFigure)])),
+    Layer.succeed(PublicFigureRepository, figures),
+    Layer.succeed(WikipediaValidator, fakeWikipediaValidator),
+  )
+
+const execute = runFormWith(fakes())
 
 describe('updatePublicFigureUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: null,
-    })
+    const result = await execute(updatePublicFigureUseCase({ ...validParams, contributor: null }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -77,10 +83,9 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should fail when contributor lacks reputation', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 9999 },
-    })
+    const result = await execute(
+      updatePublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 9999 } }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -89,11 +94,13 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should fail when figure does not exist', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      figureId: 'unknown-id',
-    })
+    const result = await execute(
+      updatePublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        figureId: 'unknown-id',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -102,11 +109,13 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should fail when name is too short', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      name: 'A',
-    })
+    const result = await execute(
+      updatePublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        name: 'A',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -122,19 +131,22 @@ describe('updatePublicFigureUseCase', () => {
       slug: PublicFigureSlug.make('marie-martin'),
     })
 
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      name: 'Marie Martin',
-      publicFigureRepo: {
+    const result = await runFormWith(
+      fakes({
         ...fakePublicFigureRepo,
         findBySlug: (slug: string) => {
           if (slug === 'marie-martin') return Effect.succeed(otherFigure)
           if (slug === 'jean-dupont') return Effect.succeed(existingFigure)
           return Effect.succeed(null)
         },
-      },
-    })
+      }),
+    )(
+      updatePublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        name: 'Marie Martin',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -143,20 +155,21 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should allow keeping the same name without slug conflict', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-    })
+    const result = await execute(
+      updatePublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+    )
 
     expect(Either.isRight(result)).toBe(true)
   })
 
   it('should fail when wikipedia URL is invalid', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      wikipediaUrl: 'https://not-wikipedia.com/page',
-    })
+    const result = await execute(
+      updatePublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        wikipediaUrl: 'https://not-wikipedia.com/page',
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -165,12 +178,14 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should fail without wikipedia when less than 2 notoriety sources', async () => {
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      wikipediaUrl: '',
-      notorietySources: ['https://source1.com'],
-    })
+    const result = await execute(
+      updatePublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        wikipediaUrl: '',
+        notorietySources: ['https://source1.com'],
+      }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result) && typeof result.left !== 'string') {
@@ -181,20 +196,23 @@ describe('updatePublicFigureUseCase', () => {
   it('should update figure and award reputation on success', async () => {
     const { run, journal } = await journalWithFigures(existingFigure)
 
-    const result = await updatePublicFigureUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      name: 'Jean-Pierre Dupont',
-      presentation: 'Nouvelle présentation suffisamment longue.',
-      runUnitOfWork: run,
-      publicFigureRepo: {
+    const result = await runFormWith(
+      fakes({
         ...fakePublicFigureRepo,
         findBySlug: (slug: string) => {
           if (slug === 'jean-dupont') return Effect.succeed(existingFigure)
           return Effect.succeed(null)
         },
-      },
-    })
+      }),
+    )(
+      updatePublicFigureUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        name: 'Jean-Pierre Dupont',
+        presentation: 'Nouvelle présentation suffisamment longue.',
+      }),
+      run,
+    )
 
     expect(Either.isRight(result) && result.right).toMatchObject({
       id: existingFigure.id,

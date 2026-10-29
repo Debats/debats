@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { Effect, Either } from 'effect'
+import { Effect, Either, Layer } from 'effect'
 import { validateDraft } from './validate-draft'
+import { runWith } from './command-test-helpers'
+import { ArgumentRepository } from '../repositories/argument-repository'
+import { OccupationRepository } from '../repositories/occupation-repository'
+import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
+import { SubjectSource } from './subject-stream'
 import {
   DraftStatement,
   draftOrganisationAuthor,
@@ -163,23 +168,30 @@ function makeRepos(overrides: {
         : null,
     )
 
+  const services = Layer.mergeAll(
+    Layer.succeed(DraftStatementRepository, draftRepo),
+    Layer.succeed(PublicFigureRepository, publicFigureRepo),
+    Layer.succeed(OrganisationRepository, organisationRepo),
+    Layer.succeed(SubjectRepository, subjectRepo),
+    Layer.succeed(PositionRepository, positionRepo),
+    Layer.succeed(SubjectSource, subjectSource),
+    Layer.succeed(PublicFigureSource, publicFigureSource),
+    Layer.succeed(ArgumentRepository, fakeArgumentRepo(overrides.arguments ?? [])),
+    Layer.succeed(OccupationRepository, occupationRepo),
+    Layer.succeed(
+      OrganisationMembershipRepository,
+      fakeMembershipRepo(overrides.memberships ?? [], seededFigures, seededOrganisations),
+    ),
+    Layer.succeed(WikipediaValidator, fakeWikipediaValidator),
+  )
+
   return {
     draftRepo,
-    publicFigureRepo,
-    organisationRepo,
-    subjectRepo,
-    positionRepo,
-    runUnitOfWork: unit.run,
-    subjectSource,
-    publicFigureSource,
     journal: unit.journal,
-    argumentRepo: fakeArgumentRepo(overrides.arguments ?? []),
     occupationRepo,
-    membershipRepo: fakeMembershipRepo(
-      overrides.memberships ?? [],
-      seededFigures,
-      seededOrganisations,
-    ),
+    /** The validation of the draft, by this contributor, against these tables and this journal */
+    validate: (contributor: ContributorIdentity | null) =>
+      runWith(services)(validateDraft({ draftId: 'draft-1', contributor }), unit.run),
   }
 }
 
@@ -193,18 +205,8 @@ const payloadsOf = (journal: { all(): Array<{ type: string; payload: unknown }> 
 describe('validateDraft', () => {
   it('refuses a visitor, and a contributor below the founder rank, before reading the draft', async () => {
     const repos = makeRepos({})
-    const visitor = await validateDraft({
-      draftId: 'draft-1',
-      contributor: null,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
-    const ideologue = await validateDraft({
-      draftId: 'draft-1',
-      contributor: { id: 'user-2', reputation: 1_000 },
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const visitor = await repos.validate(null)
+    const ideologue = await repos.validate({ id: 'user-2', reputation: 1_000 })
 
     expect(Either.isLeft(visitor) && visitor.left).toContain('connecté')
     expect(Either.isLeft(ideologue) && ideologue.left).toContain('Fondateur')
@@ -214,12 +216,7 @@ describe('validateDraft', () => {
 
   it('should fail when draft is not found', async () => {
     const repos = makeRepos({ draft: null })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -229,12 +226,7 @@ describe('validateDraft', () => {
 
   it('should create all entities via use cases when none exist', async () => {
     const repos = makeRepos({})
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isRight(result)).toBe(true)
     expect(deedsIn(repos.journal).map((e) => e.type)).toEqual([
@@ -251,12 +243,7 @@ describe('validateDraft', () => {
     const subject = makeSubject()
     const position = makePosition()
     const repos = makeRepos({ figure, subject, positions: [position] })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isRight(result)).toBe(true)
     expect(deedsIn(repos.journal).map((e) => e.type)).toEqual(['StatementAdded'])
@@ -267,12 +254,7 @@ describe('validateDraft', () => {
     const repos = makeRepos({
       draft: makeDraft({ author: draftPublicFigureAuthor('Jean-Luc Mélenchon') }),
     })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -282,24 +264,14 @@ describe('validateDraft', () => {
 
   it('should record reputation events via use cases', async () => {
     const repos = makeRepos({})
-    await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    await repos.validate(ADMIN)
 
     expect(grantsIn(repos.journal).map((g) => g[1])).toContain('added_statement_validated')
   })
 
   it('should create the organisation when the drafted author does not exist', async () => {
     const repos = makeRepos({ draft: makeOrganisationDraft() })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isRight(result)).toBe(true)
     expect(payloadsOf(repos.journal, 'OrganisationAdded')).toHaveLength(1)
@@ -310,12 +282,7 @@ describe('validateDraft', () => {
   it('should attribute the statement to the organisation', async () => {
     const organisation = sampleOrganisation()
     const repos = makeRepos({ draft: makeOrganisationDraft(), organisation })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isRight(result)).toBe(true)
     expect(payloadsOf(repos.journal, 'OrganisationAdded')).toEqual([])
@@ -328,12 +295,7 @@ describe('validateDraft', () => {
     const repos = makeRepos({
       draft: makeOrganisationDraft({ author: draftOrganisationAuthor('Attac France') }),
     })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -343,12 +305,7 @@ describe('validateDraft', () => {
 
   it('should keep the drafted statement type instead of always declaring', async () => {
     const repos = makeRepos({ draft: makeDraft({ statementType: 'program' }) })
-    const result = await validateDraft({
-      draftId: 'draft-1',
-      contributor: ADMIN,
-      ...repos,
-      wikipediaValidator: fakeWikipediaValidator,
-    })
+    const result = await repos.validate(ADMIN)
 
     expect(Either.isRight(result)).toBe(true)
     expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ statementType: 'program' })
@@ -362,12 +319,7 @@ describe('validateDraft', () => {
         draft: makeDraft({ arguments: [{ title: 'RISQUE D’EXIL FISCAL' }] }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([])
@@ -381,12 +333,7 @@ describe('validateDraft', () => {
         }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([
@@ -401,12 +348,7 @@ describe('validateDraft', () => {
     it('should mobilise nothing when the statement only asserts', async () => {
       const repos = makeRepos({})
 
-      await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      await repos.validate(ADMIN)
 
       expect(payloadsOf(repos.journal, 'ArgumentAdded')).toEqual([])
       expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ argumentIds: [] })
@@ -423,12 +365,7 @@ describe('validateDraft', () => {
         draft: makeDraft({ occupations: [{ name: 'Économiste', current: true }] }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'OccupationsSet')).toEqual([
@@ -449,12 +386,7 @@ describe('validateDraft', () => {
         { occupationId: economist.id, current: true },
       ])
 
-      await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      await repos.validate(ADMIN)
 
       expect(payloadsOf(repos.journal, 'OccupationsSet').at(-1)).toEqual({
         occupations: [
@@ -471,12 +403,7 @@ describe('validateDraft', () => {
         draft: makeDraft({ occupations: [{ name: 'Directrice de think tank', current: true }] }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isLeft(result)).toBe(true)
       if (Either.isLeft(result)) {
@@ -497,12 +424,7 @@ describe('validateDraft', () => {
         }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isRight(result)).toBe(true)
       expect(repos.journal.all().filter((e) => e.type === 'MembershipAdded')).toMatchObject([
@@ -530,12 +452,7 @@ describe('validateDraft', () => {
         }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'OrganisationAdded')).toHaveLength(1)
@@ -548,12 +465,7 @@ describe('validateDraft', () => {
         draft: makeDraft({ affiliations: [{ organisation: 'Fondation iFRAP' }] }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isLeft(result)).toBe(true)
       if (Either.isLeft(result)) {
@@ -577,12 +489,7 @@ describe('validateDraft', () => {
         draft: makeDraft({ affiliations: [{ organisation: organisation.name }] }),
       })
 
-      const result = await validateDraft({
-        draftId: 'draft-1',
-        contributor: ADMIN,
-        ...repos,
-        wikipediaValidator: fakeWikipediaValidator,
-      })
+      const result = await repos.validate(ADMIN)
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'MembershipAdded')).toEqual([])

@@ -1,4 +1,4 @@
-import { Effect, pipe } from 'effect'
+import { Context, Effect, pipe } from 'effect'
 import {
   importStatement,
   replayStatement,
@@ -29,10 +29,12 @@ export interface StatementParts {
 }
 
 export type StatementSource = Source<StatementParts>
+export const StatementSource = Context.GenericTag<StatementSource>('StatementSource')
 
 export const statementAggregate: AggregateStream<StatementState, StatementEvent, StatementParts> = {
   streamType: STATEMENT_STREAM,
   notFound: 'Prise de position introuvable.',
+  source: StatementSource,
   replay: replayStatement,
   isLive: (state) => state.deletedAt === null,
   importBatches: ({ statement, argumentIds, subjectId }) => [

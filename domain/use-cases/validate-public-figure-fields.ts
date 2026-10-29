@@ -27,9 +27,8 @@ export function publicFigureFields(fields: {
   presentation: string
   wikipediaUrl: string
   notorietySources: string[]
-  wikipediaValidator: WikipediaValidator
-}): Effect.Effect<ValidatedPublicFigureFields, Invalid> {
-  const { name, presentation, notorietySources, wikipediaValidator } = fields
+}): Effect.Effect<ValidatedPublicFigureFields, Invalid, WikipediaValidator> {
+  const { name, presentation, notorietySources } = fields
   const wikipediaUrl = fields.wikipediaUrl.trim()
   const faults = {
     ...faultsOf(PublicFigureFieldsInput, FIELD_MESSAGES)({ name, presentation }),
@@ -40,7 +39,7 @@ export function publicFigureFields(fields: {
     faultless(faults),
     Effect.andThen(
       wikipediaUrl
-        ? wikipediaPageJudged(wikipediaUrl, wikipediaValidator, (page) =>
+        ? wikipediaPageJudged(wikipediaUrl, (page) =>
             page.isBiography ? null : 'La page Wikipedia ne correspond pas à une biographie.',
           )
         : Effect.void,

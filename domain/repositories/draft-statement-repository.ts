@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { DraftStatement } from '../entities/draft-statement'
 import { DatabaseError } from './errors'
 
@@ -28,3 +28,7 @@ export interface DraftStatementRepository {
   ): Effect.Effect<void, DatabaseError>
   deleteById(id: string): Effect.Effect<void, DatabaseError>
 }
+
+export const DraftStatementRepository = Context.GenericTag<DraftStatementRepository>(
+  'DraftStatementRepository',
+)

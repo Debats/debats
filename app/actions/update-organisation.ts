@@ -2,10 +2,7 @@
 
 import { Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createOrganisationSource } from '../../infra/events/sources'
-import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
+import { runLive, runLiveForm } from '../../infra/live-services'
 import {
   LogoStorageError,
   moveOrganisationLogo,
@@ -36,19 +33,10 @@ export async function updateOrganisationAction(
   const contributor = await getAuthenticatedContributor()
   const fields = readOrganisationFields(formData)
 
-  const params = {
-    contributor,
-    organisationId,
-    ...fields,
-    revision: revisionOf(formData),
-    runUnitOfWork,
-    organisationSource: createOrganisationSource(supabase),
-    organisationRepo: createOrganisationRepository(supabase),
-    wikipediaValidator: createWikipediaValidator(),
-  }
+  const params = { contributor, organisationId, ...fields, revision: revisionOf(formData) }
 
   // Phase 1: validate
-  const validation = await validateUpdateOrganisation(params)
+  const validation = await runLiveForm(validateUpdateOrganisation(params), supabase)
   if (Either.isLeft(validation)) {
     const err = validation.left
     return typeof err === 'string'
@@ -83,7 +71,7 @@ export async function updateOrganisationAction(
   }
 
   // Phase 3: persist
-  const saved = await persistUpdatedOrganisation(params, validation.right)
+  const saved = await runLive(persistUpdatedOrganisation(params, validation.right), supabase)
   if (Either.isLeft(saved)) {
     return { success: false, error: saved.left }
   }

@@ -9,15 +9,12 @@ import {
   uploadFigureAvatar,
 } from '../../infra/storage/figure-avatar'
 import { readUploadedImage } from './read-uploaded-image'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createPublicFigureSource } from '../../infra/events/sources'
-import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
+import { runLive, runLiveForm } from '../../infra/live-services'
 import {
   validateUpdatePublicFigure,
   persistUpdatedPublicFigure,
   FieldErrors,
 } from '../../domain/use-cases/update-public-figure'
-import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
 import { generateSlug } from '../../domain/entities/public-figure'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { revisionOf } from './form-revision'
@@ -50,14 +47,10 @@ export async function updatePublicFigureAction(
     websiteUrl: String(formData.get('websiteUrl') ?? ''),
     notorietySources,
     revision: revisionOf(formData),
-    runUnitOfWork,
-    publicFigureSource: createPublicFigureSource(supabase),
-    publicFigureRepo: createPublicFigureRepository(supabase),
-    wikipediaValidator: createWikipediaValidator(),
   }
 
   // Phase 1: Validate
-  const validation = await validateUpdatePublicFigure(useCaseParams)
+  const validation = await runLiveForm(validateUpdatePublicFigure(useCaseParams), supabase)
   if (Either.isLeft(validation)) {
     const err = validation.left
     if (typeof err === 'string') {
@@ -98,7 +91,7 @@ export async function updatePublicFigureAction(
   }
 
   // Phase 3: Persist
-  const saved = await persistUpdatedPublicFigure(useCaseParams, validation.right)
+  const saved = await runLive(persistUpdatedPublicFigure(useCaseParams, validation.right), supabase)
   if (Either.isLeft(saved)) {
     return { success: false, error: saved.left }
   }

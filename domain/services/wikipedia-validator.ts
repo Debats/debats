@@ -1,3 +1,5 @@
+import { Context } from 'effect'
+
 export interface WikipediaValidationResult {
   exists: boolean
   isBiography: boolean
@@ -6,3 +8,5 @@ export interface WikipediaValidationResult {
 export interface WikipediaValidator {
   validatePage(url: string): Promise<WikipediaValidationResult>
 }
+
+export const WikipediaValidator = Context.GenericTag<WikipediaValidator>('WikipediaValidator')

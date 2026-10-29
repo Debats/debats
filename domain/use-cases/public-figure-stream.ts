@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import {
   findMembership,
   importMembership,
@@ -31,6 +31,7 @@ export interface PublicFigureParts {
 }
 
 export type PublicFigureSource = Source<PublicFigureParts>
+export const PublicFigureSource = Context.GenericTag<PublicFigureSource>('PublicFigureSource')
 
 /**
  * A figure enters the journal event by event, each dated and signed as its
@@ -44,6 +45,7 @@ export const publicFigureAggregate: AggregateStream<
 > = {
   streamType: PUBLIC_FIGURE_STREAM,
   notFound: 'Personnalité introuvable.',
+  source: PublicFigureSource,
   replay: replayPublicFigure,
   isLive: (state) => state.deletedAt === null,
   importBatches: (parts) => [

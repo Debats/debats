@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either, Effect, Layer } from 'effect'
 import { mergePositions } from './merge-positions'
 import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { addStatement, statementStream } from '../aggregates/statement'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { runWith } from './command-test-helpers'
+import { SubjectSource } from './subject-stream'
+import { StatementSource } from './statement-stream'
 import {
   fakeStatementSource,
   fakeSubjectSource,
@@ -45,39 +47,47 @@ const validParams = {
   sourcePositionId: source.id,
   targetPositionId: target.id,
   contributor: founder,
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  subjectSource: fakeSubjectSource([subjectParts(subject, [source, target])]),
-  statementSource: fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
-  positionRepo,
-  statementRepo: statementRepo([]),
 }
+
+/** The read side as the test wants it: which statements stand on the source */
+const fakes = (statements: Statement[] = []) =>
+  Layer.mergeAll(
+    Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject, [source, target])])),
+    Layer.succeed(
+      StatementSource,
+      fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
+    ),
+    Layer.succeed(PositionRepository, positionRepo),
+    Layer.succeed(StatementRepository, statementRepo(statements)),
+  )
+
+const execute = runWith(fakes())
 
 describe('mergePositions', () => {
   it('should fail if source and target are the same', async () => {
-    const result = await mergePositions({ ...validParams, targetPositionId: source.id })
+    const result = await execute(mergePositions({ ...validParams, targetPositionId: source.id }))
     expect(Either.isLeft(result) && result.left).toContain('identiques')
   })
 
   it('refuses a visitor who is not signed in', async () => {
-    const result = await mergePositions({ ...validParams, contributor: null })
+    const result = await execute(mergePositions({ ...validParams, contributor: null }))
     expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail if contributor lacks admin permission', async () => {
-    const result = await mergePositions({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 100 },
-    })
+    const result = await execute(
+      mergePositions({ ...validParams, contributor: { id: 'abc', reputation: 100 } }),
+    )
     expect(Either.isLeft(result) && result.left).toContain('Fondateur')
   })
 
   it('should fail if source position not found', async () => {
-    const result = await mergePositions({ ...validParams, sourcePositionId: 'missing' })
+    const result = await execute(mergePositions({ ...validParams, sourcePositionId: 'missing' }))
     expect(Either.isLeft(result) && result.left).toContain('source')
   })
 
   it('should fail if positions belong to different subjects', async () => {
-    const result = await mergePositions({ ...validParams, targetPositionId: elsewhere.id })
+    const result = await execute(mergePositions({ ...validParams, targetPositionId: elsewhere.id }))
     expect(Either.isLeft(result) && result.left).toContain('même sujet')
   })
 
@@ -94,11 +104,7 @@ describe('mergePositions', () => {
       ),
     )
 
-    const result = await mergePositions({
-      ...validParams,
-      runUnitOfWork: run,
-      statementRepo: statementRepo([statement]),
-    })
+    const result = await runWith(fakes([statement]))(mergePositions(validParams), run)
 
     expect(Either.isRight(result)).toBe(true)
     expect(
@@ -115,7 +121,7 @@ describe('mergePositions', () => {
   it('should refuse when the source was already merged, leaving no event behind', async () => {
     const { run, journal } = await journalWithSubjects([subject, [target]])
 
-    const result = await mergePositions({ ...validParams, runUnitOfWork: run })
+    const result = await execute(mergePositions(validParams), run)
 
     expect(Either.isLeft(result) && result.left).toContain('n’existe plus')
     expect(journal.all().map((e) => e.type)).toEqual(['SubjectAdded', 'PositionAdded'])

@@ -26,7 +26,9 @@ export type FormFailure = CommandFailure | Invalid
  */
 export const uniqueTakenAs =
   (field: string, message: string) =>
-  <A, E>(command: Effect.Effect<A, E>): Effect.Effect<A, Exclude<E, UniqueTaken> | Rejected> =>
+  <A, E, R>(
+    command: Effect.Effect<A, E, R>,
+  ): Effect.Effect<A, Exclude<E, UniqueTaken> | Rejected, R> =>
     Effect.mapError(command, (failure) =>
       isUniqueTaken(failure) ? new Rejected(message, field) : (failure as Exclude<E, UniqueTaken>),
     )

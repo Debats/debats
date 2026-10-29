@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
+import { WikipediaValidator } from '../services/wikipedia-validator'
 import { Invalid } from './types'
 import { notorietyFaults, wikipediaPageJudged } from './notoriety'
 
@@ -29,14 +30,18 @@ describe('notorietyFaults', () => {
 })
 
 describe('wikipediaPageJudged', () => {
+  /** The page judged, with the validator the test provides */
+  const judged = (validator: WikipediaValidator) =>
+    Effect.provideService(wikipediaPageJudged(page, biographyOnly), WikipediaValidator, validator)
+
   it('refuses a page that does not exist, then one the command judges wrong', async () => {
     const missing = { validatePage: async () => ({ exists: false, isBiography: false }) }
     const notABiography = { validatePage: async () => ({ exists: true, isBiography: false }) }
 
-    expect(await run(wikipediaPageJudged(page, missing, biographyOnly))).toEqual(
+    expect(await run(judged(missing))).toEqual(
       Either.left(new Invalid({ wikipediaUrl: 'La page Wikipedia n’existe pas.' })),
     )
-    expect(await run(wikipediaPageJudged(page, notABiography, biographyOnly))).toEqual(
+    expect(await run(judged(notABiography))).toEqual(
       Either.left(new Invalid({ wikipediaUrl: 'Pas une biographie.' })),
     )
   })
@@ -48,8 +53,6 @@ describe('wikipediaPageJudged', () => {
       },
     }
 
-    expect(await run(wikipediaPageJudged(page, down, biographyOnly))).toEqual(
-      Either.right(undefined),
-    )
+    expect(await run(judged(down))).toEqual(Either.right(undefined))
   })
 })

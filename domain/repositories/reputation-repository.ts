@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { DatabaseError } from './errors'
 import { ReputationEvent } from '../entities/reputation-event'
 
@@ -8,3 +8,5 @@ export interface ReputationRepository {
 
   getHistory(contributorId: string): Effect.Effect<ReputationEvent[], DatabaseError>
 }
+
+export const ReputationRepository = Context.GenericTag<ReputationRepository>('ReputationRepository')

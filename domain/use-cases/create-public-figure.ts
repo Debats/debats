@@ -1,15 +1,14 @@
-import { Either, Effect, pipe } from 'effect'
-import { generateSlug, PublicFigure, PublicFigureId } from '../entities/public-figure'
+import { Effect, pipe } from 'effect'
+import { generateSlug, PublicFigureId } from '../entities/public-figure'
 import { addPublicFigure } from '../aggregates/public-figure'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
-import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { publicFigureFields, ValidatedPublicFigureFields } from './validate-public-figure-fields'
 import { openStream } from './aggregate-stream'
 import { allowedTo, free, signedIn } from './preconditions'
-import { runCommand, runFormCommand, uniqueTakenAs } from './run-command'
+import { uniqueTakenAs } from './run-command'
 import { publicFigureAggregate } from './public-figure-stream'
 
 type CreatePublicFigureParams = {
@@ -19,15 +18,14 @@ type CreatePublicFigureParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
-  runUnitOfWork: RunUnitOfWork
-  /** Read side: the name must be free */
-  publicFigureRepo: PublicFigureRepository
-  wikipediaValidator: WikipediaValidator
 }
 
 export type { FieldErrors }
 
 const NAME_TAKEN = 'Une personnalité avec ce nom existe déjà.'
+
+/** Read side: the name must be free */
+const figures = Effect.serviceFunctions(PublicFigureRepository)
 
 /** Who may propose the figure, with a form that holds up and a name still free */
 const checked = (params: CreatePublicFigureParams) =>
@@ -41,10 +39,7 @@ const checked = (params: CreatePublicFigureParams) =>
       fields: publicFigureFields(params),
     }),
     Effect.tap(({ fields }) =>
-      Effect.flatMap(
-        params.publicFigureRepo.findBySlug(generateSlug(fields.name)),
-        free(NAME_TAKEN, 'name'),
-      ),
+      Effect.flatMap(figures.findBySlug(generateSlug(fields.name)), free(NAME_TAKEN, 'name')),
     ),
   )
 
@@ -62,7 +57,7 @@ const persisted = (
     notorietySources: params.notorietySources,
   })
   return pipe(
-    params.runUnitOfWork((events) =>
+    runUnitOfWork((events) =>
       pipe(
         openStream(publicFigureAggregate, events, id, [added], contributor.id),
         Effect.tap(() =>
@@ -84,26 +79,22 @@ const persisted = (
 
 /**
  * Validates all inputs without persisting anything; hands the fields as decoded.
- * Call this before side effects (photo upload) to fail fast.
+ * Run this before side effects (photo upload) to fail fast.
  */
-export function validateCreatePublicFigure(
-  params: CreatePublicFigureParams,
-): Promise<Either.Either<ValidatedPublicFigureFields, string | FieldErrors>> {
-  return runFormCommand(Effect.map(checked(params), ({ fields }) => fields))
+export function validateCreatePublicFigure(params: CreatePublicFigureParams) {
+  return Effect.map(checked(params), ({ fields }) => fields)
 }
 
 /**
  * Records a validated public figure in the journal and rewards the contributor.
- * Call only after validation has passed and any side effects (photo upload) are done.
+ * Run only after validation has passed and any side effects (photo upload) are done.
  */
 export function persistPublicFigure(
   params: CreatePublicFigureParams,
   fields: ValidatedPublicFigureFields,
-): Promise<Either.Either<PublicFigure, string>> {
-  return runCommand(
-    Effect.flatMap(signedIn(params.contributor), (contributor) =>
-      persisted(params, contributor, fields),
-    ),
+) {
+  return Effect.flatMap(signedIn(params.contributor), (contributor) =>
+    persisted(params, contributor, fields),
   )
 }
 
@@ -111,14 +102,7 @@ export function persistPublicFigure(
  * Validates and creates a public figure in one step.
  * Use this when there are no side effects between validation and creation.
  */
-export function createPublicFigureUseCase(
-  params: CreatePublicFigureParams,
-): Promise<Either.Either<PublicFigure, string | FieldErrors>> {
-  return runFormCommand(createPublicFigureCommand(params))
-}
-
-/** The one-step command itself, for a process that runs it among others */
-export function createPublicFigureCommand(params: CreatePublicFigureParams) {
+export function createPublicFigureUseCase(params: CreatePublicFigureParams) {
   return Effect.flatMap(checked(params), ({ contributor, fields }) =>
     persisted(params, contributor, fields),
   )

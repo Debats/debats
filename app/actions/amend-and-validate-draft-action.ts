@@ -3,16 +3,7 @@
 import { Effect, Either } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../infra/database/draft-statement-repository-supabase'
-import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
-import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
-import { createPositionRepository } from '../../infra/database/position-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createPublicFigureSource, createSubjectSource } from '../../infra/events/sources'
-import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
-import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
-import { createOrganisationMembershipRepository } from '../../infra/database/organisation-membership-repository-supabase'
-import { createWikipediaValidator } from '../../infra/wikipedia/wikipedia-validator'
+import { runLive } from '../../infra/live-services'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
 import { DraftAuthor } from '../../domain/entities/draft-statement'
 import { getAdminContributor } from './admin-guard'
@@ -52,22 +43,7 @@ export async function amendAndValidateDraftAction(
     }
   }
 
-  const result = await validateDraft({
-    draftId,
-    contributor: { id: contributor.id, reputation: contributor.reputation },
-    draftRepo,
-    publicFigureRepo: createPublicFigureRepository(supabase),
-    organisationRepo: createOrganisationRepository(supabase),
-    subjectRepo: createSubjectRepository(supabase),
-    positionRepo: createPositionRepository(supabase),
-    runUnitOfWork,
-    subjectSource: createSubjectSource(supabase),
-    publicFigureSource: createPublicFigureSource(supabase),
-    argumentRepo: createArgumentRepository(supabase),
-    occupationRepo: createOccupationRepository(supabase),
-    membershipRepo: createOrganisationMembershipRepository(supabase),
-    wikipediaValidator: createWikipediaValidator(),
-  })
+  const result = await runLive(validateDraft({ draftId, contributor }), supabase)
 
   if (Either.isLeft(result)) {
     return { success: false, error: result.left }

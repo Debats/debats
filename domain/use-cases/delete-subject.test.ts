@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either, Effect, Layer } from 'effect'
 import { deleteSubjectUseCase } from './delete-subject'
 import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
 import { Subject } from '../entities/subject'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { addStatement, removeStatement, statementStream } from '../aggregates/statement'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { runWith } from './command-test-helpers'
+import { SubjectSource } from './subject-stream'
+import { StatementSource } from './statement-stream'
 import {
   fakeStatementSource,
   fakeSubjectSource,
@@ -45,18 +47,25 @@ const statementRepo = (statements: Statement[]) =>
     findIdsBySubjectId: () => Effect.succeed(statements.map((s) => s.id)),
   }) as unknown as StatementRepository
 
-const validParams = {
-  subjectId: subject.id,
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  subjectSource: fakeSubjectSource([subjectParts(subject, [position])]),
-  statementSource: fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
-  subjectRepo: subjectRepo(0),
-  statementRepo: statementRepo([]),
-}
+const validParams = { subjectId: subject.id }
+
+/** The read side as the test wants it: how heavy the subject is, which statements stand on it */
+const fakes = (statementsCount = 0, statements: Statement[] = []) =>
+  Layer.mergeAll(
+    Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject, [position])])),
+    Layer.succeed(
+      StatementSource,
+      fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
+    ),
+    Layer.succeed(SubjectRepository, subjectRepo(statementsCount)),
+    Layer.succeed(StatementRepository, statementRepo(statements)),
+  )
+
+const execute = runWith(fakes())
 
 describe('deleteSubjectUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const result = await deleteSubjectUseCase({ ...validParams, contributor: null })
+    const result = await execute(deleteSubjectUseCase({ ...validParams, contributor: null }))
     expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
@@ -71,12 +80,10 @@ describe('deleteSubjectUseCase', () => {
       ),
     )
 
-    const result = await deleteSubjectUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      runUnitOfWork: run,
-      statementRepo: statementRepo([statement]),
-    })
+    const result = await runWith(fakes(0, [statement]))(
+      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     const deletions = journal.all().filter((e) => e.type === 'StatementDeleted')
@@ -84,28 +91,27 @@ describe('deleteSubjectUseCase', () => {
   })
 
   it('should fail when subject does not exist', async () => {
-    const result = await deleteSubjectUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 1_000_000 },
-      subjectId: 'missing',
-    })
+    const result = await execute(
+      deleteSubjectUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1_000_000 },
+        subjectId: 'missing',
+      }),
+    )
     expect(result).toEqual(Either.left('Sujet introuvable.'))
   })
 
   it('should fail when contributor lacks reputation for minor subject', async () => {
-    const result = await deleteSubjectUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-    })
+    const result = await execute(
+      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 0 } }),
+    )
     expect(Either.isLeft(result)).toBe(true)
   })
 
   it('should require Fondateur for major subject', async () => {
-    const result = await deleteSubjectUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      subjectRepo: subjectRepo(50),
-    })
+    const result = await runWith(fakes(50))(
+      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+    )
     expect(Either.isLeft(result) && result.left).toContain('Fondateur')
   })
 
@@ -122,12 +128,10 @@ describe('deleteSubjectUseCase', () => {
       ),
     )
 
-    const result = await deleteSubjectUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      runUnitOfWork: run,
-      statementRepo: statementRepo([statement]),
-    })
+    const result = await runWith(fakes(0, [statement]))(
+      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     expect(
@@ -144,12 +148,10 @@ describe('deleteSubjectUseCase', () => {
   it('should import a statement without a stream before deleting it', async () => {
     const { run, journal } = await journalWithSubjects([subject, [position]])
 
-    const result = await deleteSubjectUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      runUnitOfWork: run,
-      statementRepo: statementRepo([statement]),
-    })
+    const result = await runWith(fakes(0, [statement]))(
+      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     // The import comes before the transaction, the deletions inside it

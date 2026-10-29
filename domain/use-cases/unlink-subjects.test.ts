@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { Either } from 'effect'
+import { Either, Layer } from 'effect'
 import { unlinkSubjectsUseCase } from './unlink-subjects'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { runWith } from './command-test-helpers'
+import { SubjectSource } from './subject-stream'
 import {
   fakeSubjectSource,
   journalWithSubjects,
@@ -15,32 +16,32 @@ const retraites = sampleSubject('Les retraites')
 const validParams = {
   subjectId1: smic.id,
   subjectId2: retraites.id,
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  subjectSource: fakeSubjectSource([subjectParts(smic), subjectParts(retraites)]),
 }
+
+const execute = runWith(
+  Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(smic), subjectParts(retraites)])),
+)
 
 describe('unlinkSubjectsUseCase', () => {
   it('should fail when contributor is null', async () => {
-    const result = await unlinkSubjectsUseCase({ ...validParams, contributor: null })
+    const result = await execute(unlinkSubjectsUseCase({ ...validParams, contributor: null }))
     expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail when contributor lacks reputation', async () => {
-    const result = await unlinkSubjectsUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 0 },
-    })
+    const result = await execute(
+      unlinkSubjectsUseCase({ ...validParams, contributor: { id: 'abc', reputation: 0 } }),
+    )
     expect(Either.isLeft(result)).toBe(true)
   })
 
   it('should record the unlink on both subjects on success', async () => {
     const { run, journal } = await journalWithSubjects([smic, []], [retraites, []])
 
-    const result = await unlinkSubjectsUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 10000 },
-      runUnitOfWork: run,
-    })
+    const result = await execute(
+      unlinkSubjectsUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
+    )
 
     expect(Either.isRight(result)).toBe(true)
     expect(

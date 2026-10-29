@@ -1,9 +1,7 @@
 'use server'
 
 import { Either } from 'effect'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
+import { runLiveForm } from '../../infra/live-services'
 import { createThemeUseCase } from '../../domain/use-cases/create-theme'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -13,16 +11,15 @@ export type CreateThemeResult =
   | { success: false; fieldErrors: Record<string, string> }
 
 export async function createThemeAction(formData: FormData): Promise<CreateThemeResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await createThemeUseCase({
-    contributor,
-    name: String(formData.get('name') ?? ''),
-    description: String(formData.get('description') ?? ''),
-    runUnitOfWork,
-    themeRepo: createThemeRepository(supabase),
-  })
+  const result = await runLiveForm(
+    createThemeUseCase({
+      contributor,
+      name: String(formData.get('name') ?? ''),
+      description: String(formData.get('description') ?? ''),
+    }),
+  )
 
   if (Either.isLeft(result)) {
     const err = result.left

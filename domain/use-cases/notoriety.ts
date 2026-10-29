@@ -40,11 +40,12 @@ export function notorietyFaults(wikipediaUrl: string, notorietySources: string[]
  */
 export const wikipediaPageJudged = (
   url: string,
-  validator: WikipediaValidator,
   judge: (page: WikipediaValidationResult) => string | null,
-): Effect.Effect<void, Invalid> =>
+): Effect.Effect<void, Invalid, WikipediaValidator> =>
   pipe(
-    Effect.tryPromise(() => validator.validatePage(url)),
+    Effect.flatMap(WikipediaValidator, (validator) =>
+      Effect.tryPromise(() => validator.validatePage(url)),
+    ),
     Effect.flatMap((page) => {
       const refused = page.exists ? judge(page) : 'La page Wikipedia n’existe pas.'
       return refused ? Effect.fail(new Invalid({ wikipediaUrl: refused })) : Effect.void

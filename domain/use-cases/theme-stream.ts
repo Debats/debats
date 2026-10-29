@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { importTheme, replayTheme, THEME_STREAM, ThemeState } from '../aggregates/theme'
 import { ThemeEvent } from '../aggregates/theme-events'
 import { Theme } from '../entities/theme'
@@ -12,10 +12,12 @@ export interface ThemeParts {
 }
 
 export type ThemeSource = Source<ThemeParts>
+export const ThemeSource = Context.GenericTag<ThemeSource>('ThemeSource')
 
 export const themeAggregate: AggregateStream<ThemeState, ThemeEvent, ThemeParts> = {
   streamType: THEME_STREAM,
   notFound: 'La thématique est introuvable.',
+  source: ThemeSource,
   replay: replayTheme,
   isLive: (state) => state.deletedAt === null,
   importBatches: ({ theme }) => [

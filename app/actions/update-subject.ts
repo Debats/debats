@@ -1,9 +1,7 @@
 'use server'
 
 import { Either } from 'effect'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createSubjectSource } from '../../infra/events/sources'
+import { runLive } from '../../infra/live-services'
 import { updateSubjectUseCase } from '../../domain/use-cases/update-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { revisionOf } from './form-revision'
@@ -14,19 +12,18 @@ export async function updateSubjectAction(
   subjectId: string,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await updateSubjectUseCase({
-    contributor,
-    subjectId,
-    title: String(formData.get('title') ?? ''),
-    presentation: String(formData.get('presentation') ?? ''),
-    problem: String(formData.get('problem') ?? ''),
-    revision: revisionOf(formData),
-    runUnitOfWork,
-    subjectSource: createSubjectSource(supabase),
-  })
+  const result = await runLive(
+    updateSubjectUseCase({
+      contributor,
+      subjectId,
+      title: String(formData.get('title') ?? ''),
+      presentation: String(formData.get('presentation') ?? ''),
+      problem: String(formData.get('problem') ?? ''),
+      revision: revisionOf(formData),
+    }),
+  )
 
   if (Either.isLeft(result)) {
     return { success: false, error: result.left }

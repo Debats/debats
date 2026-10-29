@@ -2,10 +2,7 @@
 
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createArgumentSource } from '../../infra/events/sources'
+import { runLiveForm } from '../../infra/live-services'
 import { renameArgumentUseCase, FieldErrors } from '../../domain/use-cases/rename-argument'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { revisionOf } from './form-revision'
@@ -19,19 +16,17 @@ export async function renameArgumentAction(
   argumentId: string,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await renameArgumentUseCase({
-    contributor,
-    argumentId,
-    title: String(formData.get('title') ?? ''),
-    description: String(formData.get('description') ?? ''),
-    revision: revisionOf(formData),
-    runUnitOfWork,
-    argumentSource: createArgumentSource(supabase),
-    argumentRepo: createArgumentRepository(supabase),
-  })
+  const result = await runLiveForm(
+    renameArgumentUseCase({
+      contributor,
+      argumentId,
+      title: String(formData.get('title') ?? ''),
+      description: String(formData.get('description') ?? ''),
+      revision: revisionOf(formData),
+    }),
+  )
 
   if (Either.isLeft(result)) {
     const err = result.left

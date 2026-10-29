@@ -2,10 +2,7 @@
 
 import { Either } from 'effect'
 import { ThemeId } from '../../domain/entities/theme'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createSubjectSource } from '../../infra/events/sources'
-import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
+import { runLive } from '../../infra/live-services'
 import { setSubjectThemesUseCase } from '../../domain/use-cases/set-subject-themes'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -20,19 +17,17 @@ export async function setSubjectThemesAction(
   primaryThemeId: string | null,
   revision: number,
 ): Promise<SetThemesResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await setSubjectThemesUseCase({
-    contributor,
-    subjectId,
-    themeIds: themeIds.map((id) => ThemeId.make(id)),
-    primaryThemeId: primaryThemeId ? ThemeId.make(primaryThemeId) : null,
-    revision,
-    runUnitOfWork,
-    subjectSource: createSubjectSource(supabase),
-    themeRepo: createThemeRepository(supabase),
-  })
+  const result = await runLive(
+    setSubjectThemesUseCase({
+      contributor,
+      subjectId,
+      themeIds: themeIds.map((id) => ThemeId.make(id)),
+      primaryThemeId: primaryThemeId ? ThemeId.make(primaryThemeId) : null,
+      revision,
+    }),
+  )
 
   if (Either.isLeft(result)) {
     return { success: false, error: result.left }

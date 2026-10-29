@@ -2,11 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { Either } from 'effect'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createStatementSource, createSubjectSource } from '../../infra/events/sources'
-import { createPositionRepository } from '../../infra/database/position-repository-supabase'
-import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
+import { runLive } from '../../infra/live-services'
 import { mergePositions } from '../../domain/use-cases/merge-positions'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import type { ActionResult } from './validate-draft-action'
@@ -16,19 +12,9 @@ export async function mergePositionsAction(
   targetPositionId: string,
   subjectSlug: string,
 ): Promise<ActionResult> {
-  const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const result = await mergePositions({
-    sourcePositionId,
-    targetPositionId,
-    contributor,
-    runUnitOfWork,
-    subjectSource: createSubjectSource(supabase),
-    statementSource: createStatementSource(supabase),
-    positionRepo: createPositionRepository(supabase),
-    statementRepo: createStatementRepository(supabase),
-  })
+  const result = await runLive(mergePositions({ sourcePositionId, targetPositionId, contributor }))
 
   if (Either.isLeft(result)) {
     return { success: false, error: result.left }

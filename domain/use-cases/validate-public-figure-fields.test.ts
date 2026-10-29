@@ -8,7 +8,10 @@ const wikipediaValidator: WikipediaValidator = {
   validatePage: async () => ({ exists: true, isBiography: true }),
 }
 
-const run = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(Effect.either(effect))
+const run = <A, E>(effect: Effect.Effect<A, E, WikipediaValidator>) =>
+  Effect.runPromise(
+    Effect.either(Effect.provideService(effect, WikipediaValidator, wikipediaValidator)),
+  )
 
 describe('publicFigureFields', () => {
   it('hands the name and the presentation as decoded, for the command to write', async () => {
@@ -18,7 +21,6 @@ describe('publicFigureFields', () => {
         presentation: 'Un personnage public suffisamment connu.',
         wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
         notorietySources: [],
-        wikipediaValidator,
       }),
     )
     expect(outcome).toEqual(
@@ -36,7 +38,6 @@ describe('publicFigureFields', () => {
         presentation: 'Court',
         wikipediaUrl: '',
         notorietySources: ['https://example.org/one'],
-        wikipediaValidator,
       }),
     )
     expect(Either.isLeft(outcome) && outcome.left).toBeInstanceOf(Invalid)

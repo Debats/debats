@@ -1,16 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Effect } from 'effect'
+import { Either, Effect, Layer } from 'effect'
 import { inviteUserUseCase } from './invite-user'
 import { Invitation, createInvitation } from '../entities/invitation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { ContributorRepository } from '../repositories/contributor-repository'
+import { InvitationRepository } from '../repositories/invitation-repository'
+import { runWith } from './command-test-helpers'
 
-const fakeInvitationRepo = {
+const fakeInvitationRepo: InvitationRepository = {
   findById: () => Effect.succeed(null as Invitation | null),
   findPendingByEmail: () => Effect.succeed(null as Invitation | null),
   findPendingByInviter: () => Effect.succeed([] as Invitation[]),
 }
 
-const fakeContributorRepo = {
+const fakeContributorRepo: ContributorRepository = {
   ensureExists: () => Effect.succeed(undefined as void),
   existsByEmail: () => Effect.succeed(false),
 }
@@ -19,17 +22,22 @@ const validParams = {
   contributor: { id: 'inviter-uuid', reputation: 1000 },
   email: 'invitee@example.com',
   name: 'Jean Dupont',
-  runUnitOfWork: inMemoryUnitOfWork().run,
-  invitationRepo: fakeInvitationRepo,
-  contributorRepo: fakeContributorRepo,
 }
+
+/** The read side as the test wants it */
+const fakes = (
+  overrides: { invitations?: InvitationRepository; contributors?: ContributorRepository } = {},
+) =>
+  Layer.mergeAll(
+    Layer.succeed(InvitationRepository, overrides.invitations ?? fakeInvitationRepo),
+    Layer.succeed(ContributorRepository, overrides.contributors ?? fakeContributorRepo),
+  )
+
+const execute = runWith(fakes())
 
 describe('inviteUserUseCase', () => {
   it('should fail when contributor is null (not authenticated)', async () => {
-    const result = await inviteUserUseCase({
-      ...validParams,
-      contributor: null,
-    })
+    const result = await execute(inviteUserUseCase({ ...validParams, contributor: null }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -38,10 +46,9 @@ describe('inviteUserUseCase', () => {
   })
 
   it('should fail when contributor reputation is below 1000', async () => {
-    const result = await inviteUserUseCase({
-      ...validParams,
-      contributor: { id: 'abc', reputation: 999 },
-    })
+    const result = await execute(
+      inviteUserUseCase({ ...validParams, contributor: { id: 'abc', reputation: 999 } }),
+    )
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -50,10 +57,7 @@ describe('inviteUserUseCase', () => {
   })
 
   it('should fail when email is invalid', async () => {
-    const result = await inviteUserUseCase({
-      ...validParams,
-      email: 'not-an-email',
-    })
+    const result = await execute(inviteUserUseCase({ ...validParams, email: 'not-an-email' }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -62,10 +66,7 @@ describe('inviteUserUseCase', () => {
   })
 
   it('should fail when name is too short', async () => {
-    const result = await inviteUserUseCase({
-      ...validParams,
-      name: 'A',
-    })
+    const result = await execute(inviteUserUseCase({ ...validParams, name: 'A' }))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -74,13 +75,11 @@ describe('inviteUserUseCase', () => {
   })
 
   it('should fail when email already has an account', async () => {
-    const result = await inviteUserUseCase({
-      ...validParams,
-      contributorRepo: {
-        ...fakeContributorRepo,
-        existsByEmail: () => Effect.succeed(true),
-      },
-    })
+    const result = await runWith(
+      fakes({
+        contributors: { ...fakeContributorRepo, existsByEmail: () => Effect.succeed(true) },
+      }),
+    )(inviteUserUseCase(validParams))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -97,13 +96,14 @@ describe('inviteUserUseCase', () => {
       }),
     )
 
-    const result = await inviteUserUseCase({
-      ...validParams,
-      invitationRepo: {
-        ...fakeInvitationRepo,
-        findPendingByInviter: () => Effect.succeed(pendingInvitations),
-      },
-    })
+    const result = await runWith(
+      fakes({
+        invitations: {
+          ...fakeInvitationRepo,
+          findPendingByInviter: () => Effect.succeed(pendingInvitations),
+        },
+      }),
+    )(inviteUserUseCase(validParams))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -118,13 +118,14 @@ describe('inviteUserUseCase', () => {
       inviteeName: 'Existing',
     })
 
-    const result = await inviteUserUseCase({
-      ...validParams,
-      invitationRepo: {
-        ...fakeInvitationRepo,
-        findPendingByEmail: () => Effect.succeed(existingInvitation),
-      },
-    })
+    const result = await runWith(
+      fakes({
+        invitations: {
+          ...fakeInvitationRepo,
+          findPendingByEmail: () => Effect.succeed(existingInvitation),
+        },
+      }),
+    )(inviteUserUseCase(validParams))
 
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
@@ -134,7 +135,7 @@ describe('inviteUserUseCase', () => {
 
   it('opens the invitation stream, signed by the inviter, and returns it pending', async () => {
     const unit = inMemoryUnitOfWork()
-    const result = await inviteUserUseCase({ ...validParams, runUnitOfWork: unit.run })
+    const result = await execute(inviteUserUseCase(validParams), unit.run)
 
     expect(Either.isRight(result) && result.right).toMatchObject({
       inviteeEmail: 'invitee@example.com',

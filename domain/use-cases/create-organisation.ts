@@ -1,20 +1,18 @@
-import { Effect, Either, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import {
   generateOrganisationSlug,
-  Organisation,
   OrganisationId,
   OrganisationType,
 } from '../entities/organisation'
 import { addOrganisation } from '../aggregates/organisation'
-import { RunUnitOfWork } from '../events/unit-of-work'
+import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { WikipediaValidator } from '../services/wikipedia-validator'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { organisationFields } from './validate-organisation-fields'
 import { openStream } from './aggregate-stream'
 import { allowedTo, free, signedIn } from './preconditions'
-import { runCommand, runFormCommand, uniqueTakenAs } from './run-command'
+import { uniqueTakenAs } from './run-command'
 import { organisationAggregate } from './organisation-stream'
 
 export type CreateOrganisationParams = {
@@ -26,15 +24,14 @@ export type CreateOrganisationParams = {
   wikipediaUrl: string
   websiteUrl: string
   notorietySources: string[]
-  runUnitOfWork: RunUnitOfWork
-  /** Read side: the name must be free */
-  organisationRepo: OrganisationRepository
-  wikipediaValidator: WikipediaValidator
 }
 
 export type { FieldErrors }
 
 const NAME_TAKEN = 'Une organisation avec ce nom existe déjà.'
+
+/** Read side: the name must be free */
+const organisations = Effect.serviceFunctions(OrganisationRepository)
 
 /** Who may propose the organisation, with a form that holds up and a name still free */
 const checked = (params: CreateOrganisationParams) =>
@@ -49,7 +46,7 @@ const checked = (params: CreateOrganisationParams) =>
     }),
     Effect.tap(() =>
       Effect.flatMap(
-        params.organisationRepo.findBySlug(generateOrganisationSlug(params.name)),
+        organisations.findBySlug(generateOrganisationSlug(params.name)),
         free(NAME_TAKEN, 'name'),
       ),
     ),
@@ -72,7 +69,7 @@ const persisted = (
     notorietySources: params.notorietySources,
   })
   return pipe(
-    params.runUnitOfWork((events) =>
+    runUnitOfWork((events) =>
       pipe(
         openStream(organisationAggregate, events, id, [added], contributor.id),
         Effect.tap(() =>
@@ -94,38 +91,27 @@ const persisted = (
 
 /**
  * Validates all inputs without persisting anything; hands the parsed type.
- * Call this before side effects (logo upload) to fail fast.
+ * Run this before side effects (logo upload) to fail fast.
  */
-export function validateCreateOrganisation(
-  params: CreateOrganisationParams,
-): Promise<Either.Either<{ organisationType: OrganisationType }, string | FieldErrors>> {
-  return runFormCommand(Effect.map(checked(params), ({ validated }) => validated))
+export function validateCreateOrganisation(params: CreateOrganisationParams) {
+  return Effect.map(checked(params), ({ validated }) => validated)
 }
 
 /**
  * Records a validated organisation in the journal and rewards the contributor.
- * Call only after validation has passed and any side effects (logo upload) are done.
+ * Run only after validation has passed and any side effects (logo upload) are done.
  */
 export function persistOrganisation(
   params: CreateOrganisationParams,
   organisationType: OrganisationType,
-): Promise<Either.Either<Organisation, string>> {
-  return runCommand(
-    Effect.flatMap(signedIn(params.contributor), (contributor) =>
-      persisted(params, contributor, organisationType),
-    ),
+) {
+  return Effect.flatMap(signedIn(params.contributor), (contributor) =>
+    persisted(params, contributor, organisationType),
   )
 }
 
 /** Validates and creates an organisation in one step. */
-export function createOrganisationUseCase(
-  params: CreateOrganisationParams,
-): Promise<Either.Either<Organisation, string | FieldErrors>> {
-  return runFormCommand(createOrganisationCommand(params))
-}
-
-/** The one-step command itself, for a process that runs it among others */
-export function createOrganisationCommand(params: CreateOrganisationParams) {
+export function createOrganisationUseCase(params: CreateOrganisationParams) {
   return Effect.flatMap(checked(params), ({ contributor, validated }) =>
     persisted(params, contributor, validated.organisationType),
   )

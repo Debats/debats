@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Context, Effect } from 'effect'
 import { Position } from '../entities/position'
 import { DatabaseError } from './errors'
 
@@ -11,3 +11,5 @@ export interface PositionRepository {
   ): Effect.Effect<Position | null, DatabaseError>
   findBySubjectId(subjectId: string): Effect.Effect<Position[], DatabaseError>
 }
+
+export const PositionRepository = Context.GenericTag<PositionRepository>('PositionRepository')

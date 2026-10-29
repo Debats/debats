@@ -2,8 +2,7 @@
 
 import { Either, Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { runUnitOfWork } from '../../infra/events/unit-of-work'
-import { createPositionRepository } from '../../infra/database/position-repository-supabase'
+import { runLiveForm } from '../../infra/live-services'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
@@ -14,7 +13,6 @@ import {
   StatementAuthor,
 } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
-import { createArgumentRepository } from '../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { readStatementArguments } from './statement-arguments-fields'
 
@@ -38,27 +36,21 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
   const subjectId = String(formData.get('subjectId') ?? '')
   const author = readAuthor(formData)
 
-  const publicFigureRepo = createPublicFigureRepository(supabase)
-  const organisationRepo = createOrganisationRepository(supabase)
-  const subjectRepo = createSubjectRepository(supabase)
-
-  const result = await createStatementUseCase({
-    contributor,
-    subjectId,
-    author,
-    positionId: String(formData.get('positionId') ?? ''),
-    statementType: parseStatementType(formData.get('statementType')),
-    sourceName: String(formData.get('sourceName') ?? ''),
-    sourceUrl: String(formData.get('sourceUrl') ?? ''),
-    quote: String(formData.get('quote') ?? ''),
-    statedAt: String(formData.get('statedAt') ?? ''),
-    arguments: readStatementArguments(formData),
-    runUnitOfWork,
-    positionRepo: createPositionRepository(supabase),
-    publicFigureRepo,
-    organisationRepo,
-    argumentRepo: createArgumentRepository(supabase),
-  })
+  const result = await runLiveForm(
+    createStatementUseCase({
+      contributor,
+      subjectId,
+      author,
+      positionId: String(formData.get('positionId') ?? ''),
+      statementType: parseStatementType(formData.get('statementType')),
+      sourceName: String(formData.get('sourceName') ?? ''),
+      sourceUrl: String(formData.get('sourceUrl') ?? ''),
+      quote: String(formData.get('quote') ?? ''),
+      statedAt: String(formData.get('statedAt') ?? ''),
+      arguments: readStatementArguments(formData),
+    }),
+    supabase,
+  )
 
   if (Either.isLeft(result)) {
     const err = result.left
@@ -68,10 +60,12 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
     return { success: false, fieldErrors: err }
   }
 
-  const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
+  const subject = await Effect.runPromise(createSubjectRepository(supabase).findById(subjectId))
 
   if (author.kind === 'organisation') {
-    const organisation = await Effect.runPromise(organisationRepo.findById(author.id))
+    const organisation = await Effect.runPromise(
+      createOrganisationRepository(supabase).findById(author.id),
+    )
     return {
       success: true,
       subjectSlug: subject?.slug ?? '',
@@ -80,7 +74,7 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
     }
   }
 
-  const figure = await Effect.runPromise(publicFigureRepo.findById(author.id))
+  const figure = await Effect.runPromise(createPublicFigureRepository(supabase).findById(author.id))
   return {
     success: true,
     subjectSlug: subject?.slug ?? '',

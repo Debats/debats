@@ -27,7 +27,6 @@ export interface OrganisationFieldsToValidate {
   presentation: string
   wikipediaUrl: string
   notorietySources: string[]
-  wikipediaValidator: WikipediaValidator
 }
 
 export type ValidatedOrganisationFields = { organisationType: OrganisationType }
@@ -39,8 +38,8 @@ export type ValidatedOrganisationFields = { organisationType: OrganisationType }
  */
 export function organisationFields(
   fields: OrganisationFieldsToValidate,
-): Effect.Effect<ValidatedOrganisationFields, Invalid> {
-  const { name, acronym, presentation, notorietySources, wikipediaValidator } = fields
+): Effect.Effect<ValidatedOrganisationFields, Invalid, WikipediaValidator> {
+  const { name, acronym, presentation, notorietySources } = fields
   const wikipediaUrl = fields.wikipediaUrl.trim()
   const organisationType = parseOrganisationType(fields.organisationType)
   const faults = {
@@ -56,7 +55,7 @@ export function organisationFields(
     Effect.tap(() => faultless(faults)),
     Effect.tap(() =>
       wikipediaUrl
-        ? wikipediaPageJudged(wikipediaUrl, wikipediaValidator, (page) =>
+        ? wikipediaPageJudged(wikipediaUrl, (page) =>
             page.isBiography
               ? 'Cette page Wikipedia décrit une personne, pas une organisation.'
               : null,
