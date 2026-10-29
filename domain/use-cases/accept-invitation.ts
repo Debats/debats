@@ -8,7 +8,7 @@ import { acceptInvitation, isPendingInvitation } from '../aggregates/invitation'
 import { ensureStream } from './aggregate-stream'
 import { found } from './preconditions'
 import { decideOnInvitation, invitationAggregate, InvitationSource } from './invitation-stream'
-import { Grant, grantEach, rewardFor } from './reward'
+import { Grant, grantEach, grantOf, rewardFor } from './reward'
 import { runCommand } from './run-command'
 import { Rejected } from './types'
 
@@ -31,17 +31,7 @@ function grantsFor(invitation: Invitation, inviteeId: string, inviterReputation:
   const on = { relatedEntityType: 'invitation' as const, relatedEntityId: invitation.id }
   const inviteeStart = Math.floor(inviterReputation / 2)
   return [
-    ...(inviteeStart > 0
-      ? [
-          {
-            grantId: crypto.randomUUID(),
-            contributorId: inviteeId,
-            action: 'invitation_bonus' as const,
-            amount: inviteeStart,
-            ...on,
-          },
-        ]
-      : []),
+    ...(inviteeStart > 0 ? [grantOf(inviteeId, 'invitation_bonus', inviteeStart, on)] : []),
     rewardFor(invitation.inviterId, 'invitation_accepted', on),
   ]
 }

@@ -66,7 +66,7 @@ export async function updatePublicFigureAction(
     return { success: false, fieldErrors: err }
   }
 
-  const existing = validation.right
+  const { existing } = validation.right
   const oldSlug = existing.slug
   const newSlug = generateSlug(name)
   const slugChanged = newSlug !== oldSlug
@@ -98,7 +98,7 @@ export async function updatePublicFigureAction(
   }
 
   // Phase 3: Persist
-  const saved = await persistUpdatedPublicFigure(useCaseParams, existing)
+  const saved = await persistUpdatedPublicFigure(useCaseParams, validation.right)
   if (Either.isLeft(saved)) {
     return { success: false, error: saved.left }
   }

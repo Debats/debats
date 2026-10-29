@@ -106,6 +106,14 @@ describe('found and free', () => {
     )
   })
 
+  it('judges by presence, not by truth: a zero or an empty string was found', async () => {
+    expect(await run(found('Introuvable.')(0))).toEqual(Either.right(0))
+    expect(await run(found('Introuvable.')(''))).toEqual(Either.right(''))
+    expect(await run(found('Introuvable.')(undefined))).toEqual(
+      Either.left(new Rejected('Introuvable.')),
+    )
+  })
+
   it('lets a free value through, refuses a taken one', async () => {
     expect(await run(free('Déjà pris.', 'title')(null))).toEqual(Either.right(undefined))
     expect(await run(free('Déjà pris.', 'title')({ id: 1 }))).toEqual(

@@ -8,18 +8,29 @@ export interface Grant extends GrantInput {
   contributorId: string
 }
 
-/** The grant the scale gives for an action, on the entity it rewards */
-export const rewardFor = (
+/** What a grant rewards: the entity the deed was done on */
+export type RewardedOn = { relatedEntityType: Grant['relatedEntityType']; relatedEntityId: string }
+
+/** A grant of an amount the command sets, on the entity it rewards; the command names it, as every id */
+export const grantOf = (
   contributorId: string,
   action: RewardableAction,
-  related?: { relatedEntityType: Grant['relatedEntityType']; relatedEntityId: string },
+  amount: number,
+  related?: RewardedOn,
 ): Grant => ({
   grantId: crypto.randomUUID(),
   contributorId,
   action,
-  amount: reputationReward(action),
+  amount,
   ...related,
 })
+
+/** The grant the scale gives for an action, on the entity it rewards */
+export const rewardFor = (
+  contributorId: string,
+  action: RewardableAction,
+  related?: RewardedOn,
+): Grant => grantOf(contributorId, action, reputationReward(action), related)
 
 /**
  * Records grants on the contributors' streams, in the transaction of the deed

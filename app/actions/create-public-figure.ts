@@ -77,7 +77,7 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
   }
 
   // Phase 3: Persist entity + reputation — photo already uploaded
-  const created = await persistPublicFigure(useCaseParams)
+  const created = await persistPublicFigure(useCaseParams, validation.right)
   if (Either.isLeft(created)) {
     return { success: false, error: created.left }
   }

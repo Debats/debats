@@ -1,7 +1,28 @@
 import { describe, it, expect } from 'vitest'
 import { Effect } from 'effect'
 import { createInMemoryEventStore } from '../events/event-store-memory'
-import { grantEach, rewardFor } from './reward'
+import { grantEach, grantOf, rewardFor } from './reward'
+
+describe('grantOf', () => {
+  it('names a grant of any amount on the entity it rewards, each with its own id', () => {
+    const grant = grantOf('alice', 'invitation_bonus', 25, {
+      relatedEntityType: 'invitation',
+      relatedEntityId: 'i-1',
+    })
+    expect(grant).toMatchObject({
+      contributorId: 'alice',
+      action: 'invitation_bonus',
+      amount: 25,
+      relatedEntityType: 'invitation',
+      relatedEntityId: 'i-1',
+    })
+    expect(grant.grantId).not.toBe(grantOf('alice', 'invitation_bonus', 25).grantId)
+  })
+
+  it('rewardFor is a grant of what the scale gives', () => {
+    expect(rewardFor('alice', 'added_subject')).toMatchObject({ amount: 50 })
+  })
+})
 
 describe('grantEach', () => {
   it('appends one contributor’s grants together, after what the stream already holds', async () => {

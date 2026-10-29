@@ -90,7 +90,7 @@ function faultsIn(error: ParseError, messages: Record<string, string>): FieldErr
 export const found =
   (message: string, field?: string) =>
   <A>(value: A | null | undefined): Effect.Effect<A, Rejected> =>
-    value ? Effect.succeed(value) : Effect.fail(new Rejected(message, field))
+    value != null ? Effect.succeed(value) : Effect.fail(new Rejected(message, field))
 
 /** What the read side must not find: a value already there is refused, on the field that holds it */
 export const free =

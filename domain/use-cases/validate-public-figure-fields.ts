@@ -2,13 +2,15 @@ import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { Invalid } from './types'
-import { faultless, faultsOf } from './preconditions'
+import { decoded, faultless, faultsOf } from './preconditions'
 import { notorietyFaults, wikipediaPageJudged } from './notoriety'
 
 const PublicFigureFieldsInput = S.Struct({
   name: S.String.pipe(S.minLength(2), S.maxLength(100)),
   presentation: S.String.pipe(S.minLength(10)),
 })
+
+export type ValidatedPublicFigureFields = S.Schema.Type<typeof PublicFigureFieldsInput>
 
 const FIELD_MESSAGES = {
   name: 'Le nom doit faire entre 2 et 100 caractères.',
@@ -17,7 +19,8 @@ const FIELD_MESSAGES = {
 
 /**
  * The form of a public figure holds up: name and presentation, the notoriety
- * criterion, then the Wikipedia page itself, which must be a biography.
+ * criterion, then the Wikipedia page itself, which must be a biography. Hands
+ * the name and the presentation as decoded, for the command to write.
  */
 export function publicFigureFields(fields: {
   name: string
@@ -25,15 +28,16 @@ export function publicFigureFields(fields: {
   wikipediaUrl: string
   notorietySources: string[]
   wikipediaValidator: WikipediaValidator
-}): Effect.Effect<void, Invalid> {
+}): Effect.Effect<ValidatedPublicFigureFields, Invalid> {
   const { name, presentation, notorietySources, wikipediaValidator } = fields
   const wikipediaUrl = fields.wikipediaUrl.trim()
+  const faults = {
+    ...faultsOf(PublicFigureFieldsInput, FIELD_MESSAGES)({ name, presentation }),
+    ...notorietyFaults(wikipediaUrl, notorietySources),
+  }
 
   return pipe(
-    faultless({
-      ...faultsOf(PublicFigureFieldsInput, FIELD_MESSAGES)({ name, presentation }),
-      ...notorietyFaults(wikipediaUrl, notorietySources),
-    }),
+    faultless(faults),
     Effect.andThen(
       wikipediaUrl
         ? wikipediaPageJudged(wikipediaUrl, wikipediaValidator, (page) =>
@@ -41,5 +45,7 @@ export function publicFigureFields(fields: {
           )
         : Effect.void,
     ),
+    // The faults were gathered above: what the schema reads now is what it read then
+    Effect.andThen(Effect.orDie(decoded(PublicFigureFieldsInput)({ name, presentation }))),
   )
 }
