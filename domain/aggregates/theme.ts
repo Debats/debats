@@ -1,5 +1,6 @@
 import { generateThemeSlug, Theme, ThemeId, ThemeName, ThemeSlug } from '../entities/theme'
 import { StoredEvent, StreamRef } from '../events/event-store'
+import { always, Decision } from './decision'
 import { authored, authorOf, Decoded, replayStream } from './replay'
 import { decodeThemeEvent, ThemeContent, ThemeEvent } from './theme-events'
 
@@ -18,8 +19,9 @@ export interface ThemeInput {
   description: string
 }
 
-/** Decision: a contributor adds a theme (its id is chosen by the caller, as the stream's) */
-export const addTheme = (input: ThemeInput): ThemeEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const themeAdded = (input: ThemeInput): ThemeEvent => ({
   type: 'ThemeAdded',
   payload: {
     name: input.name,
@@ -28,7 +30,17 @@ export const addTheme = (input: ThemeInput): ThemeEvent => ({
   },
 })
 
-export const deleteTheme = (): ThemeEvent => ({ type: 'ThemeDeleted', payload: {} })
+export const themeDeleted = (): ThemeEvent => ({ type: 'ThemeDeleted', payload: {} })
+
+/* Decisions: what a command asks of the theme, decided from its state */
+
+export type ThemeDecision = Decision<ThemeState, ThemeEvent>
+
+/** An Idéaliste adds a theme; its id is the stream's, chosen by the command */
+export const addTheme = (input: ThemeInput): ThemeEvent[] => [themeAdded(input)]
+
+/** The subjects it gathered keep their other themes: the projection drops the links */
+export const deleteTheme = (): ThemeDecision => always(themeDeleted())
 
 /** A theme found in the table before its journal existed enters it as it is */
 export const importTheme = (theme: Theme): ThemeEvent => ({

@@ -1,6 +1,6 @@
 import { Effect } from 'effect'
 import { Argument, createArgument, sameArgumentTitle } from '../entities/argument'
-import { addArgument, argumentStream } from '../aggregates/argument'
+import { argumentAdded, argumentStream } from '../aggregates/argument'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ArgumentParts, ArgumentSource } from './argument-stream'
@@ -53,7 +53,7 @@ export async function journalWithArguments(...seed: Argument[]) {
   const unit = inMemoryUnitOfWork()
   for (const argument of seed) {
     await Effect.runPromise(
-      unit.journal.append(argumentStream(argument.id), 0, [addArgument(argument)], {
+      unit.journal.append(argumentStream(argument.id), 0, [argumentAdded(argument)], {
         actorId: argument.createdBy,
       }),
     )

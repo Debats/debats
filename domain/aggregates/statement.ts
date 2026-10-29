@@ -1,5 +1,7 @@
+import { Either } from 'effect'
 import { Statement, StatementAuthor, StatementId, StatementType } from '../entities/statement'
 import { StoredEvent, StreamRef } from '../events/event-store'
+import { Cascade, Decision, refused } from './decision'
 import { isoDate } from './iso-date'
 import { Decoded, replayStream } from './replay'
 import { decodeStatementEvent, StatementContent, StatementEvent } from './statement-events'
@@ -44,31 +46,74 @@ const content = (input: StatementContentInput): StatementContent => ({
   argumentIds: [...input.argumentIds],
 })
 
-/** Decision: a contributor adds a statement (its id is chosen by the caller, as the stream's) */
-export const addStatement = (
-  input: StatementContentInput & { author: StatementAuthor; subjectId: string },
-): StatementEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export type StatementAddition = StatementContentInput & {
+  author: StatementAuthor
+  subjectId: string
+}
+
+export const statementAdded = (input: StatementAddition): StatementEvent => ({
   type: 'StatementAdded',
   payload: { author: input.author, subjectId: input.subjectId, ...content(input) },
 })
 
-/** Decision: a contributor changes what a statement says */
-export const editStatement = (input: StatementContentInput): StatementEvent => ({
+export const statementEdited = (input: StatementContentInput): StatementEvent => ({
   type: 'StatementEdited',
   payload: content(input),
 })
 
-/** Decision: the statement follows its position, merged into another one */
-export const moveStatement = (positionId: string): StatementEvent => ({
+export const statementMoved = (positionId: string): StatementEvent => ({
   type: 'StatementMoved',
   payload: { positionId },
 })
 
-/** Decision: the statement follows its arguments, one of them merged into another */
-export const setStatementArguments = (argumentIds: readonly string[]): StatementEvent => ({
+export const statementArgumentsSet = (argumentIds: readonly string[]): StatementEvent => ({
   type: 'StatementArgumentsSet',
   payload: { argumentIds: [...argumentIds] },
 })
+
+export const statementDeleted = (): StatementEvent => ({ type: 'StatementDeleted', payload: {} })
+
+/* Decisions: what a command asks of the statement, decided from its state */
+
+export type StatementDecision = Decision<StatementState, StatementEvent>
+
+/** What another aggregate's command does to the statements it reaches */
+export type StatementCascade = Cascade<StatementState, StatementEvent>
+
+export const OTHER_SUBJECT = 'La nouvelle position doit appartenir au même sujet.'
+
+/** A contributor adds a statement; its id is the stream's, chosen by the command */
+export const addStatement = (input: StatementAddition): StatementEvent[] => [statementAdded(input)]
+
+/** A contributor changes what the statement says; its position may only move within its subject */
+export const editStatement =
+  (input: StatementContentInput, positionSubjectId: string): StatementDecision =>
+  (state) =>
+    staysOnItsSubject(state, positionSubjectId)
+      ? Either.right([statementEdited(input)])
+      : refused(OTHER_SUBJECT, 'positionId')
+
+/** The statement follows its position, merged into another one */
+export const moveStatement =
+  (positionId: string): StatementCascade =>
+  () => [statementMoved(positionId)]
+
+/** The statement goes away with its subject */
+export const removeStatement = (): StatementCascade => () => [statementDeleted()]
+
+/** The statement follows an argument merged into another, when it mobilised it */
+export const replaceArgument =
+  (sourceArgumentId: string, targetArgumentId: string): StatementCascade =>
+  (state) =>
+    state.argumentIds.includes(sourceArgumentId)
+      ? [
+          statementArgumentsSet(
+            withArgumentReplaced(state.argumentIds, sourceArgumentId, targetArgumentId),
+          ),
+        ]
+      : []
 
 /** The arguments mobilised once `source` is folded into `target`: never the same one twice */
 export const withArgumentReplaced = (
@@ -79,9 +124,6 @@ export const withArgumentReplaced = (
   const kept = argumentIds.filter((id) => id !== source)
   return kept.includes(target) ? kept : [...kept, target]
 }
-
-/** Decision: the statement goes away with its subject */
-export const removeStatement = (): StatementEvent => ({ type: 'StatementDeleted', payload: {} })
 
 /** A statement found in the tables before its journal existed enters it as it is */
 export const importStatement = (

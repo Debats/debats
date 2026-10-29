@@ -37,5 +37,5 @@ export function linkSubjectsUseCase(params: LinkSubjectsParams) {
 }
 
 function recordLink(events: EventStore, subjectId: string, otherId: string, actorId: string) {
-  return decideOnSubject(events, subjectId, actorId, () => Effect.succeed([linkSubject(otherId)]))
+  return decideOnSubject(events, subjectId, actorId, linkSubject(otherId))
 }

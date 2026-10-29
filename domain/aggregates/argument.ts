@@ -7,6 +7,7 @@ import {
 } from '../entities/argument'
 import { StoredEvent, StreamRef } from '../events/event-store'
 import { ArgumentEvent, ArgumentWording, decodeArgumentEvent } from './argument-events'
+import { always, Decision } from './decision'
 import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const ARGUMENT_STREAM = 'argument'
@@ -36,29 +37,46 @@ const wording = (input: ArgumentInput): ArgumentWording => {
   return { title, slug: generateArgumentSlug(title), description: input.description.trim() }
 }
 
-/** Decision: a contributor proposes an argument (its id is chosen by the caller, as the stream's) */
-export const addArgument = (input: ArgumentInput): ArgumentEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const argumentAdded = (input: ArgumentInput): ArgumentEvent => ({
   type: 'ArgumentAdded',
   payload: wording(input),
 })
 
-/** Decision: the wording changes; the links to statements are untouched */
-export const renameArgument = (input: ArgumentInput): ArgumentEvent => ({
+export const argumentRenamed = (input: ArgumentInput): ArgumentEvent => ({
   type: 'ArgumentRenamed',
   payload: wording(input),
 })
 
-/** Decision: this argument is a duplicate of the target and disappears into it */
-export const mergeArgumentInto = (targetArgumentId: string): ArgumentEvent => ({
+export const argumentMergedInto = (targetArgumentId: string): ArgumentEvent => ({
   type: 'ArgumentMergedInto',
   payload: { targetArgumentId },
 })
 
-/** Decision: this argument takes a duplicate in, and stays */
-export const absorbArgument = (sourceArgumentId: string): ArgumentEvent => ({
+export const argumentAbsorbed = (sourceArgumentId: string): ArgumentEvent => ({
   type: 'ArgumentAbsorbed',
   payload: { sourceArgumentId },
 })
+
+/* Decisions: what a command asks of the argument, decided from its state */
+
+export type ArgumentDecision = Decision<ArgumentState, ArgumentEvent>
+
+/** A contributor proposes an argument; its id is the stream's, chosen by the command */
+export const addArgument = (input: ArgumentInput): ArgumentEvent[] => [argumentAdded(input)]
+
+/** The wording changes; the links to statements are untouched */
+export const renameArgument = (input: ArgumentInput): ArgumentDecision =>
+  always(argumentRenamed(input))
+
+/** This argument is a duplicate of the target and disappears into it */
+export const mergeArgumentInto = (targetArgumentId: string): ArgumentDecision =>
+  always(argumentMergedInto(targetArgumentId))
+
+/** This argument takes a duplicate in, and stays */
+export const absorbArgument = (sourceArgumentId: string): ArgumentDecision =>
+  always(argumentAbsorbed(sourceArgumentId))
 
 /** An argument found in the tables before its journal existed enters it as it is */
 export const importArgument = (argument: Argument): ArgumentEvent => ({

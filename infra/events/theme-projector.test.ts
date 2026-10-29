@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
-import { addTheme, deleteTheme, replayTheme, themeStream } from '../../domain/aggregates/theme'
+import { themeAdded, themeDeleted, replayTheme, themeStream } from '../../domain/aggregates/theme'
 import { decodeThemeEvent, ThemeEvent } from '../../domain/aggregates/theme-events'
 import { UniqueTaken } from '../../domain/events/event-store'
 import { getPrismaClient } from '../prisma/client'
@@ -32,7 +32,7 @@ describe.skipIf(!hasDatabase)('theme projector', () => {
 
   it('writes the theme', async () => {
     await append(0, [
-      addTheme({ name: `Thème de test ${themeId.slice(0, 8)}`, description: 'Pour le test.' }),
+      themeAdded({ name: `Thème de test ${themeId.slice(0, 8)}`, description: 'Pour le test.' }),
     ])
 
     const row = await prisma().themes.findUniqueOrThrow({ where: { id: themeId } })
@@ -52,7 +52,7 @@ describe.skipIf(!hasDatabase)('theme projector', () => {
           journal.append(
             twin,
             0,
-            [addTheme({ name: `Thème de test ${themeId.slice(0, 8)}`, description: 'Doublon.' })],
+            [themeAdded({ name: `Thème de test ${themeId.slice(0, 8)}`, description: 'Doublon.' })],
             { actorId },
           ),
         ),
@@ -68,7 +68,7 @@ describe.skipIf(!hasDatabase)('theme projector', () => {
   })
 
   it('removes a deleted theme from the table', async () => {
-    await append(1, [deleteTheme()])
+    await append(1, [themeDeleted()])
 
     expect(await prisma().themes.findUnique({ where: { id: themeId } })).toBeNull()
   })

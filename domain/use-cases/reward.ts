@@ -1,5 +1,5 @@
 import { Array as Arr, Effect } from 'effect'
-import { contributorStream, GrantInput, grantReputation } from '../aggregates/contributor'
+import { contributorStream, GrantInput, reputationGranted } from '../aggregates/contributor'
 import { EventStore, UniqueTaken } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
 import { reputationReward, RewardableAction } from '../reputation/permissions'
@@ -51,7 +51,7 @@ export function grantEach(
   return Effect.forEach(
     Object.entries(byContributor).sort(([a], [b]) => a.localeCompare(b)),
     ([contributorId, grants]) =>
-      events.appendToEnd(contributorStream(contributorId), grants.map(grantReputation), {
+      events.appendToEnd(contributorStream(contributorId), grants.map(reputationGranted), {
         actorId,
       }),
     { discard: true },

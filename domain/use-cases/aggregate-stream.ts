@@ -13,7 +13,7 @@ import {
 } from '../events/event-store'
 import { RunUnitOfWork, runUnitOfWork } from '../events/unit-of-work'
 import { DatabaseError } from '../repositories/errors'
-import { NotFound, Rejected } from './types'
+import { Decision, NotFound, Rejected } from '../aggregates/decision'
 
 /** Events to append together, dated and signed as the rows they come from */
 export interface Batch<Event extends DomainEvent> {
@@ -176,18 +176,18 @@ export function openStream<State, Event extends DomainEvent, Parts>(
 export type RenderedFrom = Revision | undefined
 
 /**
- * A command on an aggregate: loads its stream, lets the decision look at the
- * current state, appends what it decided and rebuilds what the aggregate now
- * is, at the revision it stands at. A decision refuses with a Rejected; a deleted aggregate is NotFound
- * before any decision; a stream that moved past the revision the form was
- * rendered from is a ConcurrencyError.
+ * A command on an aggregate: loads its stream, lets the aggregate's decision
+ * look at the current state, appends what it decided and rebuilds what the
+ * aggregate now is, at the revision it stands at. A decision refuses with a
+ * Rejected; a deleted aggregate is NotFound before any decision; a stream
+ * that moved past the revision the form was rendered from is a ConcurrencyError.
  */
 export function decideOn<State, Event extends DomainEvent, Parts>(
   aggregate: AggregateStream<State, Event, Parts>,
   events: EventStore,
   id: string,
   actorId: string,
-  decide: (state: State) => Effect.Effect<Event[], Rejected>,
+  decide: Decision<State, Event>,
   renderedFrom?: RenderedFrom,
 ): Effect.Effect<Decided<State>, StreamFailure | UnreadableEvent> {
   const stillAt = (history: StoredEvent[]) =>

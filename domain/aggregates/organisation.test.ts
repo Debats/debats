@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Option } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
-import { addOrganisation, editOrganisation, replayOrganisation } from './organisation'
+import {
+  addOrganisation,
+  editOrganisation,
+  organisationAdded,
+  organisationEdited,
+  replayOrganisation,
+} from './organisation'
 
 const streamId = '7b1d0e4f-3c2a-4f7b-9d8e-0f1a2b3c4d5e'
 const at = (day: string) => new Date(`${day}T10:00:00Z`)
@@ -21,14 +27,16 @@ const stored = (
   occurredAt,
 })
 
-const added = addOrganisation({
+const cgt = {
   name: 'Confédération générale du travail',
   acronym: 'CGT',
-  organisationType: 'union',
+  organisationType: 'union' as const,
   presentation: 'Confédération syndicale française fondée en 1895.',
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/CGT',
   notorietySources: [],
-})
+}
+
+const added = organisationAdded(cgt)
 
 const stream = (...events: Array<{ type: string; payload: unknown }>): StoredEvent[] =>
   events.map((event, index) => stored(event, index + 1, at(`2024-01-${10 + index}`)))
@@ -39,12 +47,12 @@ const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
   return state.right
 }
 
-describe('organisation decisions', () => {
+describe('organisation facts', () => {
   it('derive the slug from the name and leave out blanks', () => {
     expect(added.payload).toMatchObject({ slug: 'confederation-generale-du-travail' })
     expect(added.payload).not.toHaveProperty('websiteUrl')
     expect(
-      editOrganisation({
+      organisationEdited({
         name: 'Attac',
         acronym: '  ',
         organisationType: 'ngo',
@@ -52,6 +60,16 @@ describe('organisation decisions', () => {
         notorietySources: [],
       }).payload,
     ).not.toHaveProperty('acronym')
+  })
+})
+
+describe('organisation decisions', () => {
+  it('open the stream with the organisation added', () => {
+    expect(addOrganisation(cgt)).toEqual([added])
+  })
+
+  it('record an edit, which nothing in the state can refuse', () => {
+    expect(editOrganisation(cgt)(rebuilt(added))).toEqual(Either.right([organisationEdited(cgt)]))
   })
 })
 
@@ -78,7 +96,7 @@ describe('replayOrganisation', () => {
   })
 
   it('applies an edit, keeping the creation', () => {
-    const edit = editOrganisation({
+    const edit = organisationEdited({
       name: 'CGT',
       organisationType: 'union',
       presentation: 'Une présentation revue, assez longue.',

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Effect, Either, Layer } from 'effect'
 import { removeOrganisationMembershipUseCase } from './remove-organisation-membership'
 import { createMembership, OrganisationMembership } from '../entities/organisation-membership'
-import { addMembership, publicFigureStream } from '../aggregates/public-figure'
+import { membershipAdded, publicFigureStream } from '../aggregates/public-figure'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
 import { fakeMembershipRepo, sampleFigure } from './organisation-test-helpers'
@@ -58,7 +58,7 @@ describe('removeOrganisationMembershipUseCase', () => {
       journal.append(
         publicFigureStream(figure.id),
         1,
-        [addMembership({ membershipId: existing.id, organisationId: 'org-1' })],
+        [membershipAdded({ membershipId: existing.id, organisationId: 'org-1' })],
         { actorId: 'founder' },
       ),
     )

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either, Option } from 'effect'
 import {
-  addMembership,
-  addPublicFigure,
-  editPublicFigure,
+  membershipAdded,
+  publicFigureAdded,
+  publicFigureEdited,
   publicFigureStream,
-  removeMembership,
+  membershipRemoved,
   replayPublicFigure,
-  setOccupations,
+  occupationsSet,
 } from '../../domain/aggregates/public-figure'
 import {
   decodePublicFigureEvent,
@@ -54,7 +54,7 @@ describe.skipIf(!hasDatabase)('public figure projector', () => {
 
   it('writes the figure', async () => {
     await append(0, [
-      addPublicFigure({
+      publicFigureAdded({
         name: 'Personnalité De Test',
         presentation: 'Une présentation suffisamment longue.',
         wikipediaUrl: 'https://fr.wikipedia.org/wiki/Test',
@@ -74,7 +74,7 @@ describe.skipIf(!hasDatabase)('public figure projector', () => {
 
   it('edits the figure', async () => {
     await append(1, [
-      editPublicFigure({
+      publicFigureEdited({
         name: 'Personnalité Renommée',
         presentation: 'Une présentation suffisamment longue.',
         websiteUrl: 'https://example.org',
@@ -92,9 +92,9 @@ describe.skipIf(!hasDatabase)('public figure projector', () => {
   })
 
   it('sets the occupations, then replaces them', async () => {
-    await append(2, [setOccupations([{ occupationId: occupationIds[0], current: true }])])
+    await append(2, [occupationsSet([{ occupationId: occupationIds[0], current: true }])])
     await append(3, [
-      setOccupations([
+      occupationsSet([
         { occupationId: occupationIds[0], current: false },
         { occupationId: occupationIds[1], current: true },
       ]),
@@ -112,7 +112,7 @@ describe.skipIf(!hasDatabase)('public figure projector', () => {
 
   it('adds a membership with its period, then removes it', async () => {
     await append(4, [
-      addMembership({
+      membershipAdded({
         membershipId,
         organisationId,
         role: 'Porte-parole',
@@ -132,7 +132,7 @@ describe.skipIf(!hasDatabase)('public figure projector', () => {
     })
     expect(row.started_on?.toISOString().slice(0, 10)).toBe('2020-05-01')
 
-    await append(5, [removeMembership(membershipId)])
+    await append(5, [membershipRemoved(membershipId)])
     const gone = await prisma().organisation_memberships.findUnique({ where: { id: membershipId } })
     expect(gone).toBeNull()
   })

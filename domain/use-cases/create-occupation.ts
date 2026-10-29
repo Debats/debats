@@ -52,8 +52,11 @@ export function createOccupationUseCase(params: CreateOccupationParams) {
     Effect.tap(() => ensureStream(occupationFamilyAggregate, familyId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
-        decideOnOccupationFamily(events, familyId, contributor.id, () =>
-          Effect.succeed([addOccupation(id, { name, description })]),
+        decideOnOccupationFamily(
+          events,
+          familyId,
+          contributor.id,
+          addOccupation(id, { name, description }),
         ),
       ),
     ),

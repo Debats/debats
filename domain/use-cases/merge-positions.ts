@@ -1,5 +1,5 @@
 import { Effect, pipe } from 'effect'
-import { findPosition, mergePosition } from '../aggregates/subject'
+import { mergePositions } from '../aggregates/subject'
 import { moveStatement } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
@@ -26,7 +26,7 @@ const statements = Effect.serviceFunctions(StatementRepository)
  * stream stays the whole truth of its projection. The statements to move
  * are read before the transaction: one added in between would stay behind.
  */
-export function mergePositions(params: MergePositionsParams) {
+export function mergePositionsUseCase(params: MergePositionsParams) {
   const { sourcePositionId, targetPositionId } = params
 
   return pipe(
@@ -66,15 +66,19 @@ export function mergePositions(params: MergePositionsParams) {
     Effect.flatMap(({ contributor, source, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(
-          decideOnSubject(events, source.subjectId, contributor.id, (state) =>
-            findPosition(state, sourcePositionId) && findPosition(state, targetPositionId)
-              ? Effect.succeed([mergePosition(sourcePositionId, targetPositionId)])
-              : Effect.fail(new Rejected('Une des deux positions n’existe plus.')),
+          decideOnSubject(
+            events,
+            source.subjectId,
+            contributor.id,
+            mergePositions(sourcePositionId, targetPositionId),
           ),
           Effect.andThen(
-            decideOnEachStatement(events, statementIds, contributor.id, () => [
+            decideOnEachStatement(
+              events,
+              statementIds,
+              contributor.id,
               moveStatement(targetPositionId),
-            ]),
+            ),
           ),
         ),
       ),

@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { Rejected } from './decision'
 import {
   acceptInvitation,
+  ALREADY_ACCEPTED,
+  invitationAccepted,
+  invitationRevoked,
+  invitationSent,
   isPendingInvitation,
   replayInvitation,
   revokeInvitation,
@@ -27,7 +32,35 @@ const stored = (
   occurredAt,
 })
 
-const sent = sendInvitation({ inviteeEmail: 'jean@example.com', inviteeName: 'Jean Dupont' })
+const jean = { inviteeEmail: 'jean@example.com', inviteeName: 'Jean Dupont' }
+const sent = invitationSent(jean)
+
+const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
+  const state = replayInvitation(
+    events.map((event, index) => stored(event, index + 1, at(`2024-01-${10 + index}`))),
+  )
+  if (Either.isLeft(state) || !state.right) throw new Error('expected a state')
+  return state.right
+}
+
+describe('invitation decisions', () => {
+  it('open the stream with the invitation sent', () => {
+    expect(sendInvitation(jean)).toEqual([sent])
+  })
+
+  it('accept a pending invitation, once', () => {
+    expect(acceptInvitation('invitee')(rebuilt(sent))).toEqual(
+      Either.right([invitationAccepted('invitee')]),
+    )
+    expect(acceptInvitation('other')(rebuilt(sent, invitationAccepted('invitee')))).toEqual(
+      Either.left(new Rejected(ALREADY_ACCEPTED)),
+    )
+  })
+
+  it('record a revocation, which nothing in the state can refuse', () => {
+    expect(revokeInvitation()(rebuilt(sent))).toEqual(Either.right([invitationRevoked()]))
+  })
+})
 
 describe('replayInvitation', () => {
   it('rebuilds a pending invitation signed by its inviter', () => {
@@ -51,7 +84,7 @@ describe('replayInvitation', () => {
   it('marks the acceptance with the contributor who joined and its date', () => {
     const state = replayInvitation([
       stored(sent, 1, at('2024-01-10')),
-      stored(acceptInvitation('invitee'), 2, at('2024-01-12'), 'invitee'),
+      stored(invitationAccepted('invitee'), 2, at('2024-01-12'), 'invitee'),
     ])
 
     expect(Either.isRight(state) && state.right?.invitation).toMatchObject({
@@ -65,7 +98,7 @@ describe('replayInvitation', () => {
   it('dates a revocation', () => {
     const state = replayInvitation([
       stored(sent, 1, at('2024-01-10')),
-      stored(revokeInvitation(), 2, at('2024-01-10')),
+      stored(invitationRevoked(), 2, at('2024-01-10')),
     ])
 
     expect(Either.isRight(state) && state.right?.revokedAt).toEqual(at('2024-01-10'))

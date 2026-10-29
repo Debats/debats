@@ -26,8 +26,11 @@ export interface GrantInput {
   relatedEntityId?: string
 }
 
-/** Decision: the site rewards (or sanctions) a contributor for a deed */
-export const grantReputation = (input: GrantInput): ContributorEvent => ({
+/**
+ * Fact: the site rewarded (or sanctioned) a contributor for a deed. Nothing is
+ * decided from her stream: the command appends it at the end, whatever it holds.
+ */
+export const reputationGranted = (input: GrantInput): ContributorEvent => ({
   type: 'ReputationGranted',
   payload: {
     grantId: input.grantId,

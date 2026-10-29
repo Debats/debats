@@ -2,6 +2,7 @@ import { Context, Effect } from 'effect'
 import {
   importOccupation,
   importOccupationFamily,
+  OccupationFamilyDecision,
   OCCUPATION_FAMILY_STREAM,
   OccupationFamilyState,
   replayOccupationFamily,
@@ -10,7 +11,6 @@ import { OccupationFamilyEvent } from '../aggregates/occupation-family-events'
 import { Occupation } from '../entities/occupation'
 import { OccupationFamily } from '../entities/occupation-family'
 import { EventStore } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   Decided,
@@ -61,7 +61,7 @@ export const decideOnOccupationFamily = (
   events: EventStore,
   familyId: string,
   actorId: string,
-  decide: (state: OccupationFamilyState) => Effect.Effect<OccupationFamilyEvent[], Rejected>,
+  decide: OccupationFamilyDecision,
 ) => decideOn(occupationFamilyAggregate, events, familyId, actorId, decide)
 
 export const requireOccupationFamilyState = (state: OccupationFamilyState | null) =>

@@ -1,9 +1,9 @@
 import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { editPosition, findPosition } from '../aggregates/subject'
+import { editPosition, POSITION_NOT_FOUND } from '../aggregates/subject'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
-import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, fieldsOf, found } from './preconditions'
@@ -18,8 +18,6 @@ const FIELD_MESSAGES = {
   title: 'Le titre doit faire entre 3 et 255 caractères.',
   description: 'La description doit faire au moins 10 caractères.',
 }
-
-const NOT_FOUND = 'Position introuvable.'
 
 type UpdatePositionParams = {
   contributor: ContributorIdentity | null
@@ -42,7 +40,7 @@ export function updatePositionUseCase(params: UpdatePositionParams) {
     Effect.all({
       contributor: allowedTo(params.contributor, 'edit_position', 'modifier une position'),
       input: fieldsOf(UpdatePositionInput, FIELD_MESSAGES)({ title, description }),
-      existing: Effect.flatMap(positions.findById(positionId), found(NOT_FOUND)),
+      existing: Effect.flatMap(positions.findById(positionId), found(POSITION_NOT_FOUND)),
     }),
     Effect.tap(({ existing }) => ensureStream(subjectAggregate, existing.subjectId)),
     Effect.flatMap(({ contributor, input, existing }) =>
@@ -52,10 +50,7 @@ export function updatePositionUseCase(params: UpdatePositionParams) {
             events,
             existing.subjectId,
             contributor.id,
-            (state) =>
-              findPosition(state, positionId)
-                ? Effect.succeed([editPosition({ positionId, ...input })])
-                : Effect.fail(new Rejected(NOT_FOUND)),
+            editPosition({ positionId, ...input }),
             revision,
           ),
           Effect.tap(() =>

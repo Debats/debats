@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
   contributorStream,
-  grantReputation,
+  reputationGranted,
   replayContributor,
 } from '../../domain/aggregates/contributor'
 import { decodeContributorEvent } from '../../domain/aggregates/contributor-events'
@@ -78,7 +78,7 @@ describe.skipIf(!hasDatabase)('contributor projector', () => {
       runUnitOfWork((journal) => journal.load(contributorStream(contributorId))),
     )
     const last = stored.at(-1)!
-    const again = grantReputation({
+    const again = reputationGranted({
       grantId: (last.payload as { grantId: string }).grantId,
       action: 'edited_subject',
       amount: 5,

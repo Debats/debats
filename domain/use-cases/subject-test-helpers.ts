@@ -1,7 +1,7 @@
 import { Effect } from 'effect'
 import { createPosition, Position } from '../entities/position'
 import { createSubject, Subject } from '../entities/subject'
-import { addPosition, addSubject, subjectStream } from '../aggregates/subject'
+import { positionAdded, subjectAdded, subjectStream } from '../aggregates/subject'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { StatementParts, StatementSource } from './statement-stream'
 import { SubjectParts, SubjectSource } from './subject-stream'
@@ -47,9 +47,9 @@ export async function journalWithSubjects(...subjects: Array<[Subject, Position[
         subjectStream(subject.id),
         0,
         [
-          addSubject(subject),
+          subjectAdded(subject),
           ...positions.map((p) =>
-            addPosition({ positionId: p.id, title: p.title, description: p.description }),
+            positionAdded({ positionId: p.id, title: p.title, description: p.description }),
           ),
         ],
         { actorId: subject.createdBy ?? null },

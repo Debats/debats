@@ -52,7 +52,7 @@ export function setPublicFigureOccupationsUseCase(params: SetPublicFigureOccupat
           events,
           publicFigureId,
           contributor.id,
-          () => Effect.succeed([setOccupations(assignments)]),
+          setOccupations(assignments),
           revision,
         ),
       ),

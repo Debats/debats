@@ -65,7 +65,7 @@ export function inviteUserUseCase(params: InviteUserParams) {
           invitationAggregate,
           events,
           id,
-          [sendInvitation({ inviteeEmail: input.email, inviteeName: input.name })],
+          sendInvitation({ inviteeEmail: input.email, inviteeName: input.name }),
           contributor.id,
         ),
       ),

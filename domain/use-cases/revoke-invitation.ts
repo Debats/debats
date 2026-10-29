@@ -18,9 +18,7 @@ export function revokeInvitationUseCase(params: RevokeInvitationParams) {
     ensureStream(invitationAggregate, invitationId),
     Effect.andThen(
       runUnitOfWork((events) =>
-        decideOnInvitation(events, invitationId, actorId, () =>
-          Effect.succeed([revokeInvitation()]),
-        ),
+        decideOnInvitation(events, invitationId, actorId, revokeInvitation()),
       ),
     ),
     Effect.asVoid,

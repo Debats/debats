@@ -33,5 +33,5 @@ export function unlinkSubjectsUseCase(params: UnlinkSubjectsParams) {
 }
 
 function recordUnlink(events: EventStore, subjectId: string, otherId: string, actorId: string) {
-  return decideOnSubject(events, subjectId, actorId, () => Effect.succeed([unlinkSubject(otherId)]))
+  return decideOnSubject(events, subjectId, actorId, unlinkSubject(otherId))
 }

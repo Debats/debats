@@ -55,11 +55,9 @@ export function deleteSubjectUseCase(params: DeleteSubjectParams) {
     Effect.flatMap(({ contributor, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(
-          decideOnSubject(events, subjectId, contributor.id, () =>
-            Effect.succeed([deleteSubject()]),
-          ),
+          decideOnSubject(events, subjectId, contributor.id, deleteSubject()),
           Effect.andThen(
-            decideOnEachStatement(events, statementIds, contributor.id, () => [removeStatement()]),
+            decideOnEachStatement(events, statementIds, contributor.id, removeStatement()),
           ),
         ),
       ),

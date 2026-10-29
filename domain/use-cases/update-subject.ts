@@ -38,13 +38,7 @@ export function updateSubjectUseCase(params: UpdateSubjectParams) {
     Effect.flatMap(({ contributor, edited }) =>
       runUnitOfWork((events) =>
         pipe(
-          decideOnSubject(
-            events,
-            subjectId,
-            contributor.id,
-            () => Effect.succeed([editSubject(edited)]),
-            revision,
-          ),
+          decideOnSubject(events, subjectId, contributor.id, editSubject(edited), revision),
           Effect.tap(() =>
             grant(
               events,

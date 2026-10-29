@@ -4,6 +4,10 @@ import { StoredEvent, UnreadableEvent } from '../events/event-store'
 import {
   absorbArgument,
   addArgument,
+  argumentAbsorbed,
+  argumentAdded,
+  argumentMergedInto,
+  argumentRenamed,
   mergeArgumentInto,
   renameArgument,
   replayArgument,
@@ -27,7 +31,8 @@ const stored = (
   occurredAt,
 })
 
-const added = addArgument({ title: '  Coût budgétaire ', description: ' Pèse sur le budget. ' })
+const wording = { title: '  Coût budgétaire ', description: ' Pèse sur le budget. ' }
+const added = argumentAdded(wording)
 
 const stream = (...events: Array<{ type: string; payload: unknown }>): StoredEvent[] =>
   events.map((event, index) => stored(event, index + 1, at(`2024-01-${10 + index}`)))
@@ -38,13 +43,28 @@ const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
   return state.right
 }
 
-describe('argument decisions', () => {
+describe('argument facts', () => {
   it('trim the wording and derive the slug from the title', () => {
     expect(added.payload).toEqual({
       title: 'Coût budgétaire',
       slug: 'cout-budgetaire',
       description: 'Pèse sur le budget.',
     })
+  })
+})
+
+describe('argument decisions', () => {
+  const live = rebuilt(added)
+
+  it('open the stream with the argument added', () => {
+    expect(addArgument(wording)).toEqual([added])
+  })
+
+  it('record what nothing in the state can refuse', () => {
+    const renamed = { title: 'Coût pour les finances publiques', description: '' }
+    expect(renameArgument(renamed)(live)).toEqual(Either.right([argumentRenamed(renamed)]))
+    expect(mergeArgumentInto('target')(live)).toEqual(Either.right([argumentMergedInto('target')]))
+    expect(absorbArgument('dup')(live)).toEqual(Either.right([argumentAbsorbed('dup')]))
   })
 })
 
@@ -76,7 +96,7 @@ describe('replayArgument', () => {
     const state = replayArgument([
       stored(added, 1, at('2024-01-10')),
       stored(
-        renameArgument({ title: 'Coût pour les finances publiques', description: '' }),
+        argumentRenamed({ title: 'Coût pour les finances publiques', description: '' }),
         2,
         at('2024-01-11'),
         'bob',
@@ -93,13 +113,13 @@ describe('replayArgument', () => {
   })
 
   it('remembers into which argument it was merged, and is gone since then', () => {
-    const state = rebuilt(added, mergeArgumentInto('target-id'))
+    const state = rebuilt(added, argumentMergedInto('target-id'))
     expect(state.mergedInto).toBe('target-id')
     expect(state.deletedAt).toEqual(at('2024-01-11'))
   })
 
   it('remembers the duplicates it absorbed, and stays', () => {
-    const state = rebuilt(added, absorbArgument('dup-1'), absorbArgument('dup-2'))
+    const state = rebuilt(added, argumentAbsorbed('dup-1'), argumentAbsorbed('dup-2'))
     expect(state.absorbedIds).toEqual(['dup-1', 'dup-2'])
     expect(state.deletedAt).toBeNull()
   })

@@ -1,5 +1,6 @@
-import { Context, Effect } from 'effect'
+import { Context } from 'effect'
 import {
+  ArgumentDecision,
   ARGUMENT_STREAM,
   ArgumentState,
   importArgument,
@@ -9,7 +10,6 @@ import {
 import { ArgumentEvent } from '../aggregates/argument-events'
 import { Argument } from '../entities/argument'
 import { EventStore } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   decideOn,
@@ -53,7 +53,7 @@ export const decideOnArgument = (
   events: EventStore,
   argumentId: string,
   actorId: string,
-  decide: (state: ArgumentState) => Effect.Effect<ArgumentEvent[], Rejected>,
+  decide: ArgumentDecision,
   renderedFrom?: RenderedFrom,
 ) => decideOn(argumentAggregate, events, argumentId, actorId, decide, renderedFrom)
 

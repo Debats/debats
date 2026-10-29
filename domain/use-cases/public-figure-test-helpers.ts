@@ -1,7 +1,7 @@
 import { Effect } from 'effect'
 import { OrganisationMembership } from '../entities/organisation-membership'
 import { PublicFigure } from '../entities/public-figure'
-import { addPublicFigure, publicFigureStream } from '../aggregates/public-figure'
+import { publicFigureAdded, publicFigureStream } from '../aggregates/public-figure'
 import { OccupationAssignmentPayload } from '../aggregates/public-figure-events'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { PublicFigureParts, PublicFigureSource } from './public-figure-stream'
@@ -33,7 +33,7 @@ export async function journalWithFigures(...figures: PublicFigure[]) {
         publicFigureStream(figure.id),
         0,
         [
-          addPublicFigure({
+          publicFigureAdded({
             name: figure.name,
             presentation: figure.presentation,
             notorietySources: figure.notorietySources,

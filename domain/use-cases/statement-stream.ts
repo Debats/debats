@@ -1,14 +1,15 @@
-import { Context, Effect, pipe } from 'effect'
+import { Context, Effect, Either, pipe } from 'effect'
 import {
   importStatement,
   replayStatement,
   STATEMENT_STREAM,
+  StatementCascade,
+  StatementDecision,
   StatementState,
 } from '../aggregates/statement'
 import { StatementEvent } from '../aggregates/statement-events'
 import { Statement } from '../entities/statement'
 import { EventStore, StoredEvent } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   appendAndReplay,
@@ -56,7 +57,7 @@ export const decideOnStatement = (
   events: EventStore,
   statementId: string,
   actorId: string,
-  decide: (state: StatementState) => Effect.Effect<StatementEvent[], Rejected>,
+  decide: StatementDecision,
   renderedFrom?: RenderedFrom,
 ) => decideOn(statementAggregate, events, statementId, actorId, decide, renderedFrom)
 
@@ -72,7 +73,7 @@ export const requireState = (state: StatementState | null) =>
   requireStateOf(statementAggregate, state)
 
 /**
- * The same decision on each of several statements, each in its own stream:
+ * The same cascade on each of several statements, each in its own stream:
  * what a command on another aggregate does to the statements it reaches.
  * Their streams were ensured before the transaction. One deleted meanwhile
  * is skipped, not refused: a cascade has nothing to say to what is gone.
@@ -81,13 +82,13 @@ export function decideOnEachStatement(
   events: EventStore,
   statementIds: readonly string[],
   actorId: string,
-  decide: (state: StatementState) => StatementEvent[],
+  cascade: StatementCascade,
 ) {
   return Effect.forEach(
     statementIds,
     (id) =>
       pipe(
-        decideOn(statementAggregate, events, id, actorId, (state) => Effect.succeed(decide(state))),
+        decideOn(statementAggregate, events, id, actorId, (state) => Either.right(cascade(state))),
         Effect.catchTag('NotFound', () => Effect.void),
       ),
     { discard: true },

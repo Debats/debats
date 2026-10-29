@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer } from 'effect'
 import { acceptInvitationUseCase } from './accept-invitation'
 import { Invitation, createInvitation } from '../entities/invitation'
-import { invitationStream, sendInvitation } from '../aggregates/invitation'
+import { invitationStream, invitationSent } from '../aggregates/invitation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { DatabaseError } from '../repositories/errors'
@@ -124,7 +124,7 @@ describe('acceptInvitationUseCase', () => {
       unit.journal.append(
         invitationStream(baseInvitation.id),
         0,
-        [sendInvitation({ inviteeEmail: 'invitee@example.com', inviteeName: 'Jean Dupont' })],
+        [invitationSent({ inviteeEmail: 'invitee@example.com', inviteeName: 'Jean Dupont' })],
         { actorId: 'inviter-uuid' },
       ),
     )

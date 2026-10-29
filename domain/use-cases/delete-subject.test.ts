@@ -5,7 +5,7 @@ import { createStatement, publicFigureAuthor, Statement } from '../entities/stat
 import { Subject } from '../entities/subject'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
-import { addStatement, removeStatement, statementStream } from '../aggregates/statement'
+import { statementAdded, statementDeleted, statementStream } from '../aggregates/statement'
 import { runWith } from './command-test-helpers'
 import { SubjectSource } from './subject-stream'
 import { StatementSource } from './statement-stream'
@@ -75,7 +75,10 @@ describe('deleteSubjectUseCase', () => {
       journal.append(
         statementStream(statement.id),
         0,
-        [addStatement({ ...statement, subjectId: subject.id, argumentIds: [] }), removeStatement()],
+        [
+          statementAdded({ ...statement, subjectId: subject.id, argumentIds: [] }),
+          statementDeleted(),
+        ],
         { actorId: 'author-id' },
       ),
     )
@@ -121,7 +124,7 @@ describe('deleteSubjectUseCase', () => {
       journal.append(
         statementStream(statement.id),
         0,
-        [addStatement({ ...statement, subjectId: subject.id, argumentIds: [] })],
+        [statementAdded({ ...statement, subjectId: subject.id, argumentIds: [] })],
         {
           actorId: 'author-id',
         },

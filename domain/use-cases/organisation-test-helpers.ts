@@ -1,6 +1,6 @@
 import { Effect, Option } from 'effect'
 import { createOrganisation, Organisation } from '../entities/organisation'
-import { addOrganisation, organisationStream } from '../aggregates/organisation'
+import { organisationAdded, organisationStream } from '../aggregates/organisation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OrganisationMembership } from '../entities/organisation-membership'
 import { OrganisationRepository } from '../repositories/organisation-repository'
@@ -58,7 +58,7 @@ export async function journalWithOrganisations(...organisations: Organisation[])
         organisationStream(organisation.id),
         0,
         [
-          addOrganisation({
+          organisationAdded({
             name: organisation.name,
             acronym: Option.getOrUndefined(organisation.acronym),
             organisationType: organisation.organisationType,

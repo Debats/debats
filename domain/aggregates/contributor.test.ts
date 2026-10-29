@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
-import { grantReputation, replayContributor } from './contributor'
+import { reputationGranted, replayContributor } from './contributor'
 
 const streamId = 'contributor-1'
 const at = (day: string) => new Date(`${day}T10:00:00Z`)
@@ -20,9 +20,9 @@ const stored = (
   occurredAt,
 })
 
-describe('grantReputation', () => {
+describe('reputationGranted', () => {
   it('names the grant and leaves out what the deed does not say', () => {
-    const grant = grantReputation({ grantId: 'grant-1', action: 'edited_subject', amount: 5 })
+    const grant = reputationGranted({ grantId: 'grant-1', action: 'edited_subject', amount: 5 })
     expect(grant.payload).toEqual({ grantId: 'grant-1', action: 'edited_subject', amount: 5 })
   })
 })
@@ -35,7 +35,7 @@ describe('replayContributor', () => {
   it('sums the grants and keeps each one dated', () => {
     const state = replayContributor([
       stored(
-        grantReputation({
+        reputationGranted({
           grantId: 'grant-1',
           action: 'added_subject',
           amount: 50,
@@ -46,7 +46,7 @@ describe('replayContributor', () => {
         at('2024-01-10'),
       ),
       stored(
-        grantReputation({ grantId: 'grant-2', action: 'statement_rejected', amount: -100 }),
+        reputationGranted({ grantId: 'grant-2', action: 'statement_rejected', amount: -100 }),
         2,
         at('2024-01-11'),
       ),

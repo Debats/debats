@@ -3,17 +3,17 @@ import {
   findPosition,
   importPosition,
   importSubject,
-  linkSubject,
   replaySubject,
-  setSubjectThemes,
   SUBJECT_STREAM,
+  SubjectDecision,
+  subjectLinked,
   SubjectState,
+  subjectThemesSet,
 } from '../aggregates/subject'
 import { SubjectEvent, ThemeAssignmentPayload } from '../aggregates/subject-events'
 import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { EventStore } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   Decided,
@@ -64,13 +64,13 @@ export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent, Subje
       ...(parts.themes.length > 0
         ? [
             {
-              events: [setSubjectThemes(parts.themes)],
+              events: [subjectThemesSet(parts.themes)],
               options: { actorId: author, metadata: IMPORT },
             },
           ]
         : []),
       ...parts.relatedSubjectIds.map((id) => ({
-        events: [linkSubject(id)],
+        events: [subjectLinked(id)],
         options: { actorId: author, metadata: IMPORT },
       })),
     ]
@@ -81,7 +81,7 @@ export const decideOnSubject = (
   events: EventStore,
   subjectId: string,
   actorId: string,
-  decide: (state: SubjectState) => Effect.Effect<SubjectEvent[], Rejected>,
+  decide: SubjectDecision,
   renderedFrom?: RenderedFrom,
 ) => decideOn(subjectAggregate, events, subjectId, actorId, decide, renderedFrom)
 

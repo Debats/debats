@@ -1,3 +1,4 @@
+import { Either } from 'effect'
 import {
   generateOccupationSlug,
   Occupation,
@@ -19,6 +20,7 @@ import {
   OccupationContent,
   OccupationFamilyEvent,
 } from './occupation-family-events'
+import { always, Decision, refused } from './decision'
 import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const OCCUPATION_FAMILY_STREAM = 'occupation_family'
@@ -46,14 +48,14 @@ export interface OccupationInput {
   description: string
 }
 
-/** Decision: an Idéaliste adds a family (its id is chosen by the caller, as the stream's) */
-export const addOccupationFamily = (input: FamilyInput): OccupationFamilyEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const occupationFamilyAdded = (input: FamilyInput): OccupationFamilyEvent => ({
   type: 'OccupationFamilyAdded',
   payload: familyContent(input),
 })
 
-/** Decision: an Idéaliste adds an occupation to the family, under the id the caller chose */
-export const addOccupation = (
+export const occupationAdded = (
   occupationId: string,
   input: OccupationInput,
 ): OccupationFamilyEvent => ({
@@ -61,15 +63,44 @@ export const addOccupation = (
   payload: occupationContent(occupationId, input),
 })
 
-export const removeOccupation = (occupationId: string): OccupationFamilyEvent => ({
+export const occupationRemoved = (occupationId: string): OccupationFamilyEvent => ({
   type: 'OccupationRemoved',
   payload: { occupationId },
 })
 
-export const deleteOccupationFamily = (): OccupationFamilyEvent => ({
+export const occupationFamilyDeleted = (): OccupationFamilyEvent => ({
   type: 'OccupationFamilyDeleted',
   payload: {},
 })
+
+/* Decisions: what a command asks of the family, decided from its state */
+
+export type OccupationFamilyDecision = Decision<OccupationFamilyState, OccupationFamilyEvent>
+
+export const OCCUPATION_NOT_FOUND = 'Le métier est introuvable.'
+
+/** An Idéaliste adds a family; its id is the stream's, chosen by the command */
+export const addOccupationFamily = (input: FamilyInput): OccupationFamilyEvent[] => [
+  occupationFamilyAdded(input),
+]
+
+/** An Idéaliste adds an occupation to the family, under the id the command chose */
+export const addOccupation = (
+  occupationId: string,
+  input: OccupationInput,
+): OccupationFamilyDecision => always(occupationAdded(occupationId, input))
+
+/** The occupation must be the family's; the figures holding it simply lose it */
+export const removeOccupation =
+  (occupationId: string): OccupationFamilyDecision =>
+  (state) =>
+    state.occupations.some((o) => o.id === occupationId)
+      ? Either.right([occupationRemoved(occupationId)])
+      : refused(OCCUPATION_NOT_FOUND)
+
+/** The occupations go with their family: the projection drops them */
+export const deleteOccupationFamily = (): OccupationFamilyDecision =>
+  always(occupationFamilyDeleted())
 
 /** A family found in the table before its journal existed enters it as it is */
 export const importOccupationFamily = (family: OccupationFamily): OccupationFamilyEvent => ({

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
-  addStatement,
-  editStatement,
+  statementAdded,
+  statementEdited,
   replayStatement,
   statementStream,
 } from '../../domain/aggregates/statement'
 import { decodeStatementEvent } from '../../domain/aggregates/statement-events'
-import { addArgument, argumentStream } from '../../domain/aggregates/argument'
+import { argumentAdded, argumentStream } from '../../domain/aggregates/argument'
 import { publicFigureAuthor } from '../../domain/entities/statement'
 import { getPrismaClient } from '../prisma/client'
 import { runUnitOfWork } from './unit-of-work'
@@ -44,7 +44,7 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
           journal.append(
             argumentStream(argumentId),
             0,
-            [addArgument({ title: `Argument de test ${argumentId}`, description: '' })],
+            [argumentAdded({ title: `Argument de test ${argumentId}`, description: '' })],
             { actorId },
           ),
         ),
@@ -67,7 +67,7 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
   })
 
   it('writes the statement and its argument links when it is added', async () => {
-    const added = addStatement({
+    const added = statementAdded({
       author: publicFigureAuthor(figureId),
       subjectId,
       positionId,
@@ -99,7 +99,7 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
   })
 
   it('updates the row and replaces the links when it is edited', async () => {
-    const edited = editStatement({
+    const edited = statementEdited({
       positionId,
       statementType: 'vote',
       sourceName: 'Assemblée nationale',
@@ -157,7 +157,7 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
               stream,
               3,
               [
-                editStatement({
+                statementEdited({
                   positionId,
                   statementType: 'act',
                   sourceName: 'X',

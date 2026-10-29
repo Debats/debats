@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer } from 'effect'
-import { mergePositions } from './merge-positions'
+import { mergePositionsUseCase } from './merge-positions'
 import { createStatement, publicFigureAuthor, Statement } from '../entities/statement'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
-import { addStatement, statementStream } from '../aggregates/statement'
+import { statementAdded, statementStream } from '../aggregates/statement'
 import { runWith } from './command-test-helpers'
 import { SubjectSource } from './subject-stream'
 import { StatementSource } from './statement-stream'
@@ -63,31 +63,37 @@ const fakes = (statements: Statement[] = []) =>
 
 const execute = runWith(fakes())
 
-describe('mergePositions', () => {
+describe('mergePositionsUseCase', () => {
   it('should fail if source and target are the same', async () => {
-    const result = await execute(mergePositions({ ...validParams, targetPositionId: source.id }))
+    const result = await execute(
+      mergePositionsUseCase({ ...validParams, targetPositionId: source.id }),
+    )
     expect(Either.isLeft(result) && result.left).toContain('identiques')
   })
 
   it('refuses a visitor who is not signed in', async () => {
-    const result = await execute(mergePositions({ ...validParams, contributor: null }))
+    const result = await execute(mergePositionsUseCase({ ...validParams, contributor: null }))
     expect(Either.isLeft(result) && result.left).toContain('connecté')
   })
 
   it('should fail if contributor lacks admin permission', async () => {
     const result = await execute(
-      mergePositions({ ...validParams, contributor: { id: 'abc', reputation: 100 } }),
+      mergePositionsUseCase({ ...validParams, contributor: { id: 'abc', reputation: 100 } }),
     )
     expect(Either.isLeft(result) && result.left).toContain('Fondateur')
   })
 
   it('should fail if source position not found', async () => {
-    const result = await execute(mergePositions({ ...validParams, sourcePositionId: 'missing' }))
+    const result = await execute(
+      mergePositionsUseCase({ ...validParams, sourcePositionId: 'missing' }),
+    )
     expect(Either.isLeft(result) && result.left).toContain('source')
   })
 
   it('should fail if positions belong to different subjects', async () => {
-    const result = await execute(mergePositions({ ...validParams, targetPositionId: elsewhere.id }))
+    const result = await execute(
+      mergePositionsUseCase({ ...validParams, targetPositionId: elsewhere.id }),
+    )
     expect(Either.isLeft(result) && result.left).toContain('même sujet')
   })
 
@@ -97,14 +103,14 @@ describe('mergePositions', () => {
       journal.append(
         statementStream(statement.id),
         0,
-        [addStatement({ ...statement, subjectId: subject.id, argumentIds: [] })],
+        [statementAdded({ ...statement, subjectId: subject.id, argumentIds: [] })],
         {
           actorId: 'author-id',
         },
       ),
     )
 
-    const result = await runWith(fakes([statement]))(mergePositions(validParams), run)
+    const result = await runWith(fakes([statement]))(mergePositionsUseCase(validParams), run)
 
     expect(Either.isRight(result)).toBe(true)
     expect(
@@ -121,7 +127,7 @@ describe('mergePositions', () => {
   it('should refuse when the source was already merged, leaving no event behind', async () => {
     const { run, journal } = await journalWithSubjects([subject, [target]])
 
-    const result = await execute(mergePositions(validParams), run)
+    const result = await execute(mergePositionsUseCase(validParams), run)
 
     expect(Either.isLeft(result) && result.left).toContain('n’existe plus')
     expect(journal.all().map((e) => e.type)).toEqual(['SubjectAdded', 'PositionAdded'])

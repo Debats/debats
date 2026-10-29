@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { Rejected } from './decision'
 import {
   addPosition,
   addSubject,
@@ -10,9 +11,20 @@ import {
   findPosition,
   linkSubject,
   livePositions,
-  mergePosition,
+  mergePositions,
+  POSITION_GONE,
+  POSITION_NOT_FOUND,
+  positionAdded,
+  positionEdited,
+  positionMergedInto,
   replaySubject,
   setSubjectThemes,
+  subjectAdded,
+  subjectDeleted,
+  subjectEdited,
+  subjectLinked,
+  subjectThemesSet,
+  subjectUnlinked,
   unlinkSubject,
 } from './subject'
 
@@ -34,19 +46,23 @@ const stored = (
   occurredAt,
 })
 
-const added = addSubject({
+const smic = {
   title: 'Le montant du SMIC',
   presentation: 'Une présentation suffisamment longue.',
   problem: 'Faut-il augmenter le SMIC ?',
-})
+}
 
-const pour = addPosition({
+const added = subjectAdded(smic)
+
+const pourInput = {
   positionId: 'pos-1',
   title: 'Pour une hausse',
   description: 'Une description suffisamment longue.',
-})
+}
 
-const contre = addPosition({
+const pour = positionAdded(pourInput)
+
+const contre = positionAdded({
   positionId: 'pos-2',
   title: 'Contre une hausse',
   description: 'Une autre description suffisamment longue.',
@@ -61,10 +77,55 @@ const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
   return state.right
 }
 
-describe('subject decisions', () => {
+describe('subject facts', () => {
   it('derive the slugs from the titles', () => {
     expect(added.payload).toMatchObject({ slug: 'le-montant-du-smic' })
     expect(pour.payload).toMatchObject({ slug: 'pour-une-hausse' })
+  })
+})
+
+describe('subject decisions', () => {
+  const withBoth = rebuilt(added, pour, contre)
+
+  it('open the stream with the subject added', () => {
+    expect(addSubject(smic)).toEqual([added])
+  })
+
+  it('record what nothing in the state can refuse', () => {
+    expect(editSubject(smic)(withBoth)).toEqual(Either.right([subjectEdited(smic)]))
+    expect(addPosition(pourInput)(withBoth)).toEqual(Either.right([pour]))
+    expect(setSubjectThemes([{ themeId: 'eco', isPrimary: true }])(withBoth)).toEqual(
+      Either.right([subjectThemesSet([{ themeId: 'eco', isPrimary: true }])]),
+    )
+    expect(linkSubject('other')(withBoth)).toEqual(Either.right([subjectLinked('other')]))
+    expect(unlinkSubject('other')(withBoth)).toEqual(Either.right([subjectUnlinked('other')]))
+    expect(deleteSubject()(withBoth)).toEqual(Either.right([subjectDeleted()]))
+  })
+
+  it('edit a position the subject still has', () => {
+    const edited = { positionId: 'pos-1', title: 'Pour', description: 'Description assez longue.' }
+    expect(editPosition(edited)(withBoth)).toEqual(Either.right([positionEdited(edited)]))
+  })
+
+  it('refuse to edit a position the subject does not have', () => {
+    const unknown = { positionId: 'pos-9', title: 'Pour', description: 'Description assez longue.' }
+    expect(editPosition(unknown)(withBoth)).toEqual(Either.left(new Rejected(POSITION_NOT_FOUND)))
+  })
+
+  it('merge a position into another while both are open', () => {
+    expect(mergePositions('pos-2', 'pos-1')(withBoth)).toEqual(
+      Either.right([positionMergedInto('pos-2', 'pos-1')]),
+    )
+  })
+
+  it('refuse a merge once one of the positions is gone', () => {
+    const merged = rebuilt(added, pour, contre, positionMergedInto('pos-2', 'pos-1'))
+    expect(mergePositions('pos-2', 'pos-1')(merged)).toEqual(
+      Either.left(new Rejected(POSITION_GONE)),
+    )
+    expect(mergePositions('pos-1', 'pos-2')(merged)).toEqual(
+      Either.left(new Rejected(POSITION_GONE)),
+    )
   })
 })
 
@@ -89,7 +150,7 @@ describe('replaySubject', () => {
   it('applies an edit, keeping the creation', () => {
     const state = rebuilt(
       added,
-      editSubject({
+      subjectEdited({
         title: 'Le SMIC',
         presentation: 'Présentation revue, assez longue.',
         problem: 'Faut-il augmenter le SMIC ?',
@@ -117,12 +178,12 @@ describe('replaySubject', () => {
       added,
       pour,
       contre,
-      editPosition({
+      positionEdited({
         positionId: 'pos-1',
         title: 'Pour',
         description: 'Description plus courte mais valide.',
       }),
-      mergePosition('pos-2', 'pos-1'),
+      positionMergedInto('pos-2', 'pos-1'),
     )
     expect(livePositions(state).map((p) => [p.id, p.title, p.slug])).toEqual([
       ['pos-1', 'Pour', 'pour'],
@@ -134,15 +195,15 @@ describe('replaySubject', () => {
   it('replaces the themes and keeps links without duplicates', () => {
     const state = rebuilt(
       added,
-      setSubjectThemes([{ themeId: 'eco', isPrimary: true }]),
-      setSubjectThemes([
+      subjectThemesSet([{ themeId: 'eco', isPrimary: true }]),
+      subjectThemesSet([
         { themeId: 'soc', isPrimary: true },
         { themeId: 'eco', isPrimary: false },
       ]),
-      linkSubject('other'),
-      linkSubject('other'),
-      linkSubject('third'),
-      unlinkSubject('other'),
+      subjectLinked('other'),
+      subjectLinked('other'),
+      subjectLinked('third'),
+      subjectUnlinked('other'),
     )
     expect(state.themes).toEqual([
       { themeId: 'soc', isPrimary: true },
@@ -152,7 +213,7 @@ describe('replaySubject', () => {
   })
 
   it('marks a deletion', () => {
-    const state = rebuilt(added, deleteSubject())
+    const state = rebuilt(added, subjectDeleted())
     expect(state.deletedAt).toEqual(at('2024-01-11'))
   })
 

@@ -12,7 +12,7 @@ import { fakeStatementSource } from './subject-test-helpers'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { EDITED_MEANWHILE } from './run-command'
-import { addStatement, statementStream } from '../aggregates/statement'
+import { statementAdded, statementStream } from '../aggregates/statement'
 import { publicFigureAuthor, Statement, StatementId } from '../entities/statement'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { StatementRepository } from '../repositories/statement-repository'
@@ -154,7 +154,7 @@ describe('mergeArgumentsUseCase', () => {
         statementStream('s-1'),
         0,
         [
-          addStatement({
+          statementAdded({
             ...statementOn('s-1'),
             subjectId: 'subject-1',
             argumentIds: [a.id, 'other'],

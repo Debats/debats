@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
-  addOccupation,
-  addOccupationFamily,
-  deleteOccupationFamily,
+  occupationAdded,
+  occupationFamilyAdded,
+  occupationFamilyDeleted,
   occupationFamilyStream,
-  removeOccupation,
+  occupationRemoved,
   replayOccupationFamily,
 } from '../../domain/aggregates/occupation-family'
 import {
@@ -46,9 +46,9 @@ describe.skipIf(!hasDatabase)('occupation family projector', () => {
 
   it('writes the family and its occupations', async () => {
     await append(0, [
-      addOccupationFamily({ name: `Famille de test ${suffix}`, description: '', position: 99 }),
-      addOccupation(economistId, { name: `Économiste ${suffix}`, description: 'Pour le test.' }),
-      addOccupation(writerId, { name: `Écrivain·e ${suffix}`, description: '' }),
+      occupationFamilyAdded({ name: `Famille de test ${suffix}`, description: '', position: 99 }),
+      occupationAdded(economistId, { name: `Économiste ${suffix}`, description: 'Pour le test.' }),
+      occupationAdded(writerId, { name: `Écrivain·e ${suffix}`, description: '' }),
     ])
 
     const family = await prisma().occupation_families.findUniqueOrThrow({
@@ -67,14 +67,14 @@ describe.skipIf(!hasDatabase)('occupation family projector', () => {
   })
 
   it('removes a removed occupation from the table', async () => {
-    await append(3, [removeOccupation(writerId)])
+    await append(3, [occupationRemoved(writerId)])
 
     expect(await prisma().occupations.findUnique({ where: { id: writerId } })).toBeNull()
     expect(await prisma().occupations.findUnique({ where: { id: economistId } })).not.toBeNull()
   })
 
   it('removes a deleted family with its occupations', async () => {
-    await append(4, [deleteOccupationFamily()])
+    await append(4, [occupationFamilyDeleted()])
 
     expect(await prisma().occupation_families.findUnique({ where: { id: familyId } })).toBeNull()
     expect(await prisma().occupations.findUnique({ where: { id: economistId } })).toBeNull()

@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
-  acceptInvitation,
+  invitationAccepted,
   invitationStream,
   replayInvitation,
-  revokeInvitation,
-  sendInvitation,
+  invitationRevoked,
+  invitationSent,
 } from '../../domain/aggregates/invitation'
 import { decodeInvitationEvent, InvitationEvent } from '../../domain/aggregates/invitation-events'
 import { ConcurrencyError } from '../../domain/events/event-store'
@@ -40,7 +40,7 @@ describe.skipIf(!hasDatabase)('invitation projector', () => {
   })
 
   it('writes the pending invitation, signed by the inviter', async () => {
-    await append(0, [sendInvitation({ inviteeEmail: email, inviteeName: 'Test Invitee' })])
+    await append(0, [invitationSent({ inviteeEmail: email, inviteeName: 'Test Invitee' })])
 
     const row = await prisma().invitations.findUniqueOrThrow({ where: { id: invitationId } })
     expect(row).toMatchObject({
@@ -56,7 +56,7 @@ describe.skipIf(!hasDatabase)('invitation projector', () => {
     const occurredAt = new Date('2024-03-04T05:06:07.000Z')
     await Effect.runPromise(
       runUnitOfWork((journal) =>
-        journal.append(stream, 1, [acceptInvitation(contributorId)], {
+        journal.append(stream, 1, [invitationAccepted(contributorId)], {
           actorId: contributorId,
           occurredAt,
         }),
@@ -65,7 +65,9 @@ describe.skipIf(!hasDatabase)('invitation projector', () => {
     const again = await Effect.runPromise(
       Effect.either(
         runUnitOfWork((journal) =>
-          journal.append(stream, 1, [acceptInvitation(contributorId)], { actorId: contributorId }),
+          journal.append(stream, 1, [invitationAccepted(contributorId)], {
+            actorId: contributorId,
+          }),
         ),
       ),
     )
@@ -89,7 +91,7 @@ describe.skipIf(!hasDatabase)('invitation projector', () => {
   })
 
   it('removes a revoked invitation from the table', async () => {
-    await append(2, [revokeInvitation()])
+    await append(2, [invitationRevoked()])
 
     expect(await prisma().invitations.findUnique({ where: { id: invitationId } })).toBeNull()
   })

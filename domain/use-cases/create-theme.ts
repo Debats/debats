@@ -46,7 +46,7 @@ export function createThemeUseCase(params: CreateThemeParams) {
     Effect.tap(() => Effect.flatMap(themes.findBySlug(generateThemeSlug(name)), free(NAME_TAKEN))),
     Effect.flatMap(({ contributor, input }) =>
       runUnitOfWork((events) =>
-        openStream(themeAggregate, events, id, [addTheme(input)], contributor.id),
+        openStream(themeAggregate, events, id, addTheme(input), contributor.id),
       ),
     ),
     uniqueTakenAs('name', NAME_TAKEN),

@@ -1,8 +1,8 @@
 import { Effect, pipe } from 'effect'
-import { removeOccupation } from '../aggregates/occupation-family'
+import { OCCUPATION_NOT_FOUND, removeOccupation } from '../aggregates/occupation-family'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
-import { ContributorIdentity, Rejected } from './types'
+import { ContributorIdentity } from './types'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { decideOnOccupationFamily, occupationFamilyAggregate } from './occupation-family-stream'
@@ -11,8 +11,6 @@ type DeleteOccupationParams = {
   contributor: ContributorIdentity | null
   occupationId: string
 }
-
-const NOT_FOUND = 'Le métier est introuvable.'
 
 /** Read side: which family the occupation belongs to */
 const occupations = Effect.serviceFunctions(OccupationRepository)
@@ -25,18 +23,14 @@ export function deleteOccupationUseCase(params: DeleteOccupationParams) {
     Effect.all({
       contributor: allowedTo(params.contributor, 'delete_occupation', 'supprimer un métier'),
       familyId: Effect.map(
-        Effect.flatMap(occupations.findById(occupationId), found(NOT_FOUND)),
+        Effect.flatMap(occupations.findById(occupationId), found(OCCUPATION_NOT_FOUND)),
         (occupation) => occupation.familyId,
       ),
     }),
     Effect.tap(({ familyId }) => ensureStream(occupationFamilyAggregate, familyId)),
     Effect.flatMap(({ contributor, familyId }) =>
       runUnitOfWork((events) =>
-        decideOnOccupationFamily(events, familyId, contributor.id, (state) =>
-          state.occupations.some((o) => o.id === occupationId)
-            ? Effect.succeed([removeOccupation(occupationId)])
-            : Effect.fail(new Rejected(NOT_FOUND)),
-        ),
+        decideOnOccupationFamily(events, familyId, contributor.id, removeOccupation(occupationId)),
       ),
     ),
     Effect.asVoid,

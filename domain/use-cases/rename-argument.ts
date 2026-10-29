@@ -60,7 +60,7 @@ export function renameArgumentUseCase(params: RenameArgumentParams) {
           events,
           existing.id,
           contributor.id,
-          () => Effect.succeed([renameArgument({ title, description })]),
+          renameArgument({ title, description }),
           revision,
         ),
       ),

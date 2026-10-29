@@ -72,13 +72,7 @@ const persisted = (
     Effect.andThen(
       runUnitOfWork((events) =>
         pipe(
-          decideOnPublicFigure(
-            events,
-            existing.id,
-            contributor.id,
-            () => Effect.succeed([edited]),
-            params.revision,
-          ),
+          decideOnPublicFigure(events, existing.id, contributor.id, edited, params.revision),
           Effect.tap(() =>
             grant(
               events,

@@ -5,7 +5,7 @@ import { EDITED_MEANWHILE } from './run-command'
 import { fakeStatementSource } from './subject-test-helpers'
 import { createStatement, publicFigureAuthor } from '../entities/statement'
 import { Position, createPosition } from '../entities/position'
-import { addStatement, statementStream } from '../aggregates/statement'
+import { statementAdded, statementStream } from '../aggregates/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
@@ -97,7 +97,7 @@ async function journalWithStream() {
       statementStream(existingStatement.id),
       0,
       [
-        addStatement({
+        statementAdded({
           ...existingStatement,
           subjectId: 'subject-1',
           argumentIds: ['old-argument'],

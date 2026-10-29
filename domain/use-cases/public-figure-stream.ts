@@ -3,16 +3,16 @@ import {
   findMembership,
   importMembership,
   importPublicFigure,
+  occupationsSet,
+  PublicFigureDecision,
   PUBLIC_FIGURE_STREAM,
   PublicFigureState,
   replayPublicFigure,
-  setOccupations,
 } from '../aggregates/public-figure'
 import { OccupationAssignmentPayload, PublicFigureEvent } from '../aggregates/public-figure-events'
 import { OrganisationMembership } from '../entities/organisation-membership'
 import { PublicFigure } from '../entities/public-figure'
 import { EventStore } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   Decided,
@@ -68,7 +68,7 @@ export const publicFigureAggregate: AggregateStream<
     ...(parts.occupations.length > 0
       ? [
           {
-            events: [setOccupations(parts.occupations)],
+            events: [occupationsSet(parts.occupations)],
             options: { actorId: parts.figure.createdBy, metadata: IMPORT },
           },
         ]
@@ -80,7 +80,7 @@ export const decideOnPublicFigure = (
   events: EventStore,
   publicFigureId: string,
   actorId: string,
-  decide: (state: PublicFigureState) => Effect.Effect<PublicFigureEvent[], Rejected>,
+  decide: PublicFigureDecision,
   renderedFrom?: RenderedFrom,
 ) => decideOn(publicFigureAggregate, events, publicFigureId, actorId, decide, renderedFrom)
 

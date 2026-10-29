@@ -1,4 +1,4 @@
-import { Option } from 'effect'
+import { Either, Option } from 'effect'
 import {
   MembershipId,
   OrganisationMembership,
@@ -19,6 +19,7 @@ import {
   PublicFigureContent,
   PublicFigureEvent,
 } from './public-figure-events'
+import { always, Decision, refused } from './decision'
 import { isoDate } from './iso-date'
 import { authored, authorOf, Decoded, replayStream } from './replay'
 
@@ -62,18 +63,19 @@ const content = (input: PublicFigureInput): PublicFigureContent => ({
   notorietySources: [...input.notorietySources],
 })
 
-/** Decision: a contributor adds a public figure (her id is chosen by the caller, as the stream's) */
-export const addPublicFigure = (input: PublicFigureInput): PublicFigureEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const publicFigureAdded = (input: PublicFigureInput): PublicFigureEvent => ({
   type: 'PublicFigureAdded',
   payload: content(input),
 })
 
-export const editPublicFigure = (input: PublicFigureInput): PublicFigureEvent => ({
+export const publicFigureEdited = (input: PublicFigureInput): PublicFigureEvent => ({
   type: 'PublicFigureEdited',
   payload: content(input),
 })
 
-export const setOccupations = (
+export const occupationsSet = (
   occupations: readonly OccupationAssignmentPayload[],
 ): PublicFigureEvent => ({
   type: 'OccupationsSet',
@@ -88,15 +90,51 @@ const membershipContent = (input: MembershipInput): MembershipContent => ({
   ...(input.endedOn ? { endedOn: isoDate(input.endedOn) } : {}),
 })
 
-export const addMembership = (input: MembershipInput): PublicFigureEvent => ({
+export const membershipAdded = (input: MembershipInput): PublicFigureEvent => ({
   type: 'MembershipAdded',
   payload: membershipContent(input),
 })
 
-export const removeMembership = (membershipId: string): PublicFigureEvent => ({
+export const membershipRemoved = (membershipId: string): PublicFigureEvent => ({
   type: 'MembershipRemoved',
   payload: { membershipId },
 })
+
+/* Decisions: what a command asks of the figure, decided from her state */
+
+export type PublicFigureDecision = Decision<PublicFigureState, PublicFigureEvent>
+
+export const ALREADY_MEMBER = 'Cette personnalité est déjà membre de cette organisation.'
+export const MEMBERSHIP_NOT_FOUND = 'Affiliation introuvable.'
+
+/** A contributor adds a public figure; her id is the stream's, chosen by the command */
+export const addPublicFigure = (input: PublicFigureInput): PublicFigureEvent[] => [
+  publicFigureAdded(input),
+]
+
+export const editPublicFigure = (input: PublicFigureInput): PublicFigureDecision =>
+  always(publicFigureEdited(input))
+
+/** The whole set of occupations, current or former, replaced at once */
+export const setOccupations = (
+  occupations: readonly OccupationAssignmentPayload[],
+): PublicFigureDecision => always(occupationsSet(occupations))
+
+/** A current affiliation to the same organisation is refused; a past one may be followed by a new one */
+export const addMembership =
+  (input: MembershipInput): PublicFigureDecision =>
+  (state) =>
+    hasCurrentMembership(state, input.organisationId)
+      ? refused(ALREADY_MEMBER, 'publicFigureId')
+      : Either.right([membershipAdded(input)])
+
+/** The affiliation must be the figure's */
+export const removeMembership =
+  (membershipId: string): PublicFigureDecision =>
+  (state) =>
+    findMembership(state, membershipId)
+      ? Either.right([membershipRemoved(membershipId)])
+      : refused(MEMBERSHIP_NOT_FOUND)
 
 /** A figure found in the tables before her journal existed enters it as she is */
 export const importPublicFigure = (figure: PublicFigure): PublicFigureEvent => ({

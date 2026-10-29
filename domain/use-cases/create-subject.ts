@@ -53,7 +53,7 @@ export function createSubjectUseCase(params: CreateSubjectParams) {
     Effect.flatMap(({ contributor, input }) =>
       runUnitOfWork((events) =>
         pipe(
-          openStream(subjectAggregate, events, id, [addSubject(input)], contributor.id),
+          openStream(subjectAggregate, events, id, addSubject(input), contributor.id),
           Effect.tap(() =>
             grant(
               events,

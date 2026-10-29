@@ -1,6 +1,6 @@
 import { Effect, pipe } from 'effect'
 import { absorbArgument, mergeArgumentInto } from '../aggregates/argument'
-import { setStatementArguments, withArgumentReplaced } from '../aggregates/statement'
+import { replaceArgument } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
@@ -48,24 +48,27 @@ export function mergeArgumentsUseCase(params: MergeArgumentsParams) {
       runUnitOfWork((events) =>
         pipe(
           // The target writes too, at its revision: a merge crossing this one cannot also commit
-          decideOnArgument(events, targetArgumentId, contributor.id, () =>
-            Effect.succeed([absorbArgument(sourceArgumentId)]),
+          decideOnArgument(
+            events,
+            targetArgumentId,
+            contributor.id,
+            absorbArgument(sourceArgumentId),
           ),
           Effect.catchTag('NotFound', () => Effect.fail(new Rejected(GONE))),
           Effect.tap(() =>
-            decideOnArgument(events, sourceArgumentId, contributor.id, () =>
-              Effect.succeed([mergeArgumentInto(targetArgumentId)]),
+            decideOnArgument(
+              events,
+              sourceArgumentId,
+              contributor.id,
+              mergeArgumentInto(targetArgumentId),
             ),
           ),
           Effect.tap(() =>
-            decideOnEachStatement(events, statementIds, contributor.id, (s) =>
-              s.argumentIds.includes(sourceArgumentId)
-                ? [
-                    setStatementArguments(
-                      withArgumentReplaced(s.argumentIds, sourceArgumentId, targetArgumentId),
-                    ),
-                  ]
-                : [],
+            decideOnEachStatement(
+              events,
+              statementIds,
+              contributor.id,
+              replaceArgument(sourceArgumentId, targetArgumentId),
             ),
           ),
           Effect.map(({ state }) => state.argument),

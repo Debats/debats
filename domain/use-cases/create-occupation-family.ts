@@ -56,7 +56,7 @@ export function createOccupationFamilyUseCase(params: CreateOccupationFamilyPara
           occupationFamilyAggregate,
           events,
           id,
-          [addOccupationFamily({ name, description, position })],
+          addOccupationFamily({ name, description, position }),
           contributor.id,
         ),
       ),

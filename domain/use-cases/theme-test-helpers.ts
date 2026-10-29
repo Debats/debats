@@ -1,6 +1,6 @@
 import { Effect } from 'effect'
 import { createTheme, Theme } from '../entities/theme'
-import { addTheme, themeStream } from '../aggregates/theme'
+import { themeAdded, themeStream } from '../aggregates/theme'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { ThemeParts, ThemeSource } from './theme-stream'
@@ -38,7 +38,7 @@ export async function journalWithThemes(...seed: Theme[]) {
   const unit = inMemoryUnitOfWork()
   for (const theme of seed) {
     await Effect.runPromise(
-      unit.journal.append(themeStream(theme.id), 0, [addTheme(theme)], {
+      unit.journal.append(themeStream(theme.id), 0, [themeAdded(theme)], {
         actorId: theme.createdBy,
       }),
     )

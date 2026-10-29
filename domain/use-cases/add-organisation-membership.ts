@@ -1,9 +1,9 @@
 import { Effect, pipe } from 'effect'
 import { MembershipId } from '../entities/organisation-membership'
-import { addMembership, hasCurrentMembership } from '../aggregates/public-figure'
+import { addMembership } from '../aggregates/public-figure'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, faultless, found } from './preconditions'
@@ -29,7 +29,6 @@ export type { FieldErrors }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
-const ALREADY_MEMBER = 'Cette personnalité est déjà membre de cette organisation.'
 const ROLE_MAX = 100
 
 /** Read side: the organisation must exist */
@@ -100,18 +99,17 @@ export function addOrganisationMembershipUseCase(params: AddOrganisationMembersh
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         pipe(
-          decideOnPublicFigure(events, publicFigureId, contributor.id, (state) =>
-            hasCurrentMembership(state, organisationId)
-              ? Effect.fail(new Rejected(ALREADY_MEMBER, 'publicFigureId'))
-              : Effect.succeed([
-                  addMembership({
-                    membershipId,
-                    organisationId,
-                    role: role || undefined,
-                    startedOn: startedOn ?? undefined,
-                    endedOn: endedOn ?? undefined,
-                  }),
-                ]),
+          decideOnPublicFigure(
+            events,
+            publicFigureId,
+            contributor.id,
+            addMembership({
+              membershipId,
+              organisationId,
+              role: role || undefined,
+              startedOn: startedOn ?? undefined,
+              endedOn: endedOn ?? undefined,
+            }),
           ),
           Effect.tap(() =>
             grant(

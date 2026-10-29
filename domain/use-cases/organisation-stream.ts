@@ -1,6 +1,7 @@
-import { Context, Effect } from 'effect'
+import { Context } from 'effect'
 import {
   importOrganisation,
+  OrganisationDecision,
   ORGANISATION_STREAM,
   OrganisationState,
   replayOrganisation,
@@ -8,7 +9,6 @@ import {
 import { OrganisationEvent } from '../aggregates/organisation-events'
 import { Organisation } from '../entities/organisation'
 import { EventStore } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   decideOn,
@@ -52,7 +52,7 @@ export const decideOnOrganisation = (
   events: EventStore,
   organisationId: string,
   actorId: string,
-  decide: (state: OrganisationState) => Effect.Effect<OrganisationEvent[], Rejected>,
+  decide: OrganisationDecision,
   renderedFrom?: RenderedFrom,
 ) => decideOn(organisationAggregate, events, organisationId, actorId, decide, renderedFrom)
 

@@ -1,12 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Option } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { Rejected } from './decision'
 import {
   addMembership,
   addPublicFigure,
+  ALREADY_MEMBER,
   editPublicFigure,
   findMembership,
   hasCurrentMembership,
+  MEMBERSHIP_NOT_FOUND,
+  membershipAdded,
+  membershipRemoved,
+  occupationsSet,
+  publicFigureAdded,
+  publicFigureEdited,
   removeMembership,
   replayPublicFigure,
   setOccupations,
@@ -30,12 +38,14 @@ const stored = (
   occurredAt,
 })
 
-const added = addPublicFigure({
+const dupont = {
   name: 'Jean Dupont',
   presentation: 'Un personnage public suffisamment connu.',
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   notorietySources: [],
-})
+}
+
+const added = publicFigureAdded(dupont)
 
 const stream = (...events: Array<{ type: string; payload: unknown }>): StoredEvent[] =>
   events.map((event, index) => stored(event, index + 1, at(`2024-01-${10 + index}`)))
@@ -46,14 +56,56 @@ const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
   return state.right
 }
 
-describe('public figure decisions', () => {
+describe('public figure facts', () => {
   it('derive the slug from the name and leave out empty links', () => {
     expect(added.payload).toMatchObject({ slug: 'jean-dupont' })
     expect(added.payload).not.toHaveProperty('websiteUrl')
-    expect(addMembership({ membershipId: 'm-1', organisationId: 'org-1' }).payload).toEqual({
+    expect(membershipAdded({ membershipId: 'm-1', organisationId: 'org-1' }).payload).toEqual({
       membershipId: 'm-1',
       organisationId: 'org-1',
     })
+  })
+})
+
+describe('public figure decisions', () => {
+  const affiliated = rebuilt(
+    added,
+    membershipAdded({ membershipId: 'm-1', organisationId: 'org-1' }),
+    membershipAdded({
+      membershipId: 'm-2',
+      organisationId: 'org-2',
+      startedOn: at('2020-05-01'),
+      endedOn: at('2022-05-01'),
+    }),
+  )
+
+  it('open the stream with the figure added', () => {
+    expect(addPublicFigure(dupont)).toEqual([added])
+  })
+
+  it('record what nothing in the state can refuse', () => {
+    expect(editPublicFigure(dupont)(affiliated)).toEqual(Either.right([publicFigureEdited(dupont)]))
+    expect(setOccupations([{ occupationId: 'depute', current: true }])(affiliated)).toEqual(
+      Either.right([occupationsSet([{ occupationId: 'depute', current: true }])]),
+    )
+  })
+
+  it('refuse a second current affiliation to the same organisation, on the figure field', () => {
+    expect(addMembership({ membershipId: 'm-3', organisationId: 'org-1' })(affiliated)).toEqual(
+      Either.left(new Rejected(ALREADY_MEMBER, 'publicFigureId')),
+    )
+  })
+
+  it('affiliate again to an organisation the figure left', () => {
+    const again = { membershipId: 'm-3', organisationId: 'org-2' }
+    expect(addMembership(again)(affiliated)).toEqual(Either.right([membershipAdded(again)]))
+  })
+
+  it('remove an affiliation of the figure, and refuse one she does not have', () => {
+    expect(removeMembership('m-1')(affiliated)).toEqual(Either.right([membershipRemoved('m-1')]))
+    expect(removeMembership('m-9')(affiliated)).toEqual(
+      Either.left(new Rejected(MEMBERSHIP_NOT_FOUND)),
+    )
   })
 })
 
@@ -78,7 +130,7 @@ describe('replayPublicFigure', () => {
   it('applies an edit, keeping the creation', () => {
     const state = rebuilt(
       added,
-      editPublicFigure({
+      publicFigureEdited({
         name: 'Jean Dupond',
         presentation: 'Une présentation revue, assez longue.',
         websiteUrl: 'https://dupond.fr',
@@ -99,8 +151,8 @@ describe('replayPublicFigure', () => {
   it('replaces the occupations', () => {
     const state = rebuilt(
       added,
-      setOccupations([{ occupationId: 'depute', current: true }]),
-      setOccupations([
+      occupationsSet([{ occupationId: 'depute', current: true }]),
+      occupationsSet([
         { occupationId: 'depute', current: false },
         { occupationId: 'maire', current: true },
       ]),
@@ -114,14 +166,14 @@ describe('replayPublicFigure', () => {
   it('carries the memberships with their dates, actor and period', () => {
     const state = rebuilt(
       added,
-      addMembership({
+      membershipAdded({
         membershipId: 'm-1',
         organisationId: 'org-1',
         role: 'Porte-parole',
         startedOn: at('2020-05-01'),
         endedOn: at('2022-05-01'),
       }),
-      addMembership({ membershipId: 'm-2', organisationId: 'org-2' }),
+      membershipAdded({ membershipId: 'm-2', organisationId: 'org-2' }),
     )
     expect(findMembership(state, 'm-1')).toMatchObject({
       publicFigureId: streamId,
@@ -139,8 +191,8 @@ describe('replayPublicFigure', () => {
   it('forgets a removed membership', () => {
     const state = rebuilt(
       added,
-      addMembership({ membershipId: 'm-1', organisationId: 'org-1' }),
-      removeMembership('m-1'),
+      membershipAdded({ membershipId: 'm-1', organisationId: 'org-1' }),
+      membershipRemoved('m-1'),
     )
     expect(state.memberships).toEqual([])
   })
@@ -156,7 +208,7 @@ describe('replayPublicFigure', () => {
   })
 
   it('refuses an affiliation without an author, as the table does', () => {
-    const affiliated = addMembership({ membershipId: 'm-1', organisationId: 'org-1' })
+    const affiliated = membershipAdded({ membershipId: 'm-1', organisationId: 'org-1' })
     const state = replayPublicFigure([
       stored(added, 1, at('2024-01-10')),
       stored(affiliated, 2, at('2024-01-11'), null),

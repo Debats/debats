@@ -152,7 +152,7 @@ describe('decideOn', () => {
 
     const decided = await Effect.runPromise(
       decideOn(counterAggregate, events, id, 'bob', (current) =>
-        Effect.succeed([moved(current.count + 10)]),
+        Either.right([moved(current.count + 10)]),
       ),
     )
 
@@ -169,7 +169,7 @@ describe('decideOn', () => {
 
     const outcome = await Effect.runPromise(
       Effect.either(
-        decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([moved(1)]), 1),
+        decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)]), 1),
       ),
     )
 
@@ -182,11 +182,11 @@ describe('decideOn', () => {
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
     await Effect.runPromise(
-      decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([moved(1)]), 1),
+      decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)]), 1),
     )
     // Zero: the page found no stream yet (imported since), nothing to compare
     await Effect.runPromise(
-      decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([moved(1)]), 0),
+      decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)]), 0),
     )
 
     expect(events.all()).toHaveLength(3)
@@ -197,7 +197,7 @@ describe('decideOn', () => {
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
     const decided = await Effect.runPromise(
-      decideOn(counterAggregate, events, id, 'bob', () => Effect.succeed([])),
+      decideOn(counterAggregate, events, id, 'bob', () => Either.right([])),
     )
 
     expect(decided).toEqual({ state: { count: 1, closed: false }, revision: 1 })
@@ -211,9 +211,10 @@ describe('decideOn', () => {
 
     const outcome = await Effect.runPromise(
       Effect.either(
-        decideOn(counterAggregate, events, id, 'bob', () =>
-          Effect.sync(() => void decided++).pipe(Effect.as([moved(1)])),
-        ),
+        decideOn(counterAggregate, events, id, 'bob', () => {
+          decided++
+          return Either.right([moved(1)])
+        }),
       ),
     )
 
@@ -231,7 +232,7 @@ describe('decideOn', () => {
     const outcome = await Effect.runPromise(
       Effect.either(
         decideOn(counterAggregate, events, id, 'bob', () =>
-          Effect.fail(new Rejected('Trop haut.', 'count')),
+          Either.left(new Rejected('Trop haut.', 'count')),
         ),
       ),
     )

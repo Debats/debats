@@ -13,6 +13,7 @@ import {
   OrganisationContent,
   OrganisationEvent,
 } from './organisation-events'
+import { always, Decision } from './decision'
 import { authored, authorOf, Decoded, replayStream } from './replay'
 
 export const ORGANISATION_STREAM = 'organisation'
@@ -57,16 +58,29 @@ const content = (input: OrganisationInput): OrganisationContent => {
   }
 }
 
-/** Decision: a contributor adds an organisation (its id is chosen by the caller, as the stream's) */
-export const addOrganisation = (input: OrganisationInput): OrganisationEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const organisationAdded = (input: OrganisationInput): OrganisationEvent => ({
   type: 'OrganisationAdded',
   payload: content(input),
 })
 
-export const editOrganisation = (input: OrganisationInput): OrganisationEvent => ({
+export const organisationEdited = (input: OrganisationInput): OrganisationEvent => ({
   type: 'OrganisationEdited',
   payload: content(input),
 })
+
+/* Decisions: what a command asks of the organisation, decided from its state */
+
+export type OrganisationDecision = Decision<OrganisationState, OrganisationEvent>
+
+/** A contributor adds an organisation; its id is the stream's, chosen by the command */
+export const addOrganisation = (input: OrganisationInput): OrganisationEvent[] => [
+  organisationAdded(input),
+]
+
+export const editOrganisation = (input: OrganisationInput): OrganisationDecision =>
+  always(organisationEdited(input))
 
 /** An organisation found in the tables before its journal existed enters it as it is */
 export const importOrganisation = (organisation: Organisation): OrganisationEvent => ({

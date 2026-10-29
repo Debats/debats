@@ -123,10 +123,7 @@ export function recordProposedArguments(
   return Effect.map(
     Effect.forEach(validated.toCreate, (proposed) => {
       const id = ArgumentId.make(crypto.randomUUID())
-      return Effect.as(
-        events.append(argumentStream(id), 0, [addArgument(proposed)], { actorId }),
-        id,
-      )
+      return Effect.as(events.append(argumentStream(id), 0, addArgument(proposed), { actorId }), id)
     }),
     (createdIds) => ({ argumentIds: [...validated.existingIds, ...createdIds], createdIds }),
   )

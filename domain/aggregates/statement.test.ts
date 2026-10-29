@@ -2,12 +2,21 @@ import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { publicFigureAuthor } from '../entities/statement'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { Rejected } from './decision'
 import {
   addStatement,
   editStatement,
   importStatement,
+  moveStatement,
+  OTHER_SUBJECT,
+  removeStatement,
+  replaceArgument,
   replayStatement,
-  setStatementArguments,
+  statementAdded,
+  statementArgumentsSet,
+  statementDeleted,
+  statementEdited,
+  statementMoved,
   withArgumentReplaced,
 } from './statement'
 
@@ -29,34 +38,84 @@ const stored = (
   occurredAt,
 })
 
-const added = addStatement({
+const addition = {
   author: publicFigureAuthor('figure-1'),
   subjectId: 'subject-1',
   positionId: 'pos-1',
-  statementType: 'declaration',
+  statementType: 'declaration' as const,
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
   quote: 'Une citation suffisamment longue pour être valide.',
   statedAt: at('2024-01-15'),
   argumentIds: ['arg-1'],
-})
+}
 
-const edited = editStatement({
+const added = statementAdded(addition)
+
+const edit = {
   positionId: 'pos-2',
-  statementType: 'vote',
+  statementType: 'vote' as const,
   sourceName: 'Assemblée nationale',
   quote: 'Une autre citation suffisamment longue pour être valide.',
   statedAt: at('2024-02-01'),
   argumentIds: ['arg-2', 'arg-3'],
-})
+}
 
-describe('statement events', () => {
-  it('carries the calendar day and leaves out an empty source url', () => {
+const edited = statementEdited(edit)
+
+const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
+  const state = replayStatement(
+    events.map((event, index) => stored(event, index + 1, at(`2024-01-${16 + index}`))),
+  )
+  if (Either.isLeft(state) || !state.right) throw new Error('expected a state')
+  return state.right
+}
+
+describe('statement facts', () => {
+  it('carry the calendar day and leave out an empty source url', () => {
     expect(added.payload).toMatchObject({
       statedAt: '2024-01-15',
       sourceUrl: 'https://lemonde.fr/article',
     })
     expect(edited.payload).not.toHaveProperty('sourceUrl')
+  })
+})
+
+describe('statement decisions', () => {
+  const onSubjectOne = rebuilt(added)
+
+  it('open the stream with the statement added', () => {
+    expect(addStatement(addition)).toEqual([added])
+  })
+
+  it('edit the statement for a position on its subject', () => {
+    expect(editStatement(edit, 'subject-1')(onSubjectOne)).toEqual(Either.right([edited]))
+  })
+
+  it('refuse a position on another subject, blaming the position field', () => {
+    expect(editStatement(edit, 'subject-2')(onSubjectOne)).toEqual(
+      Either.left(new Rejected(OTHER_SUBJECT, 'positionId')),
+    )
+  })
+
+  it('let a stream opened before it named its subject take any position', () => {
+    const unnamed = rebuilt({ ...added, payload: { ...added.payload, subjectId: undefined } })
+    expect(editStatement(edit, 'subject-2')(unnamed)).toEqual(Either.right([edited]))
+  })
+
+  it('follow the position merged into another', () => {
+    expect(moveStatement('pos-9')(onSubjectOne)).toEqual([statementMoved('pos-9')])
+  })
+
+  it('go away with the subject', () => {
+    expect(removeStatement()(onSubjectOne)).toEqual([statementDeleted()])
+  })
+
+  it('follow an argument merged into another, only when mobilised', () => {
+    expect(replaceArgument('arg-1', 'arg-7')(onSubjectOne)).toEqual([
+      statementArgumentsSet(['arg-7']),
+    ])
+    expect(replaceArgument('arg-5', 'arg-7')(onSubjectOne)).toEqual([])
   })
 })
 
@@ -106,7 +165,7 @@ describe('replayStatement', () => {
   it('replaces the arguments, keeping what the statement says', () => {
     const state = replayStatement([
       stored(added, 1, at('2024-01-16')),
-      stored(setStatementArguments(['arg-9']), 2, at('2024-04-01')),
+      stored(statementArgumentsSet(['arg-9']), 2, at('2024-04-01')),
     ])
     expect(Either.isRight(state) && state.right).toMatchObject({
       argumentIds: ['arg-9'],
@@ -125,7 +184,7 @@ describe('replayStatement', () => {
   it('marks a deletion', () => {
     const state = replayStatement([
       stored(added, 1, at('2024-01-16')),
-      stored({ type: 'StatementDeleted', payload: {} }, 2, at('2024-04-01')),
+      stored(statementDeleted(), 2, at('2024-04-01')),
     ])
     expect(Either.isRight(state) && state.right?.deletedAt).toEqual(at('2024-04-01'))
   })

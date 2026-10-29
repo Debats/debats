@@ -19,9 +19,7 @@ export function deleteThemeUseCase(params: DeleteThemeParams) {
     allowedTo(params.contributor, 'delete_theme', 'supprimer une thématique'),
     Effect.tap(() => ensureStream(themeAggregate, themeId)),
     Effect.flatMap((contributor) =>
-      runUnitOfWork((events) =>
-        decideOnTheme(events, themeId, contributor.id, () => Effect.succeed([deleteTheme()])),
-      ),
+      runUnitOfWork((events) => decideOnTheme(events, themeId, contributor.id, deleteTheme())),
     ),
     Effect.asVoid,
   )

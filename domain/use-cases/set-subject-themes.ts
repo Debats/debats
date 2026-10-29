@@ -47,13 +47,7 @@ export function setSubjectThemesUseCase(params: SetSubjectThemesParams) {
     Effect.tap(() => ensureStream(subjectAggregate, subjectId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
-        decideOnSubject(
-          events,
-          subjectId,
-          contributor.id,
-          () => Effect.succeed([setSubjectThemes(assignments)]),
-          revision,
-        ),
+        decideOnSubject(events, subjectId, contributor.id, setSubjectThemes(assignments), revision),
       ),
     ),
     Effect.map(({ revision }) => revision),

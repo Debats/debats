@@ -1,7 +1,7 @@
 import { Effect, pipe } from 'effect'
 import { Position } from '../entities/position'
 import { Statement, StatementType } from '../entities/statement'
-import { editStatement, staysOnItsSubject } from '../aggregates/statement'
+import { editStatement, OTHER_SUBJECT } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
@@ -18,8 +18,6 @@ import { decideOnStatement, statementAggregate, StatementSource } from './statem
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { uniqueTakenAs } from './run-command'
-
-const OTHER_SUBJECT = 'La nouvelle position doit appartenir au même sujet.'
 
 type UpdateStatementParams = {
   contributor: ContributorIdentity | null
@@ -91,20 +89,18 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
                 events,
                 statementId,
                 contributor.id,
-                (state) =>
-                  staysOnItsSubject(state, newPosition.subjectId)
-                    ? Effect.succeed([
-                        editStatement({
-                          positionId,
-                          statementType,
-                          sourceName: fields.sourceName,
-                          sourceUrl: fields.sourceUrl,
-                          quote: fields.quote,
-                          statedAt: new Date(fields.statedAt),
-                          argumentIds: recorded.argumentIds,
-                        }),
-                      ])
-                    : Effect.fail(new Rejected(OTHER_SUBJECT, 'positionId')),
+                editStatement(
+                  {
+                    positionId,
+                    statementType,
+                    sourceName: fields.sourceName,
+                    sourceUrl: fields.sourceUrl,
+                    quote: fields.quote,
+                    statedAt: new Date(fields.statedAt),
+                    argumentIds: recorded.argumentIds,
+                  },
+                  newPosition.subjectId,
+                ),
                 revision,
               ),
               Effect.tap(() =>

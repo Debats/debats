@@ -1,8 +1,8 @@
 import { Effect, pipe } from 'effect'
-import { findMembership, removeMembership } from '../aggregates/public-figure'
+import { MEMBERSHIP_NOT_FOUND, removeMembership } from '../aggregates/public-figure'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
-import { ContributorIdentity, Rejected } from './types'
+import { ContributorIdentity } from './types'
 import { ensureStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { decideOnPublicFigure, publicFigureAggregate } from './public-figure-stream'
@@ -11,8 +11,6 @@ export type RemoveOrganisationMembershipParams = {
   contributor: ContributorIdentity | null
   membershipId: string
 }
-
-const NOT_FOUND = 'Affiliation introuvable.'
 
 /** Read side: which figure the affiliation belongs to */
 const memberships = Effect.serviceFunctions(OrganisationMembershipRepository)
@@ -25,18 +23,14 @@ export function removeOrganisationMembershipUseCase(params: RemoveOrganisationMe
     Effect.all({
       contributor: allowedTo(params.contributor, 'remove_membership', 'retirer une affiliation'),
       figureId: Effect.map(
-        Effect.flatMap(memberships.findById(membershipId), found(NOT_FOUND)),
+        Effect.flatMap(memberships.findById(membershipId), found(MEMBERSHIP_NOT_FOUND)),
         (membership) => membership.publicFigureId,
       ),
     }),
     Effect.tap(({ figureId }) => ensureStream(publicFigureAggregate, figureId)),
     Effect.flatMap(({ contributor, figureId }) =>
       runUnitOfWork((events) =>
-        decideOnPublicFigure(events, figureId, contributor.id, (state) =>
-          findMembership(state, membershipId)
-            ? Effect.succeed([removeMembership(membershipId)])
-            : Effect.fail(new Rejected(NOT_FOUND)),
-        ),
+        decideOnPublicFigure(events, figureId, contributor.id, removeMembership(membershipId)),
       ),
     ),
     Effect.asVoid,

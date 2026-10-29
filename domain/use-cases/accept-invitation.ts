@@ -4,7 +4,7 @@ import { ReputationRepository } from '../repositories/reputation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { Invitation, isExpired } from '../entities/invitation'
-import { acceptInvitation, isPendingInvitation } from '../aggregates/invitation'
+import { acceptInvitation } from '../aggregates/invitation'
 import { ensureStream } from './aggregate-stream'
 import { found } from './preconditions'
 import { decideOnInvitation, invitationAggregate } from './invitation-stream'
@@ -15,8 +15,6 @@ type AcceptInvitationParams = {
   inviteeId: string
   inviteeEmail: string
 }
-
-const ALREADY_ACCEPTED = 'Cette invitation a déjà été acceptée.'
 
 /** Read side: which pending invitation the address has, and the inviter's reputation */
 const invitations = Effect.serviceFunctions(InvitationRepository)
@@ -61,11 +59,7 @@ export function acceptInvitationUseCase(params: AcceptInvitationParams) {
     Effect.flatMap(({ invitation, grants }) =>
       runUnitOfWork((events) =>
         pipe(
-          decideOnInvitation(events, invitation.id, inviteeId, (state) =>
-            isPendingInvitation(state)
-              ? Effect.succeed([acceptInvitation(inviteeId)])
-              : Effect.fail(new Rejected(ALREADY_ACCEPTED)),
-          ),
+          decideOnInvitation(events, invitation.id, inviteeId, acceptInvitation(inviteeId)),
           Effect.andThen(grantEach(events, inviteeId, grants)),
         ),
       ),

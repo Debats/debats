@@ -14,6 +14,7 @@ import {
   SubjectTitle,
 } from '../entities/subject'
 import { StoredEvent, StreamRef } from '../events/event-store'
+import { always, Decision, refused } from './decision'
 import { Decoded, replayStream } from './replay'
 import {
   decodeSubjectEvent,
@@ -63,48 +64,92 @@ export interface PositionInput {
   description: string
 }
 
-/** Decision: a contributor adds a subject (its id is chosen by the caller, as the stream's) */
-export const addSubject = (input: SubjectInput): SubjectEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const subjectAdded = (input: SubjectInput): SubjectEvent => ({
   type: 'SubjectAdded',
   payload: { ...input, slug: generateSubjectSlug(input.title) },
 })
 
-export const editSubject = (input: SubjectInput): SubjectEvent => ({
+export const subjectEdited = (input: SubjectInput): SubjectEvent => ({
   type: 'SubjectEdited',
   payload: { ...input, slug: generateSubjectSlug(input.title) },
 })
 
-export const setSubjectThemes = (themes: readonly ThemeAssignmentPayload[]): SubjectEvent => ({
+export const subjectThemesSet = (themes: readonly ThemeAssignmentPayload[]): SubjectEvent => ({
   type: 'SubjectThemesSet',
   payload: { themes: [...themes] },
 })
 
-export const linkSubject = (subjectId: string): SubjectEvent => ({
+export const subjectLinked = (subjectId: string): SubjectEvent => ({
   type: 'SubjectLinked',
   payload: { subjectId },
 })
 
-export const unlinkSubject = (subjectId: string): SubjectEvent => ({
+export const subjectUnlinked = (subjectId: string): SubjectEvent => ({
   type: 'SubjectUnlinked',
   payload: { subjectId },
 })
 
-export const addPosition = (input: PositionInput): SubjectEvent => ({
+export const positionAdded = (input: PositionInput): SubjectEvent => ({
   type: 'PositionAdded',
   payload: { ...input, slug: generatePositionSlug(input.title) },
 })
 
-export const editPosition = (input: PositionInput): SubjectEvent => ({
+export const positionEdited = (input: PositionInput): SubjectEvent => ({
   type: 'PositionEdited',
   payload: { ...input, slug: generatePositionSlug(input.title) },
 })
 
-export const mergePosition = (sourceId: string, targetId: string): SubjectEvent => ({
+export const positionMergedInto = (sourceId: string, targetId: string): SubjectEvent => ({
   type: 'PositionMergedInto',
   payload: { sourceId, targetId },
 })
 
-export const deleteSubject = (): SubjectEvent => ({ type: 'SubjectDeleted', payload: {} })
+export const subjectDeleted = (): SubjectEvent => ({ type: 'SubjectDeleted', payload: {} })
+
+/* Decisions: what a command asks of the subject, decided from its state */
+
+export type SubjectDecision = Decision<SubjectState, SubjectEvent>
+
+export const POSITION_NOT_FOUND = 'Position introuvable.'
+export const POSITION_GONE = 'Une des deux positions n’existe plus.'
+
+/** A contributor adds a subject; its id is the stream's, chosen by the command */
+export const addSubject = (input: SubjectInput): SubjectEvent[] => [subjectAdded(input)]
+
+export const editSubject = (input: SubjectInput): SubjectDecision => always(subjectEdited(input))
+
+export const setSubjectThemes = (themes: readonly ThemeAssignmentPayload[]): SubjectDecision =>
+  always(subjectThemesSet(themes))
+
+/** Links are symmetric: the other subject records the same link in its own stream */
+export const linkSubject = (subjectId: string): SubjectDecision => always(subjectLinked(subjectId))
+
+export const unlinkSubject = (subjectId: string): SubjectDecision =>
+  always(subjectUnlinked(subjectId))
+
+/** The positions go with their subject; the statements record their own deletion */
+export const deleteSubject = (): SubjectDecision => always(subjectDeleted())
+
+/** A contributor adds a position; its id is chosen by the command, inside the subject's stream */
+export const addPosition = (input: PositionInput): SubjectDecision => always(positionAdded(input))
+
+/** The position must still be open on the subject */
+export const editPosition =
+  (input: PositionInput): SubjectDecision =>
+  (state) =>
+    findPosition(state, input.positionId)
+      ? Either.right([positionEdited(input)])
+      : refused(POSITION_NOT_FOUND)
+
+/** Both positions must still be open on the subject; the source disappears into the target */
+export const mergePositions =
+  (sourceId: string, targetId: string): SubjectDecision =>
+  (state) =>
+    findPosition(state, sourceId) && findPosition(state, targetId)
+      ? Either.right([positionMergedInto(sourceId, targetId)])
+      : refused(POSITION_GONE)
 
 /** A subject found in the tables before its journal existed enters it as it is */
 export const importSubject = (subject: Subject): SubjectEvent => ({

@@ -71,7 +71,7 @@ const persisted = (
   return pipe(
     runUnitOfWork((events) =>
       pipe(
-        openStream(organisationAggregate, events, id, [added], contributor.id),
+        openStream(organisationAggregate, events, id, added, contributor.id),
         Effect.tap(() =>
           grant(
             events,

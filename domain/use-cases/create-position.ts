@@ -42,9 +42,7 @@ export function createPositionUseCase(params: CreatePositionParams) {
     Effect.flatMap(({ contributor, input }) =>
       runUnitOfWork((events) =>
         pipe(
-          decideOnSubject(events, subjectId, contributor.id, () =>
-            Effect.succeed([addPosition({ positionId, ...input })]),
-          ),
+          decideOnSubject(events, subjectId, contributor.id, addPosition({ positionId, ...input })),
           Effect.tap(() =>
             grant(
               events,

@@ -81,13 +81,7 @@ const persisted = (
     Effect.andThen(
       runUnitOfWork((events) =>
         pipe(
-          decideOnOrganisation(
-            events,
-            existing.id,
-            contributor.id,
-            () => Effect.succeed([edited]),
-            params.revision,
-          ),
+          decideOnOrganisation(events, existing.id, contributor.id, edited, params.revision),
           Effect.tap(() =>
             grant(
               events,

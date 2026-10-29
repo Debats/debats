@@ -59,7 +59,7 @@ const persisted = (
   return pipe(
     runUnitOfWork((events) =>
       pipe(
-        openStream(publicFigureAggregate, events, id, [added], contributor.id),
+        openStream(publicFigureAggregate, events, id, added, contributor.id),
         Effect.tap(() =>
           grant(
             events,

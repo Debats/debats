@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either, Option } from 'effect'
 import {
-  addOrganisation,
-  editOrganisation,
+  organisationAdded,
+  organisationEdited,
   organisationStream,
   replayOrganisation,
 } from '../../domain/aggregates/organisation'
@@ -41,7 +41,7 @@ describe.skipIf(!hasDatabase)('organisation projector', () => {
 
   it('writes the organisation', async () => {
     await append(0, [
-      addOrganisation({
+      organisationAdded({
         name: 'Organisation De Test',
         acronym: 'ODT',
         organisationType: 'association',
@@ -67,7 +67,7 @@ describe.skipIf(!hasDatabase)('organisation projector', () => {
 
   it('edits the organisation', async () => {
     await append(1, [
-      editOrganisation({
+      organisationEdited({
         name: 'Organisation Renommée',
         organisationType: 'ngo',
         presentation: 'Une présentation suffisamment longue.',
@@ -95,7 +95,7 @@ describe.skipIf(!hasDatabase)('organisation projector', () => {
           stream,
           2,
           [
-            editOrganisation({
+            organisationEdited({
               name: 'Organisation Renommée',
               organisationType: 'ngo',
               presentation: 'Une présentation suffisamment longue.',

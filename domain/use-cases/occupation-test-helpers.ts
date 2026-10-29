@@ -2,8 +2,8 @@ import { Effect } from 'effect'
 import { createOccupation, Occupation } from '../entities/occupation'
 import { createOccupationFamily, OccupationFamily } from '../entities/occupation-family'
 import {
-  addOccupation,
-  addOccupationFamily,
+  occupationAdded,
+  occupationFamilyAdded,
   occupationFamilyStream,
 } from '../aggregates/occupation-family'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
@@ -107,7 +107,7 @@ export async function journalWithFamilies(
       unit.journal.append(
         occupationFamilyStream(family.id),
         0,
-        [addOccupationFamily(family), ...own.map((o) => addOccupation(o.id, o))],
+        [occupationFamilyAdded(family), ...own.map((o) => occupationAdded(o.id, o))],
         { actorId: family.createdBy },
       ),
     )

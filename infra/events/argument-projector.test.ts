@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
-  absorbArgument,
-  addArgument,
+  argumentAbsorbed,
+  argumentAdded,
   argumentStream,
-  mergeArgumentInto,
-  renameArgument,
+  argumentMergedInto,
+  argumentRenamed,
   replayArgument,
 } from '../../domain/aggregates/argument'
 import { ArgumentEvent, decodeArgumentEvent } from '../../domain/aggregates/argument-events'
@@ -39,7 +39,7 @@ describe.skipIf(!hasDatabase)('argument projector', () => {
   })
 
   it('writes the argument', async () => {
-    await append(0, [addArgument({ title: 'Argument De Test', description: 'Pour le test.' })])
+    await append(0, [argumentAdded({ title: 'Argument De Test', description: 'Pour le test.' })])
 
     const row = await prisma().arguments.findUniqueOrThrow({ where: { id: argumentId } })
     expect(row).toMatchObject({
@@ -53,7 +53,7 @@ describe.skipIf(!hasDatabase)('argument projector', () => {
   })
 
   it('renames the argument', async () => {
-    await append(1, [renameArgument({ title: 'Argument Renommé', description: '' })])
+    await append(1, [argumentRenamed({ title: 'Argument Renommé', description: '' })])
 
     const row = await prisma().arguments.findUniqueOrThrow({ where: { id: argumentId } })
     expect(row).toMatchObject({
@@ -67,7 +67,7 @@ describe.skipIf(!hasDatabase)('argument projector', () => {
     const occurredAt = new Date('2021-02-03T04:05:06.000Z')
     await Effect.runPromise(
       runUnitOfWork((journal) =>
-        journal.append(stream, 2, [absorbArgument(crypto.randomUUID())], { actorId, occurredAt }),
+        journal.append(stream, 2, [argumentAbsorbed(crypto.randomUUID())], { actorId, occurredAt }),
       ),
     )
 
@@ -80,7 +80,7 @@ describe.skipIf(!hasDatabase)('argument projector', () => {
   })
 
   it('retires a merged argument', async () => {
-    await append(3, [mergeArgumentInto(crypto.randomUUID())])
+    await append(3, [argumentMergedInto(crypto.randomUUID())])
 
     const row = await prisma().arguments.findUniqueOrThrow({ where: { id: argumentId } })
     expect(row.deleted_at).not.toBeNull()

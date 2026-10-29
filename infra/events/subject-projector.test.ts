@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Effect, Either } from 'effect'
 import {
-  addPosition,
-  addSubject,
-  deleteSubject,
-  editPosition,
-  editSubject,
-  linkSubject,
+  positionAdded,
+  subjectAdded,
+  subjectDeleted,
+  positionEdited,
+  subjectEdited,
+  subjectLinked,
   livePositions,
-  mergePosition,
+  positionMergedInto,
   replaySubject,
-  setSubjectThemes,
+  subjectThemesSet,
   subjectStream,
-  unlinkSubject,
+  subjectUnlinked,
 } from '../../domain/aggregates/subject'
 import { decodeSubjectEvent, SubjectEvent } from '../../domain/aggregates/subject-events'
 import { getPrismaClient } from '../prisma/client'
@@ -58,17 +58,17 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
 
   it('writes the subject and its positions', async () => {
     await append(0, [
-      addSubject({
+      subjectAdded({
         title: 'Un sujet de test',
         presentation: 'Une présentation suffisamment longue.',
         problem: 'Une problématique suffisamment longue ?',
       }),
-      addPosition({
+      positionAdded({
         positionId: pourId,
         title: 'Pour',
         description: 'Une description suffisamment longue.',
       }),
-      addPosition({
+      positionAdded({
         positionId: contreId,
         title: 'Contre',
         description: 'Une autre description longue.',
@@ -88,12 +88,12 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
 
   it('edits the subject and a position', async () => {
     await append(3, [
-      editSubject({
+      subjectEdited({
         title: 'Un sujet renommé',
         presentation: 'Une présentation suffisamment longue.',
         problem: 'Une problématique suffisamment longue ?',
       }),
-      editPosition({
+      positionEdited({
         positionId: pourId,
         title: 'Plutôt pour',
         description: 'Une description suffisamment longue.',
@@ -107,9 +107,9 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
   })
 
   it('sets the themes, then replaces them, keeping one primary', async () => {
-    await append(5, [setSubjectThemes([{ themeId: themeIds[0], isPrimary: true }])])
+    await append(5, [subjectThemesSet([{ themeId: themeIds[0], isPrimary: true }])])
     await append(6, [
-      setSubjectThemes([
+      subjectThemesSet([
         { themeId: themeIds[1], isPrimary: true },
         { themeId: themeIds[0], isPrimary: false },
       ]),
@@ -126,7 +126,7 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
   })
 
   it('links to another subject once, then unlinks', async () => {
-    await append(7, [linkSubject(otherSubjectId)])
+    await append(7, [subjectLinked(otherSubjectId)])
 
     const pair = [subjectId, otherSubjectId].sort()
     const linked = await prisma().related_subjects.findMany({
@@ -134,7 +134,7 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
     })
     expect(linked).toHaveLength(1)
 
-    await append(8, [unlinkSubject(otherSubjectId)])
+    await append(8, [subjectUnlinked(otherSubjectId)])
     const unlinked = await prisma().related_subjects.findMany({
       where: { subject_id_1: pair[0], subject_id_2: pair[1] },
     })
@@ -142,11 +142,11 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
   })
 
   it('merges a position away and deletes the subject with its positions', async () => {
-    await append(9, [mergePosition(contreId, pourId)])
+    await append(9, [positionMergedInto(contreId, pourId)])
     const merged = await prisma().positions.findUniqueOrThrow({ where: { id: contreId } })
     expect(merged.deleted_at).not.toBeNull()
 
-    await append(10, [deleteSubject()])
+    await append(10, [subjectDeleted()])
     const subject = await prisma().subjects.findUniqueOrThrow({ where: { id: subjectId } })
     const pour = await prisma().positions.findUniqueOrThrow({ where: { id: pourId } })
     expect(subject.deleted_at).not.toBeNull()

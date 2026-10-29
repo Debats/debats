@@ -1,10 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
+import { Rejected } from './decision'
 import {
   addOccupation,
   addOccupationFamily,
   deleteOccupationFamily,
+  OCCUPATION_NOT_FOUND,
+  occupationAdded,
+  occupationFamilyAdded,
+  occupationFamilyDeleted,
+  occupationRemoved,
   removeOccupation,
   replayOccupationFamily,
 } from './occupation-family'
@@ -28,14 +34,22 @@ const stored = (
   occurredAt,
 })
 
-const added = addOccupationFamily({
-  name: ' Chercheur·se et universitaire ',
-  description: '',
-  position: 3,
+const research = { name: ' Chercheur·se et universitaire ', description: '', position: 3 }
+const added = occupationFamilyAdded(research)
+const economist = occupationAdded(economistId, {
+  name: ' Économiste ',
+  description: 'Chercheur·se.',
 })
-const economist = addOccupation(economistId, { name: ' Économiste ', description: 'Chercheur·se.' })
 
-describe('occupation family decisions', () => {
+const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
+  const state = replayOccupationFamily(
+    events.map((event, index) => stored(event, index + 1, at(`2024-01-${10 + index}`))),
+  )
+  if (Either.isLeft(state) || !state.right) throw new Error('expected a state')
+  return state.right
+}
+
+describe('occupation family facts', () => {
   it('derive the slugs from the trimmed names', () => {
     expect(added.payload).toEqual({
       name: 'Chercheur·se et universitaire',
@@ -49,6 +63,32 @@ describe('occupation family decisions', () => {
       slug: 'economiste',
       description: 'Chercheur·se.',
     })
+  })
+})
+
+describe('occupation family decisions', () => {
+  const withEconomist = rebuilt(added, economist)
+
+  it('open the stream with the family added', () => {
+    expect(addOccupationFamily(research)).toEqual([added])
+  })
+
+  it('record what nothing in the state can refuse', () => {
+    expect(addOccupation('writer', { name: 'Écrivain·e', description: '' })(withEconomist)).toEqual(
+      Either.right([occupationAdded('writer', { name: 'Écrivain·e', description: '' })]),
+    )
+    expect(deleteOccupationFamily()(withEconomist)).toEqual(
+      Either.right([occupationFamilyDeleted()]),
+    )
+  })
+
+  it('remove an occupation of the family, and refuse one it does not have', () => {
+    expect(removeOccupation(economistId)(withEconomist)).toEqual(
+      Either.right([occupationRemoved(economistId)]),
+    )
+    expect(removeOccupation('other')(withEconomist)).toEqual(
+      Either.left(new Rejected(OCCUPATION_NOT_FOUND)),
+    )
   })
 })
 
@@ -95,7 +135,7 @@ describe('replayOccupationFamily', () => {
     const state = replayOccupationFamily([
       stored(added, 1, at('2024-01-10')),
       stored(economist, 2, at('2024-02-01')),
-      stored(removeOccupation(economistId), 3, at('2024-03-01')),
+      stored(occupationRemoved(economistId), 3, at('2024-03-01')),
     ])
     expect(Either.isRight(state) && state.right?.occupations).toEqual([])
   })
@@ -103,7 +143,7 @@ describe('replayOccupationFamily', () => {
   it('marks a deletion with its date', () => {
     const state = replayOccupationFamily([
       stored(added, 1, at('2024-01-10')),
-      stored(deleteOccupationFamily(), 2, at('2024-03-01')),
+      stored(occupationFamilyDeleted(), 2, at('2024-03-01')),
     ])
     expect(Either.isRight(state) && state.right?.deletedAt).toEqual(at('2024-03-01'))
   })

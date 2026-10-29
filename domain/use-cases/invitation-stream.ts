@@ -1,15 +1,15 @@
-import { Context, Effect } from 'effect'
+import { Context } from 'effect'
 import {
-  acceptInvitation as accepted,
   importInvitation,
   INVITATION_STREAM,
+  invitationAccepted,
+  InvitationDecision,
   InvitationState,
   replayInvitation,
 } from '../aggregates/invitation'
 import { InvitationEvent } from '../aggregates/invitation-events'
 import { Invitation } from '../entities/invitation'
 import { EventStore } from '../events/event-store'
-import { Rejected } from './types'
 import {
   AggregateStream,
   Batch,
@@ -51,7 +51,7 @@ export const invitationAggregate: AggregateStream<
     ...(invitation.status === 'accepted' && invitation.inviteeId
       ? [
           {
-            events: [accepted(invitation.inviteeId)],
+            events: [invitationAccepted(invitation.inviteeId)],
             options: {
               actorId: invitation.inviteeId,
               metadata: IMPORT,
@@ -67,7 +67,7 @@ export const decideOnInvitation = (
   events: EventStore,
   invitationId: string,
   actorId: string,
-  decide: (state: InvitationState) => Effect.Effect<InvitationEvent[], Rejected>,
+  decide: InvitationDecision,
   renderedFrom?: RenderedFrom,
 ) => decideOn(invitationAggregate, events, invitationId, actorId, decide, renderedFrom)
 

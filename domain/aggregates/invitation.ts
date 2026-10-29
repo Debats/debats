@@ -1,5 +1,7 @@
+import { Either } from 'effect'
 import { Invitation, InvitationId, InviteeEmail, InviteeName } from '../entities/invitation'
 import { StoredEvent, StreamRef } from '../events/event-store'
+import { always, Decision, refused } from './decision'
 import { decodeInvitationEvent, InvitationEvent, InviteePayload } from './invitation-events'
 import { authored, authorOf, Decoded, replayStream } from './replay'
 
@@ -20,23 +22,44 @@ export interface InvitationState {
 export const isPendingInvitation = (state: InvitationState): boolean =>
   state.invitation.status === 'pending'
 
-/** Decision: a contributor invites someone (the id is chosen by the caller, as the stream's) */
-export const sendInvitation = (invitee: InviteePayload): InvitationEvent => ({
+/* Facts: what the stream records, named in the past tense as the events they are */
+
+export const invitationSent = (invitee: InviteePayload): InvitationEvent => ({
   type: 'InvitationSent',
   payload: invitee,
 })
 
-/** Decision: the invitee joined as this contributor */
-export const acceptInvitation = (inviteeId: string): InvitationEvent => ({
+export const invitationAccepted = (inviteeId: string): InvitationEvent => ({
   type: 'InvitationAccepted',
   payload: { inviteeId },
 })
 
-/** Decision: the e-mail could not leave, the invitation is withdrawn */
-export const revokeInvitation = (): InvitationEvent => ({
+export const invitationRevoked = (): InvitationEvent => ({
   type: 'InvitationRevoked',
   payload: {},
 })
+
+/* Decisions: what a command asks of the invitation, decided from its state */
+
+export type InvitationDecision = Decision<InvitationState, InvitationEvent>
+
+export const ALREADY_ACCEPTED = 'Cette invitation a déjà été acceptée.'
+
+/** A contributor invites someone; the id is the stream's, chosen by the command */
+export const sendInvitation = (invitee: InviteePayload): InvitationEvent[] => [
+  invitationSent(invitee),
+]
+
+/** The invitee joins as this contributor; an invitation accepted once stays accepted */
+export const acceptInvitation =
+  (inviteeId: string): InvitationDecision =>
+  (state) =>
+    isPendingInvitation(state)
+      ? Either.right([invitationAccepted(inviteeId)])
+      : refused(ALREADY_ACCEPTED)
+
+/** The e-mail could not leave: the invitation is withdrawn */
+export const revokeInvitation = (): InvitationDecision => always(invitationRevoked())
 
 /** An invitation found in the table before its journal existed enters it as it was sent */
 export const importInvitation = (invitation: Invitation): InvitationEvent => ({

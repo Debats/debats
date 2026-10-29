@@ -20,9 +20,7 @@ export function deleteOccupationFamilyUseCase(params: DeleteOccupationFamilyPara
     Effect.tap(() => ensureStream(occupationFamilyAggregate, familyId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
-        decideOnOccupationFamily(events, familyId, contributor.id, () =>
-          Effect.succeed([deleteOccupationFamily()]),
-        ),
+        decideOnOccupationFamily(events, familyId, contributor.id, deleteOccupationFamily()),
       ),
     ),
     Effect.asVoid,
