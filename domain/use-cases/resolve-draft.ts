@@ -54,29 +54,31 @@ export type DraftResolution = {
   canValidate: boolean
 }
 
+/** Read side: what the site already knows of what the draft names */
+const figures = Effect.serviceFunctions(PublicFigureRepository)
+const organisations = Effect.serviceFunctions(OrganisationRepository)
+const subjects = Effect.serviceFunctions(SubjectRepository)
+const positions = Effect.serviceFunctions(PositionRepository)
+const argumentsRead = Effect.serviceFunctions(ArgumentRepository)
+const occupations = Effect.serviceFunctions(OccupationRepository)
+
 function resolveAuthor(
   draft: DraftStatement,
-  repos: {
-    publicFigureRepo: PublicFigureRepository
-    organisationRepo: OrganisationRepository
-  },
-): Effect.Effect<ResolvedAuthor, DatabaseError> {
+): Effect.Effect<ResolvedAuthor, DatabaseError, PublicFigureRepository | OrganisationRepository> {
   const { author } = draft
 
   /** Figures and organisations share the shape the resolution exposes. */
   const named = (entity: { id: string; name: string; slug: string } | null) =>
     entity ? { id: entity.id, name: entity.name, slug: entity.slug } : null
 
-  const lookup: Effect.Effect<Named | null, DatabaseError> =
+  const lookup: Effect.Effect<
+    Named | null,
+    DatabaseError,
+    PublicFigureRepository | OrganisationRepository
+  > =
     author.kind === 'public_figure'
-      ? pipe(
-          repos.publicFigureRepo.findBySlug(generatePublicFigureSlug(author.name)),
-          Effect.map(named),
-        )
-      : pipe(
-          repos.organisationRepo.findBySlug(generateOrganisationSlug(author.name)),
-          Effect.map(named),
-        )
+      ? pipe(figures.findBySlug(generatePublicFigureSlug(author.name)), Effect.map(named))
+      : pipe(organisations.findBySlug(generateOrganisationSlug(author.name)), Effect.map(named))
 
   return pipe(
     lookup,
@@ -90,10 +92,9 @@ function resolveAuthor(
 
 function resolveSubject(
   draft: DraftStatement,
-  repo: SubjectRepository,
-): Effect.Effect<DraftResolution['subject'], DatabaseError> {
+): Effect.Effect<DraftResolution['subject'], DatabaseError, SubjectRepository> {
   return pipe(
-    repo.findBySlug(generateSubjectSlug(draft.subjectTitle)),
+    subjects.findBySlug(generateSubjectSlug(draft.subjectTitle)),
     Effect.map((subject) =>
       subject
         ? {
@@ -108,8 +109,7 @@ function resolveSubject(
 function resolvePosition(
   draft: DraftStatement,
   subjectResolution: DraftResolution['subject'],
-  repo: PositionRepository,
-): Effect.Effect<DraftResolution['position'], DatabaseError> {
+): Effect.Effect<DraftResolution['position'], DatabaseError, PositionRepository> {
   if (!subjectResolution.found) {
     return Effect.succeed({
       found: false as const,
@@ -117,9 +117,9 @@ function resolvePosition(
     })
   }
   return pipe(
-    repo.findBySubjectId(subjectResolution.entity.id),
-    Effect.map((positions) => {
-      const match = positions.find((p) => p.title === draft.positionTitle)
+    positions.findBySubjectId(subjectResolution.entity.id),
+    Effect.map((onSubject) => {
+      const match = onSubject.find((p) => p.title === draft.positionTitle)
       return match
         ? { found: true as const, entity: { id: match.id, title: match.title } }
         : { found: false as const, canCreate: draft.positionData !== null }
@@ -130,12 +130,11 @@ function resolvePosition(
 /** An argument is known by its title, which is unique across the whole site. */
 function resolveArguments(
   draft: DraftStatement,
-  repo: ArgumentRepository,
-): Effect.Effect<ResolvedArgument[], DatabaseError> {
+): Effect.Effect<ResolvedArgument[], DatabaseError, ArgumentRepository> {
   return Effect.all(
     draft.arguments.map((argument) =>
       pipe(
-        repo.findByTitle(argument.title),
+        argumentsRead.findByTitle(argument.title),
         Effect.map((known): ResolvedArgument => ({ ...argument, known: known !== null })),
       ),
     ),
@@ -144,11 +143,10 @@ function resolveArguments(
 
 function resolveOccupations(
   draft: DraftStatement,
-  repo: OccupationRepository,
-): Effect.Effect<ResolvedOccupation[], DatabaseError> {
+): Effect.Effect<ResolvedOccupation[], DatabaseError, OccupationRepository> {
   if (draft.occupations.length === 0) return Effect.succeed([])
   return pipe(
-    repo.findAll(),
+    occupations.findAll(),
     Effect.map((listed) =>
       draft.occupations.map(
         (occupation): ResolvedOccupation => ({
@@ -162,12 +160,11 @@ function resolveOccupations(
 
 function resolveAffiliations(
   draft: DraftStatement,
-  repo: OrganisationRepository,
-): Effect.Effect<ResolvedAffiliation[], DatabaseError> {
+): Effect.Effect<ResolvedAffiliation[], DatabaseError, OrganisationRepository> {
   return Effect.all(
     draft.affiliations.map((affiliation) =>
       pipe(
-        repo.findBySlug(generateOrganisationSlug(affiliation.organisation)),
+        organisations.findBySlug(generateOrganisationSlug(affiliation.organisation)),
         Effect.map(
           (organisation): ResolvedAffiliation => ({
             organisation: affiliation.organisation,
@@ -183,38 +180,35 @@ function resolveAffiliations(
   )
 }
 
-export function resolveDraft(
-  draft: DraftStatement,
-  repos: {
-    publicFigureRepo: PublicFigureRepository
-    organisationRepo: OrganisationRepository
-    subjectRepo: SubjectRepository
-    positionRepo: PositionRepository
-    argumentRepo: ArgumentRepository
-    occupationRepo: OccupationRepository
-  },
-): Effect.Effect<DraftResolution, DatabaseError> {
+/**
+ * What the site already knows of what the draft names, and whether the
+ * validation could create the rest: what the reviewer sees before deciding.
+ */
+export function resolveDraft(draft: DraftStatement) {
   return pipe(
     Effect.all({
-      author: resolveAuthor(draft, repos),
-      subject: resolveSubject(draft, repos.subjectRepo),
-      draftArguments: resolveArguments(draft, repos.argumentRepo),
-      occupations: resolveOccupations(draft, repos.occupationRepo),
-      affiliations: resolveAffiliations(draft, repos.organisationRepo),
+      author: resolveAuthor(draft),
+      subject: resolveSubject(draft),
+      draftArguments: resolveArguments(draft),
+      occupations: resolveOccupations(draft),
+      affiliations: resolveAffiliations(draft),
     }),
     Effect.flatMap(({ author, subject, draftArguments, occupations, affiliations }) =>
-      Effect.map(resolvePosition(draft, subject, repos.positionRepo), (position) => ({
-        author,
-        subject,
-        position,
-        arguments: draftArguments,
-        occupations,
-        affiliations,
-        canValidate:
-          [author, subject, position].every((r) => r.found || (!r.found && r.canCreate)) &&
-          occupations.every((o) => o.listed) &&
-          affiliations.every((a) => a.found || a.canCreate),
-      })),
+      Effect.map(
+        resolvePosition(draft, subject),
+        (position): DraftResolution => ({
+          author,
+          subject,
+          position,
+          arguments: draftArguments,
+          occupations,
+          affiliations,
+          canValidate:
+            [author, subject, position].every((r) => r.found || (!r.found && r.canCreate)) &&
+            occupations.every((o) => o.listed) &&
+            affiliations.every((a) => a.found || a.canCreate),
+        }),
+      ),
     ),
   )
 }

@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { Effect } from 'effect'
-import { resolveDraft } from './resolve-draft'
+import { Effect, Layer } from 'effect'
+import { resolveDraft as resolveDraftAgainst } from './resolve-draft'
+import { DraftStatement } from '../entities/draft-statement'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { PositionRepository } from '../repositories/position-repository'
+import { ArgumentRepository } from '../repositories/argument-repository'
+import { OccupationRepository } from '../repositories/occupation-repository'
 import { PublicFigure } from '../entities/public-figure'
 import { Subject } from '../entities/subject'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
@@ -42,6 +45,30 @@ const emptyCatalogue = () => ({
   argumentRepo: fakeArgumentRepo(),
   occupationRepo: fakeOccupationRepo(),
 })
+
+/** The draft resolved against the tables the test describes */
+const resolveDraft = (
+  draft: DraftStatement,
+  repos: {
+    publicFigureRepo: PublicFigureRepository
+    organisationRepo: OrganisationRepository
+    subjectRepo: SubjectRepository
+    positionRepo: PositionRepository
+    argumentRepo: ArgumentRepository
+    occupationRepo: OccupationRepository
+  },
+) =>
+  Effect.provide(
+    resolveDraftAgainst(draft),
+    Layer.mergeAll(
+      Layer.succeed(PublicFigureRepository, repos.publicFigureRepo),
+      Layer.succeed(OrganisationRepository, repos.organisationRepo),
+      Layer.succeed(SubjectRepository, repos.subjectRepo),
+      Layer.succeed(PositionRepository, repos.positionRepo),
+      Layer.succeed(ArgumentRepository, repos.argumentRepo),
+      Layer.succeed(OccupationRepository, repos.occupationRepo),
+    ),
+  )
 
 describe('resolveDraft', () => {
   it('should mark all entities as found when they exist', async () => {

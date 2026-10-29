@@ -3,12 +3,7 @@ import Link from 'next/link'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
-import { createPublicFigureRepository } from '../../../infra/database/public-figure-repository-supabase'
-import { createOrganisationRepository } from '../../../infra/database/organisation-repository-supabase'
-import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
-import { createPositionRepository } from '../../../infra/database/position-repository-supabase'
-import { createArgumentRepository } from '../../../infra/database/argument-repository-supabase'
-import { createOccupationRepository } from '../../../infra/database/occupation-repository-supabase'
+import { liveServices } from '../../../infra/live-services'
 import { resolveDraft } from '../../../domain/use-cases/resolve-draft'
 import { getAdminContributor } from '../../actions/admin-guard'
 import DraftList from './DraftList'
@@ -71,27 +66,12 @@ export default async function AdminDraftsPage({ searchParams }: Props) {
     )
   }
 
-  const publicFigureRepo = createPublicFigureRepository(supabase)
-  const organisationRepo = createOrganisationRepository(supabase)
-  const subjectRepo = createSubjectRepository(supabase)
-  const positionRepo = createPositionRepository(supabase)
-  const argumentRepo = createArgumentRepository(supabase)
-  const occupationRepo = createOccupationRepository(supabase)
-
+  const services = liveServices(supabase)
   const drafts = await Effect.runPromise(draftRepo.findPendingBySubject(subject))
 
   const draftsWithResolution = await Promise.all(
     drafts.map(async (draft) => {
-      const resolution = await Effect.runPromise(
-        resolveDraft(draft, {
-          publicFigureRepo,
-          organisationRepo,
-          subjectRepo,
-          positionRepo,
-          argumentRepo,
-          occupationRepo,
-        }),
-      )
+      const resolution = await Effect.runPromise(Effect.provide(resolveDraft(draft), services))
       return { draft, resolution }
     }),
   )
