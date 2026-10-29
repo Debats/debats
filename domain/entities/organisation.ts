@@ -1,5 +1,4 @@
 import * as S from 'effect/Schema'
-import { Option } from 'effect'
 import { slugify } from '../value-objects/slug'
 
 export const OrganisationId = S.String.pipe(S.brand('OrganisationId'))
@@ -78,40 +77,3 @@ export type Organisation = S.Schema.Type<typeof Organisation>
 
 export const generateOrganisationSlug = (name: string): OrganisationSlug =>
   OrganisationSlug.make(slugify(name))
-
-const optionalText = (value: string | undefined): Option.Option<string> => {
-  const trimmed = value?.trim() ?? ''
-  return trimmed ? Option.some(trimmed) : Option.none()
-}
-
-export interface OrganisationFields {
-  name: string
-  acronym?: string
-  organisationType: OrganisationType
-  presentation: string
-  wikipediaUrl?: string
-  websiteUrl?: string
-  notorietySources?: string[]
-}
-
-export const createOrganisation = (
-  params: OrganisationFields & { createdBy: string },
-): Organisation => {
-  const now = new Date()
-
-  return Organisation.make({
-    id: OrganisationId.make(crypto.randomUUID()),
-    name: OrganisationName.make(params.name),
-    slug: generateOrganisationSlug(params.name),
-    acronym: optionalText(params.acronym),
-    organisationType: params.organisationType,
-    presentation: params.presentation,
-    wikipediaUrl: optionalText(params.wikipediaUrl),
-    websiteUrl: optionalText(params.websiteUrl),
-    notorietySources: params.notorietySources ?? [],
-    createdBy: params.createdBy,
-    updatedBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

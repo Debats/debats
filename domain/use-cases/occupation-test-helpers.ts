@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
-import { createOccupation, Occupation } from '../entities/occupation'
-import { createOccupationFamily, OccupationFamily } from '../entities/occupation-family'
+import { createOccupation, createOccupationFamily } from '../entities/entity-test-helpers'
+import { Occupation } from '../entities/occupation'
+import { OccupationFamily } from '../entities/occupation-family'
 import {
   occupationAdded,
   occupationFamilyAdded,

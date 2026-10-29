@@ -32,31 +32,6 @@ export const OrganisationMembership = S.Struct({
 
 export type OrganisationMembership = S.Schema.Type<typeof OrganisationMembership>
 
-export const createMembership = (params: {
-  organisationId: string
-  publicFigureId: string
-  role?: string
-  startedOn?: Date
-  endedOn?: Date
-  createdBy: string
-}): OrganisationMembership => {
-  const now = new Date()
-  const role = params.role?.trim() ?? ''
-
-  return OrganisationMembership.make({
-    id: MembershipId.make(crypto.randomUUID()),
-    organisationId: params.organisationId,
-    publicFigureId: params.publicFigureId,
-    role: role ? Option.some(role) : Option.none(),
-    startedOn: Option.fromNullable(params.startedOn),
-    endedOn: Option.fromNullable(params.endedOn),
-    createdBy: params.createdBy,
-    updatedBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}
-
 /** A membership is current until its end date, if any, is past. */
 export const isCurrentMembership = (
   membership: OrganisationMembership,

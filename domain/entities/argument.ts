@@ -40,26 +40,6 @@ export type Argument = S.Schema.Type<typeof Argument>
 export const generateArgumentSlug = (title: string): ArgumentSlug =>
   ArgumentSlug.make(slugify(title))
 
-export const createArgument = (params: {
-  title: string
-  description?: string
-  createdBy: string
-}): Argument => {
-  const now = new Date()
-  const title = params.title.trim()
-
-  return Argument.make({
-    id: ArgumentId.make(crypto.randomUUID()),
-    title: ArgumentTitle.make(title),
-    slug: generateArgumentSlug(title),
-    description: params.description?.trim() ?? '',
-    createdBy: params.createdBy,
-    updatedBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}
-
 /** Two titles name the same argument when they only differ by case or spacing */
 export const sameArgumentTitle = (a: string, b: string): boolean =>
   a.trim().toLowerCase() === b.trim().toLowerCase()

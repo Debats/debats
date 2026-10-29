@@ -1,50 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { createInvitation, isExpired } from './invitation'
+import { createInvitation } from './entity-test-helpers'
+import { isExpired } from './invitation'
 
-describe('Invitation entity', () => {
-  const baseParams = {
+describe('isExpired', () => {
+  const invitation = createInvitation({
     inviterId: 'inviter-uuid',
     inviteeEmail: 'test@example.com',
     inviteeName: 'Jean Dupont',
-  }
+  })
+  const eightDaysAgo = new Date()
+  eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
 
-  describe('createInvitation', () => {
-    it('should create an invitation with status pending', () => {
-      const invitation = createInvitation(baseParams)
-
-      expect(invitation.status).toBe('pending')
-      expect(invitation.inviterId).toBe('inviter-uuid')
-      expect(invitation.inviteeEmail).toBe('test@example.com')
-      expect(invitation.inviteeName).toBe('Jean Dupont')
-      expect(invitation.inviteeId).toBeUndefined()
-      expect(invitation.id).toBeDefined()
-      expect(invitation.createdAt).toBeInstanceOf(Date)
-    })
+  it('is false for a recent invitation', () => {
+    expect(isExpired(invitation)).toBe(false)
   })
 
-  describe('isExpired', () => {
-    it('should return false for a recent invitation', () => {
-      const invitation = createInvitation(baseParams)
+  it('is true after 7 days', () => {
+    expect(isExpired({ ...invitation, createdAt: eightDaysAgo })).toBe(true)
+  })
 
-      expect(isExpired(invitation)).toBe(false)
-    })
-
-    it('should return true after 7 days', () => {
-      const invitation = createInvitation(baseParams)
-      const eightDaysAgo = new Date()
-      eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
-      const expiredInvitation = { ...invitation, createdAt: eightDaysAgo }
-
-      expect(isExpired(expiredInvitation)).toBe(true)
-    })
-
-    it('should return false for accepted invitations even if old', () => {
-      const invitation = createInvitation(baseParams)
-      const eightDaysAgo = new Date()
-      eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
-      const accepted = { ...invitation, createdAt: eightDaysAgo, status: 'accepted' as const }
-
-      expect(isExpired(accepted)).toBe(false)
-    })
+  it('is false for an accepted invitation, however old', () => {
+    const accepted = { ...invitation, createdAt: eightDaysAgo, status: 'accepted' as const }
+    expect(isExpired(accepted)).toBe(false)
   })
 })

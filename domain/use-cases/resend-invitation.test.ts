@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
 import { validateResendInvitation } from './resend-invitation'
-import { Invitation, createInvitation } from '../entities/invitation'
+import { createInvitation } from '../entities/entity-test-helpers'
+import { Invitation } from '../entities/invitation'
 
 const baseInvitation = createInvitation({
   inviterId: 'inviter-uuid',

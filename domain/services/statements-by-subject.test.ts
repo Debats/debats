@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createPosition } from '../entities/position'
-import { createStatement, publicFigureAuthor } from '../entities/statement'
-import { createSubject } from '../entities/subject'
+import { createPosition, createStatement, createSubject } from '../entities/entity-test-helpers'
+import { publicFigureAuthor } from '../entities/statement'
 import { StatementWithDetails } from '../repositories/statement-repository'
 import { groupStatementsBySubject } from './statements-by-subject'
 

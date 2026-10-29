@@ -30,29 +30,12 @@ export type Subject = S.Schema.Type<typeof Subject>
 
 export const generateSlug = (title: string): SubjectSlug => SubjectSlug.make(slugify(title))
 
-export const createSubject = (params: {
-  title: string
-  presentation: string
-  problem: string
-  pictureUrl?: string
-  createdBy?: string
-}): Subject => {
-  const now = new Date()
-
-  return Subject.make({
-    id: SubjectId.make(crypto.randomUUID()),
-    title: SubjectTitle.make(params.title),
-    slug: generateSlug(params.title),
-    presentation: params.presentation,
-    problem: params.problem,
-    pictureUrl: params.pictureUrl,
-    createdBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}
-
-export const isMajorSubject = (subject: Subject, statementCount = 0): boolean => {
-  const oneWeekAgo = subDays(7)(new Date())
+/** A subject is major while it is less than a week old, or once it gathers more than five statements */
+export const isMajorSubject = (
+  subject: Subject,
+  statementCount = 0,
+  today: Date = new Date(),
+): boolean => {
+  const oneWeekAgo = subDays(7)(today)
   return isAfter(oneWeekAgo)(subject.createdAt) || statementCount > 5
 }

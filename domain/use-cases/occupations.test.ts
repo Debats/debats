@@ -13,7 +13,7 @@ import {
   sampleFamily,
   sampleOccupation,
 } from './occupation-test-helpers'
-import { createPublicFigure } from '../entities/public-figure'
+import { createPublicFigure } from '../entities/entity-test-helpers'
 import { Occupation } from '../entities/occupation'
 import { OccupationFamily } from '../entities/occupation-family'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'

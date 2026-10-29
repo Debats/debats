@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createPosition } from '../entities/position'
-import { createStatement, organisationAuthor, publicFigureAuthor } from '../entities/statement'
+import { createPosition, createStatement } from '../entities/entity-test-helpers'
+import { organisationAuthor, publicFigureAuthor } from '../entities/statement'
 import { organisationRef, publicFigureRef } from '../read-models/statement-author'
 import { StatementWithAuthor } from '../repositories/statement-repository'
 import { countAllies, groupStatementsByPosition, groupSubjectCompany } from './author-on-subject'

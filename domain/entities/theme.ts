@@ -27,22 +27,3 @@ export const Theme = S.Struct({
 export type Theme = S.Schema.Type<typeof Theme>
 
 export const generateThemeSlug = (name: string): ThemeSlug => ThemeSlug.make(slugify(name))
-
-export const createTheme = (params: {
-  name: string
-  description: string
-  createdBy: string
-}): Theme => {
-  const now = new Date()
-
-  return Theme.make({
-    id: ThemeId.make(crypto.randomUUID()),
-    name: ThemeName.make(params.name),
-    slug: generateThemeSlug(params.name),
-    description: params.description,
-    createdBy: params.createdBy,
-    updatedBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

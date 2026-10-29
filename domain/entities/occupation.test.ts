@@ -1,41 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import { createOccupation, generateOccupationSlug, sameOccupationName } from './occupation'
-import { createOccupationFamily } from './occupation-family'
+import { generateOccupationSlug, OccupationName, sameOccupationName } from './occupation'
 
-describe('createOccupation', () => {
-  it('trims the name, derives the slug and defaults the description', () => {
-    const occupation = createOccupation({
-      name: '  Député·e  ',
-      familyId: 'family',
-      createdBy: 'founder',
-    })
-
-    expect(occupation.name).toBe('Député·e')
-    expect(occupation.slug).toBe('depute-e')
-    expect(occupation.familyId).toBe('family')
-    expect(occupation.description).toBe('')
-    expect(occupation.updatedBy).toBe('founder')
-  })
-
+describe('OccupationName', () => {
   it('refuses a name under two characters', () => {
-    expect(() =>
-      createOccupation({ name: 'A', familyId: 'family', createdBy: 'founder' }),
-    ).toThrow()
-  })
-})
-
-describe('createOccupationFamily', () => {
-  it('keeps the display position', () => {
-    const family = createOccupationFamily({ name: 'Exécutif', position: 1, createdBy: 'founder' })
-
-    expect(family.slug).toBe('executif')
-    expect(family.position).toBe(1)
+    expect(() => OccupationName.make('A')).toThrow()
+    expect(OccupationName.make('Député·e')).toBe('Député·e')
   })
 })
 
 describe('generateOccupationSlug', () => {
   it('strips accents, apostrophes and inclusive dots', () => {
     expect(generateOccupationSlug("Chef·fe d'entreprise")).toBe('chef-fe-d-entreprise')
+    expect(generateOccupationSlug('Député·e')).toBe('depute-e')
   })
 })
 

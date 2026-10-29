@@ -1,62 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { Option } from 'effect'
-import { createOrganisation, ORGANISATION_TYPE_LABELS, parseOrganisationType } from './organisation'
-
-const validParams = {
-  name: 'Association pour la taxation des transactions financières',
-  acronym: 'Attac',
-  organisationType: 'association' as const,
-  presentation: 'Mouvement altermondialiste créé en 1998.',
-  createdBy: 'user-123',
-}
+import {
+  generateOrganisationSlug,
+  ORGANISATION_TYPE_LABELS,
+  OrganisationName,
+  parseOrganisationType,
+} from './organisation'
 
 describe('Organisation entity', () => {
-  describe('createOrganisation', () => {
-    it('creates an organisation with a slug derived from its name', () => {
-      const organisation = createOrganisation(validParams)
+  it('derives the slug from the name', () => {
+    expect(generateOrganisationSlug('Association pour la taxation des transactions')).toBe(
+      'association-pour-la-taxation-des-transactions',
+    )
+  })
 
-      expect(organisation.name).toBe(validParams.name)
-      expect(organisation.slug).toBe('association-pour-la-taxation-des-transactions-financieres')
-      expect(organisation.acronym).toEqual(Option.some('Attac'))
-      expect(organisation.organisationType).toBe('association')
-      expect(organisation.wikipediaUrl).toEqual(Option.none())
-      expect(organisation.websiteUrl).toEqual(Option.none())
-      expect(organisation.notorietySources).toEqual([])
-      expect(organisation.createdBy).toBe('user-123')
-      expect(organisation.updatedBy).toBe('user-123')
-      expect(organisation.createdAt).toBeInstanceOf(Date)
-    })
-
-    it('stores optional links and notoriety sources', () => {
-      const organisation = createOrganisation({
-        ...validParams,
-        wikipediaUrl: 'https://fr.wikipedia.org/wiki/Attac',
-        websiteUrl: 'https://france.attac.org',
-        notorietySources: ['https://lemonde.fr/a', 'https://liberation.fr/b'],
-      })
-
-      expect(organisation.wikipediaUrl).toEqual(Option.some('https://fr.wikipedia.org/wiki/Attac'))
-      expect(organisation.websiteUrl).toEqual(Option.some('https://france.attac.org'))
-      expect(organisation.notorietySources).toHaveLength(2)
-    })
-
-    it('treats a blank acronym as absent', () => {
-      const organisation = createOrganisation({ ...validParams, acronym: '   ' })
-
-      expect(organisation.acronym).toEqual(Option.none())
-    })
-
-    it('rejects a name shorter than 2 characters', () => {
-      expect(() => createOrganisation({ ...validParams, name: 'A' })).toThrow()
-    })
-
-    it('rejects a name longer than 150 characters', () => {
-      expect(() => createOrganisation({ ...validParams, name: 'A'.repeat(151) })).toThrow()
-    })
-
-    it('rejects a presentation shorter than 10 characters', () => {
-      expect(() => createOrganisation({ ...validParams, presentation: 'Court' })).toThrow()
-    })
+  it('takes a name of 2 to 150 characters', () => {
+    expect(() => OrganisationName.make('A')).toThrow()
+    expect(() => OrganisationName.make('A'.repeat(151))).toThrow()
+    expect(OrganisationName.make('Attac')).toBe('Attac')
   })
 
   describe('parseOrganisationType', () => {

@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { groupOccupationsByFamily, sortOccupationsHeld } from './occupations'
-import { createOccupation } from '../entities/occupation'
-import { createOccupationFamily } from '../entities/occupation-family'
+import { createOccupation, createOccupationFamily } from '../entities/entity-test-helpers'
 
 describe('groupOccupationsByFamily', () => {
   it('orders families by position and their occupations by name, keeping empty families', () => {

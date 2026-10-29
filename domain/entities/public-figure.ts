@@ -1,5 +1,4 @@
 import * as S from 'effect/Schema'
-import { Option } from 'effect'
 import { slugify } from '../value-objects/slug'
 
 export const PublicFigureId = S.String.pipe(S.brand('PublicFigureId'))
@@ -34,27 +33,3 @@ export const PublicFigure = S.Struct({
 export type PublicFigure = S.Schema.Type<typeof PublicFigure>
 
 export const generateSlug = (name: string): PublicFigureSlug => PublicFigureSlug.make(slugify(name))
-
-export const createPublicFigure = (params: {
-  name: string
-  presentation: string
-  wikipediaUrl?: string
-  notorietySources?: string[]
-  websiteUrl?: string
-  createdBy: string
-}): PublicFigure => {
-  const now = new Date()
-
-  return PublicFigure.make({
-    id: PublicFigureId.make(crypto.randomUUID()),
-    name: PublicFigureName.make(params.name),
-    slug: generateSlug(params.name),
-    presentation: params.presentation,
-    wikipediaUrl: params.wikipediaUrl ? Option.some(params.wikipediaUrl) : Option.none(),
-    notorietySources: params.notorietySources ?? [],
-    websiteUrl: params.websiteUrl ? Option.some(params.websiteUrl) : Option.none(),
-    createdBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

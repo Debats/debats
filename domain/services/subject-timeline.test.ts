@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createPosition } from '../entities/position'
-import { createStatement, publicFigureAuthor } from '../entities/statement'
+import { createPosition, createStatement } from '../entities/entity-test-helpers'
+import { publicFigureAuthor } from '../entities/statement'
 import { StatementWithAuthor } from '../repositories/statement-repository'
 import { publicFigureRef } from '../read-models/statement-author'
 import { statedSpanLabel, subjectTimeline } from './subject-timeline'

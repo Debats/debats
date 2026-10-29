@@ -38,25 +38,3 @@ export type OccupationFamily = S.Schema.Type<typeof OccupationFamily>
 
 export const generateOccupationFamilySlug = (name: string): OccupationFamilySlug =>
   OccupationFamilySlug.make(slugify(name))
-
-export const createOccupationFamily = (params: {
-  name: string
-  description?: string
-  position: number
-  createdBy: string
-}): OccupationFamily => {
-  const now = new Date()
-  const name = params.name.trim()
-
-  return OccupationFamily.make({
-    id: OccupationFamilyId.make(crypto.randomUUID()),
-    name: OccupationFamilyName.make(name),
-    slug: generateOccupationFamilySlug(name),
-    description: params.description?.trim() ?? '',
-    position: params.position,
-    createdBy: params.createdBy,
-    updatedBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

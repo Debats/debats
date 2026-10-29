@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createOccupation } from '../entities/occupation'
+import { createOccupation } from '../entities/entity-test-helpers'
 import { PublicFigureActivitySummary } from '../value-objects/public-figure-activity-summary'
 import { distinctFiguresCount, occupationSections } from './occupation-sections'
 

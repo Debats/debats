@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
-import { Argument, createArgument, sameArgumentTitle } from '../entities/argument'
+import { Argument, sameArgumentTitle } from '../entities/argument'
+import { createArgument } from '../entities/entity-test-helpers'
 import { argumentAdded, argumentStream } from '../aggregates/argument'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ArgumentRepository } from '../repositories/argument-repository'

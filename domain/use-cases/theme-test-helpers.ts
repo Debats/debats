@@ -1,5 +1,6 @@
 import { Effect } from 'effect'
-import { createTheme, Theme } from '../entities/theme'
+import { createTheme } from '../entities/entity-test-helpers'
+import { Theme } from '../entities/theme'
 import { themeAdded, themeStream } from '../aggregates/theme'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ThemeRepository } from '../repositories/theme-repository'

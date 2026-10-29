@@ -47,30 +47,3 @@ export const Statement = S.Struct({
 })
 
 export type Statement = S.Schema.Type<typeof Statement>
-
-export const createStatement = (params: {
-  author: StatementAuthor
-  positionId: string
-  statementType: StatementType
-  sourceName: string
-  sourceUrl?: string
-  quote: string
-  statedAt: Date
-  createdBy?: string
-}): Statement => {
-  const now = new Date()
-
-  return Statement.make({
-    id: StatementId.make(crypto.randomUUID()),
-    author: params.author,
-    positionId: params.positionId,
-    statementType: params.statementType,
-    sourceName: params.sourceName,
-    sourceUrl: params.sourceUrl,
-    quote: params.quote,
-    statedAt: params.statedAt,
-    createdBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

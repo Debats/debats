@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createStatement, organisationAuthor, publicFigureAuthor } from './statement'
+import { createStatement } from './entity-test-helpers'
+import { organisationAuthor, publicFigureAuthor } from './statement'
 
 const base = {
   positionId: 'pos-1',
@@ -10,20 +11,16 @@ const base = {
   createdBy: 'user-1',
 }
 
-describe('Statement entity', () => {
-  it('is authored by a public figure', () => {
-    const statement = createStatement({ ...base, author: publicFigureAuthor('figure-1') })
-
-    expect(statement.author).toEqual({ kind: 'public_figure', id: 'figure-1' })
+describe('StatementAuthor', () => {
+  it('names a public figure', () => {
+    expect(publicFigureAuthor('figure-1')).toEqual({ kind: 'public_figure', id: 'figure-1' })
   })
 
-  it('is authored by an organisation', () => {
-    const statement = createStatement({ ...base, author: organisationAuthor('org-1') })
-
-    expect(statement.author).toEqual({ kind: 'organisation', id: 'org-1' })
+  it('names an organisation', () => {
+    expect(organisationAuthor('org-1')).toEqual({ kind: 'organisation', id: 'org-1' })
   })
 
-  it('rejects an author of unknown kind', () => {
+  it('is refused by the statement schema for an unknown kind', () => {
     expect(() =>
       createStatement({ ...base, author: { kind: 'robot', id: 'x' } as never }),
     ).toThrow()

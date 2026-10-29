@@ -30,24 +30,6 @@ export type Invitation = S.Schema.Type<typeof Invitation>
 
 const EXPIRATION_DAYS = 7
 
-export const createInvitation = (params: {
-  inviterId: string
-  inviteeEmail: string
-  inviteeName: string
-}): Invitation => {
-  const now = new Date()
-
-  return Invitation.make({
-    id: InvitationId.make(crypto.randomUUID()),
-    inviterId: params.inviterId,
-    inviteeEmail: InviteeEmail.make(params.inviteeEmail),
-    inviteeName: InviteeName.make(params.inviteeName),
-    status: 'pending',
-    createdAt: now,
-    updatedAt: now,
-  })
-}
-
 export const isExpired = (invitation: Invitation): boolean => {
   if (invitation.status !== 'pending') return false
   const now = new Date()

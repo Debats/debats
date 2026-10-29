@@ -1,5 +1,6 @@
 import { Effect, Option } from 'effect'
-import { createOrganisation, Organisation } from '../entities/organisation'
+import { createOrganisation, createPublicFigure } from '../entities/entity-test-helpers'
+import { Organisation } from '../entities/organisation'
 import { organisationAdded, organisationStream } from '../aggregates/organisation'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OrganisationMembership } from '../entities/organisation-membership'
@@ -11,7 +12,7 @@ import {
 } from '../repositories/organisation-membership-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
-import { createPublicFigure, PublicFigure } from '../entities/public-figure'
+import { PublicFigure } from '../entities/public-figure'
 import { OrganisationParts, OrganisationSource } from './organisation-stream'
 
 export const sampleOrganisation = (): Organisation =>

@@ -55,25 +55,3 @@ export const sameOccupationName = (written: string, listed: string): boolean => 
   const candidate = slugify(written)
   return spellingsOf(listed).some((spelling) => spelling === candidate)
 }
-
-export const createOccupation = (params: {
-  name: string
-  familyId: string
-  description?: string
-  createdBy: string
-}): Occupation => {
-  const now = new Date()
-  const name = params.name.trim()
-
-  return Occupation.make({
-    id: OccupationId.make(crypto.randomUUID()),
-    name: OccupationName.make(name),
-    slug: generateOccupationSlug(name),
-    familyId: OccupationFamilyId.make(params.familyId),
-    description: params.description?.trim() ?? '',
-    createdBy: params.createdBy,
-    updatedBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

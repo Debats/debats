@@ -31,23 +31,3 @@ export const Position = S.Struct({
 export type Position = S.Schema.Type<typeof Position>
 
 export const generateSlug = (title: string): PositionSlug => PositionSlug.make(slugify(title))
-
-export const createPosition = (params: {
-  title: string
-  description: string
-  subjectId: string
-  createdBy?: string
-}): Position => {
-  const now = new Date()
-
-  return Position.make({
-    id: PositionId.make(crypto.randomUUID()),
-    title: PositionTitle.make(params.title),
-    slug: generateSlug(params.title),
-    description: params.description,
-    subjectId: params.subjectId,
-    createdBy: params.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  })
-}

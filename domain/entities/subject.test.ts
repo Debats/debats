@@ -1,101 +1,40 @@
 import { describe, it, expect } from 'vitest'
-import { createSubject, isMajorSubject, generateSlug } from './subject'
+import { createSubject } from './entity-test-helpers'
+import { isMajorSubject, generateSlug } from './subject'
 
-describe('Subject Entity', () => {
-  describe('createSubject', () => {
-    it('should create a valid subject with generated slug', () => {
-      const subject = createSubject({
-        title: 'Immigration en France',
-        presentation: "Débat sur les politiques d'immigration française",
-        problem: "Quelle approche adopter pour l'immigration ?",
-      })
-
-      expect(subject.slug).toBe('immigration-en-france')
-      expect(subject.title).toBe('Immigration en France')
-      expect(subject.presentation).toBe("Débat sur les politiques d'immigration française")
-      expect(subject.problem).toBe("Quelle approche adopter pour l'immigration ?")
-      expect(subject.id).toBeTruthy()
-      expect(subject.createdAt).toBeInstanceOf(Date)
-      expect(subject.updatedAt).toBeInstanceOf(Date)
-    })
-
-    it('should handle accents and special characters in slug generation', () => {
-      const subject = createSubject({
-        title: 'Écologie & Développement Durable',
-        presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length',
-      })
-
-      expect(subject.slug).toBe('ecologie-developpement-durable')
-    })
-
-    it('should include optional fields when provided', () => {
-      const subject = createSubject({
-        title: 'Test Subject',
-        presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length',
-        pictureUrl: 'https://example.com/image.jpg',
-        createdBy: 'user-123',
-      })
-
-      expect(subject.pictureUrl).toBe('https://example.com/image.jpg')
-      expect(subject.createdBy).toBe('user-123')
-    })
+describe('generateSlug', () => {
+  it('generates proper slugs from various inputs', () => {
+    expect(generateSlug('Simple Title')).toBe('simple-title')
+    expect(generateSlug('Title with Multiple    Spaces')).toBe('title-with-multiple-spaces')
+    expect(generateSlug('Àccénts & Spéciàl Chärs!')).toBe('accents-special-chars')
+    expect(generateSlug('123 Numbers & Symbols @#$')).toBe('123-numbers-symbols')
+    expect(generateSlug('Écologie & Développement Durable')).toBe('ecologie-developpement-durable')
   })
 
-  describe('generateSlug', () => {
-    it('should generate proper slugs from various inputs', () => {
-      expect(generateSlug('Simple Title')).toBe('simple-title')
-      expect(generateSlug('Title with Multiple    Spaces')).toBe('title-with-multiple-spaces')
-      expect(generateSlug('Àccénts & Spéciàl Chärs!')).toBe('accents-special-chars')
-      expect(generateSlug('123 Numbers & Symbols @#$')).toBe('123-numbers-symbols')
-    })
+  it('handles edge cases', () => {
+    expect(generateSlug('   Leading and trailing   ')).toBe('leading-and-trailing')
+    expect(generateSlug('Multiple---Dashes')).toBe('multiple-dashes')
+  })
+})
 
-    it('should handle edge cases', () => {
-      expect(generateSlug('   Leading and trailing   ')).toBe('leading-and-trailing')
-      expect(generateSlug('Multiple---Dashes')).toBe('multiple-dashes')
-    })
+describe('isMajorSubject', () => {
+  const today = new Date('2026-10-29')
+  const subject = createSubject({
+    title: 'Le montant du SMIC',
+    presentation: 'Test presentation with minimum length',
+    problem: 'Test problem with minimum length',
+  })
+  const createdOn = (day: string) => ({ ...subject, createdAt: new Date(day) })
+
+  it('is major while less than a week old', () => {
+    expect(isMajorSubject(createdOn('2026-10-25'), 0, today)).toBe(true)
   })
 
-  describe('isMajorSubject', () => {
-    it('should identify major subject when recent (less than a week old)', () => {
-      const subject = createSubject({
-        title: 'Recent Subject',
-        presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length',
-      })
+  it('is major once it has more than five statements', () => {
+    expect(isMajorSubject(createdOn('2020-01-01'), 6, today)).toBe(true)
+  })
 
-      expect(isMajorSubject(subject, 0)).toBe(true)
-    })
-
-    it('should identify major subject when it has many statements', () => {
-      const subject = createSubject({
-        title: 'Old Subject',
-        presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length',
-      })
-
-      const oldSubject = {
-        ...subject,
-        createdAt: new Date('2020-01-01'),
-      }
-
-      expect(isMajorSubject(oldSubject, 6)).toBe(true)
-    })
-
-    it('should identify minor subject when old and few statements', () => {
-      const subject = createSubject({
-        title: 'Old Subject',
-        presentation: 'Test presentation with minimum length',
-        problem: 'Test problem with minimum length',
-      })
-
-      const oldSubject = {
-        ...subject,
-        createdAt: new Date('2020-01-01'),
-      }
-
-      expect(isMajorSubject(oldSubject, 2)).toBe(false)
-    })
+  it('is minor when old with few statements', () => {
+    expect(isMajorSubject(createdOn('2020-01-01'), 2, today)).toBe(false)
   })
 })

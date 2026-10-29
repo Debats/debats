@@ -1,5 +1,5 @@
-/** Contributor identity for use case authorization checks */
-export type ContributorIdentity = { id: string; reputation: number }
+/** The contributor a command receives, for its authorization checks */
+export type { ContributorIdentity } from '../entities/contributor'
 
 /** Field-level validation errors returned by use cases */
 export type FieldErrors = Record<string, string>

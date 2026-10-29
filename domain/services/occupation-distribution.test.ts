@@ -6,8 +6,7 @@ import {
   familyPositionMatrix,
   OccupationAssignment,
 } from './occupation-distribution'
-import { createOccupation } from '../entities/occupation'
-import { createOccupationFamily } from '../entities/occupation-family'
+import { createOccupation, createOccupationFamily } from '../entities/entity-test-helpers'
 
 const executive = createOccupationFamily({ name: 'Exécutif', position: 1, createdBy: 'f' })
 const elected = createOccupationFamily({ name: 'Élu·e national·e', position: 2, createdBy: 'f' })
