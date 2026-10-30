@@ -17,7 +17,8 @@ const validParams = {
   positionId: position.id,
   title: 'Pour',
   description: 'Une description revue, suffisamment longue.',
-  revision: 0,
+  /** The stream of the seeded subject: the subject, then its position */
+  revision: 2,
 }
 
 const eloquent = { id: 'abc', reputation: 10000 }
@@ -47,7 +48,7 @@ describe('updatePositionUseCase', () => {
   it('should fail when the position was merged away meanwhile', async () => {
     const { run } = await journalWithSubjects([subject, []])
     const result = await execute(
-      updatePositionUseCase({ ...validParams, contributor: eloquent }),
+      updatePositionUseCase({ ...validParams, contributor: eloquent, revision: 1 }),
       run,
     )
     expect(result).toEqual(Either.left('Position introuvable.'))

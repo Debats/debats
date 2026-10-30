@@ -26,7 +26,8 @@ const validParams = (existing = sampleOrganisation()) => ({
   wikipediaUrl: '',
   websiteUrl: 'https://france.attac.org',
   notorietySources: ['https://lemonde.fr/a', 'https://liberation.fr/b'],
-  revision: 0,
+  /** The stream of the seeded organisation: the organisation alone */
+  revision: 1,
 })
 
 /** The read side as the test wants it: the organisations the tables hold */

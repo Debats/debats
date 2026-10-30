@@ -14,7 +14,8 @@ const validParams = {
   title: 'Le SMIC',
   presentation: 'Une présentation revue, suffisamment longue.',
   problem: 'Faut-il augmenter le SMIC ?',
-  revision: 0,
+  /** The stream of the seeded subject: the subject, then its position */
+  revision: 2,
 }
 
 const execute = runWith(Layer.empty)

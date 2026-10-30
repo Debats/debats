@@ -8,14 +8,19 @@ const formWith = (revision?: string) => {
 }
 
 describe('revisionOf', () => {
-  it('reads the revision the form carries, zero included', () => {
+  it('reads the revision the form carries', () => {
     expect(revisionOf(formWith('7'))).toBe(7)
-    expect(revisionOf(formWith('0'))).toBe(0)
+    expect(revisionOf(formWith('10'))).toBe(10)
   })
 
   it('throws on a form without the field: the page forgot to read the revision', () => {
     expect(() => revisionOf(formWith())).toThrow('carries no revision')
     expect(() => revisionOf(formWith(''))).toThrow('carries no revision')
+  })
+
+  it('throws on zero: no stream stands there, the page rendered nothing real', () => {
+    expect(() => revisionOf(formWith('0'))).toThrow('carries no revision')
+    expect(() => revisionOf(formWith('007'))).toThrow('carries no revision')
   })
 
   it('throws on a value that is not a revision', () => {

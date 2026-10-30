@@ -68,7 +68,8 @@ const validParams = {
   quote: 'Nouvelle citation suffisamment longue.',
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
-  revision: 0,
+  /** The stream of the seeded statement: the statement alone */
+  revision: 1,
 }
 
 /** The read side as the test wants it */

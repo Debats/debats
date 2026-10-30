@@ -54,7 +54,8 @@ const validParams = {
   wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont',
   websiteUrl: '',
   notorietySources: [],
-  revision: 0,
+  /** The stream of the seeded figure: the figure alone */
+  revision: 1,
 }
 
 /** The read side as the test wants it */

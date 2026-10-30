@@ -32,7 +32,8 @@ const validParams = {
   subjectId: subject.id,
   themeIds: [economie.id, societe.id],
   primaryThemeId: economie.id,
-  revision: 0,
+  /** The stream of the seeded subject: the subject alone */
+  revision: 1,
 }
 
 const eloquent = { id: 'abc', reputation: 10000 }

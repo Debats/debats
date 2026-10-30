@@ -21,7 +21,8 @@ const renameParams = (argumentId: string) => ({
   argumentId,
   title: 'Coût pour les finances publiques',
   description: '',
-  revision: 0,
+  /** The stream of the seeded argument: the argument alone */
+  revision: 1,
 })
 
 /** The tables as the test wants them: the arguments the site knows */

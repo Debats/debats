@@ -101,9 +101,9 @@ export function openStream<State, Event extends DomainEvent>(
 /**
  * The revision a form was rendered from, so that the command refuses to
  * overwrite what someone else wrote meanwhile. Undefined for a command that
- * comes from no form and decides from the current state. Zero when the page
- * found no stream (one not imported yet): there is nothing to compare, the
- * command goes through.
+ * comes from no form and decides from the current state. A revision given
+ * is always compared: every aggregate has a stream, a page never renders
+ * from an empty one.
  */
 export type RenderedFrom = Revision | undefined
 
@@ -123,7 +123,7 @@ export function decideOn<State, Event extends DomainEvent>(
   renderedFrom?: RenderedFrom,
 ): Effect.Effect<Decided<State>, StreamFailure | UnreadableEvent> {
   const stillAt = (history: StoredEvent[]) =>
-    !renderedFrom || streamRevision(history) === renderedFrom
+    renderedFrom === undefined || streamRevision(history) === renderedFrom
   return pipe(
     loadStream(aggregate, events, id),
     Effect.filterOrFail(

@@ -88,19 +88,32 @@ describe('decideOn', () => {
     expect(events.all()).toHaveLength(2)
   })
 
-  it('accepts a decision rendered from the current revision, or from no stream at all', async () => {
+  it('accepts a decision rendered from the current revision, and one rendered from no form', async () => {
     const events = createInMemoryEventStore()
     await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
 
     await Effect.runPromise(
       decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)]), 1),
     )
-    // Zero: the page found no stream yet (imported since), nothing to compare
     await Effect.runPromise(
-      decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)]), 0),
+      decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)])),
     )
 
     expect(events.all()).toHaveLength(3)
+  })
+
+  it('compares zero like any revision: no stream stands at zero', async () => {
+    const events = createInMemoryEventStore()
+    await Effect.runPromise(events.append(stream, 0, [opened(1)], { actorId: 'alice' }))
+
+    const outcome = await Effect.runPromise(
+      Effect.either(
+        decideOn(counterAggregate, events, id, 'bob', () => Either.right([moved(1)]), 0),
+      ),
+    )
+
+    expect(Either.isLeft(outcome) && outcome.left).toBeInstanceOf(ConcurrencyError)
+    expect(events.all()).toHaveLength(1)
   })
 
   it('writes nothing when the decision changes nothing', async () => {
