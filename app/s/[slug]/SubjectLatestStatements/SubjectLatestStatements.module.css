@@ -10,12 +10,18 @@
   composes: label from '../../../../styles/text.module.css';
 }
 
-.all {
+.all,
+.all:link,
+.all:visited {
   font-size: 13px;
   color: var(--signal);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+
+.all:hover {
+  color: var(--ink);
 }
 
 .list {

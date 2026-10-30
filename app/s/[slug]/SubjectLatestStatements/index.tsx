@@ -1,26 +1,30 @@
 import Link from 'next/link'
 import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
-import ComingSoon from '../../../../components/ui/ComingSoon'
 import { LatestStatement } from '../../../../domain/read-models/latest-statement'
 import { authorHref, authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import { formatShortDate } from '../../../../lib/format-date'
+import { subjectTabHref } from '../SubjectTabs'
 import styles from './SubjectLatestStatements.module.css'
 
 interface SubjectLatestStatementsProps {
+  subjectSlug: string
   statements: LatestStatement[]
 }
 
-/** Les dernières prises de position du sujet, en format compact pour le rail. */
-export default function SubjectLatestStatements({ statements }: SubjectLatestStatementsProps) {
+/** Les dernières prises de position du sujet, en format compact pour le rail ; la chronologie les a toutes. */
+export default function SubjectLatestStatements({
+  subjectSlug,
+  statements,
+}: SubjectLatestStatementsProps) {
   if (statements.length === 0) return null
 
   return (
     <section>
       <div className={styles.head}>
         <h2 className={styles.title}>Dernières prises de position</h2>
-        <ComingSoon>
-          <span className={styles.all}>Tout voir</span>
-        </ComingSoon>
+        <Link href={subjectTabHref(subjectSlug, 'chronologie')} className={styles.all}>
+          Tout voir
+        </Link>
       </div>
       <ul className={styles.list}>
         {statements.map((statement) => (

@@ -188,7 +188,7 @@ export default async function SubjectDetail({
                 <>Le site ne dit pas qui a raison. Il montre qui dit quoi, et sur quelles bases.</>,
               ]}
             />
-            <SubjectLatestStatements statements={latestStatements} />
+            <SubjectLatestStatements subjectSlug={slug} statements={latestStatements} />
             <SubjectOrganisations positions={positions} />
           </>
         }
