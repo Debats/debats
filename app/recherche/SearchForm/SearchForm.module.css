@@ -1,0 +1,48 @@
+.form {
+  display: flex;
+  gap: 10px;
+  max-width: 640px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 16px 0 44px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line-2);
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238a8e97' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 14px center;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(21, 23, 28, 0.06);
+}
+
+.input::placeholder {
+  color: var(--ink-3);
+}
+
+.button {
+  height: 48px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background-color: var(--signal);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: var(--signal-dark);
+}

@@ -9,6 +9,8 @@ import Button from '../ui/Button'
 import ComingSoon from '../ui/ComingSoon'
 import ShareButton from '../ui/ShareButton'
 import { useShareButtonContext } from '../ui/ShareButton/ShareButtonContext'
+import SiteSearch from './SiteSearch'
+import SearchIcon from './SiteSearch/SearchIcon'
 import styles from './header.module.css'
 
 interface NavEntry {
@@ -29,25 +31,6 @@ const navEntries: NavEntry[] = [
   { label: 'Prises de position', href: '/prises-de-position' },
   { label: 'Méthode', href: '/guide' },
 ]
-
-function SearchIcon() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-3.5-3.5" />
-    </svg>
-  )
-}
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -74,6 +57,9 @@ export default function Header() {
           </Link>
 
           <div className={styles.mobileActions}>
+            <Link href="/recherche" className={styles.mobileSearch} aria-label="Rechercher">
+              <SearchIcon />
+            </Link>
             {!hasPageShareButton && <ShareButton iconOnly />}
             <button
               className={styles.burger}
@@ -109,12 +95,7 @@ export default function Header() {
           </nav>
 
           <div className={styles.tools}>
-            <ComingSoon className={styles.searchSoon}>
-              <span className={styles.search}>
-                <SearchIcon />
-                <span>Un sujet, une personnalité…</span>
-              </span>
-            </ComingSoon>
+            <SiteSearch />
             <Button href="/contribuer" size="small">
               Contribuer
             </Button>

@@ -1240,6 +1240,17 @@ export type Database = {
         }[]
       }
       get_user_id_by_email: { Args: { target_email: string }; Returns: string }
+      search_site: {
+        Args: { p_per_kind?: number; p_query: string }
+        Returns: {
+          detail: string
+          id: string
+          kind: string
+          score: number
+          slug: string
+          title: string
+        }[]
+      }
       merge_arguments: {
         Args: { source_id: string; target_id: string }
         Returns: undefined

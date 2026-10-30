@@ -49,6 +49,17 @@
   gap: 16px;
 }
 
+.mobileSearch,
+.mobileSearch:link,
+.mobileSearch:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--ink);
+}
+
 .burger {
   display: flex;
   background: none;
@@ -97,26 +108,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.search {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: var(--radius-pill);
-  background-color: var(--paper-2);
-  color: var(--ink-3);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-/* La barre de recherche (annoncée) n'a sa place que sur les grands écrans */
-@media (max-width: 1500px) {
-  .searchSoon {
-    display: none;
-  }
 }
 
 @media (max-width: 1024px) {

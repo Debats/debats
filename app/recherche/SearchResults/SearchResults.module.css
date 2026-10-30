@@ -1,0 +1,52 @@
+.empty {
+  composes: body from '../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.count {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.group {
+  padding: 20px 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.groupTitle {
+  composes: title from '../../../styles/text.module.css';
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.groupCount {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hit,
+.hit:link,
+.hit:visited {
+  display: block;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.hit:hover {
+  color: var(--signal);
+}
