@@ -441,6 +441,23 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements with authors', error),
       }),
 
+    findBySubjectIdsWithAuthors: (subjectIds: string[]) =>
+      subjectIds.length === 0
+        ? Effect.succeed([])
+        : Effect.tryPromise({
+            try: async () => {
+              const { data, error } = await supabase
+                .from('statements')
+                .select(STATEMENT_WITH_AUTHOR_QUERY)
+                .in('positions.subject_id', subjectIds)
+                .is('deleted_at', null)
+
+              if (error) throw error
+              return (data as unknown as StatementWithAuthorRow[]).map(mapStatementWithAuthorRow)
+            },
+            catch: (error) => dbError('Failed to fetch the statements of several subjects', error),
+          }),
+
     findIdsBySubjectId: (subjectId: string) =>
       Effect.tryPromise({
         try: async () => {

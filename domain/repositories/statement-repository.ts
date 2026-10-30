@@ -102,6 +102,11 @@ export interface StatementRepository {
    */
   findBySubjectWithAuthors(subjectId: string): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
+  /** Every live statement on any of these subjects, with its position and author */
+  findBySubjectIdsWithAuthors(
+    subjectIds: string[],
+  ): Effect.Effect<StatementWithAuthor[], DatabaseError>
+
   /** The ids of the live statements on any position of a subject */
   findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
 

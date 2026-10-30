@@ -1,0 +1,77 @@
+/*
+ * Recettes partagées des cartes d'analyse (onglets Analyses des pages sujet,
+ * personnalité et organisation), réutilisées par `composes`.
+ */
+
+/* Une carte d'analyse : titre, sous-titre, contenu */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.cardTitle {
+  composes: title from './text.module.css';
+}
+
+.cardSubtitle {
+  composes: small from './text.module.css';
+  margin-top: -8px;
+}
+
+.cardEmpty {
+  composes: small from './text.module.css';
+  color: var(--ink-3);
+}
+
+/* Le chiffre clé d'une carte, avec sa phrase */
+.headline {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-control);
+  background-color: var(--paper);
+}
+
+.headlineNumber {
+  composes: number from './text.module.css';
+}
+
+.headlineText {
+  composes: small from './text.module.css';
+  color: var(--ink);
+}
+
+/* Une liste de lignes séparées par un filet */
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+/* Le titre d'un sujet dans une ligne, lié */
+.subjectLink,
+.subjectLink:link,
+.subjectLink:visited {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.subjectLink:hover {
+  color: var(--signal);
+}

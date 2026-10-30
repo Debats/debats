@@ -1,0 +1,74 @@
+.card {
+  composes: card from '../../../../styles/analysis.module.css';
+}
+
+.title {
+  composes: cardTitle from '../../../../styles/analysis.module.css';
+}
+
+.subtitle {
+  composes: cardSubtitle from '../../../../styles/analysis.module.css';
+}
+
+.empty {
+  composes: cardEmpty from '../../../../styles/analysis.module.css';
+}
+
+.meta {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
+}
+
+.apart {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apartRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subject {
+  composes: subjectLink from '../../../../styles/analysis.module.css';
+  font-size: 16px;
+}

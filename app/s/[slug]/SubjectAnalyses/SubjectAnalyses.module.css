@@ -12,21 +12,15 @@
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 24px;
-  background-color: var(--card);
-  border-radius: var(--radius-card);
+  composes: card from '../../../../styles/analysis.module.css';
 }
 
 .title {
-  composes: title from '../../../../styles/text.module.css';
+  composes: cardTitle from '../../../../styles/analysis.module.css';
 }
 
 .subtitle {
-  composes: small from '../../../../styles/text.module.css';
-  margin-top: -8px;
+  composes: cardSubtitle from '../../../../styles/analysis.module.css';
 }
 
 .note {

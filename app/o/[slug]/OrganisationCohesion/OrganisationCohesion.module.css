@@ -1,0 +1,72 @@
+.card {
+  composes: card from '../../../../styles/analysis.module.css';
+}
+
+.title {
+  composes: cardTitle from '../../../../styles/analysis.module.css';
+}
+
+.subtitle {
+  composes: cardSubtitle from '../../../../styles/analysis.module.css';
+}
+
+.empty {
+  composes: cardEmpty from '../../../../styles/analysis.module.css';
+}
+
+.meta {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.headline {
+  composes: headline from '../../../../styles/analysis.module.css';
+}
+
+.number {
+  composes: headlineNumber from '../../../../styles/analysis.module.css';
+}
+
+.headlineText {
+  composes: headlineText from '../../../../styles/analysis.module.css';
+}
+
+.rows {
+  composes: rows from '../../../../styles/analysis.module.css';
+}
+
+.row {
+  composes: row from '../../../../styles/analysis.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subject {
+  composes: subjectLink from '../../../../styles/analysis.module.css';
+}
+
+.line {
+  composes: small from '../../../../styles/text.module.css';
+  margin-top: 4px;
+}
+
+.lineLabel {
+  composes: label from '../../../../styles/text.module.css';
+  margin-right: 6px;
+}
+
+.member,
+.member:link,
+.member:visited {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.member:hover {
+  color: var(--signal);
+}
+
+.silent {
+  composes: meta from '../../../../styles/text.module.css';
+  margin-top: 4px;
+}

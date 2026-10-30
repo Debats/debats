@@ -1,0 +1,231 @@
+.analyses {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.none {
+  composes: body from '../../../styles/text.module.css';
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.card {
+  composes: card from '../../../styles/analysis.module.css';
+}
+
+.title {
+  composes: cardTitle from '../../../styles/analysis.module.css';
+}
+
+.subtitle {
+  composes: cardSubtitle from '../../../styles/analysis.module.css';
+}
+
+.empty {
+  composes: cardEmpty from '../../../styles/analysis.module.css';
+}
+
+.note {
+  composes: meta from '../../../styles/text.module.css';
+  padding: 0 24px;
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+
+.columnTitle {
+  composes: label from '../../../styles/text.module.css';
+  margin-bottom: 12px;
+}
+
+/* Qui pense comme elle */
+.companions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.companion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.companionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
+}
+
+/* Face à l'ensemble */
+.headline {
+  composes: headline from '../../../styles/analysis.module.css';
+}
+
+.number {
+  composes: headlineNumber from '../../../styles/analysis.module.css';
+}
+
+.headlineText {
+  composes: headlineText from '../../../styles/analysis.module.css';
+}
+
+.rows {
+  composes: rows from '../../../styles/analysis.module.css';
+}
+
+.row {
+  composes: row from '../../../styles/analysis.module.css';
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.subject {
+  composes: subjectLink from '../../../styles/analysis.module.css';
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badgeWith {
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+.badgeApart {
+  background-color: var(--paper-2);
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+}
+
+.badgeAlone {
+  background-color: var(--paper);
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+}
+
+/* Changements de position */
+.steps {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+}
+
+.step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.step + .step::before {
+  content: '→';
+  margin-right: 8px;
+  color: var(--ink-3);
+}
+
+.stepPosition {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Comment elle s'exprime */
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: 150px 1fr 28px;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink-2);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.track {
+  height: 12px;
+}
+
+.fill {
+  height: 12px;
+  background-color: var(--ink);
+  border-radius: 0 4px 4px 0;
+}
+
+.barValue {
+  composes: meta from '../../../styles/text.module.css';
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bar {
+    grid-template-columns: 100px 1fr 28px;
+  }
+}
