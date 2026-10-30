@@ -136,29 +136,6 @@ export const removeMembership =
       ? Either.right([membershipRemoved(membershipId)])
       : refused(MEMBERSHIP_NOT_FOUND)
 
-/** A figure found in the tables before her journal existed enters it as she is */
-export const importPublicFigure = (figure: PublicFigure): PublicFigureEvent => ({
-  type: 'PublicFigureImported',
-  payload: content({
-    name: figure.name,
-    presentation: figure.presentation,
-    wikipediaUrl: Option.getOrUndefined(figure.wikipediaUrl),
-    websiteUrl: Option.getOrUndefined(figure.websiteUrl),
-    notorietySources: figure.notorietySources,
-  }),
-})
-
-export const importMembership = (membership: OrganisationMembership): PublicFigureEvent => ({
-  type: 'MembershipImported',
-  payload: membershipContent({
-    membershipId: membership.id,
-    organisationId: membership.organisationId,
-    role: Option.getOrUndefined(membership.role),
-    startedOn: Option.getOrUndefined(membership.startedOn),
-    endedOn: Option.getOrUndefined(membership.endedOn),
-  }),
-})
-
 /** Whether the figure is currently affiliated to this organisation */
 export const hasCurrentMembership = (state: PublicFigureState, organisationId: string): boolean =>
   state.memberships.some((m) => m.organisationId === organisationId && isCurrentMembership(m))
@@ -176,10 +153,7 @@ export const findMembership = (
 export const replayPublicFigure = replayStream(
   decodePublicFigureEvent,
   apply,
-  authored(
-    ['PublicFigureAdded', 'PublicFigureImported', 'MembershipAdded', 'MembershipImported'],
-    'a public figure or an affiliation',
-  ),
+  authored(['PublicFigureAdded', 'MembershipAdded'], 'a public figure or an affiliation'),
 )
 
 function apply(
@@ -188,7 +162,6 @@ function apply(
 ): PublicFigureState | null {
   switch (event.type) {
     case 'PublicFigureAdded':
-    case 'PublicFigureImported':
       return {
         figure: figureFrom(stored, event.payload),
         occupations: [],
@@ -210,7 +183,6 @@ function apply(
     case 'OccupationsSet':
       return { ...state, occupations: event.payload.occupations }
     case 'MembershipAdded':
-    case 'MembershipImported':
       return {
         ...state,
         memberships: [...state.memberships, membershipFrom(stored, state.figure, event.payload)],

@@ -82,20 +82,6 @@ export const addOrganisation = (input: OrganisationInput): OrganisationEvent[] =
 export const editOrganisation = (input: OrganisationInput): OrganisationDecision =>
   always(organisationEdited(input))
 
-/** An organisation found in the tables before its journal existed enters it as it is */
-export const importOrganisation = (organisation: Organisation): OrganisationEvent => ({
-  type: 'OrganisationImported',
-  payload: content({
-    name: organisation.name,
-    acronym: Option.getOrUndefined(organisation.acronym),
-    organisationType: organisation.organisationType,
-    presentation: organisation.presentation,
-    wikipediaUrl: Option.getOrUndefined(organisation.wikipediaUrl),
-    websiteUrl: Option.getOrUndefined(organisation.websiteUrl),
-    notorietySources: organisation.notorietySources,
-  }),
-})
-
 /**
  * Rebuilds the organisation from its stream; null for a stream without events.
  * An organisation always has an author (the column is not null).
@@ -103,7 +89,7 @@ export const importOrganisation = (organisation: Organisation): OrganisationEven
 export const replayOrganisation = replayStream(
   decodeOrganisationEvent,
   apply,
-  authored(['OrganisationAdded', 'OrganisationImported'], 'an organisation'),
+  authored(['OrganisationAdded'], 'an organisation'),
 )
 
 function apply(
@@ -112,7 +98,6 @@ function apply(
 ): OrganisationState | null {
   switch (event.type) {
     case 'OrganisationAdded':
-    case 'OrganisationImported':
       return { organisation: organisationFrom(stored, event.payload), deletedAt: null }
   }
   if (!state) return null

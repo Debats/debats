@@ -200,7 +200,7 @@ describe.skipIf(!hasDatabase)('subject journal after the backfill', () => {
     expect(events.length).toBeGreaterThan(0)
   })
 
-  it('replays every imported subject to what its rows hold', async () => {
+  it('replays every backfilled subject to what its rows hold', async () => {
     const rows = await prisma().subjects.findMany({
       where: { deleted_at: null },
       include: { positions: { where: { deleted_at: null }, select: { id: true, slug: true } } },

@@ -6,7 +6,6 @@ import { Rejected } from './decision'
 import {
   addStatement,
   editStatement,
-  importStatement,
   moveStatement,
   OTHER_SUBJECT,
   removeStatement,
@@ -187,17 +186,6 @@ describe('replayStatement', () => {
       stored(statementDeleted(), 2, at('2024-04-01')),
     ])
     expect(Either.isRight(state) && state.right?.deletedAt).toEqual(at('2024-04-01'))
-  })
-
-  it('treats an import like an addition', () => {
-    const first = replayStatement([stored(added, 1, at('2024-01-16'))])
-    const statement = Either.isRight(first) && first.right ? first.right.statement : null
-    const imported = importStatement(statement!, ['arg-1'], 'subject-1')
-
-    expect(imported.type).toBe('StatementImported')
-    const again = replayStatement([stored(imported, 1, at('2024-01-16'))])
-    expect(Either.isRight(again) && again.right?.statement).toEqual(statement)
-    expect(Either.isRight(again) && again.right?.subjectId).toBe('subject-1')
   })
 
   it('refuses an event it cannot read', () => {

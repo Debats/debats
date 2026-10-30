@@ -42,12 +42,6 @@ export const addTheme = (input: ThemeInput): ThemeEvent[] => [themeAdded(input)]
 /** The subjects it gathered keep their other themes: the projection drops the links */
 export const deleteTheme = (): ThemeDecision => always(themeDeleted())
 
-/** A theme found in the table before its journal existed enters it as it is */
-export const importTheme = (theme: Theme): ThemeEvent => ({
-  type: 'ThemeImported',
-  payload: { name: theme.name, slug: theme.slug, description: theme.description },
-})
-
 /**
  * Rebuilds the theme from its stream; null for a stream without events.
  * A theme always has an author (the column is not null).
@@ -55,7 +49,7 @@ export const importTheme = (theme: Theme): ThemeEvent => ({
 export const replayTheme = replayStream(
   decodeThemeEvent,
   apply,
-  authored(['ThemeAdded', 'ThemeImported'], 'a theme'),
+  authored(['ThemeAdded'], 'a theme'),
 )
 
 function apply(
@@ -64,7 +58,6 @@ function apply(
 ): ThemeState | null {
   switch (event.type) {
     case 'ThemeAdded':
-    case 'ThemeImported':
       return { theme: themeFrom(stored, event.payload), deletedAt: null }
     case 'ThemeDeleted':
       return state && { ...state, deletedAt: stored.occurredAt }

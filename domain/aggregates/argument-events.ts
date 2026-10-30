@@ -19,12 +19,6 @@ export const ArgumentAdded = S.Struct({
   payload: ArgumentWording,
 })
 
-/** The argument existed before the journal; this is the state it was found in */
-export const ArgumentImported = S.Struct({
-  type: S.Literal('ArgumentImported'),
-  payload: ArgumentWording,
-})
-
 export const ArgumentRenamed = S.Struct({
   type: S.Literal('ArgumentRenamed'),
   payload: ArgumentWording,
@@ -53,7 +47,6 @@ export const ArgumentDeleted = S.Struct({
 
 export const ArgumentEvent = S.Union(
   ArgumentAdded,
-  ArgumentImported,
   ArgumentRenamed,
   ArgumentMergedInto,
   ArgumentAbsorbed,

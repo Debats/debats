@@ -102,17 +102,6 @@ export const removeOccupation =
 export const deleteOccupationFamily = (): OccupationFamilyDecision =>
   always(occupationFamilyDeleted())
 
-/** A family found in the table before its journal existed enters it as it is */
-export const importOccupationFamily = (family: OccupationFamily): OccupationFamilyEvent => ({
-  type: 'OccupationFamilyImported',
-  payload: familyContent(family),
-})
-
-export const importOccupation = (occupation: Occupation): OccupationFamilyEvent => ({
-  type: 'OccupationImported',
-  payload: occupationContent(occupation.id, occupation),
-})
-
 function familyContent(input: FamilyInput): FamilyContent {
   const name = input.name.trim()
   return {
@@ -140,10 +129,7 @@ function occupationContent(occupationId: string, input: OccupationInput): Occupa
 export const replayOccupationFamily = replayStream(
   decodeOccupationFamilyEvent,
   apply,
-  authored(
-    ['OccupationFamilyAdded', 'OccupationFamilyImported', 'OccupationAdded', 'OccupationImported'],
-    'a family or an occupation',
-  ),
+  authored(['OccupationFamilyAdded', 'OccupationAdded'], 'a family or an occupation'),
 )
 
 function apply(
@@ -152,10 +138,8 @@ function apply(
 ): OccupationFamilyState | null {
   switch (event.type) {
     case 'OccupationFamilyAdded':
-    case 'OccupationFamilyImported':
       return { family: familyFrom(stored, event.payload), occupations: [], deletedAt: null }
     case 'OccupationAdded':
-    case 'OccupationImported':
       return (
         state && {
           ...state,

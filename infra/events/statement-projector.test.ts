@@ -212,7 +212,7 @@ describe.skipIf(!hasDatabase)('statement journal after the backfill', () => {
     expect(events.length).toBeGreaterThan(0)
   })
 
-  it('replays a few imported streams to what their rows hold', async () => {
+  it('replays a few backfilled streams to what their rows hold', async () => {
     const rows = await prisma().statements.findMany({
       take: 25,
       orderBy: { created_at: 'asc' },

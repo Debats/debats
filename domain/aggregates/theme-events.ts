@@ -18,19 +18,13 @@ export const ThemeAdded = S.Struct({
   payload: ThemeContent,
 })
 
-/** The theme existed before the journal; this is the state it was found in */
-export const ThemeImported = S.Struct({
-  type: S.Literal('ThemeImported'),
-  payload: ThemeContent,
-})
-
 /** The theme goes away; the subjects it gathered simply lose it */
 export const ThemeDeleted = S.Struct({
   type: S.Literal('ThemeDeleted'),
   payload: S.Struct({}),
 })
 
-export const ThemeEvent = S.Union(ThemeAdded, ThemeImported, ThemeDeleted)
+export const ThemeEvent = S.Union(ThemeAdded, ThemeDeleted)
 export type ThemeEvent = S.Schema.Type<typeof ThemeEvent>
 
 /** Reads a stored event as a theme event, or says why the journal is corrupt */

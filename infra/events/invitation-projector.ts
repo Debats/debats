@@ -17,7 +17,6 @@ async function apply(decoded: InvitationEvent, stored: StoredEvent, tx: PrismaTr
   const id = stored.streamId
   switch (decoded.type) {
     case 'InvitationSent':
-    case 'InvitationImported':
       return createIfMissing(tx, stored, decoded.payload)
     case 'InvitationAccepted':
       await tx.invitations.update({

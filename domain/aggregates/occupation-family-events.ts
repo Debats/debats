@@ -29,19 +29,8 @@ export const OccupationFamilyAdded = S.Struct({
   payload: FamilyContent,
 })
 
-/** The family existed before the journal; this is the state it was found in */
-export const OccupationFamilyImported = S.Struct({
-  type: S.Literal('OccupationFamilyImported'),
-  payload: FamilyContent,
-})
-
 export const OccupationAdded = S.Struct({
   type: S.Literal('OccupationAdded'),
-  payload: OccupationContent,
-})
-
-export const OccupationImported = S.Struct({
-  type: S.Literal('OccupationImported'),
   payload: OccupationContent,
 })
 
@@ -59,9 +48,7 @@ export const OccupationFamilyDeleted = S.Struct({
 
 export const OccupationFamilyEvent = S.Union(
   OccupationFamilyAdded,
-  OccupationFamilyImported,
   OccupationAdded,
-  OccupationImported,
   OccupationRemoved,
   OccupationFamilyDeleted,
 )

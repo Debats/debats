@@ -18,7 +18,6 @@ async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTra
   const id = stored.streamId
   switch (decoded.type) {
     case 'StatementAdded':
-    case 'StatementImported':
       await createRowIfMissing(tx, stored, decoded.payload)
       await syncArguments(tx, id, decoded.payload.argumentIds, stored.actorId)
       return

@@ -125,16 +125,6 @@ export const withArgumentReplaced = (
   return kept.includes(target) ? kept : [...kept, target]
 }
 
-/** A statement found in the tables before its journal existed enters it as it is */
-export const importStatement = (
-  statement: Statement,
-  argumentIds: readonly string[],
-  subjectId: string,
-): StatementEvent => ({
-  type: 'StatementImported',
-  payload: { author: statement.author, subjectId, ...content({ ...statement, argumentIds }) },
-})
-
 /** Rebuilds the statement from its stream; null for a stream without events */
 export const replayStatement = replayStream(decodeStatementEvent, apply)
 
@@ -144,7 +134,6 @@ function apply(
 ): StatementState | null {
   switch (event.type) {
     case 'StatementAdded':
-    case 'StatementImported':
       return {
         statement: Statement.make({
           id: StatementId.make(stored.streamId),

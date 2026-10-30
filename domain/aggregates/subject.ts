@@ -151,28 +151,6 @@ export const mergePositions =
       ? Either.right([positionMergedInto(sourceId, targetId)])
       : refused(POSITION_GONE)
 
-/** A subject found in the tables before its journal existed enters it as it is */
-export const importSubject = (subject: Subject): SubjectEvent => ({
-  type: 'SubjectImported',
-  payload: {
-    title: subject.title,
-    slug: subject.slug,
-    presentation: subject.presentation,
-    problem: subject.problem,
-    ...(subject.pictureUrl ? { pictureUrl: subject.pictureUrl } : {}),
-  },
-})
-
-export const importPosition = (position: Position): SubjectEvent => ({
-  type: 'PositionImported',
-  payload: {
-    positionId: position.id,
-    title: position.title,
-    slug: position.slug,
-    description: position.description,
-  },
-})
-
 /** Rebuilds the subject from its stream; null for a stream without events */
 export const replaySubject = replayStream(decodeSubjectEvent, apply)
 
@@ -182,7 +160,6 @@ function apply(
 ): SubjectState | null {
   switch (event.type) {
     case 'SubjectAdded':
-    case 'SubjectImported':
       return {
         subject: subjectFrom(stored, event.payload),
         positions: [],
@@ -229,7 +206,6 @@ function apply(
         relatedSubjectIds: state.relatedSubjectIds.filter((id) => id !== event.payload.subjectId),
       }
     case 'PositionAdded':
-    case 'PositionImported':
       return {
         ...state,
         positions: [

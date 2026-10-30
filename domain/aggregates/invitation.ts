@@ -61,12 +61,6 @@ export const acceptInvitation =
 /** The e-mail could not leave: the invitation is withdrawn */
 export const revokeInvitation = (): InvitationDecision => always(invitationRevoked())
 
-/** An invitation found in the table before its journal existed enters it as it was sent */
-export const importInvitation = (invitation: Invitation): InvitationEvent => ({
-  type: 'InvitationImported',
-  payload: { inviteeEmail: invitation.inviteeEmail, inviteeName: invitation.inviteeName },
-})
-
 /**
  * Rebuilds the invitation from its stream; null for a stream without events.
  * An invitation always has an inviter (the column is not null).
@@ -74,7 +68,7 @@ export const importInvitation = (invitation: Invitation): InvitationEvent => ({
 export const replayInvitation = replayStream(
   decodeInvitationEvent,
   apply,
-  authored(['InvitationSent', 'InvitationImported'], 'an invitation'),
+  authored(['InvitationSent'], 'an invitation'),
 )
 
 function apply(
@@ -83,7 +77,6 @@ function apply(
 ): InvitationState | null {
   switch (event.type) {
     case 'InvitationSent':
-    case 'InvitationImported':
       return { invitation: invitationFrom(stored, event.payload), revokedAt: null }
   }
   if (!state) return null

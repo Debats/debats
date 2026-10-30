@@ -20,7 +20,6 @@ async function apply(decoded: PublicFigureEvent, stored: StoredEvent, tx: Prisma
   const figureId = stored.streamId
   switch (decoded.type) {
     case 'PublicFigureAdded':
-    case 'PublicFigureImported':
       return createFigureIfMissing(tx, stored, decoded.payload)
     case 'PublicFigureEdited':
       await tx.public_figures.update({
@@ -31,7 +30,6 @@ async function apply(decoded: PublicFigureEvent, stored: StoredEvent, tx: Prisma
     case 'OccupationsSet':
       return syncOccupations(tx, figureId, decoded.payload.occupations, stored.actorId)
     case 'MembershipAdded':
-    case 'MembershipImported':
       return createMembershipIfMissing(tx, stored, decoded.payload)
     case 'MembershipRemoved':
       await tx.organisation_memberships.deleteMany({ where: { id: decoded.payload.membershipId } })

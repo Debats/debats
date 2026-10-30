@@ -18,12 +18,6 @@ export type SubjectContent = S.Schema.Type<typeof SubjectContent>
 
 export const SubjectAdded = S.Struct({ type: S.Literal('SubjectAdded'), payload: SubjectContent })
 
-/** The subject existed before the journal; this is the state it was found in */
-export const SubjectImported = S.Struct({
-  type: S.Literal('SubjectImported'),
-  payload: SubjectContent,
-})
-
 export const SubjectEdited = S.Struct({
   type: S.Literal('SubjectEdited'),
   payload: S.Struct({
@@ -67,11 +61,6 @@ export const PositionAdded = S.Struct({
   payload: PositionContent,
 })
 
-export const PositionImported = S.Struct({
-  type: S.Literal('PositionImported'),
-  payload: PositionContent,
-})
-
 export const PositionEdited = S.Struct({
   type: S.Literal('PositionEdited'),
   payload: PositionContent,
@@ -93,13 +82,11 @@ export const SubjectDeleted = S.Struct({ type: S.Literal('SubjectDeleted'), payl
 
 export const SubjectEvent = S.Union(
   SubjectAdded,
-  SubjectImported,
   SubjectEdited,
   SubjectThemesSet,
   SubjectLinked,
   SubjectUnlinked,
   PositionAdded,
-  PositionImported,
   PositionEdited,
   PositionMergedInto,
   PositionRemoved,

@@ -19,7 +19,6 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
   const subjectId = stored.streamId
   switch (decoded.type) {
     case 'SubjectAdded':
-    case 'SubjectImported':
       return createSubjectIfMissing(tx, stored, decoded.payload)
     case 'SubjectEdited':
       await tx.subjects.update({
@@ -43,7 +42,6 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
       return
     }
     case 'PositionAdded':
-    case 'PositionImported':
       return createPositionIfMissing(tx, stored, decoded.payload)
     case 'PositionEdited':
       await tx.positions.update({

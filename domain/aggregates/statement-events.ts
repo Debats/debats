@@ -36,12 +36,6 @@ export const StatementAdded = S.Struct({
   payload: StatementAddedPayload,
 })
 
-/** The statement existed before the journal; this is the state it was found in */
-export const StatementImported = S.Struct({
-  type: S.Literal('StatementImported'),
-  payload: StatementAddedPayload,
-})
-
 /** A contributor changed what the statement says; the author never changes */
 export const StatementEdited = S.Struct({
   type: S.Literal('StatementEdited'),
@@ -67,7 +61,6 @@ export const StatementDeleted = S.Struct({
 
 export const StatementEvent = S.Union(
   StatementAdded,
-  StatementImported,
   StatementEdited,
   StatementMoved,
   StatementArgumentsSet,

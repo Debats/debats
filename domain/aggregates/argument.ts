@@ -78,12 +78,6 @@ export const mergeArgumentInto = (targetArgumentId: string): ArgumentDecision =>
 export const absorbArgument = (sourceArgumentId: string): ArgumentDecision =>
   always(argumentAbsorbed(sourceArgumentId))
 
-/** An argument found in the tables before its journal existed enters it as it is */
-export const importArgument = (argument: Argument): ArgumentEvent => ({
-  type: 'ArgumentImported',
-  payload: wording(argument),
-})
-
 /** Whether the argument can still be mobilised, renamed or merged */
 export const isLiveArgument = (state: ArgumentState): boolean => state.deletedAt === null
 
@@ -94,7 +88,7 @@ export const isLiveArgument = (state: ArgumentState): boolean => state.deletedAt
 export const replayArgument = replayStream(
   decodeArgumentEvent,
   apply,
-  authored(['ArgumentAdded', 'ArgumentImported'], 'an argument'),
+  authored(['ArgumentAdded'], 'an argument'),
 )
 
 function apply(
@@ -103,7 +97,6 @@ function apply(
 ): ArgumentState | null {
   switch (event.type) {
     case 'ArgumentAdded':
-    case 'ArgumentImported':
       return {
         argument: argumentFrom(stored, event.payload),
         mergedInto: null,

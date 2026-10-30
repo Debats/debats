@@ -17,7 +17,6 @@ async function apply(decoded: OrganisationEvent, stored: StoredEvent, tx: Prisma
   const organisationId = stored.streamId
   switch (decoded.type) {
     case 'OrganisationAdded':
-    case 'OrganisationImported':
       return createIfMissing(tx, stored, decoded.payload)
     case 'OrganisationEdited':
       await tx.organisations.update({

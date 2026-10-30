@@ -13,7 +13,6 @@ export const projectTheme = projectorOf('theme', decodeThemeEvent, apply)
 async function apply(decoded: ThemeEvent, stored: StoredEvent, tx: PrismaTransaction) {
   switch (decoded.type) {
     case 'ThemeAdded':
-    case 'ThemeImported':
       return createIfMissing(tx, stored, decoded.payload)
     case 'ThemeDeleted':
       await tx.themes.deleteMany({ where: { id: stored.streamId } })

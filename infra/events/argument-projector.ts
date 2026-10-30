@@ -18,7 +18,6 @@ async function apply(decoded: ArgumentEvent, stored: StoredEvent, tx: PrismaTran
   const id = stored.streamId
   switch (decoded.type) {
     case 'ArgumentAdded':
-    case 'ArgumentImported':
       return createIfMissing(tx, stored, decoded.payload)
     case 'ArgumentRenamed':
       await tx.arguments.update({

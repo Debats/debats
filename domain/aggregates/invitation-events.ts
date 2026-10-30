@@ -19,12 +19,6 @@ export const InvitationSent = S.Struct({
   payload: Invitee,
 })
 
-/** The invitation existed before the journal; still pending at that point, accepted after if it was */
-export const InvitationImported = S.Struct({
-  type: S.Literal('InvitationImported'),
-  payload: Invitee,
-})
-
 /** The invitee joined; the actor is the contributor she became */
 export const InvitationAccepted = S.Struct({
   type: S.Literal('InvitationAccepted'),
@@ -37,12 +31,7 @@ export const InvitationRevoked = S.Struct({
   payload: S.Struct({}),
 })
 
-export const InvitationEvent = S.Union(
-  InvitationSent,
-  InvitationImported,
-  InvitationAccepted,
-  InvitationRevoked,
-)
+export const InvitationEvent = S.Union(InvitationSent, InvitationAccepted, InvitationRevoked)
 export type InvitationEvent = S.Schema.Type<typeof InvitationEvent>
 
 /** Reads a stored event as an invitation event, or says why the journal is corrupt */

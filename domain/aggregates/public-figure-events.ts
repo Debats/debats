@@ -24,12 +24,6 @@ export const PublicFigureAdded = S.Struct({
   payload: PublicFigureContent,
 })
 
-/** The figure existed before the journal; this is the state she was found in */
-export const PublicFigureImported = S.Struct({
-  type: S.Literal('PublicFigureImported'),
-  payload: PublicFigureContent,
-})
-
 export const PublicFigureEdited = S.Struct({
   type: S.Literal('PublicFigureEdited'),
   payload: PublicFigureContent,
@@ -58,11 +52,6 @@ export const MembershipAdded = S.Struct({
   payload: MembershipContent,
 })
 
-export const MembershipImported = S.Struct({
-  type: S.Literal('MembershipImported'),
-  payload: MembershipContent,
-})
-
 /** A wrong affiliation goes away; a real one that ended keeps its end date */
 export const MembershipRemoved = S.Struct({
   type: S.Literal('MembershipRemoved'),
@@ -76,11 +65,9 @@ export const PublicFigureDeleted = S.Struct({
 
 export const PublicFigureEvent = S.Union(
   PublicFigureAdded,
-  PublicFigureImported,
   PublicFigureEdited,
   OccupationsSet,
   MembershipAdded,
-  MembershipImported,
   MembershipRemoved,
   PublicFigureDeleted,
 )

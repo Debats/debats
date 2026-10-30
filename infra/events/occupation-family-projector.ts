@@ -23,10 +23,8 @@ export const projectOccupationFamily = projectorOf(
 async function apply(decoded: OccupationFamilyEvent, stored: StoredEvent, tx: PrismaTransaction) {
   switch (decoded.type) {
     case 'OccupationFamilyAdded':
-    case 'OccupationFamilyImported':
       return createFamilyIfMissing(tx, stored, decoded.payload)
     case 'OccupationAdded':
-    case 'OccupationImported':
       return createOccupationIfMissing(tx, stored, decoded.payload)
     case 'OccupationRemoved':
       await tx.occupations.deleteMany({

@@ -24,12 +24,6 @@ export const OrganisationAdded = S.Struct({
   payload: OrganisationContent,
 })
 
-/** The organisation existed before the journal; this is the state it was found in */
-export const OrganisationImported = S.Struct({
-  type: S.Literal('OrganisationImported'),
-  payload: OrganisationContent,
-})
-
 export const OrganisationEdited = S.Struct({
   type: S.Literal('OrganisationEdited'),
   payload: OrganisationContent,
@@ -40,12 +34,7 @@ export const OrganisationDeleted = S.Struct({
   payload: S.Struct({}),
 })
 
-export const OrganisationEvent = S.Union(
-  OrganisationAdded,
-  OrganisationImported,
-  OrganisationEdited,
-  OrganisationDeleted,
-)
+export const OrganisationEvent = S.Union(OrganisationAdded, OrganisationEdited, OrganisationDeleted)
 export type OrganisationEvent = S.Schema.Type<typeof OrganisationEvent>
 
 /** Reads a stored event as an organisation event, or says why the journal is corrupt */
