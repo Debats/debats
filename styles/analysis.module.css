@@ -27,6 +27,24 @@
   color: var(--ink-3);
 }
 
+/* Deux colonnes dans une carte, une seule sur mobile */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+
+.columnTitle {
+  composes: label from './text.module.css';
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Le chiffre clé d'une carte, avec sa phrase */
 .headline {
   display: flex;

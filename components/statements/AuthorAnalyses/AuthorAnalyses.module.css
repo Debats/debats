@@ -1,3 +1,5 @@
+/* Le module du dossier : l'onglet et ses cartes, un fichier par composant */
+
 .analyses {
   display: flex;
   flex-direction: column;
@@ -11,6 +13,12 @@
   border-radius: var(--radius-card);
 }
 
+.note {
+  composes: meta from '../../../styles/text.module.css';
+  padding: 0 24px;
+}
+
+/* Recettes de carte partagées par les quatre cartes */
 .card {
   composes: card from '../../../styles/analysis.module.css';
 }
@@ -27,27 +35,27 @@
   composes: cardEmpty from '../../../styles/analysis.module.css';
 }
 
-.note {
-  composes: meta from '../../../styles/text.module.css';
-  padding: 0 24px;
-}
-
 .meta {
   composes: meta from '../../../styles/text.module.css';
 }
 
 .columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
+  composes: columns from '../../../styles/analysis.module.css';
 }
 
 .columnTitle {
-  composes: label from '../../../styles/text.module.css';
-  margin-bottom: 12px;
+  composes: columnTitle from '../../../styles/analysis.module.css';
 }
 
-/* Qui pense comme elle */
+.rows {
+  composes: rows from '../../../styles/analysis.module.css';
+}
+
+.subject {
+  composes: subjectLink from '../../../styles/analysis.module.css';
+}
+
+/* CompanyCard, CompanionsColumn, CompanionRow */
 .companions {
   list-style: none;
   margin: 0;
@@ -83,7 +91,7 @@
   color: var(--signal);
 }
 
-/* Face à l'ensemble */
+/* StandingCard */
 .headline {
   composes: headline from '../../../styles/analysis.module.css';
 }
@@ -96,11 +104,7 @@
   composes: headlineText from '../../../styles/analysis.module.css';
 }
 
-.rows {
-  composes: rows from '../../../styles/analysis.module.css';
-}
-
-.row {
+.standingRow {
   composes: row from '../../../styles/analysis.module.css';
   display: flex;
   align-items: flex-start;
@@ -113,10 +117,6 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-}
-
-.subject {
-  composes: subjectLink from '../../../styles/analysis.module.css';
 }
 
 .badge {
@@ -146,7 +146,14 @@
   border: 1px solid var(--line);
 }
 
-/* Changements de position */
+/* PositionChangesCard */
+.changeRow {
+  composes: row from '../../../styles/analysis.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .steps {
   list-style: none;
   margin: 4px 0 0;
@@ -175,57 +182,9 @@
   color: var(--ink);
 }
 
-/* Comment elle s'exprime */
-.bars {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.bar {
-  display: grid;
-  grid-template-columns: 150px 1fr 28px;
-  align-items: center;
-  gap: 12px;
-}
-
-.barLabel {
-  font-size: 13px;
-  line-height: 1.3;
-  color: var(--ink-2);
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.track {
-  height: 12px;
-}
-
-.fill {
-  height: 12px;
-  background-color: var(--ink);
-  border-radius: 0 4px 4px 0;
-}
-
-.barValue {
-  composes: meta from '../../../styles/text.module.css';
-  color: var(--ink);
-}
-
 @media (max-width: 768px) {
-  .columns {
-    grid-template-columns: 1fr;
-  }
-
-  .row {
+  .standingRow {
     flex-direction: column;
     gap: 8px;
-  }
-
-  .bar {
-    grid-template-columns: 100px 1fr 28px;
   }
 }
