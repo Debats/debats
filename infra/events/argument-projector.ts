@@ -9,8 +9,7 @@ import { auditOf, changedBy, projectorOf } from './projector'
 
 /**
  * Keeps the arguments table in step with the argument stream. The links to
- * statements belong to the statement projector. Idempotent: replaying the
- * journal rebuilds the table.
+ * statements belong to the statement projector.
  */
 export const projectArgument = projectorOf('argument', decodeArgumentEvent, apply)
 
@@ -18,7 +17,7 @@ async function apply(decoded: ArgumentEvent, stored: StoredEvent, tx: PrismaTran
   const id = stored.streamId
   switch (decoded.type) {
     case 'ArgumentAdded':
-      return createIfMissing(tx, stored, decoded.payload)
+      return create(tx, stored, decoded.payload)
     case 'ArgumentRenamed':
       await tx.arguments.update({
         where: { id },
@@ -43,17 +42,7 @@ function columns(wording: ArgumentWording) {
   return { title: wording.title, slug: wording.slug, description: wording.description }
 }
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createIfMissing(
-  tx: PrismaTransaction,
-  stored: StoredEvent,
-  payload: ArgumentWording,
-) {
-  const found = await tx.arguments.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
+async function create(tx: PrismaTransaction, stored: StoredEvent, payload: ArgumentWording) {
   await tx.arguments.create({
     data: { id: stored.streamId, ...columns(payload), ...auditOf(stored, 'an argument') },
   })

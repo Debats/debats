@@ -11,8 +11,7 @@ import { actorOf, auditOf, projectorOf } from './projector'
 
 /**
  * Keeps public_figures, public_figure_occupations and organisation_memberships
- * in step with the public figure stream. Idempotent: replaying the journal
- * rebuilds them.
+ * in step with the public figure stream.
  */
 export const projectPublicFigure = projectorOf('public figure', decodePublicFigureEvent, apply)
 
@@ -20,7 +19,7 @@ async function apply(decoded: PublicFigureEvent, stored: StoredEvent, tx: Prisma
   const figureId = stored.streamId
   switch (decoded.type) {
     case 'PublicFigureAdded':
-      return createFigureIfMissing(tx, stored, decoded.payload)
+      return createFigure(tx, stored, decoded.payload)
     case 'PublicFigureEdited':
       await tx.public_figures.update({
         where: { id: figureId },
@@ -30,7 +29,7 @@ async function apply(decoded: PublicFigureEvent, stored: StoredEvent, tx: Prisma
     case 'OccupationsSet':
       return syncOccupations(tx, figureId, decoded.payload.occupations, stored.actorId)
     case 'MembershipAdded':
-      return createMembershipIfMissing(tx, stored, decoded.payload)
+      return createMembership(tx, stored, decoded.payload)
     case 'MembershipRemoved':
       await tx.organisation_memberships.deleteMany({ where: { id: decoded.payload.membershipId } })
       return
@@ -54,17 +53,11 @@ function figureColumns(content: PublicFigureContent) {
   }
 }
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createFigureIfMissing(
+async function createFigure(
   tx: PrismaTransaction,
   stored: StoredEvent,
   payload: PublicFigureContent,
 ) {
-  const found = await tx.public_figures.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
   await tx.public_figures.create({
     data: {
       id: stored.streamId,
@@ -76,16 +69,11 @@ async function createFigureIfMissing(
   })
 }
 
-async function createMembershipIfMissing(
+async function createMembership(
   tx: PrismaTransaction,
   stored: StoredEvent,
   payload: MembershipContent,
 ) {
-  const found = await tx.organisation_memberships.findUnique({
-    where: { id: payload.membershipId },
-    select: { id: true },
-  })
-  if (found) return
   await tx.organisation_memberships.create({
     data: {
       id: payload.membershipId,

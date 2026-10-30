@@ -9,7 +9,6 @@ import { auditOf, changedBy, projectorOf } from './projector'
 
 /**
  * Keeps the organisations table in step with the organisation stream.
- * Idempotent: replaying the journal rebuilds it.
  */
 export const projectOrganisation = projectorOf('organisation', decodeOrganisationEvent, apply)
 
@@ -17,7 +16,7 @@ async function apply(decoded: OrganisationEvent, stored: StoredEvent, tx: Prisma
   const organisationId = stored.streamId
   switch (decoded.type) {
     case 'OrganisationAdded':
-      return createIfMissing(tx, stored, decoded.payload)
+      return create(tx, stored, decoded.payload)
     case 'OrganisationEdited':
       await tx.organisations.update({
         where: { id: organisationId },
@@ -46,17 +45,7 @@ function columns(content: OrganisationContent) {
   }
 }
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createIfMissing(
-  tx: PrismaTransaction,
-  stored: StoredEvent,
-  payload: OrganisationContent,
-) {
-  const found = await tx.organisations.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
+async function create(tx: PrismaTransaction, stored: StoredEvent, payload: OrganisationContent) {
   await tx.organisations.create({
     data: { id: stored.streamId, ...columns(payload), ...auditOf(stored, 'an organisation') },
   })

@@ -11,7 +11,7 @@ import { projectorOf } from './projector'
 
 /**
  * Keeps subjects, positions, subject_themes and related_subjects in step
- * with the subject stream. Idempotent: replaying the journal rebuilds them.
+ * with the subject stream.
  */
 export const projectSubject = projectorOf('subject', decodeSubjectEvent, apply)
 
@@ -19,7 +19,7 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
   const subjectId = stored.streamId
   switch (decoded.type) {
     case 'SubjectAdded':
-      return createSubjectIfMissing(tx, stored, decoded.payload)
+      return createSubject(tx, stored, decoded.payload)
     case 'SubjectEdited':
       await tx.subjects.update({
         where: { id: subjectId },
@@ -42,7 +42,7 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
       return
     }
     case 'PositionAdded':
-      return createPositionIfMissing(tx, stored, decoded.payload)
+      return createPosition(tx, stored, decoded.payload)
     case 'PositionEdited':
       await tx.positions.update({
         where: { id: decoded.payload.positionId },
@@ -79,17 +79,7 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
 /** A soft delete is a change of the row: it moves updated_at too */
 const deletedOn = (at: Date) => ({ deleted_at: at, updated_at: at })
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createSubjectIfMissing(
-  tx: PrismaTransaction,
-  stored: StoredEvent,
-  payload: SubjectContent,
-) {
-  const found = await tx.subjects.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
+async function createSubject(tx: PrismaTransaction, stored: StoredEvent, payload: SubjectContent) {
   await tx.subjects.create({
     data: {
       id: stored.streamId,
@@ -105,16 +95,11 @@ async function createSubjectIfMissing(
   })
 }
 
-async function createPositionIfMissing(
+async function createPosition(
   tx: PrismaTransaction,
   stored: StoredEvent,
   payload: PositionContent,
 ) {
-  const found = await tx.positions.findUnique({
-    where: { id: payload.positionId },
-    select: { id: true },
-  })
-  if (found) return
   await tx.positions.create({
     data: {
       id: payload.positionId,

@@ -10,7 +10,7 @@ import { projectorOf } from './projector'
 
 /**
  * Keeps the statements and argument_statements tables in step with the
- * statement stream. Idempotent: replaying the journal rebuilds both tables.
+ * statement stream.
  */
 export const projectStatement = projectorOf('statement', decodeStatementEvent, apply)
 
@@ -18,7 +18,7 @@ async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTra
   const id = stored.streamId
   switch (decoded.type) {
     case 'StatementAdded':
-      await createRowIfMissing(tx, stored, decoded.payload)
+      await createRow(tx, stored, decoded.payload)
       await syncArguments(tx, id, decoded.payload.argumentIds, stored.actorId)
       return
     case 'StatementEdited':
@@ -47,17 +47,11 @@ async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTra
   }
 }
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createRowIfMissing(
+async function createRow(
   tx: PrismaTransaction,
   stored: StoredEvent,
   payload: StatementAddedPayload,
 ) {
-  const found = await tx.statements.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
   await tx.statements.create({
     data: {
       id: stored.streamId,

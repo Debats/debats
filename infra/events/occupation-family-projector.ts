@@ -11,8 +11,7 @@ import { auditOf, projectorOf } from './projector'
 /**
  * Keeps the families and occupations tables in step with the family stream.
  * A removed occupation or a deleted family leaves its table, and the links
- * with it (the foreign keys cascade). Idempotent: replaying the journal
- * rebuilds both tables.
+ * with it (the foreign keys cascade).
  */
 export const projectOccupationFamily = projectorOf(
   'occupation family',
@@ -23,9 +22,9 @@ export const projectOccupationFamily = projectorOf(
 async function apply(decoded: OccupationFamilyEvent, stored: StoredEvent, tx: PrismaTransaction) {
   switch (decoded.type) {
     case 'OccupationFamilyAdded':
-      return createFamilyIfMissing(tx, stored, decoded.payload)
+      return createFamily(tx, stored, decoded.payload)
     case 'OccupationAdded':
-      return createOccupationIfMissing(tx, stored, decoded.payload)
+      return createOccupation(tx, stored, decoded.payload)
     case 'OccupationRemoved':
       await tx.occupations.deleteMany({
         where: { id: decoded.payload.occupationId, family_id: stored.streamId },
@@ -37,17 +36,7 @@ async function apply(decoded: OccupationFamilyEvent, stored: StoredEvent, tx: Pr
   }
 }
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createFamilyIfMissing(
-  tx: PrismaTransaction,
-  stored: StoredEvent,
-  payload: FamilyContent,
-) {
-  const found = await tx.occupation_families.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
+async function createFamily(tx: PrismaTransaction, stored: StoredEvent, payload: FamilyContent) {
   await tx.occupation_families.create({
     data: {
       id: stored.streamId,
@@ -60,16 +49,11 @@ async function createFamilyIfMissing(
   })
 }
 
-async function createOccupationIfMissing(
+async function createOccupation(
   tx: PrismaTransaction,
   stored: StoredEvent,
   payload: OccupationContent,
 ) {
-  const found = await tx.occupations.findUnique({
-    where: { id: payload.occupationId },
-    select: { id: true },
-  })
-  if (found) return
   await tx.occupations.create({
     data: {
       id: payload.occupationId,

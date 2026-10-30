@@ -9,7 +9,7 @@ import { actorOf, projectorOf } from './projector'
 
 /**
  * Keeps the invitations table in step with the invitation stream. A revoked
- * invitation leaves the table. Idempotent: replaying the journal rebuilds it.
+ * invitation leaves the table.
  */
 export const projectInvitation = projectorOf('invitation', decodeInvitationEvent, apply)
 
@@ -17,7 +17,7 @@ async function apply(decoded: InvitationEvent, stored: StoredEvent, tx: PrismaTr
   const id = stored.streamId
   switch (decoded.type) {
     case 'InvitationSent':
-      return createIfMissing(tx, stored, decoded.payload)
+      return create(tx, stored, decoded.payload)
     case 'InvitationAccepted':
       await tx.invitations.update({
         where: { id },
@@ -34,17 +34,7 @@ async function apply(decoded: InvitationEvent, stored: StoredEvent, tx: PrismaTr
   }
 }
 
-/** An import finds its row already there; a replay from scratch creates it */
-async function createIfMissing(
-  tx: PrismaTransaction,
-  stored: StoredEvent,
-  payload: InviteePayload,
-) {
-  const found = await tx.invitations.findUnique({
-    where: { id: stored.streamId },
-    select: { id: true },
-  })
-  if (found) return
+async function create(tx: PrismaTransaction, stored: StoredEvent, payload: InviteePayload) {
   await tx.invitations.create({
     data: {
       id: stored.streamId,
