@@ -4,35 +4,35 @@ import { addOrganisationMembershipUseCase } from './add-organisation-membership'
 import { createMembership } from '../entities/entity-test-helpers'
 import { OrganisationMembership } from '../entities/organisation-membership'
 import { OrganisationRepository } from '../repositories/organisation-repository'
-import { fakeOrganisationRepo, sampleFigure, sampleOrganisation } from './organisation-test-helpers'
+import { PublicFigureRepository } from '../repositories/public-figure-repository'
+import {
+  fakeOrganisationRepo,
+  fakePublicFigureRepo,
+  sampleFigure,
+  sampleOrganisation,
+} from './organisation-test-helpers'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
-import { PublicFigureSource } from './public-figure-stream'
-import {
-  fakePublicFigureSource,
-  figureParts,
-  journalWithFigures,
-} from './public-figure-test-helpers'
+import { journalWithFigures } from './public-figure-test-helpers'
 
 const eloquent = { id: 'contributor-1', reputation: 1000 }
 
 const setup = () => {
   const organisation = sampleOrganisation()
   const figure = sampleFigure()
-  /** The tables as the test wants them: the figure with the memberships she already has */
-  const fakes = (memberships: OrganisationMembership[] = []) =>
-    Layer.mergeAll(
-      Layer.succeed(
-        PublicFigureSource,
-        fakePublicFigureSource([figureParts(figure, { memberships })]),
-      ),
-      Layer.succeed(OrganisationRepository, fakeOrganisationRepo([organisation])),
-    )
+  /** The tables as the test wants them: the organisation and the figure */
+  const fakes = Layer.mergeAll(
+    Layer.succeed(PublicFigureRepository, fakePublicFigureRepo([figure])),
+    Layer.succeed(OrganisationRepository, fakeOrganisationRepo([organisation])),
+  )
+  /** The journal as the test wants it: the figure with the memberships she already has */
+  const journalWith = (memberships: OrganisationMembership[]) =>
+    journalWithFigures([figure, { memberships }])
   return {
     organisation,
     figure,
-    fakes,
-    execute: runFormWith(fakes()),
+    journalWith,
+    execute: runFormWith(fakes),
     params: {
       contributor: eloquent,
       organisationId: organisation.id,
@@ -98,26 +98,28 @@ describe('addOrganisationMembershipUseCase', () => {
   })
 
   it('refuses a second current membership of the same figure in the same organisation', async () => {
-    const { params, organisation, figure, fakes } = setup()
+    const { params, organisation, figure, journalWith, execute } = setup()
     const current = createMembership({
       organisationId: organisation.id,
       publicFigureId: figure.id,
       createdBy: 'founder',
     })
-    const result = await runFormWith(fakes([current]))(addOrganisationMembershipUseCase(params))
+    const { run } = await journalWith([current])
+    const result = await execute(addOrganisationMembershipUseCase(params), run)
 
     expect(fieldErrorsOf(result).publicFigureId).toContain('déjà')
   })
 
   it('accepts a new membership when the previous one has ended', async () => {
-    const { params, organisation, figure, fakes } = setup()
+    const { params, organisation, figure, journalWith, execute } = setup()
     const former = createMembership({
       organisationId: organisation.id,
       publicFigureId: figure.id,
       endedOn: new Date('2010-01-01'),
       createdBy: 'founder',
     })
-    const result = await runFormWith(fakes([former]))(addOrganisationMembershipUseCase(params))
+    const { run } = await journalWith([former])
+    const result = await execute(addOrganisationMembershipUseCase(params), run)
 
     expect(Either.isRight(result)).toBe(true)
   })

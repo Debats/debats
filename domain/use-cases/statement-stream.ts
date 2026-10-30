@@ -1,6 +1,5 @@
-import { Context, Effect, Either, pipe } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import {
-  importStatement,
   replayStatement,
   STATEMENT_STREAM,
   StatementCascade,
@@ -8,46 +7,21 @@ import {
   StatementState,
 } from '../aggregates/statement'
 import { StatementEvent } from '../aggregates/statement-events'
-import { Statement } from '../entities/statement'
 import { EventStore, StoredEvent } from '../events/event-store'
 import {
   AggregateStream,
   appendAndReplay,
   decideOn,
-  IMPORT,
   loadStream,
   RenderedFrom,
   requireState as requireStateOf,
-  Source,
 } from './aggregate-stream'
 
-/** What the tables hold of a statement, enough to import it into the journal */
-export interface StatementParts {
-  statement: Statement
-  argumentIds: readonly string[]
-  /** The subject of its position: the stream names it from its first event */
-  subjectId: string
-}
-
-export type StatementSource = Source<StatementParts>
-export const StatementSource = Context.GenericTag<StatementSource>('StatementSource')
-
-export const statementAggregate: AggregateStream<StatementState, StatementEvent, StatementParts> = {
+export const statementAggregate: AggregateStream<StatementState, StatementEvent> = {
   streamType: STATEMENT_STREAM,
   notFound: 'Prise de position introuvable.',
-  source: StatementSource,
   replay: replayStatement,
   isLive: (state) => state.deletedAt === null,
-  importBatches: ({ statement, argumentIds, subjectId }) => [
-    {
-      events: [importStatement(statement, argumentIds, subjectId)],
-      options: {
-        actorId: statement.createdBy ?? null,
-        metadata: IMPORT,
-        occurredAt: statement.createdAt,
-      },
-    },
-  ],
 }
 
 export const loadStatement = (events: EventStore, statementId: string) =>
@@ -75,8 +49,8 @@ export const requireState = (state: StatementState | null) =>
 /**
  * The same cascade on each of several statements, each in its own stream:
  * what a command on another aggregate does to the statements it reaches.
- * Their streams were ensured before the transaction. One deleted meanwhile
- * is skipped, not refused: a cascade has nothing to say to what is gone.
+ * One deleted meanwhile is skipped, not refused: a cascade has nothing to
+ * say to what is gone.
  */
 export function decideOnEachStatement(
   events: EventStore,

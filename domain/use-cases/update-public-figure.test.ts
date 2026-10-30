@@ -11,12 +11,7 @@ import { PublicFigureRepository } from '../repositories/public-figure-repository
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
-import { PublicFigureSource } from './public-figure-stream'
-import {
-  fakePublicFigureSource,
-  figureParts,
-  journalWithFigures,
-} from './public-figure-test-helpers'
+import { journalWithFigures } from './public-figure-test-helpers'
 
 const existingFigure = PublicFigure.make({
   id: PublicFigureId.make('figure-1'),
@@ -65,7 +60,6 @@ const validParams = {
 /** The read side as the test wants it */
 const fakes = (figures: PublicFigureRepository = fakePublicFigureRepo) =>
   Layer.mergeAll(
-    Layer.succeed(PublicFigureSource, fakePublicFigureSource([figureParts(existingFigure)])),
     Layer.succeed(PublicFigureRepository, figures),
     Layer.succeed(WikipediaValidator, fakeWikipediaValidator),
   )
@@ -155,8 +149,10 @@ describe('updatePublicFigureUseCase', () => {
   })
 
   it('should allow keeping the same name without slug conflict', async () => {
+    const { run } = await journalWithFigures(existingFigure)
     const result = await execute(
       updatePublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
     )
 
     expect(Either.isRight(result)).toBe(true)

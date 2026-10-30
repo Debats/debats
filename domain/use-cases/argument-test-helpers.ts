@@ -4,7 +4,6 @@ import { createArgument } from '../entities/entity-test-helpers'
 import { argumentAdded, argumentStream } from '../aggregates/argument'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ArgumentRepository } from '../repositories/argument-repository'
-import { ArgumentParts, ArgumentSource } from './argument-stream'
 
 export const sampleArgument = (title = 'Coût budgétaire'): Argument =>
   createArgument({
@@ -38,14 +37,6 @@ export function fakeArgumentRepo(seed: Argument[] = []): ArgumentRepository {
         })),
       ),
     findRefsByStatementId: () => Effect.succeed([]),
-  }
-}
-
-/** What the tables would hold of these arguments, for an import on demand */
-export function fakeArgumentSource(seed: Argument[]): ArgumentSource {
-  return (argumentId) => {
-    const argument = seed.find((a) => a.id === argumentId)
-    return Effect.succeed<ArgumentParts | null>(argument ? { argument } : null)
   }
 }
 

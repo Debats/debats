@@ -2,7 +2,6 @@ import { Effect, pipe } from 'effect'
 import { deleteTheme } from '../aggregates/theme'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { decideOnTheme, themeAggregate } from './theme-stream'
 
@@ -17,7 +16,6 @@ export function deleteThemeUseCase(params: DeleteThemeParams) {
 
   return pipe(
     allowedTo(params.contributor, 'delete_theme', 'supprimer une thématique'),
-    Effect.tap(() => ensureStream(themeAggregate, themeId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) => decideOnTheme(events, themeId, contributor.id, deleteTheme())),
     ),

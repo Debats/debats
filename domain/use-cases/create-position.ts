@@ -5,7 +5,6 @@ import { addPosition } from '../aggregates/subject'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, fieldsOf } from './preconditions'
 import { decideOnSubject, subjectAggregate, writtenPosition } from './subject-stream'
 
@@ -38,7 +37,6 @@ export function createPositionUseCase(params: CreatePositionParams) {
       contributor: allowedTo(params.contributor, 'add_position', 'proposer une nouvelle position'),
       input: fieldsOf(CreatePositionInput, FIELD_MESSAGES)({ title, description }),
     }),
-    Effect.tap(() => ensureStream(subjectAggregate, subjectId)),
     Effect.flatMap(({ contributor, input }) =>
       runUnitOfWork((events) =>
         pipe(

@@ -4,7 +4,6 @@ import { setOccupations } from '../aggregates/public-figure'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { ContributorIdentity, Rejected } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { decideOnPublicFigure, publicFigureAggregate } from './public-figure-stream'
 
@@ -45,7 +44,6 @@ export function setPublicFigureOccupationsUseCase(params: SetPublicFigureOccupat
         () => new Rejected('Un des métiers choisis n’existe plus.'),
       ),
     ),
-    Effect.tap(() => ensureStream(publicFigureAggregate, publicFigureId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         decideOnPublicFigure(

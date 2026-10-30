@@ -3,16 +3,11 @@ import { MembershipId } from '../entities/organisation-membership'
 import { addMembership } from '../aggregates/public-figure'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationRepository } from '../repositories/organisation-repository'
+import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, faultless, found } from './preconditions'
-import {
-  decideOnPublicFigure,
-  publicFigureAggregate,
-  PublicFigureSource,
-  writtenMembership,
-} from './public-figure-stream'
+import { decideOnPublicFigure, writtenMembership } from './public-figure-stream'
 
 export type AddOrganisationMembershipParams = {
   contributor: ContributorIdentity | null
@@ -31,8 +26,9 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 const ROLE_MAX = 100
 
-/** Read side: the organisation must exist */
+/** Read side: the organisation and the figure must exist */
 const organisations = Effect.serviceFunctions(OrganisationRepository)
+const figures = Effect.serviceFunctions(PublicFigureRepository)
 
 /** Parses an optional ISO date field; `undefined` when empty, `null` when malformed. */
 function parseOptionalDate(value: string): Date | undefined | null {
@@ -77,9 +73,7 @@ export function addOrganisationMembershipUseCase(params: AddOrganisationMembersh
   const membershipId = MembershipId.make(crypto.randomUUID())
 
   const figureKnown = publicFigureId
-    ? Effect.flatMap(PublicFigureSource, (source) =>
-        Effect.map(source(publicFigureId), (parts) => parts !== null),
-      )
+    ? Effect.map(figures.findById(publicFigureId), (figure) => figure !== null)
     : Effect.succeed(false)
 
   return pipe(
@@ -95,7 +89,6 @@ export function addOrganisationMembershipUseCase(params: AddOrganisationMembersh
         faultless(membershipFaults(known, role, startedOn, endedOn)),
       ),
     ),
-    Effect.tap(() => ensureStream(publicFigureAggregate, publicFigureId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         pipe(

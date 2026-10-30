@@ -8,16 +8,7 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { statementAdded, statementDeleted, statementStream } from '../aggregates/statement'
 import { runWith } from './command-test-helpers'
-import { SubjectSource } from './subject-stream'
-import { StatementSource } from './statement-stream'
-import {
-  fakeStatementSource,
-  fakeSubjectSource,
-  journalWithSubjects,
-  samplePosition,
-  sampleSubject,
-  subjectParts,
-} from './subject-test-helpers'
+import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
 
 const subject: Subject = { ...sampleSubject(), createdAt: new Date('2020-01-01') }
 const position = samplePosition(subject.id)
@@ -53,11 +44,6 @@ const validParams = { subjectId: subject.id }
 /** The read side as the test wants it: how heavy the subject is, which statements stand on it */
 const fakes = (statementsCount = 0, statements: Statement[] = []) =>
   Layer.mergeAll(
-    Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject, [position])])),
-    Layer.succeed(
-      StatementSource,
-      fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
-    ),
     Layer.succeed(SubjectRepository, subjectRepo(statementsCount)),
     Layer.succeed(StatementRepository, statementRepo(statements)),
   )
@@ -146,28 +132,6 @@ describe('deleteSubjectUseCase', () => {
     ).toEqual([
       ['subject', 'SubjectDeleted', 'abc'],
       ['statement', 'StatementDeleted', 'abc'],
-    ])
-  })
-
-  it('should import a statement without a stream before deleting it', async () => {
-    const { run, journal } = await journalWithSubjects([subject, [position]])
-
-    const result = await runWith(fakes(0, [statement]))(
-      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
-      run,
-    )
-
-    expect(Either.isRight(result)).toBe(true)
-    // The import comes before the transaction, the deletions inside it
-    expect(
-      journal
-        .all()
-        .slice(-3)
-        .map((e) => [e.streamType, e.type, e.revision]),
-    ).toEqual([
-      ['statement', 'StatementImported', 1],
-      ['subject', 'SubjectDeleted', 3],
-      ['statement', 'StatementDeleted', 2],
     ])
   })
 })

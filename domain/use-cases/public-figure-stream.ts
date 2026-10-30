@@ -1,79 +1,21 @@
-import { Context, Effect } from 'effect'
+import { Effect } from 'effect'
 import {
   findMembership,
-  importMembership,
-  importPublicFigure,
-  occupationsSet,
   PublicFigureDecision,
   PUBLIC_FIGURE_STREAM,
   PublicFigureState,
   replayPublicFigure,
 } from '../aggregates/public-figure'
-import { OccupationAssignmentPayload, PublicFigureEvent } from '../aggregates/public-figure-events'
+import { PublicFigureEvent } from '../aggregates/public-figure-events'
 import { OrganisationMembership } from '../entities/organisation-membership'
-import { PublicFigure } from '../entities/public-figure'
 import { EventStore } from '../events/event-store'
-import {
-  AggregateStream,
-  Decided,
-  decideOn,
-  IMPORT,
-  RenderedFrom,
-  requireState,
-  Source,
-} from './aggregate-stream'
+import { AggregateStream, Decided, decideOn, RenderedFrom, requireState } from './aggregate-stream'
 
-/** What the tables hold of a public figure, enough to import her into the journal */
-export interface PublicFigureParts {
-  figure: PublicFigure
-  occupations: readonly OccupationAssignmentPayload[]
-  memberships: readonly OrganisationMembership[]
-}
-
-export type PublicFigureSource = Source<PublicFigureParts>
-export const PublicFigureSource = Context.GenericTag<PublicFigureSource>('PublicFigureSource')
-
-/**
- * A figure enters the journal event by event, each dated and signed as its
- * row: the figure, then each affiliation, then the occupations. Nobody is
- * recorded for an occupation in the tables: the figure's author stands in.
- */
-export const publicFigureAggregate: AggregateStream<
-  PublicFigureState,
-  PublicFigureEvent,
-  PublicFigureParts
-> = {
+export const publicFigureAggregate: AggregateStream<PublicFigureState, PublicFigureEvent> = {
   streamType: PUBLIC_FIGURE_STREAM,
   notFound: 'Personnalité introuvable.',
-  source: PublicFigureSource,
   replay: replayPublicFigure,
   isLive: (state) => state.deletedAt === null,
-  importBatches: (parts) => [
-    {
-      events: [importPublicFigure(parts.figure)],
-      options: {
-        actorId: parts.figure.createdBy,
-        metadata: IMPORT,
-        occurredAt: parts.figure.createdAt,
-      },
-    },
-    ...parts.memberships.map((membership) => ({
-      events: [importMembership(membership)],
-      options: {
-        actorId: membership.createdBy,
-        metadata: IMPORT,
-        occurredAt: membership.createdAt,
-      },
-    })),
-    ...(parts.occupations.length > 0
-      ? [
-          {
-            events: [occupationsSet(parts.occupations)],
-            options: { actorId: parts.figure.createdBy, metadata: IMPORT },
-          },
-        ]
-      : []),
-  ],
 }
 
 export const decideOnPublicFigure = (

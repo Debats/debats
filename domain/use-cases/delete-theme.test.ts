@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Layer } from 'effect'
 import { deleteThemeUseCase } from './delete-theme'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { runWith } from './command-test-helpers'
-import { ThemeSource } from './theme-stream'
-import { fakeThemeSource, journalWithThemes, sampleTheme } from './theme-test-helpers'
+import { journalWithThemes, sampleTheme } from './theme-test-helpers'
 
 const idealiste = { id: 'abc', reputation: 10000 }
 const theme = sampleTheme()
@@ -14,7 +12,7 @@ const validParams = {
   themeId: theme.id,
 }
 
-const execute = runWith(Layer.succeed(ThemeSource, fakeThemeSource([theme])))
+const execute = runWith(Layer.empty)
 
 describe('deleteThemeUseCase', () => {
   it('should fail when contributor is null', async () => {
@@ -46,14 +44,6 @@ describe('deleteThemeUseCase', () => {
       ['ThemeAdded', 1],
       ['ThemeDeleted', 2],
     ])
-  })
-
-  it('imports a theme the journal does not know yet, then deletes it', async () => {
-    const unit = inMemoryUnitOfWork()
-    const result = await execute(deleteThemeUseCase(validParams), unit.run)
-
-    expect(Either.isRight(result)).toBe(true)
-    expect(unit.journal.all().map((e) => e.type)).toEqual(['ThemeImported', 'ThemeDeleted'])
   })
 
   it('refuses to delete a theme already gone', async () => {

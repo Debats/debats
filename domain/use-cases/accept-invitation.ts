@@ -5,7 +5,6 @@ import { ContributorRepository } from '../repositories/contributor-repository'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { Invitation, isExpired } from '../entities/invitation'
 import { acceptInvitation } from '../aggregates/invitation'
-import { ensureStream } from './aggregate-stream'
 import { found } from './preconditions'
 import { decideOnInvitation, invitationAggregate } from './invitation-stream'
 import { Grant, grantEach, grantOf, rewardFor } from './reward'
@@ -55,7 +54,6 @@ export function acceptInvitationUseCase(params: AcceptInvitationParams) {
         grantsFor(invitation, inviteeId, inviterReputation),
       ),
     ),
-    Effect.tap(({ invitation }) => ensureStream(invitationAggregate, invitation.id)),
     Effect.flatMap(({ invitation, grants }) =>
       runUnitOfWork((events) =>
         pipe(

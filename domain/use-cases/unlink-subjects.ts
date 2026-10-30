@@ -3,7 +3,6 @@ import { unlinkSubject } from '../aggregates/subject'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity } from './types'
-import { ensureStreams } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 
@@ -19,7 +18,6 @@ export function unlinkSubjectsUseCase(params: UnlinkSubjectsParams) {
 
   return pipe(
     allowedTo(params.contributor, 'link_subjects', 'modifier les liens entre sujets'),
-    Effect.tap(() => ensureStreams(subjectAggregate, [subjectId1, subjectId2])),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         pipe(

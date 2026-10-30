@@ -1,8 +1,7 @@
-import { Effect, pipe } from 'effect'
+import { Effect } from 'effect'
 import { revokeInvitation } from '../aggregates/invitation'
 import { runUnitOfWork } from '../events/unit-of-work'
-import { ensureStream } from './aggregate-stream'
-import { decideOnInvitation, invitationAggregate } from './invitation-stream'
+import { decideOnInvitation } from './invitation-stream'
 
 type RevokeInvitationParams = {
   invitationId: string
@@ -14,13 +13,9 @@ type RevokeInvitationParams = {
 export function revokeInvitationUseCase(params: RevokeInvitationParams) {
   const { invitationId, actorId } = params
 
-  return pipe(
-    ensureStream(invitationAggregate, invitationId),
-    Effect.andThen(
-      runUnitOfWork((events) =>
-        decideOnInvitation(events, invitationId, actorId, revokeInvitation()),
-      ),
+  return Effect.asVoid(
+    runUnitOfWork((events) =>
+      decideOnInvitation(events, invitationId, actorId, revokeInvitation()),
     ),
-    Effect.asVoid,
   )
 }

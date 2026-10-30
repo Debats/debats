@@ -6,7 +6,6 @@ import { PublicFigureRepository } from '../repositories/public-figure-repository
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { publicFigureFields, ValidatedPublicFigureFields } from './validate-public-figure-fields'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, found, free, signedIn } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { decideOnPublicFigure, publicFigureAggregate } from './public-figure-stream'
@@ -68,20 +67,17 @@ const persisted = (
     notorietySources: params.notorietySources,
   })
   return pipe(
-    ensureStream(publicFigureAggregate, existing.id),
-    Effect.andThen(
-      runUnitOfWork((events) =>
-        pipe(
-          decideOnPublicFigure(events, existing.id, contributor.id, edited, params.revision),
-          Effect.tap(() =>
-            grant(
-              events,
-              contributor.id,
-              rewardFor(contributor.id, 'edited_personality', {
-                relatedEntityType: 'public_figure',
-                relatedEntityId: existing.id,
-              }),
-            ),
+    runUnitOfWork((events) =>
+      pipe(
+        decideOnPublicFigure(events, existing.id, contributor.id, edited, params.revision),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'edited_personality', {
+              relatedEntityType: 'public_figure',
+              relatedEntityId: existing.id,
+            }),
           ),
         ),
       ),

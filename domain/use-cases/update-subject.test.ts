@@ -2,17 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { Either, Layer } from 'effect'
 import { updateSubjectUseCase } from './update-subject'
 import { EDITED_MEANWHILE } from './run-command'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runWith } from './command-test-helpers'
-import { SubjectSource } from './subject-stream'
-import {
-  fakeSubjectSource,
-  journalWithSubjects,
-  samplePosition,
-  sampleSubject,
-  subjectParts,
-} from './subject-test-helpers'
+import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
 
 const subject = sampleSubject()
 const position = samplePosition(subject.id)
@@ -25,9 +17,7 @@ const validParams = {
   revision: 0,
 }
 
-const execute = runWith(
-  Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject, [position])])),
-)
+const execute = runWith(Layer.empty)
 
 describe('updateSubjectUseCase', () => {
   it('should fail when contributor is null', async () => {
@@ -115,25 +105,5 @@ describe('updateSubjectUseCase', () => {
 
     expect(result).toEqual(Either.left(EDITED_MEANWHILE))
     expect(journal.all().map((e) => e.type)).toEqual(['SubjectAdded', 'PositionAdded'])
-  })
-
-  it('should import a subject that has no stream yet, positions included, before editing it', async () => {
-    const { run, journal } = inMemoryUnitOfWork()
-
-    const result = await execute(
-      updateSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
-      run,
-    )
-
-    expect(Either.isRight(result)).toBe(true)
-    expect(deedsIn(journal).map((e) => [e.revision, e.type, e.actorId, e.metadata.source])).toEqual(
-      [
-        [1, 'SubjectImported', 'founder', 'import'],
-        [2, 'PositionImported', 'founder', 'import'],
-        [3, 'SubjectEdited', 'abc', undefined],
-      ],
-    )
-    expect(journal.all()[0].occurredAt).toEqual(subject.createdAt)
-    expect(journal.all()[1].payload).toMatchObject({ positionId: position.id, slug: position.slug })
   })
 })

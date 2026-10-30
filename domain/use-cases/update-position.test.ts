@@ -4,14 +4,7 @@ import { updatePositionUseCase } from './update-position'
 import { PositionRepository } from '../repositories/position-repository'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
-import { SubjectSource } from './subject-stream'
-import {
-  fakeSubjectSource,
-  journalWithSubjects,
-  samplePosition,
-  sampleSubject,
-  subjectParts,
-} from './subject-test-helpers'
+import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
 
 const subject = sampleSubject()
 const position = samplePosition(subject.id)
@@ -29,12 +22,7 @@ const validParams = {
 
 const eloquent = { id: 'abc', reputation: 10000 }
 
-const execute = runFormWith(
-  Layer.mergeAll(
-    Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject, [position])])),
-    Layer.succeed(PositionRepository, positionRepo),
-  ),
-)
+const execute = runFormWith(Layer.succeed(PositionRepository, positionRepo))
 
 describe('updatePositionUseCase', () => {
   it('should fail when contributor is null', async () => {

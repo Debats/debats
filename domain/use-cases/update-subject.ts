@@ -5,7 +5,6 @@ import { editSubject } from '../aggregates/subject'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity } from './types'
 import { grant, rewardFor } from './reward'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, decoded } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
@@ -34,7 +33,6 @@ export function updateSubjectUseCase(params: UpdateSubjectParams) {
       contributor: allowedTo(params.contributor, 'edit_subject', 'modifier un sujet'),
       edited: decoded(UpdateSubjectInput)({ title, presentation, problem }),
     }),
-    Effect.tap(() => ensureStream(subjectAggregate, subjectId)),
     Effect.flatMap(({ contributor, edited }) =>
       runUnitOfWork((events) =>
         pipe(

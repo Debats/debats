@@ -1,16 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { Context, Effect, Either, pipe } from 'effect'
+import { Effect, Either } from 'effect'
 import { ConcurrencyError } from '../events/event-store'
-import { createInMemoryEventStore, inMemoryUnitOfWork } from '../events/event-store-memory'
-import { RunUnitOfWork, UnitOfWork } from '../events/unit-of-work'
-import {
-  AggregateStream,
-  decideOn,
-  ensureStream,
-  IMPORT,
-  loadStream,
-  Source,
-} from './aggregate-stream'
+import { createInMemoryEventStore } from '../events/event-store-memory'
+import { AggregateStream, decideOn, loadStream } from './aggregate-stream'
 import { NotFound, Rejected } from './types'
 
 /** A counter: the smallest aggregate that can be opened, moved and closed */
@@ -24,18 +16,9 @@ type CounterEvent =
   | { type: 'Moved'; payload: { by: number } }
   | { type: 'Closed'; payload: Record<string, never> }
 
-/** What a table would hold of a counter */
-interface CounterRow {
-  count: number
-  openedAt: Date
-}
-
-const CounterSource = Context.GenericTag<Source<CounterRow>>('CounterSource')
-
-const counterAggregate: AggregateStream<Counter, CounterEvent, CounterRow> = {
+const counterAggregate: AggregateStream<Counter, CounterEvent> = {
   streamType: 'counter',
   notFound: 'Le compteur est introuvable.',
-  source: CounterSource,
   replay: (events) =>
     Either.right(
       events.reduce<Counter | null>((state, stored) => {
@@ -52,89 +35,17 @@ const counterAggregate: AggregateStream<Counter, CounterEvent, CounterRow> = {
       }, null),
     ),
   isLive: (state) => !state.closed,
-  importBatches: (row) => [
-    {
-      events: [opened(row.count)],
-      options: { actorId: null, metadata: IMPORT, occurredAt: row.openedAt },
-    },
-  ],
 }
 
 const id = 'counter-1'
 const stream = { streamType: 'counter', streamId: id }
-const nothing = () => Effect.succeed(null)
-const rowOf = (row: CounterRow) => () => Effect.succeed(row)
 
-function opened(count: number): CounterEvent {
-  return { type: 'Opened', payload: { count } }
-}
+const opened = (count: number): CounterEvent => ({ type: 'Opened', payload: { count } })
 const moved = (by: number): CounterEvent => ({ type: 'Moved', payload: { by } })
 const closed: CounterEvent = { type: 'Closed', payload: {} }
 
-const openedAt = new Date('2024-01-10T10:00:00Z')
-
-/** The stream ensured against the given unit of work and tables */
-const ensured = (run: RunUnitOfWork, source: Source<CounterRow>) =>
-  pipe(
-    ensureStream(counterAggregate, id),
-    Effect.provideService(UnitOfWork, run),
-    Effect.provideService(CounterSource, source),
-  )
-
-describe('ensureStream', () => {
-  it('leaves a stream that has events alone, without asking the tables', async () => {
-    const { run, journal } = inMemoryUnitOfWork()
-    await Effect.runPromise(journal.append(stream, 0, [opened(1), moved(2)], { actorId: 'alice' }))
-    let asked = 0
-    const source = () => Effect.sync(() => void asked++).pipe(Effect.as(null))
-
-    await Effect.runPromise(ensured(run, source))
-
-    expect(journal.all().map((e) => e.type)).toEqual(['Opened', 'Moved'])
-    expect(asked).toBe(0)
-  })
-
-  it('imports the aggregate from the tables when its stream is empty, dated and marked', async () => {
-    const { run, journal } = inMemoryUnitOfWork()
-
-    await Effect.runPromise(ensured(run, rowOf({ count: 7, openedAt })))
-
-    expect(journal.all()).toMatchObject([
-      { streamId: id, revision: 1, type: 'Opened', payload: { count: 7 }, metadata: IMPORT },
-    ])
-    expect(journal.all()[0].occurredAt).toEqual(openedAt)
-  })
-
-  it('refuses when neither the journal nor the tables know the aggregate', async () => {
-    const { run, journal } = inMemoryUnitOfWork()
-
-    const outcome = await Effect.runPromise(Effect.either(ensured(run, nothing)))
-
-    expect(Either.isLeft(outcome) && outcome.left).toEqual(
-      new NotFound('Le compteur est introuvable.'),
-    )
-    expect(journal.all()).toEqual([])
-  })
-
-  it('is content with a stream another command imported meanwhile', async () => {
-    const { run, journal } = inMemoryUnitOfWork()
-    // The tables are read after the check: the other command slips in there
-    const source = () =>
-      Effect.orDie(
-        Effect.map(
-          journal.append(stream, 0, [opened(3)], { actorId: null, metadata: IMPORT }),
-          () => ({ count: 7, openedAt }),
-        ),
-      )
-
-    await Effect.runPromise(ensured(run, source))
-
-    expect(journal.all().map((e) => [e.revision, e.payload])).toEqual([[1, { count: 3 }]])
-  })
-})
-
 describe('loadStream', () => {
-  it('refuses a stream nobody ensured', async () => {
+  it('refuses a stream nobody opened', async () => {
     const events = createInMemoryEventStore()
 
     const outcome = await Effect.runPromise(Effect.either(loadStream(counterAggregate, events, id)))

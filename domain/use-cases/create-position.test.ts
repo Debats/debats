@@ -3,13 +3,7 @@ import { Either, Layer } from 'effect'
 import { createPositionUseCase } from './create-position'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
-import { SubjectSource } from './subject-stream'
-import {
-  fakeSubjectSource,
-  journalWithSubjects,
-  sampleSubject,
-  subjectParts,
-} from './subject-test-helpers'
+import { journalWithSubjects, sampleSubject } from './subject-test-helpers'
 
 const subject = sampleSubject()
 
@@ -21,9 +15,7 @@ const validParams = {
 
 const eloquent = { id: 'abc', reputation: 10000 }
 
-const execute = runFormWith(
-  Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject)])),
-)
+const execute = runFormWith(Layer.empty)
 
 describe('createPositionUseCase', () => {
   it('should fail when contributor is null (not authenticated)', async () => {

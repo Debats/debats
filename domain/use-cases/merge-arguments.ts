@@ -4,7 +4,6 @@ import { replaceArgument } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
-import { ensureStreams } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { argumentAggregate, decideOnArgument } from './argument-stream'
 import { decideOnEachStatement, statementAggregate } from './statement-stream'
@@ -38,12 +37,6 @@ export function mergeArgumentsUseCase(params: MergeArgumentsParams) {
     ),
     Effect.bindTo('contributor'),
     Effect.bind('statementIds', () => statements.findIdsByArgumentId(sourceArgumentId)),
-    Effect.tap(({ statementIds }) =>
-      pipe(
-        ensureStreams(argumentAggregate, [targetArgumentId, sourceArgumentId]),
-        Effect.andThen(ensureStreams(statementAggregate, statementIds)),
-      ),
-    ),
     Effect.flatMap(({ contributor, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(

@@ -4,7 +4,6 @@ import { setSubjectThemes } from '../aggregates/subject'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ThemeRepository } from '../repositories/theme-repository'
 import { ContributorIdentity, Rejected } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 
@@ -44,7 +43,6 @@ export function setSubjectThemesUseCase(params: SetSubjectThemesParams) {
       () => new Rejected(PRIMARY_AMONG_CHOSEN),
     ),
     Effect.tap(() => (themeIds.length > 0 ? allKnown(themeIds) : Effect.void)),
-    Effect.tap(() => ensureStream(subjectAggregate, subjectId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         decideOnSubject(events, subjectId, contributor.id, setSubjectThemes(assignments), revision),

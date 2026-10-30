@@ -5,7 +5,6 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
-import { ensureStream, ensureStreams } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 import { decideOnEachStatement, statementAggregate } from './statement-stream'
@@ -55,12 +54,6 @@ export function mergePositionsUseCase(params: MergePositionsParams) {
     Effect.bind('statementIds', () =>
       Effect.map(statements.findByPositionId(sourcePositionId), (onSource) =>
         onSource.map((s) => s.id),
-      ),
-    ),
-    Effect.tap(({ source, statementIds }) =>
-      pipe(
-        ensureStream(subjectAggregate, source.subjectId),
-        Effect.andThen(ensureStreams(statementAggregate, statementIds)),
       ),
     ),
     Effect.flatMap(({ contributor, source, statementIds }) =>

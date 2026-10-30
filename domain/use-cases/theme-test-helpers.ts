@@ -4,7 +4,6 @@ import { Theme } from '../entities/theme'
 import { themeAdded, themeStream } from '../aggregates/theme'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ThemeRepository } from '../repositories/theme-repository'
-import { ThemeParts, ThemeSource } from './theme-stream'
 
 export const sampleTheme = (name = 'Économie'): Theme =>
   createTheme({
@@ -23,14 +22,6 @@ export function fakeThemeRepo(seed: Theme[] = []): ThemeRepository {
     findAllPrimaryLinks: () => Effect.succeed([]),
     findSubjectIdsByThemeId: () => Effect.succeed([]),
     findAssignmentsBySubjectId: () => Effect.succeed([]),
-  }
-}
-
-/** What the table would hold of these themes, for an import on demand */
-export function fakeThemeSource(seed: Theme[]): ThemeSource {
-  return (themeId) => {
-    const theme = seed.find((t) => t.id === themeId)
-    return Effect.succeed<ThemeParts | null>(theme ? { theme } : null)
   }
 }
 

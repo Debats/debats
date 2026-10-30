@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer } from 'effect'
 import { updateStatementUseCase } from './update-statement'
 import { EDITED_MEANWHILE } from './run-command'
-import { fakeStatementSource } from './subject-test-helpers'
 import { createPosition, createStatement } from '../entities/entity-test-helpers'
 import { publicFigureAuthor } from '../entities/statement'
 import { Position } from '../entities/position'
@@ -11,10 +10,10 @@ import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { PositionRepository } from '../repositories/position-repository'
+import { StatementRepository } from '../repositories/statement-repository'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
-import { StatementSource } from './statement-stream'
 
 const existingPosition = createPosition({
   title: 'Pour la réforme',
@@ -56,6 +55,10 @@ const fakePositionRepo: PositionRepository = {
   findBySubjectId: () => Effect.succeed([]),
 }
 
+const fakeStatementRepo = {
+  findById: (id: string) => Effect.succeed(id === existingStatement.id ? existingStatement : null),
+} as unknown as StatementRepository
+
 const validParams = {
   statementId: existingStatement.id,
   positionId: existingPosition.id,
@@ -71,19 +74,12 @@ const validParams = {
 /** The read side as the test wants it */
 const fakes = (
   overrides: {
-    source?: StatementSource
     positions?: PositionRepository
     arguments?: ArgumentRepository
   } = {},
 ) =>
   Layer.mergeAll(
-    Layer.succeed(
-      StatementSource,
-      overrides.source ??
-        fakeStatementSource([
-          { statement: existingStatement, argumentIds: [], subjectId: 'subject-1' },
-        ]),
-    ),
+    Layer.succeed(StatementRepository, fakeStatementRepo),
     Layer.succeed(PositionRepository, overrides.positions ?? fakePositionRepo),
     Layer.succeed(ArgumentRepository, overrides.arguments ?? fakeArgumentRepo()),
   )
@@ -128,39 +124,6 @@ describe('updateStatementUseCase', () => {
     const last = deedsIn(journal).at(-1)
     expect(last).toMatchObject({ type: 'StatementEdited', revision: 2, actorId: 'abc' })
     expect(last?.payload).toMatchObject({ argumentIds: [kept.id] })
-  })
-
-  it('should import a statement that has no stream yet, as it is, before editing it', async () => {
-    const old = sampleArgument('Ancien argument')
-    const { run, journal } = inMemoryUnitOfWork()
-
-    const result = await runFormWith(
-      fakes({
-        source: fakeStatementSource([
-          { statement: existingStatement, argumentIds: [old.id], subjectId: 'subject-1' },
-        ]),
-      }),
-    )(
-      updateStatementUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
-      run,
-    )
-
-    expect(Either.isRight(result)).toBe(true)
-    const [imported, edited] = journal.all()
-    expect(imported).toMatchObject({
-      type: 'StatementImported',
-      revision: 1,
-      actorId: 'author-id',
-      occurredAt: existingStatement.createdAt,
-      metadata: { source: 'import' },
-      payload: {
-        author: { kind: 'public_figure', id: 'figure-1' },
-        quote: 'Citation originale suffisamment longue.',
-        statedAt: '2024-01-15',
-        argumentIds: [old.id],
-      },
-    })
-    expect(edited).toMatchObject({ type: 'StatementEdited', revision: 2, actorId: 'abc' })
   })
 
   it('should tell the contributor when someone edited the statement meanwhile', async () => {
@@ -331,8 +294,10 @@ describe('updateStatementUseCase', () => {
   })
 
   it('should allow keeping the same position', async () => {
+    const { run } = await journalWithStream()
     const result = await execute(
       updateStatementUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
     )
 
     expect(Either.isRight(result)).toBe(true)

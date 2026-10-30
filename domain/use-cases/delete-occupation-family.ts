@@ -2,7 +2,6 @@ import { Effect, pipe } from 'effect'
 import { deleteOccupationFamily } from '../aggregates/occupation-family'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { decideOnOccupationFamily, occupationFamilyAggregate } from './occupation-family-stream'
 
@@ -17,7 +16,6 @@ export function deleteOccupationFamilyUseCase(params: DeleteOccupationFamilyPara
 
   return pipe(
     allowedTo(params.contributor, 'delete_occupation', 'supprimer une famille de métiers'),
-    Effect.tap(() => ensureStream(occupationFamilyAggregate, familyId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         decideOnOccupationFamily(events, familyId, contributor.id, deleteOccupationFamily()),

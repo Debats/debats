@@ -3,7 +3,6 @@ import { linkSubject } from '../aggregates/subject'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity, Rejected } from './types'
-import { ensureStreams } from './aggregate-stream'
 import { allowedTo } from './preconditions'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 
@@ -23,7 +22,6 @@ export function linkSubjectsUseCase(params: LinkSubjectsParams) {
       () => subjectId1 !== subjectId2,
       () => new Rejected('Impossible de lier un sujet au même sujet.'),
     ),
-    Effect.tap(() => ensureStreams(subjectAggregate, [subjectId1, subjectId2])),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         pipe(

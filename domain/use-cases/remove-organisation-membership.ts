@@ -3,7 +3,6 @@ import { MEMBERSHIP_NOT_FOUND, removeMembership } from '../aggregates/public-fig
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
 import { ContributorIdentity } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { decideOnPublicFigure, publicFigureAggregate } from './public-figure-stream'
 
@@ -27,7 +26,6 @@ export function removeOrganisationMembershipUseCase(params: RemoveOrganisationMe
         (membership) => membership.publicFigureId,
       ),
     }),
-    Effect.tap(({ figureId }) => ensureStream(publicFigureAggregate, figureId)),
     Effect.flatMap(({ contributor, figureId }) =>
       runUnitOfWork((events) =>
         decideOnPublicFigure(events, figureId, contributor.id, removeMembership(membershipId)),

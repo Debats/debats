@@ -5,7 +5,6 @@ import { runWith } from './command-test-helpers'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
-import { SubjectSource } from './subject-stream'
 import {
   DraftStatement,
   draftOrganisationAuthor,
@@ -21,15 +20,15 @@ import { PublicFigure } from '../entities/public-figure'
 import { Organisation } from '../entities/organisation'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { replayOrganisation } from '../aggregates/organisation'
-import { replayPublicFigure } from '../aggregates/public-figure'
+import { publicFigureStream, replayPublicFigure } from '../aggregates/public-figure'
+import { subjectStream } from '../aggregates/subject'
 import {
   fakeMembershipRepo,
   fakeOrganisationRepo,
   sampleOrganisation,
 } from './organisation-test-helpers'
-import { fakeSubjectSource, subjectParts } from './subject-test-helpers'
-import { figureParts } from './public-figure-test-helpers'
-import { PublicFigureSource } from './public-figure-stream'
+import { subjectEvents } from './subject-test-helpers'
+import { figureEvents } from './public-figure-test-helpers'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { fakeOccupationRepo, sampleOccupation } from './occupation-test-helpers'
 import { Argument } from '../entities/argument'
@@ -151,23 +150,43 @@ function makeRepos(overrides: {
   } as unknown as PositionRepository & {
     findBySubjectId: ReturnType<typeof vi.fn>
   }
-  const subjectSource = fakeSubjectSource(
-    overrides.subject ? [subjectParts(overrides.subject, overrides.positions ?? [])] : [],
-  )
-
   const seededFigures = overrides.figure ? [overrides.figure] : []
   const occupationRepo = fakeOccupationRepo(overrides.occupations ?? [])
 
-  /** The figure as the tables would hold her when a command imports her on demand */
-  const publicFigureSource: PublicFigureSource = (id) =>
-    Effect.succeed(
-      overrides.figure?.id === id
-        ? figureParts(overrides.figure, {
-            occupations: occupationRepo.assignments.get(id) ?? [],
+  /**
+   * The streams of the subject and the figure the tables already hold, opened
+   * when the validation starts: the figure's occupations are those the test
+   * assigned her by then.
+   */
+  let opened: number | null = null
+  const openStreams = async () => {
+    if (opened !== null) return
+    const { subject, figure } = overrides
+    if (subject) {
+      await Effect.runPromise(
+        unit.journal.append(
+          subjectStream(subject.id),
+          0,
+          subjectEvents(subject, overrides.positions ?? []),
+          { actorId: subject.createdBy ?? null },
+        ),
+      )
+    }
+    if (figure) {
+      await Effect.runPromise(
+        unit.journal.append(
+          publicFigureStream(figure.id),
+          0,
+          figureEvents(figure, {
+            occupations: occupationRepo.assignments.get(figure.id) ?? [],
             memberships: overrides.memberships ?? [],
-          })
-        : null,
-    )
+          }),
+          { actorId: figure.createdBy },
+        ),
+      )
+    }
+    opened = unit.journal.all().length
+  }
 
   const services = Layer.mergeAll(
     Layer.succeed(DraftStatementRepository, draftRepo),
@@ -175,8 +194,6 @@ function makeRepos(overrides: {
     Layer.succeed(OrganisationRepository, organisationRepo),
     Layer.succeed(SubjectRepository, subjectRepo),
     Layer.succeed(PositionRepository, positionRepo),
-    Layer.succeed(SubjectSource, subjectSource),
-    Layer.succeed(PublicFigureSource, publicFigureSource),
     Layer.succeed(ArgumentRepository, fakeArgumentRepo(overrides.arguments ?? [])),
     Layer.succeed(OccupationRepository, occupationRepo),
     Layer.succeed(
@@ -188,11 +205,14 @@ function makeRepos(overrides: {
 
   return {
     draftRepo,
-    journal: unit.journal,
+    /** What the validation wrote: the streams the tables already held do not count */
+    journal: { all: () => unit.journal.all().slice(opened ?? 0) },
     occupationRepo,
     /** The validation of the draft, by this contributor, against these tables and this journal */
-    validate: (contributor: ContributorIdentity | null) =>
-      runWith(services)(validateDraft({ draftId: 'draft-1', contributor }), unit.run),
+    validate: async (contributor: ContributorIdentity | null) => {
+      await openStreams()
+      return runWith(services)(validateDraft({ draftId: 'draft-1', contributor }), unit.run)
+    },
   }
 }
 

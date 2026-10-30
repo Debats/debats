@@ -3,15 +3,12 @@ import { Either, Layer, Option } from 'effect'
 import { updateOrganisationUseCase } from './update-organisation'
 import { createOrganisation } from '../entities/entity-test-helpers'
 import { Organisation } from '../entities/organisation'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
-import { OrganisationSource } from './organisation-stream'
 import {
   fakeOrganisationRepo,
-  fakeOrganisationSource,
   fakeWikipediaValidator,
   journalWithOrganisations,
   sampleOrganisation,
@@ -35,7 +32,6 @@ const validParams = (existing = sampleOrganisation()) => ({
 /** The read side as the test wants it: the organisations the tables hold */
 const fakes = (known: Organisation[]) =>
   Layer.mergeAll(
-    Layer.succeed(OrganisationSource, fakeOrganisationSource(known)),
     Layer.succeed(OrganisationRepository, fakeOrganisationRepo(known)),
     Layer.succeed(WikipediaValidator, fakeWikipediaValidator()),
   )
@@ -101,20 +97,5 @@ describe('updateOrganisationUseCase', () => {
       ['OrganisationEdited', 2],
     ])
     expect(grantsIn(unit.journal)).toEqual([['contributor-1', 'edited_organisation', 5]])
-  })
-
-  it('imports an organisation the journal does not know yet, then edits it', async () => {
-    const existing = sampleOrganisation()
-    const unit = inMemoryUnitOfWork()
-    const result = await runFormWith(fakes([existing]))(
-      updateOrganisationUseCase(validParams(existing)),
-      unit.run,
-    )
-
-    expect(Either.isRight(result)).toBe(true)
-    expect(deedsIn(unit.journal).map((e) => [e.type, e.metadata])).toEqual([
-      ['OrganisationImported', { source: 'import' }],
-      ['OrganisationEdited', {}],
-    ])
   })
 })

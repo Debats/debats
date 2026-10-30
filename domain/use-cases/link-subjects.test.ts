@@ -2,13 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Either, Layer } from 'effect'
 import { linkSubjectsUseCase } from './link-subjects'
 import { runWith } from './command-test-helpers'
-import { SubjectSource } from './subject-stream'
-import {
-  fakeSubjectSource,
-  journalWithSubjects,
-  sampleSubject,
-  subjectParts,
-} from './subject-test-helpers'
+import { journalWithSubjects, sampleSubject } from './subject-test-helpers'
 
 const smic = sampleSubject('Le montant du SMIC')
 const retraites = sampleSubject('Les retraites')
@@ -20,9 +14,7 @@ const validParams = {
 
 const eloquent = { id: 'abc', reputation: 10000 }
 
-const execute = runWith(
-  Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(smic), subjectParts(retraites)])),
-)
+const execute = runWith(Layer.empty)
 
 describe('linkSubjectsUseCase', () => {
   it('should fail when contributor is null', async () => {

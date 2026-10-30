@@ -5,7 +5,6 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, fieldsOf, found } from './preconditions'
 import { decideOnSubject, subjectAggregate, writtenPosition } from './subject-stream'
 
@@ -42,7 +41,6 @@ export function updatePositionUseCase(params: UpdatePositionParams) {
       input: fieldsOf(UpdatePositionInput, FIELD_MESSAGES)({ title, description }),
       existing: Effect.flatMap(positions.findById(positionId), found(POSITION_NOT_FOUND)),
     }),
-    Effect.tap(({ existing }) => ensureStream(subjectAggregate, existing.subjectId)),
     Effect.flatMap(({ contributor, input, existing }) =>
       runUnitOfWork((events) =>
         pipe(

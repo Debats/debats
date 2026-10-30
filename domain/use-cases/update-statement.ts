@@ -4,6 +4,7 @@ import { Statement, StatementType } from '../entities/statement'
 import { editStatement, OTHER_SUBJECT } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
+import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { statementFields } from './validate-statement-fields'
 import {
@@ -14,8 +15,7 @@ import {
   validateStatementArguments,
 } from './statement-arguments'
 import { grantEach, rewardFor } from './reward'
-import { decideOnStatement, statementAggregate, StatementSource } from './statement-stream'
-import { ensureStream } from './aggregate-stream'
+import { decideOnStatement, statementAggregate } from './statement-stream'
 import { allowedTo, found } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 
@@ -36,8 +36,9 @@ type UpdateStatementParams = {
 
 export type { FieldErrors }
 
-/** Read side: the new position must exist; the statement as projected, to find it */
+/** Read side: the statement as projected, and the new position, which must exist */
 const positions = Effect.serviceFunctions(PositionRepository)
+const statements = Effect.serviceFunctions(StatementRepository)
 
 export function updateStatementUseCase(params: UpdateStatementParams) {
   const { statementId, positionId, statementType, revision } = params
@@ -53,10 +54,9 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
           () => new Rejected(OTHER_SUBJECT),
         )
 
-  const existingStatement = pipe(
-    Effect.flatMap(StatementSource, (source) => source(statementId)),
-    Effect.flatMap(found(statementAggregate.notFound)),
-    Effect.map((parts) => parts.statement),
+  const existingStatement = Effect.flatMap(
+    statements.findById(statementId),
+    found(statementAggregate.notFound),
   )
 
   return pipe(
@@ -77,7 +77,6 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
     Effect.bind('validated', ({ contributor }) =>
       validateStatementArguments(contributor, params.arguments),
     ),
-    Effect.tap(() => ensureStream(statementAggregate, statementId)),
     // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
     Effect.flatMap(({ contributor, fields, newPosition, validated }) =>
       runUnitOfWork((events) =>

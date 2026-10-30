@@ -11,7 +11,6 @@ import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OccupationAssignmentInput } from '../read-models/occupations'
 import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
-import { OccupationFamilyParts, OccupationFamilySource } from './occupation-family-stream'
 
 export const sampleFamily = (name = 'Chercheur·se et universitaire', position = 1) =>
   createOccupationFamily({ name, position, createdBy: 'founder' })
@@ -80,19 +79,6 @@ export function fakeOccupationRepo(seed: Occupation[] = []): OccupationRepositor
           linksOf(publicFigureId).map(({ occupationId }) => ({ publicFigureId, occupationId })),
         ),
       ),
-  }
-}
-
-/** What the tables would hold of these families, for an import on demand */
-export function fakeFamilySource(
-  families: OccupationFamily[],
-  occupations: Occupation[] = [],
-): OccupationFamilySource {
-  return (familyId) => {
-    const family = families.find((f) => f.id === familyId)
-    return Effect.succeed<OccupationFamilyParts | null>(
-      family ? { family, occupations: occupations.filter((o) => o.familyId === familyId) } : null,
-    )
   }
 }
 

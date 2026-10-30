@@ -7,16 +7,7 @@ import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { statementAdded, statementStream } from '../aggregates/statement'
 import { runWith } from './command-test-helpers'
-import { SubjectSource } from './subject-stream'
-import { StatementSource } from './statement-stream'
-import {
-  fakeStatementSource,
-  fakeSubjectSource,
-  journalWithSubjects,
-  samplePosition,
-  sampleSubject,
-  subjectParts,
-} from './subject-test-helpers'
+import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
 
 const subject = sampleSubject()
 const source = samplePosition(subject.id, 'Pour une hausse')
@@ -53,11 +44,6 @@ const validParams = {
 /** The read side as the test wants it: which statements stand on the source */
 const fakes = (statements: Statement[] = []) =>
   Layer.mergeAll(
-    Layer.succeed(SubjectSource, fakeSubjectSource([subjectParts(subject, [source, target])])),
-    Layer.succeed(
-      StatementSource,
-      fakeStatementSource([{ statement, argumentIds: [], subjectId: subject.id }]),
-    ),
     Layer.succeed(PositionRepository, positionRepo),
     Layer.succeed(StatementRepository, statementRepo(statements)),
   )

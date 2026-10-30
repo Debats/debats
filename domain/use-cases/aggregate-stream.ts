@@ -1,6 +1,5 @@
-import { Context, Effect, Either, pipe } from 'effect'
+import { Effect, Either, pipe } from 'effect'
 import {
-  AppendOptions,
   ConcurrencyError,
   DomainEvent,
   EventStore,
@@ -11,43 +10,20 @@ import {
   UniqueTaken,
   UnreadableEvent,
 } from '../events/event-store'
-import { RunUnitOfWork, runUnitOfWork } from '../events/unit-of-work'
 import { DatabaseError } from '../repositories/errors'
 import { Decision, NotFound, Rejected } from '../aggregates/decision'
 
-/** Events to append together, dated and signed as the rows they come from */
-export interface Batch<Event extends DomainEvent> {
-  events: Event[]
-  options: AppendOptions
-}
-
-/** Reads what the projections hold of an aggregate; null when there is none */
-export type Source<Parts> = (id: string) => Effect.Effect<Parts | null, DatabaseError>
-
-/** How one kind of aggregate lives in the journal: its stream, its rebuild, its import */
-export interface AggregateStream<State, Event extends DomainEvent, Parts> {
+/** How one kind of aggregate lives in the journal: its stream and its rebuild */
+export interface AggregateStream<State, Event extends DomainEvent> {
   streamType: string
-  /** What the contributor reads when neither the journal nor the tables know the aggregate */
+  /** What the contributor reads when the journal does not know the aggregate */
   notFound: string
-  /** The service that reads the tables for an import on demand; the action provides the live one */
-  source: Context.Tag<Source<Parts>, Source<Parts>>
   replay: (events: StoredEvent[]) => Either.Either<State | null, UnreadableEvent>
   /** A deleted aggregate keeps its stream; a command on it is refused as on an unknown one */
   isLive: (state: State) => boolean
-  /** The events that bring what the tables hold of the aggregate into its stream */
-  importBatches: (parts: Parts) => Batch<Event>[]
 }
 
-/** Metadata of an event imported on demand; the backfill migrations write `backfill` */
-export const IMPORT = { source: 'import' }
-
 export type StreamFailure = DatabaseError | ConcurrencyError | UniqueTaken | Rejected | NotFound
-
-/** What ensuring a stream can fail with: the import writes, and the aggregate may be unknown */
-type EnsureFailure = DatabaseError | UniqueTaken | NotFound
-
-/** What ensuring a stream asks for: the unit of work, and the tables of the aggregate */
-type EnsureServices<Parts> = RunUnitOfWork | Source<Parts>
 
 const streamOf = (aggregate: { streamType: string }, id: string): StreamRef => ({
   streamType: aggregate.streamType,
@@ -55,56 +31,12 @@ const streamOf = (aggregate: { streamType: string }, id: string): StreamRef => (
 })
 
 /**
- * Makes sure the aggregate has a stream, before the command's transaction.
- * One written before its journal existed, or in the window of a deployment,
- * has none: it enters the journal as the tables hold it, read outside any
- * transaction, in a unit of work of its own. Unknown everywhere: the command
- * is refused. Two commands importing it at once: the second finds it there.
+ * The stream of an aggregate, in the transaction. Every aggregate has one
+ * since its creation opened it, or since the backfill of its table: an
+ * empty stream is an aggregate nobody knows, and the command is refused.
  */
-export function ensureStream<State, Event extends DomainEvent, Parts>(
-  aggregate: AggregateStream<State, Event, Parts>,
-  id: string,
-): Effect.Effect<void, EnsureFailure, EnsureServices<Parts>> {
-  const stream = streamOf(aggregate, id)
-  const isMissing = runUnitOfWork((events) =>
-    Effect.map(events.load(stream), (h) => h.length === 0),
-  )
-  const imported = (parts: Parts) =>
-    runUnitOfWork((events) =>
-      Effect.reduce(aggregate.importBatches(parts), 0, (revision, batch) =>
-        Effect.map(
-          events.append(stream, revision, batch.events, batch.options),
-          (stored) => revision + stored.length,
-        ),
-      ),
-    )
-  const importFrom = (
-    parts: Parts | null,
-  ): Effect.Effect<void, EnsureFailure | ConcurrencyError, RunUnitOfWork> =>
-    parts ? Effect.asVoid(imported(parts)) : Effect.fail(new NotFound(aggregate.notFound))
-  const fromTheTables = Effect.flatMap(aggregate.source, (source) => source(id))
-  return pipe(
-    isMissing,
-    Effect.flatMap(
-      (missing): Effect.Effect<void, EnsureFailure | ConcurrencyError, EnsureServices<Parts>> =>
-        missing ? Effect.flatMap(fromTheTables, importFrom) : Effect.void,
-    ),
-    // Imported meanwhile by another command: the stream is there, which is all that matters
-    Effect.catchTag('ConcurrencyError', () => Effect.void),
-  )
-}
-
-/** The same, for every aggregate a command reaches */
-export function ensureStreams<State, Event extends DomainEvent, Parts>(
-  aggregate: AggregateStream<State, Event, Parts>,
-  ids: readonly string[],
-): Effect.Effect<void, EnsureFailure, EnsureServices<Parts>> {
-  return Effect.forEach(ids, (id) => ensureStream(aggregate, id), { discard: true })
-}
-
-/** The stream of an aggregate, in the transaction; an aggregate nobody knows is refused */
-export function loadStream<State, Event extends DomainEvent, Parts>(
-  aggregate: AggregateStream<State, Event, Parts>,
+export function loadStream<State, Event extends DomainEvent>(
+  aggregate: AggregateStream<State, Event>,
   events: EventStore,
   id: string,
 ): Effect.Effect<StoredEvent[], DatabaseError | NotFound> {
@@ -128,8 +60,8 @@ export interface Decided<State> {
  * Appends the decision after the history, and rebuilds what the aggregate now
  * is. A decision that changes nothing writes nothing.
  */
-export function appendAndReplay<State, Event extends DomainEvent, Parts>(
-  aggregate: AggregateStream<State, Event, Parts>,
+export function appendAndReplay<State, Event extends DomainEvent>(
+  aggregate: AggregateStream<State, Event>,
   events: EventStore,
   id: string,
   history: StoredEvent[],
@@ -156,8 +88,8 @@ export function appendAndReplay<State, Event extends DomainEvent, Parts>(
  * what it is. The command names the aggregate: the stream exists from its
  * first event, which a concurrent creation with the same id would refuse.
  */
-export function openStream<State, Event extends DomainEvent, Parts>(
-  aggregate: AggregateStream<State, Event, Parts>,
+export function openStream<State, Event extends DomainEvent>(
+  aggregate: AggregateStream<State, Event>,
   events: EventStore,
   id: string,
   decided: Event[],
@@ -182,8 +114,8 @@ export type RenderedFrom = Revision | undefined
  * Rejected; a deleted aggregate is NotFound before any decision; a stream
  * that moved past the revision the form was rendered from is a ConcurrencyError.
  */
-export function decideOn<State, Event extends DomainEvent, Parts>(
-  aggregate: AggregateStream<State, Event, Parts>,
+export function decideOn<State, Event extends DomainEvent>(
+  aggregate: AggregateStream<State, Event>,
   events: EventStore,
   id: string,
   actorId: string,

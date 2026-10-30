@@ -1,51 +1,18 @@
-import { Context } from 'effect'
 import {
-  importOrganisation,
   OrganisationDecision,
   ORGANISATION_STREAM,
   OrganisationState,
   replayOrganisation,
 } from '../aggregates/organisation'
 import { OrganisationEvent } from '../aggregates/organisation-events'
-import { Organisation } from '../entities/organisation'
 import { EventStore } from '../events/event-store'
-import {
-  AggregateStream,
-  decideOn,
-  IMPORT,
-  RenderedFrom,
-  requireState,
-  Source,
-} from './aggregate-stream'
+import { AggregateStream, decideOn, RenderedFrom, requireState } from './aggregate-stream'
 
-/** What the tables hold of an organisation, enough to import it into the journal */
-export interface OrganisationParts {
-  organisation: Organisation
-}
-
-export type OrganisationSource = Source<OrganisationParts>
-export const OrganisationSource = Context.GenericTag<OrganisationSource>('OrganisationSource')
-
-export const organisationAggregate: AggregateStream<
-  OrganisationState,
-  OrganisationEvent,
-  OrganisationParts
-> = {
+export const organisationAggregate: AggregateStream<OrganisationState, OrganisationEvent> = {
   streamType: ORGANISATION_STREAM,
   notFound: 'Organisation introuvable.',
-  source: OrganisationSource,
   replay: replayOrganisation,
   isLive: (state) => state.deletedAt === null,
-  importBatches: ({ organisation }) => [
-    {
-      events: [importOrganisation(organisation)],
-      options: {
-        actorId: organisation.createdBy,
-        metadata: IMPORT,
-        occurredAt: organisation.createdAt,
-      },
-    },
-  ],
 }
 
 export const decideOnOrganisation = (

@@ -17,14 +17,6 @@ import { ReputationRepository } from '../domain/repositories/reputation-reposito
 import { StatementRepository } from '../domain/repositories/statement-repository'
 import { SubjectRepository } from '../domain/repositories/subject-repository'
 import { ThemeRepository } from '../domain/repositories/theme-repository'
-import { ArgumentSource } from '../domain/use-cases/argument-stream'
-import { InvitationSource } from '../domain/use-cases/invitation-stream'
-import { OccupationFamilySource } from '../domain/use-cases/occupation-family-stream'
-import { OrganisationSource } from '../domain/use-cases/organisation-stream'
-import { PublicFigureSource } from '../domain/use-cases/public-figure-stream'
-import { StatementSource } from '../domain/use-cases/statement-stream'
-import { SubjectSource } from '../domain/use-cases/subject-stream'
-import { ThemeSource } from '../domain/use-cases/theme-stream'
 import {
   CommandFailure,
   FormFailure,
@@ -46,16 +38,6 @@ import { createReputationRepository } from './database/reputation-repository-sup
 import { createStatementRepository } from './database/statement-repository-supabase'
 import { createSubjectRepository } from './database/subject-repository-supabase'
 import { createThemeRepository } from './database/theme-repository-supabase'
-import {
-  createArgumentSource,
-  createInvitationSource,
-  createOccupationFamilySource,
-  createOrganisationSource,
-  createPublicFigureSource,
-  createStatementSource,
-  createSubjectSource,
-  createThemeSource,
-} from './events/sources'
 import { runUnitOfWork as runInPostgres } from './events/unit-of-work'
 import { createAdminSupabaseClient } from './supabase/admin'
 import { createWikipediaValidator } from './wikipedia/wikipedia-validator'
@@ -87,14 +69,6 @@ export function liveServices(supabase: SupabaseClient<Database> = createAdminSup
     Layer.succeed(StatementRepository, createStatementRepository(supabase)),
     Layer.succeed(SubjectRepository, createSubjectRepository(supabase)),
     Layer.succeed(ThemeRepository, createThemeRepository(supabase)),
-    Layer.succeed(ArgumentSource, createArgumentSource(supabase)),
-    Layer.succeed(InvitationSource, createInvitationSource(supabase)),
-    Layer.succeed(OccupationFamilySource, createOccupationFamilySource(supabase)),
-    Layer.succeed(OrganisationSource, createOrganisationSource(supabase)),
-    Layer.succeed(PublicFigureSource, createPublicFigureSource(supabase)),
-    Layer.succeed(StatementSource, createStatementSource(supabase)),
-    Layer.succeed(SubjectSource, createSubjectSource(supabase)),
-    Layer.succeed(ThemeSource, createThemeSource(supabase)),
   )
 }
 

@@ -6,7 +6,6 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity } from './types'
-import { ensureStream, ensureStreams } from './aggregate-stream'
 import { found, mayPerform, signedIn } from './preconditions'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 import { decideOnEachStatement, statementAggregate } from './statement-stream'
@@ -46,12 +45,6 @@ export function deleteSubjectUseCase(params: DeleteSubjectParams) {
     ),
     Effect.bindTo('contributor'),
     Effect.bind('statementIds', () => statements.findIdsBySubjectId(subjectId)),
-    Effect.tap(({ statementIds }) =>
-      pipe(
-        ensureStream(subjectAggregate, subjectId),
-        Effect.andThen(ensureStreams(statementAggregate, statementIds)),
-      ),
-    ),
     Effect.flatMap(({ contributor, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(

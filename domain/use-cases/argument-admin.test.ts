@@ -2,14 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { Effect, Either, Layer } from 'effect'
 import { renameArgumentUseCase } from './rename-argument'
 import { mergeArgumentsUseCase } from './merge-arguments'
-import {
-  fakeArgumentRepo,
-  fakeArgumentSource,
-  journalWithArguments,
-  sampleArgument,
-} from './argument-test-helpers'
-import { fakeStatementSource } from './subject-test-helpers'
-import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { fakeArgumentRepo, journalWithArguments, sampleArgument } from './argument-test-helpers'
+import { EventStore } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { EDITED_MEANWHILE } from './run-command'
 import { statementAdded, statementStream } from '../aggregates/statement'
@@ -18,8 +12,6 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { Argument } from '../entities/argument'
 import { runFormWith, runWith } from './command-test-helpers'
-import { ArgumentSource } from './argument-stream'
-import { StatementParts, StatementSource } from './statement-stream'
 
 const idealiste = { id: 'contributor-1', reputation: 10000 }
 const eloquent = { id: 'contributor-2', reputation: 1000 }
@@ -34,10 +26,7 @@ const renameParams = (argumentId: string) => ({
 
 /** The tables as the test wants them: the arguments the site knows */
 const argumentsKnown = (seed: Argument[]) =>
-  Layer.mergeAll(
-    Layer.succeed(ArgumentSource, fakeArgumentSource(seed)),
-    Layer.succeed(ArgumentRepository, fakeArgumentRepo(seed)),
-  )
+  Layer.succeed(ArgumentRepository, fakeArgumentRepo(seed))
 
 describe('renameArgumentUseCase', () => {
   it('requires the Idéaliste rank', async () => {
@@ -79,18 +68,6 @@ describe('renameArgumentUseCase', () => {
       ['ArgumentRenamed', 2],
     ])
   })
-
-  it('imports an argument the journal does not know yet, then renames it', async () => {
-    const argument = sampleArgument()
-    const unit = inMemoryUnitOfWork()
-    const result = await runFormWith(argumentsKnown([argument]))(
-      renameArgumentUseCase(renameParams(argument.id)),
-      unit.run,
-    )
-
-    expect(Either.isRight(result)).toBe(true)
-    expect(unit.journal.all().map((e) => e.type)).toEqual(['ArgumentImported', 'ArgumentRenamed'])
-  })
 })
 
 const statementOn = (id: string): Statement =>
@@ -111,6 +88,17 @@ const statementOn = (id: string): Statement =>
 const statementRepoOf = (ids: string[]) =>
   ({ findIdsByArgumentId: () => Effect.succeed(ids) }) as unknown as StatementRepository
 
+/** Opens the stream of a statement mobilising these arguments, in the given journal */
+const statementMobilising = (journal: EventStore, id: string, argumentIds: string[]) =>
+  Effect.runPromise(
+    journal.append(
+      statementStream(id),
+      0,
+      [statementAdded({ ...statementOn(id), subjectId: 'subject-1', argumentIds })],
+      { actorId: 'author-id' },
+    ),
+  )
+
 describe('mergeArgumentsUseCase', () => {
   const [a, b] = [sampleArgument('Coût budgétaire'), sampleArgument('Coût pour l’État')]
   const mergeParams = {
@@ -118,13 +106,9 @@ describe('mergeArgumentsUseCase', () => {
     sourceArgumentId: a.id,
     targetArgumentId: b.id,
   }
-  /** The tables as the test wants them: which statements mobilise the source, and what they hold */
-  const fakes = (statementIds: string[] = [], statementsInTables: StatementParts[] = []) =>
-    Layer.mergeAll(
-      Layer.succeed(ArgumentSource, fakeArgumentSource([a, b])),
-      Layer.succeed(StatementSource, fakeStatementSource(statementsInTables)),
-      Layer.succeed(StatementRepository, statementRepoOf(statementIds)),
-    )
+  /** The tables as the test wants them: which statements mobilise the source */
+  const fakes = (statementIds: string[] = []) =>
+    Layer.succeed(StatementRepository, statementRepoOf(statementIds))
   const execute = runWith(fakes())
 
   it('requires the Idéaliste rank', async () => {
@@ -139,51 +123,33 @@ describe('mergeArgumentsUseCase', () => {
     expect(Either.isLeft(result) && result.left).toContain('lui-même')
   })
 
-  it('refuses an argument nobody knows', async () => {
+  it('refuses an argument nobody knows, as it would one merged away', async () => {
     const result = await execute(
       mergeArgumentsUseCase({ ...mergeParams, targetArgumentId: 'gone' }),
     )
 
-    expect(Either.isLeft(result) && result.left).toContain('introuvable')
+    expect(Either.isLeft(result) && result.left).toContain('existe plus')
   })
 
   it('records the merge on the source and moves each statement to the target', async () => {
     const unit = await journalWithArguments(a, b)
-    await Effect.runPromise(
-      unit.journal.append(
-        statementStream('s-1'),
-        0,
-        [
-          statementAdded({
-            ...statementOn('s-1'),
-            subjectId: 'subject-1',
-            argumentIds: [a.id, 'other'],
-          }),
-        ],
-        { actorId: 'author-id' },
-      ),
+    await statementMobilising(unit.journal, 's-1', [a.id, 'other'])
+    await statementMobilising(unit.journal, 's-2', [a.id, b.id])
+    await statementMobilising(unit.journal, 's-3', ['other'])
+
+    const result = await runWith(fakes(['s-1', 's-2', 's-3']))(
+      mergeArgumentsUseCase(mergeParams),
+      unit.run,
     )
-    const result = await runWith(
-      fakes(
-        ['s-1', 's-2', 's-3'],
-        [
-          { statement: statementOn('s-2'), argumentIds: [a.id, b.id], subjectId: 'subject-1' },
-          { statement: statementOn('s-3'), argumentIds: ['other'], subjectId: 'subject-1' },
-        ],
-      ),
-    )(mergeArgumentsUseCase(mergeParams), unit.run)
 
     expect(Either.isRight(result) && result.right.id).toBe(b.id)
-    const events = unit.journal.all().slice(3)
+    const events = unit.journal.all().slice(5)
     expect(events.map((e) => [e.streamType, e.streamId, e.type, e.payload])).toEqual([
-      // The statements the journal does not know yet enter it before the transaction
-      ['statement', 's-2', 'StatementImported', expect.anything()],
-      ['statement', 's-3', 'StatementImported', expect.anything()],
       ['argument', b.id, 'ArgumentAbsorbed', { sourceArgumentId: a.id }],
       ['argument', a.id, 'ArgumentMergedInto', { targetArgumentId: b.id }],
       ['statement', 's-1', 'StatementArgumentsSet', { argumentIds: ['other', b.id] }],
       ['statement', 's-2', 'StatementArgumentsSet', { argumentIds: [b.id] }],
-      // s-3 dropped the source meanwhile: imported to decide, nothing to change
+      // s-3 dropped the source meanwhile: its stream decides, nothing to change
     ])
   })
 

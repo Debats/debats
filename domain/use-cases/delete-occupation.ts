@@ -3,7 +3,6 @@ import { OCCUPATION_NOT_FOUND, removeOccupation } from '../aggregates/occupation
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { ContributorIdentity } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { decideOnOccupationFamily, occupationFamilyAggregate } from './occupation-family-stream'
 
@@ -27,7 +26,6 @@ export function deleteOccupationUseCase(params: DeleteOccupationParams) {
         (occupation) => occupation.familyId,
       ),
     }),
-    Effect.tap(({ familyId }) => ensureStream(occupationFamilyAggregate, familyId)),
     Effect.flatMap(({ contributor, familyId }) =>
       runUnitOfWork((events) =>
         decideOnOccupationFamily(events, familyId, contributor.id, removeOccupation(occupationId)),

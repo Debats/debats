@@ -6,7 +6,6 @@ import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { organisationFields } from './validate-organisation-fields'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, found, free, signedIn } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { decideOnOrganisation, organisationAggregate } from './organisation-stream'
@@ -77,20 +76,17 @@ const persisted = (
     notorietySources: params.notorietySources,
   })
   return pipe(
-    ensureStream(organisationAggregate, existing.id),
-    Effect.andThen(
-      runUnitOfWork((events) =>
-        pipe(
-          decideOnOrganisation(events, existing.id, contributor.id, edited, params.revision),
-          Effect.tap(() =>
-            grant(
-              events,
-              contributor.id,
-              rewardFor(contributor.id, 'edited_organisation', {
-                relatedEntityType: 'organisation',
-                relatedEntityId: existing.id,
-              }),
-            ),
+    runUnitOfWork((events) =>
+      pipe(
+        decideOnOrganisation(events, existing.id, contributor.id, edited, params.revision),
+        Effect.tap(() =>
+          grant(
+            events,
+            contributor.id,
+            rewardFor(contributor.id, 'edited_organisation', {
+              relatedEntityType: 'organisation',
+              relatedEntityId: existing.id,
+            }),
           ),
         ),
       ),

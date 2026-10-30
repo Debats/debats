@@ -12,13 +12,26 @@ import { InvitationRepository } from '../repositories/invitation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runWith } from './command-test-helpers'
-import { InvitationSource } from './invitation-stream'
 
 const baseInvitation = createInvitation({
   inviterId: 'inviter-uuid',
   inviteeEmail: 'invitee@example.com',
   inviteeName: 'Jean Dupont',
 })
+
+/** A journal where the invitation already has its stream, as the inviter sent it */
+async function journalWithInvitation() {
+  const unit = inMemoryUnitOfWork()
+  await Effect.runPromise(
+    unit.journal.append(
+      invitationStream(baseInvitation.id),
+      0,
+      [invitationSent({ inviteeEmail: 'invitee@example.com', inviteeName: 'Jean Dupont' })],
+      { actorId: 'inviter-uuid' },
+    ),
+  )
+  return unit
+}
 
 const noInvitation: InvitationRepository = {
   findById: () => Effect.succeed(null as Invitation | null),
@@ -30,9 +43,6 @@ const pendingInvitation: InvitationRepository = {
   ...noInvitation,
   findPendingByEmail: () => Effect.succeed(baseInvitation as Invitation | null),
 }
-
-/** The tables hold the invitation as sent: the journal imports it on first use */
-const invitationSource: InvitationSource = () => Effect.succeed({ invitation: baseInvitation })
 
 const fakeReputationRepo: ReputationRepository = {
   getReputation: () => Effect.succeed(2000),
@@ -60,7 +70,6 @@ const fakes = (
 ) =>
   Layer.mergeAll(
     Layer.succeed(InvitationRepository, overrides.invitations ?? pendingInvitation),
-    Layer.succeed(InvitationSource, invitationSource),
     Layer.succeed(ReputationRepository, overrides.reputations ?? fakeReputationRepo),
     Layer.succeed(ContributorRepository, overrides.contributors ?? fakeContributorRepo),
   )
@@ -81,6 +90,7 @@ describe('acceptInvitationUseCase', () => {
 
   it('should create the contributor record', async () => {
     let createdContributorId = ''
+    const unit = await journalWithInvitation()
 
     await runWith(
       fakes({
@@ -92,25 +102,25 @@ describe('acceptInvitationUseCase', () => {
           },
         },
       }),
-    )(acceptInvitationUseCase(baseParams))
+    )(acceptInvitationUseCase(baseParams), unit.run)
 
     expect(createdContributorId).toBe('invitee-uuid')
   })
 
   it('accepts the invitation on its stream, signed by the invitee, with the grants', async () => {
-    const unit = inMemoryUnitOfWork()
+    const unit = await journalWithInvitation()
 
     const result = await execute(acceptInvitationUseCase(baseParams), unit.run)
 
     expect(Either.isRight(result)).toBe(true)
     expect(deedsIn(unit.journal).map((e) => [e.type, e.actorId, e.payload])).toEqual([
-      ['InvitationImported', 'inviter-uuid', expect.anything()],
+      ['InvitationSent', 'inviter-uuid', expect.anything()],
       ['InvitationAccepted', 'invitee-uuid', { inviteeId: 'invitee-uuid' }],
     ])
   })
 
   it('refuses a second acceptance: the stream already says it was accepted', async () => {
-    const unit = inMemoryUnitOfWork()
+    const unit = await journalWithInvitation()
     await execute(acceptInvitationUseCase(baseParams), unit.run)
 
     // The read side may still show it pending: the stream, not the table, decides
@@ -121,15 +131,7 @@ describe('acceptInvitationUseCase', () => {
   })
 
   it('leaves the invitation pending when the grants cannot be written', async () => {
-    const unit = inMemoryUnitOfWork()
-    await Effect.runPromise(
-      unit.journal.append(
-        invitationStream(baseInvitation.id),
-        0,
-        [invitationSent({ inviteeEmail: 'invitee@example.com', inviteeName: 'Jean Dupont' })],
-        { actorId: 'inviter-uuid' },
-      ),
-    )
+    const unit = await journalWithInvitation()
     const failing: RunUnitOfWork = (work) =>
       unit.run((events) => Effect.andThen(work(events), Effect.fail(new DatabaseError('down'))))
 
@@ -141,7 +143,7 @@ describe('acceptInvitationUseCase', () => {
   })
 
   it('starts the invitee at half the inviter reputation and rewards the inviter, in one go', async () => {
-    const unit = inMemoryUnitOfWork()
+    const unit = await journalWithInvitation()
 
     await execute(acceptInvitationUseCase(baseParams), unit.run)
 
@@ -175,7 +177,7 @@ describe('acceptInvitationUseCase', () => {
   })
 
   it('gives the invitee nothing when the inviter has nothing', async () => {
-    const unit = inMemoryUnitOfWork()
+    const unit = await journalWithInvitation()
 
     await runWith(
       fakes({ reputations: { ...fakeReputationRepo, getReputation: () => Effect.succeed(0) } }),

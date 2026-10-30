@@ -4,7 +4,6 @@ import { addOccupation } from '../aggregates/occupation-family'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, free } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import {
@@ -49,7 +48,6 @@ export function createOccupationUseCase(params: CreateOccupationParams) {
         free(NAME_TAKEN, 'name'),
       ),
     ),
-    Effect.tap(() => ensureStream(occupationFamilyAggregate, familyId)),
     Effect.flatMap((contributor) =>
       runUnitOfWork((events) =>
         decideOnOccupationFamily(

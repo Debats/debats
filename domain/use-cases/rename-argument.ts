@@ -4,7 +4,6 @@ import { renameArgument } from '../aggregates/argument'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
-import { ensureStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { argumentAggregate, decideOnArgument } from './argument-stream'
@@ -53,7 +52,6 @@ export function renameArgumentUseCase(params: RenameArgumentParams) {
       Effect.flatMap(argumentsRead.findById(argumentId), found(argumentAggregate.notFound)),
     ),
     Effect.tap(({ existing }) => titleFree(existing)),
-    Effect.tap(({ existing }) => ensureStream(argumentAggregate, existing.id)),
     Effect.flatMap(({ contributor, existing }) =>
       runUnitOfWork((events) =>
         decideOnArgument(

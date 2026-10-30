@@ -13,7 +13,6 @@ import {
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { PublicFigure } from '../entities/public-figure'
-import { OrganisationParts, OrganisationSource } from './organisation-stream'
 
 export const sampleOrganisation = (): Organisation =>
   createOrganisation({
@@ -39,14 +38,6 @@ export function fakeOrganisationRepo(seed: Organisation[] = []): OrganisationRep
     findById: (id) => Effect.succeed(seed.find((o) => o.id === id) ?? null),
     searchByName: () => Effect.succeed(seed),
     findSummaries: () => Effect.succeed([]),
-  }
-}
-
-/** What the tables would hold of these organisations, for an import on demand */
-export function fakeOrganisationSource(organisations: Organisation[]): OrganisationSource {
-  return (organisationId) => {
-    const organisation = organisations.find((o) => o.id === organisationId)
-    return Effect.succeed<OrganisationParts | null>(organisation ? { organisation } : null)
   }
 }
 

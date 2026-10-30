@@ -7,7 +7,6 @@ import { deleteOccupationFamilyUseCase } from './delete-occupation-family'
 import { setPublicFigureOccupationsUseCase } from './set-public-figure-occupations'
 import {
   fakeFamilyRepo,
-  fakeFamilySource,
   fakeOccupationRepo,
   journalWithFamilies,
   sampleFamily,
@@ -20,13 +19,7 @@ import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { OccupationFamilyRepository } from '../repositories/occupation-family-repository'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { runFormWith, runWith } from './command-test-helpers'
-import { OccupationFamilySource } from './occupation-family-stream'
-import { PublicFigureSource } from './public-figure-stream'
-import {
-  fakePublicFigureSource,
-  figureParts,
-  journalWithFigures,
-} from './public-figure-test-helpers'
+import { journalWithFigures } from './public-figure-test-helpers'
 
 const meteque = { id: 'meteque', reputation: 0 }
 const eloquent = { id: 'eloquent', reputation: 1000 }
@@ -44,7 +37,6 @@ const eventsOf = (unit: { journal: { all: () => { type: string; streamId: string
 /** The tables as the test wants them: these families, with these occupations */
 const familiesKnown = (families: OccupationFamily[], listed: Occupation[] = []) =>
   Layer.mergeAll(
-    Layer.succeed(OccupationFamilySource, fakeFamilySource(families, listed)),
     Layer.succeed(OccupationFamilyRepository, fakeFamilyRepo(families)),
     Layer.succeed(OccupationRepository, fakeOccupationRepo(listed)),
   )
@@ -143,19 +135,6 @@ describe('createOccupationUseCase', () => {
     ])
   })
 
-  it('imports a family the journal does not know yet, with its occupations', async () => {
-    const unit = inMemoryUnitOfWork()
-    const listed = [sampleOccupation('Économiste', family.id)]
-    const result = await execute(listed)(createOccupationUseCase(occupationParams), unit.run)
-
-    expect(Either.isRight(result)).toBe(true)
-    expect(eventsOf(unit)).toEqual([
-      [family.id, 'OccupationFamilyImported'],
-      [family.id, 'OccupationImported'],
-      [family.id, 'OccupationAdded'],
-    ])
-  })
-
   it('refuses a family deleted meanwhile', async () => {
     const unit = await journalWithFamilies([family])
     await runWith(familiesKnown([family]))(
@@ -244,14 +223,9 @@ describe('deleteOccupationFamilyUseCase', () => {
 })
 
 describe('setPublicFigureOccupationsUseCase', () => {
-  /** The tables as the test wants them: the figure, and the occupations on the list */
+  /** The tables as the test wants them: the occupations on the list */
   const onFigure = (listed: Occupation[] = []) =>
-    runWith(
-      Layer.mergeAll(
-        Layer.succeed(PublicFigureSource, fakePublicFigureSource([figureParts(figure)])),
-        Layer.succeed(OccupationRepository, fakeOccupationRepo(listed)),
-      ),
-    )
+    runWith(Layer.succeed(OccupationRepository, fakeOccupationRepo(listed)))
 
   it('requires the Éloquent rank', async () => {
     const result = await onFigure()(
