@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer, Option } from 'effect'
 import { createStatementUseCase } from './create-statement'
+import { EMPTY_CONTENT_INPUT } from './validate-statement-fields'
 import { organisationAuthor, publicFigureAuthor } from '../entities/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { ArgumentRepository } from '../repositories/argument-repository'
@@ -73,10 +74,12 @@ const validParams = {
   author: publicFigureAuthor('figure-1'),
   positionId: 'pos-1',
   arguments: { argumentIds: [] as string[], newArguments: [] },
-  statementType: 'declaration' as const,
+  content: {
+    ...EMPTY_CONTENT_INPUT,
+    quote: 'Une citation suffisamment longue pour être valide.',
+  },
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
-  quote: 'Une citation suffisamment longue pour être valide.',
   statedAt: '2024-01-15',
 }
 
@@ -184,7 +187,7 @@ describe('createStatementUseCase', () => {
       createStatementUseCase({
         ...validParams,
         contributor: { id: 'abc', reputation: 0 },
-        quote: 'Court',
+        content: { ...EMPTY_CONTENT_INPUT, quote: 'Court' },
       }),
     )
 
@@ -192,6 +195,20 @@ describe('createStatementUseCase', () => {
     if (Either.isLeft(result) && typeof result.left !== 'string') {
       expect(result.left.quote).toBeDefined()
     }
+  })
+
+  it('should fail on the field a vote lacks, naming the ballot and not the quote', async () => {
+    const result = await execute(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 0 },
+        content: { ...EMPTY_CONTENT_INPUT, statementType: 'vote', choice: 'pour' },
+      }),
+    )
+
+    expect(Either.isLeft(result) && typeof result.left !== 'string' && result.left).toEqual({
+      votedText: expect.any(String),
+    })
   })
 
   it('should fail with field error when source name is empty', async () => {
@@ -281,7 +298,10 @@ describe('createStatementUseCase', () => {
       expect(result.right.author).toEqual({ kind: 'public_figure', id: 'figure-1' })
       expect(result.right.positionId).toBe('pos-1')
       expect(result.right.sourceName).toBe('Le Monde')
-      expect(result.right.quote).toBe('Une citation suffisamment longue pour être valide.')
+      expect(result.right.content).toEqual({
+        kind: 'declaration',
+        quote: 'Une citation suffisamment longue pour être valide.',
+      })
       expect(result.right.createdBy).toBe('abc')
       expect(deedsIn(journal).map((e) => [e.streamType, e.streamId, e.revision, e.type])).toEqual([
         ['statement', result.right.id, 1, 'StatementAdded'],

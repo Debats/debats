@@ -2,10 +2,11 @@
 
 import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
-import { parseStatementType, publicFigureAuthor } from '../../domain/entities/statement'
+import { publicFigureAuthor } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { readStatementArguments } from './statement-arguments-fields'
+import { readStatementContent } from './statement-content-fields'
 
 export type ActionResult =
   | { success: true }
@@ -25,10 +26,9 @@ export async function createStatementAction(
       subjectId,
       author: publicFigureAuthor(String(formData.get('publicFigureId') ?? '')),
       positionId: String(formData.get('positionId') ?? ''),
-      statementType: parseStatementType(formData.get('statementType')),
+      content: readStatementContent(formData),
       sourceName: String(formData.get('sourceName') ?? ''),
       sourceUrl: String(formData.get('sourceUrl') ?? ''),
-      quote: String(formData.get('quote') ?? ''),
       statedAt: String(formData.get('statedAt') ?? ''),
       arguments: readStatementArguments(formData),
     }),

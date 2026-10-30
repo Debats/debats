@@ -24,6 +24,7 @@ import {
   StatementWithAuthor,
   StatementWithAuthorAndSubject,
 } from '../../domain/repositories/statement-repository'
+import { toStatementContent } from './statement-content-columns'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -47,10 +48,9 @@ function mapStatementRow(row: StatementRow): Statement {
     id: StatementId.make(row.id),
     author: mapAuthor(row),
     positionId: row.position_id,
-    statementType: row.statement_type,
+    content: toStatementContent(row),
     sourceName: row.source_name,
-    sourceUrl: row.source_url ?? undefined,
-    quote: row.quote,
+    sourceUrl: row.source_url,
     statedAt: new Date(row.stated_at),
     createdBy: row.created_by ?? undefined,
     createdAt: new Date(row.created_at!),
@@ -128,9 +128,17 @@ function toArgumentRefs(links: ArgumentLinkJoin[] | null): ArgumentRef[] {
     .sort((a, b) => a.title.localeCompare(b.title, 'fr'))
 }
 
+/**
+ * The columns of a statement itself, which every query of this module selects:
+ * its own, plus the one column per content variant that its type fills.
+ */
+const STATEMENT_COLUMNS = `
+  id, public_figure_id, organisation_id, position_id, source_name, source_url, stated_at,
+  statement_type, quote, document_name, voted_text, vote_choice, deed,
+  created_by, created_at, updated_at, deleted_at`
+
 const STATEMENT_WITH_AUTHOR_QUERY = `
-  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
-  created_by, created_at, updated_at, deleted_at,
+  ${STATEMENT_COLUMNS},
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at
   ),
@@ -157,8 +165,7 @@ function mapStatementWithAuthorRow(row: StatementWithAuthorRow): StatementWithAu
 
 /** The author query with the subject embedded under the position: an argument's page reads it */
 const STATEMENT_WITH_AUTHOR_AND_SUBJECT_QUERY = `
-  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
-  created_by, created_at, updated_at, deleted_at,
+  ${STATEMENT_COLUMNS},
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
     subjects!inner (
@@ -187,8 +194,7 @@ interface FeedQueryBuilder {
  * themes, which only then narrows to subjects that have one.
  */
 const feedQuery = (themeSlug: string | undefined) => `
-  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
-  created_by, created_at, updated_at, deleted_at,
+  ${STATEMENT_COLUMNS},
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
     subjects!inner (
@@ -253,8 +259,7 @@ function mapLatestStatementRow(row: LatestStatementRow, datedBy: 'stated_at' | '
 }
 
 const STATEMENT_WITH_DETAILS_QUERY = `
-  id, public_figure_id, organisation_id, position_id, statement_type, source_name, source_url, quote, stated_at,
-  created_by, created_at, updated_at, deleted_at,
+  ${STATEMENT_COLUMNS},
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
     subjects!inner (

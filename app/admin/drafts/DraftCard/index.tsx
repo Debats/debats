@@ -14,6 +14,7 @@ import {
 import { deleteDraftAction } from '../../../actions/delete-draft-action'
 import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
+import StatementBody from '../../../../components/statements/StatementBody'
 import AuthorCreationPreview from '../AuthorCreationPreview'
 import CreationPreview from '../CreationPreview'
 import DraftEnrichment from '../DraftEnrichment'
@@ -83,7 +84,7 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
 
   return (
     <div className={styles.card}>
-      <blockquote className={styles.quote}>{draft.quote}</blockquote>
+      <StatementBody content={draft.content} />
 
       <div className={styles.meta}>
         <a

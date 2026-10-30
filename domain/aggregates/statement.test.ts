@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Either } from 'effect'
-import { publicFigureAuthor } from '../entities/statement'
+import { declarationContent, publicFigureAuthor, voteContent } from '../entities/statement'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
 import { Rejected } from './decision'
 import {
@@ -41,10 +41,9 @@ const addition = {
   author: publicFigureAuthor('figure-1'),
   subjectId: 'subject-1',
   positionId: 'pos-1',
-  statementType: 'declaration' as const,
+  content: declarationContent('Une citation suffisamment longue pour être valide.'),
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
-  quote: 'Une citation suffisamment longue pour être valide.',
   statedAt: at('2024-01-15'),
   argumentIds: ['arg-1'],
 }
@@ -53,9 +52,9 @@ const added = statementAdded(addition)
 
 const edit = {
   positionId: 'pos-2',
-  statementType: 'vote' as const,
+  content: voteContent('Proposition de loi sur la fin de vie', 'contre'),
   sourceName: 'Assemblée nationale',
-  quote: 'Une autre citation suffisamment longue pour être valide.',
+  sourceUrl: 'https://assemblee-nationale.fr/scrutin',
   statedAt: at('2024-02-01'),
   argumentIds: ['arg-2', 'arg-3'],
 }
@@ -71,12 +70,16 @@ const rebuilt = (...events: Array<{ type: string; payload: unknown }>) => {
 }
 
 describe('statement facts', () => {
-  it('carry the calendar day and leave out an empty source url', () => {
+  it('carry the calendar day, the source, and what the statement says by its type', () => {
     expect(added.payload).toMatchObject({
       statedAt: '2024-01-15',
       sourceUrl: 'https://lemonde.fr/article',
+      content: { kind: 'declaration', quote: 'Une citation suffisamment longue pour être valide.' },
     })
-    expect(edited.payload).not.toHaveProperty('sourceUrl')
+    expect(edited.payload).toMatchObject({
+      sourceUrl: 'https://assemblee-nationale.fr/scrutin',
+      content: { kind: 'vote', votedText: 'Proposition de loi sur la fin de vie' },
+    })
   })
 })
 
@@ -151,8 +154,8 @@ describe('replayStatement', () => {
       statement: {
         author: { kind: 'public_figure', id: 'figure-1' },
         positionId: 'pos-2',
-        statementType: 'vote',
-        sourceUrl: undefined,
+        content: { kind: 'vote', votedText: 'Proposition de loi sur la fin de vie' },
+        sourceUrl: 'https://assemblee-nationale.fr/scrutin',
         createdBy: 'alice',
         createdAt: at('2024-01-16'),
         updatedAt: at('2024-03-01'),
@@ -169,7 +172,10 @@ describe('replayStatement', () => {
     expect(Either.isRight(state) && state.right).toMatchObject({
       argumentIds: ['arg-9'],
       statement: {
-        quote: 'Une citation suffisamment longue pour être valide.',
+        content: {
+          kind: 'declaration',
+          quote: 'Une citation suffisamment longue pour être valide.',
+        },
         updatedAt: at('2024-04-01'),
       },
     })

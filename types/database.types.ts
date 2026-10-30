@@ -205,10 +205,15 @@ export type Database = {
       }
       draft_statements: {
         Row: {
+          affiliations: Json
           ai_notes: string | null
+          arguments: Json
           created_at: string
           date: string
+          deed: string | null
+          document_name: string | null
           id: string
+          occupations: Json
           organisation_data: Json | null
           organisation_name: string | null
           origin: string
@@ -216,7 +221,7 @@ export type Database = {
           position_title: string
           public_figure_data: Json | null
           public_figure_name: string | null
-          quote: string
+          quote: string | null
           rejection_note: string | null
           source_name: string
           source_url: string
@@ -225,12 +230,19 @@ export type Database = {
           subject_data: Json | null
           subject_title: string
           updated_at: string
+          vote_choice: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text: string | null
         }
         Insert: {
+          affiliations?: Json
           ai_notes?: string | null
+          arguments?: Json
           created_at?: string
           date: string
+          deed?: string | null
+          document_name?: string | null
           id?: string
+          occupations?: Json
           organisation_data?: Json | null
           organisation_name?: string | null
           origin: string
@@ -238,7 +250,7 @@ export type Database = {
           position_title: string
           public_figure_data?: Json | null
           public_figure_name?: string | null
-          quote: string
+          quote?: string | null
           rejection_note?: string | null
           source_name: string
           source_url: string
@@ -247,12 +259,19 @@ export type Database = {
           subject_data?: Json | null
           subject_title: string
           updated_at?: string
+          vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text?: string | null
         }
         Update: {
+          affiliations?: Json
           ai_notes?: string | null
+          arguments?: Json
           created_at?: string
           date?: string
+          deed?: string | null
+          document_name?: string | null
           id?: string
+          occupations?: Json
           organisation_data?: Json | null
           organisation_name?: string | null
           origin?: string
@@ -260,7 +279,7 @@ export type Database = {
           position_title?: string
           public_figure_data?: Json | null
           public_figure_name?: string | null
-          quote?: string
+          quote?: string | null
           rejection_note?: string | null
           source_name?: string
           source_url?: string
@@ -269,6 +288,8 @@ export type Database = {
           subject_data?: Json | null
           subject_title?: string
           updated_at?: string
+          vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text?: string | null
         }
         Relationships: []
       }
@@ -858,47 +879,59 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          deed: string | null
           deleted_at: string | null
+          document_name: string | null
           id: string
           organisation_id: string | null
           position_id: string
           public_figure_id: string | null
-          quote: string
+          quote: string | null
           source_name: string
-          source_url: string | null
+          source_url: string
           stated_at: string
           statement_type: Database["public"]["Enums"]["statement_type"]
           updated_at: string | null
+          vote_choice: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text: string | null
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          deed?: string | null
           deleted_at?: string | null
+          document_name?: string | null
           id?: string
           organisation_id?: string | null
           position_id: string
           public_figure_id?: string | null
-          quote: string
+          quote?: string | null
           source_name: string
-          source_url?: string | null
+          source_url: string
           stated_at: string
           statement_type?: Database["public"]["Enums"]["statement_type"]
           updated_at?: string | null
+          vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
+          deed?: string | null
           deleted_at?: string | null
+          document_name?: string | null
           id?: string
           organisation_id?: string | null
           position_id?: string
           public_figure_id?: string | null
-          quote?: string
+          quote?: string | null
           source_name?: string
-          source_url?: string | null
+          source_url?: string
           stated_at?: string
           statement_type?: Database["public"]["Enums"]["statement_type"]
           updated_at?: string | null
+          vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text?: string | null
         }
         Relationships: [
           {
@@ -1275,6 +1308,7 @@ export type Database = {
         | "association"
         | "collective"
       statement_type: "declaration" | "vote" | "program" | "act"
+      vote_choice: "pour" | "contre" | "abstention"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1416,6 +1450,7 @@ export const Constants = {
         "collective",
       ],
       statement_type: ["declaration", "vote", "program", "act"],
+      vote_choice: ["pour", "contre", "abstention"],
     },
   },
 } as const

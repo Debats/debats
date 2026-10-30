@@ -3,16 +3,19 @@
 import { useState, useCallback, FormEvent, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
-import { STATEMENT_TYPES, STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
 import { FieldErrors } from '../../../domain/use-cases/types'
 import { ArgumentRef } from '../../../domain/read-models/argument'
 import TextField from '../../ui/TextField'
 
 const Combobox = lazy(() => import('../../ui/Combobox'))
-import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import ArgumentsPicker from '../ArgumentsPicker'
+import StatementContentFields from '../StatementContentFields'
+import {
+  EMPTY_CONTENT_INPUT,
+  StatementContentInput,
+} from '../../../domain/use-cases/validate-statement-fields'
 import styles from './StatementForm.module.css'
 
 interface PositionOption {
@@ -36,10 +39,10 @@ interface StatementFormProps {
   canUseArguments?: boolean
   initialArguments?: ArgumentRef[]
   initialPositionId?: string
-  initialStatementType?: string
+  /** Ce que la prise de position porte déjà, selon sa nature */
+  initialContent?: Partial<StatementContentInput>
   initialSourceName?: string
   initialSourceUrl?: string
-  initialQuote?: string
   initialStatedAt?: string
 }
 
@@ -54,13 +57,16 @@ export default function StatementForm({
   canUseArguments = false,
   initialArguments,
   initialPositionId = '',
-  initialStatementType = 'declaration',
+  initialContent,
   initialSourceName = '',
   initialSourceUrl = '',
-  initialQuote = '',
   initialStatedAt = '',
 }: StatementFormProps) {
   const router = useRouter()
+  const [content, setContent] = useState<StatementContentInput>({
+    ...EMPTY_CONTENT_INPUT,
+    ...initialContent,
+  })
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
   const [isPending, setIsPending] = useState(false)
@@ -130,23 +136,7 @@ export default function StatementForm({
         </select>
       </div>
 
-      <div className={styles.selectField}>
-        <label className={styles.selectLabel} htmlFor="statementType">
-          Type
-        </label>
-        <select
-          className={styles.select}
-          id="statementType"
-          name="statementType"
-          defaultValue={initialStatementType}
-        >
-          {STATEMENT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {STATEMENT_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
-      </div>
+      <StatementContentFields value={content} onChange={setContent} errors={fieldErrors} />
 
       <TextField
         label="Nom de la source"
@@ -159,22 +149,13 @@ export default function StatementForm({
       />
 
       <TextField
-        label="URL de la source"
+        label="Lien vers la source"
         id="sourceUrl"
         name="sourceUrl"
+        required
         placeholder="https://..."
         defaultValue={initialSourceUrl}
-      />
-
-      <TextArea
-        label="Citation"
-        id="quote"
-        name="quote"
-        required
-        placeholder="Citation exacte de la personnalité (min. 10 caractères)"
-        rows={4}
-        defaultValue={initialQuote}
-        error={fieldErrors?.quote}
+        error={fieldErrors?.sourceUrl}
       />
 
       <div className={styles.dateField}>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createPosition, createStatement } from '../entities/entity-test-helpers'
-import { publicFigureAuthor } from '../entities/statement'
+import { declarationContent, publicFigureAuthor } from '../entities/statement'
 import { StatementWithAuthor } from '../repositories/statement-repository'
 import { publicFigureRef } from '../read-models/statement-author'
 import { statedSpanLabel, subjectTimeline } from './subject-timeline'
@@ -25,10 +25,9 @@ const entry = (
     ...createStatement({
       author: publicFigureAuthor(`figure-${authorName}`),
       positionId: pos.id,
-      statementType: 'declaration',
+      content: declarationContent(`Citation du ${statedAt}, suffisamment longue.`),
       sourceName: 'Le Monde',
       sourceUrl: 'https://lemonde.fr/article',
-      quote: `Citation du ${statedAt}, suffisamment longue.`,
       statedAt: new Date(statedAt),
       createdBy: 'founder',
     }),
@@ -64,14 +63,16 @@ describe('subjectTimeline', () => {
     ])
   })
 
-  it('carries what an entry shows: author, position, quote, source, type', () => {
+  it('carries what an entry shows: author, position, what it says, source', () => {
     const [year] = subjectTimeline([entry('2024-01-15', contre)])
 
     expect(year.entries[0]).toMatchObject({
       author: { kind: 'public_figure', name: 'Jean Dupont', slug: 'jean-dupont' },
       position: { id: contre.id, title: 'Contre', slug: contre.slug },
-      quote: 'Citation du 2024-01-15, suffisamment longue.',
-      statementType: 'declaration',
+      content: {
+        kind: 'declaration',
+        quote: 'Citation du 2024-01-15, suffisamment longue.',
+      },
       sourceName: 'Le Monde',
       sourceUrl: 'https://lemonde.fr/article',
     })

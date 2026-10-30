@@ -1,9 +1,34 @@
 'use client'
 
-import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
+import {
+  parseStatementType,
+  parseVoteChoice,
+  STATEMENT_TYPE_LABELS,
+  voteSense,
+} from '../../../domain/entities/statement'
 import { formatShortDate } from '../../../lib/format-date'
-import { useStatementDraft } from '../StatementDraft'
+import { StatementDraft, useStatementDraft } from '../StatementDraft'
 import styles from './StatementPreview.module.css'
+
+/**
+ * Ce que la saisie en cours dit, selon la nature choisie. Un vote et un acte
+ * s'énoncent comme des faits : l'aperçu ne les met pas entre guillemets, pour
+ * que l'auteur voie tout de suite ce que le site affichera.
+ */
+function draftSays(draft: StatementDraft): string {
+  switch (parseStatementType(draft.statementType)) {
+    case 'declaration':
+    case 'program':
+      return draft.quote
+    case 'vote': {
+      const choice = parseVoteChoice(draft.choice)
+      const sense = choice ? voteSense(choice) : 'A voté'
+      return draft.votedText ? `${sense} : ${draft.votedText}` : ''
+    }
+    case 'act':
+      return draft.deed
+  }
+}
 
 function initials(name: string): string {
   return name
@@ -22,7 +47,8 @@ function parseDate(value: string): Date | null {
 /** Aperçu de la prise de position telle qu'elle apparaîtra sur le site. */
 export default function StatementPreview() {
   const { draft } = useStatementDraft()
-  const isEmpty = !draft.authorName && !draft.quote && !draft.positionTitle
+  const says = draftSays(draft)
+  const isEmpty = !draft.authorName && !says && !draft.positionTitle
   const date = parseDate(draft.statedAt)
   const isOrganisation = draft.authorKind === 'organisation'
 
@@ -54,10 +80,15 @@ export default function StatementPreview() {
               )}
             </p>
           </div>
-          {draft.quote && <blockquote className={styles.quote}>{draft.quote}</blockquote>}
+          {says &&
+            (draft.statementType === 'vote' || draft.statementType === 'act' ? (
+              <p className={styles.fact}>{says}</p>
+            ) : (
+              <blockquote className={styles.quote}>{says}</blockquote>
+            ))}
           <p className={styles.meta}>
             {[
-              STATEMENT_TYPE_LABELS[draft.statementType],
+              STATEMENT_TYPE_LABELS[parseStatementType(draft.statementType)],
               date ? formatShortDate(date) : null,
               draft.sourceName || null,
             ]

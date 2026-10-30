@@ -8,7 +8,13 @@ import {
 } from '../../domain/aggregates/statement'
 import { decodeStatementEvent } from '../../domain/aggregates/statement-events'
 import { argumentAdded, argumentStream } from '../../domain/aggregates/argument'
-import { publicFigureAuthor } from '../../domain/entities/statement'
+import {
+  actContent,
+  declarationContent,
+  publicFigureAuthor,
+  voteContent,
+} from '../../domain/entities/statement'
+import { toStatementContent } from '../database/statement-content-columns'
 import { getPrismaClient } from '../prisma/client'
 import { runUnitOfWork } from './unit-of-work'
 
@@ -71,10 +77,9 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
       author: publicFigureAuthor(figureId),
       subjectId,
       positionId,
-      statementType: 'declaration',
+      content: declarationContent('Une citation suffisamment longue pour être valide.'),
       sourceName: 'Le Monde',
       sourceUrl: 'https://lemonde.fr/article',
-      quote: 'Une citation suffisamment longue pour être valide.',
       statedAt: new Date('2024-01-15'),
       argumentIds: argumentIds.slice(0, 1),
     })
@@ -92,6 +97,12 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
       organisation_id: null,
       position_id: positionId,
       source_url: 'https://lemonde.fr/article',
+      statement_type: 'declaration',
+      quote: 'Une citation suffisamment longue pour être valide.',
+      voted_text: null,
+      vote_choice: null,
+      deed: null,
+      document_name: null,
       created_by: actorId,
     })
     expect(row.stated_at.toISOString().slice(0, 10)).toBe('2024-01-15')
@@ -101,10 +112,9 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
   it('updates the row and replaces the links when it is edited', async () => {
     const edited = statementEdited({
       positionId,
-      statementType: 'vote',
+      content: voteContent('Proposition de loi sur la fin de vie', 'contre'),
       sourceName: 'Assemblée nationale',
       sourceUrl: 'https://www.assemblee-nationale.fr/scrutin',
-      quote: 'Une autre citation suffisamment longue pour être valide.',
       statedAt: new Date('2024-02-01'),
       argumentIds: argumentIds.slice(1, 2),
     })
@@ -117,8 +127,12 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
       where: { id: streamId },
       include: { argument_statements: true },
     })
+    // Editing into a vote clears the words the declaration carried
     expect(row).toMatchObject({
       statement_type: 'vote',
+      voted_text: 'Proposition de loi sur la fin de vie',
+      vote_choice: 'contre',
+      quote: null,
       source_url: 'https://www.assemblee-nationale.fr/scrutin',
       created_by: actorId,
     })
@@ -131,7 +145,7 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
     const row = await prisma().statements.findUniqueOrThrow({ where: { id: streamId } })
 
     expect(Either.isRight(state) && state.right?.statement).toMatchObject({
-      quote: row.quote,
+      content: toStatementContent(row),
       sourceName: row.source_name,
       positionId: row.position_id,
       createdBy: row.created_by,
@@ -159,10 +173,9 @@ describe.skipIf(!hasDatabase)('statement projector', () => {
               [
                 statementEdited({
                   positionId,
-                  statementType: 'act',
+                  content: actContent('Cosignature de la proposition de loi'),
                   sourceName: 'X',
                   sourceUrl: 'https://example.org/x',
-                  quote: 'Une citation suffisamment longue.',
                   statedAt: new Date(),
                   argumentIds: [],
                 }),
@@ -225,11 +238,10 @@ describe.skipIf(!hasDatabase)('statement journal after the backfill', () => {
       const state = replayStatement(history)
       expect(Either.isRight(state) && state.right).toMatchObject({
         statement: {
-          quote: row.quote,
+          content: toStatementContent(row),
           sourceName: row.source_name,
-          sourceUrl: row.source_url ?? undefined,
+          sourceUrl: row.source_url,
           positionId: row.position_id,
-          statementType: row.statement_type,
           createdBy: row.created_by ?? undefined,
         },
         argumentIds: row.argument_statements.map((l) => l.argument_id),

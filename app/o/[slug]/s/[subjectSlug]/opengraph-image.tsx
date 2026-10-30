@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from '../../../../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../../../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
+import { contentLine } from '../../../../../domain/entities/statement'
 import { loadBrandMark, loadLogo, loadOgFonts } from '../../../../../lib/og'
 import { formatDate } from '../../../../../lib/format-date'
 import OgAuthorOnSubject from '../../../../../components/og/OgAuthorOnSubject'
@@ -55,7 +56,7 @@ export default async function OGImage({
         avatarSrc={logoSrc}
         shape="square"
         positionTitle={first?.position.title ?? null}
-        quote={first?.statement.quote ?? null}
+        quote={first ? contentLine(first.statement.content) : null}
       />
     </OgFrame>,
     { ...size, fonts },

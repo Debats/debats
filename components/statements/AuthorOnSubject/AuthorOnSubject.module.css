@@ -64,10 +64,6 @@
   border-top: 1px solid var(--line);
 }
 
-.quote {
-  composes: quote from '../../../styles/text.module.css';
-}
-
 .source {
   display: flex;
   align-items: center;

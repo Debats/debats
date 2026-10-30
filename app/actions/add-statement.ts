@@ -8,13 +8,13 @@ import { createOrganisationRepository } from '../../infra/database/organisation-
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import {
   organisationAuthor,
-  parseStatementType,
   publicFigureAuthor,
   StatementAuthor,
 } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { readStatementArguments } from './statement-arguments-fields'
+import { readStatementContent } from './statement-content-fields'
 
 export type ActionResult =
   | { success: true; subjectSlug: string; authorHref: string; authorLabel: string }
@@ -42,10 +42,9 @@ export async function addStatementAction(formData: FormData): Promise<ActionResu
       subjectId,
       author,
       positionId: String(formData.get('positionId') ?? ''),
-      statementType: parseStatementType(formData.get('statementType')),
+      content: readStatementContent(formData),
       sourceName: String(formData.get('sourceName') ?? ''),
       sourceUrl: String(formData.get('sourceUrl') ?? ''),
-      quote: String(formData.get('quote') ?? ''),
       statedAt: String(formData.get('statedAt') ?? ''),
       arguments: readStatementArguments(formData),
     }),

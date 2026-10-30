@@ -1,10 +1,10 @@
 import { Either } from 'effect'
-import { Statement, StatementAuthor, StatementId, StatementType } from '../entities/statement'
+import { Statement, StatementAuthor, StatementContent, StatementId } from '../entities/statement'
 import { StoredEvent, StreamRef } from '../events/event-store'
 import { Cascade, Decision, refused } from './decision'
 import { isoDate } from './iso-date'
 import { Decoded, replayStream } from './replay'
-import { decodeStatementEvent, StatementContent, StatementEvent } from './statement-events'
+import { decodeStatementEvent, StatementEvent, StatementFields } from './statement-events'
 
 export const STATEMENT_STREAM = 'statement'
 
@@ -26,41 +26,40 @@ export interface StatementState {
 export const staysOnItsSubject = (state: StatementState, positionSubjectId: string): boolean =>
   state.subjectId === null || state.subjectId === positionSubjectId
 
-export interface StatementContentInput {
+export interface StatementRevisionInput {
   positionId: string
-  statementType: StatementType
+  /** What the statement carries, which depends on its nature */
+  content: StatementContent
   sourceName: string
-  sourceUrl?: string
-  quote: string
+  sourceUrl: string
   statedAt: Date
   argumentIds: readonly string[]
 }
 
-const content = (input: StatementContentInput): StatementContent => ({
+const fields = (input: StatementRevisionInput): StatementFields => ({
   positionId: input.positionId,
-  statementType: input.statementType,
+  content: input.content,
   sourceName: input.sourceName,
-  ...(input.sourceUrl ? { sourceUrl: input.sourceUrl } : {}),
-  quote: input.quote,
+  sourceUrl: input.sourceUrl,
   statedAt: isoDate(input.statedAt),
   argumentIds: [...input.argumentIds],
 })
 
 /* Facts: what the stream records, named in the past tense as the events they are */
 
-export type StatementAddition = StatementContentInput & {
+export type StatementAddition = StatementRevisionInput & {
   author: StatementAuthor
   subjectId: string
 }
 
 export const statementAdded = (input: StatementAddition): StatementEvent => ({
   type: 'StatementAdded',
-  payload: { author: input.author, subjectId: input.subjectId, ...content(input) },
+  payload: { author: input.author, subjectId: input.subjectId, ...fields(input) },
 })
 
-export const statementEdited = (input: StatementContentInput): StatementEvent => ({
+export const statementEdited = (input: StatementRevisionInput): StatementEvent => ({
   type: 'StatementEdited',
-  payload: content(input),
+  payload: fields(input),
 })
 
 export const statementMoved = (positionId: string): StatementEvent => ({
@@ -89,7 +88,7 @@ export const addStatement = (input: StatementAddition): StatementEvent[] => [sta
 
 /** A contributor changes what the statement says; its position may only move within its subject */
 export const editStatement =
-  (input: StatementContentInput, positionSubjectId: string): StatementDecision =>
+  (input: StatementRevisionInput, positionSubjectId: string): StatementDecision =>
   (state) =>
     staysOnItsSubject(state, positionSubjectId)
       ? Either.right([statementEdited(input)])
@@ -183,13 +182,12 @@ function apply(
   }
 }
 
-function asStatementFields(payload: StatementContent) {
+function asStatementFields(payload: StatementFields) {
   return {
     positionId: payload.positionId,
-    statementType: payload.statementType,
+    content: payload.content,
     sourceName: payload.sourceName,
     sourceUrl: payload.sourceUrl,
-    quote: payload.quote,
     statedAt: new Date(payload.statedAt),
   }
 }

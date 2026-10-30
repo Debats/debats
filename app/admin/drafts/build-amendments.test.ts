@@ -5,7 +5,9 @@ import {
   draftOrganisationAuthor,
   draftPublicFigureAuthor,
 } from '../../../domain/entities/draft-statement'
+import { actContent, declarationContent } from '../../../domain/entities/statement'
 import { DraftResolution } from '../../../domain/use-cases/resolve-draft'
+import { contentFieldsOf } from '../../../domain/use-cases/validate-statement-fields'
 
 function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
   return {
@@ -14,8 +16,7 @@ function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
       presentation: 'Homme politique français.',
       wikipediaUrl: 'https://fr.wikipedia.org/wiki/JLM',
     }),
-    statementType: 'declaration',
-    quote: 'Citation originale du brouillon',
+    content: declarationContent('Citation originale du brouillon'),
     sourceName: 'Le Monde',
     sourceUrl: 'https://lemonde.fr',
     date: '2024-01-15',
@@ -79,7 +80,7 @@ function makeState(overrides: Partial<AmendFormState> = {}): AmendFormState {
     positionTitle: 'Régularisation des sans-papiers',
     positionDescription: 'Régulariser.',
     sourceName: 'Le Monde',
-    quote: 'Citation originale du brouillon',
+    content: contentFieldsOf(declarationContent('Citation originale du brouillon')),
     ...overrides,
   }
 }
@@ -90,13 +91,18 @@ describe('buildAmendments', () => {
     expect(result).toEqual({})
   })
 
-  it('should include quote when changed', () => {
-    const result = buildAmendments(
-      makeDraft(),
-      allFoundResolution,
-      makeState({ quote: 'Nouvelle citation' }),
-    )
-    expect(result).toEqual({ quote: 'Nouvelle citation' })
+  it('should include the whole content when a word of it changed', () => {
+    const content = contentFieldsOf(declarationContent('Nouvelle citation'))
+    const result = buildAmendments(makeDraft(), allFoundResolution, makeState({ content }))
+
+    expect(result).toEqual({ content })
+  })
+
+  it('should include the whole content when the nature changed', () => {
+    const content = contentFieldsOf(actContent('Cosignature de la proposition de loi'))
+    const result = buildAmendments(makeDraft(), allFoundResolution, makeState({ content }))
+
+    expect(result).toEqual({ content })
   })
 
   it('should include sourceName when changed', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createPosition, createStatement } from '../entities/entity-test-helpers'
-import { organisationAuthor, publicFigureAuthor } from '../entities/statement'
+import { declarationContent, organisationAuthor, publicFigureAuthor } from '../entities/statement'
 import { organisationRef, publicFigureRef } from '../read-models/statement-author'
 import { StatementWithAuthor } from '../repositories/statement-repository'
 import { countAllies, groupStatementsByPosition, groupSubjectCompany } from './author-on-subject'
@@ -29,9 +29,9 @@ function taken(author: typeof attac, position: typeof pour): StatementWithAuthor
         ? organisationAuthor(author.id)
         : publicFigureAuthor(author.id),
     positionId: position.id,
-    statementType: 'declaration',
+    content: declarationContent('Une citation suffisamment longue.'),
     sourceName: 'Source',
-    quote: 'Une citation suffisamment longue.',
+    sourceUrl: 'https://example.org/source',
     statedAt: new Date('2024-01-01'),
     createdBy: 'user',
   })

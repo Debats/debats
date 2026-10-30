@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
+import StatementBody from '../../../../components/statements/StatementBody'
 import StatementSource from '../../../../components/statements/StatementSource'
 import { authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import { ArgumentSubjectUsage } from '../../../../domain/services/argument-usage'
@@ -46,7 +47,7 @@ export default function ArgumentUsage({ usage }: ArgumentUsageProps) {
                       <AuthorAvatar author={author} size={32} />
                       <span className={styles.authorName}>{author.name}</span>
                     </Link>
-                    <blockquote className={styles.quote}>{statement.quote}</blockquote>
+                    <StatementBody content={statement.content} />
                     <StatementSource statement={statement} />
                   </li>
                 ))}

@@ -8,9 +8,10 @@ import { createPositionRepository } from '../../../../../infra/database/position
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
-import { STATEMENT_TYPE_LABELS } from '../../../../../domain/entities/statement'
+import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
 import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
 import AuthorAvatar from '../../../../../components/statements/AuthorAvatar'
+import StatementBody from '../../../../../components/statements/StatementBody'
 import ArgumentChips from '../../../../../components/statements/ArgumentChips'
 import AdminMenu from '../../../../../components/ui/AdminMenu'
 import Button from '../../../../../components/ui/Button'
@@ -197,23 +198,19 @@ export default async function PositionDetailPage({ params }: PageProps) {
                       </Link>
                       <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
                     </div>
-                    <blockquote className={styles.quote}>{statement.quote}</blockquote>
+                    <StatementBody content={statement.content} />
                     <div className={styles.source}>
                       <span className={styles.type}>
-                        {STATEMENT_TYPE_LABELS[statement.statementType]}
+                        {STATEMENT_TYPE_LABELS[statementTypeOf(statement.content)]}
                       </span>
-                      {statement.sourceUrl ? (
-                        <a
-                          href={statement.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.sourceLink}
-                        >
-                          {statement.sourceName}
-                        </a>
-                      ) : (
-                        <span className={styles.sourceLink}>{statement.sourceName}</span>
-                      )}
+                      <a
+                        href={statement.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.sourceLink}
+                      >
+                        {statement.sourceName}
+                      </a>
                     </div>
                     <ArgumentChips arguments={used} />
                   </div>

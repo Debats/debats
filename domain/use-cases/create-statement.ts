@@ -1,12 +1,16 @@
 import { Effect, pipe } from 'effect'
-import { StatementAuthor, StatementId, StatementType } from '../entities/statement'
+import { StatementAuthor, StatementId } from '../entities/statement'
 import { addStatement } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
-import { statementFields } from './validate-statement-fields'
+import {
+  statementContent,
+  StatementContentInput,
+  statementFields,
+} from './validate-statement-fields'
 import {
   ARGUMENT_JUST_CREATED,
   argumentRewards,
@@ -27,10 +31,10 @@ type CreateStatementParams = {
   positionId: string
   /** Arguments the statement mobilises, chosen or proposed (Éloquent only) */
   arguments: StatementArgumentsInput
-  statementType: StatementType
+  /** What the statement carries, as the form holds it, read according to its type */
+  content: StatementContentInput
   sourceName: string
   sourceUrl: string
-  quote: string
   statedAt: string
 }
 
@@ -54,8 +58,8 @@ const authorKnown = (author: StatementAuthor) =>
       )
 
 export function createStatementUseCase(params: CreateStatementParams) {
-  const { subjectId, author, positionId, statementType } = params
-  const { sourceName, sourceUrl, quote, statedAt } = params
+  const { subjectId, author, positionId } = params
+  const { sourceName, sourceUrl, statedAt } = params
   // The command names the statement: the stream exists from its first event
   const id = StatementId.make(crypto.randomUUID())
 
@@ -71,7 +75,8 @@ export function createStatementUseCase(params: CreateStatementParams) {
   return pipe(
     Effect.all({
       contributor: allowedTo(params.contributor, 'add_statement', 'ajouter une prise de position'),
-      fields: statementFields({ sourceName, sourceUrl, quote, statedAt }),
+      fields: statementFields({ sourceName, sourceUrl, statedAt }),
+      content: statementContent(params.content),
     }),
     Effect.tap(() => authorKnown(author)),
     Effect.tap(() => positionOnSubject),
@@ -79,7 +84,7 @@ export function createStatementUseCase(params: CreateStatementParams) {
       validateStatementArguments(contributor, params.arguments),
     ),
     // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
-    Effect.flatMap(({ contributor, fields, validated }) =>
+    Effect.flatMap(({ contributor, content, fields, validated }) =>
       runUnitOfWork((events) =>
         pipe(
           recordProposedArguments(events, contributor.id, validated),
@@ -93,10 +98,9 @@ export function createStatementUseCase(params: CreateStatementParams) {
                   author,
                   subjectId,
                   positionId,
-                  statementType,
+                  content,
                   sourceName: fields.sourceName,
                   sourceUrl: fields.sourceUrl,
-                  quote: fields.quote,
                   statedAt: new Date(fields.statedAt),
                   argumentIds: recorded.argumentIds,
                 }),

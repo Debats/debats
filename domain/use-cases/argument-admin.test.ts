@@ -7,7 +7,12 @@ import { EventStore } from '../events/event-store'
 import { RunUnitOfWork } from '../events/unit-of-work'
 import { EDITED_MEANWHILE } from './run-command'
 import { statementAdded, statementStream } from '../aggregates/statement'
-import { publicFigureAuthor, Statement, StatementId } from '../entities/statement'
+import {
+  declarationContent,
+  publicFigureAuthor,
+  Statement,
+  StatementId,
+} from '../entities/statement'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { Argument } from '../entities/argument'
@@ -76,10 +81,9 @@ const statementOn = (id: string): Statement =>
     id: StatementId.make(id),
     author: publicFigureAuthor('figure-1'),
     positionId: 'pos-1',
-    statementType: 'declaration',
+    content: declarationContent('Une citation suffisamment longue pour être valide.'),
     sourceName: 'Le Monde',
     sourceUrl: 'https://lemonde.fr/article',
-    quote: 'Une citation suffisamment longue pour être valide.',
     statedAt: new Date('2024-01-15'),
     createdBy: 'author-id',
     createdAt: new Date('2024-01-16'),

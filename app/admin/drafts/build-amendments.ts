@@ -6,6 +6,10 @@ import {
 } from '../../../domain/entities/draft-statement'
 import { OrganisationType } from '../../../domain/entities/organisation'
 import { DraftResolution } from '../../../domain/use-cases/resolve-draft'
+import {
+  contentFieldsOf,
+  StatementContentInput,
+} from '../../../domain/use-cases/validate-statement-fields'
 import { DraftAmendments } from '../../actions/amend-and-validate-draft-action'
 
 export type AmendFormState = {
@@ -25,7 +29,8 @@ export type AmendFormState = {
   positionTitle: string
   positionDescription: string
   sourceName: string
-  quote: string
+  /** What the draft carries, field by field, as the form holds it */
+  content: StatementContentInput
 }
 
 /** Rebuilds the author, keeping its kind and the acronym the form does not expose. */
@@ -123,7 +128,12 @@ export function buildAmendments(
 
   // Statement fields
   if (state.sourceName !== draft.sourceName) amendments.sourceName = state.sourceName
-  if (state.quote !== draft.quote) amendments.quote = state.quote
+  // The content is one value: any field of it changing re-states the whole of it
+  const recorded = contentFieldsOf(draft.content)
+  const keys = Object.keys(recorded) as Array<keyof StatementContentInput>
+  if (keys.some((key) => state.content[key] !== recorded[key])) {
+    amendments.content = state.content
+  }
 
   return amendments
 }

@@ -103,10 +103,6 @@
   font-weight: 600;
 }
 
-.quote {
-  composes: quote from '../../../../styles/text.module.css';
-}
-
 @media (max-width: 768px) {
   .card {
     padding: 0 20px;

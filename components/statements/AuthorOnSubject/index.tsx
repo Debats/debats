@@ -3,7 +3,8 @@ import ContentWithSidebar from '../../layout/ContentWithSidebar'
 import EditLink from '../../ui/EditLink'
 import AuthorAvatarStack from '../AuthorAvatarStack'
 import ArgumentChips from '../ArgumentChips'
-import { STATEMENT_TYPE_LABELS } from '../../../domain/entities/statement'
+import StatementBody from '../StatementBody'
+import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../domain/entities/statement'
 import { PositionGroup, SubjectCompany } from '../../../domain/services/author-on-subject'
 import { formatShortDate } from '../../../lib/format-date'
 import { plural } from '../../../lib/plural'
@@ -69,23 +70,19 @@ export default function AuthorOnSubject({
                   </h3>
                   {statements.map(({ statement, arguments: used }) => (
                     <div key={statement.id} className={styles.statement}>
-                      <blockquote className={styles.quote}>{statement.quote}</blockquote>
+                      <StatementBody content={statement.content} />
                       <div className={styles.source}>
                         <span className={styles.type}>
-                          {STATEMENT_TYPE_LABELS[statement.statementType]}
+                          {STATEMENT_TYPE_LABELS[statementTypeOf(statement.content)]}
                         </span>
-                        {statement.sourceUrl ? (
-                          <a
-                            href={statement.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.sourceLink}
-                          >
-                            {statement.sourceName}
-                          </a>
-                        ) : (
-                          <span className={styles.sourceLink}>{statement.sourceName}</span>
-                        )}
+                        <a
+                          href={statement.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.sourceLink}
+                        >
+                          {statement.sourceName}
+                        </a>
                         <span className={styles.separator}>·</span>
                         <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
                         {editHref && <EditLink href={editHref(statement.id)} />}

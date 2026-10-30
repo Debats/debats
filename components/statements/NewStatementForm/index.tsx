@@ -12,22 +12,21 @@ import {
   PositionOption,
 } from '../../../app/actions/get-positions-for-subject'
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
+import { StatementAuthorKind } from '../../../domain/entities/statement'
 import {
-  STATEMENT_TYPES,
-  STATEMENT_TYPE_LABELS,
-  StatementAuthorKind,
-  parseStatementType,
-} from '../../../domain/entities/statement'
+  EMPTY_CONTENT_INPUT,
+  StatementContentInput,
+} from '../../../domain/use-cases/validate-statement-fields'
 import Combobox from '../../ui/Combobox'
 import ComingSoon from '../../ui/ComingSoon'
 import Segmented from '../../ui/Segmented'
 import TextField from '../../ui/TextField'
-import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import FormSuccess from '../../ui/FormSuccess'
 import { useStatementDraft } from '../StatementDraft'
 import ArgumentsPicker from '../ArgumentsPicker'
+import StatementContentFields from '../StatementContentFields'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -71,6 +70,7 @@ export default function NewStatementForm({
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedSubjectSlug, setSelectedSubjectSlug] = useState(initialSubject?.slug ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
+  const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
   const subjectSlugMapRef = useRef<Map<string, string>>(new Map())
 
   const [positions, setPositions] = useState<PositionOption[]>([])
@@ -138,15 +138,22 @@ export default function NewStatementForm({
     [positions, updateDraft],
   )
 
+  /** Ce que porte la prise de position est tenu ici, et reflété dans l'aperçu. */
+  const changeContent = useCallback(
+    (fields: StatementContentInput) => {
+      setContent(fields)
+      updateDraft(fields)
+    },
+    [updateDraft],
+  )
+
   /** Les champs libres restent non contrôlés ; l'aperçu se met à jour par délégation. */
   const handleFormChange = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       const form = e.currentTarget
       updateDraft({
-        quote: getFieldValue(form, 'quote'),
         sourceName: getFieldValue(form, 'sourceName'),
         statedAt: getFieldValue(form, 'statedAt'),
-        statementType: parseStatementType(getFieldValue(form, 'statementType')),
       })
     },
     [updateDraft],
@@ -167,10 +174,9 @@ export default function NewStatementForm({
       formData.set('positionId', selectedPositionId)
 
       const form = e.currentTarget
-      formData.set('statementType', getFieldValue(form, 'statementType'))
+      for (const [name, value] of Object.entries(content)) formData.set(name, value)
       formData.set('sourceName', getFieldValue(form, 'sourceName'))
       formData.set('sourceUrl', getFieldValue(form, 'sourceUrl'))
-      formData.set('quote', getFieldValue(form, 'quote'))
       formData.set('statedAt', getFieldValue(form, 'statedAt'))
 
       // Les arguments cochés et proposés sont portés par les champs cachés du sélecteur
@@ -203,7 +209,14 @@ export default function NewStatementForm({
         setIsPending(false)
       }
     },
-    [authorKind, selectedFigureId, selectedOrganisationId, selectedSubjectId, selectedPositionId],
+    [
+      authorKind,
+      content,
+      selectedFigureId,
+      selectedOrganisationId,
+      selectedSubjectId,
+      selectedPositionId,
+    ],
   )
 
   if (successResult) {
@@ -386,22 +399,10 @@ export default function NewStatementForm({
         <legend className={styles.sectionTitle}>
           <span className={styles.step}>3</span> Sur quelles bases ?
         </legend>
-        <TextArea
-          label="Citation"
-          id="quote"
-          name="quote"
-          required
-          placeholder={
-            isOrganisation
-              ? 'Les mots exacts du communiqué, du programme ou du vote (10 caractères au moins)'
-              : 'Les mots exacts de la personnalité (10 caractères au moins)'
-          }
-          rows={4}
-          error={fieldErrors?.quote}
-        />
+        <StatementContentFields value={content} onChange={changeContent} errors={fieldErrors} />
         <p className={styles.hint}>
-          Recopiez les mots exacts, sans reformuler ni couper une phrase de manière à en changer le
-          sens.
+          Une citation se recopie mot pour mot, sans reformuler ni couper une phrase de manière à en
+          changer le sens. Un vote et un acte ne se citent pas : ils se nomment.
         </p>
 
         <div className={styles.row}>
@@ -425,29 +426,13 @@ export default function NewStatementForm({
         </div>
 
         <TextField
-          label="Adresse de la source (facultatif)"
+          label="Adresse de la source"
           id="sourceUrl"
           name="sourceUrl"
+          required
           placeholder="https://…"
+          error={fieldErrors?.sourceUrl}
         />
-
-        <div className={styles.field}>
-          <span className={styles.label}>Type de prise de position</span>
-          <div className={styles.types} role="radiogroup" aria-label="Type de prise de position">
-            {STATEMENT_TYPES.map((type, index) => (
-              <label key={type} className={styles.type}>
-                <input
-                  type="radio"
-                  name="statementType"
-                  value={type}
-                  defaultChecked={index === 0}
-                  className={styles.radio}
-                />
-                <span className={styles.typeLabel}>{STATEMENT_TYPE_LABELS[type]}</span>
-              </label>
-            ))}
-          </div>
-        </div>
       </fieldset>
 
       {canUseArguments ? (
@@ -488,7 +473,11 @@ export default function NewStatementForm({
 
 function getFieldValue(form: HTMLFormElement, name: string): string {
   const element = form.elements.namedItem(name)
-  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+  if (
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement
+  ) {
     return element.value
   }
   if (element instanceof RadioNodeList) {

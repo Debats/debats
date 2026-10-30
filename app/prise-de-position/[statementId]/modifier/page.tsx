@@ -12,6 +12,7 @@ import { StatementAuthor } from '../../../../domain/entities/statement'
 import { statementStream } from '../../../../domain/aggregates/statement'
 import { currentRevision } from '../../../../infra/events/stream-revision'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { contentFieldsOf } from '../../../../domain/use-cases/validate-statement-fields'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
@@ -93,10 +94,9 @@ export default async function EditStatementByIdPage({ params }: PageProps) {
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}
         initialArguments={initialArguments}
         initialPositionId={statement.positionId}
-        initialStatementType={statement.statementType}
+        initialContent={contentFieldsOf(statement.content)}
         initialSourceName={statement.sourceName}
-        initialSourceUrl={statement.sourceUrl ?? ''}
-        initialQuote={statement.quote}
+        initialSourceUrl={statement.sourceUrl}
         initialStatedAt={toISODate(statement.statedAt)}
       />
     </ContentWithSidebar>

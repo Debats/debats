@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createPosition, createStatement, createSubject } from '../entities/entity-test-helpers'
-import { publicFigureAuthor } from '../entities/statement'
+import { declarationContent, publicFigureAuthor } from '../entities/statement'
 import { StatementWithDetails } from '../repositories/statement-repository'
 import { groupStatementsBySubject } from './statements-by-subject'
 
@@ -20,9 +20,9 @@ function entry(subjectTitle: string, createdAt: Date): StatementWithDetails {
   const statement = createStatement({
     author: publicFigureAuthor('figure'),
     positionId: position.id,
-    statementType: 'declaration',
+    content: declarationContent('Une citation suffisamment longue.'),
     sourceName: 'Source',
-    quote: 'Une citation suffisamment longue.',
+    sourceUrl: 'https://example.org/source',
     statedAt: createdAt,
     createdBy: 'user',
   })

@@ -1,4 +1,4 @@
-import { StatementType } from '../entities/statement'
+import { StatementContent } from '../entities/statement'
 import { ArgumentRef } from '../read-models/argument'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { StatedSpan, StatementWithAuthor } from '../repositories/statement-repository'
@@ -10,10 +10,9 @@ export interface TimelineEntry {
   statedAt: Date
   author: StatementAuthorRef
   position: { id: string; title: string; slug: string }
-  statementType: StatementType
-  quote: string
+  content: StatementContent
   sourceName: string
-  sourceUrl?: string
+  sourceUrl: string
   arguments: ArgumentRef[]
 }
 
@@ -37,8 +36,7 @@ const toEntry = ({
   statedAt: statement.statedAt,
   author,
   position: { id: position.id, title: position.title, slug: position.slug },
-  statementType: statement.statementType,
-  quote: statement.quote,
+  content: statement.content,
   sourceName: statement.sourceName,
   sourceUrl: statement.sourceUrl,
   arguments: used,

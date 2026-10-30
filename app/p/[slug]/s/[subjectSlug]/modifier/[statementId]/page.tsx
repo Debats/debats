@@ -9,6 +9,7 @@ import { createPositionRepository } from '../../../../../../../infra/database/po
 import { createArgumentRepository } from '../../../../../../../infra/database/argument-repository-supabase'
 import { getAuthenticatedContributor } from '../../../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../../../domain/reputation/permissions'
+import { contentFieldsOf } from '../../../../../../../domain/use-cases/validate-statement-fields'
 import { statementStream } from '../../../../../../../domain/aggregates/statement'
 import { currentRevision } from '../../../../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../../../../components/layout/ContentWithSidebar'
@@ -77,10 +78,9 @@ export default async function EditStatementPage({ params }: PageProps) {
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}
         initialArguments={initialArguments}
         initialPositionId={statement.positionId}
-        initialStatementType={statement.statementType}
+        initialContent={contentFieldsOf(statement.content)}
         initialSourceName={statement.sourceName}
-        initialSourceUrl={statement.sourceUrl ?? ''}
-        initialQuote={statement.quote}
+        initialSourceUrl={statement.sourceUrl}
         initialStatedAt={toISODate(statement.statedAt)}
       />
     </ContentWithSidebar>

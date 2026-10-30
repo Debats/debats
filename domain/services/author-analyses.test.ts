@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { createPosition, createStatement, createSubject } from '../entities/entity-test-helpers'
-import { organisationAuthor, publicFigureAuthor, StatementType } from '../entities/statement'
+import {
+  actContent,
+  declarationContent,
+  organisationAuthor,
+  programContent,
+  publicFigureAuthor,
+  StatementContent,
+  StatementType,
+  voteContent,
+} from '../entities/statement'
 import {
   organisationRef,
   publicFigureRef,
@@ -46,6 +55,20 @@ interface Taken {
   on?: string
 }
 
+/** What a statement of that type carries, so the fixture says a type in one word */
+function carrying(type: StatementType): StatementContent {
+  switch (type) {
+    case 'declaration':
+      return declarationContent('Une citation suffisamment longue.')
+    case 'program':
+      return programContent('Programme 2027', 'Une citation suffisamment longue.')
+    case 'vote':
+      return voteContent('Proposition de loi sur la fin de vie', 'pour')
+    case 'act':
+      return actContent('Cosignature de la proposition de loi')
+  }
+}
+
 function taken(
   author: StatementAuthorRef,
   position: ReturnType<typeof positionOn>,
@@ -57,9 +80,9 @@ function taken(
         ? organisationAuthor(author.id)
         : publicFigureAuthor(author.id),
     positionId: position.id,
-    statementType: type,
+    content: carrying(type),
     sourceName: source,
-    quote: 'Une citation suffisamment longue.',
+    sourceUrl: 'https://example.org/source',
     statedAt: new Date(on),
     createdBy: 'user',
   })

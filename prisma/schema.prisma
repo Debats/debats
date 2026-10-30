@@ -551,7 +551,11 @@ model domain_events {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model draft_statements {
   id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  quote              String
+  quote              String?
+  document_name      String?
+  voted_text         String?
+  vote_choice        vote_choice?
+  deed               String?
   source_name        String         @db.VarChar(255)
   source_url         String
   date               DateTime       @db.Date
@@ -570,6 +574,9 @@ model draft_statements {
   organisation_name  String?
   organisation_data  Json?
   statement_type     statement_type @default(declaration)
+  arguments          Json           @default("[]")
+  occupations        Json           @default("[]")
+  affiliations       Json           @default("[]")
 
   @@schema("public")
 }
@@ -781,8 +788,12 @@ model reputation_events {
 model statements {
   id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   source_name         String                @db.VarChar(255)
-  source_url          String?
-  quote               String
+  source_url          String
+  quote               String?
+  document_name       String?
+  voted_text          String?
+  vote_choice         vote_choice?
+  deed                String?
   stated_at           DateTime              @db.Date
   created_by          String?               @db.Uuid
   created_at          DateTime?             @default(now()) @db.Timestamptz(6)
@@ -951,6 +962,14 @@ enum statement_type {
   vote
   program
   act
+
+  @@schema("public")
+}
+
+enum vote_choice {
+  pour
+  contre
+  abstention
 
   @@schema("public")
 }

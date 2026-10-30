@@ -1,5 +1,5 @@
 import { OrganisationType } from './organisation'
-import { StatementType } from './statement'
+import { StatementContent } from './statement'
 
 /** Fields needed to create a public figure that does not exist yet. */
 export type DraftPublicFigureData = {
@@ -68,8 +68,11 @@ export const draftOrganisationAuthor = (
 export type DraftStatement = {
   id: string
   author: DraftAuthor
-  statementType: StatementType
-  quote: string
+  /**
+   * What the draft carries, in the same shape a statement does: the words of a
+   * declaration or a programme, the ballot of a vote, the deed of an act.
+   */
+  content: StatementContent
   sourceName: string
   sourceUrl: string
   date: string // YYYY-MM-DD

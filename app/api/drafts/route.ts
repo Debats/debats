@@ -3,11 +3,11 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
 import { NewDraftStatement } from '../../../domain/repositories/draft-statement-repository'
-import { STATEMENT_TYPES, StatementType } from '../../../domain/entities/statement'
 import {
   parseDraftAffiliations,
   parseDraftArguments,
   parseDraftAuthor,
+  parseDraftContent,
   parseDraftOccupations,
   validateSlugifiableFields,
 } from './validation'
@@ -48,7 +48,6 @@ const REQUIRED_FIELDS = [
   'positionTitle',
   'sourceName',
   'sourceUrl',
-  'quote',
   'date',
   'origin',
 ] as const
@@ -71,9 +70,8 @@ function parseDraftInput(
   const parsedAuthor = parseDraftAuthor(input.author)
   if ('error' in parsedAuthor) return parsedAuthor
 
-  if (input.statementType !== undefined && !isStatementType(input.statementType)) {
-    return { error: `Field statementType must be one of: ${STATEMENT_TYPES.join(', ')}` }
-  }
+  const parsedContent = parseDraftContent(input.content)
+  if ('error' in parsedContent) return parsedContent
 
   const parsedArguments = parseDraftArguments(input.arguments)
   if ('error' in parsedArguments) return parsedArguments
@@ -98,12 +96,11 @@ function parseDraftInput(
       arguments: parsedArguments.arguments,
       occupations: parsedOccupations.occupations,
       affiliations: parsedAffiliations.affiliations,
-      statementType: (input.statementType as StatementType) ?? 'declaration',
+      content: parsedContent.content,
       subjectTitle: input.subjectTitle as string,
       positionTitle: input.positionTitle as string,
       sourceName: input.sourceName as string,
       sourceUrl: input.sourceUrl as string,
-      quote: input.quote as string,
       date: input.date as string,
       aiNotes: (input.aiNotes as string) ?? null,
       subjectData: (input.subjectData as NewDraftStatement['subjectData']) ?? null,
@@ -111,10 +108,6 @@ function parseDraftInput(
       origin: input.origin as string,
     },
   }
-}
-
-function isStatementType(value: unknown): value is StatementType {
-  return STATEMENT_TYPES.includes(value as StatementType)
 }
 
 /**

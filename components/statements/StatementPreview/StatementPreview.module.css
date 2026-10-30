@@ -64,6 +64,13 @@
   font-size: 18px;
 }
 
+/* Un vote, un acte : des faits, donc ni serif italique ni guillemets */
+.fact {
+  composes: body from '../../../styles/text.module.css';
+  margin: 0;
+  color: var(--ink);
+}
+
 .meta {
   composes: meta from '../../../styles/text.module.css';
 }

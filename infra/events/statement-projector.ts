@@ -1,11 +1,12 @@
 import {
   decodeStatementEvent,
   StatementAddedPayload,
-  StatementContent,
   StatementEvent,
+  StatementFields,
 } from '../../domain/aggregates/statement-events'
 import { StoredEvent } from '../../domain/events/event-store'
 import { PrismaTransaction } from '../prisma/client'
+import { fromStatementContent } from '../database/statement-content-columns'
 import { projectorOf } from './projector'
 
 /**
@@ -65,14 +66,13 @@ async function createRow(
   })
 }
 
-function contentColumns(content: StatementContent) {
+function contentColumns(fields: StatementFields) {
   return {
-    position_id: content.positionId,
-    statement_type: content.statementType,
-    source_name: content.sourceName,
-    source_url: content.sourceUrl ?? null,
-    quote: content.quote,
-    stated_at: new Date(content.statedAt),
+    position_id: fields.positionId,
+    source_name: fields.sourceName,
+    source_url: fields.sourceUrl,
+    stated_at: new Date(fields.statedAt),
+    ...fromStatementContent(fields.content),
   }
 }
 

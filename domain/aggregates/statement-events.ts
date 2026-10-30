@@ -1,22 +1,23 @@
 import * as S from 'effect/Schema'
-import { STATEMENT_TYPES, StatementAuthor } from '../entities/statement'
+import { StatementAuthor, StatementContent } from '../entities/statement'
 import { eventDecoder } from '../events/decode-event'
 
 /** A calendar day, as the statement form and the stated_at column carry it */
 const IsoDate = S.String.pipe(S.pattern(/^\d{4}-\d{2}-\d{2}$/))
 
 /** What a statement says, in full: every event carries the whole of it */
-const StatementContent = S.Struct({
+const StatementFields = S.Struct({
   positionId: S.String,
-  statementType: S.Literal(...STATEMENT_TYPES),
+  /** What it carries, by its nature: words quoted, or a vote or a deed named */
+  content: StatementContent,
   sourceName: S.String,
-  sourceUrl: S.optional(S.String),
-  quote: S.String,
+  /** Verifiability is the promise of the site, so the link is never optional */
+  sourceUrl: S.String,
   statedAt: IsoDate,
   /** The arguments the statement mobilises, by id */
   argumentIds: S.Array(S.String),
 })
-export type StatementContent = S.Schema.Type<typeof StatementContent>
+export type StatementFields = S.Schema.Type<typeof StatementFields>
 
 const StatementAddedPayload = S.Struct({
   author: StatementAuthor,
@@ -26,7 +27,7 @@ const StatementAddedPayload = S.Struct({
    * 2026 and from the backfill, which the decision then cannot defend.
    */
   subjectId: S.optional(S.String),
-  ...StatementContent.fields,
+  ...StatementFields.fields,
 })
 export type StatementAddedPayload = S.Schema.Type<typeof StatementAddedPayload>
 
@@ -39,7 +40,7 @@ export const StatementAdded = S.Struct({
 /** A contributor changed what the statement says; the author never changes */
 export const StatementEdited = S.Struct({
   type: S.Literal('StatementEdited'),
-  payload: StatementContent,
+  payload: StatementFields,
 })
 
 /** The statement now stands on another position of the same subject: its position was merged */

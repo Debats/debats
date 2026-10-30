@@ -28,7 +28,7 @@ import {
   PublicFigureId,
   PublicFigureName,
 } from './public-figure'
-import { Statement, StatementAuthor, StatementId, StatementType } from './statement'
+import { Statement, StatementAuthor, StatementContent, StatementId } from './statement'
 import { generateSlug as generateSubjectSlug, Subject, SubjectId, SubjectTitle } from './subject'
 import { generateThemeSlug, Theme, ThemeId, ThemeName } from './theme'
 
@@ -81,10 +81,9 @@ export const createPosition = (params: {
 export const createStatement = (params: {
   author: StatementAuthor
   positionId: string
-  statementType: StatementType
+  content: StatementContent
   sourceName: string
-  sourceUrl?: string
-  quote: string
+  sourceUrl: string
   statedAt: Date
   createdBy?: string
 }): Statement => {
@@ -93,10 +92,9 @@ export const createStatement = (params: {
     id: StatementId.make(crypto.randomUUID()),
     author: params.author,
     positionId: params.positionId,
-    statementType: params.statementType,
+    content: params.content,
     sourceName: params.sourceName,
     sourceUrl: params.sourceUrl,
-    quote: params.quote,
     statedAt: params.statedAt,
     createdBy: params.createdBy,
     createdAt: now,

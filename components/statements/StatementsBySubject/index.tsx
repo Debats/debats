@@ -2,6 +2,7 @@ import Link from 'next/link'
 import EditLink from '../../ui/EditLink'
 import NavSelect from '../../ui/NavSelect'
 import ArgumentChips from '../ArgumentChips'
+import StatementBody from '../StatementBody'
 import StatementSource from '../StatementSource'
 import Segmented from '../../ui/Segmented'
 import ShowMore from '../../ui/ShowMore'
@@ -65,7 +66,7 @@ function Entry({
         <span className={styles.positionLabel}>Position</span>
         <span className={styles.positionTitle}>{position.title}</span>
       </p>
-      <blockquote className={styles.quote}>{statement.quote}</blockquote>
+      <StatementBody content={statement.content} />
       <StatementSource statement={statement}>
         {editHref && <EditLink href={editHref(statement.id)} />}
       </StatementSource>

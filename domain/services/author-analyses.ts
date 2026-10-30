@@ -1,4 +1,10 @@
-import { STATEMENT_TYPES, StatementAuthor, StatementType } from '../entities/statement'
+import {
+  STATEMENT_TYPES,
+  StatementAuthor,
+  StatementContent,
+  StatementType,
+  statementTypeOf,
+} from '../entities/statement'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import {
   MembershipFigure,
@@ -278,14 +284,15 @@ export const SOURCES_LIMIT = 5
 
 /** How the author expresses herself: by type of statement, and through which sources */
 export function expressionProfile(
-  own: ReadonlyArray<{ statement: { statementType: StatementType; sourceName: string } }>,
+  own: ReadonlyArray<{ statement: { content: StatementContent; sourceName: string } }>,
   limit = SOURCES_LIMIT,
 ): ExpressionProfile {
   const typeCounts = new Map<StatementType, number>()
   // Sources are typed freely: « Le Monde » and « le monde » are one source, named as first met
   const sources = new Map<string, { name: string; count: number }>()
   for (const { statement } of own) {
-    typeCounts.set(statement.statementType, (typeCounts.get(statement.statementType) ?? 0) + 1)
+    const type = statementTypeOf(statement.content)
+    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
     const name = statement.sourceName.trim()
     const key = name.toLocaleLowerCase('fr')
     const source = sources.get(key) ?? { name, count: 0 }

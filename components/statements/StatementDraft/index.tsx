@@ -1,18 +1,21 @@
 'use client'
 
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { StatementAuthorKind, StatementType } from '../../../domain/entities/statement'
+import { StatementAuthorKind } from '../../../domain/entities/statement'
+import { StatementContentInput } from '../../../domain/use-cases/validate-statement-fields'
 
-/** Ce que l'utilisateur a saisi jusqu'ici, pour l'aperçu en marge du formulaire. */
-export interface StatementDraft {
+/**
+ * Ce que l'utilisateur a saisi jusqu'ici, pour l'aperçu en marge du
+ * formulaire. Le contenu reste à plat, champ par champ : une saisie en cours
+ * ne satisfait pas encore l'union du domaine.
+ */
+export interface StatementDraft extends StatementContentInput {
   authorKind: StatementAuthorKind
   authorName: string
   subjectTitle: string
   positionTitle: string
-  quote: string
   sourceName: string
   statedAt: string
-  statementType: StatementType
 }
 
 export const EMPTY_DRAFT: StatementDraft = {
@@ -20,10 +23,14 @@ export const EMPTY_DRAFT: StatementDraft = {
   authorName: '',
   subjectTitle: '',
   positionTitle: '',
-  quote: '',
   sourceName: '',
   statedAt: '',
   statementType: 'declaration',
+  quote: '',
+  document: '',
+  votedText: '',
+  choice: '',
+  deed: '',
 }
 
 interface StatementDraftContextValue {

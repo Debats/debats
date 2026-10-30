@@ -1,0 +1,41 @@
+.typeField {
+  composes: field from '../../ui/form-field.module.css';
+}
+
+.label {
+  composes: label from '../../ui/form-field.module.css';
+}
+
+.select {
+  composes: control from '../../ui/form-field.module.css';
+  cursor: pointer;
+}
+
+.error {
+  composes: error from '../../ui/form-field.module.css';
+}
+
+/* Ce que la nature choisie veut dire, sous le sélecteur */
+.hint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  cursor: pointer;
+}

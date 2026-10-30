@@ -1,0 +1,28 @@
+.quote {
+  composes: quote from '../../../styles/text.module.css';
+  margin: 0;
+}
+
+/*
+ * Un vote, un acte, le document d'un programme : des faits, pas des paroles.
+ * Donc ni serif italique ni guillemets — la forme dit déjà la différence.
+ */
+.fact {
+  composes: body from '../../../styles/text.module.css';
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}

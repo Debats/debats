@@ -3,7 +3,8 @@ import { Either, Effect, Layer } from 'effect'
 import { updateStatementUseCase } from './update-statement'
 import { EDITED_MEANWHILE } from './run-command'
 import { createPosition, createStatement } from '../entities/entity-test-helpers'
-import { publicFigureAuthor } from '../entities/statement'
+import { declarationContent, publicFigureAuthor } from '../entities/statement'
+import { EMPTY_CONTENT_INPUT } from './validate-statement-fields'
 import { Position } from '../entities/position'
 import { statementAdded, statementStream } from '../aggregates/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
@@ -39,10 +40,9 @@ const positionOnOtherSubject = createPosition({
 const existingStatement = createStatement({
   author: publicFigureAuthor('figure-1'),
   positionId: existingPosition.id,
-  statementType: 'declaration',
+  content: declarationContent('Citation originale suffisamment longue.'),
   sourceName: 'Le Monde',
   sourceUrl: 'https://lemonde.fr/article',
-  quote: 'Citation originale suffisamment longue.',
   statedAt: new Date('2024-01-15'),
   createdBy: 'author-id',
 })
@@ -62,10 +62,9 @@ const fakeStatementRepo = {
 const validParams = {
   statementId: existingStatement.id,
   positionId: existingPosition.id,
-  statementType: 'declaration' as const,
+  content: { ...EMPTY_CONTENT_INPUT, quote: 'Nouvelle citation suffisamment longue.' },
   sourceName: 'France Inter',
   sourceUrl: 'https://franceinter.fr/article',
-  quote: 'Nouvelle citation suffisamment longue.',
   statedAt: '2024-06-20',
   arguments: { argumentIds: [] as string[], newArguments: [] },
   /** The stream of the seeded statement: the statement alone */
@@ -250,11 +249,36 @@ describe('updateStatementUseCase', () => {
       updateStatementUseCase({
         ...validParams,
         contributor: { id: 'abc', reputation: 10000 },
-        quote: 'Court',
+        content: { ...EMPTY_CONTENT_INPUT, quote: 'Court' },
       }),
     )
 
     expect(Either.isLeft(result)).toBe(true)
+  })
+
+  it('should turn a declaration into a vote, dropping the words it no longer carries', async () => {
+    const { run } = await journalWithStream()
+
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        content: {
+          ...EMPTY_CONTENT_INPUT,
+          statementType: 'vote',
+          votedText: 'Proposition de loi sur la fin de vie',
+          choice: 'contre',
+          quote: 'Une citation saisie avant de basculer sur un vote.',
+        },
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result) && result.right.content).toEqual({
+      kind: 'vote',
+      votedText: 'Proposition de loi sur la fin de vie',
+      choice: 'contre',
+    })
   })
 
   it('should fail when statedAt is invalid', async () => {
@@ -288,7 +312,7 @@ describe('updateStatementUseCase', () => {
       author: existingStatement.author,
       positionId: anotherPosition.id,
       sourceName: 'France Inter',
-      quote: 'Nouvelle citation suffisamment longue.',
+      content: { kind: 'declaration', quote: 'Nouvelle citation suffisamment longue.' },
       createdBy: 'author-id',
     })
     expect(grantsIn(journal)).toEqual([['abc', 'edited_statement', 5]])

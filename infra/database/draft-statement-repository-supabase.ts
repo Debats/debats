@@ -9,8 +9,12 @@ import {
   draftOrganisationAuthor,
   draftPublicFigureAuthor,
 } from '../../domain/entities/draft-statement'
-import { StatementType } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
+import {
+  fromStatementContent,
+  StatementContentColumns,
+  toStatementContent,
+} from './statement-content-columns'
 import {
   DraftStatementRepository,
   NewDraftStatement,
@@ -57,8 +61,7 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
   return {
     id: row.id as string,
     author: mapAuthor(row),
-    statementType: row.statement_type as StatementType,
-    quote: row.quote as string,
+    content: toStatementContent(row as StatementContentColumns),
     sourceName: row.source_name as string,
     sourceUrl: row.source_url as string,
     date: row.date as string,
@@ -85,12 +88,11 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         try: async () => {
           const rows = drafts.map((draft) => ({
             ...authorColumns(draft.author),
-            statement_type: draft.statementType,
+            ...fromStatementContent(draft.content),
             subject_title: draft.subjectTitle,
             position_title: draft.positionTitle,
             source_name: draft.sourceName,
             source_url: draft.sourceUrl,
-            quote: draft.quote,
             date: draft.date,
             ai_notes: draft.aiNotes,
             subject_data: draft.subjectData,
@@ -184,13 +186,13 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
       Effect.tryPromise({
         try: async () => {
           const row: Record<string, unknown> = {}
-          if (fields.quote !== undefined) row.quote = fields.quote
+          // The content is one value: every variant column is rewritten together
+          if (fields.content !== undefined) Object.assign(row, fromStatementContent(fields.content))
           if (fields.sourceName !== undefined) row.source_name = fields.sourceName
           if (fields.sourceUrl !== undefined) row.source_url = fields.sourceUrl
           if (fields.date !== undefined) row.date = fields.date
           if (fields.aiNotes !== undefined) row.ai_notes = fields.aiNotes
           if (fields.author !== undefined) Object.assign(row, authorColumns(fields.author))
-          if (fields.statementType !== undefined) row.statement_type = fields.statementType
           if (fields.subjectTitle !== undefined) row.subject_title = fields.subjectTitle
           if (fields.positionTitle !== undefined) row.position_title = fields.positionTitle
           if (fields.subjectData !== undefined) row.subject_data = fields.subjectData

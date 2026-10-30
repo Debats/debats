@@ -1,3 +1,6 @@
+import { Either } from 'effect'
+import * as S from 'effect/Schema'
+import { ArrayFormatter } from 'effect/ParseResult'
 import { slugify } from '../../../domain/value-objects/slug'
 import {
   DraftAffiliation,
@@ -10,6 +13,12 @@ import {
   draftPublicFigureAuthor,
 } from '../../../domain/entities/draft-statement'
 import { ORGANISATION_TYPES, parseOrganisationType } from '../../../domain/entities/organisation'
+import {
+  StatementContent,
+  StatementType,
+  STATEMENT_TYPES,
+  VOTE_CHOICES,
+} from '../../../domain/entities/statement'
 
 const SLUGIFIABLE_FIELDS = ['subjectTitle', 'positionTitle'] as const
 
@@ -238,4 +247,40 @@ export function parseDraftAffiliations(
   }
 
   return { affiliations: parsed }
+}
+
+type ParsedContent = { content: StatementContent } | { error: string }
+
+/** What each kind expects, named in the refusal so the caller can fix it. */
+const CONTENT_SHAPES: Record<StatementType, string> = {
+  declaration: 'quote (10 characters minimum)',
+  program: 'document, quote (10 characters minimum)',
+  vote: `votedText, choice (${VOTE_CHOICES.join(' | ')})`,
+  act: 'deed',
+}
+
+/**
+ * Parses what the draft carries, according to its kind. The payload says the
+ * kind and names only the fields that kind calls for, as the domain does:
+ * `{ "kind": "vote", "votedText": "…", "choice": "contre" }`.
+ */
+export function parseDraftContent(value: unknown): ParsedContent {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return { error: 'Field content must be an object' }
+  }
+
+  const decoded = S.decodeUnknownEither(StatementContent, { errors: 'all' })(value)
+  if (Either.isRight(decoded)) return { content: decoded.right }
+
+  const kind = (value as { kind?: unknown }).kind
+  if (!STATEMENT_TYPES.includes(kind as StatementType)) {
+    return { error: `Field content.kind must be one of: ${STATEMENT_TYPES.join(', ')}` }
+  }
+
+  const faults = ArrayFormatter.formatErrorSync(decoded.left)
+    .map((issue) => issue.path.join('.'))
+    .filter((path, index, all) => path !== '' && all.indexOf(path) === index)
+  return {
+    error: `Field content is invalid for kind "${kind}": check ${faults.join(', ')} — expected ${CONTENT_SHAPES[kind as StatementType]}`,
+  }
 }

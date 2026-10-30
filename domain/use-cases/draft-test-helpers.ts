@@ -12,6 +12,7 @@ import {
 } from '../entities/public-figure'
 import { Subject, SubjectId, SubjectSlug, SubjectTitle } from '../entities/subject'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
+import { declarationContent } from '../entities/statement'
 
 export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
   return {
@@ -20,8 +21,7 @@ export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStateme
       presentation: 'Homme politique français, leader de LFI.',
       wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean-Luc_M%C3%A9lenchon',
     }),
-    statementType: 'declaration',
-    quote: 'Une citation importante sur le sujet',
+    content: declarationContent('Une citation importante sur le sujet'),
     sourceName: 'Le Monde',
     sourceUrl: 'https://lemonde.fr/article',
     date: '2024-01-15',

@@ -3,6 +3,7 @@ import {
   parseDraftAffiliations,
   parseDraftArguments,
   parseDraftAuthor,
+  parseDraftContent,
   parseDraftOccupations,
   validateSlugifiableFields,
 } from './validation'
@@ -212,6 +213,67 @@ describe('parseDraftAffiliations', () => {
   it('rejects a missing organisation name', () => {
     expect(parseDraftAffiliations([{ role: 'adhérente' }])).toEqual({
       error: 'Field affiliations[0].organisation must contain at least one alphanumeric character',
+    })
+  })
+})
+
+describe('parseDraftContent', () => {
+  const QUOTE = 'Une citation suffisamment longue pour être valide.'
+
+  it('reads a declaration', () => {
+    expect(parseDraftContent({ kind: 'declaration', quote: QUOTE })).toEqual({
+      content: { kind: 'declaration', quote: QUOTE },
+    })
+  })
+
+  it('reads a programme with the document it is quoted from', () => {
+    expect(
+      parseDraftContent({ kind: 'program', document: "L'Avenir en commun", quote: QUOTE }),
+    ).toEqual({ content: { kind: 'program', document: "L'Avenir en commun", quote: QUOTE } })
+  })
+
+  it('reads a vote as the text put to the ballot and the way it went', () => {
+    expect(
+      parseDraftContent({ kind: 'vote', votedText: 'Proposition de loi', choice: 'contre' }),
+    ).toEqual({ content: { kind: 'vote', votedText: 'Proposition de loi', choice: 'contre' } })
+  })
+
+  it('reads an act as what was done', () => {
+    expect(parseDraftContent({ kind: 'act', deed: 'Cosignature de la PPL n° 575' })).toEqual({
+      content: { kind: 'act', deed: 'Cosignature de la PPL n° 575' },
+    })
+  })
+
+  it('leaves aside what the kind does not call for', () => {
+    expect(
+      parseDraftContent({ kind: 'act', deed: 'Cosignature', quote: QUOTE, choice: 'pour' }),
+    ).toEqual({ content: { kind: 'act', deed: 'Cosignature' } })
+  })
+
+  it('refuses a kind that is not one of the four', () => {
+    expect(parseDraftContent({ kind: 'tweet', quote: QUOTE })).toEqual({
+      error: 'Field content.kind must be one of: declaration, vote, program, act',
+    })
+  })
+
+  it('refuses content that is not an object', () => {
+    expect(parseDraftContent('une citation')).toEqual({ error: 'Field content must be an object' })
+    expect(parseDraftContent(undefined)).toEqual({ error: 'Field content must be an object' })
+  })
+
+  it('names the field a vote lacks, and what the kind expects', () => {
+    const result = parseDraftContent({ kind: 'vote', choice: 'contre' })
+
+    expect(result).toEqual({
+      error:
+        'Field content is invalid for kind "vote": check votedText — expected votedText, choice (pour | contre | abstention)',
+    })
+  })
+
+  it('names the quote a declaration is too short on', () => {
+    expect(parseDraftContent({ kind: 'declaration', quote: 'court' })).toEqual({
+      error:
+        'Field content is invalid for kind "declaration": check quote — expected quote (10 characters minimum)',
     })
   })
 })

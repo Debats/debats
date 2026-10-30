@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer } from 'effect'
 import { deleteSubjectUseCase } from './delete-subject'
 import { createStatement } from '../entities/entity-test-helpers'
-import { publicFigureAuthor, Statement } from '../entities/statement'
+import { declarationContent, publicFigureAuthor, Statement } from '../entities/statement'
 import { Subject } from '../entities/subject'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
@@ -15,9 +15,9 @@ const position = samplePosition(subject.id)
 const statement = createStatement({
   author: publicFigureAuthor('figure-1'),
   positionId: position.id,
-  statementType: 'declaration',
+  content: declarationContent('Une citation suffisamment longue pour être valide.'),
   sourceName: 'Le Monde',
-  quote: 'Une citation suffisamment longue pour être valide.',
+  sourceUrl: 'https://lemonde.fr/article',
   statedAt: new Date('2024-01-15'),
   createdBy: 'author-id',
 })

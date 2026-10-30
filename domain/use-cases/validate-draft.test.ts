@@ -10,6 +10,7 @@ import {
   draftOrganisationAuthor,
   draftPublicFigureAuthor,
 } from '../entities/draft-statement'
+import { voteContent } from '../entities/statement'
 import { DraftStatementRepository } from '../repositories/draft-statement-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
@@ -324,12 +325,13 @@ describe('validateDraft', () => {
     }
   })
 
-  it('should keep the drafted statement type instead of always declaring', async () => {
-    const repos = makeRepos({ draft: makeDraft({ statementType: 'program' }) })
+  it('should carry what the draft says, by its type, instead of always declaring', async () => {
+    const content = voteContent('Proposition de loi sur la fin de vie', 'contre')
+    const repos = makeRepos({ draft: makeDraft({ content }) })
     const result = await repos.validate(ADMIN)
 
     expect(Either.isRight(result)).toBe(true)
-    expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ statementType: 'program' })
+    expect(deedsIn(repos.journal).at(-1)?.payload).toMatchObject({ content })
   })
 
   describe('the arguments the draft carries', () => {

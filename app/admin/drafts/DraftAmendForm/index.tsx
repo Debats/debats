@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { DraftStatement } from '../../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../../domain/use-cases/resolve-draft'
+import { contentFieldsOf } from '../../../../domain/use-cases/validate-statement-fields'
 import { DraftAmendments } from '../../../actions/amend-and-validate-draft-action'
 import { searchPublicFigures } from '../../../actions/search-public-figures'
 import { searchOrganisations } from '../../../actions/search-organisations'
@@ -17,6 +18,7 @@ import TextField from '../../../../components/ui/TextField'
 import TextArea from '../../../../components/ui/TextArea'
 import Button from '../../../../components/ui/Button'
 import ModeToggle from '../../../../components/ui/ModeToggle'
+import StatementContentFields from '../../../../components/statements/StatementContentFields'
 import EntityField, { EntityFieldValue } from '../EntityField'
 import { buildAmendments } from '../build-amendments'
 import styles from './DraftAmendForm.module.css'
@@ -95,7 +97,7 @@ export default function DraftAmendForm({
 
   // Statement
   const [sourceName, setSourceName] = useState(draft.sourceName)
-  const [quote, setQuote] = useState(draft.quote)
+  const [content, setContent] = useState(contentFieldsOf(draft.content))
 
   useEffect(() => {
     if (subjectMode !== 'existing' || !subjectId) return
@@ -156,7 +158,7 @@ export default function DraftAmendForm({
       positionTitle,
       positionDescription,
       sourceName,
-      quote,
+      content,
     })
     await onSubmit(amendments)
   }, [
@@ -178,7 +180,7 @@ export default function DraftAmendForm({
     positionTitle,
     positionDescription,
     sourceName,
-    quote,
+    content,
     onSubmit,
   ])
 
@@ -367,14 +369,7 @@ export default function DraftAmendForm({
         onChange={(e) => setSourceName(e.target.value)}
       />
 
-      <TextArea
-        label="Citation"
-        id="amend-quote"
-        name="quote"
-        value={quote}
-        onChange={(e) => setQuote(e.target.value)}
-        rows={3}
-      />
+      <StatementContentFields value={content} onChange={setContent} />
 
       <div className={styles.actions}>
         <Button size="small" onClick={handleSubmit} disabled={disabled}>

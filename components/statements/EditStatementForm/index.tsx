@@ -4,6 +4,7 @@ import { useCallback } from 'react'
 import { updateStatementAction } from '../../../app/actions/update-statement'
 import { ArgumentRef } from '../../../domain/read-models/argument'
 import StatementForm from '../StatementForm'
+import { StatementContentInput } from '../../../domain/use-cases/validate-statement-fields'
 
 interface PositionOption {
   id: string
@@ -17,10 +18,9 @@ interface EditStatementFormProps {
   canUseArguments: boolean
   initialArguments: ArgumentRef[]
   initialPositionId: string
-  initialStatementType: string
+  initialContent: StatementContentInput
   initialSourceName: string
   initialSourceUrl: string
-  initialQuote: string
   initialStatedAt: string
   /** The revision of the statement's stream the form shows: an edit made meanwhile is not overwritten */
   revision: number
@@ -33,10 +33,9 @@ export default function EditStatementForm({
   canUseArguments,
   initialArguments,
   initialPositionId,
-  initialStatementType,
+  initialContent,
   initialSourceName,
   initialSourceUrl,
-  initialQuote,
   initialStatedAt,
   revision,
 }: EditStatementFormProps) {
@@ -59,10 +58,9 @@ export default function EditStatementForm({
       canUseArguments={canUseArguments}
       initialArguments={initialArguments}
       initialPositionId={initialPositionId}
-      initialStatementType={initialStatementType}
+      initialContent={initialContent}
       initialSourceName={initialSourceName}
       initialSourceUrl={initialSourceUrl}
-      initialQuote={initialQuote}
       initialStatedAt={initialStatedAt}
     />
   )

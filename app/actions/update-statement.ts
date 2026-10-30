@@ -2,11 +2,11 @@
 
 import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
-import { parseStatementType } from '../../domain/entities/statement'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { revisionOf } from './form-revision'
 import { readStatementArguments } from './statement-arguments-fields'
+import { readStatementContent } from './statement-content-fields'
 
 export type ActionResult =
   | { success: true }
@@ -24,10 +24,9 @@ export async function updateStatementAction(
       contributor,
       statementId,
       positionId: String(formData.get('positionId') ?? ''),
-      statementType: parseStatementType(formData.get('statementType')),
+      content: readStatementContent(formData),
       sourceName: String(formData.get('sourceName') ?? ''),
       sourceUrl: String(formData.get('sourceUrl') ?? ''),
-      quote: String(formData.get('quote') ?? ''),
       statedAt: String(formData.get('statedAt') ?? ''),
       arguments: readStatementArguments(formData),
       revision: revisionOf(formData),

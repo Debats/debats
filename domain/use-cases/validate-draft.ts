@@ -27,6 +27,7 @@ import { createOrganisationUseCase } from './create-organisation'
 import { createSubjectUseCase } from './create-subject'
 import { createPositionUseCase } from './create-position'
 import { createStatementUseCase } from './create-statement'
+import { contentFieldsOf } from './validate-statement-fields'
 import { organisationAuthor, publicFigureAuthor, StatementAuthor } from '../entities/statement'
 import { ContributorIdentity, Rejected } from './types'
 import { allowedTo, found } from './preconditions'
@@ -104,10 +105,10 @@ export function validateDraft(params: ValidateDraftParams) {
           subjectId,
           author,
           positionId,
-          statementType: draft.statementType,
+          // The draft already holds the content as its type calls for it
+          content: contentFieldsOf(draft.content),
           sourceName: draft.sourceName,
           sourceUrl: draft.sourceUrl,
-          quote: draft.quote,
           statedAt: draft.date,
           // Titles only: an existing argument is reused, a new one created.
           arguments: {

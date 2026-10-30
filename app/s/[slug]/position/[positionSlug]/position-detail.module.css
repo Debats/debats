@@ -63,10 +63,6 @@
   composes: meta from '../../../../../styles/text.module.css';
 }
 
-.quote {
-  composes: quote from '../../../../../styles/text.module.css';
-}
-
 .source {
   display: flex;
   align-items: center;

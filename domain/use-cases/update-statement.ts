@@ -1,12 +1,16 @@
 import { Effect, pipe } from 'effect'
 import { Position } from '../entities/position'
-import { Statement, StatementType } from '../entities/statement'
+import { Statement } from '../entities/statement'
 import { editStatement, OTHER_SUBJECT } from '../aggregates/statement'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
-import { statementFields } from './validate-statement-fields'
+import {
+  statementContent,
+  StatementContentInput,
+  statementFields,
+} from './validate-statement-fields'
 import {
   ARGUMENT_JUST_CREATED,
   argumentRewards,
@@ -25,10 +29,10 @@ type UpdateStatementParams = {
   positionId: string
   /** The full set of arguments the statement mobilises after the edit (Éloquent only) */
   arguments: StatementArgumentsInput
-  statementType: StatementType
+  /** What the statement carries, as the form holds it, read according to its type */
+  content: StatementContentInput
   sourceName: string
   sourceUrl: string
-  quote: string
   statedAt: string
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
@@ -41,8 +45,8 @@ const positions = Effect.serviceFunctions(PositionRepository)
 const statements = Effect.serviceFunctions(StatementRepository)
 
 export function updateStatementUseCase(params: UpdateStatementParams) {
-  const { statementId, positionId, statementType, revision } = params
-  const { sourceName, sourceUrl, quote, statedAt } = params
+  const { statementId, positionId, revision } = params
+  const { sourceName, sourceUrl, statedAt } = params
 
   // The stream decides this below; the tables answer for the streams opened before they said their subject
   const onTheSameSubject = (existing: Statement, newPosition: Position) =>
@@ -66,7 +70,8 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
         'edit_statement',
         'modifier une prise de position',
       ),
-      fields: statementFields({ sourceName, sourceUrl, quote, statedAt }),
+      fields: statementFields({ sourceName, sourceUrl, statedAt }),
+      content: statementContent(params.content),
       existing: existingStatement,
       newPosition: Effect.flatMap(
         positions.findById(positionId),
@@ -78,7 +83,7 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
       validateStatementArguments(contributor, params.arguments),
     ),
     // The proposed arguments open their streams, and the rewards fall, in the edit's transaction
-    Effect.flatMap(({ contributor, fields, newPosition, validated }) =>
+    Effect.flatMap(({ content, contributor, fields, newPosition, validated }) =>
       runUnitOfWork((events) =>
         pipe(
           recordProposedArguments(events, contributor.id, validated),
@@ -91,10 +96,9 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
                 editStatement(
                   {
                     positionId,
-                    statementType,
+                    content,
                     sourceName: fields.sourceName,
                     sourceUrl: fields.sourceUrl,
-                    quote: fields.quote,
                     statedAt: new Date(fields.statedAt),
                     argumentIds: recorded.argumentIds,
                   },

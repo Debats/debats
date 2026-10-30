@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { StatementType } from '../../../domain/entities/statement'
+import { StatementContent } from '../../../domain/entities/statement'
 import { ArgumentRef } from '../../../domain/read-models/argument'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import ArgumentChips from '../ArgumentChips'
 import AuthorAvatar from '../AuthorAvatar'
+import StatementBody from '../StatementBody'
 import StatementSource from '../StatementSource'
 import styles from './DatedStatement.module.css'
 
@@ -15,10 +16,9 @@ interface DatedStatementProps {
   /** Left out when every entry of the list stands on the same subject */
   subject?: { title: string; href: string }
   statement: {
-    statementType: StatementType
-    quote: string
+    content: StatementContent
     sourceName: string
-    sourceUrl?: string
+    sourceUrl: string
     statedAt: Date
   }
   arguments: ArgumentRef[]
@@ -58,7 +58,7 @@ export default function DatedStatement({
             </>
           )}
         </p>
-        <blockquote className={styles.quote}>{statement.quote}</blockquote>
+        <StatementBody content={statement.content} />
         <StatementSource statement={statement} />
         <ArgumentChips arguments={used} />
       </div>
