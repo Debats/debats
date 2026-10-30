@@ -8,6 +8,7 @@ import {
   StatementAuthorRef,
 } from '../../../domain/read-models/statement-author'
 import {
+  AuthorAnalysis,
   Companion,
   Company,
   ExpressionProfile,
@@ -25,16 +26,12 @@ interface AuthorAnalysesProps {
   author: StatementAuthorRef
   /** « cette personnalité », « cette organisation » */
   who: string
-  company: Company
-  standing: Standing
-  changes: PositionChange[]
-  profile: ExpressionProfile
+  analysis: AuthorAnalysis
   /** A block of the page's own, shown after who she stands with */
   children?: React.ReactNode
 }
 
 const subjectsLabel = (count: number) => `${count} ${plural(count, 'sujet', 'sujets')}`
-const voicesLabel = (count: number) => `${count} ${plural(count, 'voix', 'voix')}`
 const titles = (positions: PositionRef[]) => positions.map((p) => p.title).join(', ')
 
 function CompanionRow({ companion, apart }: { companion: Companion; apart: boolean }) {
@@ -56,6 +53,31 @@ function CompanionRow({ companion, apart }: { companion: Companion; apart: boole
   )
 }
 
+function CompanionsColumn({
+  title,
+  companions,
+  apart,
+}: {
+  title: string
+  companions: Companion[]
+  apart: boolean
+}) {
+  return (
+    <div>
+      <h4 className={styles.columnTitle}>{title}</h4>
+      {companions.length === 0 ? (
+        <p className={styles.empty}>Personne, pour l’instant.</p>
+      ) : (
+        <ul className={styles.companions}>
+          {companions.map((c) => (
+            <CompanionRow key={`${c.author.kind}-${c.author.id}`} companion={c} apart={apart} />
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /** Who stands with the author the most often, and who stands apart the most often */
 function CompanyCard({ company, who }: { company: Company; who: string }) {
   const nobody = company.closest.length === 0 && company.opposed.length === 0
@@ -70,34 +92,16 @@ function CompanyCard({ company, who }: { company: Company; who: string }) {
         <p className={styles.empty}>Personne d’autre ne s’est encore exprimé sur ses sujets.</p>
       ) : (
         <div className={styles.columns}>
-          <div>
-            <h4 className={styles.columnTitle}>Le plus souvent du même avis</h4>
-            {company.closest.length === 0 ? (
-              <p className={styles.empty}>Personne, pour l’instant.</p>
-            ) : (
-              <ul className={styles.companions}>
-                {company.closest.map((c) => (
-                  <CompanionRow
-                    key={`${c.author.kind}-${c.author.id}`}
-                    companion={c}
-                    apart={false}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <h4 className={styles.columnTitle}>Le plus souvent d’un autre avis</h4>
-            {company.opposed.length === 0 ? (
-              <p className={styles.empty}>Personne, pour l’instant.</p>
-            ) : (
-              <ul className={styles.companions}>
-                {company.opposed.map((c) => (
-                  <CompanionRow key={`${c.author.kind}-${c.author.id}`} companion={c} apart />
-                ))}
-              </ul>
-            )}
-          </div>
+          <CompanionsColumn
+            title="Le plus souvent du même avis"
+            companions={company.closest}
+            apart={false}
+          />
+          <CompanionsColumn
+            title="Le plus souvent d’un autre avis"
+            companions={company.opposed}
+            apart
+          />
         </div>
       )}
     </section>
@@ -113,6 +117,14 @@ const standingBadge = (s: SubjectStanding) =>
     : s.withLeading
       ? { label: 'Position la plus soutenue', className: styles.badgeWith }
       : { label: 'Position minoritaire', className: styles.badgeApart }
+
+/** Her positions, then how the subject stands: the leading one when it is not hers */
+function standingDetail(s: SubjectStanding): string {
+  const mine = titles(s.positions)
+  if (s.authors === 1) return mine
+  if (s.withLeading) return `${mine} · ${s.authors} voix sur le sujet`
+  return `${mine} · la plus soutenue : ${s.leading.title} (${s.leading.authors} voix)`
+}
 
 /** On each subject, whether the author stands with the most supported position */
 function StandingCard({
@@ -140,14 +152,15 @@ function StandingCard({
           </span>
         </p>
       )}
-      <ul className={styles.rows}>
+      {/* A div list: the « see more » button stands among the rows */}
+      <div role="list" className={styles.rows}>
         <ShowMore
           initialCount={INITIAL_STANDING_ROWS}
           moreLabel={`Voir les ${standing.subjects.length - INITIAL_STANDING_ROWS} autres sujets`}
           items={standing.subjects.map((s) => {
             const badge = standingBadge(s)
             return (
-              <li key={s.subject.id} className={styles.row}>
+              <div key={s.subject.id} role="listitem" className={styles.row}>
                 <div className={styles.rowBody}>
                   <Link
                     href={authorOnSubjectHref(author, s.subject.slug)}
@@ -155,25 +168,14 @@ function StandingCard({
                   >
                     {s.subject.title}
                   </Link>
-                  <span className={styles.meta}>
-                    {titles(s.positions)}
-                    {s.authors > 1 && !s.withLeading && (
-                      <>
-                        {' '}
-                        · la plus soutenue : {s.leading.title} ({voicesLabel(s.leading.authors)})
-                      </>
-                    )}
-                    {s.authors > 1 && s.withLeading && (
-                      <> · {voicesLabel(s.authors)} sur le sujet</>
-                    )}
-                  </span>
+                  <span className={styles.meta}>{standingDetail(s)}</span>
                 </div>
                 <span className={`${styles.badge} ${badge.className}`}>{badge.label}</span>
-              </li>
+              </div>
             )
           })}
         />
-      </ul>
+      </div>
     </section>
   )
 }
@@ -225,6 +227,7 @@ function ChangesCard({
   )
 }
 
+/** Horizontal bars, the entries given most first: the first one sets the scale */
 function Bars({ entries }: { entries: Array<{ key: string; label: string; count: number }> }) {
   const max = entries[0]?.count ?? 0
   return (
@@ -273,15 +276,9 @@ function ProfileCard({ profile, who }: { profile: ExpressionProfile; who: string
 }
 
 /** Onglet Analyses d'une personnalité ou d'une organisation : ses positions face aux autres. */
-export default function AuthorAnalyses({
-  author,
-  who,
-  company,
-  standing,
-  changes,
-  profile,
-  children,
-}: AuthorAnalysesProps) {
+export default function AuthorAnalyses({ author, who, analysis, children }: AuthorAnalysesProps) {
+  const { company, standing, changes, profile } = analysis
+  // The standing lists every subject she spoke on: none means no statement at all
   if (standing.subjects.length === 0) {
     return (
       <p className={styles.none}>

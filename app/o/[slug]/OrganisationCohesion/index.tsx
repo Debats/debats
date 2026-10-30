@@ -49,8 +49,8 @@ export default function OrganisationCohesion({
           <p className={styles.headline}>
             <span className={styles.number}>{aligned}</span>
             <span className={styles.headlineText}>
-              {plural(aligned, 'fois', 'fois')} la même position que l’organisation, {apart} fois
-              une autre, sur {spoken.length} {plural(spoken.length, 'sujet', 'sujets')}
+              fois la même position que l’organisation, {apart} fois une autre, sur {spoken.length}{' '}
+              {plural(spoken.length, 'sujet', 'sujets')}
             </span>
           </p>
           <ul className={styles.rows}>

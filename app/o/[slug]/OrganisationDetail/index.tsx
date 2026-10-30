@@ -9,16 +9,14 @@ import { ORGANISATION_TYPE_LABELS } from '../../../../domain/entities/organisati
 import { isCurrentMembership } from '../../../../domain/entities/organisation-membership'
 import { organisationAuthor } from '../../../../domain/entities/statement'
 import { organisationRef } from '../../../../domain/read-models/statement-author'
-import { AuthorTab, authorTabHref } from '../../../../domain/read-models/author-tabs'
+import {
+  AUTHOR_TAB_LABELS,
+  AuthorTab,
+  authorTabs,
+} from '../../../../domain/read-models/author-tabs'
 import { groupStatementsBySubject } from '../../../../domain/services/statements-by-subject'
 import { argumentDistribution } from '../../../../domain/services/figure-activity'
-import {
-  company,
-  expressionProfile,
-  memberCohesion,
-  positionChanges,
-  standing,
-} from '../../../../domain/services/author-analyses'
+import { analyseAuthor, memberCohesion } from '../../../../domain/services/author-analyses'
 import TopArguments from '../../../../components/statements/TopArguments'
 import AuthorAnalyses from '../../../../components/statements/AuthorAnalyses'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
@@ -163,24 +161,14 @@ export default async function OrganisationDetail({
       >
         <SectionTabs
           ariaLabel="Sections de l'organisation"
-          active={activeTab === 'analyses' ? 'Analyses' : 'Prises de position'}
-          tabs={[
-            {
-              label: 'Prises de position',
-              count: statements.length,
-              href: authorTabHref(base, 'statements'),
-            },
-            { label: 'Analyses', href: authorTabHref(base, 'analyses') },
-          ]}
+          active={AUTHOR_TAB_LABELS[activeTab]}
+          tabs={authorTabs(base, statements.length)}
         />
         {onSubjects ? (
           <AuthorAnalyses
             author={organisationRef({ ...organisation, acronym })}
             who="cette organisation"
-            company={company(statements, onSubjects, self)}
-            standing={standing(statements, onSubjects, self)}
-            changes={positionChanges(statements)}
-            profile={expressionProfile(statements)}
+            analysis={analyseAuthor(statements, onSubjects, self)}
           >
             <OrganisationCohesion
               organisationSlug={slug}

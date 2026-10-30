@@ -401,3 +401,26 @@ export function organisationsLine(
     return [line]
   })
 }
+
+/* The four analyses every author gets */
+
+export interface AuthorAnalysis {
+  company: Company
+  standing: Standing
+  changes: PositionChange[]
+  profile: ExpressionProfile
+}
+
+/** Everything the Analyses tab of a public figure or an organisation shows about her alone */
+export function analyseAuthor(
+  own: StatementWithDetails[],
+  onSubjects: StatementWithAuthor[],
+  self: StatementAuthor,
+): AuthorAnalysis {
+  return {
+    company: company(own, onSubjects, self),
+    standing: standing(own, onSubjects, self),
+    changes: positionChanges(own),
+    profile: expressionProfile(own),
+  }
+}

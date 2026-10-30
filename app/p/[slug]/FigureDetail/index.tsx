@@ -12,20 +12,18 @@ import { MembershipWithOrganisation } from '../../../../domain/repositories/orga
 import { isCurrentMembership } from '../../../../domain/entities/organisation-membership'
 import { publicFigureAuthor } from '../../../../domain/entities/statement'
 import { publicFigureRef } from '../../../../domain/read-models/statement-author'
-import { AuthorTab, authorTabHref } from '../../../../domain/read-models/author-tabs'
+import {
+  AUTHOR_TAB_LABELS,
+  AuthorTab,
+  authorTabs,
+} from '../../../../domain/read-models/author-tabs'
 import {
   activityPeriod,
   argumentDistribution,
   statementsPerYear,
   themeDistribution,
 } from '../../../../domain/services/figure-activity'
-import {
-  company,
-  expressionProfile,
-  organisationsLine,
-  positionChanges,
-  standing,
-} from '../../../../domain/services/author-analyses'
+import { analyseAuthor, organisationsLine } from '../../../../domain/services/author-analyses'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import AdminMenu from '../../../../components/ui/AdminMenu'
@@ -185,24 +183,14 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
       >
         <SectionTabs
           ariaLabel="Sections de la personnalité"
-          active={activeTab === 'analyses' ? 'Analyses' : 'Prises de position'}
-          tabs={[
-            {
-              label: 'Prises de position',
-              count: statements.length,
-              href: authorTabHref(base, 'statements'),
-            },
-            { label: 'Analyses', href: authorTabHref(base, 'analyses') },
-          ]}
+          active={AUTHOR_TAB_LABELS[activeTab]}
+          tabs={authorTabs(base, statements.length)}
         />
         {onSubjects ? (
           <AuthorAnalyses
             author={publicFigureRef(figure)}
             who="cette personnalité"
-            company={company(statements, onSubjects, self)}
-            standing={standing(statements, onSubjects, self)}
-            changes={positionChanges(statements)}
-            profile={expressionProfile(statements)}
+            analysis={analyseAuthor(statements, onSubjects, self)}
           >
             {currentMemberships.length > 0 && (
               <FigureOrganisationsLine
