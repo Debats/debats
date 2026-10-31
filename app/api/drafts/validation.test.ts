@@ -5,6 +5,8 @@ import {
   parseDraftAuthor,
   parseDraftContent,
   parseDraftOccupations,
+  parseDraftPatch,
+  parseDraftReview,
   validateSlugifiableFields,
 } from './validation'
 import { ORGANISATION_TYPES } from '../../../domain/entities/organisation'
@@ -274,6 +276,96 @@ describe('parseDraftContent', () => {
     expect(parseDraftContent({ kind: 'declaration', quote: 'court' })).toEqual({
       error:
         'Field content is invalid for kind "declaration": check quote — expected quote (10 characters minimum)',
+    })
+  })
+})
+
+describe('parseDraftPatch', () => {
+  it('accepts a correction of the content, in the shape the domain gives it', () => {
+    expect(
+      parseDraftPatch({
+        content: { kind: 'vote', votedText: 'Projet de loi Yadan', choice: 'pour' },
+      }),
+    ).toEqual({
+      fields: { content: { kind: 'vote', votedText: 'Projet de loi Yadan', choice: 'pour' } },
+    })
+  })
+
+  it('says what is wrong with a content that does not fit its kind', () => {
+    expect(parseDraftPatch({ content: { kind: 'vote', choice: 'pour' } })).toEqual({
+      error: expect.stringContaining('Field content is invalid for kind "vote": check votedText'),
+    })
+  })
+
+  it('refuses the flat fields of the old payload by name', () => {
+    expect(parseDraftPatch({ quote: 'Une citation corrigée.', statementType: 'vote' })).toEqual({
+      error: 'Unknown fields: quote, statementType',
+    })
+  })
+
+  it('refuses an empty correction', () => {
+    expect(parseDraftPatch({})).toEqual({ error: 'No fields to update.' })
+  })
+
+  it('refuses a body that is not an object', () => {
+    expect(parseDraftPatch([])).toEqual({ error: 'Expected a JSON object.' })
+  })
+
+  it('parses the author like the creation does', () => {
+    expect(parseDraftPatch({ author: { kind: 'organisation', name: 'CGT' } })).toEqual({
+      fields: { author: { kind: 'organisation', name: 'CGT', data: null } },
+    })
+  })
+
+  it('refuses a title that would not make a slug', () => {
+    expect(parseDraftPatch({ subjectTitle: '!!!' })).toEqual({
+      error: 'Field subjectTitle must contain at least one alphanumeric character',
+    })
+  })
+
+  it('refuses a text field that is empty or not a text', () => {
+    expect(parseDraftPatch({ sourceUrl: '' })).toEqual({
+      error: 'Field sourceUrl must be a non-empty string',
+    })
+    expect(parseDraftPatch({ sourceName: 42 })).toEqual({
+      error: 'Field sourceName must be a non-empty string',
+    })
+  })
+
+  it('refuses a date that is not YYYY-MM-DD', () => {
+    expect(parseDraftPatch({ date: '12/06/2025' })).toEqual({
+      error: 'Invalid date format (expected YYYY-MM-DD)',
+    })
+    expect(parseDraftPatch({ date: '2025-06-12' })).toEqual({ fields: { date: '2025-06-12' } })
+  })
+
+  it('lets the notes be cleared, as they are optional', () => {
+    expect(parseDraftPatch({ aiNotes: null })).toEqual({ fields: { aiNotes: null } })
+  })
+})
+
+describe('parseDraftReview', () => {
+  it('accepts a revision request with the note that explains it', () => {
+    expect(
+      parseDraftReview({
+        status: 'revision_requested',
+        note: 'La citation est absente de la source.',
+      }),
+    ).toEqual({ status: 'revision_requested', note: 'La citation est absente de la source.' })
+  })
+
+  it('refuses a review without a note: the contributor must know what to fix', () => {
+    expect(parseDraftReview({ status: 'revision_requested', note: '  ' })).toEqual({
+      error: 'Field note is required: say what the contributor must fix',
+    })
+  })
+
+  it('refuses every other status: validating and rejecting stay human decisions', () => {
+    expect(parseDraftReview({ status: 'validated', note: 'ok' })).toEqual({
+      error: 'Field status must be "revision_requested"',
+    })
+    expect(parseDraftReview({ status: 'rejected', note: 'non' })).toEqual({
+      error: 'Field status must be "revision_requested"',
     })
   })
 })

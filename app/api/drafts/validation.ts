@@ -9,6 +9,7 @@ import {
   DraftOccupation,
   DraftOrganisationData,
   DraftPublicFigureData,
+  DraftStatement,
   draftOrganisationAuthor,
   draftPublicFigureAuthor,
 } from '../../../domain/entities/draft-statement'
@@ -283,4 +284,102 @@ export function parseDraftContent(value: unknown): ParsedContent {
   return {
     error: `Field content is invalid for kind "${kind}": check ${faults.join(', ')} — expected ${CONTENT_SHAPES[kind as StatementType]}`,
   }
+}
+
+/** What a correction may touch: the draft, never its status nor its enrichment lists */
+export type DraftPatch = Partial<
+  Pick<
+    DraftStatement,
+    | 'content'
+    | 'sourceName'
+    | 'sourceUrl'
+    | 'date'
+    | 'aiNotes'
+    | 'author'
+    | 'subjectTitle'
+    | 'positionTitle'
+    | 'subjectData'
+    | 'positionData'
+    | 'rejectionNote'
+    | 'origin'
+  >
+>
+
+const PATCHABLE_FIELDS: ReadonlySet<string> = new Set<keyof DraftPatch>([
+  'content',
+  'sourceName',
+  'sourceUrl',
+  'date',
+  'aiNotes',
+  'author',
+  'subjectTitle',
+  'positionTitle',
+  'subjectData',
+  'positionData',
+  'rejectionNote',
+  'origin',
+])
+
+/** The fields a correction must send as text, never empty */
+const TEXT_FIELDS = ['sourceName', 'sourceUrl', 'subjectTitle', 'positionTitle', 'origin'] as const
+
+type ParsedPatch = { fields: DraftPatch } | { error: string }
+
+/**
+ * Parses a partial correction of a draft. Every field is optional and only the
+ * named ones are read; the author and the content go through the same parsers
+ * as a creation, so a correction can retype a draft from words to a deed.
+ */
+export function parseDraftPatch(body: unknown): ParsedPatch {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { error: 'Expected a JSON object.' }
+  }
+  const input = body as Record<string, unknown>
+
+  const unknownFields = Object.keys(input).filter((key) => !PATCHABLE_FIELDS.has(key))
+  if (unknownFields.length > 0) return { error: `Unknown fields: ${unknownFields.join(', ')}` }
+  if (Object.keys(input).length === 0) return { error: 'No fields to update.' }
+
+  for (const field of TEXT_FIELDS) {
+    if (field in input && (typeof input[field] !== 'string' || !input[field])) {
+      return { error: `Field ${field} must be a non-empty string` }
+    }
+  }
+  const slugError = validateSlugifiableFields(input, true)
+  if (slugError) return { error: slugError }
+  if ('date' in input && (typeof input.date !== 'string' || !ISO_DATE.test(input.date))) {
+    return { error: 'Invalid date format (expected YYYY-MM-DD)' }
+  }
+
+  const fields: DraftPatch = { ...(input as DraftPatch) }
+  if ('author' in input) {
+    const author = parseDraftAuthor(input.author)
+    if ('error' in author) return author
+    fields.author = author.author
+  }
+  if ('content' in input) {
+    const content = parseDraftContent(input.content)
+    if ('error' in content) return content
+    fields.content = content.content
+  }
+  return { fields }
+}
+
+export type DraftReview = { status: 'revision_requested'; note: string }
+
+/**
+ * Parses a review posted by a machine. It may only send a draft back for
+ * revision, with the note that says why: validating and rejecting are
+ * decisions a person takes on the review screen.
+ */
+export function parseDraftReview(body: unknown): DraftReview | { error: string } {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return { error: 'Expected a JSON object.' }
+  }
+  const { status, note } = body as Record<string, unknown>
+  if (status !== 'revision_requested') return { error: 'Field status must be "revision_requested"' }
+  if (typeof note !== 'string' || !note.trim()) {
+    return { error: 'Field note is required: say what the contributor must fix' }
+  }
+  return { status, note: note.trim() }
 }
