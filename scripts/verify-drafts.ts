@@ -35,6 +35,9 @@ const USER_AGENT = 'Mozilla/5.0 (compatible; debats.co draft verifier; +https://
 /** The verdicts a review is sent for: the words are not there, or the source is gone */
 const FAILING = new Set<Verdict['kind']>(['missing', 'unreachable'])
 
+/** The verdicts the report lists for a person: what fails, and what only a person can settle */
+const TO_REVIEW = new Set<Verdict['kind']>(['missing', 'unreachable', 'close'])
+
 function parseArgs(argv: string[]): Options {
   const at = (flag: string) => {
     const index = argv.indexOf(flag)
@@ -120,7 +123,11 @@ async function checkAll(drafts: DraftPayload[]): Promise<Checked[]> {
 
 const failingOf = (checked: Checked[]) => checked.filter(({ verdict }) => FAILING.has(verdict.kind))
 
-const reasonOf = (verdict: Verdict) => ('reason' in verdict ? ` (${verdict.reason})` : '')
+const reasonOf = (verdict: Verdict) => {
+  if ('reason' in verdict) return ` (${verdict.reason})`
+  if ('coverage' in verdict) return ` (${Math.round(verdict.coverage * 100)} % des mots)`
+  return ''
+}
 
 function printCounts(checked: Checked[]) {
   const counts = new Map<Verdict['kind'], number>()
@@ -132,9 +139,9 @@ function printCounts(checked: Checked[]) {
 }
 
 /** The drafts to look at again, by subject, the subject with the most first */
-function printFailing(checked: Checked[]) {
+function printToReview(checked: Checked[]) {
   const bySubject = new Map<string, Checked[]>()
-  for (const item of failingOf(checked)) {
+  for (const item of checked.filter(({ verdict }) => TO_REVIEW.has(verdict.kind))) {
     const subject = item.draft.subjectTitle
     bySubject.set(subject, [...(bySubject.get(subject) ?? []), item])
   }
@@ -177,7 +184,7 @@ async function main() {
 
   const checked = await checkAll(drafts)
   printCounts(checked)
-  printFailing(checked)
+  printToReview(checked)
   if (options.out) {
     writeFileSync(options.out, JSON.stringify(checked, null, 2))
     console.error(`Rapport écrit dans ${options.out}`)

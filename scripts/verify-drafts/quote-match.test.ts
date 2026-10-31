@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalise, quoteAppearsIn, textOfHtml } from './quote-match'
+import { coverageOf, normalise, quoteAppearsIn, textOfHtml } from './quote-match'
 
 describe('textOfHtml', () => {
   it('keeps the words of a page and drops its markup, scripts and styles', () => {
@@ -50,5 +50,32 @@ describe('quoteAppearsIn', () => {
     expect(quoteAppearsIn('Le grand remplacement est une réalité (...) une invention', page)).toBe(
       false,
     )
+  })
+})
+
+describe('coverageOf', () => {
+  const page = `Il a répété : « Le grand remplacement est une réalité, et ceux qui le nient
+    mentent aux Français, tout simplement. » Puis il a changé de sujet.`
+
+  it('is 1 when the whole quote is on the page', () => {
+    expect(coverageOf('Le grand remplacement est une réalité, et ceux qui le nient', page)).toBe(1)
+  })
+
+  it('is 0 when none of the quote is on the page', () => {
+    expect(coverageOf('Le grand remplacement est un mythe inventé par la droite', page)).toBe(0)
+  })
+
+  it('is the share of the quote the page carries when a word was changed', () => {
+    const coverage = coverageOf(
+      'Le grand remplacement est une réalité, et ceux qui le nient trompent aux Français, tout simplement',
+      page,
+    )
+    expect(coverage).toBeGreaterThan(0.4)
+    expect(coverage).toBeLessThan(1)
+  })
+
+  it('judges a short quote as a whole', () => {
+    expect(coverageOf('mentent aux Français', page)).toBe(1)
+    expect(coverageOf('mentent aux Belges', page)).toBe(0)
   })
 })

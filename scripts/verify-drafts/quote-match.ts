@@ -64,9 +64,36 @@ export const normalise = (text: string): string =>
 /** A quote may be cut: « … », […], (...) or ... each mark a piece left out. */
 const CUT = /\[(?:\.{3}|…)\]|\((?:\.{3}|…)\)|…|\.{3}/
 
+const piecesOf = (quote: string): string[] => quote.split(CUT).map(normalise).filter(Boolean)
+
 /** True when every piece of the quote is on the page, whatever the typography. */
 export const quoteAppearsIn = (quote: string, pageText: string): boolean => {
   const page = normalise(pageText)
-  const pieces = quote.split(CUT).map(normalise).filter(Boolean)
+  const pieces = piecesOf(quote)
   return pieces.length > 0 && pieces.every((piece) => page.includes(piece))
+}
+
+/** How many words in a row make a window worth looking for */
+const WINDOW = 6
+
+/** The runs of WINDOW words of a piece; a piece shorter than that is one window */
+const windowsOf = (piece: string): string[] => {
+  const words = piece.split(' ')
+  if (words.length <= WINDOW) return [piece]
+  return Array.from({ length: words.length - WINDOW + 1 }, (_, i) =>
+    words.slice(i, i + WINDOW).join(' '),
+  )
+}
+
+/**
+ * The share of the quote the page carries, from 0 to 1: a word changed in the
+ * middle of a quote costs a few windows, not the whole quote. This tells a
+ * paraphrase (most windows found) from an invention (none found).
+ */
+export const coverageOf = (quote: string, pageText: string): number => {
+  const page = normalise(pageText)
+  const windows = piecesOf(quote).flatMap(windowsOf)
+  if (windows.length === 0) return 0
+  const found = windows.filter((window) => page.includes(window)).length
+  return found / windows.length
 }
