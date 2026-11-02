@@ -11,7 +11,10 @@
  *   npm run verify:drafts:production -- …       # the same against debats.co
  *
  * Environment: DEBATS_URL (default http://localhost:3000), ADMIN_API_KEY (or a network
- * secret on the cloud environment that adds the Authorization header for DEBATS_URL's host)
+ * secret on the cloud environment that adds the Authorization header for DEBATS_URL's host).
+ * A cloud session sits behind a proxy declared by HTTPS_PROXY, which Node's fetch ignores
+ * unless NODE_USE_ENV_PROXY=1 is set: without it the secret is never added and the API
+ * answers 401.
  */
 
 import { writeFileSync } from 'node:fs'
