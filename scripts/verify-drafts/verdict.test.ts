@@ -88,6 +88,13 @@ describe('verdictFor', () => {
       }),
     ).toEqual({ kind: 'unverifiable', reason: 'HTTP 403' })
     expect(
+      verdictFor(words, 'https://lemonde.fr/a', {
+        status: 402,
+        contentType: 'text/html',
+        body: '',
+      }),
+    ).toEqual({ kind: 'unverifiable', reason: 'HTTP 402' })
+    expect(
       verdictFor(words, 'https://lepoint.fr/a', {
         status: 429,
         contentType: 'text/html',

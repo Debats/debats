@@ -54,7 +54,7 @@ export const needsABrowser = (url: string): boolean => {
 }
 
 /** A refusal aimed at the visitor, not a page that is gone: a paywall, a bot wall, a rate limit */
-const turnsRobotsAway = (status: number): boolean => [401, 403, 429].includes(status)
+const turnsRobotsAway = (status: number): boolean => [401, 402, 403, 429].includes(status)
 
 /** The media type alone, without its charset */
 const mediaTypeOf = (contentType: string): string => contentType.split(';')[0].trim().toLowerCase()
