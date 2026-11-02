@@ -10,7 +10,8 @@
  *   npm run verify:drafts -- --limit 50 --out report.json
  *   npm run verify:drafts:production -- …       # the same against debats.co
  *
- * Environment: ADMIN_API_KEY (required), DEBATS_URL (default http://localhost:3000)
+ * Environment: DEBATS_URL (default http://localhost:3000), ADMIN_API_KEY (or a network
+ * secret on the cloud environment that adds the Authorization header for DEBATS_URL's host)
  */
 
 import { writeFileSync } from 'node:fs'
@@ -50,20 +51,32 @@ function parseArgs(argv: string[]): Options {
   }
 }
 
-/** The drafts API of one site, reached with its admin key; any unexpected answer stops the run */
+/**
+ * The drafts API of one site; any unexpected answer stops the run.
+ *
+ * The admin key is sent when ADMIN_API_KEY is set. In a cloud environment the
+ * key lives in a network secret instead: Anthropic's proxy adds the header
+ * once the request has left the machine, so the script must not send its own.
+ */
 function draftsApi(env: NodeJS.ProcessEnv) {
   const key = env.ADMIN_API_KEY
-  if (!key) throw new Error('ADMIN_API_KEY manque dans l’environnement')
   const base = (env.DEBATS_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(key ? { Authorization: `Bearer ${key}` } : {}),
+  }
 
   const call = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
-    const response = await fetch(`${base}${path}`, {
-      ...init,
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    })
+    const response = await fetch(`${base}${path}`, { ...init, headers })
     if (!response.ok) {
       const method = init.method ?? 'GET'
-      throw new Error(`${method} ${path} → HTTP ${response.status} : ${await response.text()}`)
+      const hint =
+        response.status === 401 && !key
+          ? ' (ADMIN_API_KEY absent de l’environnement, et aucun network secret n’a posé l’en-tête)'
+          : ''
+      throw new Error(
+        `${method} ${path} → HTTP ${response.status}${hint} : ${await response.text()}`,
+      )
     }
     return (await response.json()) as T
   }
