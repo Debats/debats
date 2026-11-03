@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { buildContentCatalog } from './content-catalog'
 
+const noOccupations = { occupationFamilies: [], occupations: [] }
+
 describe('buildContentCatalog', () => {
   it('nests positions under the subject they belong to', () => {
     const catalog = buildContentCatalog({
@@ -21,6 +23,7 @@ describe('buildContentCatalog', () => {
       ],
       publicFigures: [],
       organisations: [],
+      ...noOccupations,
     })
 
     expect(catalog.subjects).toEqual([
@@ -41,6 +44,7 @@ describe('buildContentCatalog', () => {
       positions: [],
       publicFigures: [],
       organisations: [],
+      ...noOccupations,
     })
 
     expect(catalog.subjects[0].positions).toEqual([])
@@ -52,6 +56,7 @@ describe('buildContentCatalog', () => {
       positions: [{ id: 'pos-1', subjectId: 'gone', slug: 'orpheline', title: 'Orpheline' }],
       publicFigures: [],
       organisations: [],
+      ...noOccupations,
     })
 
     expect(catalog.subjects).toEqual([])
@@ -77,6 +82,7 @@ describe('buildContentCatalog', () => {
           acronym: 'CGT',
         },
       ],
+      ...noOccupations,
     })
 
     expect(catalog.subjects.map((s) => s.title)).toEqual(["L'école", 'Les retraites'])
@@ -100,6 +106,7 @@ describe('buildContentCatalog', () => {
           acronym: 'CGT',
         },
       ],
+      ...noOccupations,
     })
 
     expect(catalog.organisations).toEqual([
@@ -108,6 +115,42 @@ describe('buildContentCatalog', () => {
         name: 'Confédération générale du travail',
         acronym: 'CGT',
       },
+    ])
+  })
+
+  it('lists the closed list of occupations by family, families in their order, names by name', () => {
+    const catalog = buildContentCatalog({
+      subjects: [],
+      positions: [],
+      publicFigures: [],
+      organisations: [],
+      occupationFamilies: [
+        { id: 'f-2', slug: 'chercheur-se', name: 'Chercheur·se et universitaire', position: 2 },
+        { id: 'f-1', slug: 'elu-e', name: 'Élu·e', position: 1 },
+        { id: 'f-3', slug: 'artiste', name: 'Artiste', position: 3 },
+      ],
+      occupations: [
+        { id: 'o-1', familyId: 'f-1', slug: 'senateur-rice', name: 'Sénateur·rice' },
+        { id: 'o-2', familyId: 'f-1', slug: 'depute-e', name: 'Député·e' },
+        { id: 'o-3', familyId: 'f-2', slug: 'economiste', name: 'Économiste' },
+      ],
+    })
+
+    expect(catalog.occupations).toEqual([
+      {
+        slug: 'elu-e',
+        name: 'Élu·e',
+        occupations: [
+          { slug: 'depute-e', name: 'Député·e' },
+          { slug: 'senateur-rice', name: 'Sénateur·rice' },
+        ],
+      },
+      {
+        slug: 'chercheur-se',
+        name: 'Chercheur·se et universitaire',
+        occupations: [{ slug: 'economiste', name: 'Économiste' }],
+      },
+      { slug: 'artiste', name: 'Artiste', occupations: [] },
     ])
   })
 })

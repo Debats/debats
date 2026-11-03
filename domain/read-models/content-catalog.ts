@@ -29,10 +29,24 @@ export interface CatalogOrganisation {
   acronym: string | null
 }
 
+export interface CatalogOccupation {
+  slug: string
+  name: string
+}
+
+/** A family of the closed list of occupations, with the names it holds */
+export interface CatalogOccupationFamily {
+  slug: string
+  name: string
+  occupations: CatalogOccupation[]
+}
+
 export interface ContentCatalog {
   subjects: CatalogSubject[]
   publicFigures: CatalogPublicFigure[]
   organisations: CatalogOrganisation[]
+  /** The closed list a public figure's occupations are taken from, by family */
+  occupations: CatalogOccupationFamily[]
 }
 
 /** Flat rows read from the database, before assembly. */
@@ -41,6 +55,8 @@ export interface ContentCatalogRows {
   positions: Array<{ id: string; subjectId: string; slug: string; title: string }>
   publicFigures: Array<{ id: string; slug: string; name: string }>
   organisations: Array<{ id: string; slug: string; name: string; acronym: string | null }>
+  occupationFamilies: Array<{ id: string; slug: string; name: string; position: number }>
+  occupations: Array<{ id: string; familyId: string; slug: string; name: string }>
 }
 
 const byLabel = (a: string, b: string) => a.localeCompare(b, 'fr')
@@ -74,5 +90,15 @@ export function buildContentCatalog(rows: ContentCatalogRows): ContentCatalog {
         acronym: organisation.acronym,
       }))
       .sort((a, b) => byLabel(a.name, b.name)),
+    occupations: [...rows.occupationFamilies]
+      .sort((a, b) => a.position - b.position || byLabel(a.name, b.name))
+      .map((family) => ({
+        slug: family.slug,
+        name: family.name,
+        occupations: rows.occupations
+          .filter((occupation) => occupation.familyId === family.id)
+          .map((occupation) => ({ slug: occupation.slug, name: occupation.name }))
+          .sort((a, b) => byLabel(a.name, b.name)),
+      })),
   }
 }

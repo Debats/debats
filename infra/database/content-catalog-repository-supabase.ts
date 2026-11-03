@@ -32,33 +32,61 @@ function fetchLiveRows<Row>(
   }, PAGE_SIZE)
 }
 
+/** Every row of a table that is never soft-deleted: the closed lists. */
+function fetchAllRows<Row>(
+  supabase: SupabaseClient,
+  table: string,
+  columns: string,
+): Promise<Row[]> {
+  return fetchAllPages<Row>(async (offset, limit) => {
+    const { data, error, count } = await supabase
+      .from(table)
+      .select(columns, { count: 'exact' })
+      .range(offset, offset + limit - 1)
+
+    if (error) throw error
+    return { rows: data as Row[], total: count }
+  }, PAGE_SIZE)
+}
+
 export function createContentCatalogRepository(supabase: SupabaseClient): ContentCatalogRepository {
   return {
     getCatalog: () =>
       Effect.tryPromise({
         try: async () => {
-          const [subjects, positions, publicFigures, organisations] = await Promise.all([
-            fetchLiveRows<{ id: string; slug: string; title: string }>(
-              supabase,
-              'subjects',
-              'id,slug,title',
-            ),
-            fetchLiveRows<{ id: string; subject_id: string; slug: string; title: string }>(
-              supabase,
-              'positions',
-              'id,subject_id,slug,title',
-            ),
-            fetchLiveRows<{ id: string; slug: string; name: string }>(
-              supabase,
-              'public_figures',
-              'id,slug,name',
-            ),
-            fetchLiveRows<{ id: string; slug: string; name: string; acronym: string | null }>(
-              supabase,
-              'organisations',
-              'id,slug,name,acronym',
-            ),
-          ])
+          const [subjects, positions, publicFigures, organisations, families, occupations] =
+            await Promise.all([
+              fetchLiveRows<{ id: string; slug: string; title: string }>(
+                supabase,
+                'subjects',
+                'id,slug,title',
+              ),
+              fetchLiveRows<{ id: string; subject_id: string; slug: string; title: string }>(
+                supabase,
+                'positions',
+                'id,subject_id,slug,title',
+              ),
+              fetchLiveRows<{ id: string; slug: string; name: string }>(
+                supabase,
+                'public_figures',
+                'id,slug,name',
+              ),
+              fetchLiveRows<{ id: string; slug: string; name: string; acronym: string | null }>(
+                supabase,
+                'organisations',
+                'id,slug,name,acronym',
+              ),
+              fetchAllRows<{ id: string; slug: string; name: string; position: number }>(
+                supabase,
+                'occupation_families',
+                'id,slug,name,position',
+              ),
+              fetchAllRows<{ id: string; family_id: string; slug: string; name: string }>(
+                supabase,
+                'occupations',
+                'id,family_id,slug,name',
+              ),
+            ])
 
           return buildContentCatalog({
             subjects,
@@ -70,6 +98,13 @@ export function createContentCatalogRepository(supabase: SupabaseClient): Conten
             })),
             publicFigures,
             organisations,
+            occupationFamilies: families,
+            occupations: occupations.map((o) => ({
+              id: o.id,
+              familyId: o.family_id,
+              slug: o.slug,
+              name: o.name,
+            })),
           })
         },
         catch: (error) => dbError('Failed to fetch the content catalog', error),
