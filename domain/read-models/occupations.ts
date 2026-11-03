@@ -1,4 +1,4 @@
-import { Occupation } from '../entities/occupation'
+import { Occupation, sameOccupationName } from '../entities/occupation'
 import { OccupationFamily } from '../entities/occupation-family'
 
 /** A family with its occupations, as the lists and selectors show them */
@@ -32,6 +32,30 @@ export interface OccupationHeld {
 export interface OccupationAssignmentInput {
   occupationId: string
   current: boolean
+}
+
+/** An occupation written by its name, as a draft or the API names it */
+export interface NamedOccupation {
+  name: string
+  current: boolean
+}
+
+/**
+ * The assignments the written names designate among the listed occupations,
+ * or the first name that designates none: the list is closed, and a name
+ * outside it is refused rather than created.
+ */
+export function assignmentsFromNames(
+  listed: Occupation[],
+  named: NamedOccupation[],
+): { assignments: OccupationAssignmentInput[] } | { unknown: string } {
+  const assignments: OccupationAssignmentInput[] = []
+  for (const { name, current } of named) {
+    const match = listed.find((candidate) => sameOccupationName(name, candidate.name))
+    if (!match) return { unknown: name }
+    assignments.push({ occupationId: match.id, current })
+  }
+  return { assignments }
 }
 
 /** Current occupations first, then the former ones, each by name */

@@ -167,6 +167,18 @@ DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:64322/postgres
 
 Voir `.env.example` pour la liste complète des variables.
 
+### API d'administration
+
+Les agents de collecte (skills `contribution-pipeline` et compagnie, tâches planifiées) parlent au site par une API protégée par une clé Bearer, `ADMIN_API_KEY`. Trois variables la concernent, à poser en production **avant** de déployer une route qui en dépend :
+
+| Variable               | Rôle                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `ADMIN_API_KEY`        | La clé attendue dans `Authorization: Bearer …`                                                                                 |
+| `ADMIN_CONTRIBUTOR_ID` | Le contributeur (`contributors.id`, rang Éloquent au moins) au nom duquel les routes d'enrichissement écrivent dans le journal |
+| `DEBATS_URL`           | Le site visé par `npm run verify:drafts`                                                                                       |
+
+Routes : `GET /api/catalog` (sujets, positions, personnalités, organisations, métiers), `GET/POST /api/drafts`, `PATCH/DELETE /api/drafts/<id>`, `POST /api/drafts/<id>/review`, `GET /api/public-figures/<slug>`, `PATCH /api/public-figures/<slug>/occupations`, `POST /api/public-figures/<slug>/affiliations`, `DELETE /api/public-figures/<slug>/affiliations/<id>`, `POST /api/organisations`, `PATCH /api/organisations/<slug>`. Les brouillons attendent une relecture humaine ; les routes d'enrichissement écrivent directement, par les mêmes commandes que l'interface.
+
 ### Lancement
 
 ```bash

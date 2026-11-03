@@ -18,7 +18,7 @@ import { RunUnitOfWork } from '../events/unit-of-work'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { OccupationRepository } from '../repositories/occupation-repository'
 import { OrganisationMembershipRepository } from '../repositories/organisation-membership-repository'
-import { sameOccupationName } from '../entities/occupation'
+import { assignmentsFromNames } from '../read-models/occupations'
 import { isCurrentMembership } from '../entities/organisation-membership'
 import { setPublicFigureOccupationsUseCase } from './set-public-figure-occupations'
 import { addOrganisationMembershipUseCase } from './add-organisation-membership'
@@ -204,14 +204,12 @@ function occupationsApplied(
 ) {
   if (draft.occupations.length === 0) return Effect.void
 
-  const drafted = Effect.flatMap(occupations.findAll(), (listed) =>
-    Effect.forEach(draft.occupations, (occupation) => {
-      const match = listed.find((candidate) => sameOccupationName(occupation.name, candidate.name))
-      return match
-        ? Effect.succeed({ occupationId: match.id, current: occupation.current })
-        : Effect.fail(new Rejected(`Le métier « ${occupation.name} » n’est pas dans la liste.`))
-    }),
-  )
+  const drafted = Effect.flatMap(occupations.findAll(), (listed) => {
+    const resolved = assignmentsFromNames(listed, draft.occupations)
+    return 'unknown' in resolved
+      ? Effect.fail(new Rejected(`Le métier « ${resolved.unknown} » n’est pas dans la liste.`))
+      : Effect.succeed(resolved.assignments)
+  })
   const held = Effect.map(occupations.findByPublicFigureId(publicFigureId), (held) =>
     held.map(({ occupation, current }) => ({ occupationId: occupation.id, current })),
   )

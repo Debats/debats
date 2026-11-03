@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupOccupationsByFamily, sortOccupationsHeld } from './occupations'
+import { assignmentsFromNames, groupOccupationsByFamily, sortOccupationsHeld } from './occupations'
 import { createOccupation, createOccupationFamily } from '../entities/entity-test-helpers'
 
 describe('groupOccupationsByFamily', () => {
@@ -47,5 +47,32 @@ describe('sortOccupationsHeld', () => {
       ['Député·e', false],
       ['Sénateur·rice', false],
     ])
+  })
+})
+
+describe('assignmentsFromNames', () => {
+  const listed = [
+    createOccupation({ name: 'Député·e', familyId: 'f1', createdBy: 'founder' }),
+    createOccupation({ name: 'Économiste', familyId: 'f2', createdBy: 'founder' }),
+  ]
+
+  it('names the listed occupation each written name designates, whatever the spelling', () => {
+    const result = assignmentsFromNames(listed, [
+      { name: 'Député', current: false },
+      { name: 'économiste', current: true },
+    ])
+
+    expect(result).toEqual({
+      assignments: [
+        { occupationId: listed[0].id, current: false },
+        { occupationId: listed[1].id, current: true },
+      ],
+    })
+  })
+
+  it('refuses the first name that designates no listed occupation', () => {
+    expect(assignmentsFromNames(listed, [{ name: 'Astronaute', current: true }])).toEqual({
+      unknown: 'Astronaute',
+    })
   })
 })
