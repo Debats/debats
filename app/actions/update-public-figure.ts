@@ -35,7 +35,7 @@ export async function updatePublicFigureAction(
 
   const notorietySources = formData
     .getAll('notorietySources')
-    .map((v) => String(v))
+    .map((v) => String(v).trim())
     .filter((v) => v.length > 0)
 
   const useCaseParams = {

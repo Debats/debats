@@ -41,9 +41,9 @@ export default function EditPositionForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      const formData = new FormData()
-      formData.set('title', title)
-      formData.set('description', description)
+      // The form itself carries the fields and the hidden revision:
+      // a hand-built FormData silently drops whatever it forgets
+      const formData = new FormData(e.currentTarget)
 
       try {
         const result: ActionResult = await updatePositionAction(positionId, formData)
@@ -62,7 +62,7 @@ export default function EditPositionForm({
         setIsPending(false)
       }
     },
-    [positionId, title, description, returnHref, router],
+    [positionId, returnHref, router],
   )
 
   return (

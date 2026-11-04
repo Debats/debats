@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, FormEvent } from 'react'
+import { useState, useCallback, FormEvent } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
@@ -50,8 +50,6 @@ export default function EditPublicFigureForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
   const [isPending, setIsPending] = useState(false)
 
-  const photoInputRef = useRef<HTMLInputElement>(null)
-
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -68,21 +66,9 @@ export default function EditPublicFigureForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      const formData = new FormData()
-      formData.set('name', name)
-      formData.set('presentation', presentation)
-      formData.set('wikipediaUrl', wikipediaUrl)
-      formData.set('websiteUrl', websiteUrl)
-
-      const s1 = notorietySource1.trim()
-      const s2 = notorietySource2.trim()
-      if (s1) formData.append('notorietySources', s1)
-      if (s2) formData.append('notorietySources', s2)
-
-      const photoFile = photoInputRef.current?.files?.[0]
-      if (photoFile) {
-        formData.set('photo', photoFile)
-      }
+      // The form itself carries the fields, the photo and the hidden revision:
+      // a hand-built FormData silently drops whatever it forgets
+      const formData = new FormData(e.currentTarget)
 
       try {
         const result: ActionResult = await updatePublicFigureAction(figureId, formData)
@@ -101,16 +87,7 @@ export default function EditPublicFigureForm({
         setIsPending(false)
       }
     },
-    [
-      figureId,
-      name,
-      presentation,
-      wikipediaUrl,
-      websiteUrl,
-      notorietySource1,
-      notorietySource2,
-      router,
-    ],
+    [figureId, router],
   )
 
   const showNotorietySources = !wikipediaUrl.trim()
@@ -159,7 +136,6 @@ export default function EditPublicFigureForm({
             name="photo"
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            ref={photoInputRef}
             onChange={handlePhotoChange}
           />
           {fieldErrors?.photo && <span className={formStyles.fieldError}>{fieldErrors.photo}</span>}
