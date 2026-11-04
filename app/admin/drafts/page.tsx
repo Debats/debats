@@ -5,7 +5,14 @@ import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
 import { liveServices } from '../../../infra/live-services'
 import { resolveDraft } from '../../../domain/use-cases/resolve-draft'
+import {
+  DraftsParams,
+  draftGroupingAllLabel,
+  draftsViewHref,
+  parseDraftsView,
+} from '../../../domain/read-models/drafts-view'
 import { getAdminContributor } from '../../actions/admin-guard'
+import DraftGroups from './DraftGroups'
 import DraftList from './DraftList'
 import styles from './admin-drafts.module.css'
 
@@ -15,7 +22,7 @@ export const metadata: Metadata = {
 }
 
 interface Props {
-  searchParams: Promise<{ subject?: string }>
+  searchParams: Promise<DraftsParams>
 }
 
 export default async function AdminDraftsPage({ searchParams }: Props) {
@@ -30,44 +37,21 @@ export default async function AdminDraftsPage({ searchParams }: Props) {
 
   const supabase = createAdminSupabaseClient()
   const draftRepo = createDraftStatementRepository(supabase)
-  const { subject } = await searchParams
+  const view = parseDraftsView(await searchParams)
 
-  if (!subject) {
-    const subjectCounts = await Effect.runPromise(draftRepo.countPendingBySubject())
-    const total = subjectCounts.reduce((sum, s) => sum + s.count, 0)
+  if (!view.group) {
+    const groups = await Effect.runPromise(draftRepo.countPendingGroups(view.grouping))
 
     return (
       <div className={styles.container}>
         <h1 className={styles.title}>BROUILLONS EN ATTENTE</h1>
-
-        {subjectCounts.length === 0 ? (
-          <p className={styles.empty}>Aucun brouillon en attente de validation.</p>
-        ) : (
-          <>
-            <p className={styles.total}>
-              {total} brouillon{total > 1 ? 's' : ''} en attente
-            </p>
-            <ul className={styles.subjectList}>
-              {subjectCounts.map(({ subjectTitle, count }) => (
-                <li key={subjectTitle}>
-                  <Link
-                    href={`/admin/drafts?subject=${encodeURIComponent(subjectTitle)}`}
-                    className={styles.subjectLink}
-                  >
-                    {subjectTitle}
-                    <span className={styles.subjectCount}>{count}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <DraftGroups grouping={view.grouping} groups={groups} />
       </div>
     )
   }
 
   const services = liveServices(supabase)
-  const drafts = await Effect.runPromise(draftRepo.findPendingBySubject(subject))
+  const drafts = await Effect.runPromise(draftRepo.findPendingInGroup(view.grouping, view.group))
 
   const draftsWithResolution = await Promise.all(
     drafts.map(async (draft) => {
@@ -78,15 +62,15 @@ export default async function AdminDraftsPage({ searchParams }: Props) {
 
   return (
     <div className={styles.container}>
-      <Link href="/admin/drafts" className={styles.backLink}>
-        ← Tous les sujets
+      <Link href={draftsViewHref({ grouping: view.grouping })} className={styles.backLink}>
+        ← {draftGroupingAllLabel(view.grouping)}
       </Link>
-      <h1 className={styles.title}>{subject}</h1>
+      <h1 className={styles.title}>{view.group}</h1>
 
       {draftsWithResolution.length === 0 ? (
-        <p className={styles.empty}>Aucun brouillon en attente pour ce sujet.</p>
+        <p className={styles.empty}>Aucun brouillon en attente ici.</p>
       ) : (
-        <DraftList drafts={draftsWithResolution} />
+        <DraftList drafts={draftsWithResolution} view={view} />
       )}
     </div>
   )

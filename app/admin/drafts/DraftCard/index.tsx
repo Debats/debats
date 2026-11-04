@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { DraftStatement } from '../../../../domain/entities/draft-statement'
@@ -25,9 +26,11 @@ import styles from './DraftCard.module.css'
 interface DraftCardProps {
   draft: DraftStatement
   resolution: DraftResolution
+  /** Where every draft of this author is listed, absent when the page already lists them */
+  authorDraftsHref?: string
 }
 
-export default function DraftCard({ draft, resolution }: DraftCardProps) {
+export default function DraftCard({ draft, resolution, authorDraftsHref }: DraftCardProps) {
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string>()
@@ -102,11 +105,18 @@ export default function DraftCard({ draft, resolution }: DraftCardProps) {
       {draft.aiNotes && <p className={styles.aiNotes}>{draft.aiNotes}</p>}
 
       <div className={styles.resolution}>
-        <EntityStatus
-          label={draft.author.name}
-          resolution={resolution.author}
-          linkPrefix={draft.author.kind === 'organisation' ? '/o/' : '/p/'}
-        />
+        <span className={styles.authorLine}>
+          <EntityStatus
+            label={draft.author.name}
+            resolution={resolution.author}
+            linkPrefix={draft.author.kind === 'organisation' ? '/o/' : '/p/'}
+          />
+          {authorDraftsHref && (
+            <Link href={authorDraftsHref} className={styles.authorDrafts}>
+              Ses brouillons
+            </Link>
+          )}
+        </span>
         <EntityStatus label={draft.subjectTitle} resolution={resolution.subject} linkPrefix="/s/" />
         <EntityStatus label={draft.positionTitle} resolution={resolution.position} />
       </div>

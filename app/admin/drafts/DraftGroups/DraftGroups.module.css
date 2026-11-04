@@ -1,0 +1,54 @@
+.groupings {
+  margin: 0 0 24px 0;
+}
+
+.total {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: 0 0 20px 0;
+}
+
+.empty {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.groupList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.groupLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  border-radius: 4px;
+  transition: background-color 0.1s ease;
+}
+
+.groupLink:hover {
+  background-color: var(--paper-2);
+}
+
+.groupCount {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--card);
+  background-color: var(--signal);
+  border-radius: 12px;
+  padding: 2px 10px;
+  min-width: 24px;
+  text-align: center;
+}

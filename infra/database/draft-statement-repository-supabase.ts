@@ -19,6 +19,24 @@ import {
   DraftStatementRepository,
   NewDraftStatement,
 } from '../../domain/repositories/draft-statement-repository'
+import { DraftGrouping, draftGroupsOf } from '../../domain/read-models/drafts-view'
+import { fetchAllRows } from './fetch-all-pages'
+
+type GroupingColumn = 'subject_title' | 'public_figure_name' | 'organisation_name'
+
+/** What a draft is grouped by: its subject, and the one author column it fills */
+type GroupingRow = {
+  subject_title: string
+  public_figure_name: string | null
+  organisation_name: string | null
+}
+
+/** The column the drafts carry each grouping in */
+const GROUPING_COLUMNS: Record<DraftGrouping, GroupingColumn> = {
+  subject: 'subject_title',
+  public_figure: 'public_figure_name',
+  organisation: 'organisation_name',
+}
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -127,41 +145,39 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         catch: (error) => dbError(`Failed to fetch ${status} drafts`, error),
       }),
 
-    findPendingBySubject: (subjectTitle: string) =>
+    findPendingInGroup: (grouping: DraftGrouping, label: string) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('draft_statements')
             .select('*')
             .eq('status', 'pending')
-            .eq('subject_title', subjectTitle)
+            .eq(GROUPING_COLUMNS[grouping], label)
             .order('created_at', { ascending: false })
 
           if (error) throw error
           return data.map(mapRow)
         },
-        catch: (error) => dbError('Failed to fetch pending drafts by subject', error),
+        catch: (error) => dbError(`Failed to fetch pending drafts by ${grouping}`, error),
       }),
 
-    countPendingBySubject: () =>
+    countPendingGroups: (grouping: DraftGrouping) =>
       Effect.tryPromise({
         try: async () => {
-          const { data, error } = await supabase
-            .from('draft_statements')
-            .select('subject_title')
-            .eq('status', 'pending')
-
-          if (error) throw error
-          const counts = new Map<string, number>()
-          for (const row of data) {
-            const title = row.subject_title as string
-            counts.set(title, (counts.get(title) ?? 0) + 1)
-          }
-          return Array.from(counts, ([subjectTitle, count]) => ({ subjectTitle, count })).sort(
-            (a, b) => b.count - a.count,
+          const column = GROUPING_COLUMNS[grouping]
+          // A draft has exactly one author, so the column of the other kind is null
+          const rows = await fetchAllRows<GroupingRow>((offset, limit) =>
+            supabase
+              .from('draft_statements')
+              .select('subject_title, public_figure_name, organisation_name', { count: 'exact' })
+              .eq('status', 'pending')
+              .not(column, 'is', null)
+              .order('id')
+              .range(offset, offset + limit - 1),
           )
+          return draftGroupsOf(rows.flatMap((row) => row[column] ?? []))
         },
-        catch: (error) => dbError('Failed to count pending drafts by subject', error),
+        catch: (error) => dbError(`Failed to count pending drafts by ${grouping}`, error),
       }),
 
     findById: (id: string) =>
