@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { CSSProperties } from 'react'
 import { occupationFamilyHref } from '../../../../domain/read-models/occupations'
 import {
   FamilyPositionMatrix,
@@ -27,10 +26,7 @@ export default function Matrix({ matrix }: { matrix: FamilyPositionMatrix }) {
         représente dans la famille. Plus la case est sombre, plus la famille penche.
       </p>
       <div className={styles.matrixScroll}>
-        <table
-          className={styles.matrix}
-          style={{ '--matrix-columns': matrix.positions.length } as CSSProperties}
-        >
+        <table className={styles.matrix} style={{ '--matrix-columns': matrix.positions.length }}>
           <thead>
             <tr>
               <th scope="col" className={styles.matrixCorner}>
