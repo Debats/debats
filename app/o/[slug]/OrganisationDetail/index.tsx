@@ -6,7 +6,7 @@ import { createOrganisationMembershipRepository } from '../../../../infra/databa
 import { createStatementRepository } from '../../../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../../../infra/database/theme-repository-supabase'
 import { ORGANISATION_TYPE_LABELS } from '../../../../domain/entities/organisation'
-import { isCurrentMembership } from '../../../../domain/entities/organisation-membership'
+import { splitMemberships } from '../../../../domain/services/memberships'
 import { organisationAuthor } from '../../../../domain/entities/statement'
 import { organisationRef } from '../../../../domain/read-models/statement-author'
 import {
@@ -73,8 +73,7 @@ export default async function OrganisationDetail({
     ? statementsOnTheme(statements, await subjectIdsOnTheme(themeRepo, view.themeSlug))
     : statements
 
-  const current = memberships.filter(({ membership }) => isCurrentMembership(membership))
-  const former = memberships.filter(({ membership }) => !isCurrentMembership(membership))
+  const { current, former } = splitMemberships(memberships, new Date())
   const groups = groupStatementsBySubject(statements)
   // Only the Analyses tab reads everyone's statements on its subjects
   const onSubjects =

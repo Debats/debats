@@ -79,15 +79,15 @@
   color: var(--signal);
 }
 
-/* La frise des engagements passés, du plus récent au plus ancien */
-.past {
+/* La frise des engagements terminés, du plus récent au plus ancien */
+.former {
   list-style: none;
   margin: 20px 0 0;
   padding: 20px 0 0;
   border-top: 1px solid var(--line);
 }
 
-.pastItem {
+.formerItem {
   display: grid;
   grid-template-columns: 28px 1fr;
   column-gap: 12px;
@@ -105,19 +105,19 @@
   background-color: var(--line);
 }
 
-.pastItem:last-child .thread {
+.formerItem:last-child .thread {
   display: none;
 }
 
-/* Le logo d'un engagement passé s'efface, comme un métier qu'on ne tient plus */
+/* Le logo d'un engagement terminé s'efface, comme un métier qu'on ne tient plus */
 .faded {
   filter: grayscale(1);
   opacity: 0.65;
 }
 
-.pastLink,
-.pastLink:link,
-.pastLink:visited {
+.formerLink,
+.formerLink:link,
+.formerLink:visited {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -125,11 +125,11 @@
   color: var(--ink-2);
 }
 
-.pastItem:last-child .pastLink {
+.formerItem:last-child .formerLink {
   padding-bottom: 0;
 }
 
-.pastName {
+.formerName {
   font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 500;
@@ -137,6 +137,6 @@
   color: var(--ink-2);
 }
 
-.pastLink:hover .pastName {
+.formerLink:hover .formerName {
   color: var(--signal);
 }

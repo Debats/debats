@@ -1,6 +1,6 @@
 import { Engagements } from '../../../../domain/services/figure-engagements'
 import CurrentEngagement from './CurrentEngagement'
-import PastEngagement from './PastEngagement'
+import FormerEngagement from './FormerEngagement'
 import styles from './FigureEngagements.module.css'
 
 interface FigureEngagementsProps {
@@ -13,9 +13,9 @@ interface FigureEngagementsProps {
  * du plus récent au plus ancien.
  */
 export default function FigureEngagements({
-  engagements: { current, past },
+  engagements: { current, former },
 }: FigureEngagementsProps) {
-  if (current.length === 0 && past.length === 0) return null
+  if (current.length === 0 && former.length === 0) return null
 
   return (
     <div className={styles.card}>
@@ -29,10 +29,10 @@ export default function FigureEngagements({
         </ul>
       )}
 
-      {past.length > 0 && (
-        <ol className={styles.past}>
-          {past.map((engagement) => (
-            <PastEngagement key={engagement.membership.id} engagement={engagement} />
+      {former.length > 0 && (
+        <ol className={styles.former}>
+          {former.map((engagement) => (
+            <FormerEngagement key={engagement.membership.id} engagement={engagement} />
           ))}
         </ol>
       )}

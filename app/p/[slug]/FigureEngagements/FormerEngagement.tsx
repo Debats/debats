@@ -6,7 +6,7 @@ import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './FigureEngagements.module.css'
 
 /** Un engagement terminé, jalon de la frise : le logo effacé, la période, le nom. */
-export default function PastEngagement({
+export default function FormerEngagement({
   engagement: { membership, organisation },
 }: {
   engagement: MembershipWithOrganisation
@@ -15,7 +15,7 @@ export default function PastEngagement({
   const period = membershipPeriodLabel(membership)
 
   return (
-    <li className={styles.pastItem}>
+    <li className={styles.formerItem}>
       <span className={styles.rail}>
         <span className={styles.faded}>
           <OrganisationLogo
@@ -27,9 +27,9 @@ export default function PastEngagement({
         </span>
         <span className={styles.thread} />
       </span>
-      <Link href={`/o/${organisation.slug}`} className={styles.pastLink}>
+      <Link href={`/o/${organisation.slug}`} className={styles.formerLink}>
         {period && <span className={styles.period}>{period}</span>}
-        <span className={styles.pastName}>{organisation.name}</span>
+        <span className={styles.formerName}>{organisation.name}</span>
         {role && <span className={styles.meta}>{role}</span>}
       </Link>
     </li>

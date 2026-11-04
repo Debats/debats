@@ -103,7 +103,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
     activeTab === 'analyses'
       ? await Effect.runPromise(statementRepo.findBySubjectIdsWithAuthors(subjectIds))
       : null
-  const engagements = figureEngagements(memberships)
+  const engagements = figureEngagements(memberships, new Date())
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const adminActions = [

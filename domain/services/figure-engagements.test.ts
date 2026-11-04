@@ -43,14 +43,14 @@ describe('figureEngagements', () => {
     )
 
     expect(names(engagements.current)).toEqual(['Mouvement démocrate'])
-    expect(names(engagements.past)).toEqual(['Union pour la démocratie française'])
+    expect(names(engagements.former)).toEqual(['Union pour la démocratie française'])
   })
 
   it('counts a membership ending in the future as a running one', () => {
     const engagements = figureEngagements([affiliation('Attac', { endedOn: '2027-06-30' })], today)
 
     expect(names(engagements.current)).toEqual(['Attac'])
-    expect(engagements.past).toEqual([])
+    expect(engagements.former).toEqual([])
   })
 
   it('leads the running memberships with the longest-standing one, the undated ones last', () => {
@@ -80,7 +80,7 @@ describe('figureEngagements', () => {
       today,
     )
 
-    expect(names(engagements.past)).toEqual([
+    expect(names(engagements.former)).toEqual([
       'Union pour la démocratie française',
       'Centre des démocrates sociaux',
       'Centre démocrate',
@@ -96,7 +96,7 @@ describe('figureEngagements', () => {
       today,
     )
 
-    const ids = engagements.past.map(({ membership }) => membership.id)
+    const ids = engagements.former.map(({ membership }) => membership.id)
     expect(new Set(ids).size).toBe(2)
   })
 
@@ -110,6 +110,6 @@ describe('figureEngagements', () => {
   })
 
   it('has nothing to show without any membership', () => {
-    expect(figureEngagements([], today)).toEqual({ current: [], past: [] })
+    expect(figureEngagements([], today)).toEqual({ current: [], former: [] })
   })
 })

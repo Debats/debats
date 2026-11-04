@@ -7,15 +7,16 @@
  * sont à égalité, comme les métiers le sont.
  */
 
-import { Array as Arr, Option } from 'effect'
-import { isCurrentMembership, OrganisationMembership } from '../entities/organisation-membership'
+import { Option } from 'effect'
+import { OrganisationMembership } from '../entities/organisation-membership'
 import { MembershipWithOrganisation } from '../repositories/organisation-membership-repository'
+import { splitMemberships } from './memberships'
 
 export interface Engagements {
   /** Affiliations en cours, de la plus ancienne à la plus récente */
   current: MembershipWithOrganisation[]
   /** Affiliations terminées, de la plus récente à la plus ancienne */
-  past: MembershipWithOrganisation[]
+  former: MembershipWithOrganisation[]
 }
 
 const startedAt = (membership: OrganisationMembership): number | null =>
@@ -41,14 +42,15 @@ const byOldestStart = (a: MembershipWithOrganisation, b: MembershipWithOrganisat
 const byMostRecentEnd = (a: MembershipWithOrganisation, b: MembershipWithOrganisation): number =>
   (endedAt(b.membership) ?? 0) - (endedAt(a.membership) ?? 0) || byName(a, b)
 
-/** Les affiliations d'une personnalité, séparées entre engagements en cours et passés */
+/**
+ * Les affiliations d'une personnalité, séparées entre engagements en cours et
+ * terminés, chaque côté dans son ordre. Le jour de référence vient de l'appelant.
+ */
 export function figureEngagements(
   memberships: MembershipWithOrganisation[],
-  today: Date = new Date(),
+  today: Date,
 ): Engagements {
-  const [ended, running] = Arr.partition(memberships, ({ membership }) =>
-    isCurrentMembership(membership, today),
-  )
+  const { current, former } = splitMemberships(memberships, today)
 
-  return { current: running.sort(byOldestStart), past: ended.sort(byMostRecentEnd) }
+  return { current: current.sort(byOldestStart), former: former.sort(byMostRecentEnd) }
 }
