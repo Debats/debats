@@ -48,12 +48,8 @@ export default function NewPositionForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      const formData = new FormData()
-      formData.set('title', title)
-      formData.set('description', description)
-
       try {
-        const result: ActionResult = await createPositionAction(subjectId, formData)
+        const result: ActionResult = await createPositionAction(subjectId, { title, description })
 
         setIsPending(false)
 
@@ -106,7 +102,6 @@ export default function NewPositionForm({
         <TextField
           label="Titre de la position"
           id="title"
-          name="title"
           required
           placeholder="ex : Pour l'interdiction, Contre toute régulation..."
           value={title}
@@ -129,7 +124,6 @@ export default function NewPositionForm({
         <TextArea
           label="Description"
           id="description"
-          name="description"
           required
           placeholder="Développez cette position (min. 10 caractères)"
           rows={4}

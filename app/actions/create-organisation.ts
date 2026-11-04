@@ -11,7 +11,7 @@ import {
 } from '../../domain/use-cases/create-organisation'
 import { generateOrganisationSlug } from '../../domain/entities/organisation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { readOrganisationFields } from './organisation-fields'
+import { newOrganisationForm, NewOrganisationFormData } from '../../lib/forms/organisation-form'
 import { readUploadedImage } from './read-uploaded-image'
 
 export type ActionResult =
@@ -19,10 +19,12 @@ export type ActionResult =
   | { success: false; error: string; fieldErrors?: undefined }
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
-export async function createOrganisationAction(formData: FormData): Promise<ActionResult> {
+export async function createOrganisationAction(
+  formData: NewOrganisationFormData,
+): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
-  const fields = readOrganisationFields(formData)
+  const { logo, ...fields } = newOrganisationForm.decode(formData)
 
   const params = { contributor, ...fields }
 
@@ -36,8 +38,7 @@ export async function createOrganisationAction(formData: FormData): Promise<Acti
   }
 
   // Phase 2: optional logo upload, entity not yet created
-  const logo = formData.get('logo')
-  if (logo instanceof File && logo.size > 0) {
+  if (logo) {
     const image = await readUploadedImage(logo)
     if (Either.isLeft(image)) {
       return { success: false, fieldErrors: { logo: image.left } }

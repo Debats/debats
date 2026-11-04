@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOrganisationAction } from '../../../app/actions/update-organisation'
+import { editOrganisationForm, OrganisationFormInput } from '../../../lib/forms/organisation-form'
 import OrganisationForm, { OrganisationFormValues, SubmitOutcome } from '../OrganisationForm'
 
 interface EditOrganisationFormProps {
@@ -22,8 +23,8 @@ export default function EditOrganisationForm({
   const router = useRouter()
 
   const handleSubmit = useCallback(
-    async (formData: FormData): Promise<SubmitOutcome> => {
-      formData.set('revision', String(revision))
+    async (values: OrganisationFormInput): Promise<SubmitOutcome> => {
+      const formData = editOrganisationForm.encode({ ...values, revision })
       const result = await updateOrganisationAction(organisationId, formData)
       if (result.success) {
         router.push(`/o/${result.slug}`)

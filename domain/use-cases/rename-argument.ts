@@ -12,13 +12,17 @@ const TITLE_TAKEN = 'Un argument porte déjà ce titre : fusionnez-les plutôt.'
 const TITLE_MIN = 3
 const TITLE_MAX = 255
 
-type RenameArgumentParams = {
-  contributor: ContributorIdentity | null
-  argumentId: string
+/** What the rename form of an argument sends: its wording, and the revision it shows. */
+export type RenamedArgument = {
   title: string
   description: string
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+}
+
+type RenameArgumentParams = RenamedArgument & {
+  contributor: ContributorIdentity | null
+  argumentId: string
 }
 
 export type { FieldErrors }
@@ -28,8 +32,10 @@ const argumentsRead = Effect.serviceFunctions(ArgumentRepository)
 
 /** Corrects an argument's wording; its links to statements are untouched. */
 export function renameArgumentUseCase(params: RenameArgumentParams) {
-  const { argumentId, description, revision } = params
+  const { argumentId, revision } = params
+  // The spaces around a wording mean nothing
   const title = params.title.trim()
+  const description = params.description.trim()
 
   // Another argument under the same title is a duplicate to merge, not to rename into
   const titleFree = (existing: Argument) =>

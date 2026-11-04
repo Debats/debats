@@ -8,21 +8,26 @@ import { grant, rewardFor } from './reward'
 import { allowedTo, fieldsOf } from './preconditions'
 import { decideOnSubject, subjectAggregate, writtenPosition } from './subject-stream'
 
+// The spaces around a title mean nothing: they are dropped before it is judged
 const CreatePositionInput = S.Struct({
-  title: S.String.pipe(S.minLength(3), S.maxLength(255)),
-  description: S.String.pipe(S.minLength(10)),
+  title: S.Trim.pipe(S.minLength(3), S.maxLength(255)),
+  description: S.Trim.pipe(S.minLength(10)),
 })
+
+/**
+ * What the form of a new position sends: the fields as they were typed, which
+ * the schema above judges and hands to the command.
+ */
+export type NewPosition = S.Schema.Encoded<typeof CreatePositionInput>
 
 const FIELD_MESSAGES = {
   title: 'Le titre doit faire entre 3 et 255 caractères.',
   description: 'La description doit faire au moins 10 caractères.',
 }
 
-type CreatePositionParams = {
+type CreatePositionParams = NewPosition & {
   contributor: ContributorIdentity | null
   subjectId: string
-  title: string
-  description: string
 }
 
 export type { FieldErrors }

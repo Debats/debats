@@ -2,7 +2,11 @@
 
 import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
-import { createSubjectUseCase, FieldErrors } from '../../domain/use-cases/create-subject'
+import {
+  createSubjectUseCase,
+  FieldErrors,
+  NewSubject,
+} from '../../domain/use-cases/create-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
@@ -10,17 +14,10 @@ export type ActionResult =
   | { success: false; error: string; fieldErrors?: undefined }
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
-export async function createSubjectAction(formData: FormData): Promise<ActionResult> {
+export async function createSubjectAction(subject: NewSubject): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
-  const result = await runLiveForm(
-    createSubjectUseCase({
-      contributor,
-      title: String(formData.get('title') ?? ''),
-      presentation: String(formData.get('presentation') ?? ''),
-      problem: String(formData.get('problem') ?? ''),
-    }),
-  )
+  const result = await runLiveForm(createSubjectUseCase({ contributor, ...subject }))
 
   if (Either.isLeft(result)) {
     const err = result.left

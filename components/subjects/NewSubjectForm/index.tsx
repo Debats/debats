@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { createSubjectAction } from '../../../app/actions/create-subject'
-import SubjectForm from '../SubjectForm'
+import SubjectForm, { SubjectFormValues } from '../SubjectForm'
 import FormSuccess from '../../ui/FormSuccess'
 
 export default function NewSubjectForm() {
@@ -11,6 +11,8 @@ export default function NewSubjectForm() {
   const handleSuccess = useCallback((result: { slug: string; title: string }) => {
     setSuccessResult(result)
   }, [])
+
+  const handleSubmit = useCallback((values: SubjectFormValues) => createSubjectAction(values), [])
 
   if (successResult) {
     return (
@@ -36,7 +38,7 @@ export default function NewSubjectForm() {
 
   return (
     <SubjectForm
-      onSubmit={createSubjectAction}
+      onSubmit={handleSubmit}
       submitLabel="Créer ce sujet"
       pendingLabel="Création en cours..."
       onSuccess={handleSuccess}

@@ -8,23 +8,26 @@ import { grant, rewardFor } from './reward'
 import { allowedTo, fieldsOf, found } from './preconditions'
 import { decideOnSubject, subjectAggregate, writtenPosition } from './subject-stream'
 
+// The spaces around a title mean nothing: they are dropped before it is judged
 const UpdatePositionInput = S.Struct({
-  title: S.String.pipe(S.minLength(3), S.maxLength(255)),
-  description: S.String.pipe(S.minLength(10)),
+  title: S.Trim.pipe(S.minLength(3), S.maxLength(255)),
+  description: S.Trim.pipe(S.minLength(10)),
 })
+
+/** What the edit form of a position sends: its fields, and the revision it shows. */
+export type EditedPosition = S.Schema.Encoded<typeof UpdatePositionInput> & {
+  /** The revision of the subject's stream the form was rendered from */
+  revision: number
+}
 
 const FIELD_MESSAGES = {
   title: 'Le titre doit faire entre 3 et 255 caractères.',
   description: 'La description doit faire au moins 10 caractères.',
 }
 
-type UpdatePositionParams = {
+type UpdatePositionParams = EditedPosition & {
   contributor: ContributorIdentity | null
   positionId: string
-  title: string
-  description: string
-  /** The revision of the subject's stream the form was rendered from */
-  revision: number
 }
 
 export type { FieldErrors }

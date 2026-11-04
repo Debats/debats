@@ -41,9 +41,9 @@ describe('createSubjectUseCase', () => {
         title: 'Ab',
       }),
     )
-    expect(
-      Either.isLeft(result) && typeof result.left !== 'string' && result.left.title,
-    ).toBeDefined()
+    expect(Either.isLeft(result) && result.left).toEqual({
+      title: 'Le titre doit faire entre 3 et 100 caractères.',
+    })
   })
 
   it('should fail when presentation is too short', async () => {
@@ -54,9 +54,39 @@ describe('createSubjectUseCase', () => {
         presentation: 'Court',
       }),
     )
-    expect(
-      Either.isLeft(result) && typeof result.left !== 'string' && result.left.presentation,
-    ).toBeDefined()
+    expect(Either.isLeft(result) && result.left).toEqual({
+      presentation: 'La présentation doit faire au moins 10 caractères.',
+    })
+  })
+
+  it('drops the spaces around what was typed: they are not part of a title', async () => {
+    const result = await execute(
+      createSubjectUseCase({
+        contributor: { id: 'abc', reputation: 10000 },
+        title: '  Le montant du SMIC  ',
+        presentation: '  Une présentation suffisamment longue.  ',
+        problem: '  Faut-il augmenter le SMIC ?  ',
+      }),
+    )
+
+    expect(Either.isRight(result) && result.right.title).toBe('Le montant du SMIC')
+    expect(Either.isRight(result) && result.right.presentation).toBe(
+      'Une présentation suffisamment longue.',
+    )
+  })
+
+  it('refuses a presentation holding nothing but spaces', async () => {
+    const result = await execute(
+      createSubjectUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        presentation: '            ',
+      }),
+    )
+
+    expect(Either.isLeft(result) && result.left).toEqual({
+      presentation: 'La présentation doit faire au moins 10 caractères.',
+    })
   })
 
   it('refuses a title another subject already bears, on the title field', async () => {

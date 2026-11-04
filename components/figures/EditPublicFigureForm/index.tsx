@@ -5,7 +5,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { updatePublicFigureAction, ActionResult } from '../../../app/actions/update-public-figure'
+import { editPublicFigureForm } from '../../../lib/forms/public-figure-form'
+import { useChosenFile } from '../../../lib/forms/use-chosen-file'
 import { FieldErrors } from '../../../domain/use-cases/update-public-figure'
+import NotorietySources, { notorietySourcePair } from '../../forms/NotorietySources'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
@@ -42,22 +45,14 @@ export default function EditPublicFigureForm({
   const [presentation, setPresentation] = useState(initialPresentation)
   const [wikipediaUrl, setWikipediaUrl] = useState(initialWikipediaUrl)
   const [websiteUrl, setWebsiteUrl] = useState(initialWebsiteUrl)
-  const [notorietySource1, setNotorietySource1] = useState(initialNotorietySources[0] ?? '')
-  const [notorietySource2, setNotorietySource2] = useState(initialNotorietySources[1] ?? '')
-  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>()
+  const [notorietySources, setNotorietySources] = useState(() =>
+    notorietySourcePair(initialNotorietySources),
+  )
+  const { file: photo, previewUrl: photoPreviewUrl, choose: choosePhoto } = useChosenFile()
 
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
   const [isPending, setIsPending] = useState(false)
-
-  const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setPhotoPreviewUrl(URL.createObjectURL(file))
-    } else {
-      setPhotoPreviewUrl(undefined)
-    }
-  }, [])
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -66,9 +61,15 @@ export default function EditPublicFigureForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      // The form itself carries the fields, the photo and the hidden revision:
-      // a hand-built FormData silently drops whatever it forgets
-      const formData = new FormData(e.currentTarget)
+      const formData = editPublicFigureForm.encode({
+        name,
+        presentation,
+        wikipediaUrl,
+        websiteUrl,
+        notorietySources,
+        photo,
+        revision,
+      })
 
       try {
         const result: ActionResult = await updatePublicFigureAction(figureId, formData)
@@ -87,21 +88,29 @@ export default function EditPublicFigureForm({
         setIsPending(false)
       }
     },
-    [figureId, router],
+    [
+      figureId,
+      name,
+      presentation,
+      wikipediaUrl,
+      websiteUrl,
+      notorietySources,
+      photo,
+      revision,
+      router,
+    ],
   )
 
   const showNotorietySources = !wikipediaUrl.trim()
 
   return (
     <form onSubmit={handleSubmit} className={formStyles.form}>
-      <input type="hidden" name="revision" value={revision} />
       {error && <FormError message={error} />}
 
       <div className={formStyles.fieldGroup}>
         <TextField
           label="Nom"
           id="name"
-          name="name"
           required
           placeholder="ex : Albert Camus, Simone Veil..."
           value={name}
@@ -114,7 +123,6 @@ export default function EditPublicFigureForm({
         <TextArea
           label="Présentation"
           id="presentation"
-          name="presentation"
           required
           placeholder="Courte présentation de la personnalité (min. 10 caractères)"
           rows={4}
@@ -133,10 +141,9 @@ export default function EditPublicFigureForm({
           <input
             className={localStyles.fileInput}
             id="photo"
-            name="photo"
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={handlePhotoChange}
+            onChange={(e) => choosePhoto(e.target.files?.[0])}
           />
           {fieldErrors?.photo && <span className={formStyles.fieldError}>{fieldErrors.photo}</span>}
         </div>
@@ -156,7 +163,6 @@ export default function EditPublicFigureForm({
         <TextField
           label="URL Wikipedia (optionnel)"
           id="wikipediaUrl"
-          name="wikipediaUrl"
           placeholder="https://fr.wikipedia.org/wiki/..."
           value={wikipediaUrl}
           onChange={(e) => setWikipediaUrl(e.target.value)}
@@ -165,37 +171,18 @@ export default function EditPublicFigureForm({
       </div>
 
       {showNotorietySources && (
-        <div className={localStyles.notorietySection}>
-          <p className={localStyles.notorietyTitle}>Sources de notoriété</p>
-          <TextField
-            label="Source de notoriété 1"
-            id="notorietySource1"
-            name="notorietySources"
-            required
-            placeholder="https://lemonde.fr/..."
-            value={notorietySource1}
-            onChange={(e) => setNotorietySource1(e.target.value)}
-          />
-          <TextField
-            label="Source de notoriété 2"
-            id="notorietySource2"
-            name="notorietySources"
-            required
-            placeholder="https://liberation.fr/..."
-            value={notorietySource2}
-            onChange={(e) => setNotorietySource2(e.target.value)}
-          />
-          {fieldErrors?.notorietySources && (
-            <span className={formStyles.fieldError}>{fieldErrors.notorietySources}</span>
-          )}
-        </div>
+        <NotorietySources
+          who="la personnalité"
+          sources={notorietySources}
+          onChange={setNotorietySources}
+          error={fieldErrors?.notorietySources}
+        />
       )}
 
       <div className={formStyles.fieldGroup}>
         <TextField
           label="Site web (optionnel)"
           id="websiteUrl"
-          name="websiteUrl"
           placeholder="https://..."
           value={websiteUrl}
           onChange={(e) => setWebsiteUrl(e.target.value)}

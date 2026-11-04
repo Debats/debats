@@ -40,10 +40,7 @@ export default function EditStatementForm({
   revision,
 }: EditStatementFormProps) {
   const handleSubmit = useCallback(
-    (formData: FormData) => {
-      formData.set('revision', String(revision))
-      return updateStatementAction(statementId, formData)
-    },
+    (formData: FormData) => updateStatementAction(statementId, formData, revision),
     [statementId, revision],
   )
 

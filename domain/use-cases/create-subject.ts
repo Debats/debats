@@ -11,11 +11,19 @@ import { allowedTo, fieldsOf, free } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { subjectAggregate } from './subject-stream'
 
+// The spaces around a title mean nothing: they are dropped before it is judged
 const CreateSubjectInput = S.Struct({
-  title: SubjectTitle,
-  presentation: S.String.pipe(S.minLength(10)),
-  problem: S.String.pipe(S.minLength(10)),
+  title: S.Trim.pipe(S.compose(SubjectTitle)),
+  presentation: S.Trim.pipe(S.minLength(10)),
+  problem: S.Trim.pipe(S.minLength(10)),
 })
+
+/**
+ * What the form of a new subject sends: the fields as they were typed, which
+ * the schema above judges and hands to the command. The action takes this type,
+ * so a field the command needs cannot be left out of what the client sends.
+ */
+export type NewSubject = S.Schema.Encoded<typeof CreateSubjectInput>
 
 const FIELD_MESSAGES = {
   title: 'Le titre doit faire entre 3 et 100 caractères.',
@@ -25,11 +33,8 @@ const FIELD_MESSAGES = {
 
 const TITLE_TAKEN = 'Un sujet porte déjà ce titre.'
 
-type CreateSubjectParams = {
+type CreateSubjectParams = NewSubject & {
   contributor: ContributorIdentity | null
-  title: string
-  presentation: string
-  problem: string
 }
 
 export type { FieldErrors }

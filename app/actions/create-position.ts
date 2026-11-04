@@ -2,7 +2,11 @@
 
 import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
-import { createPositionUseCase, FieldErrors } from '../../domain/use-cases/create-position'
+import {
+  createPositionUseCase,
+  FieldErrors,
+  NewPosition,
+} from '../../domain/use-cases/create-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
@@ -12,18 +16,11 @@ export type ActionResult =
 
 export async function createPositionAction(
   subjectId: string,
-  formData: FormData,
+  position: NewPosition,
 ): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
-  const result = await runLiveForm(
-    createPositionUseCase({
-      contributor,
-      subjectId,
-      title: String(formData.get('title') ?? ''),
-      description: String(formData.get('description') ?? ''),
-    }),
-  )
+  const result = await runLiveForm(createPositionUseCase({ contributor, subjectId, ...position }))
 
   if (Either.isLeft(result)) {
     const err = result.left

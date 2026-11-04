@@ -9,20 +9,22 @@ import { allowedTo, decoded } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 
+// The spaces around a title mean nothing: they are dropped before it is judged
 const UpdateSubjectInput = S.Struct({
-  title: SubjectTitle,
-  presentation: S.String.pipe(S.minLength(10)),
-  problem: S.String.pipe(S.minLength(10)),
+  title: S.Trim.pipe(S.compose(SubjectTitle)),
+  presentation: S.Trim.pipe(S.minLength(10)),
+  problem: S.Trim.pipe(S.minLength(10)),
 })
 
-type UpdateSubjectParams = {
-  contributor: ContributorIdentity | null
-  subjectId: string
-  title: string
-  presentation: string
-  problem: string
+/** What the edit form of a subject sends: its fields, and the revision it shows. */
+export type EditedSubject = S.Schema.Encoded<typeof UpdateSubjectInput> & {
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+}
+
+type UpdateSubjectParams = EditedSubject & {
+  contributor: ContributorIdentity | null
+  subjectId: string
 }
 
 export function updateSubjectUseCase(params: UpdateSubjectParams) {

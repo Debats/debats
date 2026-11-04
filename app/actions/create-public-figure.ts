@@ -12,44 +12,33 @@ import {
 } from '../../domain/use-cases/create-public-figure'
 import { generateSlug } from '../../domain/entities/public-figure'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { newPublicFigureForm, NewPublicFigureFormData } from '../../lib/forms/public-figure-form'
 
 export type ActionResult =
   | { success: true; slug: string; name: string; id: string }
   | { success: false; error: string; fieldErrors?: undefined }
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
-export async function createPublicFigureAction(formData: FormData): Promise<ActionResult> {
+export async function createPublicFigureAction(
+  formData: NewPublicFigureFormData,
+): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const name = String(formData.get('name') ?? '')
-
-  const photoFile = formData.get('photo') as File | null
-  if (!photoFile || photoFile.size === 0) {
+  const { photo: chosenPhoto, ...fields } = newPublicFigureForm.decode(formData)
+  if (!chosenPhoto) {
     return {
       success: false,
       fieldErrors: { photo: 'La photo de la personnalité est obligatoire.' },
     }
   }
 
-  const photo = await readUploadedImage(photoFile)
+  const photo = await readUploadedImage(chosenPhoto)
   if (Either.isLeft(photo)) {
     return { success: false, fieldErrors: { photo: photo.left } }
   }
 
-  const notorietySources = formData
-    .getAll('notorietySources')
-    .map((v) => String(v))
-    .filter((v) => v.length > 0)
-
-  const useCaseParams = {
-    contributor,
-    name,
-    presentation: String(formData.get('presentation') ?? ''),
-    wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
-    websiteUrl: String(formData.get('websiteUrl') ?? ''),
-    notorietySources,
-  }
+  const useCaseParams = { contributor, ...fields }
 
   // Phase 1: Validate — nothing persisted yet
   const validation = await runLiveForm(validateCreatePublicFigure(useCaseParams), supabase)
@@ -63,7 +52,7 @@ export async function createPublicFigureAction(formData: FormData): Promise<Acti
 
   // Phase 2: Upload photo — entity not yet created
   try {
-    await uploadFigureAvatar(supabase, generateSlug(name), photo.right)
+    await uploadFigureAvatar(supabase, generateSlug(fields.name), photo.right)
   } catch (error) {
     if (error instanceof AvatarStorageError) {
       return { success: false, error: "L'upload de la photo a échoué. Veuillez réessayer." }

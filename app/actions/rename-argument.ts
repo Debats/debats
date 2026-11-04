@@ -3,9 +3,12 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { runLiveForm } from '../../infra/live-services'
-import { renameArgumentUseCase, FieldErrors } from '../../domain/use-cases/rename-argument'
+import {
+  renameArgumentUseCase,
+  FieldErrors,
+  RenamedArgument,
+} from '../../domain/use-cases/rename-argument'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { revisionOf } from './form-revision'
 
 export type ActionResult =
   | { success: true; slug: string }
@@ -14,19 +17,11 @@ export type ActionResult =
 
 export async function renameArgumentAction(
   argumentId: string,
-  formData: FormData,
+  renamed: RenamedArgument,
 ): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
-  const result = await runLiveForm(
-    renameArgumentUseCase({
-      contributor,
-      argumentId,
-      title: String(formData.get('title') ?? ''),
-      description: String(formData.get('description') ?? ''),
-      revision: revisionOf(formData),
-    }),
-  )
+  const result = await runLiveForm(renameArgumentUseCase({ contributor, argumentId, ...renamed }))
 
   if (Either.isLeft(result)) {
     const err = result.left

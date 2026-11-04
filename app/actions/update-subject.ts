@@ -2,28 +2,18 @@
 
 import { Either } from 'effect'
 import { runLive } from '../../infra/live-services'
-import { updateSubjectUseCase } from '../../domain/use-cases/update-subject'
+import { EditedSubject, updateSubjectUseCase } from '../../domain/use-cases/update-subject'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { revisionOf } from './form-revision'
 
 export type ActionResult = { success: true; slug: string } | { success: false; error: string }
 
 export async function updateSubjectAction(
   subjectId: string,
-  formData: FormData,
+  edited: EditedSubject,
 ): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
-  const result = await runLive(
-    updateSubjectUseCase({
-      contributor,
-      subjectId,
-      title: String(formData.get('title') ?? ''),
-      presentation: String(formData.get('presentation') ?? ''),
-      problem: String(formData.get('problem') ?? ''),
-      revision: revisionOf(formData),
-    }),
-  )
+  const result = await runLive(updateSubjectUseCase({ contributor, subjectId, ...edited }))
 
   if (Either.isLeft(result)) {
     return { success: false, error: result.left }

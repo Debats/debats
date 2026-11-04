@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { createOrganisationAction } from '../../../app/actions/create-organisation'
+import { newOrganisationForm, OrganisationFormInput } from '../../../lib/forms/organisation-form'
 import FormSuccess from '../../ui/FormSuccess'
 import OrganisationForm, { SubmitOutcome } from '../OrganisationForm'
 
@@ -13,14 +14,17 @@ interface Created {
 export default function NewOrganisationForm() {
   const [created, setCreated] = useState<Created>()
 
-  const handleSubmit = useCallback(async (formData: FormData): Promise<SubmitOutcome> => {
-    const result = await createOrganisationAction(formData)
-    if (result.success) {
-      setCreated({ slug: result.slug, name: result.name })
-      return { success: true }
-    }
-    return { success: false, error: result.error, fieldErrors: result.fieldErrors }
-  }, [])
+  const handleSubmit = useCallback(
+    async (values: OrganisationFormInput): Promise<SubmitOutcome> => {
+      const result = await createOrganisationAction(newOrganisationForm.encode(values))
+      if (result.success) {
+        setCreated({ slug: result.slug, name: result.name })
+        return { success: true }
+      }
+      return { success: false, error: result.error, fieldErrors: result.fieldErrors }
+    },
+    [],
+  )
 
   if (created) {
     return (

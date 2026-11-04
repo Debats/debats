@@ -1,0 +1,13 @@
+.notoriety {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  border: 1px solid var(--line);
+}
+
+.notorietyTitle {
+  composes: label from '../../../styles/text.module.css';
+}

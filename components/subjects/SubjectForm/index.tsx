@@ -3,7 +3,7 @@
 import { useState, useCallback, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
-import { FieldErrors } from '../../../domain/use-cases/create-subject'
+import { FieldErrors, NewSubject } from '../../../domain/use-cases/create-subject'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
@@ -16,14 +16,11 @@ type SubmitResult =
   | { success: false; error: string; fieldErrors?: undefined }
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
-export interface SubjectFormValues {
-  title: string
-  presentation: string
-  problem: string
-}
+/** What the form holds: exactly the fields the command that writes a subject needs. */
+export type SubjectFormValues = NewSubject
 
 interface SubjectFormProps {
-  onSubmit: (formData: FormData) => Promise<SubmitResult>
+  onSubmit: (values: SubjectFormValues) => Promise<SubmitResult>
   submitLabel: string
   pendingLabel: string
   cancelHref?: string
@@ -54,12 +51,8 @@ export default function SubjectForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      const formData = new FormData()
-      formData.set('title', title)
-      formData.set('presentation', presentation)
-      formData.set('problem', problem)
       try {
-        const result = await onSubmit(formData)
+        const result = await onSubmit({ title, presentation, problem })
 
         if (!result.success) {
           if (result.error) {
@@ -92,7 +85,6 @@ export default function SubjectForm({
         <TextField
           label="Titre du sujet"
           id="title"
-          name="title"
           required
           placeholder="ex : L'énergie nucléaire, Le revenu universel..."
           value={title}
@@ -113,7 +105,6 @@ export default function SubjectForm({
         <TextArea
           label="Présentation"
           id="presentation"
-          name="presentation"
           required
           placeholder="Présentation du sujet de débat (min. 10 caractères)"
           rows={4}
@@ -134,7 +125,6 @@ export default function SubjectForm({
         <TextArea
           label="Problématique"
           id="problem"
-          name="problem"
           required
           placeholder="La question centrale du débat (min. 10 caractères)"
           rows={4}

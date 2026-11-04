@@ -4,7 +4,6 @@ import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { revisionOf } from './form-revision'
 import { readStatementArguments } from './statement-arguments-fields'
 import { readStatementContent } from './statement-content-fields'
 
@@ -16,6 +15,8 @@ export type ActionResult =
 export async function updateStatementAction(
   statementId: string,
   formData: FormData,
+  /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
+  revision: number,
 ): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
@@ -29,7 +30,7 @@ export async function updateStatementAction(
       sourceUrl: String(formData.get('sourceUrl') ?? ''),
       statedAt: String(formData.get('statedAt') ?? ''),
       arguments: readStatementArguments(formData),
-      revision: revisionOf(formData),
+      revision,
     }),
   )
 

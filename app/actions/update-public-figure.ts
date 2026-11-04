@@ -17,7 +17,7 @@ import {
 } from '../../domain/use-cases/update-public-figure'
 import { generateSlug } from '../../domain/entities/public-figure'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { revisionOf } from './form-revision'
+import { editPublicFigureForm, EditPublicFigureFormData } from '../../lib/forms/public-figure-form'
 
 export type ActionResult =
   | { success: true; slug: string }
@@ -26,28 +26,13 @@ export type ActionResult =
 
 export async function updatePublicFigureAction(
   figureId: string,
-  formData: FormData,
+  formData: EditPublicFigureFormData,
 ): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
-  const name = String(formData.get('name') ?? '')
-
-  const notorietySources = formData
-    .getAll('notorietySources')
-    .map((v) => String(v).trim())
-    .filter((v) => v.length > 0)
-
-  const useCaseParams = {
-    contributor,
-    figureId,
-    name,
-    presentation: String(formData.get('presentation') ?? ''),
-    wikipediaUrl: String(formData.get('wikipediaUrl') ?? ''),
-    websiteUrl: String(formData.get('websiteUrl') ?? ''),
-    notorietySources,
-    revision: revisionOf(formData),
-  }
+  const { photo: chosenPhoto, ...fields } = editPublicFigureForm.decode(formData)
+  const useCaseParams = { contributor, figureId, ...fields }
 
   // Phase 1: Validate
   const validation = await runLiveForm(validateUpdatePublicFigure(useCaseParams), supabase)
@@ -61,15 +46,12 @@ export async function updatePublicFigureAction(
 
   const { existing } = validation.right
   const oldSlug = existing.slug
-  const newSlug = generateSlug(name)
+  const newSlug = generateSlug(fields.name)
   const slugChanged = newSlug !== oldSlug
 
   // Phase 2: Handle avatar
-  const photoFile = formData.get('photo') as File | null
-  const hasNewPhoto = photoFile && photoFile.size > 0
-
-  if (hasNewPhoto) {
-    const photo = await readUploadedImage(photoFile)
+  if (chosenPhoto) {
+    const photo = await readUploadedImage(chosenPhoto)
     if (Either.isLeft(photo)) {
       return { success: false, fieldErrors: { photo: photo.left } }
     }

@@ -2,9 +2,12 @@
 
 import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
-import { updatePositionUseCase, FieldErrors } from '../../domain/use-cases/update-position'
+import {
+  updatePositionUseCase,
+  EditedPosition,
+  FieldErrors,
+} from '../../domain/use-cases/update-position'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { revisionOf } from './form-revision'
 
 export type ActionResult =
   | { success: true }
@@ -13,19 +16,11 @@ export type ActionResult =
 
 export async function updatePositionAction(
   positionId: string,
-  formData: FormData,
+  edited: EditedPosition,
 ): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
-  const result = await runLiveForm(
-    updatePositionUseCase({
-      contributor,
-      positionId,
-      title: String(formData.get('title') ?? ''),
-      description: String(formData.get('description') ?? ''),
-      revision: revisionOf(formData),
-    }),
-  )
+  const result = await runLiveForm(updatePositionUseCase({ contributor, positionId, ...edited }))
 
   if (Either.isLeft(result)) {
     const err = result.left

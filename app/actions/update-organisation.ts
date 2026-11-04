@@ -16,8 +16,7 @@ import {
 } from '../../domain/use-cases/update-organisation'
 import { generateOrganisationSlug } from '../../domain/entities/organisation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { revisionOf } from './form-revision'
-import { readOrganisationFields } from './organisation-fields'
+import { editOrganisationForm, EditOrganisationFormData } from '../../lib/forms/organisation-form'
 import { readUploadedImage } from './read-uploaded-image'
 
 export type ActionResult =
@@ -27,13 +26,13 @@ export type ActionResult =
 
 export async function updateOrganisationAction(
   organisationId: string,
-  formData: FormData,
+  formData: EditOrganisationFormData,
 ): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
-  const fields = readOrganisationFields(formData)
+  const { logo, ...fields } = editOrganisationForm.decode(formData)
 
-  const params = { contributor, organisationId, ...fields, revision: revisionOf(formData) }
+  const params = { contributor, organisationId, ...fields }
 
   // Phase 1: validate
   const validation = await runLiveForm(validateUpdateOrganisation(params), supabase)
@@ -47,9 +46,7 @@ export async function updateOrganisationAction(
   // Phase 2: logo, following a possible slug change
   const oldSlug = validation.right.existing.slug
   const newSlug = generateOrganisationSlug(fields.name)
-  const logo = formData.get('logo')
-
-  if (logo instanceof File && logo.size > 0) {
+  if (logo) {
     const image = await readUploadedImage(logo)
     if (Either.isLeft(image)) {
       return { success: false, fieldErrors: { logo: image.left } }

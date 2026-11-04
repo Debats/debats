@@ -41,12 +41,12 @@ export default function EditPositionForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      // The form itself carries the fields and the hidden revision:
-      // a hand-built FormData silently drops whatever it forgets
-      const formData = new FormData(e.currentTarget)
-
       try {
-        const result: ActionResult = await updatePositionAction(positionId, formData)
+        const result: ActionResult = await updatePositionAction(positionId, {
+          title,
+          description,
+          revision,
+        })
 
         setIsPending(false)
 
@@ -62,19 +62,17 @@ export default function EditPositionForm({
         setIsPending(false)
       }
     },
-    [positionId, returnHref, router],
+    [positionId, title, description, revision, returnHref, router],
   )
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
-      <input type="hidden" name="revision" value={revision} />
       {error && <FormError message={error} />}
 
       <div className={styles.fieldGroup}>
         <TextField
           label="Titre de la position"
           id="title"
-          name="title"
           required
           placeholder="ex : Pour l'interdiction, Contre toute régulation..."
           value={title}
@@ -87,7 +85,6 @@ export default function EditPositionForm({
         <TextArea
           label="Description"
           id="description"
-          name="description"
           required
           placeholder="Développez cette position (min. 10 caractères)"
           rows={4}

@@ -19,10 +19,7 @@ export default function EditSubjectForm({
   revision,
 }: EditSubjectFormProps) {
   const handleSubmit = useCallback(
-    (formData: FormData) => {
-      formData.set('revision', String(revision))
-      return updateSubjectAction(subjectId, formData)
-    },
+    (values: SubjectFormValues) => updateSubjectAction(subjectId, { ...values, revision }),
     [subjectId, revision],
   )
 

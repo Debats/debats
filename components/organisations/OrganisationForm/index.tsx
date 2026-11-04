@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useCallback, useRef, FormEvent } from 'react'
+import { useState, useCallback, FormEvent } from 'react'
 import Image from 'next/image'
 import * as Sentry from '@sentry/nextjs'
 import { ORGANISATION_TYPES, ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
 import { FieldErrors } from '../../../domain/use-cases/types'
+import { OrganisationFormInput } from '../../../lib/forms/organisation-form'
+import { useChosenFile } from '../../../lib/forms/use-chosen-file'
+import NotorietySources, { notorietySourcePair } from '../../forms/NotorietySources'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Select from '../../ui/Select'
@@ -24,6 +27,13 @@ export interface OrganisationFormValues {
   websiteUrl: string
   notorietySources: readonly string[]
 }
+
+/**
+ * The fields this state holds, and only those: the notoriety sources and the
+ * logo are kept apart, each by what edits it. A field in the state that nothing
+ * updates would be sent back as it was read.
+ */
+type TextFields = Omit<OrganisationFormValues, 'notorietySources'>
 
 const emptyOrganisationValues: OrganisationFormValues = {
   name: '',
@@ -47,7 +57,7 @@ interface OrganisationFormProps {
   pendingLabel: string
   cancelHref?: string
   /** Envoie le formulaire ; le résultat pilote l'affichage des erreurs */
-  onSubmit: (formData: FormData) => Promise<SubmitOutcome>
+  onSubmit: (values: OrganisationFormInput) => Promise<SubmitOutcome>
 }
 
 const TYPE_OPTIONS = [
@@ -64,22 +74,24 @@ export default function OrganisationForm({
   cancelHref,
   onSubmit,
 }: OrganisationFormProps) {
-  const [values, setValues] = useState(initialValues)
-  const [notorietySource1, setNotorietySource1] = useState(initialValues.notorietySources[0] ?? '')
-  const [notorietySource2, setNotorietySource2] = useState(initialValues.notorietySources[1] ?? '')
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>()
+  const [fields, setFields] = useState<TextFields>(() => ({
+    name: initialValues.name,
+    acronym: initialValues.acronym,
+    organisationType: initialValues.organisationType,
+    presentation: initialValues.presentation,
+    wikipediaUrl: initialValues.wikipediaUrl,
+    websiteUrl: initialValues.websiteUrl,
+  }))
+  const [notorietySources, setNotorietySources] = useState(() =>
+    notorietySourcePair(initialValues.notorietySources),
+  )
+  const { file: logo, previewUrl: logoPreviewUrl, choose: chooseLogo } = useChosenFile()
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
   const [isPending, setIsPending] = useState(false)
-  const logoInputRef = useRef<HTMLInputElement>(null)
 
-  const setValue = (field: keyof OrganisationFormValues) => (value: string) =>
-    setValues((current) => ({ ...current, [field]: value }))
-
-  const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    setLogoPreviewUrl(file ? URL.createObjectURL(file) : undefined)
-  }, [])
+  const setValue = (field: keyof TextFields) => (value: string) =>
+    setFields((current) => ({ ...current, [field]: value }))
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -88,21 +100,8 @@ export default function OrganisationForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      const formData = new FormData()
-      formData.set('name', values.name)
-      formData.set('acronym', values.acronym)
-      formData.set('organisationType', values.organisationType)
-      formData.set('presentation', values.presentation)
-      formData.set('wikipediaUrl', values.wikipediaUrl)
-      formData.set('websiteUrl', values.websiteUrl)
-      for (const source of [notorietySource1, notorietySource2]) {
-        if (source.trim()) formData.append('notorietySources', source.trim())
-      }
-      const logo = logoInputRef.current?.files?.[0]
-      if (logo) formData.set('logo', logo)
-
       try {
-        const outcome = await onSubmit(formData)
+        const outcome = await onSubmit({ ...fields, notorietySources, logo })
         if (!outcome.success) {
           setError(outcome.error)
           setFieldErrors(outcome.fieldErrors)
@@ -114,10 +113,10 @@ export default function OrganisationForm({
         setIsPending(false)
       }
     },
-    [values, notorietySource1, notorietySource2, onSubmit],
+    [fields, notorietySources, logo, onSubmit],
   )
 
-  const showNotorietySources = !values.wikipediaUrl.trim()
+  const showNotorietySources = !fields.wikipediaUrl.trim()
 
   return (
     <form onSubmit={handleSubmit} className={formStyles.form}>
@@ -127,10 +126,9 @@ export default function OrganisationForm({
         <TextField
           label="Nom"
           id="name"
-          name="name"
           required
           placeholder="ex : Confédération générale du travail"
-          value={values.name}
+          value={fields.name}
           onChange={(e) => setValue('name')(e.target.value)}
           error={fieldErrors?.name}
         />
@@ -147,19 +145,17 @@ export default function OrganisationForm({
         <TextField
           label="Sigle (optionnel)"
           id="acronym"
-          name="acronym"
           placeholder="ex : CGT"
-          value={values.acronym}
+          value={fields.acronym}
           onChange={(e) => setValue('acronym')(e.target.value)}
           error={fieldErrors?.acronym}
         />
         <Select
           label="Type"
           id="organisationType"
-          name="organisationType"
           required
           options={TYPE_OPTIONS}
-          value={values.organisationType}
+          value={fields.organisationType}
           onChange={(e) => setValue('organisationType')(e.target.value)}
           error={fieldErrors?.organisationType}
         />
@@ -169,11 +165,10 @@ export default function OrganisationForm({
         <TextArea
           label="Présentation"
           id="presentation"
-          name="presentation"
           required
           placeholder="Courte présentation de l'organisation (min. 10 caractères)"
           rows={4}
-          value={values.presentation}
+          value={fields.presentation}
           onChange={(e) => setValue('presentation')(e.target.value)}
           error={fieldErrors?.presentation}
         />
@@ -195,8 +190,8 @@ export default function OrganisationForm({
             {currentSlug && !logoPreviewUrl && (
               <OrganisationLogo
                 slug={currentSlug}
-                name={values.name}
-                acronym={values.acronym}
+                name={fields.name}
+                acronym={fields.acronym}
                 size={72}
               />
             )}
@@ -213,11 +208,9 @@ export default function OrganisationForm({
             <input
               className={styles.fileInput}
               id="logo"
-              name="logo"
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              ref={logoInputRef}
-              onChange={handleLogoChange}
+              onChange={(e) => chooseLogo(e.target.files?.[0])}
             />
           </div>
           {fieldErrors?.logo && <span className={formStyles.fieldError}>{fieldErrors.logo}</span>}
@@ -235,9 +228,8 @@ export default function OrganisationForm({
         <TextField
           label="URL Wikipedia (optionnel)"
           id="wikipediaUrl"
-          name="wikipediaUrl"
           placeholder="https://fr.wikipedia.org/wiki/..."
-          value={values.wikipediaUrl}
+          value={fields.wikipediaUrl}
           onChange={(e) => setValue('wikipediaUrl')(e.target.value)}
           error={fieldErrors?.wikipediaUrl}
         />
@@ -251,50 +243,21 @@ export default function OrganisationForm({
       </div>
 
       {showNotorietySources && (
-        <div className={styles.notoriety}>
-          <p className={styles.notorietyTitle}>Sources de notoriété</p>
-          <div className={formStyles.guide}>
-            <p className={formStyles.guideTitle}>Pourquoi ?</p>
-            <p className={formStyles.guideText}>
-              Sans page Wikipedia, l&apos;organisation doit justifier de sa notoriété par au moins
-              deux publications dans des sources indépendantes et fiables (article de presse, page
-              institutionnelle, rapport officiel...).
-            </p>
-          </div>
-          <TextField
-            label="Source de notoriété 1"
-            id="notorietySource1"
-            name="notorietySources"
-            type="url"
-            required
-            placeholder="https://lemonde.fr/..."
-            value={notorietySource1}
-            onChange={(e) => setNotorietySource1(e.target.value)}
-          />
-          <TextField
-            label="Source de notoriété 2"
-            id="notorietySource2"
-            name="notorietySources"
-            type="url"
-            required
-            placeholder="https://liberation.fr/..."
-            value={notorietySource2}
-            onChange={(e) => setNotorietySource2(e.target.value)}
-          />
-          {fieldErrors?.notorietySources && (
-            <span className={formStyles.fieldError}>{fieldErrors.notorietySources}</span>
-          )}
-        </div>
+        <NotorietySources
+          who="l’organisation"
+          sources={notorietySources}
+          onChange={setNotorietySources}
+          error={fieldErrors?.notorietySources}
+        />
       )}
 
       <div className={formStyles.fieldGroup}>
         <TextField
           label="Site web (optionnel)"
           id="websiteUrl"
-          name="websiteUrl"
           type="url"
           placeholder="https://..."
-          value={values.websiteUrl}
+          value={fields.websiteUrl}
           onChange={(e) => setValue('websiteUrl')(e.target.value)}
         />
       </div>

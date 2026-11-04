@@ -68,6 +68,25 @@ describe('updatePositionUseCase', () => {
     expect(Either.isLeft(result)).toBe(true)
   })
 
+  it('drops the spaces around what was typed: they are not part of a title', async () => {
+    const { run } = await journalWithSubjects([subject, [position]])
+
+    const result = await execute(
+      updatePositionUseCase({
+        ...validParams,
+        contributor: eloquent,
+        title: '  Pour  ',
+        description: '  Une description revue, suffisamment longue.  ',
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      title: 'Pour',
+      description: 'Une description revue, suffisamment longue.',
+    })
+  })
+
   it('should update position and award reputation on success', async () => {
     const { run, journal } = await journalWithSubjects([subject, [position]])
 
