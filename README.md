@@ -177,7 +177,7 @@ Les agents de collecte (skills `contribution-pipeline` et compagnie, tâches pla
 | `ADMIN_CONTRIBUTOR_ID` | Le contributeur (`contributors.id`, rang Éloquent au moins) au nom duquel les routes d'enrichissement écrivent dans le journal |
 | `DEBATS_URL`           | Le site visé par `npm run verify:drafts`                                                                                       |
 
-Routes : `GET /api/catalog` (sujets, positions, personnalités, organisations, métiers), `GET/POST /api/drafts`, `PATCH/DELETE /api/drafts/<id>`, `POST /api/drafts/<id>/review`, `GET /api/public-figures/<slug>`, `PATCH /api/public-figures/<slug>/occupations`, `POST /api/public-figures/<slug>/affiliations`, `DELETE /api/public-figures/<slug>/affiliations/<id>`, `POST /api/organisations`, `PATCH /api/organisations/<slug>`. Les brouillons attendent une relecture humaine ; les routes d'enrichissement écrivent directement, par les mêmes commandes que l'interface.
+Routes : `GET /api/catalog` (sujets, positions, personnalités, organisations, métiers), `GET/POST /api/drafts`, `PATCH/DELETE /api/drafts/<id>`, `POST /api/drafts/<id>/review`, `GET /api/public-figures/<slug>`, `PATCH /api/public-figures/<slug>/occupations`, `POST /api/public-figures/<slug>/affiliations`, `DELETE /api/public-figures/<slug>/affiliations/<id>`, `POST /api/organisations`, `PATCH /api/organisations/<slug>`, `GET /api/statements?subject=|figure=|organisation=<slug>`, `GET/PATCH /api/statements/<id>`. Les brouillons attendent une relecture humaine ; les routes d'enrichissement et de correction écrivent directement, par les mêmes commandes que l'interface.
 
 ### Lancement
 

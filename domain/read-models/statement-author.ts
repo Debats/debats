@@ -1,3 +1,5 @@
+import { Option } from 'effect'
+import { Organisation } from '../entities/organisation'
 import { StatementAuthorKind } from '../entities/statement'
 
 /**
@@ -38,6 +40,15 @@ export const organisationRef = (organisation: {
   slug: organisation.slug,
   acronym: organisation.acronym,
 })
+
+/** The organisation entity, whose acronym is an Option, as an author */
+export const organisationEntityRef = (organisation: Organisation): StatementAuthorRef =>
+  organisationRef({
+    id: organisation.id,
+    name: organisation.name,
+    slug: organisation.slug,
+    acronym: Option.getOrNull(organisation.acronym),
+  })
 
 /** The author's own page */
 export const authorHref = (author: StatementAuthorRef): string =>
