@@ -12,7 +12,12 @@ interface OgAuthorOnSubjectProps {
   quote: string | null
 }
 
-/** Contenu de l'image OpenGraph « un auteur sur un sujet » : identité, position, citation. */
+/**
+ * Contenu de l'image OpenGraph « un auteur sur un sujet » : identité, position, citation.
+ *
+ * Ses blocs sont empilés par un conteneur explicite : le moteur de rendu met en
+ * rang les enfants d'un fragment, qui se chevaucheraient.
+ */
 export default function OgAuthorOnSubject({
   authorName,
   subjectTitle,
@@ -22,7 +27,7 @@ export default function OgAuthorOnSubject({
   quote,
 }: OgAuthorOnSubjectProps) {
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
         {avatarSrc && <OgAvatar src={avatarSrc} size={120} shape={shape} />}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -75,6 +80,6 @@ export default function OgAuthorOnSubject({
           {truncate(quote, 170)}
         </span>
       )}
-    </>
+    </div>
   )
 }

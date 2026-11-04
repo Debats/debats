@@ -7,6 +7,11 @@ interface OgFrameProps {
   brandMark: string
   /** Texte en bas à gauche, à côté de la marque */
   footer?: string
+  /**
+   * Le contenu, en boîtes empilées par le cadre. Un composant appelé ici rend
+   * une boîte unique, jamais un fragment : le moteur de rendu met en rang les
+   * enfants d'un fragment, et le cadre ne peut pas l'empiler à sa place.
+   */
   children: React.ReactNode
 }
 
