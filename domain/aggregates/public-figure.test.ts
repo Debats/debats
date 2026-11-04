@@ -23,6 +23,9 @@ import {
 const streamId = '5a0c9d3e-2b1f-4e6a-8c7d-9e0f1a2b3c4d'
 const at = (day: string) => new Date(`${day}T10:00:00Z`)
 
+/** The day the commands of these tests are taken on */
+const today = at('2026-01-01')
+
 const stored = (
   event: { type: string; payload: unknown },
   revision: number,
@@ -91,14 +94,29 @@ describe('public figure decisions', () => {
   })
 
   it('refuse a second current affiliation to the same organisation, on the figure field', () => {
-    expect(addMembership({ membershipId: 'm-3', organisationId: 'org-1' })(affiliated)).toEqual(
-      Either.left(new Rejected(ALREADY_MEMBER, 'publicFigureId')),
-    )
+    expect(
+      addMembership({ membershipId: 'm-3', organisationId: 'org-1' }, today)(affiliated),
+    ).toEqual(Either.left(new Rejected(ALREADY_MEMBER, 'publicFigureId')))
   })
 
   it('affiliate again to an organisation the figure left', () => {
     const again = { membershipId: 'm-3', organisationId: 'org-2' }
-    expect(addMembership(again)(affiliated)).toEqual(Either.right([membershipAdded(again)]))
+    expect(addMembership(again, today)(affiliated)).toEqual(Either.right([membershipAdded(again)]))
+  })
+
+  it('judges a running affiliation on the day the command is taken, not on the day it runs', () => {
+    const leaving = rebuilt(
+      added,
+      membershipAdded({ membershipId: 'm-1', organisationId: 'org-1', endedOn: at('2026-06-30') }),
+    )
+    const joining = { membershipId: 'm-3', organisationId: 'org-1' }
+
+    expect(addMembership(joining, at('2026-01-01'))(leaving)).toEqual(
+      Either.left(new Rejected(ALREADY_MEMBER, 'publicFigureId')),
+    )
+    expect(addMembership(joining, at('2026-12-31'))(leaving)).toEqual(
+      Either.right([membershipAdded(joining)]),
+    )
   })
 
   it('remove an affiliation of the figure, and refuse one she does not have', () => {
@@ -184,8 +202,8 @@ describe('replayPublicFigure', () => {
       createdBy: 'alice',
       createdAt: at('2024-01-11'),
     })
-    expect(hasCurrentMembership(state, 'org-1')).toBe(false)
-    expect(hasCurrentMembership(state, 'org-2')).toBe(true)
+    expect(hasCurrentMembership(state, 'org-1', today)).toBe(false)
+    expect(hasCurrentMembership(state, 'org-2', today)).toBe(true)
   })
 
   it('forgets a removed membership', () => {

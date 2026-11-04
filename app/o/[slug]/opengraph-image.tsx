@@ -44,8 +44,9 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
     loadBrandMark(),
     loadLogo(slug),
   ])
+  const today = new Date()
   const membersCount = memberships.filter(({ membership }) =>
-    isCurrentMembership(membership),
+    isCurrentMembership(membership, today),
   ).length
   const acronym = Option.getOrNull(organisation.acronym)
   const footer = [

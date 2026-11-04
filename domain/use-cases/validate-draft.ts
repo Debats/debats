@@ -1,4 +1,4 @@
-import { Effect, pipe } from 'effect'
+import { Clock, Effect, pipe } from 'effect'
 import {
   DraftAffiliation,
   DraftAuthor,
@@ -250,11 +250,14 @@ function affiliated(
   contributor: ContributorIdentity,
 ) {
   const alreadyRunning = (organisationId: string) =>
-    Effect.map(memberships.findByOrganisationId(organisationId), (affiliations) =>
-      affiliations.some(
-        ({ membership }) =>
-          membership.publicFigureId === publicFigureId && isCurrentMembership(membership),
-      ),
+    Effect.map(
+      Effect.all([memberships.findByOrganisationId(organisationId), Clock.currentTimeMillis]),
+      ([affiliations, millis]) =>
+        affiliations.some(
+          ({ membership }) =>
+            membership.publicFigureId === publicFigureId &&
+            isCurrentMembership(membership, new Date(millis)),
+        ),
     )
   const added = (organisationId: string) =>
     pipe(

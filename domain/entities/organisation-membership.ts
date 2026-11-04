@@ -32,9 +32,9 @@ export const OrganisationMembership = S.Struct({
 
 export type OrganisationMembership = S.Schema.Type<typeof OrganisationMembership>
 
-/** A membership is current until its end date, if any, is past. */
-export const isCurrentMembership = (
-  membership: OrganisationMembership,
-  today: Date = new Date(),
-): boolean =>
+/**
+ * A membership is current until its end date, if any, is past.
+ * The day to judge on comes from the caller: the domain never reads the clock.
+ */
+export const isCurrentMembership = (membership: OrganisationMembership, today: Date): boolean =>
   Option.match(membership.endedOn, { onNone: () => true, onSome: (end) => end >= today })

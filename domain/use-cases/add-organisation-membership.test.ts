@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Either, Layer, Option } from 'effect'
+import { Effect, Either, Layer, Option, TestContext } from 'effect'
 import { addOrganisationMembershipUseCase } from './add-organisation-membership'
 import { createMembership } from '../entities/entity-test-helpers'
 import { OrganisationMembership } from '../entities/organisation-membership'
@@ -145,5 +145,18 @@ describe('addOrganisationMembershipUseCase', () => {
       })
     }
     expect(grantsIn(journal)).toEqual([['contributor-1', 'added_membership', 5]])
+  })
+
+  it('stamps the fact with the very instant the command was taken on', async () => {
+    const { params, figure, execute } = setup()
+    const { run, journal } = await journalWithFigures(figure)
+    // The command reads the clock it is given: here a test clock, stopped at the epoch
+    const result = await execute(
+      Effect.provide(addOrganisationMembershipUseCase(params), TestContext.TestContext),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(deedsIn(journal).at(-1)?.occurredAt).toEqual(new Date(0))
   })
 })

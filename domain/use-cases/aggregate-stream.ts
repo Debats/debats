@@ -57,6 +57,15 @@ export interface Decided<State> {
 }
 
 /**
+ * When the command happened. A decision that judges on time (an affiliation
+ * still running, a date already past) is given this instant, and the facts it
+ * writes carry the very same one: the journal then says on which instant the
+ * decision was taken. Left out by a command that owes nothing to the clock —
+ * the journal stamps the event as it writes it.
+ */
+export type HappenedAt = Date | undefined
+
+/**
  * Appends the decision after the history, and rebuilds what the aggregate now
  * is. A decision that changes nothing writes nothing.
  */
@@ -67,10 +76,14 @@ export function appendAndReplay<State, Event extends DomainEvent>(
   history: StoredEvent[],
   decided: Event[],
   actorId: string,
+  happenedAt?: HappenedAt,
 ): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
   return pipe(
     decided.length > 0
-      ? events.append(streamOf(aggregate, id), streamRevision(history), decided, { actorId })
+      ? events.append(streamOf(aggregate, id), streamRevision(history), decided, {
+          actorId,
+          occurredAt: happenedAt,
+        })
       : Effect.succeed([]),
     Effect.map((stored) => [...history, ...stored]),
     Effect.flatMap((whole) =>
@@ -94,8 +107,9 @@ export function openStream<State, Event extends DomainEvent>(
   id: string,
   decided: Event[],
   actorId: string,
+  happenedAt?: HappenedAt,
 ): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
-  return appendAndReplay(aggregate, events, id, [], decided, actorId)
+  return appendAndReplay(aggregate, events, id, [], decided, actorId, happenedAt)
 }
 
 /**
@@ -121,6 +135,7 @@ export function decideOn<State, Event extends DomainEvent>(
   actorId: string,
   decide: Decision<State, Event>,
   renderedFrom?: RenderedFrom,
+  happenedAt?: HappenedAt,
 ): Effect.Effect<Decided<State>, StreamFailure | UnreadableEvent> {
   const stillAt = (history: StoredEvent[]) =>
     renderedFrom === undefined || streamRevision(history) === renderedFrom
@@ -137,7 +152,7 @@ export function decideOn<State, Event extends DomainEvent>(
         Effect.filterOrFail(aggregate.isLive, () => new NotFound(aggregate.notFound)),
         Effect.flatMap(decide),
         Effect.flatMap((decided) =>
-          appendAndReplay(aggregate, events, id, history, decided, actorId),
+          appendAndReplay(aggregate, events, id, history, decided, actorId, happenedAt),
         ),
       ),
     ),

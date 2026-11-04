@@ -122,9 +122,9 @@ export const setOccupations = (
 
 /** A current affiliation to the same organisation is refused; a past one may be followed by a new one */
 export const addMembership =
-  (input: MembershipInput): PublicFigureDecision =>
+  (input: MembershipInput, today: Date): PublicFigureDecision =>
   (state) =>
-    hasCurrentMembership(state, input.organisationId)
+    hasCurrentMembership(state, input.organisationId, today)
       ? refused(ALREADY_MEMBER, 'publicFigureId')
       : Either.right([membershipAdded(input)])
 
@@ -136,9 +136,15 @@ export const removeMembership =
       ? Either.right([membershipRemoved(membershipId)])
       : refused(MEMBERSHIP_NOT_FOUND)
 
-/** Whether the figure is currently affiliated to this organisation */
-export const hasCurrentMembership = (state: PublicFigureState, organisationId: string): boolean =>
-  state.memberships.some((m) => m.organisationId === organisationId && isCurrentMembership(m))
+/** Whether the figure is affiliated to this organisation on the given day */
+export const hasCurrentMembership = (
+  state: PublicFigureState,
+  organisationId: string,
+  today: Date,
+): boolean =>
+  state.memberships.some(
+    (m) => m.organisationId === organisationId && isCurrentMembership(m, today),
+  )
 
 export const findMembership = (
   state: PublicFigureState,
