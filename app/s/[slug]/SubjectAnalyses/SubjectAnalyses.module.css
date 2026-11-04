@@ -166,15 +166,26 @@
   overflow-x: auto;
 }
 
+/* Largeurs fixées : les colonnes de positions se partagent le reste à parts égales.
+   Sous la largeur minimale, la table déborde et .matrixScroll prend la main. */
 .matrix {
+  --matrix-family-column: 180px;
+  --matrix-total-column: 56px;
+  --matrix-position-column-min: 96px;
+
   width: 100%;
+  min-width: calc(
+    var(--matrix-family-column) + var(--matrix-total-column) + var(--matrix-columns, 3) *
+      var(--matrix-position-column-min)
+  );
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 4px;
   margin: -4px;
 }
 
 .matrixCorner {
-  width: 180px;
+  width: var(--matrix-family-column);
 }
 
 .matrixHead {
@@ -185,11 +196,13 @@
   color: var(--ink);
   text-align: center;
   text-wrap: balance;
+  overflow-wrap: break-word;
   vertical-align: bottom;
 }
 
 .matrixTotalHead {
   composes: meta from '../../../../styles/text.module.css';
+  width: var(--matrix-total-column);
   font-size: 11px;
   font-weight: 400;
   text-align: right;
@@ -213,7 +226,6 @@
 
 .matrixCell {
   padding: 0;
-  min-width: 72px;
 }
 
 .cell {
