@@ -96,7 +96,7 @@ export async function resendInvitationLink(email: string): Promise<ResendResult>
   const invitationRepo = createInvitationRepository(admin)
 
   const result = await Effect.runPromise(
-    validateResendInvitation({ email, invitationRepo }).pipe(
+    validateResendInvitation({ email, invitationRepo, today: new Date() }).pipe(
       Effect.flatMap((invitation) =>
         Effect.promise(() =>
           admin.auth.admin.inviteUserByEmail(email, { data: { name: invitation.inviteeName } }),

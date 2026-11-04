@@ -1,4 +1,4 @@
-import { Effect, pipe } from 'effect'
+import { Clock, Effect, pipe } from 'effect'
 import { InvitationRepository } from '../repositories/invitation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
@@ -40,13 +40,18 @@ export function acceptInvitationUseCase(params: AcceptInvitationParams) {
   const { inviteeId, inviteeEmail } = params
 
   return pipe(
-    invitations.findPendingByEmail(inviteeEmail),
-    Effect.flatMap(found('Aucune invitation en attente pour cette adresse e-mail.')),
+    Effect.all({
+      invitation: Effect.flatMap(
+        invitations.findPendingByEmail(inviteeEmail),
+        found('Aucune invitation en attente pour cette adresse e-mail.'),
+      ),
+      // The day the acceptance is judged on, read once: nothing hides a clock
+      today: Effect.map(Clock.currentTimeMillis, (millis) => new Date(millis)),
+    }),
     Effect.filterOrFail(
-      (invitation) => !isExpired(invitation),
+      ({ invitation, today }) => !isExpired(invitation, today),
       () => new Rejected('L’invitation a expiré. Demandez une nouvelle invitation.'),
     ),
-    Effect.bindTo('invitation'),
     // The profile is written outside the journal, by choice: it belongs to authentication
     Effect.tap(() => contributors.ensureExists(inviteeId)),
     Effect.bind('grants', ({ invitation }) =>

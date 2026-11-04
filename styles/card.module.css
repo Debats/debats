@@ -1,0 +1,11 @@
+/*
+ * La carte, recette partagée : du papier `--card` posé sur le fond, sans
+ * bordure ni ombre — le relief vient des teintes. Réutilisée par `composes`,
+ * y compris par les cartes d'analyse, qui n'ajoutent que leur mise en colonne.
+ */
+
+.card {
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}

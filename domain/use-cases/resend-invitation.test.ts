@@ -18,12 +18,16 @@ const fakeInvitationRepo = {
 
 const run = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(effect.pipe(Effect.either))
 
+/** The day these tests judge an expiry on */
+const today = new Date('2026-03-15T10:00:00Z')
+
 describe('validateResendInvitation', () => {
   it('should fail when no pending invitation exists for the email', async () => {
     const result = await run(
       validateResendInvitation({
         email: 'unknown@example.com',
         invitationRepo: fakeInvitationRepo,
+        today,
       }),
     )
 
@@ -39,8 +43,13 @@ describe('validateResendInvitation', () => {
         email: 'invitee@example.com',
         invitationRepo: {
           ...fakeInvitationRepo,
-          findPendingByEmail: () => Effect.succeed(baseInvitation as Invitation | null),
+          findPendingByEmail: () =>
+            Effect.succeed({
+              ...baseInvitation,
+              createdAt: new Date('2026-03-12T10:00:00Z'),
+            } as Invitation | null),
         },
+        today,
       }),
     )
 
@@ -52,11 +61,9 @@ describe('validateResendInvitation', () => {
   })
 
   it('should fail when invitation is expired (>7 days)', async () => {
-    const eightDaysAgo = new Date()
-    eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
     const expiredInvitation: Invitation = {
       ...baseInvitation,
-      createdAt: eightDaysAgo,
+      createdAt: new Date('2026-03-06T10:00:00Z'),
     }
 
     const result = await run(
@@ -66,6 +73,7 @@ describe('validateResendInvitation', () => {
           ...fakeInvitationRepo,
           findPendingByEmail: () => Effect.succeed(expiredInvitation as Invitation | null),
         },
+        today,
       }),
     )
 

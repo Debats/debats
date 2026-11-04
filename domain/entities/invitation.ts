@@ -30,10 +30,10 @@ export type Invitation = S.Schema.Type<typeof Invitation>
 
 const EXPIRATION_DAYS = 7
 
-export const isExpired = (invitation: Invitation): boolean => {
+/** Judged on the day the caller gives: a use case reads its clock, a page renders on its own day */
+export const isExpired = (invitation: Invitation, today: Date): boolean => {
   if (invitation.status !== 'pending') return false
-  const now = new Date()
   const expiresAt = new Date(invitation.createdAt)
   expiresAt.setDate(expiresAt.getDate() + EXPIRATION_DAYS)
-  return now > expiresAt
+  return today > expiresAt
 }

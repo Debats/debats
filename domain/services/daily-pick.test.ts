@@ -18,7 +18,7 @@ describe('dailyIndex', () => {
   })
 
   it('should return 0 for count 0', () => {
-    expect(dailyIndex(0)).toBe(0)
+    expect(dailyIndex(0, new Date(2026, 0, 1))).toBe(0)
   })
 
   it('should always return a valid index', () => {

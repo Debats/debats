@@ -11,6 +11,8 @@ interface OrganisationMembersProps {
   organisationSlug: string
   current: MembershipWithFigure[]
   former: MembershipWithFigure[]
+  /** Le jour du rendu : ce à quoi les libellés de période se lisent */
+  today: Date
   /** L'utilisateur peut affilier une personnalité */
   canAffiliate: boolean
   /** L'utilisateur peut retirer une affiliation erronée */
@@ -24,15 +26,18 @@ function MemberRow({
   entry,
   organisationSlug,
   canRemove,
+  today,
 }: {
   entry: MembershipWithFigure
   organisationSlug: string
   canRemove: boolean
+  today: Date
 }) {
   const { membership, figure } = entry
-  const details = [Option.getOrNull(membership.role), membershipPeriodLabel(membership)].filter(
-    Boolean,
-  )
+  const details = [
+    Option.getOrNull(membership.role),
+    membershipPeriodLabel(membership, today),
+  ].filter(Boolean)
 
   return (
     <div role="listitem" className={styles.row}>
@@ -61,6 +66,7 @@ export default function OrganisationMembers({
   former,
   canAffiliate,
   canRemove,
+  today,
 }: OrganisationMembersProps) {
   const rows = (entries: MembershipWithFigure[]) =>
     entries.map((entry) => (
@@ -69,6 +75,7 @@ export default function OrganisationMembers({
         entry={entry}
         organisationSlug={organisationSlug}
         canRemove={canRemove}
+        today={today}
       />
     ))
 

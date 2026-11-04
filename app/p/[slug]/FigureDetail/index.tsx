@@ -23,7 +23,7 @@ import {
   themeDistribution,
 } from '../../../../domain/services/figure-activity'
 import { analyseAuthor, organisationsLine } from '../../../../domain/services/author-analyses'
-import { figureEngagements } from '../../../../domain/services/figure-engagements'
+import { figureAffiliations } from '../../../../domain/services/figure-affiliations'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import AdminMenu from '../../../../components/ui/AdminMenu'
@@ -103,7 +103,9 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
     activeTab === 'analyses'
       ? await Effect.runPromise(statementRepo.findBySubjectIdsWithAuthors(subjectIds))
       : null
-  const engagements = figureEngagements(memberships, new Date())
+  // Un seul jour pour toute la page : ce qui est en cours et ce que les libellés en disent
+  const today = new Date()
+  const affiliations = figureAffiliations(memberships, today)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const adminActions = [
@@ -152,7 +154,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
           period: activityPeriod(statedDates),
         }}
         occupations={occupationTags}
-        affiliations={affiliationTags(engagements.current)}
+        affiliations={affiliationTags(affiliations.current)}
         adminMenu={adminActions.length > 0 && <AdminMenu actions={adminActions} />}
         actions={
           <>
@@ -174,7 +176,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
         topMargin
         aside={
           <>
-            <FigureEngagements engagements={engagements} />
+            <FigureEngagements affiliations={affiliations} today={today} />
             <FigureAnalyses
               themes={themeDistribution(subjectIds, primaryLinks, themes)}
               perYear={statementsPerYear(statedDates)}
@@ -194,14 +196,14 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
             who="cette personnalité"
             analysis={analyseAuthor(statements, onSubjects, self)}
           >
-            {engagements.current.length > 0 && (
+            {affiliations.current.length > 0 && (
               <FigureOrganisationsLine
                 figureSlug={slug}
                 line={organisationsLine(
                   statements,
                   onSubjects,
                   self,
-                  engagements.current.map(({ organisation }) => organisation),
+                  affiliations.current.map(({ organisation }) => organisation),
                 )}
               />
             )}

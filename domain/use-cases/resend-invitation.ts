@@ -5,6 +5,8 @@ import { isExpired, Invitation } from '../entities/invitation'
 type ValidateResendParams = {
   email: string
   invitationRepo: InvitationRepository
+  /** The day the expiry is judged on, given by the action that calls it */
+  today: Date
 }
 
 export const validateResendInvitation = (
@@ -18,7 +20,7 @@ export const validateResendInvitation = (
         : Effect.succeed(invitation),
     ),
     Effect.filterOrFail(
-      (invitation) => !isExpired(invitation),
+      (invitation) => !isExpired(invitation, params.today),
       () =>
         'L\u2019invitation a expiré. Demandez à la personne qui vous a invité·e de vous réinviter.',
     ),

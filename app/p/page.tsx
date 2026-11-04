@@ -11,6 +11,7 @@ import FigureAvatar from '../../components/figures/FigureAvatar'
 import PersonalitySearch from '../../components/figures/PersonalitySearch'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
+import { formatRelativeDate } from '../../lib/format-date'
 import { plural } from '../../lib/plural'
 import styles from './personalities.module.css'
 
@@ -21,19 +22,6 @@ export const metadata: Metadata = {
 }
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
-
-function formatRelativeDate(date: Date): string {
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) return "Aujourd'hui"
-  if (diffDays === 1) return 'Hier'
-  if (diffDays < 30) return `Il y a ${diffDays} jours`
-  const diffMonths = Math.floor(diffDays / 30)
-  if (diffMonths < 12) return `Il y a ${diffMonths} mois`
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-}
 
 function FigureCard({ figure, stat }: { figure: PublicFigureActivitySummary; stat: string }) {
   return (
@@ -75,6 +63,8 @@ export default async function PersonalitiesPage({ searchParams }: PageProps) {
     ? canPerform(contributor.reputation, 'add_personality')
     : false
 
+  // Un seul jour pour toute la page, comme ailleurs
+  const today = new Date()
   const [mostActive, recentlyActive, letterFigures] = await Promise.all([
     Effect.runPromise(repo.findSummariesByActivity(10, 'subjects_count')),
     Effect.runPromise(repo.findSummariesByActivity(10, 'latest_statement_at')),
@@ -115,7 +105,7 @@ export default async function PersonalitiesPage({ searchParams }: PageProps) {
                 figure={figure}
                 stat={
                   figure.latestStatementAt
-                    ? formatRelativeDate(figure.latestStatementAt)
+                    ? formatRelativeDate(figure.latestStatementAt, today)
                     : 'Aucune activité'
                 }
               />

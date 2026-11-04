@@ -16,7 +16,8 @@ async function MostActiveSubjects() {
   const subjectRepo = createSubjectRepository(supabase)
 
   const subjectIds = await Effect.runPromise(subjectRepo.findAllIds())
-  const dailyId = subjectIds.length > 0 ? subjectIds[dailyIndex(subjectIds.length)] : undefined
+  const dailyId =
+    subjectIds.length > 0 ? subjectIds[dailyIndex(subjectIds.length, new Date())] : undefined
 
   const subjects = await Effect.runPromise(
     subjectRepo.findSummariesByActivity(MOST_ACTIVE_LIMIT, dailyId),

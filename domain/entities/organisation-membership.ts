@@ -1,5 +1,6 @@
 import * as S from 'effect/Schema'
 import { Option } from 'effect'
+import { dayOf } from '../value-objects/day'
 
 export const MembershipId = S.String.pipe(S.brand('MembershipId'))
 export type MembershipId = S.Schema.Type<typeof MembershipId>
@@ -33,8 +34,11 @@ export const OrganisationMembership = S.Struct({
 export type OrganisationMembership = S.Schema.Type<typeof OrganisationMembership>
 
 /**
- * A membership is current until its end date, if any, is past.
+ * A membership runs until the end of the day its end date names; one without
+ * an end date runs on. A period that has not opened yet is read as running
+ * too: nothing on this site is announced for later, and an affiliation to come
+ * belongs with the running ones rather than with those that have ended.
  * The day to judge on comes from the caller: the domain never reads the clock.
  */
 export const isCurrentMembership = (membership: OrganisationMembership, today: Date): boolean =>
-  Option.match(membership.endedOn, { onNone: () => true, onSome: (end) => end >= today })
+  Option.match(membership.endedOn, { onNone: () => true, onSome: (end) => end >= dayOf(today) })

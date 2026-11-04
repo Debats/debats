@@ -1,19 +1,22 @@
-import { Engagements } from '../../../../domain/services/figure-engagements'
+import { FigureAffiliations } from '../../../../domain/services/figure-affiliations'
 import CurrentEngagement from './CurrentEngagement'
 import FormerEngagement from './FormerEngagement'
 import styles from './FigureEngagements.module.css'
 
 interface FigureEngagementsProps {
-  engagements: Engagements
+  affiliations: FigureAffiliations
+  /** The day the page renders on: what the period labels are read against */
+  today: Date
 }
 
 /**
- * Carte du rail d'une personnalité : ses affiliations. Les engagements en
- * cours sont à égalité, en tête ; ceux qui ont pris fin forment une frise,
- * du plus récent au plus ancien.
+ * The card of a figure's rail: her affiliations, which the page calls her
+ * engagements. The running ones stand as equals, at the top; the ones that
+ * have ended form a thread, from the most recent to the oldest.
  */
 export default function FigureEngagements({
-  engagements: { current, former },
+  affiliations: { current, former },
+  today,
 }: FigureEngagementsProps) {
   if (current.length === 0 && former.length === 0) return null
 
@@ -23,16 +26,24 @@ export default function FigureEngagements({
 
       {current.length > 0 && (
         <ul className={styles.current}>
-          {current.map((engagement) => (
-            <CurrentEngagement key={engagement.membership.id} engagement={engagement} />
+          {current.map((affiliation) => (
+            <CurrentEngagement
+              key={affiliation.membership.id}
+              affiliation={affiliation}
+              today={today}
+            />
           ))}
         </ul>
       )}
 
       {former.length > 0 && (
         <ol className={styles.former}>
-          {former.map((engagement) => (
-            <FormerEngagement key={engagement.membership.id} engagement={engagement} />
+          {former.map((affiliation) => (
+            <FormerEngagement
+              key={affiliation.membership.id}
+              affiliation={affiliation}
+              today={today}
+            />
           ))}
         </ol>
       )}

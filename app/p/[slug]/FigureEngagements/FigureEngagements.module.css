@@ -1,7 +1,5 @@
 .card {
-  padding: 24px;
-  background-color: var(--card);
-  border-radius: var(--radius-card);
+  composes: card from '../../../../styles/card.module.css';
 }
 
 .title {

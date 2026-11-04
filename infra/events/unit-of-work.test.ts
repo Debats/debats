@@ -30,10 +30,19 @@ const takenOn = <A, E>(
     ),
   )
 
+/** The instant the command is taken on: a day no real fact of the journal bears */
+const COMMANDED_AT = new Date('2026-04-02T08:15:00.000Z')
+
+/**
+ * The deed the grant claims. No position is edited here: the test needs a real
+ * fact on a real stream to watch it being dated, and takes it back afterwards.
+ */
 const REWARDED = 'edited_position'
 
 let contributorId = ''
 let reputationBefore = 0
+/** Where her stream stood before the test: what is above it is the test's own */
+let revisionBefore = 0
 
 describe.skipIf(!hasDatabase)('the transaction of a command, on Postgres', () => {
   beforeAll(async () => {
@@ -45,17 +54,25 @@ describe.skipIf(!hasDatabase)('the transaction of a command, on Postgres', () =>
     })
     contributorId = contributor.id
     reputationBefore = contributor.reputation ?? 0
+    const stream = await prisma().domain_events.aggregate({
+      where: { stream_type: 'contributor', stream_id: contributorId },
+      _max: { revision: true },
+    })
+    revisionBefore = stream._max.revision ?? 0
   })
 
+  // Taken back by revision and by the instant chosen above, never by what a
+  // payload looks like: a payload that changes shape must not leave the facts
+  // of a test behind in the journal, in silence
   afterAll(async () => {
     await prisma().reputation_events.deleteMany({
-      where: { contributor_id: contributorId, action: REWARDED, related_entity_id: null },
+      where: { contributor_id: contributorId, created_at: COMMANDED_AT },
     })
     await prisma().domain_events.deleteMany({
       where: {
         stream_type: 'contributor',
         stream_id: contributorId,
-        payload: { path: ['action'], equals: REWARDED },
+        revision: { gt: revisionBefore },
       },
     })
     await prisma().contributors.update({
@@ -66,9 +83,7 @@ describe.skipIf(!hasDatabase)('the transaction of a command, on Postgres', () =>
   })
 
   it('dates the fact it writes, and the row it projects, with the instant it was taken on', async () => {
-    const commandedAt = new Date('2026-04-02T08:15:00.000Z')
-
-    await takenOn(commandedAt, (events) =>
+    await takenOn(COMMANDED_AT, (events) =>
       grant(events, contributorId, rewardFor(contributorId, REWARDED)),
     )
 
@@ -76,11 +91,11 @@ describe.skipIf(!hasDatabase)('the transaction of a command, on Postgres', () =>
       where: { stream_type: 'contributor', stream_id: contributorId },
       orderBy: { revision: 'desc' },
     })
-    expect(fact?.occurred_at).toEqual(commandedAt)
+    expect(fact?.occurred_at).toEqual(COMMANDED_AT)
     const rows = await prisma().reputation_events.findMany({
-      where: { contributor_id: contributorId, action: REWARDED, related_entity_id: null },
+      where: { contributor_id: contributorId, created_at: COMMANDED_AT },
     })
     expect(rows).toHaveLength(1)
-    expect(rows[0].created_at).toEqual(commandedAt)
+    expect(rows[0].action).toBe(REWARDED)
   })
 })

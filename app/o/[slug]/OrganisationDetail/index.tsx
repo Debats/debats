@@ -73,7 +73,9 @@ export default async function OrganisationDetail({
     ? statementsOnTheme(statements, await subjectIdsOnTheme(themeRepo, view.themeSlug))
     : statements
 
-  const { current, former } = splitMemberships(memberships, new Date())
+  // Un seul jour pour toute la page : ce qui est en cours et ce que les libellés en disent
+  const today = new Date()
+  const { current, former } = splitMemberships(memberships, today)
   const groups = groupStatementsBySubject(statements)
   // Only the Analyses tab reads everyone's statements on its subjects
   const onSubjects =
@@ -151,6 +153,7 @@ export default async function OrganisationDetail({
               organisationSlug={slug}
               current={current}
               former={former}
+              today={today}
               canAffiliate={canAffiliate}
               canRemove={canRemove}
             />

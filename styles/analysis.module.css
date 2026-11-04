@@ -3,14 +3,12 @@
  * personnalité et organisation), réutilisées par `composes`.
  */
 
-/* Une carte d'analyse : titre, sous-titre, contenu */
+/* Une carte d'analyse : la carte partagée, en colonne — titre, sous-titre, contenu */
 .card {
+  composes: card from './card.module.css';
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 24px;
-  background-color: var(--card);
-  border-radius: var(--radius-card);
 }
 
 .cardTitle {

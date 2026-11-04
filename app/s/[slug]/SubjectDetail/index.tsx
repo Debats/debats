@@ -107,7 +107,7 @@ export default async function SubjectDetail({
     : '/contribuer'
   const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
   const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
-  const major = isMajorSubject(subject, stats.statementsCount)
+  const major = isMajorSubject(subject, stats.statementsCount, new Date())
   const canDelete =
     !!contributor &&
     canPerform(contributor.reputation, major ? 'delete_major_subject' : 'delete_minor_subject')

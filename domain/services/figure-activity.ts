@@ -3,6 +3,8 @@
  * prises de position : fonctions pures, sans accès aux données.
  */
 
+import { yearOf } from '../value-objects/day'
+
 export interface YearCount {
   year: number
   count: number
@@ -60,7 +62,8 @@ export function argumentDistribution<T extends ArgumentLike>(
     .slice(0, limit)
 }
 
-const years = (dates: Date[]) => dates.map((date) => date.getFullYear())
+/** L'année du jour du site : une prise de position du 1er janvier ne bascule pas d'une année */
+const years = (dates: Date[]) => dates.map(yearOf)
 
 /** Première et dernière année d'expression, ou null sans prise de position. */
 export function activityPeriod(dates: Date[]): ActivityPeriod | null {

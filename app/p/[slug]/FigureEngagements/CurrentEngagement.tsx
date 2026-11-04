@@ -6,17 +6,19 @@ import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './FigureEngagements.module.css'
 
 /**
- * Un engagement en cours : le logo, le nom de l'organisation, le rôle et la
- * durée quand on les connaît, et l'accès à ses prises de position. Tout le
- * bloc est un seul lien vers la page de l'organisation.
+ * A running engagement: the logo, the organisation's name, the role and the
+ * period when they are known, and the way to its statements. The whole block
+ * is a single link to the organisation's page.
  */
 export default function CurrentEngagement({
-  engagement: { membership, organisation },
+  affiliation: { membership, organisation },
+  today,
 }: {
-  engagement: MembershipWithOrganisation
+  affiliation: MembershipWithOrganisation
+  today: Date
 }) {
   const role = Option.getOrNull(membership.role)
-  const period = membershipPeriodLabel(membership)
+  const period = membershipPeriodLabel(membership, today)
 
   return (
     <li className={styles.currentItem}>

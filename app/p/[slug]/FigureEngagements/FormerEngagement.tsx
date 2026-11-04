@@ -5,14 +5,16 @@ import { MembershipWithOrganisation } from '../../../../domain/repositories/orga
 import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './FigureEngagements.module.css'
 
-/** Un engagement terminé, jalon de la frise : le logo effacé, la période, le nom. */
+/** An engagement that has ended, a milestone on the thread: faded logo, period, name. */
 export default function FormerEngagement({
-  engagement: { membership, organisation },
+  affiliation: { membership, organisation },
+  today,
 }: {
-  engagement: MembershipWithOrganisation
+  affiliation: MembershipWithOrganisation
+  today: Date
 }) {
   const role = Option.getOrNull(membership.role)
-  const period = membershipPeriodLabel(membership)
+  const period = membershipPeriodLabel(membership, today)
 
   return (
     <li className={styles.formerItem}>

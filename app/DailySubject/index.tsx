@@ -15,7 +15,7 @@ export default async function DailySubject() {
   const subjectIds = await Effect.runPromise(subjectRepo.findAllIds())
   if (subjectIds.length === 0) return null
 
-  const dailyId = subjectIds[dailyIndex(subjectIds.length)]
+  const dailyId = subjectIds[dailyIndex(subjectIds.length, new Date())]
   const subject = await Effect.runPromise(subjectRepo.findSummaryById(dailyId))
   if (!subject) return null
 

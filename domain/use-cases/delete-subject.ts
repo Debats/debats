@@ -1,4 +1,4 @@
-import { Effect, pipe } from 'effect'
+import { Clock, Effect, pipe } from 'effect'
 import { isMajorSubject } from '../entities/subject'
 import { deleteSubject } from '../aggregates/subject'
 import { removeStatement } from '../aggregates/statement'
@@ -27,12 +27,14 @@ const statements = Effect.serviceFunctions(StatementRepository)
 export function deleteSubjectUseCase(params: DeleteSubjectParams) {
   const { subjectId } = params
 
+  // The rank the deletion requires is judged on the day the command is taken
   const weight = Effect.all({
     subject: Effect.flatMap(subjects.findById(subjectId), found(subjectAggregate.notFound)),
     stats: subjects.getStats(subjectId),
+    today: Effect.map(Clock.currentTimeMillis, (millis) => new Date(millis)),
   })
-  const actionFor = ({ subject, stats }: Effect.Effect.Success<typeof weight>) =>
-    isMajorSubject(subject, stats.statementsCount)
+  const actionFor = ({ subject, stats, today }: Effect.Effect.Success<typeof weight>) =>
+    isMajorSubject(subject, stats.statementsCount, today)
       ? ('delete_major_subject' as const)
       : ('delete_minor_subject' as const)
 

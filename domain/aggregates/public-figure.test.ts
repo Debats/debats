@@ -104,6 +104,27 @@ describe('public figure decisions', () => {
     expect(addMembership(again, today)(affiliated)).toEqual(Either.right([membershipAdded(again)]))
   })
 
+  it('refuses a second affiliation on the very day the first one ends, and allows it the day after', () => {
+    // An end date comes from a `date` column, so it is the midnight of its day,
+    // and the command is taken in the middle of the afternoon
+    const leaving = rebuilt(
+      added,
+      membershipAdded({
+        membershipId: 'm-1',
+        organisationId: 'org-1',
+        endedOn: new Date('2026-06-30T00:00:00Z'),
+      }),
+    )
+    const joining = { membershipId: 'm-3', organisationId: 'org-1' }
+
+    expect(addMembership(joining, new Date('2026-06-30T14:00:00Z'))(leaving)).toEqual(
+      Either.left(new Rejected(ALREADY_MEMBER, 'publicFigureId')),
+    )
+    expect(addMembership(joining, new Date('2026-07-01T14:00:00Z'))(leaving)).toEqual(
+      Either.right([membershipAdded(joining)]),
+    )
+  })
+
   it('judges a running affiliation on the day the command is taken, not on the day it runs', () => {
     const leaving = rebuilt(
       added,

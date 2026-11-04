@@ -1,10 +1,9 @@
 /**
- * Les affiliations d'une personnalité telles que le rail de sa page les
- * montre : les engagements en cours, puis ceux qui ont pris fin.
- * Fonctions pures, sans accès aux données.
+ * A public figure's affiliations as the rail of her page shows them: the ones
+ * still running, then the ones that have ended. Pure functions, no data access.
  *
- * Aucune affiliation n'est désignée principale : les engagements en cours
- * sont à égalité, comme les métiers le sont.
+ * None of them is held up as the main one: the running affiliations stand as
+ * equals, the way her occupations do.
  */
 
 import { Option } from 'effect'
@@ -12,10 +11,10 @@ import { OrganisationMembership } from '../entities/organisation-membership'
 import { MembershipWithOrganisation } from '../repositories/organisation-membership-repository'
 import { splitMemberships } from './memberships'
 
-export interface Engagements {
-  /** Affiliations en cours, de la plus ancienne à la plus récente */
+export interface FigureAffiliations {
+  /** Running affiliations, from the oldest to the most recent */
   current: MembershipWithOrganisation[]
-  /** Affiliations terminées, de la plus récente à la plus ancienne */
+  /** Ended affiliations, from the most recent to the oldest */
   former: MembershipWithOrganisation[]
 }
 
@@ -28,7 +27,7 @@ const endedAt = (membership: OrganisationMembership): number | null =>
 const byName = (a: MembershipWithOrganisation, b: MembershipWithOrganisation): number =>
   a.organisation.name.localeCompare(b.organisation.name, 'fr')
 
-/** L'engagement le plus ancien d'abord ; ceux dont on ignore le début ferment la marche. */
+/** The oldest affiliation first; the ones whose start is unknown bring up the rear. */
 const byOldestStart = (a: MembershipWithOrganisation, b: MembershipWithOrganisation): number => {
   const left = startedAt(a.membership)
   const right = startedAt(b.membership)
@@ -38,19 +37,27 @@ const byOldestStart = (a: MembershipWithOrganisation, b: MembershipWithOrganisat
   return left - right || byName(a, b)
 }
 
-/** La fin la plus récente d'abord. Une affiliation terminée a toujours sa date de fin. */
+/**
+ * The most recent end first. An ended affiliation always has its end date,
+ * since one without an end date is counted among the running: the fallback
+ * below is unreachable, and only there so the comparator reads as a total order.
+ */
 const byMostRecentEnd = (a: MembershipWithOrganisation, b: MembershipWithOrganisation): number =>
   (endedAt(b.membership) ?? 0) - (endedAt(a.membership) ?? 0) || byName(a, b)
 
 /**
- * Les affiliations d'une personnalité, séparées entre engagements en cours et
- * terminés, chaque côté dans son ordre. Le jour de référence vient de l'appelant.
+ * A figure's affiliations, told apart between the running and the ended ones,
+ * each side in its own order. The day of reference comes from the caller, and
+ * what it is given is left as it was: each side is sorted on a copy.
  */
-export function figureEngagements(
+export function figureAffiliations(
   memberships: MembershipWithOrganisation[],
   today: Date,
-): Engagements {
+): FigureAffiliations {
   const { current, former } = splitMemberships(memberships, today)
 
-  return { current: current.sort(byOldestStart), former: former.sort(byMostRecentEnd) }
+  return {
+    current: [...current].sort(byOldestStart),
+    former: [...former].sort(byMostRecentEnd),
+  }
 }

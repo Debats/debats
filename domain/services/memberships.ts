@@ -1,13 +1,13 @@
 /**
- * Ce qu'une affiliation est devenue : en cours, ou terminée.
- * Fonction pure, utile des deux côtés de la relation — la page d'une
- * personnalité en tire ses engagements, celle d'une organisation ses membres.
+ * What has become of an affiliation: running, or ended.
+ * A pure function, of use on both sides of the relation — a public figure's
+ * page draws her engagements from it, an organisation's page its members.
  */
 
 import { Array as Arr } from 'effect'
 import { isCurrentMembership, OrganisationMembership } from '../entities/organisation-membership'
 
-/** Une affiliation vue d'un côté ou de l'autre : avec sa personnalité, ou avec son organisation */
+/** An affiliation seen from one side or the other: with its figure, or with its organisation */
 export interface Affiliated {
   membership: OrganisationMembership
 }
@@ -18,8 +18,8 @@ export interface SplitMemberships<T> {
 }
 
 /**
- * Les affiliations en cours d'un côté, celles qui ont pris fin de l'autre.
- * Le jour de référence est donné par l'appelant : le domaine ne lit pas l'horloge.
+ * The running affiliations on one side, the ones that have ended on the other.
+ * The day of reference is given by the caller: the domain reads no clock.
  */
 export function splitMemberships<T extends Affiliated>(
   memberships: T[],

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createMembership } from '../entities/entity-test-helpers'
 import { MembershipWithOrganisation } from '../repositories/organisation-membership-repository'
-import { figureEngagements } from './figure-engagements'
+import { figureAffiliations } from './figure-affiliations'
 
 const today = new Date('2026-11-04')
 
@@ -26,12 +26,12 @@ const affiliation = (
   },
 })
 
-const names = (engagements: MembershipWithOrganisation[]) =>
-  engagements.map(({ organisation }) => organisation.name)
+const names = (affiliations: MembershipWithOrganisation[]) =>
+  affiliations.map(({ organisation }) => organisation.name)
 
-describe('figureEngagements', () => {
+describe('figureAffiliations', () => {
   it('separates the memberships that are still running from those that ended', () => {
-    const engagements = figureEngagements(
+    const affiliations = figureAffiliations(
       [
         affiliation('Mouvement démocrate', { acronym: 'MoDem' }),
         affiliation('Union pour la démocratie française', {
@@ -42,19 +42,22 @@ describe('figureEngagements', () => {
       today,
     )
 
-    expect(names(engagements.current)).toEqual(['Mouvement démocrate'])
-    expect(names(engagements.former)).toEqual(['Union pour la démocratie française'])
+    expect(names(affiliations.current)).toEqual(['Mouvement démocrate'])
+    expect(names(affiliations.former)).toEqual(['Union pour la démocratie française'])
   })
 
   it('counts a membership ending in the future as a running one', () => {
-    const engagements = figureEngagements([affiliation('Attac', { endedOn: '2027-06-30' })], today)
+    const affiliations = figureAffiliations(
+      [affiliation('Attac', { endedOn: '2027-06-30' })],
+      today,
+    )
 
-    expect(names(engagements.current)).toEqual(['Attac'])
-    expect(engagements.former).toEqual([])
+    expect(names(affiliations.current)).toEqual(['Attac'])
+    expect(affiliations.former).toEqual([])
   })
 
   it('leads the running memberships with the longest-standing one, the undated ones last', () => {
-    const engagements = figureEngagements(
+    const affiliations = figureAffiliations(
       [
         affiliation('Oxfam France', { startedOn: '2019-09-01' }),
         affiliation('Médecins du Monde'),
@@ -63,7 +66,7 @@ describe('figureEngagements', () => {
       today,
     )
 
-    expect(names(engagements.current)).toEqual([
+    expect(names(affiliations.current)).toEqual([
       'La France insoumise',
       'Oxfam France',
       'Médecins du Monde',
@@ -71,7 +74,7 @@ describe('figureEngagements', () => {
   })
 
   it('orders the ended memberships from the most recent to the oldest', () => {
-    const engagements = figureEngagements(
+    const affiliations = figureAffiliations(
       [
         affiliation('Centre démocrate', { endedOn: '1976-05-23' }),
         affiliation('Union pour la démocratie française', { endedOn: '2007-01-01' }),
@@ -80,7 +83,7 @@ describe('figureEngagements', () => {
       today,
     )
 
-    expect(names(engagements.former)).toEqual([
+    expect(names(affiliations.former)).toEqual([
       'Union pour la démocratie française',
       'Centre des démocrates sociaux',
       'Centre démocrate',
@@ -88,7 +91,7 @@ describe('figureEngagements', () => {
   })
 
   it('keeps two spells in the same organisation apart', () => {
-    const engagements = figureEngagements(
+    const affiliations = figureAffiliations(
       [
         affiliation('Renaissance', { endedOn: '2019-06-26' }),
         affiliation('Renaissance', { endedOn: '2019-12-31' }),
@@ -96,20 +99,20 @@ describe('figureEngagements', () => {
       today,
     )
 
-    const ids = engagements.former.map(({ membership }) => membership.id)
+    const ids = affiliations.former.map(({ membership }) => membership.id)
     expect(new Set(ids).size).toBe(2)
   })
 
   it('sorts same-dated memberships by name, so the order never wavers', () => {
-    const engagements = figureEngagements(
+    const affiliations = figureAffiliations(
       [affiliation('Oxfam France'), affiliation('Attac'), affiliation('Médecins du Monde')],
       today,
     )
 
-    expect(names(engagements.current)).toEqual(['Attac', 'Médecins du Monde', 'Oxfam France'])
+    expect(names(affiliations.current)).toEqual(['Attac', 'Médecins du Monde', 'Oxfam France'])
   })
 
   it('has nothing to show without any membership', () => {
-    expect(figureEngagements([], today)).toEqual({ current: [], former: [] })
+    expect(figureAffiliations([], today)).toEqual({ current: [], former: [] })
   })
 })

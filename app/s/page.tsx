@@ -77,7 +77,10 @@ export default async function SubjectsPage({ searchParams }: PageProps) {
         hideLatestStatements
         aside={
           <>
-            <RandomSubject candidates={candidates} initialIndex={dailyIndex(candidates.length)} />
+            <RandomSubject
+              candidates={candidates}
+              initialIndex={dailyIndex(candidates.length, new Date())}
+            />
             <SubjectsToDocument subjects={subjectsToDocument(entries)} />
             <ProposeSubject canAddSubject={canAddSubject} />
           </>
