@@ -8,15 +8,8 @@ import {
 } from '../aggregates/public-figure'
 import { PublicFigureEvent } from '../aggregates/public-figure-events'
 import { OrganisationMembership } from '../entities/organisation-membership'
-import { EventStore } from '../events/event-store'
-import {
-  AggregateStream,
-  Decided,
-  decideOn,
-  HappenedAt,
-  RenderedFrom,
-  requireState,
-} from './aggregate-stream'
+import { EventStore, Revision } from '../events/event-store'
+import { AggregateStream, Decided, decideOn, requireState } from './aggregate-stream'
 
 export const publicFigureAggregate: AggregateStream<PublicFigureState, PublicFigureEvent> = {
   streamType: PUBLIC_FIGURE_STREAM,
@@ -30,10 +23,8 @@ export const decideOnPublicFigure = (
   publicFigureId: string,
   actorId: string,
   decide: PublicFigureDecision,
-  renderedFrom?: RenderedFrom,
-  happenedAt?: HappenedAt,
-) =>
-  decideOn(publicFigureAggregate, events, publicFigureId, actorId, decide, renderedFrom, happenedAt)
+  renderedFrom?: Revision,
+) => decideOn(publicFigureAggregate, events, publicFigureId, actorId, decide, renderedFrom)
 
 export const requirePublicFigureState = (state: PublicFigureState | null) =>
   requireState(publicFigureAggregate, state)

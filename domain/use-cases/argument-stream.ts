@@ -6,14 +6,8 @@ import {
   replayArgument,
 } from '../aggregates/argument'
 import { ArgumentEvent } from '../aggregates/argument-events'
-import { EventStore } from '../events/event-store'
-import {
-  AggregateStream,
-  decideOn,
-  loadStream,
-  RenderedFrom,
-  requireState,
-} from './aggregate-stream'
+import { EventStore, Revision } from '../events/event-store'
+import { AggregateStream, decideOn, loadStream, requireState } from './aggregate-stream'
 
 export const argumentAggregate: AggregateStream<ArgumentState, ArgumentEvent> = {
   streamType: ARGUMENT_STREAM,
@@ -30,7 +24,7 @@ export const decideOnArgument = (
   argumentId: string,
   actorId: string,
   decide: ArgumentDecision,
-  renderedFrom?: RenderedFrom,
+  renderedFrom?: Revision,
 ) => decideOn(argumentAggregate, events, argumentId, actorId, decide, renderedFrom)
 
 export const requireArgumentState = (state: ArgumentState | null) =>

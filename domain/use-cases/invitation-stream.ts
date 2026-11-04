@@ -5,8 +5,8 @@ import {
   replayInvitation,
 } from '../aggregates/invitation'
 import { InvitationEvent } from '../aggregates/invitation-events'
-import { EventStore } from '../events/event-store'
-import { AggregateStream, decideOn, RenderedFrom, requireState } from './aggregate-stream'
+import { EventStore, Revision } from '../events/event-store'
+import { AggregateStream, decideOn, requireState } from './aggregate-stream'
 
 export const invitationAggregate: AggregateStream<InvitationState, InvitationEvent> = {
   streamType: INVITATION_STREAM,
@@ -20,7 +20,7 @@ export const decideOnInvitation = (
   invitationId: string,
   actorId: string,
   decide: InvitationDecision,
-  renderedFrom?: RenderedFrom,
+  renderedFrom?: Revision,
 ) => decideOn(invitationAggregate, events, invitationId, actorId, decide, renderedFrom)
 
 export const requireInvitationState = (state: InvitationState | null) =>

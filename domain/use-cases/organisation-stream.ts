@@ -5,8 +5,8 @@ import {
   replayOrganisation,
 } from '../aggregates/organisation'
 import { OrganisationEvent } from '../aggregates/organisation-events'
-import { EventStore } from '../events/event-store'
-import { AggregateStream, decideOn, RenderedFrom, requireState } from './aggregate-stream'
+import { EventStore, Revision } from '../events/event-store'
+import { AggregateStream, decideOn, requireState } from './aggregate-stream'
 
 export const organisationAggregate: AggregateStream<OrganisationState, OrganisationEvent> = {
   streamType: ORGANISATION_STREAM,
@@ -20,7 +20,7 @@ export const decideOnOrganisation = (
   organisationId: string,
   actorId: string,
   decide: OrganisationDecision,
-  renderedFrom?: RenderedFrom,
+  renderedFrom?: Revision,
 ) => decideOn(organisationAggregate, events, organisationId, actorId, decide, renderedFrom)
 
 export const requireOrganisationState = (state: OrganisationState | null) =>

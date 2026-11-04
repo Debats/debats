@@ -1,4 +1,4 @@
-import { Clock, Effect, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import { MembershipId } from '../entities/organisation-membership'
 import { addMembership } from '../aggregates/public-figure'
 import { runUnitOfWork } from '../events/unit-of-work'
@@ -89,16 +89,10 @@ export function addOrganisationMembershipUseCase(params: AddOrganisationMembersh
         faultless(membershipFaults(known, role, startedOn, endedOn)),
       ),
     ),
-    // The decision judges on the instant the command happened, and the fact it
-    // writes carries that same instant
+    // Whether the affiliation is still running is judged on the instant the
+    // command was taken on, which the transaction gives and dates its facts with
     Effect.flatMap((contributor) =>
-      Effect.map(Clock.currentTimeMillis, (millis) => ({
-        contributor,
-        happenedAt: new Date(millis),
-      })),
-    ),
-    Effect.flatMap(({ contributor, happenedAt }) =>
-      runUnitOfWork((events) =>
+      runUnitOfWork((events, happenedAt) =>
         pipe(
           decideOnPublicFigure(
             events,
@@ -114,8 +108,6 @@ export function addOrganisationMembershipUseCase(params: AddOrganisationMembersh
               },
               happenedAt,
             ),
-            undefined,
-            happenedAt,
           ),
           Effect.tap(() =>
             grant(

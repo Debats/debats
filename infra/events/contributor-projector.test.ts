@@ -22,8 +22,11 @@ let reputationBefore = 0
 
 describe.skipIf(!hasDatabase)('contributor projector', () => {
   beforeAll(async () => {
+    // The first contributor by id: the unit of work's own test takes the last,
+    // and the two files run side by side on the same database
     const contributor = await prisma().contributors.findFirstOrThrow({
       select: { id: true, reputation: true },
+      orderBy: { id: 'asc' },
     })
     contributorId = contributor.id
     reputationBefore = contributor.reputation ?? 0

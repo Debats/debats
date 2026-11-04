@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Effect, Either, Layer, Option, TestContext } from 'effect'
+import { Effect, Either, Layer, Option, TestClock, TestContext } from 'effect'
 import { addOrganisationMembershipUseCase } from './add-organisation-membership'
 import { createMembership } from '../entities/entity-test-helpers'
 import { OrganisationMembership } from '../entities/organisation-membership'
@@ -11,7 +11,7 @@ import {
   sampleFigure,
   sampleOrganisation,
 } from './organisation-test-helpers'
-import { deedsIn, grantsIn } from './contributor-test-helpers'
+import { deedsIn, grantFactsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
 import { journalWithFigures } from './public-figure-test-helpers'
 
@@ -147,16 +147,21 @@ describe('addOrganisationMembershipUseCase', () => {
     expect(grantsIn(journal)).toEqual([['contributor-1', 'added_membership', 5]])
   })
 
-  it('stamps the fact with the very instant the command was taken on', async () => {
+  it('stamps the deed and the reward it earns with the one instant the command was taken on', async () => {
     const { params, figure, execute } = setup()
     const { run, journal } = await journalWithFigures(figure)
-    // The command reads the clock it is given: here a test clock, stopped at the epoch
+    const commandedAt = new Date('2026-03-15T09:30:00Z')
+    // The command reads the clock it is given: here a test clock, stopped on that instant
     const result = await execute(
-      Effect.provide(addOrganisationMembershipUseCase(params), TestContext.TestContext),
+      Effect.provide(
+        Effect.andThen(TestClock.setTime(commandedAt), addOrganisationMembershipUseCase(params)),
+        TestContext.TestContext,
+      ),
       run,
     )
 
     expect(Either.isRight(result)).toBe(true)
-    expect(deedsIn(journal).at(-1)?.occurredAt).toEqual(new Date(0))
+    expect(deedsIn(journal).at(-1)?.occurredAt).toEqual(commandedAt)
+    expect(grantFactsIn(journal).at(-1)?.occurredAt).toEqual(commandedAt)
   })
 })

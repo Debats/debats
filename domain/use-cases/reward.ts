@@ -40,7 +40,8 @@ export const rewardFor = (
  * read the projected total, on purpose), so two deeds of hers at once never
  * conflict. Streams are taken in id order: two commands rewarding the same two
  * contributors lock them the same way round. The actor is the contributor
- * whose command earned them.
+ * whose command earned them, and the transaction dates them like the deed
+ * they reward.
  */
 export function grantEach(
   events: EventStore,

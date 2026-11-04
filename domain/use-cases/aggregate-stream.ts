@@ -57,17 +57,9 @@ export interface Decided<State> {
 }
 
 /**
- * When the command happened. A decision that judges on time (an affiliation
- * still running, a date already past) is given this instant, and the facts it
- * writes carry the very same one: the journal then says on which instant the
- * decision was taken. Left out by a command that owes nothing to the clock —
- * the journal stamps the event as it writes it.
- */
-export type HappenedAt = Date | undefined
-
-/**
  * Appends the decision after the history, and rebuilds what the aggregate now
- * is. A decision that changes nothing writes nothing.
+ * is. A decision that changes nothing writes nothing. The transaction dates
+ * the facts with the instant the command was taken on.
  */
 export function appendAndReplay<State, Event extends DomainEvent>(
   aggregate: AggregateStream<State, Event>,
@@ -76,14 +68,10 @@ export function appendAndReplay<State, Event extends DomainEvent>(
   history: StoredEvent[],
   decided: Event[],
   actorId: string,
-  happenedAt?: HappenedAt,
 ): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
   return pipe(
     decided.length > 0
-      ? events.append(streamOf(aggregate, id), streamRevision(history), decided, {
-          actorId,
-          occurredAt: happenedAt,
-        })
+      ? events.append(streamOf(aggregate, id), streamRevision(history), decided, { actorId })
       : Effect.succeed([]),
     Effect.map((stored) => [...history, ...stored]),
     Effect.flatMap((whole) =>
@@ -107,19 +95,9 @@ export function openStream<State, Event extends DomainEvent>(
   id: string,
   decided: Event[],
   actorId: string,
-  happenedAt?: HappenedAt,
 ): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | UniqueTaken | UnreadableEvent> {
-  return appendAndReplay(aggregate, events, id, [], decided, actorId, happenedAt)
+  return appendAndReplay(aggregate, events, id, [], decided, actorId)
 }
-
-/**
- * The revision a form was rendered from, so that the command refuses to
- * overwrite what someone else wrote meanwhile. Undefined for a command that
- * comes from no form and decides from the current state. A revision given
- * is always compared: every aggregate has a stream, a page never renders
- * from an empty one.
- */
-export type RenderedFrom = Revision | undefined
 
 /**
  * A command on an aggregate: loads its stream, lets the aggregate's decision
@@ -127,6 +105,12 @@ export type RenderedFrom = Revision | undefined
  * aggregate now is, at the revision it stands at. A decision refuses with a
  * Rejected; a deleted aggregate is NotFound before any decision; a stream
  * that moved past the revision the form was rendered from is a ConcurrencyError.
+ *
+ * `renderedFrom` is the revision a form was rendered from, so that the command
+ * refuses to overwrite what someone else wrote meanwhile. Left out by a command
+ * that comes from no form and decides from the current state. A revision given
+ * is always compared: every aggregate has a stream, a page never renders from
+ * an empty one.
  */
 export function decideOn<State, Event extends DomainEvent>(
   aggregate: AggregateStream<State, Event>,
@@ -134,8 +118,7 @@ export function decideOn<State, Event extends DomainEvent>(
   id: string,
   actorId: string,
   decide: Decision<State, Event>,
-  renderedFrom?: RenderedFrom,
-  happenedAt?: HappenedAt,
+  renderedFrom?: Revision,
 ): Effect.Effect<Decided<State>, StreamFailure | UnreadableEvent> {
   const stillAt = (history: StoredEvent[]) =>
     renderedFrom === undefined || streamRevision(history) === renderedFrom
@@ -152,7 +135,7 @@ export function decideOn<State, Event extends DomainEvent>(
         Effect.filterOrFail(aggregate.isLive, () => new NotFound(aggregate.notFound)),
         Effect.flatMap(decide),
         Effect.flatMap((decided) =>
-          appendAndReplay(aggregate, events, id, history, decided, actorId, happenedAt),
+          appendAndReplay(aggregate, events, id, history, decided, actorId),
         ),
       ),
     ),

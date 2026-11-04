@@ -7,13 +7,12 @@ import {
   StatementState,
 } from '../aggregates/statement'
 import { StatementEvent } from '../aggregates/statement-events'
-import { EventStore, StoredEvent } from '../events/event-store'
+import { EventStore, Revision, StoredEvent } from '../events/event-store'
 import {
   AggregateStream,
   appendAndReplay,
   decideOn,
   loadStream,
-  RenderedFrom,
   requireState as requireStateOf,
 } from './aggregate-stream'
 
@@ -32,7 +31,7 @@ export const decideOnStatement = (
   statementId: string,
   actorId: string,
   decide: StatementDecision,
-  renderedFrom?: RenderedFrom,
+  renderedFrom?: Revision,
 ) => decideOn(statementAggregate, events, statementId, actorId, decide, renderedFrom)
 
 export const appendToStatement = (

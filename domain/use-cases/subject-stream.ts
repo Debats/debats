@@ -8,8 +8,8 @@ import {
 } from '../aggregates/subject'
 import { SubjectEvent } from '../aggregates/subject-events'
 import { Position } from '../entities/position'
-import { EventStore } from '../events/event-store'
-import { AggregateStream, Decided, decideOn, RenderedFrom, requireState } from './aggregate-stream'
+import { EventStore, Revision } from '../events/event-store'
+import { AggregateStream, Decided, decideOn, requireState } from './aggregate-stream'
 
 export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent> = {
   streamType: SUBJECT_STREAM,
@@ -23,7 +23,7 @@ export const decideOnSubject = (
   subjectId: string,
   actorId: string,
   decide: SubjectDecision,
-  renderedFrom?: RenderedFrom,
+  renderedFrom?: Revision,
 ) => decideOn(subjectAggregate, events, subjectId, actorId, decide, renderedFrom)
 
 export const requireSubjectState = (state: SubjectState | null) =>
