@@ -1,0 +1,142 @@
+.card {
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.title {
+  composes: label from '../../../../styles/text.module.css';
+  margin-bottom: 16px;
+}
+
+/* Les engagements en cours : à égalité, aucun n'est la vedette de l'autre */
+.current {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.currentItem + .currentItem {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.feature,
+.feature:link,
+.feature:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.meta {
+  composes: small from '../../../../styles/text.module.css';
+  display: block;
+  margin-top: 4px;
+}
+
+.period {
+  composes: meta from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.feature:hover .shortcut {
+  color: var(--signal);
+}
+
+.arrow {
+  color: var(--signal);
+}
+
+/* La frise des engagements passés, du plus récent au plus ancien */
+.past {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.pastItem {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 12px;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.thread {
+  width: 2px;
+  flex-grow: 1;
+  background-color: var(--line);
+}
+
+.pastItem:last-child .thread {
+  display: none;
+}
+
+/* Le logo d'un engagement passé s'efface, comme un métier qu'on ne tient plus */
+.faded {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.pastLink,
+.pastLink:link,
+.pastLink:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 18px;
+  color: var(--ink-2);
+}
+
+.pastItem:last-child .pastLink {
+  padding-bottom: 0;
+}
+
+.pastName {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+
+.pastLink:hover .pastName {
+  color: var(--signal);
+}

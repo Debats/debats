@@ -1,6 +1,6 @@
 import { Option } from 'effect'
-import { OrganisationMembership } from '../../../../domain/entities/organisation-membership'
-import { formatMonthYear } from '../../../../lib/format-date'
+import { OrganisationMembership } from '../domain/entities/organisation-membership'
+import { formatMonthYear } from './format-date'
 
 /**
  * Libellé de la période d'une affiliation : « depuis mars 2020 »,

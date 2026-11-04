@@ -4,7 +4,7 @@ import FigureAvatar from '../../../../components/figures/FigureAvatar'
 import RemoveMembershipButton from '../../../../components/organisations/RemoveMembershipButton'
 import ShowMore from '../../../../components/ui/ShowMore'
 import { MembershipWithFigure } from '../../../../domain/repositories/organisation-membership-repository'
-import { membershipPeriodLabel } from './period'
+import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './OrganisationMembers.module.css'
 
 interface OrganisationMembersProps {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createMembership } from '../../../../domain/entities/entity-test-helpers'
-import { membershipPeriodLabel } from './period'
+import { createMembership } from '../domain/entities/entity-test-helpers'
+import { membershipPeriodLabel } from './membership-period'
 
 const base = { organisationId: 'org', publicFigureId: 'figure', createdBy: 'user' }
 

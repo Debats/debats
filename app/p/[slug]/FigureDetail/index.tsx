@@ -9,7 +9,6 @@ import { createOccupationRepository } from '../../../../infra/database/occupatio
 import { createOccupationFamilyRepository } from '../../../../infra/database/occupation-family-repository-supabase'
 import { occupationFamilyHref } from '../../../../domain/read-models/occupations'
 import { MembershipWithOrganisation } from '../../../../domain/repositories/organisation-membership-repository'
-import { isCurrentMembership } from '../../../../domain/entities/organisation-membership'
 import { publicFigureAuthor } from '../../../../domain/entities/statement'
 import { publicFigureRef } from '../../../../domain/read-models/statement-author'
 import {
@@ -24,6 +23,7 @@ import {
   themeDistribution,
 } from '../../../../domain/services/figure-activity'
 import { analyseAuthor, organisationsLine } from '../../../../domain/services/author-analyses'
+import { figureEngagements } from '../../../../domain/services/figure-engagements'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import AdminMenu from '../../../../components/ui/AdminMenu'
@@ -42,6 +42,7 @@ import { statementsOnTheme } from '../../../../domain/services/statements-on-the
 import { subjectIdsOnTheme } from '../../../../infra/queries/subject-ids-on-theme'
 import { groupStatementsBySubject } from '../../../../domain/services/statements-by-subject'
 import FigureAnalyses from '../FigureAnalyses'
+import FigureEngagements from '../FigureEngagements'
 import FigureOrganisationsLine from '../FigureOrganisationsLine'
 
 interface FigureDetailProps {
@@ -53,14 +54,12 @@ interface FigureDetailProps {
 }
 
 /** Les affiliations en cours, telles qu'affichées en pastilles sous le libellé « Personnalité ». */
-function currentAffiliations(memberships: MembershipWithOrganisation[]): Affiliation[] {
-  return memberships
-    .filter(({ membership }) => isCurrentMembership(membership))
-    .map(({ membership, organisation }) => ({
-      organisationSlug: organisation.slug,
-      organisationLabel: organisation.acronym ?? organisation.name,
-      role: Option.getOrNull(membership.role),
-    }))
+function affiliationTags(current: MembershipWithOrganisation[]): Affiliation[] {
+  return current.map(({ membership, organisation }) => ({
+    organisationSlug: organisation.slug,
+    organisationLabel: organisation.acronym ?? organisation.name,
+    role: Option.getOrNull(membership.role),
+  }))
 }
 
 /** The whole public figure page; the two tab routes render it with their tab. */
@@ -104,7 +103,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
     activeTab === 'analyses'
       ? await Effect.runPromise(statementRepo.findBySubjectIdsWithAuthors(subjectIds))
       : null
-  const currentMemberships = memberships.filter(({ membership }) => isCurrentMembership(membership))
+  const engagements = figureEngagements(memberships)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const adminActions = [
@@ -153,7 +152,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
           period: activityPeriod(statedDates),
         }}
         occupations={occupationTags}
-        affiliations={currentAffiliations(memberships)}
+        affiliations={affiliationTags(engagements.current)}
         adminMenu={adminActions.length > 0 && <AdminMenu actions={adminActions} />}
         actions={
           <>
@@ -174,11 +173,14 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
       <ContentWithSidebar
         topMargin
         aside={
-          <FigureAnalyses
-            themes={themeDistribution(subjectIds, primaryLinks, themes)}
-            perYear={statementsPerYear(statedDates)}
-            topArguments={argumentDistribution(statements)}
-          />
+          <>
+            <FigureEngagements engagements={engagements} />
+            <FigureAnalyses
+              themes={themeDistribution(subjectIds, primaryLinks, themes)}
+              perYear={statementsPerYear(statedDates)}
+              topArguments={argumentDistribution(statements)}
+            />
+          </>
         }
       >
         <SectionTabs
@@ -192,14 +194,14 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
             who="cette personnalité"
             analysis={analyseAuthor(statements, onSubjects, self)}
           >
-            {currentMemberships.length > 0 && (
+            {engagements.current.length > 0 && (
               <FigureOrganisationsLine
                 figureSlug={slug}
                 line={organisationsLine(
                   statements,
                   onSubjects,
                   self,
-                  currentMemberships.map(({ organisation }) => organisation),
+                  engagements.current.map(({ organisation }) => organisation),
                 )}
               />
             )}
