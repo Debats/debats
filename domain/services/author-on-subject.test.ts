@@ -8,10 +8,12 @@ import {
   countSubjectVoices,
   countUndefended,
   debateOnSubject,
+  figuresOnSubject,
   groupStatementsByPosition,
   groupSubjectCompany,
   latestStatedAt,
   neighboursOf,
+  positionShares,
   voicesOf,
 } from './author-on-subject'
 
@@ -187,6 +189,56 @@ describe('voicesOf', () => {
     expect(voicesOf([taken(veil, pour)])).toEqual([
       { authorKey: 'public_figure-veil', positionId: pour.id },
     ])
+  })
+})
+
+describe('positionShares', () => {
+  const openPositions = [
+    { id: pour.id, title: 'Pour', slug: 'pour' },
+    { id: contre.id, title: 'Contre', slug: 'contre' },
+  ]
+  const sharesOf = (...statements: StatementWithAuthor[]) =>
+    positionShares(debateOnSubject(openPositions, statements, new Set()))
+
+  it('splits the counted voices between the positions', () => {
+    const shares = sharesOf(taken(veil, pour), taken(camus, pour), taken(attac, contre))
+    expect(shares.map(({ count, share }) => ({ count, share }))).toEqual([
+      { count: 2, share: 2 / 3 },
+      { count: 1, share: 1 / 3 },
+    ])
+  })
+
+  it('counts an author who took two positions in both segments', () => {
+    // Le dénominateur compte des couples (auteur, position) : c'est pour ça
+    // qu'une barre faite de ces parts n'affiche jamais son total.
+    const shares = sharesOf(taken(veil, pour), taken(veil, contre))
+    expect(shares.map(({ share }) => share)).toEqual([0.5, 0.5])
+  })
+
+  it('gives every position a zero share when nobody spoke', () => {
+    expect(sharesOf().map(({ share }) => share)).toEqual([0, 0])
+  })
+})
+
+describe('figuresOnSubject', () => {
+  it('counts each public figure of the subject once, and leaves organisations out', () => {
+    const ids = figuresOnSubject(
+      [taken(veil, pour), taken(veil, contre), taken(attac, pour)],
+      organisationAuthor('attac'),
+    )
+    expect(ids).toEqual(['veil'])
+  })
+
+  it('keeps the author even when she never spoke on the subject', () => {
+    // Ses métiers nomment sa ligne de rôle, et ses familles font ses groupes
+    expect(figuresOnSubject([taken(camus, pour)], publicFigureAuthor('veil'))).toEqual([
+      'camus',
+      'veil',
+    ])
+  })
+
+  it('does not repeat the author when she did speak', () => {
+    expect(figuresOnSubject([taken(veil, pour)], publicFigureAuthor('veil'))).toEqual(['veil'])
   })
 })
 

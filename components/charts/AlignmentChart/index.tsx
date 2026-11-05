@@ -11,8 +11,12 @@ interface AlignmentChartProps {
   /**
    * Ce qu'il faut savoir pour lire le graphique. Le texte appartient à la
    * page : ce composant ne dit pas de quoi on parle, il montre des écarts.
+   *
+   * Obligatoire : sans lui, le graphique montre des pastilles creuses sans
+   * dire ce qu'elles veulent dire, c'est-à-dire un écart qui ne conclut rien
+   * présenté comme un fait. L'explication n'est pas une décoration.
    */
-  caveat?: React.ReactNode
+  caveat: React.ReactNode
 }
 
 /**
@@ -76,7 +80,7 @@ export default function AlignmentChart({ alignment, referenceLabel, caveat }: Al
         <span />
       </div>
 
-      {caveat && <p className={styles.caveat}>{caveat}</p>}
+      <p className={styles.caveat}>{caveat}</p>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import ArgumentChips from '../ArgumentChips'
 import StatementBody from '../StatementBody'
 import EditLink from '../../ui/EditLink'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../domain/entities/statement'
+import { roleOf } from '../../../domain/read-models/author-role'
 import {
   authorOnSubjectHref,
   StatementAuthorRef,
@@ -69,9 +70,9 @@ export default function AuthorPositionCard({
           <p className={styles.alliesLabel}>Même position</p>
           <ul className={styles.allyList}>
             {allies.map((ally) => {
-              // `roles` est indexé par personnalité : une organisation alliée
-              // n'a pas de métier, et n'a donc rien à chercher là-dedans.
-              const role = ally.kind === 'public_figure' ? roles.get(ally.id) : undefined
+              // `roleOf` sait qu'une organisation alliée n'a pas de métier à
+              // chercher dans une table indexée par personnalité.
+              const role = roleOf(ally, roles)
               return (
                 <li key={`${ally.kind}-${ally.id}`}>
                   <Link href={authorOnSubjectHref(ally, subjectSlug)} className={styles.ally}>

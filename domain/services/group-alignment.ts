@@ -111,13 +111,23 @@ export interface SubjectAlignment {
   everyone: Alignment
   /** Les groupes où quelqu'un d'autre s'est exprimé, du plus au moins raccord */
   rows: AlignmentRow[]
+  /**
+   * Les groupes auxquels l'auteur appartient, muets compris.
+   *
+   * Sans ce nombre, `rows` vide voudrait dire deux choses : que ses groupes
+   * se taisent sur ce sujet, ou que le site ne lui connaît aucun groupe. Une
+   * page qui les confond affirme un parti et un métier qu'elle ignore.
+   */
+  groups: number
 }
 
 /**
  * L'auteur est retiré de la référence comme de ses propres groupes : la
  * question est de savoir si les autres le suivent, il n'a pas à peser dans
  * son propre dénominateur. Un groupe dont personne d'autre ne s'est exprimé
- * n'a rien à dire et ne rend pas de ligne.
+ * n'a rien à dire et ne rend pas de ligne — mais il reste compté dans
+ * `groups`, parce que l'ignorer et ne pas l'avoir sont deux situations
+ * différentes.
  */
 export function alignOnSubject(
   voices: readonly Voice[],
@@ -137,5 +147,5 @@ export function alignOnSubject(
     .filter((row) => row.alignment.total > 0)
     .sort((a, b) => b.alignment.deviation - a.alignment.deviation)
 
-  return { everyone: alignmentOf(all, reference), rows }
+  return { everyone: alignmentOf(all, reference), rows, groups: groups.length }
 }

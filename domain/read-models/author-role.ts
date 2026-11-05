@@ -1,10 +1,14 @@
 import { Occupation } from '../entities/occupation'
 import { StatementAuthorRef } from './statement-author'
 
+/** One occupation a public figure holds today */
+export interface FigureOccupation {
+  publicFigureId: string
+  occupation: Occupation
+}
+
 /** What a list names under a public figure: the occupations she holds today */
-export function rolesByFigure(
-  held: Array<{ publicFigureId: string; occupation: Occupation }>,
-): Map<string, string> {
+export function rolesByFigure(held: readonly FigureOccupation[]): Map<string, string> {
   const names = new Map<string, string[]>()
   for (const { publicFigureId, occupation } of held) {
     names.set(publicFigureId, [...(names.get(publicFigureId) ?? []), occupation.name])

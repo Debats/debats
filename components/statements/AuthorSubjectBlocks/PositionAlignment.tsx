@@ -1,7 +1,7 @@
 import AlignmentChart from '../../charts/AlignmentChart'
 import ShareBar from '../../charts/ShareBar'
 import ShareLegend from '../../charts/ShareLegend'
-import { PositionStanding } from '../../../domain/services/author-on-subject'
+import { PositionShare, PositionStanding } from '../../../domain/services/author-on-subject'
 import { SubjectAlignment } from '../../../domain/services/group-alignment'
 import { plural } from '../../../lib/plural'
 import analysis from '../../../styles/analysis.module.css'
@@ -11,14 +11,15 @@ import styles from './AuthorSubjectBlocks.module.css'
 const EVERYONE = 'Toutes les voix du sujet'
 
 interface PositionAlignmentProps {
+  /** Toutes les positions du sujet, de la plus à la moins soutenue */
   debate: PositionStanding[]
+  /** La part de chacune parmi les voix comptées, calculée par le domaine */
+  shares: PositionShare[]
   alignment: SubjectAlignment
-  /** Les voix distinctes du sujet, l'auteur compris */
-  voices: number
   /**
-   * Ce qu'on dit quand aucun groupe n'a de quoi parler. Le texte vient de la
-   * page : une personnalité se compare à ses organisations et à ses métiers,
-   * une organisation à ses propres membres.
+   * Ce qu'on dit quand il n'y a personne à comparer. Le texte vient de la
+   * page, qui seule sait de quels groupes il s'agit — et si le site en
+   * connaît.
    */
   nobodyToCompare: React.ReactNode
 }
@@ -34,12 +35,10 @@ interface PositionAlignmentProps {
  */
 export default function PositionAlignment({
   debate,
+  shares,
   alignment,
-  voices,
   nobodyToCompare,
 }: PositionAlignmentProps) {
-  if (voices === 0) return null
-
   const { everyone, rows } = alignment
 
   return (
@@ -67,10 +66,11 @@ export default function PositionAlignment({
       />
       <ShareBar
         label={EVERYONE}
-        shares={debate.map((standing) => ({
-          key: standing.position.id,
-          label: standing.position.title,
-          count: standing.authors.length,
+        shares={shares.map((share) => ({
+          key: share.position.id,
+          label: share.position.title,
+          count: share.count,
+          share: share.share,
         }))}
       />
 

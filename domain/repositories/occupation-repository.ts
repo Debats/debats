@@ -1,5 +1,6 @@
 import { Context, Effect } from 'effect'
 import { Occupation } from '../entities/occupation'
+import { FigureOccupation } from '../read-models/author-role'
 import { OccupationAssignmentInput, OccupationHeld } from '../read-models/occupations'
 import { OccupationAssignment } from '../services/occupation-distribution'
 import { DatabaseError } from './errors'
@@ -31,7 +32,7 @@ export interface OccupationRepository {
   /** The occupations these figures hold today, to name their role in a list */
   findCurrentHeldByPublicFigureIds(
     publicFigureIds: string[],
-  ): Effect.Effect<Array<{ publicFigureId: string; occupation: Occupation }>, DatabaseError>
+  ): Effect.Effect<FigureOccupation[], DatabaseError>
 
   /** Every (figure, occupation) link of the site, for the counters */
   findAllAssignments(): Effect.Effect<OccupationAssignment[], DatabaseError>

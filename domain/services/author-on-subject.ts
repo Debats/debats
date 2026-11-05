@@ -109,6 +109,47 @@ export function debateOnSubject(
 export const countUndefended = (debate: readonly PositionStanding[]): number =>
   debate.filter((standing) => standing.authors.length === 0).length
 
+/** Une position et sa part de la barre du sujet */
+export interface PositionShare {
+  position: { id: string; title: string }
+  /** Les voix distinctes qui la défendent */
+  count: number
+  /** `count` sur le total compté, zéro quand personne ne s'est exprimé */
+  share: number
+}
+
+/**
+ * La part de chaque position parmi les voix du sujet, pour la barre à 100 %.
+ *
+ * Le dénominateur compte des couples (auteur, position) : un auteur qui a
+ * pris deux positions pèse dans deux segments. Ce n'est donc pas un nombre
+ * de voix — `countSubjectVoices` est seul à le dire — et une barre faite de
+ * ces parts n'affiche jamais son total.
+ */
+export function positionShares(debate: readonly PositionStanding[]): PositionShare[] {
+  const total = debate.reduce((sum, standing) => sum + standing.authors.length, 0)
+  return debate.map(({ position, authors }) => ({
+    position: { id: position.id, title: position.title },
+    count: authors.length,
+    share: total > 0 ? authors.length / total : 0,
+  }))
+}
+
+/**
+ * Les personnalités dont le sujet a besoin : celles qui s'y sont exprimées,
+ * plus l'auteur de la page quand c'en est une — même muet, ses métiers
+ * nomment sa ligne de rôle et ses familles font ses groupes.
+ */
+export function figuresOnSubject(
+  statements: readonly StatementWithAuthor[],
+  self: StatementAuthor,
+): string[] {
+  const ids = statements
+    .filter((statement) => statement.author.kind === 'public_figure')
+    .map((statement) => statement.author.id)
+  return Array.from(new Set(self.kind === 'public_figure' ? [...ids, self.id] : ids))
+}
+
 /** Les voix du sujet, réduites à ce que mesure l'alignement par groupe */
 export const voicesOf = (statements: readonly StatementWithAuthor[]) =>
   statements.map(({ author, position }) => ({

@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect, Option } from 'effect'
 import { createAdminSupabaseClient } from '../../../../../infra/supabase/admin'
@@ -16,6 +17,7 @@ import {
   groupStatementsByPosition,
   groupSubjectCompany,
   latestStatedAt,
+  positionShares,
 } from '../../../../../domain/services/author-on-subject'
 import { loadOrganisationSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
@@ -100,6 +102,20 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
   const voices = countSubjectVoices(page.everyone)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
 
+  // Ses membres se taisent, ou le site ne lui en connaît aucun : une
+  // organisation n'a qu'un groupe, le sien, et le dire faux serait affirmer
+  // des membres qu'on n'a pas.
+  const nobodyToCompare =
+    page.members === 0 ? (
+      <>
+        Débats.co ne connaît encore aucune personnalité affiliée à {organisation.name} : il n’y a
+        aucun groupe auquel comparer cette position.{' '}
+        <Link href={`/o/${organisation.slug}/affilier`}>Vous pouvez en affilier une.</Link>
+      </>
+    ) : (
+      'Aucune autre voix de cette organisation n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position.'
+    )
+
   return (
     <>
       <script
@@ -165,9 +181,9 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
         {positions.length > 0 && (
           <PositionAlignment
             debate={debate}
+            shares={positionShares(debate)}
             alignment={page.alignment}
-            voices={voices}
-            nobodyToCompare="Aucune autre voix de cette organisation n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position."
+            nobodyToCompare={nobodyToCompare}
           />
         )}
 

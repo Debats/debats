@@ -17,6 +17,7 @@ export default function LeaningBars({ matrix }: { matrix: FamilyPositionMatrix }
       key: matrix.positions[index].id,
       label: matrix.positions[index].title,
       count: cell.count,
+      share: cell.share,
     }))
 
   return (

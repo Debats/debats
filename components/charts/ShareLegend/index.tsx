@@ -1,4 +1,4 @@
-import { shadeOf } from '../../../styles/shades'
+import { shadeOf } from '../shades'
 import styles from './ShareLegend.module.css'
 
 /** Une entrée de légende : sa nuance vient de son rang dans la liste */

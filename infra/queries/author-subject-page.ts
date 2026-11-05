@@ -13,14 +13,26 @@ import {
   OrganisationSubjectPage,
   SubjectContext,
 } from '../../domain/read-models/author-subject-page'
-import { rolesByFigure } from '../../domain/read-models/author-role'
+import { FigureOccupation, rolesByFigure } from '../../domain/read-models/author-role'
+import { Position } from '../../domain/entities/position'
+import { Subject } from '../../domain/entities/subject'
 import { MembershipWithOrganisation } from '../../domain/repositories/organisation-membership-repository'
+import {
+  StatedSpan,
+  StatementWithAuthor,
+  StatementWithDetails,
+} from '../../domain/repositories/statement-repository'
 import {
   MemberedOrganisation,
   occupationFamilyGroups,
   organisationGroups,
 } from '../../domain/services/author-groups'
-import { authorKey, neighboursOf, voicesOf } from '../../domain/services/author-on-subject'
+import {
+  authorKey,
+  figuresOnSubject,
+  neighboursOf,
+  voicesOf,
+} from '../../domain/services/author-on-subject'
 import { alignOnSubject, GroupDefinition } from '../../domain/services/group-alignment'
 import { createStatementRepository } from '../database/statement-repository-supabase'
 import { createPositionRepository } from '../database/position-repository-supabase'
@@ -68,7 +80,13 @@ export async function loadFigureSubjectPage(
   ])
 
   const current = memberships.filter(({ membership }) => isCurrentMembership(membership, today))
-  const groups = await figureGroups(supabase, figure.id, around.figureIds, current, today)
+  const groups = await figureGroups(
+    supabase,
+    figure.id,
+    figuresOnSubject(around.everyone, self),
+    current,
+    today,
+  )
 
   return {
     ...context(around, self, hers, groups, totals),
@@ -91,27 +109,51 @@ export async function loadOrganisationSubjectPage(
 ): Promise<OrganisationSubjectPage> {
   const self = organisationAuthor(organisation.id)
 
-  const [around, summary, members] = await Promise.all([
+  const [around, summary, memberIds] = await Promise.all([
     subjectAround(supabase, self, subject),
     Effect.runPromise(createOrganisationRepository(supabase).findSummaryById(organisation.id)),
-    membered(supabase, [organisation], today),
+    memberIdsOf(supabase, organisation.id, today),
   ])
 
   const totals = {
     subjects: summary?.subjectsCount ?? 0,
     statements: summary?.statementsCount ?? 0,
   }
+  const itself: MemberedOrganisation = {
+    ...affiliationOf(organisation),
+    id: organisation.id,
+    memberIds,
+  }
 
   return {
-    ...context(around, self, hers, organisationGroups(members), totals),
+    ...context(around, self, hers, organisationGroups([itself]), totals),
     // Les mêmes membres que le groupe auquel la page compare l'organisation :
     // ceux dont l'affiliation est en cours, et non tous ceux qui l'ont été.
-    members: members[0]?.memberIds.length ?? 0,
+    members: memberIds.length,
   }
 }
 
-/** Les lectures que les deux pages partagent : le sujet, et le débat autour */
-async function subjectAround(supabase: Client, self: StatementAuthor, subject: SubjectRef) {
+/** Ce que les deux pages lisent du sujet et du débat autour */
+interface SubjectAround {
+  /** Toutes les prises de position du sujet, tous auteurs confondus */
+  everyone: StatementWithAuthor[]
+  /** Les positions ouvertes, celles que personne n'a prises comprises */
+  positions: Position[]
+  span: StatedSpan | null
+  /** Les sujets liés à celui-ci */
+  related: Subject[]
+  /** Les métiers actuels des personnalités du sujet, l'auteur compris */
+  held: FigureOccupation[]
+  /** Les prises de position de l'auteur sur les sujets liés */
+  onNeighbours: StatementWithDetails[]
+}
+
+/** Les lectures que les deux pages partagent */
+async function subjectAround(
+  supabase: Client,
+  self: StatementAuthor,
+  subject: SubjectRef,
+): Promise<SubjectAround> {
   const statements = createStatementRepository(supabase)
 
   const [everyone, positions, span, related] = await Promise.all([
@@ -121,20 +163,11 @@ async function subjectAround(supabase: Client, self: StatementAuthor, subject: S
     Effect.runPromise(createRelatedSubjectsRepository(supabase).findRelated(subject.id)),
   ])
 
-  // L'auteur est de la partie même s'il ne s'est pas exprimé : ses métiers
-  // nomment la ligne de rôle, et ses familles font ses groupes.
-  const figureIds = Array.from(
-    new Set([
-      ...everyone
-        .filter((statement) => statement.author.kind === 'public_figure')
-        .map((statement) => statement.author.id),
-      ...(self.kind === 'public_figure' ? [self.id] : []),
-    ]),
-  )
-
   const [held, onNeighbours] = await Promise.all([
     Effect.runPromise(
-      createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(figureIds),
+      createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(
+        figuresOnSubject(everyone, self),
+      ),
     ),
     Effect.runPromise(
       statements.findByAuthorAndSubjectIds(
@@ -144,10 +177,8 @@ async function subjectAround(supabase: Client, self: StatementAuthor, subject: S
     ),
   ])
 
-  return { everyone, positions, span, related, figureIds, held, onNeighbours }
+  return { everyone, positions, span, related, held, onNeighbours }
 }
-
-type SubjectAround = Awaited<ReturnType<typeof subjectAround>>
 
 /** Ce que les deux pages tirent des mêmes lectures */
 function context(
@@ -228,10 +259,33 @@ async function membered(
 ): Promise<MemberedOrganisation[]> {
   if (organisations.length === 0) return []
 
+  const byOrganisation = await currentMembers(
+    supabase,
+    organisations.map(({ id }) => id),
+    today,
+  )
+
+  return organisations.map((organisation) => ({
+    id: organisation.id,
+    ...affiliationOf(organisation),
+    memberIds: byOrganisation.get(organisation.id) ?? [],
+  }))
+}
+
+/** Les personnalités affiliées à cette organisation aujourd'hui */
+async function memberIdsOf(supabase: Client, organisationId: string, today: Date) {
+  const byOrganisation = await currentMembers(supabase, [organisationId], today)
+  return byOrganisation.get(organisationId) ?? []
+}
+
+/** Les membres actuels de ces organisations, par organisation */
+async function currentMembers(
+  supabase: Client,
+  organisationIds: string[],
+  today: Date,
+): Promise<Map<string, string[]>> {
   const links = await Effect.runPromise(
-    createOrganisationMembershipRepository(supabase).findByOrganisationIds(
-      organisations.map(({ id }) => id),
-    ),
+    createOrganisationMembershipRepository(supabase).findByOrganisationIds(organisationIds),
   )
 
   const byOrganisation = new Map<string, string[]>()
@@ -241,10 +295,5 @@ async function membered(
     members.push(figure.id)
     byOrganisation.set(membership.organisationId, members)
   }
-
-  return organisations.map((organisation) => ({
-    id: organisation.id,
-    ...affiliationOf(organisation),
-    memberIds: byOrganisation.get(organisation.id) ?? [],
-  }))
+  return byOrganisation
 }

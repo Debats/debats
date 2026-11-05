@@ -98,10 +98,18 @@ describe('alignOnSubject', () => {
     expect(rows[0].alignment).toMatchObject({ withAuthor: 1, total: 1 })
   })
 
-  it('drops a group whose members never spoke on the subject', () => {
+  it('drops a group whose members never spoke on the subject, but still counts it', () => {
     const voices = [voice('elle', 'pour'), voice('a', 'pour')]
-    const { rows } = alignOnSubject(voices, hers, 'elle', [group('muet', ['z'])])
+    const { rows, groups } = alignOnSubject(voices, hers, 'elle', [group('muet', ['z'])])
     expect(rows).toEqual([])
+    expect(groups).toBe(1)
+  })
+
+  it('counts no group when the author belongs to none', () => {
+    // Une page qui confond « ses groupes se taisent » et « on ne lui connaît
+    // aucun groupe » affirme un parti et un métier qu'elle ignore.
+    const voices = [voice('elle', 'pour'), voice('a', 'pour')]
+    expect(alignOnSubject(voices, hers, 'elle', []).groups).toBe(0)
   })
 
   it('puts the most aligned group first', () => {

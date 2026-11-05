@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../../infra/supabase/admin'
@@ -6,7 +7,7 @@ import { createPublicFigureRepository } from '../../../../../infra/database/publ
 import { createSubjectRepository } from '../../../../../infra/database/subject-repository-supabase'
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
 import { publicFigureAuthor } from '../../../../../domain/entities/statement'
-import { publicFigureRef } from '../../../../../domain/read-models/statement-author'
+import { authorHref, publicFigureRef } from '../../../../../domain/read-models/statement-author'
 import {
   countStatements,
   countSubjectVoices,
@@ -15,7 +16,9 @@ import {
   groupStatementsByPosition,
   groupSubjectCompany,
   latestStatedAt,
+  positionShares,
 } from '../../../../../domain/services/author-on-subject'
+import { elide } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
@@ -96,6 +99,19 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const voices = countSubjectVoices(page.everyone)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
 
+  // Ses groupes se taisent, ou le site ne lui en connaît aucun : dire l'un
+  // pour l'autre, c'est affirmer un parti et un métier qu'on ignore.
+  const nobodyToCompare =
+    page.alignment.groups === 0 ? (
+      <>
+        Débats.co ne connaît encore ni les métiers {elide('de', author.name)}
+        {author.name} ni ses affiliations : il n’y a aucun groupe auquel comparer cette position.{' '}
+        <Link href={authorHref(author)}>Vous pouvez les renseigner depuis sa page.</Link>
+      </>
+    ) : (
+      'Aucune autre voix de ses organisations ni de ses métiers n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position.'
+    )
+
   return (
     <>
       <script
@@ -155,9 +171,9 @@ export default async function FigureSubjectPage({ params }: PageProps) {
         {positions.length > 0 && (
           <PositionAlignment
             debate={debate}
+            shares={positionShares(debate)}
             alignment={page.alignment}
-            voices={voices}
-            nobodyToCompare="Aucune autre voix de ses organisations ni de ses métiers n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position."
+            nobodyToCompare={nobodyToCompare}
           />
         )}
 
