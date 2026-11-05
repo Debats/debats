@@ -10,9 +10,9 @@ import {
 } from '../../../domain/read-models/statement-author'
 import { PositionGroup } from '../../../domain/services/author-on-subject'
 import { formatShortDate } from '../../../lib/format-date'
-import styles from './AuthorOnSubject.module.css'
+import styles from './AuthorSubjectBlocks.module.css'
 
-interface PositionCardProps {
+interface AuthorPositionCardProps {
   subjectSlug: string
   group: PositionGroup
   /** Les autres qui ont pris la même position */
@@ -23,13 +23,13 @@ interface PositionCardProps {
 }
 
 /** Une position de l'auteur, ses prises de position, et qui le rejoint. */
-export default function PositionCard({
+export default function AuthorPositionCard({
   subjectSlug,
   group,
   allies,
   roles,
   editHref,
-}: PositionCardProps) {
+}: AuthorPositionCardProps) {
   const { position, statements } = group
 
   return (
@@ -68,19 +68,22 @@ export default function PositionCard({
         <div className={styles.allies}>
           <p className={styles.alliesLabel}>Même position</p>
           <ul className={styles.allyList}>
-            {allies.map((ally) => (
-              <li key={`${ally.kind}-${ally.id}`}>
-                <Link href={authorOnSubjectHref(ally, subjectSlug)} className={styles.ally}>
-                  <AuthorAvatar author={ally} size={32} />
-                  <span className={styles.allyBody}>
-                    <span className={styles.allyName}>{ally.name}</span>
-                    {roles.get(ally.id) && (
-                      <span className={styles.allyRole}>{roles.get(ally.id)}</span>
-                    )}
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {allies.map((ally) => {
+              // `roles` est indexé par personnalité : une organisation alliée
+              // n'a pas de métier, et n'a donc rien à chercher là-dedans.
+              const role = ally.kind === 'public_figure' ? roles.get(ally.id) : undefined
+              return (
+                <li key={`${ally.kind}-${ally.id}`}>
+                  <Link href={authorOnSubjectHref(ally, subjectSlug)} className={styles.ally}>
+                    <AuthorAvatar author={ally} size={32} />
+                    <span className={styles.allyBody}>
+                      <span className={styles.allyName}>{ally.name}</span>
+                      {role && <span className={styles.allyRole}>{role}</span>}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}

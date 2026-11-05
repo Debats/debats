@@ -1,12 +1,24 @@
 import Link from 'next/link'
+import ShareBar from '../../../../components/charts/ShareBar'
+import ShareLegend from '../../../../components/charts/ShareLegend'
 import { occupationFamilyHref } from '../../../../domain/read-models/occupations'
-import { FamilyPositionMatrix } from '../../../../domain/services/occupation-distribution'
-import Legend from './Legend'
-import StackedBar from './StackedBar'
+import {
+  FamilyPositionMatrix,
+  MatrixCell,
+} from '../../../../domain/services/occupation-distribution'
+import { percent } from '../../../../lib/percent'
 import styles from './SubjectAnalyses.module.css'
 
 /** Vers où penche chaque famille : une barre à 100 % par famille, l'ensemble en référence */
 export default function LeaningBars({ matrix }: { matrix: FamilyPositionMatrix }) {
+  /** Les cellules d'une ligne, nommées par les positions de la matrice */
+  const shares = (cells: MatrixCell[]) =>
+    cells.map((cell, index) => ({
+      key: matrix.positions[index].id,
+      label: matrix.positions[index].title,
+      count: cell.count,
+    }))
+
   return (
     <section className={styles.card}>
       <h3 className={styles.title}>Vers où penche chaque famille de métiers</h3>
@@ -14,26 +26,30 @@ export default function LeaningBars({ matrix }: { matrix: FamilyPositionMatrix }
         Part des prises de position de chaque famille qui va à chaque position, comparée à
         l’ensemble des personnalités.
       </p>
-      <Legend matrix={matrix} />
+      <ShareLegend
+        items={matrix.positions.map((position) => ({
+          key: position.id,
+          label: position.title,
+          note: percent(position.share),
+        }))}
+      />
       <div className={styles.bars}>
         {matrix.families.map(({ family, cells, total }) => (
-          <StackedBar
+          <ShareBar
             key={family.id}
             label={
               <Link href={occupationFamilyHref(family)} className={styles.familyLink}>
                 {family.name}
               </Link>
             }
-            cells={cells}
-            total={total}
-            matrix={matrix}
+            shares={shares(cells)}
+            value={total}
           />
         ))}
-        <StackedBar
+        <ShareBar
           label="Toutes familles"
-          cells={matrix.overall.cells}
-          total={matrix.overall.total}
-          matrix={matrix}
+          shares={shares(matrix.overall.cells)}
+          value={matrix.overall.total}
           reference
         />
       </div>

@@ -4,10 +4,13 @@ import { declarationContent, organisationAuthor, publicFigureAuthor } from '../e
 import { organisationRef, publicFigureRef } from '../read-models/statement-author'
 import { StatementWithAuthor } from '../repositories/statement-repository'
 import {
+  countStatements,
   countSubjectVoices,
+  countUndefended,
   debateOnSubject,
   groupStatementsByPosition,
   groupSubjectCompany,
+  latestStatedAt,
   neighboursOf,
   voicesOf,
 } from './author-on-subject'
@@ -56,6 +59,58 @@ describe('groupStatementsByPosition', () => {
 
     expect(groups.map((g) => g.position.title)).toEqual(['Pour', 'Contre'])
     expect(groups[0].statements).toHaveLength(2)
+  })
+})
+
+describe('countStatements', () => {
+  const grouped = (...statements: StatementWithAuthor[]) =>
+    groupStatementsByPosition(
+      statements.map((s) => ({ ...s, subject: { id: 'subject' } as never })),
+    )
+
+  it('adds up the statements of every position', () => {
+    expect(countStatements(grouped(taken(attac, pour), taken(attac, contre)))).toBe(2)
+  })
+
+  it('counts nothing when the author never spoke', () => {
+    expect(countStatements([])).toBe(0)
+  })
+})
+
+describe('latestStatedAt', () => {
+  const on = (date: string) => ({
+    ...taken(attac, pour),
+    statement: { ...taken(attac, pour).statement, statedAt: new Date(date) },
+    subject: { id: 'subject' } as never,
+  })
+
+  it('takes the most recent date across every position', () => {
+    const groups = groupStatementsByPosition([
+      on('2022-05-01'),
+      { ...on('2024-03-12'), position: contre },
+      on('2023-01-01'),
+    ])
+
+    expect(latestStatedAt(groups)).toEqual(new Date('2024-03-12'))
+  })
+
+  it('has no date when the author never spoke', () => {
+    expect(latestStatedAt([])).toBeNull()
+  })
+})
+
+describe('countUndefended', () => {
+  it('counts the positions nobody has taken', () => {
+    const debate = debateOnSubject(
+      [
+        { id: pour.id, title: 'Pour', slug: 'pour' },
+        { id: contre.id, title: 'Contre', slug: 'contre' },
+      ],
+      [taken(veil, pour)],
+      new Set(),
+    )
+
+    expect(countUndefended(debate)).toBe(1)
   })
 })
 
@@ -159,12 +214,29 @@ describe('neighboursOf', () => {
 
   it('names the positions the author defends there, without repeating one', () => {
     const own = [
-      { ...taken(veil, pour), subject: { id: 'voisin' } },
-      { ...taken(veil, pour), subject: { id: 'voisin' } },
-    ] as never
+      { subject: { id: 'voisin' }, position: { title: 'Pour' } },
+      { subject: { id: 'voisin' }, position: { title: 'Pour' } },
+    ]
 
     expect(neighboursOf([voisin], own)).toEqual([
       { title: 'Un sujet voisin', slug: 'un-sujet-voisin', positions: ['Pour'], statements: 2 },
+    ])
+  })
+
+  it('names each of the positions the author defends there', () => {
+    const own = [
+      { subject: { id: 'voisin' }, position: { title: 'Pour' } },
+      { subject: { id: 'voisin' }, position: { title: 'Contre' } },
+      { subject: { id: 'ailleurs' }, position: { title: 'Ailleurs' } },
+    ]
+
+    expect(neighboursOf([voisin], own)).toEqual([
+      {
+        title: 'Un sujet voisin',
+        slug: 'un-sujet-voisin',
+        positions: ['Pour', 'Contre'],
+        statements: 2,
+      },
     ])
   })
 

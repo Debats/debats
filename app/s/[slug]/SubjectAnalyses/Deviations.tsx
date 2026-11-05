@@ -2,7 +2,7 @@ import {
   FamilyPositionMatrix,
   SMALL_FAMILY,
 } from '../../../../domain/services/occupation-distribution'
-import { percent, signed } from './labels'
+import { percent, signed } from '../../../../lib/percent'
 import styles from './SubjectAnalyses.module.css'
 
 /** The deviation axis spans this many points on each side */

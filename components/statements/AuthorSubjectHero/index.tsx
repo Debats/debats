@@ -1,19 +1,22 @@
 import Link from 'next/link'
 import AuthorAvatar from '../AuthorAvatar'
-import AuthorRoleLine, { AuthorRole } from './AuthorRoleLine'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
 import styles from './AuthorSubjectHero.module.css'
 
-export type { AuthorRole }
-
 interface AuthorSubjectHeroProps {
   author: StatementAuthorRef
   subject: { title: string; slug: string }
-  role: AuthorRole
+  /**
+   * Ce qui nomme l'auteur sous son nom. Vient de la page : une personnalité
+   * se nomme par ses métiers et ses affiliations, une organisation par son
+   * type et ses membres.
+   */
+  role?: React.ReactNode
   counts: {
     statements: number
     positions: number
+    /** Les autres voix du sujet qui défendent une de ses positions */
     allies: number
     /** Les positions ouvertes sur le sujet, défendues ou non */
     openPositions: number
@@ -26,9 +29,9 @@ interface AuthorSubjectHeroProps {
  * En-tête de la page « une personnalité ou une organisation sur un sujet ».
  *
  * Le visiteur arrive le plus souvent d'un moteur de recherche et ne connaît
- * ni l'auteur ni le sujet : le bandeau le nomme par ses métiers et ses
- * affiliations, et laisse la réponse au paragraphe de synthèse qui suit.
- * Les compteurs sont une ligne de repères, pas le sujet du bandeau.
+ * ni l'auteur ni le sujet : le bandeau le nomme, et laisse la réponse au
+ * paragraphe de synthèse qui suit. Les compteurs sont une ligne de repères,
+ * pas le sujet du bandeau.
  */
 export default function AuthorSubjectHero({
   author,
@@ -61,7 +64,7 @@ export default function AuthorSubjectHero({
                 {author.name}
               </Link>
             </h1>
-            <AuthorRoleLine role={role} />
+            {role}
             <p className={styles.subject}>
               sur{' '}
               <Link href={`/s/${subject.slug}`} className={styles.subjectLink}>
@@ -82,9 +85,7 @@ export default function AuthorSubjectHero({
             {plural(counts.positions, 'position défendue', 'positions défendues')}
           </span>
           <span aria-hidden="true">·</span>
-          <span>
-            {counts.allies} {plural(counts.allies, 'acteur du même avis', 'acteurs du même avis')}
-          </span>
+          <span>{counts.allies} voix du même avis</span>
           <span aria-hidden="true">·</span>
           <span>
             {counts.openPositions}{' '}

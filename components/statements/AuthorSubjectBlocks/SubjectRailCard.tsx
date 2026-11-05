@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { StatedSpan } from '../../../domain/repositories/statement-repository'
 import { statedSpanLabel } from '../../../domain/services/subject-timeline'
 import { plural } from '../../../lib/plural'
-import styles from './AuthorOnSubject.module.css'
+import styles from './AuthorSubjectBlocks.module.css'
 
 interface SubjectRailCardProps {
   subject: { title: string; slug: string; problem: string }
@@ -13,8 +13,8 @@ interface SubjectRailCardProps {
 /** Le sujet, sa problématique et les repères du débat, en tête du rail. */
 export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps) {
   return (
-    <div className={styles.subjectCard}>
-      <p className={styles.subjectCardTitle}>Le sujet</p>
+    <div className={styles.railCard}>
+      <p className={styles.railCardTitle}>Le sujet</p>
       <Link href={`/s/${subject.slug}`} className={styles.subjectCardName}>
         {subject.title}
       </Link>
@@ -41,10 +41,10 @@ export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps
         )}
       </dl>
 
-      <Link href={`/s/${subject.slug}`} className={styles.subjectCardLink}>
+      <Link href={`/s/${subject.slug}`} className={styles.railCardLink}>
         Voir toutes les positions
       </Link>
-      <Link href={`/s/${subject.slug}/chronologie`} className={styles.subjectCardLink}>
+      <Link href={`/s/${subject.slug}/chronologie`} className={styles.railCardLink}>
         Chronologie du sujet
       </Link>
     </div>

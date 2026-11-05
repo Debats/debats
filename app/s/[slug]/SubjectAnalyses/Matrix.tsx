@@ -4,7 +4,7 @@ import {
   FamilyPositionMatrix,
   MatrixCell,
 } from '../../../../domain/services/occupation-distribution'
-import { percent } from './labels'
+import { percent } from '../../../../lib/percent'
 import styles from './SubjectAnalyses.module.css'
 
 /** Nuance d'une case de la matrice selon la part de la famille */

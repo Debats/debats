@@ -4,7 +4,8 @@ import {
   authorOnSubjectHref,
   StatementAuthorRef,
 } from '../../../domain/read-models/statement-author'
-import styles from './AuthorOnSubject.module.css'
+import { plural } from '../../../lib/plural'
+import styles from './AuthorSubjectBlocks.module.css'
 
 interface NeighbourSubjectsProps {
   author: StatementAuthorRef
@@ -41,7 +42,8 @@ export default function NeighbourSubjects({ author, neighbours }: NeighbourSubje
             <span className={styles.neighbourTitle}>{neighbour.title}</span>
             {neighbour.statements > 0 && (
               <span className={styles.neighbourPosition}>
-                Position défendue : <strong>{neighbour.positions.join(', ')}</strong>
+                {plural(neighbour.positions.length, 'Position défendue', 'Positions défendues')} :{' '}
+                <strong>{neighbour.positions.join(', ')}</strong>
               </span>
             )}
           </Link>

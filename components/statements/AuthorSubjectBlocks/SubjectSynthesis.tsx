@@ -1,9 +1,9 @@
 import { subjectSynthesis } from '../../../domain/read-models/author-subject-synthesis'
 import { elide } from '../../../lib/elision'
 import { formatShortDate } from '../../../lib/format-date'
-import styles from './AuthorOnSubject.module.css'
+import styles from './AuthorSubjectBlocks.module.css'
 
-interface SynthesisProps {
+interface SubjectSynthesisProps {
   authorName: string
   subjectTitle: string
   statements: number
@@ -22,7 +22,7 @@ interface SynthesisProps {
  * recherche autre chose qu'une citation isolée. Les règles d'accord et les
  * branches vivent dans `subjectSynthesis`, ici on ne fait que les placer.
  */
-export default function Synthesis({
+export default function SubjectSynthesis({
   authorName,
   subjectTitle,
   statements,
@@ -30,7 +30,7 @@ export default function Synthesis({
   allies,
   undefended,
   latest,
-}: SynthesisProps) {
+}: SubjectSynthesisProps) {
   const sentence = subjectSynthesis({
     statements,
     positionTitles,

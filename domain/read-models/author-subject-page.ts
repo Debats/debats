@@ -2,9 +2,14 @@ import { StatedSpan, StatementWithAuthor } from '../repositories/statement-repos
 import { SubjectAlignment } from '../services/group-alignment'
 
 /**
- * Ce que la page « un auteur sur un sujet » lit autour de ses propres
- * prises de position. L'infrastructure produit ces formes, la présentation
- * les consomme : ni l'une ni l'autre ne dépend de l'autre.
+ * Ce que les pages « un auteur sur un sujet » lisent autour des prises de
+ * position de leur auteur. L'infrastructure produit ces formes, la
+ * présentation les consomme : ni l'une ni l'autre ne dépend de l'autre.
+ *
+ * Il y a deux pages, et non une page configurable : une personnalité se
+ * présente par ses métiers et ses affiliations, une organisation par ses
+ * membres. Ce qu'elles ont en commun est `SubjectContext` ; chacune le
+ * complète de ce qu'elle seule sait montrer.
  */
 
 /** Un sujet voisin, et ce que l'auteur y défend quand il s'y est exprimé */
@@ -16,17 +21,15 @@ export interface NeighbourSubject {
   statements: number
 }
 
-/** La carte de visite de l'auteur, pour le rail */
-export interface AuthorProfile {
-  /** Ses métiers actuels, pour la ligne de rôle */
-  occupations: string[]
-  /** Ses affiliations en cours */
-  organisations: Array<{ name: string; slug: string; acronym: string | null }>
-  subjects: number
-  statements: number
+/** Une affiliation en cours, telle que la page la nomme */
+export interface Affiliation {
+  name: string
+  slug: string
+  acronym: string | null
 }
 
-export interface AuthorSubjectPage {
+/** Le sujet, le débat autour, et ce que l'auteur pèse sur le site */
+export interface SubjectContext {
   /** Toutes les prises de position du sujet, tous auteurs confondus */
   everyone: StatementWithAuthor[]
   /** Les positions ouvertes sur le sujet, celles que personne n'a prises comprises */
@@ -37,5 +40,22 @@ export interface AuthorSubjectPage {
   roles: Map<string, string>
   alignment: SubjectAlignment
   neighbours: NeighbourSubject[]
-  profile: AuthorProfile
+  /** Les sujets sur lesquels l'auteur s'est exprimé, sur tout le site */
+  subjects: number
+  /** Ses prises de position sur tout le site */
+  statements: number
+}
+
+/** Ce qu'une personnalité a d'elle à montrer : ses métiers, ses affiliations */
+export interface FigureSubjectPage extends SubjectContext {
+  /** Ses métiers actuels, par ordre alphabétique */
+  occupations: string[]
+  /** Ses affiliations en cours */
+  organisations: Affiliation[]
+}
+
+/** Ce qu'une organisation a d'elle à montrer : ses membres */
+export interface OrganisationSubjectPage extends SubjectContext {
+  /** Ses membres actuels */
+  members: number
 }

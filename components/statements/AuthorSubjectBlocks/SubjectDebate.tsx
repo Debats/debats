@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import AuthorAvatarStack from '../AuthorAvatarStack'
 import { PositionStanding } from '../../../domain/services/author-on-subject'
-import { plural } from '../../../lib/plural'
-import styles from './AuthorOnSubject.module.css'
+import styles from './AuthorSubjectBlocks.module.css'
 
-interface DebateSectionProps {
+interface SubjectDebateProps {
   subjectSlug: string
   debate: PositionStanding[]
 }
@@ -14,9 +13,13 @@ interface DebateSectionProps {
  * soutenue. Une position que personne n'a défendue reste affichée — son
  * vide est une information, et une invitation à contribuer.
  */
-export default function DebateSection({ subjectSlug, debate }: DebateSectionProps) {
+export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProps) {
   if (debate.length === 0) return null
-  const most = debate[0]?.authors.length ?? 0
+
+  // La position la plus soutenue donne l'échelle. Lue sur la liste entière et
+  // non sur sa première entrée : le tri est le travail de `debateOnSubject`,
+  // ce bloc n'a pas à en dépendre pour ne pas dessiner de barre à 140 %.
+  const most = Math.max(0, ...debate.map((standing) => standing.authors.length))
 
   return (
     <section className={styles.others}>
@@ -48,9 +51,7 @@ export default function DebateSection({ subjectSlug, debate }: DebateSectionProp
                     style={{ width: most > 0 ? `${(count / most) * 100}%` : '0%' }}
                   />
                 </div>
-                <span className={styles.debateCount}>
-                  {count} {plural(count, 'voix', 'voix')}
-                </span>
+                <span className={styles.debateCount}>{count} voix</span>
               </div>
 
               {count > 0 ? (
@@ -64,7 +65,7 @@ export default function DebateSection({ subjectSlug, debate }: DebateSectionProp
               ) : (
                 <p className={styles.debateEmpty}>
                   Personne ne l’a encore défendue ici.{' '}
-                  <Link href="/contribuer" className={styles.subjectCardLink}>
+                  <Link href="/contribuer" className={styles.railCardLink}>
                     Vous connaissez une déclaration ?
                   </Link>
                 </p>

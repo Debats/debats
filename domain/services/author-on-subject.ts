@@ -30,6 +30,20 @@ export function groupStatementsByPosition(statements: StatementWithDetails[]): P
   return Array.from(groups.values())
 }
 
+/** Combien de prises de position l'auteur a sur le sujet, toutes positions confondues */
+export const countStatements = (positions: readonly PositionGroup[]): number =>
+  positions.reduce((sum, group) => sum + group.statements.length, 0)
+
+/**
+ * La date de la prise de position la plus récente de l'auteur sur le sujet,
+ * `null` quand il ne s'est pas exprimé. Le groupement par position ne dit
+ * rien de la chronologie : c'est la plus récente de toutes les positions.
+ */
+export const latestStatedAt = (positions: readonly PositionGroup[]): Date | null =>
+  positions
+    .flatMap(({ statements }) => statements.map(({ statement }) => statement.statedAt))
+    .reduce<Date | null>((last, date) => (!last || date > last ? date : last), null)
+
 /**
  * Qui rejoint l'auteur sur chacune de ses positions, lui-même exclu. Les
  * autres positions du sujet sont le travail de `debateOnSubject`, qui les
@@ -91,6 +105,10 @@ export function debateOnSubject(
     .sort((a, b) => b.authors.length - a.authors.length)
 }
 
+/** Combien de positions du sujet personne n'a encore défendues */
+export const countUndefended = (debate: readonly PositionStanding[]): number =>
+  debate.filter((standing) => standing.authors.length === 0).length
+
 /** Les voix du sujet, réduites à ce que mesure l'alignement par groupe */
 export const voicesOf = (statements: readonly StatementWithAuthor[]) =>
   statements.map(({ author, position }) => ({
@@ -107,10 +125,21 @@ export const voicesOf = (statements: readonly StatementWithAuthor[]) =>
 export const countSubjectVoices = (statements: readonly StatementWithAuthor[]): number =>
   new Set(statements.map(({ author }) => authorKey(author))).size
 
+/**
+ * Ce qu'une prise de position apprend sur un sujet voisin : où elle a été
+ * prise, et pour quoi. Le minimum que `neighboursOf` lit — déclarer
+ * `StatementWithDetails` obligerait ses tests à fabriquer une prise de
+ * position entière, ou à mentir au typage.
+ */
+export interface StatementOnSubject {
+  subject: { id: string }
+  position: { title: string }
+}
+
 /** Un sujet voisin, et ce que l'auteur y défend quand il s'y est exprimé */
 export function neighboursOf(
   related: ReadonlyArray<{ id: string; title: string; slug: string }>,
-  own: readonly StatementWithDetails[],
+  own: readonly StatementOnSubject[],
 ): NeighbourSubject[] {
   return related.map((subject) => {
     const mine = own.filter((statement) => statement.subject.id === subject.id)

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import styles from './AuthorOnSubject.module.css'
+import { elide } from '../../../lib/elision'
+import styles from './AuthorSubjectBlocks.module.css'
 
 interface ContributeCardProps {
   authorName: string
@@ -12,13 +13,16 @@ interface ContributeCardProps {
  * seul bloc qui transforme le trafic des moteurs en contribution.
  */
 export default function ContributeCard({ authorName, statements }: ContributeCardProps) {
+  // « de Alma Dufour » n'existe pas : le nom de l'auteur décide de la forme
+  const author = `${elide('de', authorName)}${authorName}`
+
   return (
     <section className={styles.contribute}>
       <h2 className={styles.contributeTitle}>Il manque une déclaration ?</h2>
       <p className={styles.contributeBody}>
         {statements === 0
-          ? `Débats.co n’a encore aucune prise de position de ${authorName} sur ce sujet.`
-          : `Cette page ne recense ${statements === 1 ? "qu'une seule prise de position" : `que ${statements} prises de position`} de ${authorName} sur ce sujet.`}{' '}
+          ? `Débats.co n’a encore aucune prise de position ${author} sur ce sujet.`
+          : `Cette page ne recense ${counted(statements)} ${author} sur ce sujet.`}{' '}
         Si vous en connaissez une autre — un discours, un vote, une interview — ajoutez-la avec sa
         source : elle apparaîtra ici après relecture.
       </p>
@@ -33,3 +37,7 @@ export default function ContributeCard({ authorName, statements }: ContributeCar
     </section>
   )
 }
+
+/** « qu’une seule prise de position », « que 3 prises de position » */
+const counted = (statements: number) =>
+  statements === 1 ? 'qu’une seule prise de position' : `que ${statements} prises de position`

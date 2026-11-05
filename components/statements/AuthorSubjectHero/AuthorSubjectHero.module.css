@@ -62,7 +62,7 @@
   color: var(--signal);
 }
 
-/* Ligne de rôle : métiers actuels puis affiliations */
+/* Ligne de rôle : les métiers d'une personnalité, le type d'une organisation */
 .role {
   display: flex;
   flex-wrap: wrap;
@@ -71,7 +71,8 @@
   margin: 10px 0 0;
 }
 
-.occupation {
+/* Une pastille de la ligne de rôle : un métier, un type, un effectif */
+.roleChip {
   composes: small from '../../../styles/text.module.css';
   padding: 2px 10px;
   border-radius: var(--radius-pill);

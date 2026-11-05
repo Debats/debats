@@ -1,5 +1,11 @@
 {
   "rules": {
+    "no-duplicate-selectors": [
+      true,
+      {
+        "message": "Ce sélecteur est déjà déclaré plus haut : la seconde déclaration écrase la première en silence. Fusionner les deux règles."
+      }
+    ],
     "declaration-property-value-disallowed-list": [
       {
         "/.*/": [

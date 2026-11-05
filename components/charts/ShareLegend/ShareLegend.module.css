@@ -1,0 +1,29 @@
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.item {
+  composes: small from '../../../styles/text.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  flex-shrink: 0;
+}
+
+.note {
+  composes: meta from '../../../styles/text.module.css';
+  font-size: 11px;
+}

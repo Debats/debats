@@ -2,20 +2,26 @@ import Link from 'next/link'
 import AlignmentTrack from './AlignmentTrack'
 import { SubjectAlignment } from '../../../domain/services/group-alignment'
 import { percent } from '../../../lib/percent'
-import { plural } from '../../../lib/plural'
 import styles from './AlignmentChart.module.css'
 
 interface AlignmentChartProps {
   alignment: SubjectAlignment
-  /** « cette personnalité », « cette organisation » */
-  who: string
+  /** Le nom de la ligne de référence, et son libellé dans les descriptions */
+  referenceLabel: string
+  /**
+   * Ce qu'il faut savoir pour lire le graphique. Le texte appartient à la
+   * page : ce composant ne dit pas de quoi on parle, il montre des écarts.
+   */
+  caveat?: React.ReactNode
 }
 
 /**
- * Avec qui l'auteur est raccord : par groupe, la part qui défend la même
- * position, son intervalle de confiance, et le trait de l'ensemble.
+ * Des parts comparées à une référence : par groupe, la part observée, son
+ * intervalle de confiance, et le trait de la référence. Une pastille creuse
+ * est une part dont l'intervalle contient la référence — l'écart ne conclut
+ * rien.
  */
-export default function AlignmentChart({ alignment, who }: AlignmentChartProps) {
+export default function AlignmentChart({ alignment, referenceLabel, caveat }: AlignmentChartProps) {
   const { everyone, rows } = alignment
   const reference = everyone.share
 
@@ -28,8 +34,7 @@ export default function AlignmentChart({ alignment, who }: AlignmentChartProps) 
               {row.label}
             </Link>
             <span className={styles.voices}>
-              {row.alignment.withAuthor} sur {row.alignment.total}{' '}
-              {plural(row.alignment.total, 'voix', 'voix')}
+              {row.alignment.withAuthor} sur {row.alignment.total} voix
             </span>
           </span>
           <AlignmentTrack alignment={row.alignment} reference={reference} label={row.label} />
@@ -44,15 +49,15 @@ export default function AlignmentChart({ alignment, who }: AlignmentChartProps) 
 
       <div className={`${styles.row} ${styles.rowReference}`}>
         <span className={styles.group}>
-          <span className={styles.groupName}>Toutes les voix du sujet</span>
+          <span className={styles.groupName}>{referenceLabel}</span>
           <span className={styles.voices}>
-            {everyone.withAuthor} sur {everyone.total} {plural(everyone.total, 'voix', 'voix')}
+            {everyone.withAuthor} sur {everyone.total} voix
           </span>
         </span>
         <AlignmentTrack
           alignment={everyone}
           reference={reference}
-          label="Toutes les voix du sujet"
+          label={referenceLabel}
           isReference
         />
         <span className={styles.value}>
@@ -71,12 +76,7 @@ export default function AlignmentChart({ alignment, who }: AlignmentChartProps) 
         <span />
       </div>
 
-      <p className={styles.caveat}>
-        Chaque barre est l’intervalle dans lequel la part du groupe se tient vraiment, vu le nombre
-        de personnes qu’il compte. Tant qu’elle traverse le trait de l’ensemble, l’écart avec {who}{' '}
-        ne conclut rien : la pastille reste creuse. Ces parts portent sur les personnes recensées
-        sur Débats.co, pas sur un échantillon représentatif.
-      </p>
+      {caveat && <p className={styles.caveat}>{caveat}</p>}
     </div>
   )
 }

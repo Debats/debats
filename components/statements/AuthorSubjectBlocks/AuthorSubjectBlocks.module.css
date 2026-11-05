@@ -104,32 +104,12 @@ a.sourceLink:hover {
   composes: meta from '../../../styles/text.module.css';
 }
 
-.allies {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-
 .alliesLabel {
   composes: label from '../../../styles/text.module.css';
 }
 
 .others {
   margin-top: 40px;
-}
-
-.otherCard {
-  background-color: var(--card);
-  border-radius: var(--radius-card);
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 24px;
 }
 
 .otherTitle {
@@ -141,7 +121,8 @@ a.sourceLink:hover {
   text-wrap: pretty;
 }
 
-.subjectCard {
+/* Les cartes du rail : celle du sujet, celle de l'auteur */
+.railCard {
   padding: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
@@ -150,7 +131,7 @@ a.sourceLink:hover {
   gap: 10px;
 }
 
-.subjectCardTitle {
+.railCardTitle {
   composes: label from '../../../styles/text.module.css';
 }
 
@@ -172,9 +153,9 @@ a.sourceLink:hover {
   composes: small from '../../../styles/text.module.css';
 }
 
-.subjectCardLink,
-.subjectCardLink:link,
-.subjectCardLink:visited {
+.railCardLink,
+.railCardLink:link,
+.railCardLink:visited {
   font-size: 13px;
   color: var(--signal);
   text-decoration: underline;
@@ -183,7 +164,7 @@ a.sourceLink:hover {
   text-decoration-color: rgba(227, 36, 63, 0.4);
 }
 
-.subjectCardLink:hover {
+.railCardLink:hover {
   text-decoration-color: var(--signal);
 }
 
@@ -212,38 +193,15 @@ a.sourceLink:hover {
   font-weight: 600;
 }
 
-.analysis {
+/* La carte « où se situe cette position », détachée des prises de position */
+.alignmentCard {
+  composes: card from '../../../styles/analysis.module.css';
   margin-top: 40px;
 }
 
 .subTitle {
   composes: label from '../../../styles/text.module.css';
   margin-top: 8px;
-}
-
-/* Légende des nuances, au-dessus de la barre du sujet */
-.legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-}
-
-.legendItem {
-  composes: small from '../../../styles/text.module.css';
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink);
-}
-
-.swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  flex-shrink: 0;
 }
 
 /* Le débat en entier : une carte par position ouverte */
@@ -528,12 +486,4 @@ a.sourceLink:hover {
   .contribute {
     padding: 20px;
   }
-}
-
-.legendMine {
-  composes: meta from '../../../styles/text.module.css';
-  padding: 1px 8px;
-  border-radius: var(--radius-pill);
-  background-color: var(--ink);
-  color: var(--paper);
 }
