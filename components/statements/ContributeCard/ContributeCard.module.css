@@ -1,0 +1,70 @@
+/* L'appel à contribuer, en pied de page : du trafic des moteurs vers une contribution */
+.card {
+  margin-top: 40px;
+  padding: 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.body {
+  composes: small from '../../../styles/text.module.css';
+  margin-top: 10px;
+  max-width: 62ch;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.primary,
+.primary:link,
+.primary:visited {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  background-color: var(--signal);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.primary:hover {
+  background-color: var(--signal-dark);
+}
+
+.secondary,
+.secondary:link,
+.secondary:visited {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.secondary:hover {
+  border-color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+}

@@ -1,0 +1,49 @@
+.card {
+  composes: railCard from '../../../styles/blocks.module.css';
+}
+
+.title {
+  composes: railCardTitle from '../../../styles/blocks.module.css';
+}
+
+.link {
+  composes: quietLink from '../../../styles/blocks.module.css';
+}
+
+/* La carte de visite de l'auteur */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.name:hover {
+  color: var(--signal);
+}
+
+/* Une ligne de présentation : les métiers, les affiliations, les compteurs */
+.line {
+  composes: small from '../../../styles/text.module.css';
+}
+
+.organisation,
+.organisation:link,
+.organisation:visited {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-2);
+}
+
+.organisation:hover {
+  color: var(--signal);
+}

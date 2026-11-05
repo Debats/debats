@@ -4,7 +4,7 @@ import {
   authorOnSubjectHref,
   StatementAuthorRef,
 } from '../domain/read-models/statement-author'
-import { elide } from './elision'
+import { elided } from './elision'
 
 interface SubjectSummary {
   title: string
@@ -13,7 +13,7 @@ interface SubjectSummary {
 
 /** « Prises de position d'Alma Dufour sur… », jamais « de Alma Dufour » */
 const describe = (author: StatementAuthorRef, subject: SubjectSummary) =>
-  `Prises de position ${elide('de', author.name)}${author.name} sur ${subject.title}.`
+  `Prises de position ${elided('de', author.name)} sur ${subject.title}.`
 
 /** Metadata of the page « un auteur sur un sujet » */
 export function authorOnSubjectMetadata(

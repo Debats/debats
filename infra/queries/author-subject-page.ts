@@ -16,6 +16,7 @@ import {
 import { FigureOccupation, rolesByFigure } from '../../domain/read-models/author-role'
 import { Position } from '../../domain/entities/position'
 import { Subject } from '../../domain/entities/subject'
+import { DatabaseError } from '../../domain/repositories/errors'
 import { MembershipWithOrganisation } from '../../domain/repositories/organisation-membership-repository'
 import {
   StatedSpan,
@@ -49,11 +50,18 @@ interface SubjectRef {
   id: string
 }
 
+/** Les lectures indépendantes partent ensemble : `Effect.all` est séquentiel par défaut */
+const PARALLEL = { concurrency: 'unbounded' } as const
+
 /**
  * Ce que les pages « un auteur sur un sujet » lisent autour des prises de
  * position de leur auteur. Deux fonctions, une par page : les deux pages ne
  * montrent pas la même identité, et une seule fonction qui rendrait les deux
  * obligerait chaque page à ignorer la moitié de sa réponse.
+ *
+ * Chacune rend **un** Effect, que la page lance une fois : une
+ * `DatabaseError` reste typée jusque là, au lieu de devenir une exception à
+ * chacune des onze lectures.
  *
  * Ces fonctions lisent les tables et rien d'autre : ce qui fait un groupe
  * est dit par `domain/services/author-groups.ts`, ce qui fait un sujet
@@ -61,82 +69,85 @@ interface SubjectRef {
  */
 
 /** La page d'une personnalité sur un sujet : ses métiers, ses affiliations */
-export async function loadFigureSubjectPage(
+export function loadFigureSubjectPage(
   supabase: Client,
   figure: { id: string },
   subject: SubjectRef,
   /** Les positions que la personnalité défend sur ce sujet */
   hers: ReadonlySet<string>,
   today: Date,
-): Promise<FigureSubjectPage> {
+): Effect.Effect<FigureSubjectPage, DatabaseError> {
   const self = publicFigureAuthor(figure.id)
 
-  const [around, memberships, totals] = await Promise.all([
-    subjectAround(supabase, self, subject),
-    Effect.runPromise(
-      createOrganisationMembershipRepository(supabase).findByPublicFigureId(figure.id),
-    ),
-    figureTotals(supabase, figure.id),
-  ])
+  return Effect.all(
+    {
+      around: subjectAround(supabase, self, subject),
+      memberships: createOrganisationMembershipRepository(supabase).findByPublicFigureId(figure.id),
+      totals: figureTotals(supabase, figure.id),
+    },
+    PARALLEL,
+  ).pipe(
+    Effect.flatMap(({ around, memberships, totals }) => {
+      const current = memberships.filter(({ membership }) => isCurrentMembership(membership, today))
+      const figureIds = figuresOnSubject(around.subjectStatements, self)
 
-  const current = memberships.filter(({ membership }) => isCurrentMembership(membership, today))
-  const groups = await figureGroups(
-    supabase,
-    figure.id,
-    figuresOnSubject(around.everyone, self),
-    current,
-    today,
+      return Effect.map(
+        figureGroups(supabase, figure.id, figureIds, current, today),
+        (groups): FigureSubjectPage => ({
+          ...context(around, self, hers, groups, totals),
+          occupations: occupationsOf(around.held, figure.id),
+          organisations: current.map(({ organisation }) => affiliationOf(organisation)),
+        }),
+      )
+    }),
   )
-
-  return {
-    ...context(around, self, hers, groups, totals),
-    occupations: around.held
-      .filter(({ publicFigureId }) => publicFigureId === figure.id)
-      .map(({ occupation }) => occupation.name)
-      .sort((a, b) => a.localeCompare(b, 'fr')),
-    organisations: current.map(({ organisation }) => affiliationOf(organisation)),
-  }
 }
 
 /** La page d'une organisation sur un sujet : ses membres */
-export async function loadOrganisationSubjectPage(
+export function loadOrganisationSubjectPage(
   supabase: Client,
   organisation: Affiliation & { id: string },
   subject: SubjectRef,
   /** Les positions que l'organisation défend sur ce sujet */
   hers: ReadonlySet<string>,
   today: Date,
-): Promise<OrganisationSubjectPage> {
+): Effect.Effect<OrganisationSubjectPage, DatabaseError> {
   const self = organisationAuthor(organisation.id)
 
-  const [around, summary, memberIds] = await Promise.all([
-    subjectAround(supabase, self, subject),
-    Effect.runPromise(createOrganisationRepository(supabase).findSummaryById(organisation.id)),
-    memberIdsOf(supabase, organisation.id, today),
-  ])
+  return Effect.map(
+    Effect.all(
+      {
+        around: subjectAround(supabase, self, subject),
+        summary: createOrganisationRepository(supabase).findSummaryById(organisation.id),
+        memberIds: memberIdsOf(supabase, organisation.id, today),
+      },
+      PARALLEL,
+    ),
+    ({ around, summary, memberIds }): OrganisationSubjectPage => {
+      const itself: MemberedOrganisation = {
+        ...affiliationOf(organisation),
+        id: organisation.id,
+        memberIds,
+      }
+      const totals = {
+        subjects: summary?.subjectsCount ?? 0,
+        statements: summary?.statementsCount ?? 0,
+      }
 
-  const totals = {
-    subjects: summary?.subjectsCount ?? 0,
-    statements: summary?.statementsCount ?? 0,
-  }
-  const itself: MemberedOrganisation = {
-    ...affiliationOf(organisation),
-    id: organisation.id,
-    memberIds,
-  }
-
-  return {
-    ...context(around, self, hers, organisationGroups([itself]), totals),
-    // Les mêmes membres que le groupe auquel la page compare l'organisation :
-    // ceux dont l'affiliation est en cours, et non tous ceux qui l'ont été.
-    members: memberIds.length,
-  }
+      return {
+        ...context(around, self, hers, organisationGroups([itself]), totals),
+        // Les mêmes membres que le groupe auquel la page compare l'organisation :
+        // ceux dont l'affiliation est en cours, et non tous ceux qui l'ont été.
+        members: memberIds.length,
+      }
+    },
+  )
 }
 
 /** Ce que les deux pages lisent du sujet et du débat autour */
 interface SubjectAround {
   /** Toutes les prises de position du sujet, tous auteurs confondus */
-  everyone: StatementWithAuthor[]
+  subjectStatements: StatementWithAuthor[]
   /** Les positions ouvertes, celles que personne n'a prises comprises */
   positions: Position[]
   span: StatedSpan | null
@@ -149,35 +160,39 @@ interface SubjectAround {
 }
 
 /** Les lectures que les deux pages partagent */
-async function subjectAround(
+function subjectAround(
   supabase: Client,
   self: StatementAuthor,
   subject: SubjectRef,
-): Promise<SubjectAround> {
+): Effect.Effect<SubjectAround, DatabaseError> {
   const statements = createStatementRepository(supabase)
 
-  const [everyone, positions, span, related] = await Promise.all([
-    Effect.runPromise(statements.findBySubjectWithAuthors(subject.id)),
-    Effect.runPromise(createPositionRepository(supabase).findBySubjectId(subject.id)),
-    Effect.runPromise(statements.findStatedSpanBySubjectId(subject.id)),
-    Effect.runPromise(createRelatedSubjectsRepository(supabase).findRelated(subject.id)),
-  ])
-
-  const [held, onNeighbours] = await Promise.all([
-    Effect.runPromise(
-      createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(
-        figuresOnSubject(everyone, self),
-      ),
+  return Effect.all(
+    {
+      subjectStatements: statements.findBySubjectWithAuthors(subject.id),
+      positions: createPositionRepository(supabase).findBySubjectId(subject.id),
+      span: statements.findStatedSpanBySubjectId(subject.id),
+      related: createRelatedSubjectsRepository(supabase).findRelated(subject.id),
+    },
+    PARALLEL,
+  ).pipe(
+    // Ces deux-là dépendent des premières : qui parle sur le sujet, et quels
+    // sujets lui sont liés.
+    Effect.flatMap((subjectWide) =>
+      Effect.all(
+        {
+          held: createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(
+            figuresOnSubject(subjectWide.subjectStatements, self),
+          ),
+          onNeighbours: statements.findByAuthorAndSubjectIds(
+            self,
+            subjectWide.related.map(({ id }) => id),
+          ),
+        },
+        PARALLEL,
+      ).pipe(Effect.map((aroundTheSubject) => ({ ...subjectWide, ...aroundTheSubject }))),
     ),
-    Effect.runPromise(
-      statements.findByAuthorAndSubjectIds(
-        self,
-        related.map(({ id }) => id),
-      ),
-    ),
-  ])
-
-  return { everyone, positions, span, related, held, onNeighbours }
+  )
 }
 
 /** Ce que les deux pages tirent des mêmes lectures */
@@ -189,11 +204,11 @@ function context(
   totals: Pick<SubjectContext, 'subjects' | 'statements'>,
 ): SubjectContext {
   return {
-    everyone: around.everyone,
+    subjectStatements: around.subjectStatements,
     positions: around.positions.map(({ id, title, slug }) => ({ id, title, slug })),
     span: around.span,
     roles: rolesByFigure(around.held),
-    alignment: alignOnSubject(voicesOf(around.everyone), hers, authorKey(self), groups),
+    alignment: alignOnSubject(voicesOf(around.subjectStatements), hers, authorKey(self), groups),
     neighbours: neighboursOf(around.related, around.onNeighbours),
     ...totals,
   }
@@ -205,15 +220,25 @@ const affiliationOf = (organisation: Affiliation): Affiliation => ({
   acronym: organisation.acronym,
 })
 
+/** Les métiers que la personnalité de la page tient aujourd'hui, par ordre alphabétique */
+const occupationsOf = (held: readonly FigureOccupation[], figureId: string): string[] =>
+  held
+    .filter(({ publicFigureId }) => publicFigureId === figureId)
+    .map(({ occupation }) => occupation.name)
+    .sort((a, b) => a.localeCompare(b, 'fr'))
+
 /** Les compteurs d'une personnalité, lus sur la projection qui les agrège déjà */
-async function figureTotals(
+function figureTotals(
   supabase: Client,
   figureId: string,
-): Promise<Pick<SubjectContext, 'subjects' | 'statements'>> {
-  const [summary] = await Effect.runPromise(
+): Effect.Effect<Pick<SubjectContext, 'subjects' | 'statements'>, DatabaseError> {
+  return Effect.map(
     createPublicFigureRepository(supabase).findSummariesByIds([figureId]),
+    ([summary]) => ({
+      subjects: summary?.subjectsCount ?? 0,
+      statements: summary?.statementsCount ?? 0,
+    }),
   )
-  return { subjects: summary?.subjectsCount ?? 0, statements: summary?.statementsCount ?? 0 }
 }
 
 /**
@@ -221,79 +246,92 @@ async function figureTotals(
  * cours, et ses familles de métiers. L'infrastructure lit, le domaine dit
  * ce qui fait un groupe.
  */
-async function figureGroups(
+function figureGroups(
   supabase: Client,
   figureId: string,
   figureIds: string[],
   current: MembershipWithOrganisation[],
   today: Date,
-): Promise<GroupDefinition[]> {
+): Effect.Effect<GroupDefinition[], DatabaseError> {
   const occupations = createOccupationRepository(supabase)
 
-  const [organisations, assignments, families] = await Promise.all([
-    membered(
-      supabase,
-      current.map(({ organisation }) => organisation),
-      today,
+  return Effect.all(
+    {
+      organisations: membered(
+        supabase,
+        current.map(({ organisation }) => organisation),
+        today,
+      ),
+      assignments: occupations.findAssignmentsByPublicFigureIds(figureIds),
+      families: createOccupationFamilyRepository(supabase).findAll(),
+    },
+    PARALLEL,
+  ).pipe(
+    Effect.flatMap(({ organisations, assignments, families }) =>
+      Effect.map(
+        // Seuls les métiers effectivement tenus par ces personnes, pas toute la liste
+        occupations.findByIds(Array.from(new Set(assignments.map((a) => a.occupationId)))),
+        (held) => [
+          ...organisationGroups(organisations),
+          ...occupationFamilyGroups(figureId, families, assignments, held),
+        ],
+      ),
     ),
-    Effect.runPromise(occupations.findAssignmentsByPublicFigureIds(figureIds)),
-    Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
-  ])
-
-  // Seuls les métiers effectivement tenus par ces personnes, pas toute la liste
-  const held = await Effect.runPromise(
-    occupations.findByIds(Array.from(new Set(assignments.map((a) => a.occupationId)))),
   )
-
-  return [
-    ...organisationGroups(organisations),
-    ...occupationFamilyGroups(figureId, families, assignments, held),
-  ]
 }
 
 /** Une seule lecture pour toutes ces organisations, jamais une par affiliation */
-async function membered(
+function membered(
   supabase: Client,
   organisations: ReadonlyArray<Affiliation & { id: string }>,
   today: Date,
-): Promise<MemberedOrganisation[]> {
-  if (organisations.length === 0) return []
+): Effect.Effect<MemberedOrganisation[], DatabaseError> {
+  if (organisations.length === 0) return Effect.succeed([])
 
-  const byOrganisation = await currentMembers(
-    supabase,
-    organisations.map(({ id }) => id),
-    today,
+  return Effect.map(
+    currentMembers(
+      supabase,
+      organisations.map(({ id }) => id),
+      today,
+    ),
+    (byOrganisation) =>
+      organisations.map((organisation) => ({
+        id: organisation.id,
+        ...affiliationOf(organisation),
+        memberIds: byOrganisation.get(organisation.id) ?? [],
+      })),
   )
-
-  return organisations.map((organisation) => ({
-    id: organisation.id,
-    ...affiliationOf(organisation),
-    memberIds: byOrganisation.get(organisation.id) ?? [],
-  }))
 }
 
 /** Les personnalités affiliées à cette organisation aujourd'hui */
-async function memberIdsOf(supabase: Client, organisationId: string, today: Date) {
-  const byOrganisation = await currentMembers(supabase, [organisationId], today)
-  return byOrganisation.get(organisationId) ?? []
+function memberIdsOf(
+  supabase: Client,
+  organisationId: string,
+  today: Date,
+): Effect.Effect<string[], DatabaseError> {
+  return Effect.map(
+    currentMembers(supabase, [organisationId], today),
+    (byOrganisation) => byOrganisation.get(organisationId) ?? [],
+  )
 }
 
 /** Les membres actuels de ces organisations, par organisation */
-async function currentMembers(
+function currentMembers(
   supabase: Client,
   organisationIds: string[],
   today: Date,
-): Promise<Map<string, string[]>> {
-  const links = await Effect.runPromise(
+): Effect.Effect<Map<string, string[]>, DatabaseError> {
+  return Effect.map(
     createOrganisationMembershipRepository(supabase).findByOrganisationIds(organisationIds),
+    (links) => {
+      const byOrganisation = new Map<string, string[]>()
+      for (const { membership, figure } of links) {
+        if (!isCurrentMembership(membership, today)) continue
+        const members = byOrganisation.get(membership.organisationId) ?? []
+        members.push(figure.id)
+        byOrganisation.set(membership.organisationId, members)
+      }
+      return byOrganisation
+    },
   )
-
-  const byOrganisation = new Map<string, string[]>()
-  for (const { membership, figure } of links) {
-    if (!isCurrentMembership(membership, today)) continue
-    const members = byOrganisation.get(membership.organisationId) ?? []
-    members.push(figure.id)
-    byOrganisation.set(membership.organisationId, members)
-  }
-  return byOrganisation
 }

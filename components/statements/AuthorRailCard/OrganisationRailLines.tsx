@@ -1,6 +1,6 @@
 import { ORGANISATION_TYPE_LABELS, OrganisationType } from '../../../domain/entities/organisation'
 import { plural } from '../../../lib/plural'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './AuthorRailCard.module.css'
 
 /**
  * Ce qui présente une organisation dans le rail : son type et ses membres.
@@ -20,9 +20,9 @@ export default function OrganisationRailLines({
 }) {
   return (
     <>
-      <p className={styles.authorRole}>{ORGANISATION_TYPE_LABELS[organisationType]}</p>
+      <p className={styles.line}>{ORGANISATION_TYPE_LABELS[organisationType]}</p>
       {members > 0 && (
-        <p className={styles.authorRole}>
+        <p className={styles.line}>
           {members} {plural(members, 'membre recensé·e', 'membres recensé·es')}
         </p>
       )}

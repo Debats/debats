@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { elide } from '../../../lib/elision'
-import styles from './AuthorSubjectBlocks.module.css'
+import { elided } from '../../../lib/elision'
+import styles from './ContributeCard.module.css'
 
 interface ContributeCardProps {
   authorName: string
@@ -14,23 +14,23 @@ interface ContributeCardProps {
  */
 export default function ContributeCard({ authorName, statements }: ContributeCardProps) {
   // « de Alma Dufour » n'existe pas : le nom de l'auteur décide de la forme
-  const author = `${elide('de', authorName)}${authorName}`
+  const author = elided('de', authorName)
 
   return (
-    <section className={styles.contribute}>
-      <h2 className={styles.contributeTitle}>Il manque une déclaration ?</h2>
-      <p className={styles.contributeBody}>
+    <section className={styles.card}>
+      <h2 className={styles.title}>Il manque une déclaration ?</h2>
+      <p className={styles.body}>
         {statements === 0
           ? `Débats.co n’a encore aucune prise de position ${author} sur ce sujet.`
           : `Cette page ne recense ${counted(statements)} ${author} sur ce sujet.`}{' '}
         Si vous en connaissez une autre — un discours, un vote, une interview — ajoutez-la avec sa
         source : elle apparaîtra ici après relecture.
       </p>
-      <div className={styles.contributeActions}>
-        <Link href="/nouvelle-prise-de-position" className={styles.contributePrimary}>
+      <div className={styles.actions}>
+        <Link href="/nouvelle-prise-de-position" className={styles.primary}>
           Ajouter une prise de position
         </Link>
-        <Link href="/guide" className={styles.contributeSecondary}>
+        <Link href="/guide" className={styles.secondary}>
           Comment nous sourçons
         </Link>
       </div>

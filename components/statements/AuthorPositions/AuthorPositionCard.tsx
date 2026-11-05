@@ -13,7 +13,7 @@ import {
 } from '../../../domain/read-models/statement-author'
 import { PositionGroup } from '../../../domain/services/author-on-subject'
 import { formatShortDate } from '../../../lib/format-date'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './AuthorPositions.module.css'
 
 interface AuthorPositionCardProps {
   subjectSlug: string

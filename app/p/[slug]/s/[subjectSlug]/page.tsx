@@ -18,7 +18,7 @@ import {
   latestStatedAt,
   positionShares,
 } from '../../../../../domain/services/author-on-subject'
-import { elide } from '../../../../../lib/elision'
+import { prepositionBefore } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
@@ -33,15 +33,15 @@ import ContentWithSidebar from '../../../../../components/layout/ContentWithSide
 import { figureOnSubjectHref } from '../../../../../domain/read-models/hrefs'
 import AuthorSubjectHero from '../../../../../components/statements/AuthorSubjectHero'
 import FigureRoleLine from '../../../../../components/statements/AuthorSubjectHero/FigureRoleLine'
-import AuthorPositions from '../../../../../components/statements/AuthorSubjectBlocks/AuthorPositions'
-import AuthorRailCard from '../../../../../components/statements/AuthorSubjectBlocks/AuthorRailCard'
-import ContributeCard from '../../../../../components/statements/AuthorSubjectBlocks/ContributeCard'
-import FigureRailLines from '../../../../../components/statements/AuthorSubjectBlocks/FigureRailLines'
-import NeighbourSubjects from '../../../../../components/statements/AuthorSubjectBlocks/NeighbourSubjects'
-import PositionAlignment from '../../../../../components/statements/AuthorSubjectBlocks/PositionAlignment'
-import SubjectDebate from '../../../../../components/statements/AuthorSubjectBlocks/SubjectDebate'
-import SubjectRailCard from '../../../../../components/statements/AuthorSubjectBlocks/SubjectRailCard'
-import SubjectSynthesis from '../../../../../components/statements/AuthorSubjectBlocks/SubjectSynthesis'
+import AuthorPositions from '../../../../../components/statements/AuthorPositions'
+import AuthorRailCard from '../../../../../components/statements/AuthorRailCard'
+import FigureRailLines from '../../../../../components/statements/AuthorRailCard/FigureRailLines'
+import ContributeCard from '../../../../../components/statements/ContributeCard'
+import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
+import PositionAlignment from '../../../../../components/statements/PositionAlignment'
+import SubjectDebate from '../../../../../components/statements/SubjectDebate'
+import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
+import SubjectSynthesis from '../../../../../components/statements/SubjectSynthesis'
 
 interface PageProps {
   params: Promise<{ slug: string; subjectSlug: string }>
@@ -94,12 +94,14 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const hers = new Set(positions.map(({ position }) => position.id))
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
-  const page = await loadFigureSubjectPage(supabase, figure, subject, hers, new Date())
-  const company = groupSubjectCompany(page.everyone, publicFigureAuthor(figure.id), hers)
-  const debate = debateOnSubject(page.positions, page.everyone, hers)
+  const page = await Effect.runPromise(
+    loadFigureSubjectPage(supabase, figure, subject, hers, new Date()),
+  )
+  const company = groupSubjectCompany(page.subjectStatements, publicFigureAuthor(figure.id), hers)
+  const debate = debateOnSubject(page.positions, page.subjectStatements, hers)
 
   const statements = countStatements(positions)
-  const voices = countSubjectVoices(page.everyone)
+  const voices = countSubjectVoices(page.subjectStatements)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
   const review = await reviewOf(
     supabase,
@@ -112,7 +114,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const nobodyToCompare =
     page.alignment.groups === 0 ? (
       <>
-        Débats.co ne connaît encore ni les métiers {elide('de', author.name)}
+        Débats.co ne connaît encore ni les métiers {prepositionBefore('de', author.name)}
         {author.name} ni ses affiliations : il n’y a aucun groupe auquel comparer cette position.{' '}
         <Link href={authorHref(author)}>Vous pouvez les renseigner depuis sa page.</Link>
       </>
@@ -167,6 +169,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
+          statements={statements}
           company={company}
           roles={page.roles}
           editHref={
@@ -178,7 +181,6 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
         {positions.length > 0 && (
           <PositionAlignment
-            debate={debate}
             shares={positionShares(debate)}
             alignment={page.alignment}
             nobodyToCompare={nobodyToCompare}

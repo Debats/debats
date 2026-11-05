@@ -218,6 +218,17 @@ describe('positionShares', () => {
   it('gives every position a zero share when nobody spoke', () => {
     expect(sharesOf().map(({ share }) => share)).toEqual([0, 0])
   })
+
+  it('carries which position is the author’s, so a legend needs no second list', () => {
+    const shares = positionShares(
+      debateOnSubject(openPositions, [taken(veil, pour)], new Set([contre.id])),
+    )
+
+    expect(shares.map(({ position, hers }) => [position.title, hers])).toEqual([
+      ['Pour', false],
+      ['Contre', true],
+    ])
+  })
 })
 
 describe('figuresOnSubject', () => {

@@ -1,7 +1,7 @@
 import { subjectSynthesis } from '../../../domain/read-models/author-subject-synthesis'
-import { elide } from '../../../lib/elision'
+import { prepositionBefore } from '../../../lib/elision'
 import { formatShortDate } from '../../../lib/format-date'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './SubjectSynthesis.module.css'
 
 interface SubjectSynthesisProps {
   authorName: string
@@ -42,7 +42,7 @@ export default function SubjectSynthesis({
   if (!sentence.statements) {
     return (
       <p className={styles.synthesis}>
-        Débats.co ne recense aucune prise de position {elide('de', authorName)}
+        Débats.co ne recense aucune prise de position {prepositionBefore('de', authorName)}
         <strong>{authorName}</strong> sur {subjectTitle}.
       </p>
     )
@@ -51,7 +51,7 @@ export default function SubjectSynthesis({
   return (
     <p className={styles.synthesis}>
       Sur {subjectTitle}, Débats.co recense <strong>{sentence.statements}</strong>{' '}
-      {elide('de', authorName)}
+      {prepositionBefore('de', authorName)}
       <strong>{authorName}</strong>
       {sentence.when && <>, {sentence.when}</>}
       {'. '}

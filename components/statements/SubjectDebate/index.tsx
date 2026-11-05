@@ -2,7 +2,7 @@ import Link from 'next/link'
 import AuthorAvatarStack from '../AuthorAvatarStack'
 import { CONTRIBUTE_HREF, positionHref } from '../../../domain/read-models/hrefs'
 import { PositionStanding } from '../../../domain/services/author-on-subject'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './SubjectDebate.module.css'
 
 interface SubjectDebateProps {
   subjectSlug: string
@@ -23,9 +23,9 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
   const most = Math.max(0, ...debate.map((standing) => standing.authors.length))
 
   return (
-    <section className={styles.others}>
-      <header className={styles.sectionHead}>
-        <h2 className={styles.sectionTitle}>Le débat en entier</h2>
+    <section className={styles.section}>
+      <header className={styles.head}>
+        <h2 className={styles.title}>Le débat en entier</h2>
       </header>
       <div className={styles.list}>
         {debate.map((standing) => {
@@ -34,10 +34,10 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
           return (
             <article
               key={standing.position.id}
-              className={standing.hers ? styles.debateCardHers : styles.debateCard}
+              className={standing.hers ? styles.cardHers : styles.card}
             >
-              <div className={styles.debateHead}>
-                <h3 className={styles.otherTitle}>
+              <div className={styles.cardHead}>
+                <h3 className={styles.positionTitle}>
                   <Link href={href} className={styles.positionLink}>
                     {standing.position.title}
                   </Link>
@@ -45,14 +45,14 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
                 {standing.hers && <span className={styles.kicker}>Sa position</span>}
               </div>
 
-              <div className={styles.debateBar}>
-                <div className={styles.debateTrack}>
+              <div className={styles.bar}>
+                <div className={styles.track}>
                   <div
-                    className={styles.debateFill}
+                    className={styles.fill}
                     style={{ width: most > 0 ? `${(count / most) * 100}%` : '0%' }}
                   />
                 </div>
-                <span className={styles.debateCount}>{count} voix</span>
+                <span className={styles.count}>{count} voix</span>
               </div>
 
               {count > 0 ? (
@@ -64,9 +64,9 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
                   moreHref={href}
                 />
               ) : (
-                <p className={styles.debateEmpty}>
+                <p className={styles.empty}>
                   Personne ne l’a encore défendue ici.{' '}
-                  <Link href={CONTRIBUTE_HREF} className={styles.railCardLink}>
+                  <Link href={CONTRIBUTE_HREF} className={styles.emptyLink}>
                     Vous connaissez une déclaration ?
                   </Link>
                 </p>

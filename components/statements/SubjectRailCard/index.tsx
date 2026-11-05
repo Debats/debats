@@ -3,7 +3,7 @@ import { subjectHref } from '../../../domain/read-models/hrefs'
 import { StatedSpan } from '../../../domain/repositories/statement-repository'
 import { statedSpanLabel } from '../../../domain/services/subject-timeline'
 import { plural } from '../../../lib/plural'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './SubjectRailCard.module.css'
 
 interface SubjectRailCardProps {
   subject: { title: string; slug: string; problem: string }
@@ -13,13 +13,15 @@ interface SubjectRailCardProps {
 
 /** Le sujet, sa problématique et les repères du débat, en tête du rail. */
 export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps) {
+  const span = statedSpanLabel(facts.span)
+
   return (
-    <div className={styles.railCard}>
-      <p className={styles.railCardTitle}>Le sujet</p>
-      <Link href={subjectHref(subject.slug)} className={styles.subjectCardName}>
+    <div className={styles.card}>
+      <p className={styles.title}>Le sujet</p>
+      <Link href={subjectHref(subject.slug)} className={styles.name}>
         {subject.title}
       </Link>
-      <p className={styles.subjectCardProblem}>{subject.problem}</p>
+      <p className={styles.problem}>{subject.problem}</p>
 
       <dl className={styles.facts}>
         <div className={styles.fact}>
@@ -34,18 +36,18 @@ export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps
           </dt>
           <dd className={styles.factValue}>{facts.voices}</dd>
         </div>
-        {statedSpanLabel(facts.span) && (
+        {span && (
           <div className={styles.fact}>
             <dt className={styles.factLabel}>Période couverte</dt>
-            <dd className={styles.factValue}>{statedSpanLabel(facts.span)}</dd>
+            <dd className={styles.factValue}>{span}</dd>
           </div>
         )}
       </dl>
 
-      <Link href={subjectHref(subject.slug)} className={styles.railCardLink}>
+      <Link href={subjectHref(subject.slug)} className={styles.link}>
         Voir toutes les positions
       </Link>
-      <Link href={`${subjectHref(subject.slug)}/chronologie`} className={styles.railCardLink}>
+      <Link href={`${subjectHref(subject.slug)}/chronologie`} className={styles.link}>
         Chronologie du sujet
       </Link>
     </div>

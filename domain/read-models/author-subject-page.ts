@@ -30,8 +30,12 @@ export interface Affiliation {
 
 /** Le sujet, le débat autour, et ce que l'auteur pèse sur le site */
 export interface SubjectContext {
-  /** Toutes les prises de position du sujet, tous auteurs confondus */
-  everyone: StatementWithAuthor[]
+  /**
+   * Toutes les prises de position du sujet, tous auteurs confondus. Pas
+   * `everyone` : `alignment.everyone` est la ligne de référence du
+   * graphique, et les deux se lisent à quatre lignes d'écart.
+   */
+  subjectStatements: StatementWithAuthor[]
   /** Les positions ouvertes sur le sujet, celles que personne n'a prises comprises */
   positions: Array<{ id: string; title: string; slug: string }>
   /** La période couverte par les prises de position du sujet */

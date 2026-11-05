@@ -1,0 +1,10 @@
+/* La carte « où se situe cette position », détachée des prises de position */
+.card {
+  composes: card from '../../../styles/analysis.module.css';
+  margin-top: 40px;
+}
+
+.subTitle {
+  composes: label from '../../../styles/text.module.css';
+  margin-top: 8px;
+}

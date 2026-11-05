@@ -2,7 +2,7 @@ import Link from 'next/link'
 import AuthorAvatar from '../AuthorAvatar'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './AuthorRailCard.module.css'
 
 interface AuthorRailCardProps {
   author: StatementAuthorRef
@@ -31,23 +31,23 @@ export default function AuthorRailCard({
   children,
 }: AuthorRailCardProps) {
   return (
-    <div className={styles.railCard}>
-      <p className={styles.railCardTitle}>{author.name} en bref</p>
-      <div className={styles.authorHead}>
+    <div className={styles.card}>
+      <p className={styles.title}>{author.name} en bref</p>
+      <div className={styles.head}>
         <AuthorAvatar author={author} size={52} />
-        <Link href={authorHref(author)} className={styles.authorName}>
+        <Link href={authorHref(author)} className={styles.name}>
           {author.name}
         </Link>
       </div>
 
       {children}
 
-      <p className={styles.authorRole}>
+      <p className={styles.line}>
         Sur Débats.co : {subjects} {plural(subjects, 'sujet', 'sujets')}, {statements}{' '}
         {plural(statements, 'prise de position', 'prises de position')}.
       </p>
 
-      <Link href={authorHref(author)} className={styles.railCardLink}>
+      <Link href={authorHref(author)} className={styles.link}>
         Sa page complète
       </Link>
     </div>

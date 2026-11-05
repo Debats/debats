@@ -6,7 +6,7 @@ import {
   StatementAuthorRef,
 } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './NeighbourSubjects.module.css'
 
 interface NeighbourSubjectsProps {
   author: StatementAuthorRef
@@ -22,9 +22,9 @@ export default function NeighbourSubjects({ author, neighbours }: NeighbourSubje
   if (neighbours.length === 0) return null
 
   return (
-    <section className={styles.others}>
-      <header className={styles.sectionHead}>
-        <h2 className={styles.sectionTitle}>{author.name} sur les sujets voisins</h2>
+    <section className={styles.section}>
+      <header className={styles.head}>
+        <h2 className={styles.title}>{author.name} sur les sujets voisins</h2>
       </header>
       <div className={styles.neighbours}>
         {neighbours.map((neighbour) => (

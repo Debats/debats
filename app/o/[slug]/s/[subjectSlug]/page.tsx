@@ -33,15 +33,15 @@ import ContentWithSidebar from '../../../../../components/layout/ContentWithSide
 import AuthorSubjectHero from '../../../../../components/statements/AuthorSubjectHero'
 import { organisationHref, statementEditHref } from '../../../../../domain/read-models/hrefs'
 import OrganisationRoleLine from '../../../../../components/statements/AuthorSubjectHero/OrganisationRoleLine'
-import AuthorPositions from '../../../../../components/statements/AuthorSubjectBlocks/AuthorPositions'
-import AuthorRailCard from '../../../../../components/statements/AuthorSubjectBlocks/AuthorRailCard'
-import ContributeCard from '../../../../../components/statements/AuthorSubjectBlocks/ContributeCard'
-import NeighbourSubjects from '../../../../../components/statements/AuthorSubjectBlocks/NeighbourSubjects'
-import OrganisationRailLines from '../../../../../components/statements/AuthorSubjectBlocks/OrganisationRailLines'
-import PositionAlignment from '../../../../../components/statements/AuthorSubjectBlocks/PositionAlignment'
-import SubjectDebate from '../../../../../components/statements/AuthorSubjectBlocks/SubjectDebate'
-import SubjectRailCard from '../../../../../components/statements/AuthorSubjectBlocks/SubjectRailCard'
-import SubjectSynthesis from '../../../../../components/statements/AuthorSubjectBlocks/SubjectSynthesis'
+import AuthorPositions from '../../../../../components/statements/AuthorPositions'
+import AuthorRailCard from '../../../../../components/statements/AuthorRailCard'
+import OrganisationRailLines from '../../../../../components/statements/AuthorRailCard/OrganisationRailLines'
+import ContributeCard from '../../../../../components/statements/ContributeCard'
+import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
+import PositionAlignment from '../../../../../components/statements/PositionAlignment'
+import SubjectDebate from '../../../../../components/statements/SubjectDebate'
+import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
+import SubjectSynthesis from '../../../../../components/statements/SubjectSynthesis'
 
 interface PageProps {
   params: Promise<{ slug: string; subjectSlug: string }>
@@ -97,12 +97,18 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
   const hers = new Set(positions.map(({ position }) => position.id))
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
-  const page = await loadOrganisationSubjectPage(supabase, author, subject, hers, new Date())
-  const company = groupSubjectCompany(page.everyone, organisationAuthor(organisation.id), hers)
-  const debate = debateOnSubject(page.positions, page.everyone, hers)
+  const page = await Effect.runPromise(
+    loadOrganisationSubjectPage(supabase, author, subject, hers, new Date()),
+  )
+  const company = groupSubjectCompany(
+    page.subjectStatements,
+    organisationAuthor(organisation.id),
+    hers,
+  )
+  const debate = debateOnSubject(page.positions, page.subjectStatements, hers)
 
   const statements = countStatements(positions)
-  const voices = countSubjectVoices(page.everyone)
+  const voices = countSubjectVoices(page.subjectStatements)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
   const review = await reviewOf(
     supabase,
@@ -181,6 +187,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
+          statements={statements}
           company={company}
           roles={page.roles}
           editHref={canEdit ? statementEditHref : undefined}
@@ -188,7 +195,6 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
 
         {positions.length > 0 && (
           <PositionAlignment
-            debate={debate}
             shares={positionShares(debate)}
             alignment={page.alignment}
             nobodyToCompare={nobodyToCompare}

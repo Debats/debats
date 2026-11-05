@@ -1,0 +1,20 @@
+/* Le paragraphe de synthèse : le seul vrai texte de la page */
+.synthesis {
+  composes: body from '../../../styles/text.module.css';
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin-bottom: 32px;
+  max-width: 62ch;
+}
+
+.synthesis strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .synthesis {
+    font-size: 17px;
+  }
+}

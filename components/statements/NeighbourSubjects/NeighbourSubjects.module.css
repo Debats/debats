@@ -1,0 +1,61 @@
+.section {
+  composes: section from '../../../styles/blocks.module.css';
+}
+
+.head {
+  composes: sectionHead from '../../../styles/blocks.module.css';
+}
+
+.title {
+  composes: sectionTitle from '../../../styles/blocks.module.css';
+}
+
+/* Les sujets voisins, deux par ligne */
+.neighbours {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.neighbour,
+.neighbour:link,
+.neighbour:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 22px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  color: var(--ink);
+}
+
+.neighbourSilent {
+  composes: neighbour;
+  background-color: var(--paper-2);
+}
+
+.neighbour:hover,
+.neighbourSilent:hover {
+  background-color: var(--paper-2);
+}
+
+.kicker {
+  composes: label from '../../../styles/text.module.css';
+}
+
+.neighbourTitle {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+
+.neighbourPosition {
+  composes: small from '../../../styles/text.module.css';
+}
+
+@media (max-width: 768px) {
+  .neighbours {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,19 +1,22 @@
 import AlignmentChart from '../../charts/AlignmentChart'
 import ShareBar from '../../charts/ShareBar'
 import ShareLegend from '../../charts/ShareLegend'
-import { PositionShare, PositionStanding } from '../../../domain/services/author-on-subject'
+import { PositionShare } from '../../../domain/services/author-on-subject'
 import { SubjectAlignment } from '../../../domain/services/group-alignment'
 import { plural } from '../../../lib/plural'
 import analysis from '../../../styles/analysis.module.css'
-import styles from './AuthorSubjectBlocks.module.css'
+import styles from './PositionAlignment.module.css'
 
 /** Le nom de la ligne de référence, partout où le graphique la nomme */
 const EVERYONE = 'Toutes les voix du sujet'
 
 interface PositionAlignmentProps {
-  /** Toutes les positions du sujet, de la plus à la moins soutenue */
-  debate: PositionStanding[]
-  /** La part de chacune parmi les voix comptées, calculée par le domaine */
+  /**
+   * Les positions du sujet avec leur part, de la plus à la moins soutenue,
+   * calculées par le domaine. Une seule liste pour la légende et pour la
+   * barre : toutes deux tirent leur nuance d'encre du rang, et deux listes
+   * données séparément pourraient se désaccorder sans rien casser.
+   */
   shares: PositionShare[]
   alignment: SubjectAlignment
   /**
@@ -34,7 +37,6 @@ interface PositionAlignmentProps {
  * prennent donc la position pour sujet, pas la personne.
  */
 export default function PositionAlignment({
-  debate,
   shares,
   alignment,
   nobodyToCompare,
@@ -42,7 +44,7 @@ export default function PositionAlignment({
   const { everyone, rows } = alignment
 
   return (
-    <section className={styles.alignmentCard}>
+    <section className={styles.card}>
       <h2 className={analysis.cardTitle}>Où se situe cette position</h2>
       <p className={analysis.cardSubtitle}>
         Comment les voix du sujet se répartissent entre les positions, et qui défend la même.
@@ -58,10 +60,10 @@ export default function PositionAlignment({
       </p>
 
       <ShareLegend
-        items={debate.map((standing) => ({
-          key: standing.position.id,
-          label: standing.position.title,
-          note: standing.hers ? 'position défendue' : undefined,
+        items={shares.map((share) => ({
+          key: share.position.id,
+          label: share.position.title,
+          note: share.hers ? 'position défendue' : undefined,
         }))}
       />
       <ShareBar

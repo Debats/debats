@@ -116,6 +116,8 @@ export interface PositionShare {
   count: number
   /** `count` sur le total compté, zéro quand personne ne s'est exprimé */
   share: number
+  /** C'est une des positions de l'auteur de la page */
+  hers: boolean
 }
 
 /**
@@ -125,13 +127,18 @@ export interface PositionShare {
  * pris deux positions pèse dans deux segments. Ce n'est donc pas un nombre
  * de voix — `countSubjectVoices` est seul à le dire — et une barre faite de
  * ces parts n'affiche jamais son total.
+ *
+ * L'ordre du débat est conservé, et chaque part dit si c'est une position de
+ * l'auteur : une barre et sa légende tirent leur nuance d'encre du rang dans
+ * la liste, elles doivent lire la même liste.
  */
 export function positionShares(debate: readonly PositionStanding[]): PositionShare[] {
   const total = debate.reduce((sum, standing) => sum + standing.authors.length, 0)
-  return debate.map(({ position, authors }) => ({
+  return debate.map(({ position, authors, hers }) => ({
     position: { id: position.id, title: position.title },
     count: authors.length,
     share: total > 0 ? authors.length / total : 0,
+    hers,
   }))
 }
 
