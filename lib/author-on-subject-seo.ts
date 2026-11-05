@@ -4,11 +4,16 @@ import {
   authorOnSubjectHref,
   StatementAuthorRef,
 } from '../domain/read-models/statement-author'
+import { elide } from './elision'
 
 interface SubjectSummary {
   title: string
   slug: string
 }
+
+/** « Prises de position d'Alma Dufour sur… », jamais « de Alma Dufour » */
+const describe = (author: StatementAuthorRef, subject: SubjectSummary) =>
+  `Prises de position ${elide('de', author.name)}${author.name} sur ${subject.title}.`
 
 /** Metadata of the page « un auteur sur un sujet » */
 export function authorOnSubjectMetadata(
@@ -16,7 +21,7 @@ export function authorOnSubjectMetadata(
   subject: SubjectSummary,
 ): Metadata {
   const title = `${author.name} sur ${subject.title}`
-  const description = `Prises de position de ${author.name} sur ${subject.title}.`
+  const description = describe(author, subject)
   const url = authorOnSubjectHref(author, subject.slug)
   return {
     title,
@@ -34,7 +39,7 @@ export function authorOnSubjectJsonLd(author: StatementAuthorRef, subject: Subje
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: `${author.name} sur ${subject.title}`,
-    description: `Prises de position de ${author.name} sur ${subject.title}.`,
+    description: describe(author, subject),
     url: `https://debats.co${authorOnSubjectHref(author, subject.slug)}`,
     image: isOrganisation
       ? `https://debats.co/logos/${author.slug}.png`

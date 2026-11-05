@@ -9,6 +9,8 @@ import styles from './AuthorOnSubject.module.css'
 interface AlignmentCardProps {
   debate: PositionStanding[]
   alignment: SubjectAlignment
+  /** Les voix distinctes du sujet, l'auteur compris */
+  voices: number
   /** « cette personnalité », « cette organisation » */
   who: string
 }
@@ -18,8 +20,7 @@ interface AlignmentCardProps {
  * l'écart entre lui et chaque groupe auquel il appartient. La seconde
  * carte n'apparaît que lorsqu'il y a quelqu'un à comparer.
  */
-export default function AlignmentCard({ debate, alignment, who }: AlignmentCardProps) {
-  const voices = debate.reduce((sum, standing) => sum + standing.authors.length, 0)
+export default function AlignmentCard({ debate, alignment, voices, who }: AlignmentCardProps) {
   if (voices === 0) return null
 
   const { everyone, rows } = alignment
@@ -40,8 +41,8 @@ export default function AlignmentCard({ debate, alignment, who }: AlignmentCardP
         <span className={analysis.headlineNumber}>{everyone.withAuthor}</span>
         <span className={analysis.headlineText}>
           {plural(everyone.withAuthor, 'autre voix défend', 'autres voix défendent')} la même
-          position, sur {everyone.total} {plural(everyone.total, 'recensée', 'recensées')} sur ce
-          sujet
+          position, sur {everyone.total}{' '}
+          {plural(everyone.total, 'autre voix recensée', 'autres voix recensées')} sur ce sujet
         </span>
       </p>
 

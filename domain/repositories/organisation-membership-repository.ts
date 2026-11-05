@@ -35,6 +35,11 @@ export interface OrganisationMembershipRepository {
   /** Memberships of an organisation with their public figure, most recent first */
   findByOrganisationId(organisationId: string): Effect.Effect<MembershipWithFigure[], DatabaseError>
 
+  /** Memberships of several organisations at once, in no particular order */
+  findByOrganisationIds(
+    organisationIds: string[],
+  ): Effect.Effect<MembershipWithFigure[], DatabaseError>
+
   /** Memberships of a public figure with their organisation, most recent first */
   /** Memberships are written by the public figure stream (domain/aggregates/public-figure.ts) */
   findByPublicFigureId(

@@ -9,7 +9,6 @@ import { Organisation } from '../../../../../domain/entities/organisation'
 import { organisationAuthor } from '../../../../../domain/entities/statement'
 import { organisationRef } from '../../../../../domain/read-models/statement-author'
 import {
-  countAllies,
   debateOnSubject,
   groupStatementsByPosition,
   groupSubjectCompany,
@@ -93,7 +92,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
         counts={{
           statements: organisationStatements.length,
           positions: positions.length,
-          allies: countAllies(company),
+          allies: page.alignment.everyone.withAuthor,
           openPositions: page.positions.length,
         }}
         actions={<ShareButton compact title={`${organisation.name} sur ${subject.title}`} />}

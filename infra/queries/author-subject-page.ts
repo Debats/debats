@@ -3,66 +3,27 @@ import { Effect } from 'effect'
 import { Database } from '../../types/database.types'
 import { StatementAuthor } from '../../domain/entities/statement'
 import { isCurrentMembership } from '../../domain/entities/organisation-membership'
+import { AuthorProfile, AuthorSubjectPage } from '../../domain/read-models/author-subject-page'
 import { rolesByFigure } from '../../domain/read-models/author-role'
 import { StatementAuthorRef } from '../../domain/read-models/statement-author'
 import { MembershipWithOrganisation } from '../../domain/repositories/organisation-membership-repository'
-import {
-  StatedSpan,
-  StatementWithAuthor,
-  StatementWithDetails,
-} from '../../domain/repositories/statement-repository'
 import {
   MemberedOrganisation,
   occupationFamilyGroups,
   organisationGroups,
 } from '../../domain/services/author-groups'
-import { authorKey, voicesOf } from '../../domain/services/author-on-subject'
-import {
-  alignOnSubject,
-  GroupDefinition,
-  SubjectAlignment,
-} from '../../domain/services/group-alignment'
+import { authorKey, neighboursOf, voicesOf } from '../../domain/services/author-on-subject'
+import { alignOnSubject, GroupDefinition } from '../../domain/services/group-alignment'
 import { createStatementRepository } from '../database/statement-repository-supabase'
 import { createPositionRepository } from '../database/position-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
 import { createOccupationFamilyRepository } from '../database/occupation-family-repository-supabase'
+import { createOrganisationRepository } from '../database/organisation-repository-supabase'
 import { createOrganisationMembershipRepository } from '../database/organisation-membership-repository-supabase'
+import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createRelatedSubjectsRepository } from '../database/related-subjects-repository-supabase'
 
 type Client = SupabaseClient<Database>
-
-/** Un sujet voisin, et ce que l'auteur y défend quand il s'y est exprimé */
-export interface NeighbourSubject {
-  title: string
-  slug: string
-  /** Les positions que l'auteur y défend, vide s'il ne s'est pas exprimé */
-  positions: string[]
-  statements: number
-}
-
-/** La carte de visite de l'auteur, pour le rail */
-export interface AuthorProfile {
-  /** Ses métiers actuels, pour la ligne de rôle */
-  occupations: string[]
-  /** Ses affiliations en cours */
-  organisations: Array<{ name: string; slug: string; acronym: string | null }>
-  subjects: number
-  statements: number
-}
-
-export interface AuthorSubjectPage {
-  /** Toutes les prises de position du sujet, tous auteurs confondus */
-  everyone: StatementWithAuthor[]
-  /** Les positions ouvertes sur le sujet, celles que personne n'a prises comprises */
-  positions: Array<{ id: string; title: string; slug: string }>
-  /** La période couverte par les prises de position du sujet */
-  span: StatedSpan | null
-  /** Le métier actuel de chaque personnalité du sujet, pour la nommer sous son nom */
-  roles: Map<string, string>
-  alignment: SubjectAlignment
-  neighbours: NeighbourSubject[]
-  profile: AuthorProfile
-}
 
 /**
  * Tout ce que la page « un auteur sur un sujet » lit en plus de ses propres
@@ -71,7 +32,8 @@ export interface AuthorSubjectPage {
  * routes personnalité et organisation, qui n'en diffèrent que par l'auteur.
  *
  * Cette fonction lit les tables et rien d'autre : ce qui fait un groupe est
- * dit par `domain/services/author-groups.ts`.
+ * dit par `domain/services/author-groups.ts`, ce qui fait un sujet voisin
+ * par `author-on-subject.ts`.
  */
 export async function loadAuthorSubjectPage(
   supabase: Client,
@@ -85,17 +47,15 @@ export async function loadAuthorSubjectPage(
   const occupations = createOccupationRepository(supabase)
   const membershipsRepo = createOrganisationMembershipRepository(supabase)
   const isFigure = author.kind === 'public_figure'
+  const self: StatementAuthor = isFigure
+    ? { kind: 'public_figure', id: author.id }
+    : { kind: 'organisation', id: author.id }
 
-  const [everyone, positions, span, related, own, memberships] = await Promise.all([
+  const [everyone, positions, span, related, memberships] = await Promise.all([
     Effect.runPromise(statements.findBySubjectWithAuthors(subject.id)),
     Effect.runPromise(createPositionRepository(supabase).findBySubjectId(subject.id)),
     Effect.runPromise(statements.findStatedSpanBySubjectId(subject.id)),
     Effect.runPromise(createRelatedSubjectsRepository(supabase).findRelated(subject.id)),
-    Effect.runPromise(
-      isFigure
-        ? statements.findByPublicFigureWithDetails(author.id)
-        : statements.findByOrganisationWithDetails(author.id),
-    ),
     isFigure
       ? Effect.runPromise(membershipsRepo.findByPublicFigureId(author.id))
       : Promise.resolve<MembershipWithOrganisation[]>([]),
@@ -113,14 +73,17 @@ export async function loadAuthorSubjectPage(
   )
   const current = memberships.filter(({ membership }) => isCurrentMembership(membership, today))
 
-  const [held, groups] = await Promise.all([
+  const [held, groups, onNeighbours, totals] = await Promise.all([
     Effect.runPromise(occupations.findCurrentHeldByPublicFigureIds(figureIds)),
     groupsOf(supabase, author, figureIds, current, today),
+    Effect.runPromise(
+      statements.findByAuthorAndSubjectIds(
+        self,
+        related.map(({ id }) => id),
+      ),
+    ),
+    totalsOf(supabase, author),
   ])
-
-  const self: StatementAuthor = isFigure
-    ? { kind: 'public_figure', id: author.id }
-    : { kind: 'organisation', id: author.id }
 
   return {
     everyone,
@@ -128,7 +91,7 @@ export async function loadAuthorSubjectPage(
     span,
     roles: rolesByFigure(held),
     alignment: alignOnSubject(voicesOf(everyone), hers, authorKey(self), groups),
-    neighbours: neighboursOf(related, own),
+    neighbours: neighboursOf(related, onNeighbours),
     profile: {
       occupations: held
         .filter(({ publicFigureId }) => publicFigureId === author.id)
@@ -139,26 +102,27 @@ export async function loadAuthorSubjectPage(
         slug: organisation.slug,
         acronym: organisation.acronym,
       })),
-      subjects: new Set(own.map(({ subject }) => subject.id)).size,
-      statements: own.length,
+      ...totals,
     },
   }
 }
 
-/** Les sujets liés, avec ce que l'auteur y défend */
-function neighboursOf(
-  related: Array<{ title: string; slug: string; id: string }>,
-  own: StatementWithDetails[],
-): NeighbourSubject[] {
-  return related.map((subject) => {
-    const mine = own.filter((statement) => statement.subject.id === subject.id)
-    return {
-      title: subject.title,
-      slug: subject.slug,
-      positions: Array.from(new Set(mine.map(({ position }) => position.title))),
-      statements: mine.length,
-    }
-  })
+/** Les compteurs de l'auteur, lus sur la projection qui les agrège déjà */
+async function totalsOf(
+  supabase: Client,
+  author: StatementAuthorRef,
+): Promise<Pick<AuthorProfile, 'subjects' | 'statements'>> {
+  if (author.kind === 'organisation') {
+    const summary = await Effect.runPromise(
+      createOrganisationRepository(supabase).findSummaryById(author.id),
+    )
+    return { subjects: summary?.subjectsCount ?? 0, statements: summary?.statementsCount ?? 0 }
+  }
+
+  const [summary] = await Effect.runPromise(
+    createPublicFigureRepository(supabase).findSummariesByIds([author.id]),
+  )
+  return { subjects: summary?.subjectsCount ?? 0, statements: summary?.statementsCount ?? 0 }
 }
 
 /** Lit les membres et les métiers, et laisse le domaine en faire des groupes */
@@ -170,42 +134,50 @@ async function groupsOf(
   today: Date,
 ): Promise<GroupDefinition[]> {
   const memberships = createOrganisationMembershipRepository(supabase)
-  const membersOf = async (organisation: {
-    id: string
-    name: string
-    slug: string
-    acronym: string | null
-  }): Promise<MemberedOrganisation> => {
-    const members = await Effect.runPromise(memberships.findByOrganisationId(organisation.id))
-    return {
-      ...organisation,
-      memberIds: members
-        .filter(({ membership }) => isCurrentMembership(membership, today))
-        .map(({ figure }) => figure.id),
+
+  /** Une seule lecture pour toutes ses organisations, jamais une par affiliation */
+  const membered = async (
+    organisations: Array<{ id: string; name: string; slug: string; acronym: string | null }>,
+  ): Promise<MemberedOrganisation[]> => {
+    if (organisations.length === 0) return []
+    const links = await Effect.runPromise(
+      memberships.findByOrganisationIds(organisations.map(({ id }) => id)),
+    )
+    const byOrganisation = new Map<string, string[]>()
+    for (const { membership, figure } of links) {
+      if (!isCurrentMembership(membership, today)) continue
+      const members = byOrganisation.get(membership.organisationId) ?? []
+      members.push(figure.id)
+      byOrganisation.set(membership.organisationId, members)
     }
+    return organisations.map((organisation) => ({
+      ...organisation,
+      memberIds: byOrganisation.get(organisation.id) ?? [],
+    }))
   }
 
   if (author.kind === 'organisation') {
-    return organisationGroups([
-      await membersOf({
-        id: author.id,
-        name: author.name,
-        slug: author.slug,
-        acronym: author.acronym,
-      }),
-    ])
+    return organisationGroups(
+      await membered([
+        { id: author.id, name: author.name, slug: author.slug, acronym: author.acronym },
+      ]),
+    )
   }
 
   const occupations = createOccupationRepository(supabase)
-  const [organisations, assignments, allOccupations, families] = await Promise.all([
-    Promise.all(current.map(({ organisation }) => membersOf(organisation))),
+  const [organisations, assignments, families] = await Promise.all([
+    membered(current.map(({ organisation }) => organisation)),
     Effect.runPromise(occupations.findAssignmentsByPublicFigureIds(figureIds)),
-    Effect.runPromise(occupations.findAll()),
     Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
   ])
 
+  // Seuls les métiers effectivement tenus par ces personnes, pas toute la liste
+  const held = await Effect.runPromise(
+    occupations.findByIds(Array.from(new Set(assignments.map((a) => a.occupationId)))),
+  )
+
   return [
     ...organisationGroups(organisations),
-    ...occupationFamilyGroups(author.id, families, assignments, allOccupations),
+    ...occupationFamilyGroups(author.id, families, assignments, held),
   ]
 }

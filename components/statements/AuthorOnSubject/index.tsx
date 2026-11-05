@@ -8,12 +8,13 @@ import PositionCard from './PositionCard'
 import SubjectRailCard from './SubjectRailCard'
 import Synthesis from './Synthesis'
 import { StatementAuthorRef } from '../../../domain/read-models/statement-author'
+import { AuthorSubjectPage } from '../../../domain/read-models/author-subject-page'
 import {
+  countSubjectVoices,
   PositionGroup,
   PositionStanding,
   SubjectCompany,
 } from '../../../domain/services/author-on-subject'
-import { AuthorSubjectPage } from '../../../infra/queries/author-subject-page'
 import { plural } from '../../../lib/plural'
 import styles from './AuthorOnSubject.module.css'
 
@@ -54,7 +55,7 @@ export default function AuthorOnSubject({
   const latest = positions
     .flatMap(({ statements }) => statements.map(({ statement }) => statement.statedAt))
     .reduce<Date | null>((last, date) => (!last || date > last ? date : last), null)
-  const voices = debate.reduce((sum, standing) => sum + standing.authors.length, 0)
+  const voices = countSubjectVoices(page.everyone)
 
   return (
     <ContentWithSidebar
@@ -107,7 +108,7 @@ export default function AuthorOnSubject({
 
       {positions.length > 0 && (
         <div className={styles.analysis}>
-          <AlignmentCard debate={debate} alignment={page.alignment} who={who} />
+          <AlignmentCard debate={debate} alignment={page.alignment} voices={voices} who={who} />
         </div>
       )}
 

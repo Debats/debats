@@ -1,4 +1,5 @@
 import { StatementAuthor } from '../entities/statement'
+import { NeighbourSubject } from '../read-models/author-subject-page'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { StatementWithAuthor, StatementWithDetails } from '../repositories/statement-repository'
 
@@ -56,13 +57,6 @@ export function groupSubjectCompany(
   return { alliesByPosition }
 }
 
-/** Distinct allies across all of the author's positions */
-export function countAllies(company: SubjectCompany): number {
-  return new Set(
-    Array.from(company.alliesByPosition.values()).flatMap((authors) => authors.map(authorKey)),
-  ).size
-}
-
 /** Une position du sujet et qui la défend, pour la carte du débat */
 export interface PositionStanding {
   position: { id: string; title: string; slug: string }
@@ -103,3 +97,28 @@ export const voicesOf = (statements: readonly StatementWithAuthor[]) =>
     authorKey: authorKey(author),
     positionId: position.id,
   }))
+
+/**
+ * Combien de voix porte le sujet : des auteurs distincts, l'auteur de la
+ * page compris. Une personnalité qui a changé d'avis compte pour une, alors
+ * qu'elle pèse dans deux segments de la barre des positions — on ne somme
+ * donc jamais les effectifs par position pour obtenir ce nombre.
+ */
+export const countSubjectVoices = (statements: readonly StatementWithAuthor[]): number =>
+  new Set(statements.map(({ author }) => authorKey(author))).size
+
+/** Un sujet voisin, et ce que l'auteur y défend quand il s'y est exprimé */
+export function neighboursOf(
+  related: ReadonlyArray<{ id: string; title: string; slug: string }>,
+  own: readonly StatementWithDetails[],
+): NeighbourSubject[] {
+  return related.map((subject) => {
+    const mine = own.filter((statement) => statement.subject.id === subject.id)
+    return {
+      title: subject.title,
+      slug: subject.slug,
+      positions: Array.from(new Set(mine.map(({ position }) => position.title))),
+      statements: mine.length,
+    }
+  })
+}

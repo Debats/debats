@@ -1,5 +1,6 @@
+import { subjectSynthesis } from '../../../domain/read-models/author-subject-synthesis'
+import { elide } from '../../../lib/elision'
 import { formatShortDate } from '../../../lib/format-date'
-import { plural } from '../../../lib/plural'
 import styles from './AuthorOnSubject.module.css'
 
 interface SynthesisProps {
@@ -18,10 +19,8 @@ interface SynthesisProps {
 /**
  * La page n'a presque aucun texte : trois lignes construites depuis les
  * données répondent avant le défilement, et donnent aux moteurs de
- * recherche autre chose qu'une citation isolée.
- *
- * Rien n'y accorde en genre : l'auteur est aussi bien une personnalité
- * qu'une organisation, et le site écrit de façon inclusive.
+ * recherche autre chose qu'une citation isolée. Les règles d'accord et les
+ * branches vivent dans `subjectSynthesis`, ici on ne fait que les placer.
  */
 export default function Synthesis({
   authorName,
@@ -32,48 +31,32 @@ export default function Synthesis({
   undefended,
   latest,
 }: SynthesisProps) {
-  if (statements === 0) {
+  const sentence = subjectSynthesis({
+    statements,
+    positionTitles,
+    allies,
+    undefended,
+    latest: latest && formatShortDate(latest),
+  })
+
+  if (!sentence.statements) {
     return (
       <p className={styles.synthesis}>
-        Débats.co ne recense aucune prise de position de <strong>{authorName}</strong> sur{' '}
-        {subjectTitle}.
+        Débats.co ne recense aucune prise de position {elide('de', authorName)}
+        <strong>{authorName}</strong> sur {subjectTitle}.
       </p>
     )
   }
 
   return (
     <p className={styles.synthesis}>
-      Sur {subjectTitle}, Débats.co recense{' '}
-      <strong>
-        {statements} {plural(statements, 'prise de position', 'prises de position')}
-      </strong>{' '}
-      de <strong>{authorName}</strong>
-      {latest && (
-        <>
-          , {statements === 1 ? 'le' : 'la dernière le'} {formatShortDate(latest)}
-        </>
-      )}
+      Sur {subjectTitle}, Débats.co recense <strong>{sentence.statements}</strong>{' '}
+      {elide('de', authorName)}
+      <strong>{authorName}</strong>
+      {sentence.when && <>, {sentence.when}</>}
       {'. '}
-      {plural(positionTitles.length, 'Position défendue', 'Positions défendues')} :{' '}
-      <strong>{positionTitles.join(', ')}</strong>
-      {allies > 0 ? (
-        <>
-          {' '}
-          — {plural(positionTitles.length, 'partagée', 'partagées')} par {allies}{' '}
-          {plural(allies, 'autre voix recensée ici', 'autres voix recensées ici')}
-        </>
-      ) : (
-        <> — que personne d’autre n’a encore défendue ici</>
-      )}
-      .
-      {undefended > 0 && (
-        <>
-          {' '}
-          {undefended} {plural(undefended, 'autre position reste', 'autres positions restent')}{' '}
-          {plural(undefended, 'ouverte', 'ouvertes')} sur ce sujet sans que personne ne{' '}
-          {plural(undefended, 'la', 'les')} défende.
-        </>
-      )}
+      {sentence.positionsLabel} : <strong>{positionTitles.join(', ')}</strong> — {sentence.shared}.
+      {sentence.undefended && <> {sentence.undefended}</>}
     </p>
   )
 }

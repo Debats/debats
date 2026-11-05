@@ -1,5 +1,5 @@
 import { Context, Effect } from 'effect'
-import { Statement } from '../entities/statement'
+import { Statement, StatementAuthor } from '../entities/statement'
 import { LatestStatement } from '../read-models/latest-statement'
 import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
@@ -88,6 +88,16 @@ export interface StatementRepository {
   findByOrganisationAndSubject(
     organisationId: string,
     subjectId: string,
+  ): Effect.Effect<StatementWithDetails[], DatabaseError>
+
+  /**
+   * Les prises de position d'un auteur sur une poignée de sujets : ce que
+   * la page « un auteur sur un sujet » montre de ses sujets voisins, sans
+   * charger tout son historique.
+   */
+  findByAuthorAndSubjectIds(
+    author: StatementAuthor,
+    subjectIds: string[],
   ): Effect.Effect<StatementWithDetails[], DatabaseError>
 
   /**

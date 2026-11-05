@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatar from '../AuthorAvatar'
-import { AuthorProfile } from '../../../infra/queries/author-subject-page'
+import { AuthorProfile } from '../../../domain/read-models/author-subject-page'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
 import styles from './AuthorOnSubject.module.css'

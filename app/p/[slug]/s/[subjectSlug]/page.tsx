@@ -8,7 +8,6 @@ import { createStatementRepository } from '../../../../../infra/database/stateme
 import { publicFigureAuthor } from '../../../../../domain/entities/statement'
 import { publicFigureRef } from '../../../../../domain/read-models/statement-author'
 import {
-  countAllies,
   debateOnSubject,
   groupStatementsByPosition,
   groupSubjectCompany,
@@ -84,7 +83,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
         counts={{
           statements: figureStatements.length,
           positions: positions.length,
-          allies: countAllies(company),
+          allies: page.alignment.everyone.withAuthor,
           openPositions: page.positions.length,
         }}
         actions={<ShareButton compact title={`${figure.name} sur ${subject.title}`} />}

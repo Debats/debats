@@ -13,6 +13,13 @@ interface StackedShareBarProps {
   label: React.ReactNode
 }
 
+/*
+ * Un auteur qui a pris deux positions pèse dans deux segments : le total de
+ * la barre compte des couples (auteur, position), jamais des voix. Il n'est
+ * donc pas affiché — le nombre de voix distinctes se dit ailleurs, en
+ * toutes lettres, et `countSubjectVoices` est seul à le calculer.
+ */
+
 /** Nuance d'encre d'une part, de la plus à la moins soutenue */
 export const shadeClass = (index: number) => styles[`shade${Math.min(index, 5)}`]
 
@@ -42,7 +49,6 @@ export default function StackedShareBar({ shares, label }: StackedShareBarProps)
             )
           })}
       </div>
-      <span className={styles.total}>{total}</span>
     </div>
   )
 }

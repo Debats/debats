@@ -99,6 +99,27 @@ export function createOrganisationMembershipRepository(
         catch: (error) => dbError('Failed to fetch organisation members', error),
       }),
 
+    findByOrganisationIds: (organisationIds) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (organisationIds.length === 0) return []
+          const { data, error } = await supabase
+            .from('organisation_memberships')
+            .select('*, public_figures!inner(id, name, slug)')
+            .in('organisation_id', organisationIds)
+            .is('public_figures.deleted_at', null)
+          if (error) throw error
+          return data.map((row): MembershipWithFigure => {
+            const figure = row.public_figures as unknown as FigureJoin
+            return {
+              membership: mapRow(row),
+              figure: { id: figure.id, name: figure.name, slug: figure.slug },
+            }
+          })
+        },
+        catch: (error) => dbError('Failed to fetch members of several organisations', error),
+      }),
+
     findByPublicFigureId: (publicFigureId) =>
       Effect.tryPromise({
         try: async () => {

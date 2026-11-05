@@ -38,6 +38,7 @@ export function fakeOrganisationRepo(seed: Organisation[] = []): OrganisationRep
     findById: (id) => Effect.succeed(seed.find((o) => o.id === id) ?? null),
     searchByName: () => Effect.succeed(seed),
     findSummaries: () => Effect.succeed([]),
+    findSummaryById: () => Effect.succeed(null),
   }
 }
 
@@ -72,17 +73,19 @@ export function fakeMembershipRepo(
   organisations: Organisation[] = [],
 ): OrganisationMembershipRepository & { rows: OrganisationMembership[] } {
   const rows = [...seed]
+  const withFigure = (membership: OrganisationMembership): MembershipWithFigure => {
+    const figure = figures.find((f) => f.id === membership.publicFigureId)!
+    return { membership, figure: { id: figure.id, name: figure.name, slug: figure.slug } }
+  }
+
   return {
     rows,
     findById: (id) => Effect.succeed(rows.find((m) => m.id === id) ?? null),
     findByOrganisationId: (organisationId) =>
+      Effect.succeed(rows.filter((m) => m.organisationId === organisationId).map(withFigure)),
+    findByOrganisationIds: (organisationIds) =>
       Effect.succeed(
-        rows
-          .filter((m) => m.organisationId === organisationId)
-          .map((membership): MembershipWithFigure => {
-            const figure = figures.find((f) => f.id === membership.publicFigureId)!
-            return { membership, figure: { id: figure.id, name: figure.name, slug: figure.slug } }
-          }),
+        rows.filter((m) => organisationIds.includes(m.organisationId)).map(withFigure),
       ),
     findByPublicFigureId: (publicFigureId) =>
       Effect.succeed(

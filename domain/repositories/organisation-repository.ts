@@ -16,6 +16,9 @@ export interface OrganisationRepository {
 
   /** Every organisation with its members count, ordered by name */
   findSummaries(): Effect.Effect<OrganisationSummary[], DatabaseError>
+
+  /** The counters of one organisation, without reading the whole list */
+  findSummaryById(id: string): Effect.Effect<OrganisationSummary | null, DatabaseError>
 }
 
 export const OrganisationRepository =

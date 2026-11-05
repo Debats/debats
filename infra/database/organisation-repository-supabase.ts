@@ -141,5 +141,30 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
         },
         catch: (error) => dbError('Failed to fetch organisation summaries', error),
       }),
+
+    findSummaryById: (id) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('v_organisation_summary')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle<OrganisationSummaryRow>()
+          if (error) throw error
+          if (!data) return null
+          return {
+            id: data.id,
+            name: data.name,
+            slug: data.slug,
+            acronym: data.acronym,
+            organisationType: data.organisation_type,
+            presentation: data.presentation,
+            membersCount: data.members_count ?? 0,
+            statementsCount: data.statements_count ?? 0,
+            subjectsCount: data.subjects_count ?? 0,
+          }
+        },
+        catch: (error) => dbError('Failed to fetch organisation summary', error),
+      }),
   }
 }

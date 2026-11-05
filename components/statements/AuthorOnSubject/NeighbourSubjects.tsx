@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { NeighbourSubject } from '../../../infra/queries/author-subject-page'
+import { NeighbourSubject } from '../../../domain/read-models/author-subject-page'
 import {
   authorOnSubjectHref,
   StatementAuthorRef,

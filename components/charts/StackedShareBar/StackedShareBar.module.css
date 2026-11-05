@@ -1,6 +1,6 @@
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 40px;
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr);
   align-items: center;
   gap: 14px;
 }
@@ -26,12 +26,6 @@
   white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 11px;
-}
-
-.total {
-  composes: meta from '../../../styles/text.module.css';
-  color: var(--ink);
-  text-align: right;
 }
 
 .shade0 {
@@ -60,10 +54,6 @@
 
 @media (max-width: 600px) {
   .row {
-    grid-template-columns: minmax(0, 1fr) 36px;
-  }
-
-  .label {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

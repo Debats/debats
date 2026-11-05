@@ -4,10 +4,11 @@ import { declarationContent, organisationAuthor, publicFigureAuthor } from '../e
 import { organisationRef, publicFigureRef } from '../read-models/statement-author'
 import { StatementWithAuthor } from '../repositories/statement-repository'
 import {
-  countAllies,
+  countSubjectVoices,
   debateOnSubject,
   groupStatementsByPosition,
   groupSubjectCompany,
+  neighboursOf,
   voicesOf,
 } from './author-on-subject'
 
@@ -74,7 +75,6 @@ describe('groupSubjectCompany', () => {
     )
 
     expect(company.alliesByPosition.get(pour.id)?.map((a) => a.name)).toEqual(['Simone Veil'])
-    expect(countAllies(company)).toBe(1)
   })
 
   it('leaves out whoever took another position: the debate card shows them', () => {
@@ -131,6 +131,46 @@ describe('voicesOf', () => {
   it('reduces a statement to who spoke and for which position', () => {
     expect(voicesOf([taken(veil, pour)])).toEqual([
       { authorKey: 'public_figure-veil', positionId: pour.id },
+    ])
+  })
+})
+
+describe('countSubjectVoices', () => {
+  it('counts an author once however many statements she made', () => {
+    expect(countSubjectVoices([taken(veil, pour), taken(veil, pour), taken(camus, pour)])).toBe(2)
+  })
+
+  it('counts an author who changed her mind once, not once per position', () => {
+    // Régression : le rail sommait les effectifs par position et affichait
+    // deux voix pour une personne qui a pris deux positions sur le sujet,
+    // alors que la carte d'analyse juste au-dessus en annonçait une.
+    expect(countSubjectVoices([taken(veil, pour), taken(veil, contre)])).toBe(1)
+  })
+
+  it('does not confuse a public figure and an organisation sharing an identifier', () => {
+    expect(
+      countSubjectVoices([taken(attac, pour), taken(publicFigureRef({ ...attac }), pour)]),
+    ).toBe(2)
+  })
+})
+
+describe('neighboursOf', () => {
+  const voisin = { id: 'voisin', title: 'Un sujet voisin', slug: 'un-sujet-voisin' }
+
+  it('names the positions the author defends there, without repeating one', () => {
+    const own = [
+      { ...taken(veil, pour), subject: { id: 'voisin' } },
+      { ...taken(veil, pour), subject: { id: 'voisin' } },
+    ] as never
+
+    expect(neighboursOf([voisin], own)).toEqual([
+      { title: 'Un sujet voisin', slug: 'un-sujet-voisin', positions: ['Pour'], statements: 2 },
+    ])
+  })
+
+  it('keeps a related subject the author never spoke on', () => {
+    expect(neighboursOf([voisin], [])).toEqual([
+      { title: 'Un sujet voisin', slug: 'un-sujet-voisin', positions: [], statements: 0 },
     ])
   })
 })

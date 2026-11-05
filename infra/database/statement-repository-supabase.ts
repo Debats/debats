@@ -413,6 +413,24 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements for organisation and subject', error),
       }),
 
+    findByAuthorAndSubjectIds: (author, subjectIds) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (subjectIds.length === 0) return []
+          const column = author.kind === 'organisation' ? 'organisation_id' : 'public_figure_id'
+          const { data, error } = await supabase
+            .from('statements')
+            .select(STATEMENT_WITH_DETAILS_QUERY)
+            .eq(column, author.id)
+            .in('positions.subject_id', subjectIds)
+            .is('deleted_at', null)
+
+          if (error) throw error
+          return data.map(mapStatementWithDetailsRow)
+        },
+        catch: (error) => dbError('Failed to fetch statements for author and subjects', error),
+      }),
+
     findByArgumentWithAuthors: (argumentId: string) =>
       Effect.tryPromise({
         try: async () => {
