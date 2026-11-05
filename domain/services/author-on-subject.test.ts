@@ -3,7 +3,13 @@ import { createPosition, createStatement } from '../entities/entity-test-helpers
 import { declarationContent, organisationAuthor, publicFigureAuthor } from '../entities/statement'
 import { organisationRef, publicFigureRef } from '../read-models/statement-author'
 import { StatementWithAuthor } from '../repositories/statement-repository'
-import { countAllies, groupStatementsByPosition, groupSubjectCompany } from './author-on-subject'
+import {
+  countAllies,
+  debateOnSubject,
+  groupStatementsByPosition,
+  groupSubjectCompany,
+  voicesOf,
+} from './author-on-subject'
 
 const pour = createPosition({
   title: 'Pour',
@@ -60,7 +66,7 @@ describe('groupSubjectCompany', () => {
     taken(camus, contre),
   ]
 
-  it('separates allies on the author positions from the other positions, without the author', () => {
+  it('keeps the allies of each position of the author, without the author herself', () => {
     const company = groupSubjectCompany(
       subjectStatements,
       organisationAuthor('attac'),
@@ -68,8 +74,17 @@ describe('groupSubjectCompany', () => {
     )
 
     expect(company.alliesByPosition.get(pour.id)?.map((a) => a.name)).toEqual(['Simone Veil'])
-    expect(company.opponents).toEqual([{ title: 'Contre', slug: contre.slug, authors: [camus] }])
     expect(countAllies(company)).toBe(1)
+  })
+
+  it('leaves out whoever took another position: the debate card shows them', () => {
+    const company = groupSubjectCompany(
+      subjectStatements,
+      organisationAuthor('attac'),
+      new Set([pour.id]),
+    )
+
+    expect(company.alliesByPosition.has(contre.id)).toBe(false)
   })
 
   it('does not confuse a public figure and an organisation sharing an identifier', () => {
@@ -80,5 +95,42 @@ describe('groupSubjectCompany', () => {
     )
 
     expect(company.alliesByPosition.get(pour.id)).toHaveLength(1)
+  })
+})
+
+describe('debateOnSubject', () => {
+  const openPositions = [
+    { id: pour.id, title: 'Pour', slug: 'pour' },
+    { id: contre.id, title: 'Contre', slug: 'contre' },
+  ]
+
+  it('ranks the positions from the most to the least supported', () => {
+    const statements = [taken(veil, pour), taken(camus, pour), taken(attac, contre)]
+    const debate = debateOnSubject(openPositions, statements, new Set())
+    expect(debate.map((standing) => standing.position.slug)).toEqual(['pour', 'contre'])
+    expect(debate[0].authors).toHaveLength(2)
+  })
+
+  it('keeps a position nobody has defended yet', () => {
+    const debate = debateOnSubject(openPositions, [taken(veil, pour)], new Set())
+    expect(debate[1]).toMatchObject({ position: { slug: 'contre' }, authors: [] })
+  })
+
+  it('counts an author once however many statements she made', () => {
+    const debate = debateOnSubject(openPositions, [taken(veil, pour), taken(veil, pour)], new Set())
+    expect(debate[0].authors).toHaveLength(1)
+  })
+
+  it('marks the positions of the author the page is about', () => {
+    const debate = debateOnSubject(openPositions, [taken(veil, pour)], new Set([pour.id]))
+    expect(debate.map((standing) => standing.hers)).toEqual([true, false])
+  })
+})
+
+describe('voicesOf', () => {
+  it('reduces a statement to who spoke and for which position', () => {
+    expect(voicesOf([taken(veil, pour)])).toEqual([
+      { authorKey: 'public_figure-veil', positionId: pour.id },
+    ])
   })
 })

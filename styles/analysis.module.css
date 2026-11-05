@@ -91,3 +91,38 @@
 .subjectLink:hover {
   color: var(--signal);
 }
+
+/*
+ * Nuances d'encre des positions, de la plus à la moins soutenue. Partagées
+ * par l'onglet Analyses du sujet et par les barres de la page « un auteur
+ * sur un sujet » : un sujet garde les mêmes nuances d'une page à l'autre.
+ */
+.shade0 {
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+.shade1 {
+  background-color: var(--ink-2);
+  color: var(--paper);
+}
+
+.shade2 {
+  background-color: var(--ink-3);
+  color: var(--paper);
+}
+
+.shade3 {
+  background-color: var(--line-2);
+  color: var(--ink);
+}
+
+.shade4 {
+  background-color: var(--paper-2);
+  color: var(--ink);
+}
+
+.shade5 {
+  background-color: var(--line);
+  color: var(--ink);
+}

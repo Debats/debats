@@ -39,7 +39,7 @@ export function countFiguresByOccupation(assignments: OccupationAssignment[]): M
 }
 
 /** The families each public figure belongs to, through its occupations */
-function familiesByFigure(
+export function familiesByFigure(
   assignments: OccupationAssignment[],
   occupations: Occupation[],
 ): Map<string, Set<string>> {

@@ -11,18 +11,9 @@ export interface PositionGroup {
   statements: StatementWithArguments[]
 }
 
-/** Another position on the subject and who took it */
-export interface OtherPositionGroup {
-  title: string
-  slug: string
-  authors: StatementAuthorRef[]
-}
-
 export interface SubjectCompany {
   /** Everyone else who took one of the author's positions, by position id */
   alliesByPosition: Map<string, StatementAuthorRef[]>
-  /** The other positions, most supported first */
-  opponents: OtherPositionGroup[]
 }
 
 export const authorKey = (author: { kind: string; id: string }) => `${author.kind}-${author.id}`
@@ -39,36 +30,22 @@ export function groupStatementsByPosition(statements: StatementWithDetails[]): P
 }
 
 /**
- * Who else took position on the subject: allies share one of the author's
- * positions, opponents took another one. The author is left out of both.
+ * Qui rejoint l'auteur sur chacune de ses positions, lui-même exclu. Les
+ * autres positions du sujet sont le travail de `debateOnSubject`, qui les
+ * montre toutes — y compris celles que personne n'a encore défendues.
  */
 export function groupSubjectCompany(
   subjectStatements: StatementWithAuthor[],
   current: StatementAuthor,
-  currentPositionIds: Set<string>,
+  currentPositionIds: ReadonlySet<string>,
 ): SubjectCompany {
   const alliesMap = new Map<string, Map<string, StatementAuthorRef>>()
-  const opponentsMap = new Map<
-    string,
-    { title: string; slug: string; authors: Map<string, StatementAuthorRef> }
-  >()
 
   for (const { author, position } of subjectStatements) {
     if (author.kind === current.kind && author.id === current.id) continue
-
-    if (currentPositionIds.has(position.id)) {
-      if (!alliesMap.has(position.id)) alliesMap.set(position.id, new Map())
-      alliesMap.get(position.id)!.set(authorKey(author), author)
-    } else {
-      if (!opponentsMap.has(position.id)) {
-        opponentsMap.set(position.id, {
-          title: position.title,
-          slug: position.slug,
-          authors: new Map(),
-        })
-      }
-      opponentsMap.get(position.id)!.authors.set(authorKey(author), author)
-    }
+    if (!currentPositionIds.has(position.id)) continue
+    if (!alliesMap.has(position.id)) alliesMap.set(position.id, new Map())
+    alliesMap.get(position.id)!.set(authorKey(author), author)
   }
 
   const alliesByPosition = new Map<string, StatementAuthorRef[]>()
@@ -76,11 +53,7 @@ export function groupSubjectCompany(
     alliesByPosition.set(positionId, Array.from(authors.values()))
   })
 
-  const opponents = Array.from(opponentsMap.values())
-    .map((g) => ({ title: g.title, slug: g.slug, authors: Array.from(g.authors.values()) }))
-    .sort((a, b) => b.authors.length - a.authors.length)
-
-  return { alliesByPosition, opponents }
+  return { alliesByPosition }
 }
 
 /** Distinct allies across all of the author's positions */
@@ -89,3 +62,44 @@ export function countAllies(company: SubjectCompany): number {
     Array.from(company.alliesByPosition.values()).flatMap((authors) => authors.map(authorKey)),
   ).size
 }
+
+/** Une position du sujet et qui la défend, pour la carte du débat */
+export interface PositionStanding {
+  position: { id: string; title: string; slug: string }
+  /** Les auteurs distincts qui l'ont prise, l'auteur de la page compris */
+  authors: StatementAuthorRef[]
+  /** C'est une des positions de l'auteur de la page */
+  hers: boolean
+}
+
+/**
+ * Le débat en entier : toutes les positions ouvertes sur le sujet, de la
+ * plus à la moins soutenue. Une position que personne n'a encore défendue
+ * reste de la partie — son vide est une information, et une invitation.
+ */
+export function debateOnSubject(
+  positions: ReadonlyArray<{ id: string; title: string; slug: string }>,
+  statements: readonly StatementWithAuthor[],
+  hers: ReadonlySet<string>,
+): PositionStanding[] {
+  const authors = new Map<string, Map<string, StatementAuthorRef>>()
+  for (const { author, position } of statements) {
+    const taken = authors.get(position.id) ?? new Map<string, StatementAuthorRef>()
+    taken.set(authorKey(author), author)
+    authors.set(position.id, taken)
+  }
+  return positions
+    .map((position) => ({
+      position,
+      authors: Array.from(authors.get(position.id)?.values() ?? []),
+      hers: hers.has(position.id),
+    }))
+    .sort((a, b) => b.authors.length - a.authors.length)
+}
+
+/** Les voix du sujet, réduites à ce que mesure l'alignement par groupe */
+export const voicesOf = (statements: readonly StatementWithAuthor[]) =>
+  statements.map(({ author, position }) => ({
+    authorKey: authorKey(author),
+    positionId: position.id,
+  }))

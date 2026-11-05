@@ -196,3 +196,344 @@ a.sourceLink:hover {
     font-size: 24px;
   }
 }
+
+/* Le paragraphe de synthèse : le seul vrai texte de la page */
+.synthesis {
+  composes: body from '../../../styles/text.module.css';
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin-bottom: 32px;
+  max-width: 62ch;
+}
+
+.synthesis strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.analysis {
+  margin-top: 40px;
+}
+
+.subTitle {
+  composes: label from '../../../styles/text.module.css';
+  margin-top: 8px;
+}
+
+/* Légende des nuances, au-dessus de la barre du sujet */
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.legendItem {
+  composes: small from '../../../styles/text.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Le débat en entier : une carte par position ouverte */
+.debateCard {
+  background-color: var(--paper-2);
+  border-radius: var(--radius-card);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.debateCardHers {
+  composes: debateCard;
+  background-color: var(--card);
+}
+
+.debateHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.debateBar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.debateTrack {
+  flex-grow: 1;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--line);
+  overflow: hidden;
+}
+
+.debateFill {
+  height: 100%;
+  background-color: var(--ink);
+}
+
+.debateCount {
+  composes: meta from '../../../styles/text.module.css';
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.debateEmpty {
+  composes: small from '../../../styles/text.module.css';
+}
+
+/* Les alliés, nommés : des liens, pas une pile d'avatars muette */
+.allies {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.allyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ally,
+.ally:link,
+.ally:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.ally:hover {
+  background-color: var(--paper-2);
+}
+
+.allyBody {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.allyName {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.allyRole {
+  composes: meta from '../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+/* Les sujets voisins */
+.neighbours {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.neighbour,
+.neighbour:link,
+.neighbour:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 22px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  color: var(--ink);
+}
+
+.neighbourSilent {
+  composes: neighbour;
+  background-color: var(--paper-2);
+}
+
+.neighbour:hover,
+.neighbourSilent:hover {
+  background-color: var(--paper-2);
+}
+
+.neighbourTitle {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+
+.neighbourPosition {
+  composes: small from '../../../styles/text.module.css';
+}
+
+/* L'appel à contribuer */
+.contribute {
+  margin-top: 40px;
+  padding: 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.contributeTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.contributeBody {
+  composes: small from '../../../styles/text.module.css';
+  margin-top: 10px;
+  max-width: 62ch;
+}
+
+.contributeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.contributePrimary,
+.contributePrimary:link,
+.contributePrimary:visited {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  background-color: var(--signal);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contributePrimary:hover {
+  background-color: var(--signal-dark);
+}
+
+.contributeSecondary,
+.contributeSecondary:link,
+.contributeSecondary:visited {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contributeSecondary:hover {
+  border-color: var(--ink);
+}
+
+/* Les repères du débat, dans la carte du sujet */
+.facts {
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.factLabel {
+  composes: small from '../../../styles/text.module.css';
+}
+
+.factValue {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+/* La carte de visite de l'auteur */
+.authorHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.authorName,
+.authorName:link,
+.authorName:visited {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.authorName:hover {
+  color: var(--signal);
+}
+
+.authorRole {
+  composes: small from '../../../styles/text.module.css';
+}
+
+.authorOrganisation,
+.authorOrganisation:link,
+.authorOrganisation:visited {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-2);
+}
+
+.authorOrganisation:hover {
+  color: var(--signal);
+}
+
+@media (max-width: 768px) {
+  .synthesis {
+    font-size: 17px;
+  }
+
+  .neighbours {
+    grid-template-columns: 1fr;
+  }
+
+  .contribute {
+    padding: 20px;
+  }
+}
+
+.legendMine {
+  composes: meta from '../../../styles/text.module.css';
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--ink);
+  color: var(--paper);
+}

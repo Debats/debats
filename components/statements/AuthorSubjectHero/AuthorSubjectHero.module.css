@@ -9,11 +9,19 @@
   padding: 0 var(--container-gutter);
 }
 
+/* Le fil d'Ariane et les actions se partagent la première ligne */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
 .kicker {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
 }
 
 .crumb {
@@ -29,31 +37,19 @@
   color: var(--line-2);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 32px;
-  align-items: start;
-}
-
 .main {
-  grid-column: span 8;
   display: flex;
   gap: 28px;
   align-items: center;
+  max-width: 880px;
 }
 
-.aside {
-  grid-column: span 4;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 8px;
+.identity {
+  min-width: 0;
 }
 
 .title {
   composes: displayLarge from '../../../styles/text.module.css';
-  margin-bottom: 10px;
 }
 
 .figureLink,
@@ -66,8 +62,45 @@
   color: var(--signal);
 }
 
+/* Ligne de rôle : métiers actuels puis affiliations */
+.role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.occupation {
+  composes: small from '../../../styles/text.module.css';
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper);
+  color: var(--ink-2);
+}
+
+/* `composes` n'est valide que dans un sélecteur de classe simple */
+.organisation {
+  composes: small from '../../../styles/text.module.css';
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--org-soft);
+}
+
+.organisation,
+.organisation:link,
+.organisation:visited {
+  color: var(--org-dark);
+}
+
+.organisation:hover {
+  background-color: var(--org);
+  color: var(--paper);
+}
+
 .subject {
   composes: voice from '../../../styles/text.module.css';
+  margin-top: 16px;
 }
 
 .subjectLink,
@@ -85,33 +118,16 @@
   text-decoration-color: var(--signal);
 }
 
-.stats {
-  margin: 0;
-  padding: 24px;
-  background-color: var(--card);
-  border-radius: var(--radius-card);
+/* Les compteurs : une ligne de repères, pas le sujet du bandeau */
+.facts {
+  composes: meta from '../../../styles/text.module.css';
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 16px 20px;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.statValue {
-  composes: number from '../../../styles/text.module.css';
-  margin: 0;
-}
-
-.statLabel {
-  composes: label from '../../../styles/text.module.css';
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  max-width: 96px;
+  gap: 8px 16px;
+  margin: 28px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
 }
 
 .actions {
@@ -130,28 +146,9 @@
     padding: 0 var(--container-gutter-mobile);
   }
 
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .main,
-  .aside {
-    grid-column: span 1;
-  }
-
   .main {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-  }
-
-  .aside {
-    padding-top: 0;
-  }
-
-  .stats {
-    padding: 20px;
-    gap: 12px;
   }
 }

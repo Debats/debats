@@ -10,9 +10,11 @@ import { organisationAuthor } from '../../../../../domain/entities/statement'
 import { organisationRef } from '../../../../../domain/read-models/statement-author'
 import {
   countAllies,
+  debateOnSubject,
   groupStatementsByPosition,
   groupSubjectCompany,
 } from '../../../../../domain/services/author-on-subject'
+import { loadAuthorSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import {
@@ -63,20 +65,20 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
 
   if (!organisation || !subject) notFound()
 
-  const [organisationStatements, subjectStatements, contributor] = await Promise.all([
+  const [organisationStatements, contributor] = await Promise.all([
     Effect.runPromise(statementRepo.findByOrganisationAndSubject(organisation.id, subject.id)),
-    Effect.runPromise(statementRepo.findBySubjectWithAuthors(subject.id)),
     getAuthenticatedContributor(),
   ])
 
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
   const author = toAuthorRef(organisation)
   const positions = groupStatementsByPosition(organisationStatements)
-  const company = groupSubjectCompany(
-    subjectStatements,
-    organisationAuthor(organisation.id),
-    new Set(positions.map(({ position }) => position.id)),
-  )
+  const hers = new Set(positions.map(({ position }) => position.id))
+
+  // Le jour vient du bord : le domaine ne lit aucune horloge
+  const page = await loadAuthorSubjectPage(supabase, author, subject, hers, new Date())
+  const company = groupSubjectCompany(page.everyone, organisationAuthor(organisation.id), hers)
+  const debate = debateOnSubject(page.positions, page.everyone, hers)
 
   return (
     <>
@@ -87,17 +89,22 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
       <AuthorSubjectHero
         author={author}
         subject={subject}
+        role={{ occupations: page.profile.occupations, organisations: page.profile.organisations }}
         counts={{
           statements: organisationStatements.length,
           positions: positions.length,
           allies: countAllies(company),
+          openPositions: page.positions.length,
         }}
         actions={<ShareButton compact title={`${organisation.name} sur ${subject.title}`} />}
       />
       <AuthorOnSubject
+        author={author}
         subject={subject}
         positions={positions}
         company={company}
+        page={page}
+        debate={debate}
         editHref={
           canEdit ? (statementId) => `/prise-de-position/${statementId}/modifier` : undefined
         }

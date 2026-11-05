@@ -1,49 +1,85 @@
-import Link from 'next/link'
 import ContentWithSidebar from '../../layout/ContentWithSidebar'
-import EditLink from '../../ui/EditLink'
-import AuthorAvatarStack from '../AuthorAvatarStack'
-import ArgumentChips from '../ArgumentChips'
-import StatementBody from '../StatementBody'
-import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../domain/entities/statement'
-import { PositionGroup, SubjectCompany } from '../../../domain/services/author-on-subject'
-import { formatShortDate } from '../../../lib/format-date'
+import AlignmentCard from './AlignmentCard'
+import AuthorRailCard from './AuthorRailCard'
+import ContributeCard from './ContributeCard'
+import DebateSection from './DebateSection'
+import NeighbourSubjects from './NeighbourSubjects'
+import PositionCard from './PositionCard'
+import SubjectRailCard from './SubjectRailCard'
+import Synthesis from './Synthesis'
+import { StatementAuthorRef } from '../../../domain/read-models/statement-author'
+import {
+  PositionGroup,
+  PositionStanding,
+  SubjectCompany,
+} from '../../../domain/services/author-on-subject'
+import { AuthorSubjectPage } from '../../../infra/queries/author-subject-page'
 import { plural } from '../../../lib/plural'
 import styles from './AuthorOnSubject.module.css'
 
 interface AuthorOnSubjectProps {
+  author: StatementAuthorRef
   subject: { title: string; slug: string; problem: string }
-  /** The author's positions on the subject, with their statements */
+  /** Les positions de l'auteur sur le sujet, avec ses prises de position */
   positions: PositionGroup[]
   company: SubjectCompany
+  /** Le débat autour, les groupes, les sujets voisins, sa carte de visite */
+  page: AuthorSubjectPage
+  /** Toutes les positions du sujet, de la plus à la moins soutenue */
+  debate: PositionStanding[]
   /** Lien de modification d'une prise de position, quand l'utilisateur y a droit */
   editHref?: (statementId: string) => string
 }
 
-/** Le corps de la page « un auteur sur un sujet » : ses positions, les autres, le sujet en rail. */
+/**
+ * Le corps de la page « un auteur sur un sujet ».
+ *
+ * C'est la page la mieux référencée du site : un visiteur y arrive d'un
+ * moteur de recherche sans connaître ni l'auteur ni le sujet. Elle lui
+ * donne donc, dans l'ordre : la réponse en prose, la prise de position
+ * sourcée, la place de cette position dans le débat, le débat entier, les
+ * sujets voisins, et de quoi contribuer.
+ */
 export default function AuthorOnSubject({
+  author,
   subject,
   positions,
   company,
+  page,
+  debate,
   editHref,
 }: AuthorOnSubjectProps) {
   const statementsCount = positions.reduce((sum, group) => sum + group.statements.length, 0)
+  const who = author.kind === 'organisation' ? 'cette organisation' : 'cette personnalité'
+  const latest = positions
+    .flatMap(({ statements }) => statements.map(({ statement }) => statement.statedAt))
+    .reduce<Date | null>((last, date) => (!last || date > last ? date : last), null)
+  const voices = debate.reduce((sum, standing) => sum + standing.authors.length, 0)
 
   return (
     <ContentWithSidebar
       topMargin
+      hideLatestStatements
       aside={
-        <div className={styles.subjectCard}>
-          <p className={styles.subjectCardTitle}>Le sujet</p>
-          <Link href={`/s/${subject.slug}`} className={styles.subjectCardName}>
-            {subject.title}
-          </Link>
-          <p className={styles.subjectCardProblem}>{subject.problem}</p>
-          <Link href={`/s/${subject.slug}`} className={styles.subjectCardLink}>
-            Voir toutes les positions
-          </Link>
-        </div>
+        <>
+          <SubjectRailCard
+            subject={subject}
+            facts={{ positions: page.positions.length, voices, span: page.span }}
+          />
+          <AuthorRailCard author={author} profile={page.profile} />
+        </>
       }
     >
+      <Synthesis
+        authorName={author.name}
+        subjectTitle={subject.title}
+        statements={statementsCount}
+        positionTitles={positions.map(({ position }) => position.title)}
+        allies={page.alignment.everyone.withAuthor}
+        undefended={debate.filter((standing) => standing.authors.length === 0).length}
+        latest={latest}
+      />
+
       <section>
         <header className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>
@@ -55,86 +91,31 @@ export default function AuthorOnSubject({
           <p className={styles.empty}>Aucune prise de position enregistrée pour l’instant.</p>
         ) : (
           <div className={styles.list}>
-            {positions.map(({ position, statements }) => {
-              const allies = company.alliesByPosition.get(position.id) ?? []
-              return (
-                <article key={position.id} className={styles.card}>
-                  <p className={styles.kicker}>Sa position</p>
-                  <h3 className={styles.positionTitle}>
-                    <Link
-                      href={`/s/${subject.slug}/position/${position.slug}`}
-                      className={styles.positionLink}
-                    >
-                      {position.title}
-                    </Link>
-                  </h3>
-                  {statements.map(({ statement, arguments: used }) => (
-                    <div key={statement.id} className={styles.statement}>
-                      <StatementBody content={statement.content} />
-                      <div className={styles.source}>
-                        <span className={styles.type}>
-                          {STATEMENT_TYPE_LABELS[statementTypeOf(statement.content)]}
-                        </span>
-                        <a
-                          href={statement.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.sourceLink}
-                        >
-                          {statement.sourceName}
-                        </a>
-                        <span className={styles.separator}>·</span>
-                        <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
-                        {editHref && <EditLink href={editHref(statement.id)} />}
-                      </div>
-                      <ArgumentChips arguments={used} />
-                    </div>
-                  ))}
-                  {allies.length > 0 && (
-                    <div className={styles.allies}>
-                      <span className={styles.alliesLabel}>Même position</span>
-                      <AuthorAvatarStack
-                        authors={allies}
-                        max={10}
-                        size={36}
-                        subjectSlug={subject.slug}
-                        moreHref={`/s/${subject.slug}/position/${position.slug}`}
-                      />
-                    </div>
-                  )}
-                </article>
-              )
-            })}
+            {positions.map((group) => (
+              <PositionCard
+                key={group.position.id}
+                subjectSlug={subject.slug}
+                group={group}
+                allies={company.alliesByPosition.get(group.position.id) ?? []}
+                roles={page.roles}
+                editHref={editHref}
+              />
+            ))}
           </div>
         )}
       </section>
 
-      {company.opponents.length > 0 && (
-        <section className={styles.others}>
-          <header className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Positions différentes</h2>
-          </header>
-          <div className={styles.list}>
-            {company.opponents.map((group) => (
-              <div key={group.slug} className={styles.otherCard}>
-                <Link
-                  href={`/s/${subject.slug}/position/${group.slug}`}
-                  className={styles.otherTitle}
-                >
-                  {group.title}
-                </Link>
-                <AuthorAvatarStack
-                  authors={group.authors}
-                  max={8}
-                  size={36}
-                  subjectSlug={subject.slug}
-                  moreHref={`/s/${subject.slug}/position/${group.slug}`}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
+      {positions.length > 0 && (
+        <div className={styles.analysis}>
+          <AlignmentCard debate={debate} alignment={page.alignment} who={who} />
+        </div>
       )}
+
+      <DebateSection subjectSlug={subject.slug} debate={debate} />
+
+      <NeighbourSubjects author={author} neighbours={page.neighbours} />
+
+      <ContributeCard authorName={author.name} statements={statementsCount} />
     </ContentWithSidebar>
   )
 }

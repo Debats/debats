@@ -46,35 +46,29 @@
   color: var(--signal);
 }
 
-/* Nuances d'encre des positions, de la plus à la moins soutenue */
+/* Nuances d'encre des positions, partagées avec la page « un auteur sur un sujet » */
 .shade0 {
-  background-color: var(--ink);
-  color: var(--paper);
+  composes: shade0 from '../../../../styles/analysis.module.css';
 }
 
 .shade1 {
-  background-color: var(--ink-2);
-  color: var(--paper);
+  composes: shade1 from '../../../../styles/analysis.module.css';
 }
 
 .shade2 {
-  background-color: var(--ink-3);
-  color: var(--paper);
+  composes: shade2 from '../../../../styles/analysis.module.css';
 }
 
 .shade3 {
-  background-color: var(--line-2);
-  color: var(--ink);
+  composes: shade3 from '../../../../styles/analysis.module.css';
 }
 
 .shade4 {
-  background-color: var(--paper-2);
-  color: var(--ink);
+  composes: shade4 from '../../../../styles/analysis.module.css';
 }
 
 .shade5 {
-  background-color: var(--line);
-  color: var(--ink);
+  composes: shade5 from '../../../../styles/analysis.module.css';
 }
 
 /* Légende */
