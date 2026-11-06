@@ -89,10 +89,9 @@ export function loadFigureSubjectPage(
   ).pipe(
     Effect.flatMap(({ around, memberships, totals }) => {
       const current = memberships.filter(({ membership }) => isCurrentMembership(membership, today))
-      const figureIds = figuresOnSubject(around.subjectStatements, self)
 
       return Effect.map(
-        figureGroups(supabase, figure.id, figureIds, current, today),
+        figureGroups(supabase, figure.id, around.figureIds, current, today),
         (groups): FigureSubjectPage => ({
           ...context(around, self, hers, groups, totals),
           occupations: occupationsOf(around.held, figure.id),
@@ -148,6 +147,13 @@ export function loadOrganisationSubjectPage(
 interface SubjectAround {
   /** Toutes les prises de position du sujet, tous auteurs confondus */
   subjectStatements: StatementWithAuthor[]
+  /**
+   * Les personnalités qui s'expriment sur le sujet, celle de la page
+   * comprise. Calculée une fois ici : les métiers lus juste après et les
+   * groupes de la page sont les mêmes personnes, et deux calculs pourraient
+   * se désaccorder.
+   */
+  figureIds: string[]
   /** Les positions ouvertes, celles que personne n'a prises comprises */
   positions: Position[]
   span: StatedSpan | null
@@ -178,20 +184,20 @@ function subjectAround(
   ).pipe(
     // Ces deux-là dépendent des premières : qui parle sur le sujet, et quels
     // sujets lui sont liés.
-    Effect.flatMap((subjectWide) =>
-      Effect.all(
+    Effect.flatMap((subjectWide) => {
+      const figureIds = figuresOnSubject(subjectWide.subjectStatements, self)
+
+      return Effect.all(
         {
-          held: createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(
-            figuresOnSubject(subjectWide.subjectStatements, self),
-          ),
+          held: createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(figureIds),
           onNeighbours: statements.findByAuthorAndSubjectIds(
             self,
             subjectWide.related.map(({ id }) => id),
           ),
         },
         PARALLEL,
-      ).pipe(Effect.map((aroundTheSubject) => ({ ...subjectWide, ...aroundTheSubject }))),
-    ),
+      ).pipe(Effect.map((aroundTheSubject) => ({ ...subjectWide, ...aroundTheSubject, figureIds })))
+    }),
   )
 }
 
@@ -280,14 +286,16 @@ function figureGroups(
   )
 }
 
-/** Une seule lecture pour toutes ces organisations, jamais une par affiliation */
+/**
+ * Une seule lecture pour toutes ces organisations, jamais une par
+ * affiliation. Une liste vide ne demande pas de garde ici : le dépôt rend
+ * déjà une liste vide sans interroger la base.
+ */
 function membered(
   supabase: Client,
   organisations: ReadonlyArray<Affiliation & { id: string }>,
   today: Date,
 ): Effect.Effect<MemberedOrganisation[], DatabaseError> {
-  if (organisations.length === 0) return Effect.succeed([])
-
   return Effect.map(
     currentMembers(
       supabase,

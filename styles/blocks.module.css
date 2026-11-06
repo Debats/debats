@@ -1,13 +1,20 @@
 /*
- * Recettes des blocs qui composent un corps de page : l'en-tête d'une
- * section, la carte, le lien d'encre, la carte du rail.
+ * Recettes des blocs qui composent un corps de page : le rythme vertical,
+ * l'en-tête d'une section, le lien d'encre, la carte du rail.
  *
  * Les blocs des pages « un auteur sur un sujet » ont chacun leur dossier et
  * leur module. Ce qu'ils partagent vit ici et se compose : aucun bloc
  * n'emprunte une classe à son voisin, et une carte du rail ne décide pas de
- * l'allure d'un lien dans une carte de débat.
+ * l'allure d'un lien dans une carte de débat. Ce qui n'a qu'un usager n'est
+ * pas une recette et reste chez lui ; un lien d'action est un composant,
+ * `components/ui/ActionLink`.
  */
 
+/*
+ * L'écart entre deux blocs du corps. Tous les blocs le portent, le premier
+ * comme les autres : aucun ne sait s'il ouvre la page, et la synthèse qui
+ * les précède n'a donc pas de marge à elle.
+ */
 .section {
   margin-top: 40px;
 }
@@ -30,15 +37,6 @@
   gap: 16px;
 }
 
-.card {
-  background-color: var(--card);
-  border-radius: var(--radius-card);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* Un lien qui porte l'encre du texte, et ne rougit qu'au survol */
 .inkLink,
 .inkLink:link,
@@ -48,22 +46,6 @@
 
 .inkLink:hover {
   color: var(--signal);
-}
-
-/* Un lien discret, souligné : « Sa page complète », « Chronologie du sujet » */
-.quietLink,
-.quietLink:link,
-.quietLink:visited {
-  font-size: 13px;
-  color: var(--signal);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  text-decoration-color: rgba(227, 36, 63, 0.4);
-}
-
-.quietLink:hover {
-  text-decoration-color: var(--signal);
 }
 
 /* Les cartes du rail : celle du sujet, celle de l'auteur */
@@ -78,10 +60,4 @@
 
 .railCardTitle {
   composes: label from './text.module.css';
-}
-
-@media (max-width: 768px) {
-  .card {
-    padding: 20px;
-  }
 }

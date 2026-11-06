@@ -18,7 +18,7 @@ import {
   latestStatedAt,
   positionShares,
 } from '../../../../../domain/services/author-on-subject'
-import { prepositionBefore } from '../../../../../lib/elision'
+import { elided } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
@@ -114,8 +114,8 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const nobodyToCompare =
     page.alignment.groups === 0 ? (
       <>
-        Débats.co ne connaît encore ni les métiers {prepositionBefore('de', author.name)}
-        {author.name} ni ses affiliations : il n’y a aucun groupe auquel comparer cette position.{' '}
+        Débats.co ne connaît encore ni les métiers {elided('de', author.name)} ni ses affiliations :
+        il n’y a aucun groupe auquel comparer cette position.{' '}
         <Link href={authorHref(author)}>Vous pouvez les renseigner depuis sa page.</Link>
       </>
     ) : (
@@ -169,7 +169,6 @@ export default async function FigureSubjectPage({ params }: PageProps) {
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
-          statements={statements}
           company={company}
           roles={page.roles}
           editHref={

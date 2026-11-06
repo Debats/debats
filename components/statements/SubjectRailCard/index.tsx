@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ActionLink from '../../ui/ActionLink'
 import { subjectHref } from '../../../domain/read-models/hrefs'
 import { StatedSpan } from '../../../domain/repositories/statement-repository'
 import { statedSpanLabel } from '../../../domain/services/subject-timeline'
@@ -44,12 +45,12 @@ export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps
         )}
       </dl>
 
-      <Link href={subjectHref(subject.slug)} className={styles.link}>
+      <ActionLink href={subjectHref(subject.slug)} quiet>
         Voir toutes les positions
-      </Link>
-      <Link href={`${subjectHref(subject.slug)}/chronologie`} className={styles.link}>
+      </ActionLink>
+      <ActionLink href={`${subjectHref(subject.slug)}/chronologie`} quiet>
         Chronologie du sujet
-      </Link>
+      </ActionLink>
     </div>
   )
 }

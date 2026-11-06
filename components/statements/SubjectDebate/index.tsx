@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ActionLink from '../../ui/ActionLink'
 import AuthorAvatarStack from '../AuthorAvatarStack'
 import { CONTRIBUTE_HREF, positionHref } from '../../../domain/read-models/hrefs'
 import { PositionStanding } from '../../../domain/services/author-on-subject'
@@ -66,9 +67,9 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
               ) : (
                 <p className={styles.empty}>
                   Personne ne l’a encore défendue ici.{' '}
-                  <Link href={CONTRIBUTE_HREF} className={styles.emptyLink}>
+                  <ActionLink href={CONTRIBUTE_HREF} quiet>
                     Vous connaissez une déclaration ?
-                  </Link>
+                  </ActionLink>
                 </p>
               )}
             </article>

@@ -1,6 +1,6 @@
 /* L'appel à contribuer, en pied de page : du trafic des moteurs vers une contribution */
 .card {
-  margin-top: 40px;
+  composes: section from '../../../styles/blocks.module.css';
   padding: 28px;
   background-color: var(--card);
   border-radius: var(--radius-card);

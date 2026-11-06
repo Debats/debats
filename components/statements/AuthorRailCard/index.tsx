@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ActionLink from '../../ui/ActionLink'
 import AuthorAvatar from '../AuthorAvatar'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
@@ -47,9 +48,9 @@ export default function AuthorRailCard({
         {plural(statements, 'prise de position', 'prises de position')}.
       </p>
 
-      <Link href={authorHref(author)} className={styles.link}>
+      <ActionLink href={authorHref(author)} quiet>
         Sa page complète
-      </Link>
+      </ActionLink>
     </div>
   )
 }

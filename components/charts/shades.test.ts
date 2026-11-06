@@ -13,6 +13,8 @@ describe('shades', () => {
       new URL('../../styles/analysis.module.css', import.meta.url),
       'utf8',
     )
+    // Un sélecteur simple par nuance, accolade sur la ligne : la feuille est
+    // formatée par Prettier, et `npm run check` le vérifie avant tout commit.
     const defined = stylesheet.match(/^\.shade\d+ \{$/gm) ?? []
 
     expect(defined).toHaveLength(SHADES)
@@ -27,5 +29,9 @@ describe('shades', () => {
   it('falls back on the last shade beyond the palette, where everything would blend', () => {
     expect(shadeOf(SHADES)).toBe(shadeOf(SHADES - 1))
     expect(shadeOf(99)).toBe(shadeOf(SHADES - 1))
+  })
+
+  it('refuses a negative rank instead of giving it the darkest shade', () => {
+    expect(() => shadeOf(-1)).toThrow('Rang de nuance négatif : -1')
   })
 })

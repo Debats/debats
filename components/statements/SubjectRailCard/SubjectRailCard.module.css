@@ -6,10 +6,6 @@
   composes: railCardTitle from '../../../styles/blocks.module.css';
 }
 
-.link {
-  composes: quietLink from '../../../styles/blocks.module.css';
-}
-
 .name,
 .name:link,
 .name:visited {

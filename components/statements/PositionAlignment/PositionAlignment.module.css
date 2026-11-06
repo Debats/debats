@@ -1,10 +1,42 @@
-/* La carte « où se situe cette position », détachée des prises de position */
+/*
+ * La carte « où se situe cette position », détachée des prises de position.
+ * Elle emprunte les recettes des cartes d'analyse, partagées avec l'onglet
+ * Analyses du sujet — mais elle les compose ici, pour que son JSX ne lise
+ * qu'une feuille et qu'un renommage dans `analysis.module.css` se corrige
+ * en un seul endroit.
+ */
 .card {
+  composes: section from '../../../styles/blocks.module.css';
   composes: card from '../../../styles/analysis.module.css';
-  margin-top: 40px;
 }
 
-.subTitle {
+.title {
+  composes: cardTitle from '../../../styles/analysis.module.css';
+}
+
+.subtitle {
+  composes: cardSubtitle from '../../../styles/analysis.module.css';
+}
+
+/* Le chiffre qui ouvre la carte, et la phrase qui le dit */
+.headline {
+  composes: headline from '../../../styles/analysis.module.css';
+}
+
+.headlineNumber {
+  composes: headlineNumber from '../../../styles/analysis.module.css';
+}
+
+.headlineText {
+  composes: headlineText from '../../../styles/analysis.module.css';
+}
+
+.empty {
+  composes: cardEmpty from '../../../styles/analysis.module.css';
+}
+
+/* Le titre du second temps de la carte : les groupes, un par un */
+.groupsTitle {
   composes: label from '../../../styles/text.module.css';
   margin-top: 8px;
 }

@@ -4,7 +4,6 @@ import ShareLegend from '../../charts/ShareLegend'
 import { PositionShare } from '../../../domain/services/author-on-subject'
 import { SubjectAlignment } from '../../../domain/services/group-alignment'
 import { plural } from '../../../lib/plural'
-import analysis from '../../../styles/analysis.module.css'
 import styles from './PositionAlignment.module.css'
 
 /** Le nom de la ligne de référence, partout où le graphique la nomme */
@@ -45,14 +44,14 @@ export default function PositionAlignment({
 
   return (
     <section className={styles.card}>
-      <h2 className={analysis.cardTitle}>Où se situe cette position</h2>
-      <p className={analysis.cardSubtitle}>
+      <h2 className={styles.title}>Où se situe cette position</h2>
+      <p className={styles.subtitle}>
         Comment les voix du sujet se répartissent entre les positions, et qui défend la même.
       </p>
 
-      <p className={analysis.headline}>
-        <span className={analysis.headlineNumber}>{everyone.withAuthor}</span>
-        <span className={analysis.headlineText}>
+      <p className={styles.headline}>
+        <span className={styles.headlineNumber}>{everyone.withAuthor}</span>
+        <span className={styles.headlineText}>
           {plural(everyone.withAuthor, 'autre voix défend', 'autres voix défendent')} la même
           position, sur {everyone.total}{' '}
           {plural(everyone.total, 'autre voix recensée', 'autres voix recensées')} sur ce sujet
@@ -78,7 +77,7 @@ export default function PositionAlignment({
 
       {rows.length > 0 ? (
         <>
-          <h3 className={styles.subTitle}>Qui suit cette position, groupe par groupe</h3>
+          <h3 className={styles.groupsTitle}>Qui suit cette position, groupe par groupe</h3>
           <AlignmentChart
             alignment={alignment}
             referenceLabel={EVERYONE}
@@ -93,7 +92,7 @@ export default function PositionAlignment({
           />
         </>
       ) : (
-        <p className={analysis.cardEmpty}>{nobodyToCompare}</p>
+        <p className={styles.empty}>{nobodyToCompare}</p>
       )}
     </section>
   )

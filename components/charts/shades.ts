@@ -14,9 +14,15 @@ export const SHADES = 6
  * nuances elles-mêmes sont dans `styles/analysis.module.css`, pour qu'un
  * sujet garde les mêmes d'une page à l'autre ; la règle qui les choisit vit
  * ici, avec les graphiques qui s'en servent.
+ *
+ * Le débordement par le haut est un choix de palette ; un rang négatif est
+ * une erreur d'appelant, et se tait d'autant moins qu'il donnerait la
+ * nuance de la position la plus soutenue.
  */
 export function shadeOf(index: number): string {
-  const name = `shade${Math.min(Math.max(index, 0), SHADES - 1)}`
+  if (index < 0) throw new Error(`Rang de nuance négatif : ${index}`)
+
+  const name = `shade${Math.min(index, SHADES - 1)}`
   const shade = analysis[name]
   // Sans ce garde-fou, une nuance absente de la feuille rendrait `undefined`
   // dans un `className` : pas d'erreur, un segment invisible.

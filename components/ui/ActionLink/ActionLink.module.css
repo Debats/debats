@@ -1,9 +1,12 @@
+/*
+ * Un lien d'action : il porte le signal et un trait souligné qui s'affirme
+ * au survol. La recette ne vit qu'ici — un appel posé sous un bloc de texte
+ * et un lien discret sous une carte du rail ne diffèrent que par leur
+ * taille, et aucun module de bloc n'a à la recopier.
+ */
 .actionLink,
 .actionLink:link,
 .actionLink:visited {
-  display: inline-block;
-  font-size: 14px;
-  font-weight: 500;
   color: var(--signal);
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -12,6 +15,23 @@
 }
 
 .actionLink:hover {
-  color: var(--signal-dark);
   text-decoration-color: var(--signal);
+}
+
+/* Un appel posé seul, sous un bloc de texte : « Voir tous les sujets → » */
+.standalone {
+  composes: actionLink;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.standalone:hover {
+  color: var(--signal-dark);
+}
+
+/* Un lien discret : sous une carte du rail, ou dans une phrase */
+.quiet {
+  composes: actionLink;
+  font-size: 13px;
 }

@@ -81,7 +81,3 @@
 .empty {
   composes: small from '../../../styles/text.module.css';
 }
-
-.emptyLink {
-  composes: quietLink from '../../../styles/blocks.module.css';
-}

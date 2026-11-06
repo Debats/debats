@@ -187,7 +187,6 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
-          statements={statements}
           company={company}
           roles={page.roles}
           editHref={canEdit ? statementEditHref : undefined}

@@ -1,3 +1,7 @@
+.section {
+  composes: section from '../../../styles/blocks.module.css';
+}
+
 .head {
   composes: sectionHead from '../../../styles/blocks.module.css';
 }
@@ -19,7 +23,12 @@
 
 /* Une position de l'auteur : son titre, ses prises de position, ses alliés */
 .card {
-  composes: card from '../../../styles/blocks.module.css';
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .kicker {
@@ -143,6 +152,10 @@ a.sourceLink:hover {
 }
 
 @media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+
   .positionTitle {
     font-size: 24px;
   }
