@@ -1,0 +1,5 @@
+<h1><%= @subject.title %></h1>
+
+<%= render "form.html", Map.put(assigns, :action, Routes.subject_path(@conn, :update, @subject)) %>
+
+<span><%= link "Retour", to: Routes.subject_path(@conn, :show, @subject) %></span>

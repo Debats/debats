@@ -1,0 +1,18 @@
+<h1>Show Claim</h1>
+
+<ul>
+
+  <li>
+    <strong>Title:</strong>
+    <%= @claim.title %>
+  </li>
+
+  <li>
+    <strong>Description:</strong>
+    <%= @claim.description %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.claim_path(@conn, :edit, @claim) %></span>
+<span><%= link "Back", to: Routes.claim_path(@conn, :index) %></span>

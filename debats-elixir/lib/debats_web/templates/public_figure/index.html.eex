@@ -1,0 +1,30 @@
+<h1>Listing Public figures</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Intro</th>
+      <th>Wikipediaurl</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for public_figure <- @public_figures do %>
+    <tr>
+      <td><%= public_figure.name %></td>
+      <td><%= public_figure.intro %></td>
+      <td><%= public_figure.wikipedia_url %></td>
+
+      <td>
+        <span><%= link "Show", to: Routes.public_figure_path(@conn, :show, public_figure) %></span>
+        <span><%= link "Edit", to: Routes.public_figure_path(@conn, :edit, public_figure) %></span>
+        <span><%= link "Delete", to: Routes.public_figure_path(@conn, :delete, public_figure), method: :delete, data: [confirm: "Are you sure?"] %></span>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Public figure", to: Routes.public_figure_path(@conn, :new) %></span>

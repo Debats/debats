@@ -1,0 +1,45 @@
+<h1><%= @subject.title %></h1>
+
+<p>
+    <%= @subject.description %>
+</p>
+<span><%= link "Modifier", to: Routes.subject_path(@conn, :edit, @subject) %></span>
+
+<h2>Les positions</h2>
+
+<ul>
+<%= for position <- @subject.positions do %>
+  <li><%= position.title %></li>
+<% end %>
+</ul>
+
+<h2>Ajouter une position</h2>
+
+<%= form_for @changeset,  Routes.position_path(@conn, :create), fn f -> %>
+  <%= if @changeset.action do %>
+  <div class="alert alert-danger">
+    <p>Oops, something went wrong! Please check the errors below.</p>
+  </div>
+  <% end %>
+
+<div class="form-group">
+        <%= inputs_for f, :positions, [append: [%Debats.Subjects.Position{}]], fn p -> %>
+
+  <%= label p, :title %>
+  <%= text_input p, :title %>
+  <%= error_tag p, :title %>
+
+  <%= label p, :description %>
+  <%= text_input p, :description %>
+  <%= error_tag p, :description %>
+
+  <div>
+    <%= submit "Save" %>
+  </div>
+
+
+        <% end %>
+
+</div>
+
+<% end %>

@@ -1,0 +1,28 @@
+<h1>Listing Claims</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Description</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for claim <- @claims do %>
+    <tr>
+      <td><%= claim.title %></td>
+      <td><%= claim.description %></td>
+
+      <td>
+        <span><%= link "Show", to: Routes.claim_path(@conn, :show, claim) %></span>
+        <span><%= link "Edit", to: Routes.claim_path(@conn, :edit, claim) %></span>
+        <span><%= link "Delete", to: Routes.claim_path(@conn, :delete, claim), method: :delete, data: [confirm: "Are you sure?"] %></span>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Claim", to: Routes.claim_path(@conn, :new) %></span>

@@ -1,0 +1,7 @@
+<h1><%= @public_figure.name %></h1>
+<a target="_blank" href="<%= @public_figure.wikipedia_url %>">Wikipedia</a>
+
+<p><%= @public_figure.intro %></p>
+
+<span><%= link "Edit", to: Routes.public_figure_path(@conn, :edit, @public_figure) %></span>
+<span><%= link "Back", to: Routes.public_figure_path(@conn, :index) %></span>

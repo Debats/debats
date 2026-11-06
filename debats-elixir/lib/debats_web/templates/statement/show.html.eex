@@ -1,0 +1,28 @@
+<h1>Show Statement</h1>
+
+<ul>
+
+  <li>
+    <strong>Evidence source:</strong>
+    <%= @statement.evidence_source %>
+  </li>
+
+  <li>
+    <strong>Evidence url:</strong>
+    <%= @statement.evidence_url %>
+  </li>
+
+  <li>
+    <strong>Quote:</strong>
+    <%= @statement.quote %>
+  </li>
+
+  <li>
+    <strong>Date:</strong>
+    <%= @statement.date %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.statement_path(@conn, :edit, @statement) %></span>
+<span><%= link "Back", to: Routes.statement_path(@conn, :index) %></span>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Débats</title>
+    <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
+    <script defer type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
+  </head>
+  <body>
+    <header>
+      <section class="container">
+        <nav role="navigation">
+          <ul>
+            <li><%= link "Sujets", to: Routes.subject_path(@conn, :index) %></li>
+            <li><%= link "Personnalités", to: Routes.public_figure_path(@conn, :index) %></li>
+            <li><%= link "Mode d’emploi", to: Routes.page_path(@conn, :how_to) %></li>
+            <%= if @current_user do %>
+                <li><%= link @current_user.name, to: Routes.user_path(@conn, :show, @current_user ) %></li>
+                <li><%= link "Déconnexion",
+                            to: Routes.session_path(@conn, :delete),
+                             method: "delete" %>
+                </li>
+            <% else %>
+                <li><%= link "Connexion", to: Routes.session_path(@conn, :new) %></li>
+                <li><%= link "Inscription", to: Routes.user_path(@conn, :new) %></li>
+            <% end %>
+            <%= if function_exported?(Routes, :live_dashboard_path, 2) do %>
+              <li><%= link "LiveDashboard", to: Routes.live_dashboard_path(@conn, :home) %></li>
+            <% end %>
+          </ul>
+        </nav>
+        <a href="/" class="debats-logo">
+          <img src="<%= Routes.static_path(@conn, "/images/logo.png") %>" alt="Débats Logo"/>
+        </a>
+      </section>
+    </header>
+    <main role="main" class="container">
+      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+
+      <%= @inner_content %>
+
+    </main>
+    <footer class="row">
+      <section class="column left">
+        <ul>
+          <li><a href="">Crédits</a></li>
+          <li><a href="">Mentions légales</a></li>
+        </ul>
+      </section>
+      <section class="column right">
+        <ul>
+          <li><%= link "À propos", to: Routes.page_path(@conn, :about) %></li>
+          <li><%= link "Contact", to: Routes.page_path(@conn, :contact) %></li>
+          <li><a href="https://twitter.com/debatsco" target="_blank">Twitter</a></li>
+        </ul>
+      </section>
+    </footer>
+  </body>
+</html>
