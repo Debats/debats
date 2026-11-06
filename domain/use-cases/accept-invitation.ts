@@ -1,4 +1,4 @@
-import { Clock, Effect, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import { InvitationRepository } from '../repositories/invitation-repository'
 import { ReputationRepository } from '../repositories/reputation-repository'
 import { ContributorRepository } from '../repositories/contributor-repository'
@@ -6,6 +6,7 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { Invitation, isExpired } from '../entities/invitation'
 import { acceptInvitation } from '../aggregates/invitation'
 import { found } from './preconditions'
+import { today } from './today'
 import { decideOnInvitation, invitationAggregate } from './invitation-stream'
 import { Grant, grantEach, grantOf, rewardFor } from './reward'
 import { Rejected } from './types'
@@ -46,7 +47,7 @@ export function acceptInvitationUseCase(params: AcceptInvitationParams) {
         found('Aucune invitation en attente pour cette adresse e-mail.'),
       ),
       // The day the acceptance is judged on, read once: nothing hides a clock
-      today: Effect.map(Clock.currentTimeMillis, (millis) => new Date(millis)),
+      today,
     }),
     Effect.filterOrFail(
       ({ invitation, today }) => !isExpired(invitation, today),

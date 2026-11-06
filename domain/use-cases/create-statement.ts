@@ -6,6 +6,7 @@ import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { today } from './today'
 import {
   statementContent,
   StatementContentInput,
@@ -75,7 +76,9 @@ export function createStatementUseCase(params: CreateStatementParams) {
   return pipe(
     Effect.all({
       contributor: allowedTo(params.contributor, 'add_statement', 'ajouter une prise de position'),
-      fields: statementFields({ sourceName, sourceUrl, statedAt }),
+      fields: Effect.flatMap(today, (day) =>
+        statementFields({ sourceName, sourceUrl, statedAt }, day),
+      ),
       content: statementContent(params.content),
     }),
     Effect.tap(() => authorKnown(author)),

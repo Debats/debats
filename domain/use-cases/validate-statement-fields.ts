@@ -1,27 +1,44 @@
 import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { quoteOf, StatementContent, STATEMENT_TYPES } from '../entities/statement'
+import { dayKey } from '../value-objects/day'
 import { fieldsOf } from './preconditions'
 
-const StatementFieldsInput = S.Struct({
-  sourceName: S.String.pipe(S.minLength(1)),
-  /** Verifiability is the promise of the site, so the link is never optional */
-  sourceUrl: S.String.pipe(S.minLength(1)),
-  statedAt: S.String.pipe(S.pattern(/^\d{4}-\d{2}-\d{2}$/)),
-})
+/**
+ * A day already reached, written as the day's own name. Nobody has stated
+ * anything tomorrow, so a date the site's day has not reached is a typo — and
+ * since both sides are day names, the comparison is the strings' own order.
+ */
+const statementFieldsInput = (today: Date) =>
+  S.Struct({
+    sourceName: S.String.pipe(S.minLength(1)),
+    /** Verifiability is the promise of the site, so the link is never optional */
+    sourceUrl: S.String.pipe(S.minLength(1)),
+    statedAt: S.String.pipe(
+      S.pattern(/^\d{4}-\d{2}-\d{2}$/),
+      S.filter((statedAt) => statedAt <= dayKey(today)),
+    ),
+  })
 
 const FIELD_MESSAGES = {
   sourceName: 'Le nom de la source est requis.',
   sourceUrl: 'Le lien vers la source est requis.',
-  statedAt: 'La date de la déclaration est invalide (format attendu : AAAA-MM-JJ).',
+  statedAt:
+    'La date de la prise de position doit être au format AAAA-MM-JJ et ne peut pas être dans le futur.',
 }
 
-/** What the form says of the statement's source, decoded */
-export const statementFields = (fields: {
-  sourceName: string
-  sourceUrl: string
-  statedAt: string
-}) => fieldsOf(StatementFieldsInput, FIELD_MESSAGES)(fields)
+/**
+ * What the form says of the statement's source, decoded. The day it is judged
+ * against comes from the caller: a command gives the day it was taken on.
+ */
+export const statementFields = (
+  fields: {
+    sourceName: string
+    sourceUrl: string
+    statedAt: string
+  },
+  today: Date,
+) => fieldsOf(statementFieldsInput(today), FIELD_MESSAGES)(fields)
 
 /** Every field the form can hold, whichever type is selected */
 export type StatementContentInput = {

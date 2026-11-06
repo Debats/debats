@@ -33,22 +33,57 @@ describe('statementFields', () => {
     statedAt: '2026-02-14',
   }
 
+  /** Noon in Paris on the day the valid fields were stated */
+  const today = new Date('2026-02-14T11:00:00Z')
+
   it('hands a named and linked source as decoded', async () => {
-    expect(await run(statementFields(valid))).toEqual(Either.right(valid))
+    expect(await run(statementFields(valid, today))).toEqual(Either.right(valid))
   })
 
   it('requires the link, because a statement nobody can check is worthless', async () => {
-    expect(faults(await run(statementFields({ ...valid, sourceUrl: '' })))).toEqual(['sourceUrl'])
+    expect(faults(await run(statementFields({ ...valid, sourceUrl: '' }, today)))).toEqual([
+      'sourceUrl',
+    ])
   })
 
   it('requires the name of the source', async () => {
-    expect(faults(await run(statementFields({ ...valid, sourceName: '' })))).toEqual(['sourceName'])
+    expect(faults(await run(statementFields({ ...valid, sourceName: '' }, today)))).toEqual([
+      'sourceName',
+    ])
   })
 
   it('refuses a malformed date', async () => {
-    expect(faults(await run(statementFields({ ...valid, statedAt: '14/02/2026' })))).toEqual([
-      'statedAt',
-    ])
+    expect(faults(await run(statementFields({ ...valid, statedAt: '14/02/2026' }, today)))).toEqual(
+      ['statedAt'],
+    )
+  })
+
+  it('refuses a date the day has not reached: nobody states tomorrow', async () => {
+    expect(faults(await run(statementFields({ ...valid, statedAt: '2026-02-15' }, today)))).toEqual(
+      ['statedAt'],
+    )
+  })
+
+  it('accepts the day itself, which is where most statements are entered from', async () => {
+    expect(await run(statementFields({ ...valid, statedAt: '2026-02-14' }, today))).toEqual(
+      Either.right({ ...valid, statedAt: '2026-02-14' }),
+    )
+  })
+
+  it('reads the day in Paris, not in UTC: a statement entered late is still today', async () => {
+    // 23:30 in Paris on 14 February is 22:30 UTC the same day
+    const lateEvening = new Date('2026-02-14T22:30:00Z')
+    expect(await run(statementFields({ ...valid, statedAt: '2026-02-14' }, lateEvening))).toEqual(
+      Either.right({ ...valid, statedAt: '2026-02-14' }),
+    )
+  })
+
+  it('reads the day in Paris when UTC is still the day before', async () => {
+    // 00:30 in Paris on 15 February is 23:30 UTC on the 14th
+    const justPastMidnight = new Date('2026-02-14T23:30:00Z')
+    expect(
+      await run(statementFields({ ...valid, statedAt: '2026-02-15' }, justPastMidnight)),
+    ).toEqual(Either.right({ ...valid, statedAt: '2026-02-15' }))
   })
 })
 

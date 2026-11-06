@@ -1,4 +1,4 @@
-import { Clock, Effect, pipe } from 'effect'
+import { Effect, pipe } from 'effect'
 import { isMajorSubject } from '../entities/subject'
 import { deleteSubject } from '../aggregates/subject'
 import { removeStatement } from '../aggregates/statement'
@@ -7,6 +7,7 @@ import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity } from './types'
 import { found, mayPerform, signedIn } from './preconditions'
+import { today } from './today'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 import { decideOnEachStatement, statementAggregate } from './statement-stream'
 
@@ -31,7 +32,7 @@ export function deleteSubjectUseCase(params: DeleteSubjectParams) {
   const weight = Effect.all({
     subject: Effect.flatMap(subjects.findById(subjectId), found(subjectAggregate.notFound)),
     stats: subjects.getStats(subjectId),
-    today: Effect.map(Clock.currentTimeMillis, (millis) => new Date(millis)),
+    today,
   })
   const actionFor = ({ subject, stats, today }: Effect.Effect.Success<typeof weight>) =>
     isMajorSubject(subject, stats.statementsCount, today)

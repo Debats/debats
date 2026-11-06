@@ -6,6 +6,7 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
+import { today } from './today'
 import {
   statementContent,
   StatementContentInput,
@@ -70,7 +71,9 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
         'edit_statement',
         'modifier une prise de position',
       ),
-      fields: statementFields({ sourceName, sourceUrl, statedAt }),
+      fields: Effect.flatMap(today, (day) =>
+        statementFields({ sourceName, sourceUrl, statedAt }, day),
+      ),
       content: statementContent(params.content),
       existing: existingStatement,
       newPosition: Effect.flatMap(
