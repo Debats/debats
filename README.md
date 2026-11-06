@@ -21,28 +21,28 @@ Le projet a été initié en 2014 et a connu plusieurs itérations technologique
 
 - **Stack** : Ruby on Rails fullstack
 - **État** : Version la plus aboutie avec modèle de données complet
-- **Localisation** : `ruby-backend/`
+- **Localisation** : retirée de l'arbre de travail en novembre 2026, `git checkout 420165b -- ruby-backend`
 - **Fonctionnalités** : CRUD complet, authentification, upload d'images
 
 ### 2. Frontend React (2018-2019)
 
 - **Stack** : React + Redux + GraphQL
 - **État** : Interface utilisateur moderne mais incomplète
-- **Localisation** : `frontend/`
+- **Localisation** : retirée de l'arbre de travail en novembre 2026, `git checkout 420165b -- frontend`
 - **Objectif** : Moderniser l'interface utilisateur
 
 ### 3. API GraphQL (2019-2020)
 
 - **Stack** : Node.js + GraphQL + Prisma
 - **État** : API moderne mais non finalisée
-- **Localisation** : `api/`
+- **Localisation** : retirée de l'arbre de travail en novembre 2026, `git checkout 420165b -- api`
 - **Objectif** : Remplacer le backend Ruby par une API moderne
 
 ### 4. Elixir Phoenix (2020-2021)
 
 - **Stack** : Elixir + Phoenix + PostgreSQL
 - **État** : Refonte complète mais abandonnée
-- **Localisation** : `debats-elixir/`
+- **Localisation** : retirée de l'arbre de travail en novembre 2026, `git checkout 420165b -- debats-elixir`
 - **Objectif** : Performance et fiabilité
 
 ### 5. Next.js Standalone (actuel)
@@ -132,10 +132,22 @@ Les fontes (Instrument Serif, Instrument Sans, JetBrains Mono) sont chargées pa
 
 Les images OpenGraph (`opengraph-image.tsx`) sont rendues sans CSS : elles lisent les mêmes fontes au format TTF dans `public/fonts/` et les couleurs des tokens depuis `lib/og.ts`, avec les composants de `components/og/`.
 
-### Projets legacy (référence)
+### Projets legacy
 
-- `ruby-backend/` : Application Rails originale
-- `debats-elixir/` : Version Phoenix abandonnée
+Les quatre versions précédentes ont quitté l'arbre de travail en novembre 2026, une fois leur audit terminé et ce
+qu'elles avaient encore d'utile consigné dans `TODO.md`, `Réputation.md`, `Niveaux.md` et `Accréditation.md`. Elles
+restent intégralement dans l'historique git, au commit `420165b` :
+
+```bash
+git checkout 420165b -- ruby-backend        # Rails, 2014-2018
+git checkout 420165b -- frontend            # React + Redux + GraphQL, 2016-2018
+git checkout 420165b -- api                 # Node + GraphQL + Prisma, 2018
+git checkout 420165b -- debats-elixir       # Phoenix, 2020
+git show 420165b:ruby-backend/config/reputation.yml   # ou un seul fichier
+```
+
+La version Phoenix vivait hors dépôt et dans aucun historique : `420165b` l'y a fait entrer avant de la supprimer,
+sources seules.
 
 ## Développement
 
