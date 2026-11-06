@@ -1,5 +1,0 @@
-<h1>Edit Public figure</h1>
-
-<%= render "form.html", Map.put(assigns, :action, Routes.public_figure_path(@conn, :update, @public_figure)) %>
-
-<span><%= link "Back", to: Routes.public_figure_path(@conn, :index) %></span>

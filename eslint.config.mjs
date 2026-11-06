@@ -21,7 +21,6 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
-    'debats-elixir/**',
     'content/**',
     'docs/**',
     'scripts/**',

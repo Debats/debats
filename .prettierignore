@@ -3,7 +3,6 @@ node_modules
 types/database.types.ts
 package-lock.json
 tsconfig.tsbuildinfo
-debats-elixir
 .clever.json
 .mcp.json
 next-env.d.ts
