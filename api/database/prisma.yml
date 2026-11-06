@@ -1,9 +1,0 @@
-endpoint: http://localhost:4467
-datamodel: datamodel.graphql
-secret: marx2018
-hooks:
-  post-deploy:
-    - graphql get-schema --project database
-    - graphql prepare
-seed:
-  import: seed.graphql

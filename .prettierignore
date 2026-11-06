@@ -4,7 +4,6 @@ types/database.types.ts
 package-lock.json
 tsconfig.tsbuildinfo
 debats-elixir
-api
 .clever.json
 .mcp.json
 next-env.d.ts
