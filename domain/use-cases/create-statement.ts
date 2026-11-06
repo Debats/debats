@@ -19,17 +19,34 @@ import {
   StatementArgumentsInput,
   validateStatementArguments,
 } from './statement-arguments'
+import {
+  chosenPositionField,
+  InlinePosition,
+  inlinePositionFields,
+  POSITION_TITLE_TAKEN,
+  positionReward,
+  recordNewPosition,
+} from './create-position'
 import { grantEach, rewardFor } from './reward'
 import { openStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { statementAggregate } from './statement-stream'
 
+/**
+ * The position the statement defends: one already on the subject, or one the
+ * form opens in the same breath. Never both, never neither — which is why it
+ * is a union and not two optional fields.
+ */
+export type StatementPositionInput =
+  | { kind: 'existing'; id: string }
+  | ({ kind: 'new' } & InlinePosition)
+
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
   subjectId: string
   author: StatementAuthor
-  positionId: string
+  position: StatementPositionInput
   /** Arguments the statement mobilises, chosen or proposed (Éloquent only) */
   arguments: StatementArgumentsInput
   /** What the statement carries, as the form holds it, read according to its type */
@@ -38,6 +55,13 @@ type CreateStatementParams = {
   sourceUrl: string
   statedAt: string
 }
+
+/**
+ * What the contribution form sends: the command's own input, minus who is
+ * contributing, which the action reads from the session. A field added to the
+ * command is a field the client no longer compiles without.
+ */
+export type NewStatement = Omit<CreateStatementParams, 'contributor'>
 
 export type { FieldErrors }
 
@@ -59,19 +83,39 @@ const authorKnown = (author: StatementAuthor) =>
       )
 
 export function createStatementUseCase(params: CreateStatementParams) {
-  const { subjectId, author, positionId } = params
+  const { subjectId, author, position } = params
   const { sourceName, sourceUrl, statedAt } = params
   // The command names the statement: the stream exists from its first event
   const id = StatementId.make(crypto.randomUUID())
 
-  const positionOnSubject = pipe(
-    positions.findById(positionId),
-    Effect.flatMap(found('La position sélectionnée est introuvable.')),
-    Effect.filterOrFail(
-      (position) => position.subjectId === subjectId,
-      () => new Rejected("La position sélectionnée n'appartient pas à ce sujet."),
-    ),
-  )
+  /** A position already on the subject: it must exist, and be one of its own */
+  const positionOnSubject = (positionId: string) =>
+    pipe(
+      positions.findById(positionId),
+      Effect.flatMap(found('La position sélectionnée est introuvable.')),
+      Effect.filterOrFail(
+        (candidate) => candidate.subjectId === subjectId,
+        () => new Rejected("La position sélectionnée n'appartient pas à ce sujet."),
+      ),
+    )
+
+  /**
+   * Which position the statement will hang on, settled before anything is
+   * written: either one read from the tables, or the fields of one to open.
+   * Opening a position is its own right, so it is asked for here.
+   */
+  const positionSettled =
+    position.kind === 'new'
+      ? pipe(
+          allowedTo(params.contributor, 'add_position', 'proposer une nouvelle position'),
+          Effect.andThen(inlinePositionFields(position)),
+          Effect.map((toOpen) => ({ kind: 'new', toOpen }) as const),
+        )
+      : pipe(
+          chosenPositionField(position.id),
+          Effect.andThen(positionOnSubject(position.id)),
+          Effect.as({ kind: 'existing', id: position.id } as const),
+        )
 
   return pipe(
     Effect.all({
@@ -80,18 +124,40 @@ export function createStatementUseCase(params: CreateStatementParams) {
         statementFields({ sourceName, sourceUrl, statedAt }, day),
       ),
       content: statementContent(params.content),
+      position: positionSettled,
     }),
     Effect.tap(() => authorKnown(author)),
-    Effect.tap(() => positionOnSubject),
     Effect.bind('validated', ({ contributor }) =>
       validateStatementArguments(contributor, params.arguments),
     ),
-    // The proposed arguments open their streams, and the rewards fall, in the statement's transaction
-    Effect.flatMap(({ contributor, content, fields, validated }) =>
+    /*
+     * One transaction for the whole contribution: the proposed arguments open
+     * their streams, a new position lands on its subject, the statement opens
+     * its own, and every reward falls — together, or not at all.
+     */
+    Effect.flatMap(({ contributor, content, fields, position: settled, validated }) =>
       runUnitOfWork((events) =>
         pipe(
-          recordProposedArguments(events, contributor.id, validated),
-          Effect.flatMap((recorded) =>
+          /*
+           * Each write that can hit a unique constraint names its own field:
+           * one mapping for the whole command would report a position title
+           * already taken under the arguments field.
+           */
+          pipe(
+            recordProposedArguments(events, contributor.id, validated),
+            uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
+          ),
+          Effect.bindTo('recorded'),
+          Effect.bind('positionId', () =>
+            settled.kind === 'new'
+              ? pipe(
+                  recordNewPosition(events, subjectId, contributor.id, settled.toOpen),
+                  Effect.map((opened) => opened.id),
+                  uniqueTakenAs('positionTitle', POSITION_TITLE_TAKEN),
+                )
+              : Effect.succeed(settled.id),
+          ),
+          Effect.flatMap(({ recorded, positionId }) =>
             pipe(
               openStream(
                 statementAggregate,
@@ -111,6 +177,7 @@ export function createStatementUseCase(params: CreateStatementParams) {
               ),
               Effect.tap(() =>
                 grantEach(events, contributor.id, [
+                  ...(settled.kind === 'new' ? [positionReward(contributor.id, positionId)] : []),
                   rewardFor(contributor.id, 'added_statement_validated', {
                     relatedEntityType: 'statement',
                     relatedEntityId: id,
@@ -123,7 +190,6 @@ export function createStatementUseCase(params: CreateStatementParams) {
         ),
       ),
     ),
-    uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
     Effect.map(({ state }) => state.statement),
   )
 }

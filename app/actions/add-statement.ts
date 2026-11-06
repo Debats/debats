@@ -7,46 +7,35 @@ import { createPublicFigureRepository } from '../../infra/database/public-figure
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import {
-  organisationAuthor,
-  publicFigureAuthor,
-  StatementAuthor,
-} from '../../domain/entities/statement'
-import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
+  createStatementUseCase,
+  FieldErrors,
+  NewStatement,
+} from '../../domain/use-cases/create-statement'
+import { statementArgumentsOf } from '../../lib/forms/statement-arguments'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { readStatementArguments } from './statement-arguments-fields'
-import { readStatementContent } from './statement-content-fields'
 
 export type ActionResult =
   | { success: true; subjectSlug: string; authorHref: string; authorLabel: string }
   | { success: false; error: string; fieldErrors?: undefined }
   | { success: false; error?: undefined; fieldErrors: FieldErrors }
 
-/** The form names the author kind, then the matching identifier field */
-function readAuthor(formData: FormData): StatementAuthor {
-  const kind = String(formData.get('authorKind') ?? 'public_figure')
-  return kind === 'organisation'
-    ? organisationAuthor(String(formData.get('organisationId') ?? ''))
-    : publicFigureAuthor(String(formData.get('publicFigureId') ?? ''))
-}
-
-export async function addStatementAction(formData: FormData): Promise<ActionResult> {
+export async function addStatementAction(input: NewStatement): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
+  const { subjectId, author } = input
 
-  const subjectId = String(formData.get('subjectId') ?? '')
-  const author = readAuthor(formData)
-
+  /*
+   * Une Server Function reçoit du JSON : son paramètre a le type qu'on déclare,
+   * jamais la garantie qu'il arrive sous cette forme. Les champs jugés par un
+   * schéma se défendent seuls, et les identifiants échouent proprement sur la
+   * lecture qui ne les trouve pas ; les deux tableaux d'arguments, que le
+   * domaine parcourt sans les interroger, se ramènent ici à leur forme.
+   */
   const result = await runLiveForm(
     createStatementUseCase({
+      ...input,
       contributor,
-      subjectId,
-      author,
-      positionId: String(formData.get('positionId') ?? ''),
-      content: readStatementContent(formData),
-      sourceName: String(formData.get('sourceName') ?? ''),
-      sourceUrl: String(formData.get('sourceUrl') ?? ''),
-      statedAt: String(formData.get('statedAt') ?? ''),
-      arguments: readStatementArguments(formData),
+      arguments: statementArgumentsOf(input.arguments),
     }),
     supabase,
   )

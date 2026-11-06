@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   Rank,
   getRank,
+  rankThreshold,
   requiredRank,
   canPerform,
   reputationReward,
@@ -125,6 +126,25 @@ describe('Reputation System', () => {
         it(`should allow ${action} for Fondateur (1000000)`, () => {
           expect(canPerform(1000000, action)).toBe(true)
         })
+      }
+    })
+  })
+
+  describe('rankThreshold', () => {
+    it('costs nothing to be Sophiste or Métèque: one is where you start, the other where you fall', () => {
+      expect(rankThreshold(Rank.Sophiste)).toBe(0)
+      expect(rankThreshold(Rank.Meteque)).toBe(0)
+    })
+
+    it('gives the reputation each earned rank demands', () => {
+      expect(rankThreshold(Rank.Eloquent)).toBe(1000)
+      expect(rankThreshold(Rank.Idealiste)).toBe(10000)
+      expect(rankThreshold(Rank.Fondateur)).toBe(1000000)
+    })
+
+    it('agrees with getRank at the threshold: what a rank costs is what reaches it', () => {
+      for (const rank of [Rank.Eloquent, Rank.Idealiste, Rank.Fondateur]) {
+        expect(getRank(rankThreshold(rank))).toBe(rank)
       }
     })
   })

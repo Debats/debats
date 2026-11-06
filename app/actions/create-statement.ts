@@ -5,7 +5,7 @@ import { runLiveForm } from '../../infra/live-services'
 import { publicFigureAuthor } from '../../domain/entities/statement'
 import { createStatementUseCase, FieldErrors } from '../../domain/use-cases/create-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { readStatementArguments } from './statement-arguments-fields'
+import { readStatementArguments } from '../../lib/forms/statement-arguments'
 import { readStatementContent } from './statement-content-fields'
 
 export type ActionResult =
@@ -25,7 +25,7 @@ export async function createStatementAction(
       contributor,
       subjectId,
       author: publicFigureAuthor(String(formData.get('publicFigureId') ?? '')),
-      positionId: String(formData.get('positionId') ?? ''),
+      position: { kind: 'existing', id: String(formData.get('positionId') ?? '') },
       content: readStatementContent(formData),
       sourceName: String(formData.get('sourceName') ?? ''),
       sourceUrl: String(formData.get('sourceUrl') ?? ''),

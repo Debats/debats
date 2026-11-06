@@ -13,6 +13,7 @@ import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
+import { journalWithSubjects, sampleSubject } from './subject-test-helpers'
 import {
   PublicFigure,
   PublicFigureId,
@@ -72,7 +73,7 @@ const organisation = sampleOrganisation()
 const validParams = {
   subjectId: 'subject-1',
   author: publicFigureAuthor('figure-1'),
-  positionId: 'pos-1',
+  position: { kind: 'existing' as const, id: 'pos-1' },
   arguments: { argumentIds: [] as string[], newArguments: [] },
   content: {
     ...EMPTY_CONTENT_INPUT,
@@ -144,6 +145,81 @@ describe('createStatementUseCase', () => {
       payload: { title: 'Liberté de choix', slug: 'liberte-de-choix' },
     })
     expect(statement.payload).toMatchObject({ argumentIds: [argument.id, proposed.streamId] })
+  })
+
+  it('writes a new position and the statement in the same transaction, and rewards both', async () => {
+    // A Métèque may propose a position: naming one describes the debate, it does not settle it
+    const subject = sampleSubject()
+    const { run, journal } = await journalWithSubjects([subject, []])
+
+    const result = await runFormWith(fakes())(
+      createStatementUseCase({
+        ...validParams,
+        subjectId: subject.id,
+        contributor: { id: 'abc', reputation: 0 },
+        position: {
+          kind: 'new',
+          positionTitle: 'Pour une aide active à mourir',
+          positionDescription: 'Le geste létal est accompli par le corps médical, sous conditions.',
+        },
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    const [position, statement] = deedsIn(journal).slice(-2)
+    expect(position).toMatchObject({
+      streamId: subject.id,
+      type: 'PositionAdded',
+      actorId: 'abc',
+      payload: { title: 'Pour une aide active à mourir', slug: 'pour-une-aide-active-a-mourir' },
+    })
+    expect(statement).toMatchObject({ streamType: 'statement', type: 'StatementAdded' })
+    // The statement hangs on the position just written, not on one looked up
+    const { positionId } = position.payload as { positionId: string }
+    expect(statement.payload).toMatchObject({ positionId })
+    expect(grantsIn(journal)).toEqual([
+      ['abc', 'added_position_validated', 50],
+      ['abc', 'added_statement_validated', 50],
+    ])
+  })
+
+  it('refuses a new position whose title is too short, naming the field', async () => {
+    const subject = sampleSubject()
+    const { run } = await journalWithSubjects([subject, []])
+
+    const result = await runFormWith(fakes())(
+      createStatementUseCase({
+        ...validParams,
+        subjectId: subject.id,
+        contributor: { id: 'abc', reputation: 0 },
+        position: {
+          kind: 'new',
+          positionTitle: 'Ab',
+          positionDescription: 'Une description assez longue.',
+        },
+      }),
+      run,
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' ? Object.keys(result.left) : [],
+    ).toEqual(['positionTitle'])
+  })
+
+  it('says nothing was chosen rather than « introuvable » when no position was picked', async () => {
+    // Un sujet sans position n'offre rien à cocher : le reproche serait injuste
+    const result = await execute(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 0 },
+        position: { kind: 'existing', id: '' },
+      }),
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' ? result.left.positionId : null,
+    ).toContain('Choisissez une position')
   })
 
   it('should fail when the organisation author is not found', async () => {

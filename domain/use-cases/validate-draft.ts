@@ -104,7 +104,7 @@ export function validateDraft(params: ValidateDraftParams) {
           contributor,
           subjectId,
           author,
-          positionId,
+          position: { kind: 'existing', id: positionId },
           // The draft already holds the content as its type calls for it
           content: contentFieldsOf(draft.content),
           sourceName: draft.sourceName,

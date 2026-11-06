@@ -116,7 +116,7 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
           initialFigure={initialFigure}
           initialOrganisation={initialOrganisation}
           initialSubject={initialSubject}
-          canUseArguments={canPerform(contributor.reputation, 'add_argument')}
+          reputation={contributor.reputation}
         />
       </ContentWithSidebar>
     </StatementDraftProvider>

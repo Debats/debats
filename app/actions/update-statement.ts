@@ -4,7 +4,7 @@ import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
-import { readStatementArguments } from './statement-arguments-fields'
+import { readStatementArguments } from '../../lib/forms/statement-arguments'
 import { readStatementContent } from './statement-content-fields'
 
 export type ActionResult =

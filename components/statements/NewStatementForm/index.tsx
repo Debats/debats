@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef, FormEvent } from 'react'
+import { useState, useCallback, useEffect, FormEvent } from 'react'
 import Link from 'next/link'
 import * as Sentry from '@sentry/nextjs'
 import { addStatementAction, ActionResult } from '../../../app/actions/add-statement'
@@ -11,8 +11,18 @@ import {
   getPositionsForSubject,
   PositionOption,
 } from '../../../app/actions/get-positions-for-subject'
-import { FieldErrors } from '../../../domain/use-cases/create-statement'
-import { StatementAuthorKind } from '../../../domain/entities/statement'
+import {
+  FieldErrors,
+  NewStatement,
+  StatementPositionInput,
+} from '../../../domain/use-cases/create-statement'
+import {
+  organisationAuthor,
+  publicFigureAuthor,
+  StatementAuthorKind,
+} from '../../../domain/entities/statement'
+import { canPerform } from '../../../domain/reputation/permissions'
+import { readStatementArguments } from '../../../lib/forms/statement-arguments'
 import {
   EMPTY_CONTENT_INPUT,
   StatementContentInput,
@@ -27,6 +37,9 @@ import FormSuccess from '../../ui/FormSuccess'
 import { useStatementDraft } from '../StatementDraft'
 import ArgumentsPicker from '../ArgumentsPicker'
 import StatementContentFields from '../StatementContentFields'
+import LockedAction from './LockedAction'
+import NewPositionPanel from './NewPositionPanel'
+import WhatWillBeWritten from './WhatWillBeWritten'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -38,8 +51,12 @@ interface NewStatementFormProps {
   initialFigure?: NamedEntity
   initialOrganisation?: NamedEntity
   initialSubject?: { id: string; title: string; slug?: string }
-  /** Le contributeur a le rang pour mobiliser et proposer des arguments */
-  canUseArguments: boolean
+  /**
+   * La réputation du contributeur. Le formulaire en déduit lui-même ce qu'il
+   * propose : un rang ouvre des actions, et une action fermée se dit au lieu
+   * de s'offrir puis de refuser.
+   */
+  reputation: number
 }
 
 const AUTHOR_KINDS: Record<string, StatementAuthorKind> = {
@@ -56,9 +73,15 @@ export default function NewStatementForm({
   initialFigure,
   initialOrganisation,
   initialSubject,
-  canUseArguments,
+  reputation,
 }: NewStatementFormProps) {
   const { updateDraft } = useStatementDraft()
+
+  // Ce que le rang ouvre, lu une fois : le barème est la seule source
+  const canUseArguments = canPerform(reputation, 'add_argument')
+  const canAddSubject = canPerform(reputation, 'add_subject')
+  const canAddFigure = canPerform(reputation, 'add_personality')
+  const canAddOrganisation = canPerform(reputation, 'add_organisation')
 
   const [authorKind, setAuthorKind] = useState<StatementAuthorKind>(
     initialOrganisation ? 'organisation' : 'public_figure',
@@ -68,10 +91,12 @@ export default function NewStatementForm({
     initialOrganisation?.id ?? '',
   )
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
-  const [selectedSubjectSlug, setSelectedSubjectSlug] = useState(initialSubject?.slug ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
+  /** Une position ouverte en place : le formulaire la porte jusqu'à l'envoi, rien n'est écrit avant */
+  const [openingPosition, setOpeningPosition] = useState(false)
+  const [newPositionTitle, setNewPositionTitle] = useState('')
+  const [newPositionDescription, setNewPositionDescription] = useState('')
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
-  const subjectSlugMapRef = useRef<Map<string, string>>(new Map())
 
   const [positions, setPositions] = useState<PositionOption[]>([])
   const [loadingPositions, setLoadingPositions] = useState(!!initialSubject?.id)
@@ -112,9 +137,6 @@ export default function NewStatementForm({
 
   const handleSearchSubjects = useCallback(async (query: string) => {
     const results = await searchSubjects(query)
-    for (const s of results) {
-      subjectSlugMapRef.current.set(s.id, s.slug)
-    }
     return results.map((s) => ({ id: s.id, label: s.title }))
   }, [])
 
@@ -128,6 +150,29 @@ export default function NewStatementForm({
       updateDraft({ authorKind: kind, authorName: '' })
     },
     [authorKind, updateDraft],
+  )
+
+  const openPosition = useCallback(() => {
+    setOpeningPosition(true)
+    updateDraft({ positionTitle: '' })
+  }, [updateDraft])
+
+  /** Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant d'ouvrir */
+  const cancelPosition = useCallback(() => {
+    setOpeningPosition(false)
+    setNewPositionTitle('')
+    setNewPositionDescription('')
+    updateDraft({
+      positionTitle: positions.find((p) => p.id === selectedPositionId)?.title ?? '',
+    })
+  }, [positions, selectedPositionId, updateDraft])
+
+  const changeNewPositionTitle = useCallback(
+    (value: string) => {
+      setNewPositionTitle(value)
+      updateDraft({ positionTitle: value })
+    },
+    [updateDraft],
   )
 
   const selectPosition = useCallback(
@@ -166,26 +211,34 @@ export default function NewStatementForm({
       setFieldErrors(undefined)
       setIsPending(true)
 
-      const formData = new FormData()
-      formData.set('authorKind', authorKind)
-      formData.set('publicFigureId', selectedFigureId)
-      formData.set('organisationId', selectedOrganisationId)
-      formData.set('subjectId', selectedSubjectId)
-      formData.set('positionId', selectedPositionId)
-
       const form = e.currentTarget
-      for (const [name, value] of Object.entries(content)) formData.set(name, value)
-      formData.set('sourceName', getFieldValue(form, 'sourceName'))
-      formData.set('sourceUrl', getFieldValue(form, 'sourceUrl'))
-      formData.set('statedAt', getFieldValue(form, 'statedAt'))
 
-      // Les arguments cochés et proposés sont portés par les champs cachés du sélecteur
-      const native = new FormData(form)
-      for (const id of native.getAll('argumentIds')) formData.append('argumentIds', String(id))
-      formData.set('newArguments', String(native.get('newArguments') ?? '[]'))
+      /** Celle qu'on ouvre, ou celle qu'on a cochée : jamais les deux */
+      const position: StatementPositionInput = openingPosition
+        ? {
+            kind: 'new',
+            positionTitle: newPositionTitle,
+            positionDescription: newPositionDescription,
+          }
+        : { kind: 'existing', id: selectedPositionId }
+
+      const input: NewStatement = {
+        subjectId: selectedSubjectId,
+        author:
+          authorKind === 'organisation'
+            ? organisationAuthor(selectedOrganisationId)
+            : publicFigureAuthor(selectedFigureId),
+        position,
+        content,
+        sourceName: getFieldValue(form, 'sourceName'),
+        sourceUrl: getFieldValue(form, 'sourceUrl'),
+        statedAt: getFieldValue(form, 'statedAt'),
+        // Les arguments cochés et proposés sont portés par les champs cachés du sélecteur
+        arguments: readStatementArguments(new FormData(form)),
+      }
 
       try {
-        const result: ActionResult = await addStatementAction(formData)
+        const result: ActionResult = await addStatementAction(input)
 
         setIsPending(false)
 
@@ -212,10 +265,13 @@ export default function NewStatementForm({
     [
       authorKind,
       content,
+      newPositionDescription,
+      newPositionTitle,
+      openingPosition,
       selectedFigureId,
       selectedOrganisationId,
-      selectedSubjectId,
       selectedPositionId,
+      selectedSubjectId,
     ],
   )
 
@@ -300,21 +356,47 @@ export default function NewStatementForm({
           />
         )}
         {isOrganisation ? (
-          <p className={styles.hint}>
-            Un parti, une ONG, un syndicat, une entreprise ou un collectif qui s’exprime en son nom
-            : communiqué, programme, vote, action. Elle n’existe pas encore ?{' '}
-            <Link href="/o/ajouter" className={styles.hintLink}>
-              Créer une organisation
-            </Link>
-          </p>
+          <>
+            <p className={styles.hint}>
+              Un parti, une ONG, un syndicat, une entreprise ou un collectif qui s’exprime en son
+              nom : communiqué, programme, vote, action.
+            </p>
+            {canAddOrganisation ? (
+              <p className={styles.hint}>
+                Elle n’existe pas encore ?{' '}
+                <Link href="/o/ajouter" className={styles.hintLink}>
+                  Créer une organisation
+                </Link>
+              </p>
+            ) : (
+              <LockedAction
+                what="Référencer une organisation"
+                action="add_organisation"
+                reputation={reputation}
+              />
+            )}
+          </>
         ) : (
-          <p className={styles.hint}>
-            La personnalité doit avoir fait l’objet d’au moins deux publications dans des sources
-            indépendantes. Elle n’existe pas encore ?{' '}
-            <Link href="/p/ajouter" className={styles.hintLink}>
-              Créer une personnalité
-            </Link>
-          </p>
+          <>
+            <p className={styles.hint}>
+              La personnalité doit avoir fait l’objet d’au moins deux publications dans des sources
+              indépendantes.
+            </p>
+            {canAddFigure ? (
+              <p className={styles.hint}>
+                Elle n’existe pas encore ?{' '}
+                <Link href="/p/ajouter" className={styles.hintLink}>
+                  Créer une personnalité
+                </Link>
+              </p>
+            ) : (
+              <LockedAction
+                what="Référencer une personnalité"
+                action="add_personality"
+                reputation={reputation}
+              />
+            )}
+          </>
         )}
       </fieldset>
 
@@ -331,9 +413,11 @@ export default function NewStatementForm({
           onSearch={handleSearchSubjects}
           onSelect={(id, label) => {
             setSelectedSubjectId(id)
-            setSelectedSubjectSlug(subjectSlugMapRef.current.get(id) ?? '')
             setPositions([])
             setSelectedPositionId('')
+            setOpeningPosition(false)
+            setNewPositionTitle('')
+            setNewPositionDescription('')
             setLoadingPositions(!!id)
             updateDraft({ subjectTitle: label, positionTitle: '' })
           }}
@@ -341,17 +425,30 @@ export default function NewStatementForm({
             initialSubject ? { id: initialSubject.id, label: initialSubject.title } : undefined
           }
         />
-        <p className={styles.hint}>
-          Ce sujet n’existe pas encore ?{' '}
-          <Link href="/s/ajouter" className={styles.hintLink}>
-            Créer un sujet
-          </Link>
-        </p>
+        {canAddSubject ? (
+          <p className={styles.hint}>
+            Ce sujet n’existe pas encore ?{' '}
+            <Link href="/s/ajouter" className={styles.hintLink}>
+              Créer un sujet
+            </Link>
+          </p>
+        ) : (
+          <LockedAction what="Référencer un sujet" action="add_subject" reputation={reputation} />
+        )}
 
         <div className={styles.field}>
           <span className={styles.label}>Position défendue</span>
           {!selectedSubjectId ? (
             <p className={styles.hint}>Choisissez d’abord un sujet.</p>
+          ) : openingPosition ? (
+            <NewPositionPanel
+              title={newPositionTitle}
+              description={newPositionDescription}
+              onTitle={changeNewPositionTitle}
+              onDescription={setNewPositionDescription}
+              onCancel={cancelPosition}
+              errors={fieldErrors}
+            />
           ) : loadingPositions ? (
             <p className={styles.hint}>Chargement des positions…</p>
           ) : positions.length === 0 ? (
@@ -381,15 +478,17 @@ export default function NewStatementForm({
               ))}
             </div>
           )}
-          {selectedSubjectId && !loadingPositions && (
+          {fieldErrors?.positionId && (
+            <span className={styles.fieldError}>{fieldErrors.positionId}</span>
+          )}
+          {selectedSubjectId && !openingPosition && !loadingPositions && (
             <p className={styles.hint}>
-              Aucune position ne correspond ?{' '}
-              <Link
-                href={`/s/${selectedSubjectSlug || selectedSubjectId}/nouvelle-position`}
-                className={styles.hintLink}
-              >
-                Proposer une nouvelle position
-              </Link>
+              {positions.length === 0 ? 'Proposez la première :' : 'Aucune ne correspond ?'}{' '}
+              <button type="button" className={styles.inlineAction} onClick={openPosition}>
+                {positions.length === 0 ? 'ouvrir une position ici' : 'proposer une position ici'}
+              </button>
+              {' — '}ouvert dès l’inscription : nommer une position décrit le débat, elle ne le
+              tranche pas.
             </p>
           )}
         </div>
@@ -458,6 +557,8 @@ export default function NewStatementForm({
           </p>
         </div>
       )}
+
+      <WhatWillBeWritten opening={openingPosition} positionTitle={newPositionTitle} />
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>

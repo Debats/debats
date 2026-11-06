@@ -12,6 +12,14 @@ const RANK_THRESHOLDS = {
   [Rank.Fondateur]: 1000000,
 } as const
 
+/**
+ * La réputation qu'un rang demande. Zéro pour les deux premiers : on est
+ * Métèque dès l'inscription, et Sophiste sans rien demander.
+ */
+export function rankThreshold(rank: Rank): number {
+  return rank === Rank.Sophiste || rank === Rank.Meteque ? 0 : RANK_THRESHOLDS[rank]
+}
+
 export function getNextRankThreshold(reputation: number): number | null {
   if (reputation < 0) return 0
   if (reputation < RANK_THRESHOLDS[Rank.Eloquent]) return RANK_THRESHOLDS[Rank.Eloquent]
