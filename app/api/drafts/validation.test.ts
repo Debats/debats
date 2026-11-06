@@ -64,7 +64,10 @@ describe('parseDraftAuthor', () => {
 describe('validateSlugifiableFields', () => {
   it('accepts titles that slugify', () => {
     expect(
-      validateSlugifiableFields({ subjectTitle: "L'école", positionTitle: 'Plus de moyens' }, false),
+      validateSlugifiableFields(
+        { subjectTitle: "L'école", positionTitle: 'Plus de moyens' },
+        false,
+      ),
     ).toBeNull()
   })
 
@@ -115,7 +118,9 @@ describe('parseDraftArguments', () => {
   })
 
   it('rejects something that is not an array', () => {
-    expect(parseDraftArguments('Exil fiscal')).toEqual({ error: 'Field arguments must be an array' })
+    expect(parseDraftArguments('Exil fiscal')).toEqual({
+      error: 'Field arguments must be an array',
+    })
   })
 })
 
@@ -188,9 +193,11 @@ describe('parseDraftAffiliations', () => {
       organisationType: 'association',
     }
 
-    expect(parseDraftAffiliations([{ organisation: 'Fondation iFRAP', organisationData }])).toEqual({
-      affiliations: [{ organisation: 'Fondation iFRAP', organisationData }],
-    })
+    expect(parseDraftAffiliations([{ organisation: 'Fondation iFRAP', organisationData }])).toEqual(
+      {
+        affiliations: [{ organisation: 'Fondation iFRAP', organisationData }],
+      },
+    )
   })
 
   it('rejects an unknown organisation type', () => {
@@ -207,9 +214,9 @@ describe('parseDraftAffiliations', () => {
   })
 
   it('rejects a malformed date', () => {
-    expect(parseDraftAffiliations([{ organisation: 'Les Écologistes', startedOn: '2015' }])).toEqual(
-      { error: 'Field affiliations[0].startedOn must be a date (YYYY-MM-DD)' },
-    )
+    expect(
+      parseDraftAffiliations([{ organisation: 'Les Écologistes', startedOn: '2015' }]),
+    ).toEqual({ error: 'Field affiliations[0].startedOn must be a date (YYYY-MM-DD)' })
   })
 
   it('rejects a missing organisation name', () => {

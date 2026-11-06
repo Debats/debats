@@ -22,7 +22,8 @@ describe('parseOrganisationInput', () => {
         acronym: 'CGT',
         organisationType: 'union',
         presentation: 'Première confédération syndicale française.',
-        wikipediaUrl: 'https://fr.wikipedia.org/wiki/Conf%C3%A9d%C3%A9ration_g%C3%A9n%C3%A9rale_du_travail',
+        wikipediaUrl:
+          'https://fr.wikipedia.org/wiki/Conf%C3%A9d%C3%A9ration_g%C3%A9n%C3%A9rale_du_travail',
         notorietySources: ['https://www.cgt.fr/'],
       }),
     ).toEqual({

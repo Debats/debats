@@ -33,7 +33,8 @@ describe('httpFailureOf', () => {
   it('answers 409 when the value was taken or the stream edited meanwhile', () => {
     expect(httpFailureOf(new UniqueTaken('organisations_slug_key')).status).toBe(409)
     expect(
-      httpFailureOf(new ConcurrencyError({ streamType: 'organisation', streamId: 'o-1' }, 2)).status,
+      httpFailureOf(new ConcurrencyError({ streamType: 'organisation', streamId: 'o-1' }, 2))
+        .status,
     ).toBe(409)
   })
 

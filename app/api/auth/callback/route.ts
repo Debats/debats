@@ -42,10 +42,9 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser()
 
   if (user) {
-    const { error: upsertError } = await supabase.from('contributors').upsert(
-      { id: user.id, reputation: 0 },
-      { onConflict: 'id', ignoreDuplicates: true },
-    )
+    const { error: upsertError } = await supabase
+      .from('contributors')
+      .upsert({ id: user.id, reputation: 0 }, { onConflict: 'id', ignoreDuplicates: true })
 
     if (upsertError) {
       return redirectWithError(

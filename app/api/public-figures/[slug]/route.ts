@@ -4,10 +4,7 @@ import { checkAdminApiKey } from '../../admin-auth'
 import { figureBySlug, figureView } from './figure'
 
 /** A public figure's occupations and affiliations, to read before writing them. */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   if (!checkAdminApiKey(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

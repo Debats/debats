@@ -10,10 +10,7 @@ import { checkAdminApiKey } from '../../../admin-auth'
  * the note that tells the contributor what to fix. Validating and rejecting
  * stay on the review screen, in human hands.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!checkAdminApiKey(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

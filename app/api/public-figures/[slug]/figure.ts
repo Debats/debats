@@ -19,7 +19,9 @@ export async function figureBySlug(
     Effect.either(createPublicFigureRepository(supabase).findBySlug(slug)),
   )
   if (found._tag === 'Left') {
-    return { response: NextResponse.json({ error: 'Failed to load public figure' }, { status: 500 }) }
+    return {
+      response: NextResponse.json({ error: 'Failed to load public figure' }, { status: 500 }),
+    }
   }
   if (found.right === null) {
     return { response: NextResponse.json({ error: 'Public figure not found' }, { status: 404 }) }
@@ -43,7 +45,9 @@ export async function figureView(
     ),
   )
   if (read._tag === 'Left') {
-    return { response: NextResponse.json({ error: 'Failed to load public figure' }, { status: 500 }) }
+    return {
+      response: NextResponse.json({ error: 'Failed to load public figure' }, { status: 500 }),
+    }
   }
   return { view: publicFigureEnrichmentView(figure, read.right.held, read.right.memberships) }
 }

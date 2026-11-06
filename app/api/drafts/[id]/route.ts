@@ -6,10 +6,7 @@ import { parseDraftPatch } from '../validation'
 import { checkAdminApiKey } from '../../admin-auth'
 
 /** A correction of a draft: partial, field by field, and it sends the draft back to pending. */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!checkAdminApiKey(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

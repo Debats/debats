@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? new URL(process.env.NEXT_PUBLIC_SENTRY_DSN)
-  : null
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN ? new URL(process.env.NEXT_PUBLIC_SENTRY_DSN) : null
 const sentryProjectId = dsn?.pathname.replace('/', '')
 
 export async function POST(request: NextRequest) {

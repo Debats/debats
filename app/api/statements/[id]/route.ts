@@ -60,10 +60,7 @@ const argumentsOf = (loaded: LoadedStatement, patch: StatementPatch): StatementA
  * `/prise-de-position/<id>/modifier` does with the whole form: the fields not
  * sent keep their value, `content` and `arguments` are replaced whole.
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = createAdminSupabaseClient()
   const actor = await adminActorOf(request, supabase)
   if ('response' in actor) return actor.response
