@@ -81,6 +81,16 @@ Contributors (Contributeurs)
 - **Argument** : Les raisonnements avancés dans un débat, partagés par tout le site comme des étiquettes (titre unique, slug, description optionnelle) et mobilisés par les prises de position. « Dignité de la personne » mobilisé sur deux sujets est un seul argument. Les sujets et positions qu'un argument sert se déduisent des prises de position ; sur un sujet, un argument repris par plusieurs positions est dit polarisant. Les Idéalistes peuvent renommer un argument ou le fusionner dans un autre
 - **Contributor** : Les utilisateurs contributeurs de la plateforme
 
+### Réputation et accréditation
+
+Chaque acte de contribution rapporte des points, et chaque point ouvre des droits. Trois documents décrivent le
+système, la référence exécutable restant `domain/reputation/permissions.ts` :
+
+- [Réputation.md](Réputation.md) — le barème : ce que chaque acte rapporte, comment un gain est écrit dans la
+  transaction de l'acte qu'il récompense, et quels gains sont définis mais pas encore accordés
+- [Niveaux.md](Niveaux.md) — les cinq rangs (Sophiste, Métèque, Éloquent·e, Idéaliste, Fondateur) et leurs seuils
+- [Accréditation.md](Accréditation.md) — chaque action, le rang qu'elle demande et le use case qui la contrôle
+
 ## Architecture technique actuelle
 
 ### Stack
