@@ -5,7 +5,6 @@ package-lock.json
 tsconfig.tsbuildinfo
 debats-elixir
 frontend
-ruby-backend
 api
 .clever.json
 .mcp.json

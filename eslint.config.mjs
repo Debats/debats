@@ -23,7 +23,6 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     'frontend/**',
     'api/**',
-    'ruby-backend/**',
     'debats-elixir/**',
     'content/**',
     'docs/**',
