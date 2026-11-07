@@ -217,7 +217,7 @@ describe('createPublicFigureUseCase', () => {
     }
   })
 
-  it('should accept gracefully when Wikipedia validator throws (network error)', async () => {
+  it('refuses on the Wikipedia field when the page cannot be checked', async () => {
     const result = await runFormWith(
       fakes({
         wikipedia: {
@@ -228,7 +228,9 @@ describe('createPublicFigureUseCase', () => {
       }),
     )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
-    expect(Either.isRight(result)).toBe(true)
+    expect(result).toEqual(
+      Either.left({ wikipediaUrl: expect.stringContaining('Impossible de vérifier') }),
+    )
   })
 
   it('should succeed without Wikipedia when 2 valid notoriety sources', async () => {

@@ -88,6 +88,27 @@ describe('createWikipediaValidator', () => {
     await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('says nothing')
   })
 
+  it('fails when the call itself fails, rather than resolve to a verdict', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('The operation was aborted due to timeout')
+      }),
+    )
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('timeout')
+  })
+
+  it('gives up on an answer rather than wait on it', async () => {
+    const fetching = answering(pageWithItem('Q991'), instanceOf('Q5'))
+
+    await createWikipediaValidator().validatePage(CAMUS)
+
+    for (const [, init] of fetching.mock.calls as unknown as [string, RequestInit][]) {
+      expect(init.signal).toBeInstanceOf(AbortSignal)
+    }
+  })
+
   it('asks Wikipedia, then Wikidata, and names itself to both', async () => {
     const fetching = answering(pageWithItem('Q991'), instanceOf('Q5'))
 

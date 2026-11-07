@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { Invalid } from './types'
-import { notorietyFaults, wikipediaPageJudged } from './notoriety'
+import { notorietyFaults, UNABLE_TO_CHECK_WIKIPEDIA, wikipediaPageJudged } from './notoriety'
 
 const run = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(Effect.either(effect))
 
@@ -46,13 +46,50 @@ describe('wikipediaPageJudged', () => {
     )
   })
 
-  it('lets a page the validator cannot reach through', async () => {
+  /*
+   * Ni « la page n'existe pas », ni un passage sans contrôle : le site dit
+   * qu'il n'a pas pu vérifier. Le critère de notoriété laisse une issue — deux
+   * sources indépendantes tiennent lieu de page Wikipédia — donc un refus
+   * pendant une panne n'enferme personne.
+   */
+  it('says it could not check when the validator cannot be reached', async () => {
     const down = {
       validatePage: async () => {
         throw new Error('timeout')
       },
     }
 
-    expect(await run(judged(down))).toEqual(Either.right(undefined))
+    expect(await run(judged(down))).toEqual(
+      Either.left(new Invalid({ wikipediaUrl: UNABLE_TO_CHECK_WIKIPEDIA })),
+    )
+  })
+
+  it('tries once more before giving up: a hiccup is not an outage', async () => {
+    let calls = 0
+    const hiccup = {
+      validatePage: async () => {
+        calls += 1
+        if (calls === 1) throw new Error('connexion perdue')
+        return { exists: true, isBiography: true }
+      },
+    }
+
+    expect(await run(judged(hiccup))).toEqual(Either.right(undefined))
+    expect(calls).toBe(2)
+  })
+
+  it('does not retry a page it could read and judged wrong', async () => {
+    let calls = 0
+    const notABiography = {
+      validatePage: async () => {
+        calls += 1
+        return { exists: true, isBiography: false }
+      },
+    }
+
+    expect(await run(judged(notABiography))).toEqual(
+      Either.left(new Invalid({ wikipediaUrl: 'Pas une biographie.' })),
+    )
+    expect(calls).toBe(1)
   })
 })

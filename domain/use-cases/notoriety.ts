@@ -1,4 +1,4 @@
-import { Effect, pipe } from 'effect'
+import { Effect, pipe, Schedule } from 'effect'
 import { WikipediaValidationResult, WikipediaValidator } from '../services/wikipedia-validator'
 import { FieldErrors, Invalid } from './types'
 
@@ -33,10 +33,24 @@ export function notorietyFaults(wikipediaUrl: string, notorietySources: string[]
 }
 
 /**
+ * What the site says when it could not reach Wikipedia at all. It names the
+ * way out rather than the outage: without a page, two independent sources
+ * satisfy the same criterion, so nobody is stuck waiting for Wikipedia.
+ */
+export const UNABLE_TO_CHECK_WIKIPEDIA =
+  'Impossible de vérifier cette page Wikipedia pour le moment. Réessayez, ou indiquez deux sources de notoriété à la place.'
+
+/** A hiccup is caught up with once; an outage is said out loud */
+const ONE_RETRY = Schedule.recurs(1).pipe(Schedule.addDelay(() => '300 millis'))
+
+/**
  * The Wikipedia page, looked up by the validator: one that does not exist is
  * refused, one that exists is judged by the command (a biography, or not).
- * A validator that fails lets the URL through, on purpose: the site does not
- * depend on Wikipedia to accept a contribution.
+ *
+ * A lookup that cannot be made is neither of those, and says so. Letting the
+ * URL through would accept an unchecked page; calling it absent would refuse a
+ * contribution over someone else's outage. The validator never guesses on our
+ * behalf either — it answers or it fails — so the three cases stay three.
  */
 export const wikipediaPageJudged = (
   url: string,
@@ -46,9 +60,13 @@ export const wikipediaPageJudged = (
     Effect.flatMap(WikipediaValidator, (validator) =>
       Effect.tryPromise(() => validator.validatePage(url)),
     ),
+    // Only the lookup is retried: a page read and judged wrong is not asked twice
+    Effect.retry(ONE_RETRY),
     Effect.flatMap((page) => {
       const refused = page.exists ? judge(page) : 'La page Wikipedia n’existe pas.'
       return refused ? Effect.fail(new Invalid({ wikipediaUrl: refused })) : Effect.void
     }),
-    Effect.catchTag('UnknownException', () => Effect.void),
+    Effect.catchTag('UnknownException', () =>
+      Effect.fail(new Invalid({ wikipediaUrl: UNABLE_TO_CHECK_WIKIPEDIA })),
+    ),
   )
