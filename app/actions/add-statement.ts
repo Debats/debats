@@ -12,6 +12,7 @@ import {
   NewStatement,
 } from '../../domain/use-cases/create-statement'
 import { statementArgumentsOf } from '../../lib/forms/statement-arguments'
+import { statementAuthorOf } from '../../lib/forms/statement-author'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
@@ -28,13 +29,19 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
    * Une Server Function reçoit du JSON : son paramètre a le type qu'on déclare,
    * jamais la garantie qu'il arrive sous cette forme. Les champs jugés par un
    * schéma se défendent seuls, et les identifiants échouent proprement sur la
-   * lecture qui ne les trouve pas ; les deux tableaux d'arguments, que le
-   * domaine parcourt sans les interroger, se ramènent ici à leur forme.
+   * lecture qui ne les trouve pas. Ce que le domaine parcourt sans l'interroger
+   * se ramène ici à sa forme : les deux tableaux d'arguments, et l'auteur, dont
+   * la commande aiguille la sorte et lit la charge telle quelle.
+   *
+   * La position s'en passe : son `kind` est lu par un ternaire, donc une sorte
+   * inattendue vaut « celle qu'on a cochée » et finit en refus sur son
+   * identifiant manquant.
    */
   const result = await runLiveForm(
     createStatementUseCase({
       ...input,
       contributor,
+      author: statementAuthorOf(input.author),
       arguments: statementArgumentsOf(input.arguments),
     }),
     supabase,
