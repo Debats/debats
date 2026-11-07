@@ -8,6 +8,7 @@ import { FieldErrors } from '../../../domain/use-cases/types'
 import { OrganisationFormInput } from '../../../lib/forms/organisation-form'
 import { useChosenFile } from '../../../lib/forms/use-chosen-file'
 import NotorietySources, { notorietySourcePair } from '../../forms/NotorietySources'
+import WikipediaFill from '../../forms/WikipediaFill'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Select from '../../ui/Select'
@@ -232,6 +233,12 @@ export default function OrganisationForm({
           value={fields.wikipediaUrl}
           onChange={(e) => setValue('wikipediaUrl')(e.target.value)}
           error={fieldErrors?.wikipediaUrl}
+        />
+        <WikipediaFill
+          url={fields.wikipediaUrl}
+          onFilled={({ name, presentation }) =>
+            setFields((current) => ({ ...current, name, presentation }))
+          }
         />
         <div className={formStyles.guide}>
           <p className={formStyles.guideTitle}>Conseil</p>

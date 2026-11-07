@@ -2,43 +2,9 @@ import {
   WikipediaValidator,
   WikipediaValidationResult,
 } from '../../domain/services/wikipedia-validator'
+import { askWikimedia, extractLangAndTitle } from './wikimedia'
 
 const WIKIDATA_HUMAN_ID = 'Q5'
-const USER_AGENT = 'Debats.co/1.0 (https://debats.co)'
-
-/**
- * How long we wait for an answer. A contributor is waiting on the other end,
- * and the domain now turns a failed lookup into « we could not check this page
- * for the moment » — so hanging would be the one outcome it cannot report.
- */
-const TIMEOUT_MS = 4000
-
-/** The URL's shape is judged by the domain before the validator is ever asked */
-function extractLangAndTitle(url: string): { lang: string; title: string } | null {
-  const match = url.match(/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/(.+)$/)
-  if (!match) return null
-  return { lang: match[1], title: decodeURIComponent(match[2]) }
-}
-
-/**
- * Asks a Wikimedia API, or fails.
- *
- * A page we could not reach is not a page that does not exist. The domain
- * lets an unjudged URL through on purpose — the site does not depend on
- * Wikipedia to accept a contribution — and it can only do that if we refuse
- * to answer on its behalf. Guessing here used to refuse a personality and, by
- * the mirror rule, accept an organisation whose page describes a person.
- */
-async function askWikimedia(url: string): Promise<unknown> {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  })
-  if (!response.ok) {
-    throw new Error(`Wikimedia answered ${response.status} for ${url}`)
-  }
-  return response.json()
-}
 
 interface WikipediaPage {
   missing?: string

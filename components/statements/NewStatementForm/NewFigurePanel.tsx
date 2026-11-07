@@ -3,6 +3,7 @@
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
 import { NewPublicFigure } from '../../../domain/use-cases/create-public-figure'
 import NotorietySources, { NotorietySourcePair } from '../../forms/NotorietySources'
+import WikipediaFill from '../../forms/WikipediaFill'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
@@ -88,6 +89,11 @@ export default function NewFigurePanel({
         value={figure.wikipediaUrl}
         onChange={(e) => withField('wikipediaUrl', e.target.value)}
         error={errors?.figureWikipediaUrl}
+      />
+
+      <WikipediaFill
+        url={figure.wikipediaUrl}
+        onFilled={({ name, presentation }) => onChange({ ...figure, name, presentation })}
       />
 
       <TextField

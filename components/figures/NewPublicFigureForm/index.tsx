@@ -8,6 +8,7 @@ import { FieldErrors } from '../../../domain/use-cases/create-public-figure'
 import { newPublicFigureForm } from '../../../lib/forms/public-figure-form'
 import { useChosenFile } from '../../../lib/forms/use-chosen-file'
 import NotorietySources, { notorietySourcePair } from '../../forms/NotorietySources'
+import WikipediaFill from '../../forms/WikipediaFill'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
@@ -203,6 +204,13 @@ export default function NewPublicFigureForm() {
           value={wikipediaUrl}
           onChange={(e) => setWikipediaUrl(e.target.value)}
           error={fieldErrors?.wikipediaUrl}
+        />
+        <WikipediaFill
+          url={wikipediaUrl}
+          onFilled={(facts) => {
+            setName(facts.name)
+            setPresentation(facts.presentation)
+          }}
         />
         <div className={formStyles.guide}>
           <p className={formStyles.guideTitle}>Conseil</p>

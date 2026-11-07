@@ -4,6 +4,7 @@ import { ORGANISATION_TYPES, ORGANISATION_TYPE_LABELS } from '../../../domain/en
 import { NewOrganisation } from '../../../domain/use-cases/create-organisation'
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
 import NotorietySources, { NotorietySourcePair } from '../../forms/NotorietySources'
+import WikipediaFill from '../../forms/WikipediaFill'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Select from '../../ui/Select'
@@ -102,6 +103,11 @@ export default function NewOrganisationPanel({
         value={organisation.wikipediaUrl}
         onChange={(e) => withField('wikipediaUrl', e.target.value)}
         error={errors?.organisationWikipediaUrl}
+      />
+
+      <WikipediaFill
+        url={organisation.wikipediaUrl}
+        onFilled={({ name, presentation }) => onChange({ ...organisation, name, presentation })}
       />
 
       <TextField
