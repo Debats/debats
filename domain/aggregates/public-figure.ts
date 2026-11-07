@@ -1,4 +1,5 @@
 import { Either, Option } from 'effect'
+import { blankToUndefined } from './optional-text'
 import {
   MembershipId,
   OrganisationMembership,
@@ -54,14 +55,18 @@ export interface MembershipInput {
   endedOn?: Date
 }
 
-const content = (input: PublicFigureInput): PublicFigureContent => ({
-  name: input.name,
-  slug: generateSlug(input.name),
-  presentation: input.presentation,
-  ...(input.wikipediaUrl ? { wikipediaUrl: input.wikipediaUrl } : {}),
-  ...(input.websiteUrl ? { websiteUrl: input.websiteUrl } : {}),
-  notorietySources: [...input.notorietySources],
-})
+const content = (input: PublicFigureInput): PublicFigureContent => {
+  const wikipediaUrl = blankToUndefined(input.wikipediaUrl)
+  const websiteUrl = blankToUndefined(input.websiteUrl)
+  return {
+    name: input.name,
+    slug: generateSlug(input.name),
+    presentation: input.presentation,
+    ...(wikipediaUrl ? { wikipediaUrl } : {}),
+    ...(websiteUrl ? { websiteUrl } : {}),
+    notorietySources: [...input.notorietySources],
+  }
+}
 
 /* Facts: what the stream records, named in the past tense as the events they are */
 

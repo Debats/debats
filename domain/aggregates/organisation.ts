@@ -1,4 +1,5 @@
 import { Option } from 'effect'
+import { blankToUndefined } from './optional-text'
 import {
   generateOrganisationSlug,
   Organisation,
@@ -38,9 +39,6 @@ export interface OrganisationInput {
   websiteUrl?: string
   notorietySources: readonly string[]
 }
-
-const blankToUndefined = (value: string | undefined): string | undefined =>
-  value?.trim() ? value.trim() : undefined
 
 const content = (input: OrganisationInput): OrganisationContent => {
   const acronym = blankToUndefined(input.acronym)

@@ -68,6 +68,18 @@ describe('public figure facts', () => {
       organisationId: 'org-1',
     })
   })
+
+  /* A link made of spaces is no link: the fact drops it, as the organisation's does */
+  it('leave out a blank link and trim the ones it keeps', () => {
+    const payload = publicFigureEdited({
+      ...dupont,
+      wikipediaUrl: '  https://fr.wikipedia.org/wiki/Jean_Dupont  ',
+      websiteUrl: '   ',
+    }).payload
+
+    expect(payload).not.toHaveProperty('websiteUrl')
+    expect(payload).toMatchObject({ wikipediaUrl: 'https://fr.wikipedia.org/wiki/Jean_Dupont' })
+  })
 })
 
 describe('public figure decisions', () => {

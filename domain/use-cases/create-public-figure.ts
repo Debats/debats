@@ -103,8 +103,8 @@ export const recordNewPublicFigure = (
       id,
       addPublicFigure({
         ...fields,
-        wikipediaUrl: params.wikipediaUrl.trim() || undefined,
-        websiteUrl: params.websiteUrl || undefined,
+        wikipediaUrl: params.wikipediaUrl,
+        websiteUrl: params.websiteUrl,
         notorietySources: params.notorietySources,
       }),
       contributorId,

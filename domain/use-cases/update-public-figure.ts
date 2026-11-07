@@ -62,8 +62,8 @@ const persisted = (
 ) => {
   const edited = editPublicFigure({
     ...fields,
-    wikipediaUrl: params.wikipediaUrl.trim() || undefined,
-    websiteUrl: params.websiteUrl || undefined,
+    wikipediaUrl: params.wikipediaUrl,
+    websiteUrl: params.websiteUrl,
     notorietySources: params.notorietySources,
   })
   return pipe(
