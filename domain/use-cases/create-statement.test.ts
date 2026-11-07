@@ -75,6 +75,9 @@ const fakePublicFigureRepo = {
 
 const organisation = sampleOrganisation()
 
+/** Une page qui ne décrit pas une personne : ce qu'une organisation doit présenter */
+const pageIsNotAPerson = fakeWikipediaValidator({ exists: true, isBiography: false })
+
 const validParams = {
   subjectId: 'subject-1',
   author: { kind: 'existing' as const, author: publicFigureAuthor('figure-1') },
@@ -359,6 +362,148 @@ describe('createStatementUseCase', () => {
         ? Object.keys(result.left).sort()
         : [],
     ).toEqual(['figureName', 'figureNotorietySources', 'figurePresentation'])
+  })
+
+  it('opens an organisation and its statement in the same transaction, and rewards both', async () => {
+    const nameIsFree = fakeOrganisationRepo([])
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await runFormWith(
+      fakes({ organisations: nameIsFree, wikipedia: pageIsNotAPerson }),
+    )(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        author: {
+          kind: 'new_organisation',
+          organisation: {
+            name: 'Europe Écologie Les Verts',
+            acronym: 'EELV',
+            organisationType: 'political_party',
+            presentation: 'Parti politique écologiste français.',
+            wikipediaUrl: 'https://fr.wikipedia.org/wiki/Les_Écologistes',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    const [organisation, statement] = deedsIn(journal).slice(-2)
+    expect(organisation).toMatchObject({
+      streamType: 'organisation',
+      type: 'OrganisationAdded',
+      actorId: 'abc',
+      payload: { name: 'Europe Écologie Les Verts', acronym: 'EELV' },
+    })
+    expect(statement).toMatchObject({
+      streamType: 'statement',
+      payload: { author: { kind: 'organisation', id: organisation.streamId } },
+    })
+    expect(grantsIn(journal)).toEqual([
+      ['abc', 'added_organisation_validated', 50],
+      ['abc', 'added_statement_validated', 50],
+    ])
+  })
+
+  it('names the organisation’s faults under their own fields, and keeps its type’s own name', async () => {
+    const result = await runFormWith(fakes({ organisations: fakeOrganisationRepo([]) }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        author: {
+          kind: 'new_organisation',
+          organisation: {
+            name: 'A',
+            acronym: '',
+            organisationType: '',
+            presentation: 'Court',
+            wikipediaUrl: '',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string'
+        ? Object.keys(result.left).sort()
+        : [],
+    ).toEqual([
+      'organisationName',
+      'organisationNotorietySources',
+      'organisationPresentation',
+      'organisationType',
+    ])
+  })
+
+  it('refuses an organisation under the Éloquent rank before ever asking Wikipedia', async () => {
+    const neverAsked: WikipediaValidator = {
+      validatePage: () => {
+        throw new Error('Wikipédia consulté avant le contrôle de rang')
+      },
+    }
+
+    const result = await runFormWith(
+      fakes({ organisations: fakeOrganisationRepo([]), wikipedia: neverAsked }),
+    )(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 0 },
+        author: {
+          kind: 'new_organisation',
+          organisation: {
+            name: 'Europe Écologie Les Verts',
+            acronym: 'EELV',
+            organisationType: 'political_party',
+            presentation: 'Parti politique écologiste français.',
+            wikipediaUrl: 'https://fr.wikipedia.org/wiki/Les_Écologistes',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+    )
+
+    expect(Either.isLeft(result) && result.left).toContain('Éloquent')
+  })
+
+  it('writes nothing when the organisation’s Wikipedia page describes a person', async () => {
+    // Une page de personne ne décrit pas une organisation : le refus précède la transaction
+    const pageIsAPerson = fakeWikipediaValidator({ exists: true, isBiography: true })
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await runFormWith(
+      fakes({ organisations: fakeOrganisationRepo([]), wikipedia: pageIsAPerson }),
+    )(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        author: {
+          kind: 'new_organisation',
+          organisation: {
+            name: 'Europe Écologie Les Verts',
+            acronym: 'EELV',
+            organisationType: 'political_party',
+            presentation: 'Parti politique écologiste français.',
+            wikipediaUrl: 'https://fr.wikipedia.org/wiki/Marine_Tondelier',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+      run,
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string'
+        ? result.left.organisationWikipediaUrl
+        : null,
+    ).toBeDefined()
+    expect(journal.all()).toEqual([])
   })
 
   it('should fail when the organisation author is not found', async () => {

@@ -103,26 +103,29 @@ const underPrefix = (prefix: string, field: string) =>
  * same breath, and both have a presentation: a bare `presentation` would not
  * say which one is at fault. The command that opens an entity alone keeps the
  * plain names, because there is nothing to tell it apart from.
+ *
+ * A field already named after its entity stays as it is — `keep` spares it the
+ * prefix, so `organisationType` does not become `organisationOrganisationType`.
  */
 export const faultsUnder =
-  (prefix: string) =>
-  <A, E, R>(command: Effect.Effect<A, E, R>): Effect.Effect<A, E | Invalid | Rejected, R> =>
-    Effect.mapError(command, (failure): E | Invalid | Rejected => {
+  (prefix: string, keep: readonly string[] = []) =>
+  <A, E, R>(command: Effect.Effect<A, E, R>): Effect.Effect<A, E | Invalid | Rejected, R> => {
+    const renamed = (field: string) => (keep.includes(field) ? field : underPrefix(prefix, field))
+
+    return Effect.mapError(command, (failure): E | Invalid | Rejected => {
       if (failure instanceof Invalid) {
         return new Invalid(
           Object.fromEntries(
-            Object.entries(failure.fields).map(([field, message]) => [
-              underPrefix(prefix, field),
-              message,
-            ]),
+            Object.entries(failure.fields).map(([field, message]) => [renamed(field), message]),
           ),
         )
       }
       if (failure instanceof Rejected && failure.field) {
-        return new Rejected(failure.message, underPrefix(prefix, failure.field))
+        return new Rejected(failure.message, renamed(failure.field))
       }
       return failure
     })
+  }
 
 /** What the read side must not find: a value already there is refused, on the field that holds it */
 export const free =

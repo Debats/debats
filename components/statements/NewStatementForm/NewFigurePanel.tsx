@@ -5,7 +5,7 @@ import { NewPublicFigure } from '../../../domain/use-cases/create-public-figure'
 import NotorietySources, { NotorietySourcePair } from '../../forms/NotorietySources'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
-import styles from './NewStatementForm.module.css'
+import Panel from './Panel'
 
 /**
  * Les champs libres d'une personnalité ouverte en place : ce que la commande
@@ -54,12 +54,11 @@ export default function NewFigurePanel({
     onChange({ ...figure, [field]: value })
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHead}>
-        <p className={styles.panelTitle}>Nouvelle personnalité</p>
-        <p className={styles.panelNote}>écrite avec votre prise de position</p>
-      </div>
-
+    <Panel
+      title="Nouvelle personnalité"
+      instead="choisir une personnalité existante"
+      onCancel={onCancel}
+    >
       <TextField
         label="Nom"
         id="figureName"
@@ -108,10 +107,6 @@ export default function NewFigurePanel({
           error={errors?.figureNotorietySources}
         />
       )}
-
-      <button type="button" className={styles.panelCancel} onClick={onCancel}>
-        Annuler et choisir une personnalité existante
-      </button>
-    </div>
+    </Panel>
   )
 }

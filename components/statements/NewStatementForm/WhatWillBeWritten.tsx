@@ -1,12 +1,14 @@
 import styles from './NewStatementForm.module.css'
 
+/** Une entité que l'envoi ouvrira, nommée si elle l'est déjà */
+export interface Opened {
+  /** « La personnalité », « L'organisation », « La position » */
+  what: string
+  name: string
+}
+
 interface WhatWillBeWrittenProps {
-  /** Une personnalité est en cours d'ouverture, nommée ou pas encore */
-  openingFigure: boolean
-  figureName: string
-  /** Une position est en cours d'ouverture, titrée ou pas encore */
-  opening: boolean
-  positionTitle: string
+  opened: readonly Opened[]
 }
 
 /**
@@ -16,43 +18,26 @@ interface WhatWillBeWrittenProps {
  * enregistré et le formulaire garde tout. C'est pour ça que l'encart annonce
  * sans jamais rendre compte d'un demi-succès — il n'y en a pas.
  *
- * Une position ouverte s'annonce dès qu'elle l'est, titrée ou non : annoncer
- * seulement une fois le titre tapé ferait disparaître une écriture qui va
- * bien avoir lieu.
+ * Une entité ouverte s'annonce dès qu'elle l'est, nommée ou non : attendre son
+ * nom ferait disparaître une écriture qui va bien avoir lieu.
  */
-export default function WhatWillBeWritten({
-  openingFigure,
-  figureName,
-  opening,
-  positionTitle,
-}: WhatWillBeWrittenProps) {
+export default function WhatWillBeWritten({ opened }: WhatWillBeWrittenProps) {
   return (
     <div className={styles.summary}>
       <p className={styles.summaryTitle}>Ce que l’envoi va écrire</p>
       <ul className={styles.summaryList}>
-        {openingFigure && (
-          <li>
-            {figureName ? (
+        {opened.map(({ what, name }) => (
+          <li key={what}>
+            {name ? (
               <>
-                La personnalité <strong>{figureName}</strong>
+                {what} <strong>{name}</strong>
               </>
             ) : (
-              'La personnalité que vous ouvrez'
+              `${what} que vous ouvrez`
             )}
           </li>
-        )}
-        {opening && (
-          <li>
-            {positionTitle ? (
-              <>
-                La position <strong>{positionTitle}</strong>
-              </>
-            ) : (
-              'La position que vous ouvrez'
-            )}
-          </li>
-        )}
-        <li>Votre prise de position, sur cette position</li>
+        ))}
+        <li>Votre prise de position</li>
       </ul>
       <p className={styles.summaryNote}>
         En une seule écriture : si quelque chose est refusé, rien n’est enregistré et vous gardez

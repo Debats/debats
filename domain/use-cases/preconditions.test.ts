@@ -152,6 +152,21 @@ describe('faultsUnder', () => {
     })
   })
 
+  it('spares the fields already named after their entity', async () => {
+    const outcome = await run(
+      faultsUnder('organisation', ['organisationType'])(
+        Effect.fail(
+          new Invalid({ name: 'Nom trop court.', organisationType: 'Choisissez un type.' }),
+        ),
+      ),
+    )
+
+    expect(Either.isLeft(outcome) && (outcome.left as Invalid).fields).toEqual({
+      organisationName: 'Nom trop court.',
+      organisationType: 'Choisissez un type.',
+    })
+  })
+
   it('leaves a refusal that blames no field alone', async () => {
     const outcome = await run(
       faultsUnder('figure')(Effect.fail(new Rejected('Vous devez être Éloquent·e.'))),

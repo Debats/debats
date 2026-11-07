@@ -41,8 +41,9 @@ import ArgumentsPicker from '../ArgumentsPicker'
 import StatementContentFields from '../StatementContentFields'
 import LockedAction from './LockedAction'
 import NewFigurePanel, { FigureDraft } from './NewFigurePanel'
-import NewPositionPanel from './NewPositionPanel'
-import WhatWillBeWritten from './WhatWillBeWritten'
+import NewOrganisationPanel, { OrganisationDraft } from './NewOrganisationPanel'
+import NewPositionPanel, { PositionDraft } from './NewPositionPanel'
+import WhatWillBeWritten, { Opened } from './WhatWillBeWritten'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -98,15 +99,15 @@ export default function NewStatementForm({
   const [selectedFigure, setSelectedFigure] = useState<{ id: string; name: string } | undefined>(
     initialFigure,
   )
-  const [selectedOrganisationId, setSelectedOrganisationId] = useState(
-    initialOrganisation?.id ?? '',
-  )
+  /** Même raison que pour la personnalité : le Combobox doit pouvoir se rouvrir sur son choix */
+  const [selectedOrganisation, setSelectedOrganisation] = useState<
+    { id: string; name: string } | undefined
+  >(initialOrganisation)
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
   /** Une position ouverte en place : le formulaire la porte jusqu'à l'envoi, rien n'est écrit avant */
   const [openingPosition, setOpeningPosition] = useState(false)
-  const [newPositionTitle, setNewPositionTitle] = useState('')
-  const [newPositionDescription, setNewPositionDescription] = useState('')
+  const [newPosition, setNewPosition] = useState<PositionDraft>({ title: '', description: '' })
   /** Une personnalité ouverte en place : portée jusqu'à l'envoi, rien n'est écrit avant */
   const [openingFigure, setOpeningFigure] = useState(false)
   const [newFigure, setNewFigure] = useState<FigureDraft>({
@@ -119,10 +120,30 @@ export default function NewStatementForm({
   const [figureSources, setFigureSources] = useState<NotorietySourcePair>(() =>
     notorietySourcePair([]),
   )
+  /** Une organisation ouverte en place, mêmes règles que pour une personnalité */
+  const [openingOrganisation, setOpeningOrganisation] = useState(false)
+  const [newOrganisation, setNewOrganisation] = useState<OrganisationDraft>({
+    name: '',
+    acronym: '',
+    organisationType: '',
+    presentation: '',
+    wikipediaUrl: '',
+    websiteUrl: '',
+  })
+  const [organisationSources, setOrganisationSources] = useState<NotorietySourcePair>(() =>
+    notorietySourcePair([]),
+  )
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
 
   const [positions, setPositions] = useState<PositionOption[]>([])
   const [loadingPositions, setLoadingPositions] = useState(!!initialSubject?.id)
+
+  /** Ce que l'envoi ouvrira, dans l'ordre où le formulaire le demande */
+  const opened: Opened[] = [
+    ...(openingFigure ? [{ what: 'La personnalité', name: newFigure.name }] : []),
+    ...(openingOrganisation ? [{ what: 'L’organisation', name: newOrganisation.name }] : []),
+    ...(openingPosition ? [{ what: 'La position', name: newPosition.title }] : []),
+  ]
 
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
@@ -169,8 +190,9 @@ export default function NewStatementForm({
       if (!kind || kind === authorKind) return
       setAuthorKind(kind)
       setSelectedFigure(undefined)
-      setSelectedOrganisationId('')
+      setSelectedOrganisation(undefined)
       setOpeningFigure(false)
+      setOpeningOrganisation(false)
       updateDraft({ authorKind: kind, authorName: '' })
     },
     [authorKind, updateDraft],
@@ -199,12 +221,32 @@ export default function NewStatementForm({
     [updateDraft],
   )
 
+  const openOrganisation = useCallback(() => {
+    setOpeningOrganisation(true)
+    updateDraft({ authorName: newOrganisation.name })
+  }, [newOrganisation.name, updateDraft])
+
+  /** Annuler rend la main au choix, et rend celui qu'on avait fait avant d'ouvrir */
+  const cancelOrganisation = useCallback(() => {
+    setOpeningOrganisation(false)
+    updateDraft({ authorName: selectedOrganisation?.name ?? '' })
+  }, [selectedOrganisation, updateDraft])
+
+  const changeOrganisation = useCallback(
+    (organisation: OrganisationDraft) => {
+      setNewOrganisation(organisation)
+      updateDraft({ authorName: organisation.name })
+    },
+    [updateDraft],
+  )
+
   const openPosition = useCallback(() => {
     setOpeningPosition(true)
-    updateDraft({ positionTitle: '' })
-  }, [updateDraft])
+    updateDraft({ positionTitle: newPosition.title })
+  }, [newPosition.title, updateDraft])
 
   /** Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant d'ouvrir */
+  /** Annuler rend la main au choix, et rend celui qu'on avait coché avant d'ouvrir */
   const cancelPosition = useCallback(() => {
     setOpeningPosition(false)
     updateDraft({
@@ -212,10 +254,10 @@ export default function NewStatementForm({
     })
   }, [positions, selectedPositionId, updateDraft])
 
-  const changeNewPositionTitle = useCallback(
-    (value: string) => {
-      setNewPositionTitle(value)
-      updateDraft({ positionTitle: value })
+  const changePosition = useCallback(
+    (position: PositionDraft) => {
+      setNewPosition(position)
+      updateDraft({ positionTitle: position.title })
     },
     [updateDraft],
   )
@@ -262,24 +304,32 @@ export default function NewStatementForm({
       const position: StatementPositionInput = openingPosition
         ? {
             kind: 'new',
-            positionTitle: newPositionTitle,
-            positionDescription: newPositionDescription,
+            positionTitle: newPosition.title,
+            positionDescription: newPosition.description,
           }
         : { kind: 'existing', id: selectedPositionId }
 
       /** Celle qu'on ouvre, ou celle qu'on a choisie : jamais les deux */
-      const chosenAuthor: StatementAuthorInput = openingFigure
+      const chosenAuthor: StatementAuthorInput = openingOrganisation
         ? {
-            kind: 'new_figure',
-            figure: { ...newFigure, notorietySources: figureSources.filter(Boolean) },
+            kind: 'new_organisation',
+            organisation: {
+              ...newOrganisation,
+              notorietySources: organisationSources.filter(Boolean),
+            },
           }
-        : {
-            kind: 'existing',
-            author:
-              authorKind === 'organisation'
-                ? organisationAuthor(selectedOrganisationId)
-                : publicFigureAuthor(selectedFigure?.id ?? ''),
-          }
+        : openingFigure
+          ? {
+              kind: 'new_figure',
+              figure: { ...newFigure, notorietySources: figureSources.filter(Boolean) },
+            }
+          : {
+              kind: 'existing',
+              author:
+                authorKind === 'organisation'
+                  ? organisationAuthor(selectedOrganisation?.id ?? '')
+                  : publicFigureAuthor(selectedFigure?.id ?? ''),
+            }
 
       const input: NewStatement = {
         subjectId: selectedSubjectId,
@@ -323,12 +373,14 @@ export default function NewStatementForm({
       content,
       figureSources,
       newFigure,
-      newPositionDescription,
-      newPositionTitle,
+      newOrganisation,
+      newPosition,
+      openingOrganisation,
+      organisationSources,
       openingFigure,
       openingPosition,
       selectedFigure,
-      selectedOrganisationId,
+      selectedOrganisation,
       selectedPositionId,
       selectedSubjectId,
     ],
@@ -377,7 +429,16 @@ export default function NewStatementForm({
           items={[{ label: 'Une personnalité' }, { label: 'Une organisation' }]}
           onChange={changeAuthorKind}
         />
-        {isOrganisation ? (
+        {isOrganisation && openingOrganisation ? (
+          <NewOrganisationPanel
+            organisation={newOrganisation}
+            onChange={changeOrganisation}
+            sources={organisationSources}
+            onSources={setOrganisationSources}
+            onCancel={cancelOrganisation}
+            errors={fieldErrors}
+          />
+        ) : isOrganisation ? (
           <Combobox
             key="organisation"
             label="Organisation"
@@ -387,12 +448,12 @@ export default function NewStatementForm({
             placeholder="Tapez un nom ou un sigle…"
             onSearch={handleSearchOrganisations}
             onSelect={(id, label) => {
-              setSelectedOrganisationId(id)
+              setSelectedOrganisation(id ? { id, name: label } : undefined)
               updateDraft({ authorName: label })
             }}
             initialItem={
-              initialOrganisation
-                ? { id: initialOrganisation.id, label: initialOrganisation.name }
+              selectedOrganisation
+                ? { id: selectedOrganisation.id, label: selectedOrganisation.name }
                 : undefined
             }
           />
@@ -430,12 +491,14 @@ export default function NewStatementForm({
               nom : communiqué, programme, vote, action.
             </p>
             {canAddOrganisation ? (
-              <p className={styles.hint}>
-                Elle n’existe pas encore ?{' '}
-                <Link href="/o/ajouter" className={styles.hintLink}>
-                  Créer une organisation
-                </Link>
-              </p>
+              !openingOrganisation && (
+                <p className={styles.hint}>
+                  Elle n’existe pas encore ?{' '}
+                  <button type="button" className={styles.inlineAction} onClick={openOrganisation}>
+                    l’ouvrir ici
+                  </button>
+                </p>
+              )
             ) : (
               <LockedAction
                 what="Référencer une organisation"
@@ -486,8 +549,8 @@ export default function NewStatementForm({
             setPositions([])
             setSelectedPositionId('')
             setOpeningPosition(false)
-            setNewPositionTitle('')
-            setNewPositionDescription('')
+            // Les positions appartiennent au sujet : changer de sujet rend celles qu'on ouvrait caduques
+            setNewPosition({ title: '', description: '' })
             setLoadingPositions(!!id)
             updateDraft({ subjectTitle: label, positionTitle: '' })
           }}
@@ -512,10 +575,8 @@ export default function NewStatementForm({
             <p className={styles.hint}>Choisissez d’abord un sujet.</p>
           ) : openingPosition ? (
             <NewPositionPanel
-              title={newPositionTitle}
-              description={newPositionDescription}
-              onTitle={changeNewPositionTitle}
-              onDescription={setNewPositionDescription}
+              position={newPosition}
+              onChange={changePosition}
               onCancel={cancelPosition}
               errors={fieldErrors}
             />
@@ -628,12 +689,7 @@ export default function NewStatementForm({
         </div>
       )}
 
-      <WhatWillBeWritten
-        openingFigure={openingFigure}
-        figureName={newFigure.name}
-        opening={openingPosition}
-        positionTitle={newPositionTitle}
-      />
+      <WhatWillBeWritten opened={opened} />
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>

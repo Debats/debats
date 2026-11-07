@@ -1,13 +1,18 @@
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
+import Panel from './Panel'
 import styles from './NewStatementForm.module.css'
 
-interface NewPositionPanelProps {
+/** Les champs d'une position ouverte en place */
+export interface PositionDraft {
   title: string
   description: string
-  onTitle: (value: string) => void
-  onDescription: (value: string) => void
+}
+
+interface NewPositionPanelProps {
+  position: PositionDraft
+  onChange: (position: PositionDraft) => void
   onCancel: () => void
   errors?: FieldErrors
 }
@@ -16,35 +21,30 @@ interface NewPositionPanelProps {
  * Une position ouverte sans quitter le formulaire.
  *
  * Rien n'est écrit ici : le panneau tient deux champs que l'envoi portera
- * avec le reste, dans la même transaction que la prise de position. Annuler
- * referme le panneau et rend la main aux positions existantes.
+ * avec le reste, dans la même transaction que la prise de position.
  *
- * Les champs sont ceux du design system, et portent les noms sous lesquels la
- * commande rapporte leurs fautes — `positionTitle` plutôt que `title`, parce
- * qu'un sujet ouvert dans ce même formulaire aura un titre lui aussi.
+ * Les champs portent les noms sous lesquels la commande rapporte leurs fautes
+ * — `positionTitle` plutôt que `title`, parce qu'un sujet ouvert dans ce même
+ * formulaire aura un titre lui aussi.
  */
 export default function NewPositionPanel({
-  title,
-  description,
-  onTitle,
-  onDescription,
+  position,
+  onChange,
   onCancel,
   errors,
 }: NewPositionPanelProps) {
-  return (
-    <div className={styles.panel}>
-      <div className={styles.panelHead}>
-        <p className={styles.panelTitle}>Nouvelle position</p>
-        <p className={styles.panelNote}>écrite avec votre prise de position</p>
-      </div>
+  const withField = (field: keyof PositionDraft, value: string) =>
+    onChange({ ...position, [field]: value })
 
+  return (
+    <Panel title="Nouvelle position" instead="choisir une position existante" onCancel={onCancel}>
       <TextField
         label="Titre de la position"
         id="positionTitle"
         required
         placeholder="ex : Pour une aide active à mourir encadrée"
-        value={title}
-        onChange={(e) => onTitle(e.target.value)}
+        value={position.title}
+        onChange={(e) => withField('title', e.target.value)}
         error={errors?.positionTitle}
       />
 
@@ -54,8 +54,8 @@ export default function NewPositionPanel({
         required
         rows={2}
         placeholder="Ce que défend cette position, en une phrase."
-        value={description}
-        onChange={(e) => onDescription(e.target.value)}
+        value={position.description}
+        onChange={(e) => withField('description', e.target.value)}
         error={errors?.positionDescription}
       />
 
@@ -63,10 +63,6 @@ export default function NewPositionPanel({
         Une position décrit le débat, elle ne le tranche pas : nommez l’avis défendu, pas la
         personne qui le défend.
       </p>
-
-      <button type="button" className={styles.panelCancel} onClick={onCancel}>
-        Annuler et choisir une position existante
-      </button>
-    </div>
+    </Panel>
   )
 }

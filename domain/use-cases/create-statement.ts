@@ -1,5 +1,10 @@
 import { Effect, pipe } from 'effect'
-import { publicFigureAuthor, StatementAuthor, StatementId } from '../entities/statement'
+import {
+  organisationAuthor,
+  publicFigureAuthor,
+  StatementAuthor,
+  StatementId,
+} from '../entities/statement'
 import { addStatement } from '../aggregates/statement'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
@@ -29,6 +34,14 @@ import {
   positionReward,
   recordNewPosition,
 } from './create-position'
+import {
+  inlineOrganisationChecked,
+  NewOrganisation,
+  ORGANISATION_NAME_TAKEN,
+  organisationReward,
+  recordNewOrganisation,
+} from './create-organisation'
+import { OrganisationType } from '../entities/organisation'
 import {
   inlinePublicFigureChecked,
   NewPublicFigure,
@@ -61,6 +74,7 @@ export type StatementPositionInput =
 export type StatementAuthorInput =
   | { kind: 'existing'; author: StatementAuthor }
   | { kind: 'new_figure'; figure: NewPublicFigure }
+  | { kind: 'new_organisation'; organisation: NewOrganisation }
 
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
@@ -96,6 +110,11 @@ type SettledAuthor =
       readonly kind: 'new_figure'
       readonly figure: NewPublicFigure
       readonly fields: ValidatedPublicFigureFields
+    }
+  | {
+      readonly kind: 'new_organisation'
+      readonly organisation: NewOrganisation
+      readonly organisationType: OrganisationType
     }
   | { readonly kind: 'existing'; readonly author: StatementAuthor }
 
@@ -165,16 +184,29 @@ const positionSettled = (
  * Wikipedia page is a network call — it happens here, and never inside the
  * transaction, whose seconds are counted.
  */
-const authorSettled = (author: StatementAuthorInput, contributor: ContributorIdentity | null) =>
-  author.kind === 'new_figure'
-    ? Effect.map(
+const authorSettled = (author: StatementAuthorInput, contributor: ContributorIdentity | null) => {
+  switch (author.kind) {
+    case 'new_figure':
+      return Effect.map(
         inlinePublicFigureChecked(author.figure, contributor),
         (fields): SettledAuthor => ({ kind: 'new_figure', figure: author.figure, fields }),
       )
-    : Effect.map(
+    case 'new_organisation':
+      return Effect.map(
+        inlineOrganisationChecked(author.organisation, contributor),
+        ({ organisationType }): SettledAuthor => ({
+          kind: 'new_organisation',
+          organisation: author.organisation,
+          organisationType,
+        }),
+      )
+    case 'existing':
+      return Effect.map(
         authorKnown(author.author),
         (): SettledAuthor => ({ kind: 'existing', author: author.author }),
       )
+  }
+}
 
 /** The position the statement hangs on: the one opened in this transaction, or the one chosen */
 const positionIn = (
@@ -192,14 +224,41 @@ const positionIn = (
     : Effect.succeed(settled.id)
 
 /** The author the statement carries: the one opened here, or the one read */
-const authorIn = (events: EventStore, contributorId: string, settled: SettledAuthor) =>
-  settled.kind === 'new_figure'
-    ? pipe(
+const authorIn = (events: EventStore, contributorId: string, settled: SettledAuthor) => {
+  switch (settled.kind) {
+    case 'new_figure':
+      return pipe(
         recordNewPublicFigure(events, contributorId, settled.figure, settled.fields),
         Effect.map((figure) => publicFigureAuthor(figure.id)),
         uniqueTakenAs('figureName', PUBLIC_FIGURE_NAME_TAKEN),
       )
-    : Effect.succeed(settled.author)
+    case 'new_organisation':
+      return pipe(
+        recordNewOrganisation(
+          events,
+          contributorId,
+          settled.organisation,
+          settled.organisationType,
+        ),
+        Effect.map((organisation) => organisationAuthor(organisation.id)),
+        uniqueTakenAs('organisationName', ORGANISATION_NAME_TAKEN),
+      )
+    case 'existing':
+      return Effect.succeed(settled.author)
+  }
+}
+
+/** What opening the author earned, if one was opened at all */
+const authorRewards = (contributorId: string, settled: SettledAuthor, writtenId: string) => {
+  switch (settled.kind) {
+    case 'new_figure':
+      return [publicFigureReward(contributorId, writtenId)]
+    case 'new_organisation':
+      return [organisationReward(contributorId, writtenId)]
+    case 'existing':
+      return []
+  }
+}
 
 export function createStatementUseCase(params: CreateStatementParams) {
   const { subjectId, author, position, sourceName, sourceUrl, statedAt } = params
@@ -257,9 +316,7 @@ export function createStatementUseCase(params: CreateStatementParams) {
               ),
               Effect.tap(() =>
                 grantEach(events, settled.contributor.id, [
-                  ...(settled.author.kind === 'new_figure'
-                    ? [publicFigureReward(settled.contributor.id, written.id)]
-                    : []),
+                  ...authorRewards(settled.contributor.id, settled.author, written.id),
                   ...(settled.position.kind === 'new'
                     ? [positionReward(settled.contributor.id, positionId)]
                     : []),
