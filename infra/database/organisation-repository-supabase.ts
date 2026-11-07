@@ -48,6 +48,20 @@ interface OrganisationSummaryRow {
   subjects_count: number | null
 }
 
+function mapSummaryRow(row: OrganisationSummaryRow): OrganisationSummary {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    acronym: row.acronym,
+    organisationType: row.organisation_type,
+    presentation: row.presentation,
+    membersCount: row.members_count ?? 0,
+    statementsCount: row.statements_count ?? 0,
+    subjectsCount: row.subjects_count ?? 0,
+  }
+}
+
 function mapRow(row: OrganisationRow): Organisation {
   return Organisation.make({
     id: OrganisationId.make(row.id),
@@ -68,6 +82,29 @@ function mapRow(row: OrganisationRow): Organisation {
 
 export function createOrganisationRepository(supabase: SupabaseClient): OrganisationRepository {
   const live = () => supabase.from('organisations').select('*').is('deleted_at', null)
+
+  /** Reads the summary view page by page, ordered by name so paging stays stable */
+  const fetchSummaries = (type?: OrganisationType) =>
+    Effect.tryPromise({
+      try: async () => {
+        const rows = await fetchAllRows<OrganisationSummaryRow>((offset, limit) => {
+          const query = supabase
+            .from('v_organisation_summary')
+            .select('*', { count: 'exact' })
+            .order('name')
+            .range(offset, offset + limit - 1)
+          return type ? query.eq('organisation_type', type) : query
+        })
+        return rows.map(mapSummaryRow)
+      },
+      catch: (error) =>
+        dbError(
+          type
+            ? `Failed to fetch organisation summaries of type ${type}`
+            : 'Failed to fetch organisation summaries',
+          error,
+        ),
+    })
 
   const findOne = (column: 'id' | 'slug', value: string, message: string) =>
     Effect.tryPromise({
@@ -115,32 +152,9 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
         catch: (error) => dbError('Failed to search organisations', error),
       }),
 
-    findSummaries: () =>
-      Effect.tryPromise({
-        try: async () => {
-          const rows = await fetchAllRows<OrganisationSummaryRow>((offset, limit) =>
-            supabase
-              .from('v_organisation_summary')
-              .select('*', { count: 'exact' })
-              .order('name')
-              .range(offset, offset + limit - 1),
-          )
-          return rows.map(
-            (row): OrganisationSummary => ({
-              id: row.id,
-              name: row.name,
-              slug: row.slug,
-              acronym: row.acronym,
-              organisationType: row.organisation_type,
-              presentation: row.presentation,
-              membersCount: row.members_count ?? 0,
-              statementsCount: row.statements_count ?? 0,
-              subjectsCount: row.subjects_count ?? 0,
-            }),
-          )
-        },
-        catch: (error) => dbError('Failed to fetch organisation summaries', error),
-      }),
+    findSummaries: () => fetchSummaries(),
+
+    findSummariesByType: (type) => fetchSummaries(type),
 
     findSummaryById: (id) =>
       Effect.tryPromise({
@@ -152,17 +166,7 @@ export function createOrganisationRepository(supabase: SupabaseClient): Organisa
             .maybeSingle<OrganisationSummaryRow>()
           if (error) throw error
           if (!data) return null
-          return {
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            acronym: data.acronym,
-            organisationType: data.organisation_type,
-            presentation: data.presentation,
-            membersCount: data.members_count ?? 0,
-            statementsCount: data.statements_count ?? 0,
-            subjectsCount: data.subjects_count ?? 0,
-          }
+          return mapSummaryRow(data)
         },
         catch: (error) => dbError('Failed to fetch organisation summary', error),
       }),

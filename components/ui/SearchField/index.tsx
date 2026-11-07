@@ -55,12 +55,13 @@ export default function SearchField<T>({
         type="search"
         className={styles.input}
         placeholder={placeholder}
+        aria-label={placeholder}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
       {hasSearched && (
-        <div className={styles.results}>
+        <div className={styles.results} role="status" aria-live="polite">
           {results.length === 0 ? (
             <p className={styles.noResults}>Aucun résultat pour « {query} »</p>
           ) : (

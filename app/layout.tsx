@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from 'next/font/google'
 import '../styles/tokens.css'
 import '../styles/base.css'
 import styles from './layout.module.css'
@@ -12,6 +11,7 @@ import FeedbackWidget from '../components/feedback/FeedbackWidget'
 
 import { Metadata, Viewport } from 'next'
 import { siteDescription } from './site'
+import { fontVariables } from './fonts'
 
 // Source de vérité CSS : --signal dans styles/tokens.css
 const DEBATS_SIGNAL = '#e3243f'
@@ -19,28 +19,6 @@ const DEBATS_SIGNAL = '#e3243f'
 export const viewport: Viewport = {
   themeColor: DEBATS_SIGNAL,
 }
-
-const serif = Instrument_Serif({
-  subsets: ['latin'],
-  weight: '400',
-  style: ['normal', 'italic'],
-  variable: '--font-instrument-serif',
-  display: 'swap',
-})
-
-const sans = Instrument_Sans({
-  subsets: ['latin'],
-  variable: '--font-instrument-sans',
-  display: 'swap',
-})
-
-const mono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
-  display: 'swap',
-})
-
-const fontVariables = [serif, sans, mono].map((font) => font.variable).join(' ')
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://debats.co'),

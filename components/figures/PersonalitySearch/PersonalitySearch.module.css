@@ -1,18 +1,3 @@
-.resultLink,
-.resultLink:link,
-.resultLink:visited {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: var(--radius-control);
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--ink);
-  transition: background-color 0.15s ease;
-}
-
-.resultLink:hover {
-  background-color: var(--paper-2);
-  color: var(--ink);
+.resultLink {
+  composes: resultLink from '../../../styles/search.module.css';
 }

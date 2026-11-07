@@ -1,0 +1,8 @@
+.resultLink {
+  composes: resultLink from '../../../styles/search.module.css';
+}
+
+.acronym {
+  composes: meta from '../../../styles/text.module.css';
+  color: var(--org-dark);
+}

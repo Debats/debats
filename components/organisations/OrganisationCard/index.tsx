@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import OrganisationLogo from '../../../components/organisations/OrganisationLogo'
+import OrganisationLogo from '../OrganisationLogo'
 import { OrganisationSummary } from '../../../domain/read-models/organisation-summary'
 import { plural } from '../../../lib/plural'
 import styles from './OrganisationCard.module.css'

@@ -1,5 +1,5 @@
 import { Context, Effect } from 'effect'
-import { Organisation } from '../entities/organisation'
+import { Organisation, OrganisationType } from '../entities/organisation'
 import { OrganisationSummary } from '../read-models/organisation-summary'
 import { DatabaseError } from './errors'
 
@@ -16,6 +16,9 @@ export interface OrganisationRepository {
 
   /** Every organisation with its members count, ordered by name */
   findSummaries(): Effect.Effect<OrganisationSummary[], DatabaseError>
+
+  /** The organisations of one type with their counters, ordered by name */
+  findSummariesByType(type: OrganisationType): Effect.Effect<OrganisationSummary[], DatabaseError>
 
   /** The counters of one organisation, without reading the whole list */
   findSummaryById(id: string): Effect.Effect<OrganisationSummary | null, DatabaseError>

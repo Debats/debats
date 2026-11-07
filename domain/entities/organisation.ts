@@ -51,6 +51,29 @@ export const ORGANISATION_TYPE_PLURAL_LABELS: Record<OrganisationType, string> =
   collective: 'Collectifs',
 }
 
+/** The plural label as it reads inside a sentence: an acronym keeps its capitals */
+export function pluralTypeInSentence(type: OrganisationType): string {
+  const label = ORGANISATION_TYPE_PLURAL_LABELS[type]
+  return label === label.toUpperCase() ? label : label.toLowerCase()
+}
+
+/** How each type names itself in an URL, under /o/type/… */
+export const ORGANISATION_TYPE_SLUGS: Record<OrganisationType, string> = {
+  political_party: 'partis-politiques',
+  ngo: 'ong',
+  union: 'syndicats',
+  company: 'entreprises',
+  lobby: 'lobbies',
+  business_group: 'groupements-economiques',
+  association: 'associations',
+  collective: 'collectifs',
+}
+
+/** Returns the type this URL slug names, null when no type answers to it. */
+export function parseOrganisationTypeSlug(slug: string): OrganisationType | null {
+  return ORGANISATION_TYPES.find((type) => ORGANISATION_TYPE_SLUGS[type] === slug) ?? null
+}
+
 /** Returns the organisation type when the value is a known one, null otherwise. */
 export function parseOrganisationType(value: unknown): OrganisationType | null {
   const str = String(value ?? '')

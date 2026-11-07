@@ -38,6 +38,7 @@ export function fakeOrganisationRepo(seed: Organisation[] = []): OrganisationRep
     findById: (id) => Effect.succeed(seed.find((o) => o.id === id) ?? null),
     searchByName: () => Effect.succeed(seed),
     findSummaries: () => Effect.succeed([]),
+    findSummariesByType: () => Effect.succeed([]),
     findSummaryById: () => Effect.succeed(null),
   }
 }

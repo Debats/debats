@@ -8,6 +8,11 @@ import { createThemeRepository } from '../infra/database/theme-repository-supaba
 import { createOrganisationRepository } from '../infra/database/organisation-repository-supabase'
 import { createArgumentRepository } from '../infra/database/argument-repository-supabase'
 import { createOccupationFamilyRepository } from '../infra/database/occupation-family-repository-supabase'
+import {
+  ORGANISATIONS_PER_GROUP,
+  groupOrganisationsByType,
+  isTruncated,
+} from '../domain/read-models/organisation-summary'
 
 const BASE_URL = 'https://debats.co'
 
@@ -94,15 +99,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const argumentRepo = createArgumentRepository(supabase)
     const familyRepo = createOccupationFamilyRepository(supabase)
 
-    const [subjects, publicFigures, themes, organisations, argumentSummaries, families] =
-      await Promise.all([
-        Effect.runPromise(subjectRepo.findAll()),
-        Effect.runPromise(publicFigureRepo.findAll()),
-        Effect.runPromise(themeRepo.findAll()),
-        Effect.runPromise(organisationRepo.findAll()),
-        Effect.runPromise(argumentRepo.findSummaries()),
-        Effect.runPromise(familyRepo.findAll()),
-      ])
+    const [
+      subjects,
+      publicFigures,
+      themes,
+      organisations,
+      organisationSummaries,
+      argumentSummaries,
+      families,
+    ] = await Promise.all([
+      Effect.runPromise(subjectRepo.findAll()),
+      Effect.runPromise(publicFigureRepo.findAll()),
+      Effect.runPromise(themeRepo.findAll()),
+      Effect.runPromise(organisationRepo.findAll()),
+      Effect.runPromise(organisationRepo.findSummaries()),
+      Effect.runPromise(argumentRepo.findSummaries()),
+      Effect.runPromise(familyRepo.findAll()),
+    ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
       url: `${BASE_URL}/s/${subject.slug}`,
@@ -132,6 +145,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
+    // Seuls les groupes que /o ne montre pas en entier : les autres n'ont pas de lien entrant
+    const organisationTypePages: MetadataRoute.Sitemap = groupOrganisationsByType(
+      organisationSummaries,
+      ORGANISATIONS_PER_GROUP,
+    )
+      .filter(isTruncated)
+      .map((group) => ({
+        url: `${BASE_URL}${group.href}`,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+
     const argumentPages: MetadataRoute.Sitemap = argumentSummaries.map((argument) => ({
       url: `${BASE_URL}/arguments/${argument.slug}`,
       changeFrequency: 'weekly' as const,
@@ -150,6 +175,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...subjectPages,
       ...publicFigurePages,
       ...organisationPages,
+      ...organisationTypePages,
       ...themePages,
       ...argumentPages,
       ...occupationPages,
