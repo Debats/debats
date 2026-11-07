@@ -9,10 +9,10 @@ import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
 
 /**
- * Les champs libres d'une personnalité créée en place : ce que la commande
- * attend, moins les sources de notoriété, qui restent une paire tant qu'on les
- * saisit. Dérivé plutôt que recopié, pour qu'un champ ajouté à la commande ne
- * puisse pas manquer ici sans qu'on le voie.
+ * The free fields of a personality created in place: what the command expects,
+ * minus the notoriety sources, which stay a pair while they are being typed.
+ * Derived rather than copied, so that a field added to the command cannot go
+ * missing here without being noticed.
  */
 export type FigureDraft = Omit<NewPublicFigure, 'notorietySources'>
 
@@ -20,9 +20,9 @@ interface NewFigurePanelProps {
   figure: FigureDraft
   onChange: (figure: FigureDraft) => void
   /**
-   * Les deux sources de notoriété, en paire et non en liste : leur place
-   * compte tant qu'on les saisit, sinon ce qu'on tape dans la seconde
-   * remonterait dans la première. La liste du domaine se compose à l'envoi.
+   * The two notoriety sources, as a pair and not as a list: their place
+   * matters while they are being typed, or what is typed in the second would
+   * move up into the first. The domain's list is composed on submission.
    */
   sources: NotorietySourcePair
   onSources: (sources: NotorietySourcePair) => void
@@ -31,17 +31,17 @@ interface NewFigurePanelProps {
 }
 
 /**
- * Une personnalité créée sans quitter le formulaire.
+ * A personality created without leaving the form.
  *
- * Rien n'est écrit ici : le panneau tient les champs que l'envoi portera, dans
- * la même transaction que la prise de position. Le critère de notoriété est le
- * même qu'ailleurs sur le site — une page Wikipédia, ou deux sources
- * indépendantes — et le bloc des sources n'apparaît que faute de page, avec le
- * rappel de pourquoi il apparaît.
+ * Nothing is written here: the panel holds the fields the submission will
+ * carry, in the same transaction as the statement. The notoriety criterion is
+ * the one used everywhere else on the site — a Wikipedia page, or two
+ * independent sources — and the sources block appears only for want of a
+ * page, with the reminder of why it appeared.
  *
- * Pas de photo : un fichier n'est pas un argument sérialisable de Server
- * Function, et ce formulaire envoie un objet typé. L'avatar s'ajoute ensuite
- * depuis la page de la personnalité.
+ * No photo: a file is not a serialisable argument of a Server Function, and
+ * this form sends a typed object. The avatar is added afterwards, from the
+ * personality's own page.
  */
 export default function NewFigurePanel({
   figure,

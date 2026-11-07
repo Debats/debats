@@ -14,9 +14,9 @@ import { OrganisationDraft } from './NewOrganisationPanel'
 import { Created } from './WhatWillBeWritten'
 
 /**
- * L'existante qu'on a choisie, avec son nom. L'identifiant ne suffit pas : le
- * Combobox se démonte quand le panneau de saisie s'affiche, et il faut pouvoir
- * le remonter sur ce qui était choisi plutôt que vide.
+ * The existing one that was chosen, with its name. The id alone is not
+ * enough: the Combobox unmounts when the panel appears, and it must be able
+ * to come back on what was chosen rather than empty.
  */
 export interface Chosen {
   id: string
@@ -24,28 +24,28 @@ export interface Chosen {
 }
 
 /**
- * Un champ d'auteur dans l'un de ses deux états : une existante choisie dans
- * la liste du site, ou une nouvelle en cours de saisie. Jamais les deux —
- * `AuthorChoice.input` tranche, et rend l'union que la commande attend.
+ * An author field in one of its two states: an existing one chosen from the
+ * site's list, or a new one being typed. Never both — `AuthorChoice.input`
+ * settles it, and yields the union the command expects.
  */
 interface ExistingOrNew<Draft> {
   chosen?: Chosen
   choose: (chosen?: Chosen) => void
-  /** Vrai quand on décrit une nouvelle au lieu d'en choisir une */
+  /** True while a new one is being described instead of one being chosen */
   creating: boolean
   startNew: () => void
   /**
-   * Revenir au choix, et retrouver celui qu'on avait fait avant. Ce qui a été
-   * tapé reste : annuler veut dire « laisse-moi revoir les existantes », pas
-   * « jette ce que j'ai écrit ».
+   * Back to choosing, and back to the choice made before. What was typed
+   * stays: cancelling means « let me look at the existing ones again », not
+   * « throw away what I wrote ».
    */
   cancelNew: () => void
   draft: Draft
   change: (draft: Draft) => void
   /**
-   * Les deux sources de notoriété, en paire et non en liste : leur place
-   * compte tant qu'on les saisit, sinon ce qu'on tape dans la seconde
-   * remonterait dans la première. La liste du domaine se compose à l'envoi.
+   * The two notoriety sources, as a pair and not as a list: their place
+   * matters while they are being typed, or what is typed in the second would
+   * move up into the first. The domain's list is composed on submission.
    */
   sources: NotorietySourcePair
   setSources: (sources: NotorietySourcePair) => void
@@ -56,9 +56,9 @@ export interface AuthorChoice {
   changeKind: (kind: StatementAuthorKind) => void
   figure: ExistingOrNew<FigureDraft>
   organisation: ExistingOrNew<OrganisationDraft>
-  /** Ce que l'envoi portera : choisie ou créée, jamais les deux */
+  /** What the submission will carry: chosen or created, never both */
   input: StatementAuthorInput
-  /** Ce que l'envoi créera du côté auteur, pour le récapitulatif */
+  /** What the submission will create on the author's side, for the recap */
   created: Created[]
 }
 
@@ -79,22 +79,21 @@ const EMPTY_ORGANISATION: OrganisationDraft = {
 }
 
 /**
- * Qui s'exprime : une personnalité ou une organisation, choisie parmi celles
- * du site ou créée dans le même geste que la prise de position.
+ * Who speaks: a personality or an organisation, chosen among the site's own
+ * or created in the same gesture as the statement.
  *
- * Les deux sortes vivent ici, l'une sous l'autre, et c'est tout l'intérêt du
- * fichier : elles tiennent sur un écran. Trois fois pendant l'écriture de ce
- * formulaire, un défaut a été corrigé dans une sorte et oublié dans l'autre —
- * le champ qui perdait son choix au repli, la reprise de saisie qui effaçait
- * ce qui avait été tapé — parce que les deux jumelles étaient à deux cents
- * lignes l'une de l'autre.
+ * Both kinds live here, one under the other, and that is the whole point of
+ * this file: they fit on one screen. Three times while this form was being
+ * written, a defect was fixed in one kind and missed in the other — the field
+ * that lost its choice when the panel closed, the panel that wiped what had
+ * been typed when reopened — because the twins sat two hundred lines apart.
  *
- * Le hook rapporte lui-même à l'aperçu du rail, par le brouillon partagé : il
- * possède l'auteur, donc il possède les deux champs qui le décrivent.
+ * The hook reports to the rail's preview itself, through the shared draft: it
+ * owns the author, so it owns both fields that describe him or her.
  *
- * `initial` amorce les états et n'est lu qu'au premier rendu, comme avant
- * l'extraction : la page qui ouvre le formulaire sur une personnalité ne la
- * change pas en cours de saisie.
+ * `initial` seeds the states and is read on the first render only, as before
+ * the extraction: a page that opens the form on a personality does not change
+ * her while the form is being filled.
  */
 export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chosen }): AuthorChoice {
   const { updateDraft } = useStatementDraft()
@@ -119,7 +118,7 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
     notorietySourcePair([]),
   )
 
-  /** Changer de sorte d'auteur oublie le choix et referme les deux panneaux */
+  /** Changing the kind of author forgets the choice and closes both panels */
   const changeKind = useCallback(
     (next: StatementAuthorKind) => {
       if (next === kind) return
@@ -194,11 +193,11 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
   }
 
   /**
-   * Une saisie en cours l'emporte sur un choix : on ne peut pas faire les
-   * deux, et la sorte active décide lequel des deux côtés parle.
+   * One being typed wins over one chosen: both cannot be done at once, and
+   * the active kind decides which of the two sides speaks.
    *
-   * Mémoïsé parce que l'envoi en dépend : un objet neuf à chaque rendu ferait
-   * de son `useCallback` une promesse vide.
+   * Memoised because the submission depends on it: a new object on every
+   * render would make its `useCallback` an empty promise.
    */
   const input: StatementAuthorInput = useMemo(
     () =>
@@ -236,8 +235,8 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
   )
 
   /**
-   * Déduit de ce qui part, et non d'une condition parallèle : le récapitulatif
-   * ne peut donc pas annoncer autre chose que ce que la commande recevra.
+   * Derived from what leaves, not from a parallel condition: the recap
+   * therefore cannot announce anything other than what the command will get.
    */
   const created: Created[] =
     input.kind === 'new_figure'

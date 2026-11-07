@@ -2,24 +2,24 @@ import { ReactNode } from 'react'
 import styles from './NewStatementForm.module.css'
 
 interface PanelProps {
-  /** Ce qu'on crée : « Nouvelle personnalité », « Nouvelle position » */
+  /** What is being created: « Nouvelle personnalité », « Nouvelle position » */
   title: string
-  /** Ce que l'annulation rend : « choisir une personnalité existante » */
+  /** What cancelling gives back: « choisir une personnalité existante » */
   instead: string
   onCancel: () => void
   children: ReactNode
 }
 
 /**
- * Le cadre d'une entité créée en place, partagé par les trois panneaux.
+ * The frame of an entity created in place, shared by the three panels.
  *
- * La note est tournée sans participe — « en même temps que » plutôt que
- * « écrite avec » — pour que le cadre ne s'accorde avec rien : les trois
- * entités actuelles sont féminines, un sujet ne le sera pas.
+ * Its note is phrased without a participle — « en même temps que » rather
+ * than « écrite avec » — so that the frame agrees with nothing: the three
+ * entities it holds today are feminine, a subject will not be.
  *
- * Chacun tient ses champs ; ce qu'ils ont en commun est le cadre et la sortie —
- * le rappel que rien n'est écrit avant l'envoi, et le moyen de refermer sans
- * perdre ce qu'on a tapé.
+ * Each panel holds its own fields; what they have in common is the frame and
+ * the way out — the reminder that nothing is written before the submission,
+ * and the means to close without losing what was typed.
  */
 export default function Panel({ title, instead, onCancel, children }: PanelProps) {
   return (

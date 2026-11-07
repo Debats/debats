@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { readStatementArguments, statementArgumentsOf } from './statement-arguments'
 
-/** Ce qu'un client envoie vraiment n'a pas de type : chaque cas est du JSON possible */
+/** What a client actually sends has no type: each case below is possible JSON */
 const asSent = (value: unknown) => value
 
 describe('statementArgumentsOf', () => {
-  it('garde ce qui est bien formé', () => {
+  it('keeps what is well formed', () => {
     expect(
       statementArgumentsOf(
         asSent({
@@ -19,27 +19,27 @@ describe('statementArgumentsOf', () => {
     })
   })
 
-  it('rend deux tableaux vides quand rien n’arrive', () => {
-    for (const sent of [undefined, null, 'des arguments', 42]) {
+  it('returns two empty arrays when nothing arrives', () => {
+    for (const sent of [undefined, null, 'some arguments', 42]) {
       expect(statementArgumentsOf(asSent(sent))).toEqual({ argumentIds: [], newArguments: [] })
     }
   })
 
-  it('rend un tableau là où le domaine en parcourt un, quoi qu’il reçoive', () => {
-    // Sans ça, le domaine faisait .filter sur une chaîne et .map sur null
+  it('returns an array wherever the domain walks one, whatever it receives', () => {
+    // Without this, the domain ran .filter on a string and .map on null
     expect(statementArgumentsOf(asSent({ argumentIds: 'arg-1', newArguments: null }))).toEqual({
       argumentIds: [],
       newArguments: [],
     })
   })
 
-  it('écarte un identifiant vide et les espaces qui l’entourent', () => {
+  it('drops an empty id and the spaces around the ones it keeps', () => {
     expect(
       statementArgumentsOf(asSent({ argumentIds: ['  arg-1  ', '', '   '], newArguments: [] })),
     ).toEqual({ argumentIds: ['arg-1'], newArguments: [] })
   })
 
-  it('écarte un argument proposé qui n’a ni titre ni description', () => {
+  it('drops a proposed argument that has neither title nor description', () => {
     expect(
       statementArgumentsOf(
         asSent({
@@ -66,7 +66,7 @@ describe('readStatementArguments', () => {
     return fields
   }
 
-  it('lit les arguments cochés et ceux proposés', () => {
+  it('reads the ticked arguments and the proposed ones', () => {
     expect(
       readStatementArguments(
         sent([
@@ -81,14 +81,14 @@ describe('readStatementArguments', () => {
     })
   })
 
-  it('ignore un JSON illisible plutôt que d’échouer', () => {
-    expect(readStatementArguments(sent([['newArguments', '{pas du json']]))).toEqual({
+  it('ignores unreadable JSON rather than fail', () => {
+    expect(readStatementArguments(sent([['newArguments', '{not json']]))).toEqual({
       argumentIds: [],
       newArguments: [],
     })
   })
 
-  it('rend deux tableaux vides sur un formulaire sans arguments', () => {
+  it('returns two empty arrays for a form with no arguments', () => {
     expect(readStatementArguments(new FormData())).toEqual({
       argumentIds: [],
       newArguments: [],

@@ -4,7 +4,7 @@ import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
 import styles from './NewStatementForm.module.css'
 
-/** Les champs d'une position créée en place */
+/** The fields of a position created in place */
 export interface PositionDraft {
   title: string
   description: string
@@ -18,14 +18,14 @@ interface NewPositionPanelProps {
 }
 
 /**
- * Une position créée sans quitter le formulaire.
+ * A position created without leaving the form.
  *
- * Rien n'est écrit ici : le panneau tient deux champs que l'envoi portera
- * avec le reste, dans la même transaction que la prise de position.
+ * Nothing is written here: the panel holds two fields the submission will
+ * carry with the rest, in the same transaction as the statement.
  *
- * Les champs portent les noms sous lesquels la commande rapporte leurs fautes
- * — `positionTitle` plutôt que `title`, parce qu'un sujet créé dans ce même
- * formulaire aura un titre lui aussi.
+ * The fields bear the names under which the command reports their faults —
+ * `positionTitle` rather than `title`, because a subject created in this same
+ * form will have a title of its own.
  */
 export default function NewPositionPanel({
   position,

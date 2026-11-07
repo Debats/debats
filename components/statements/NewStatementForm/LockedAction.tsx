@@ -2,23 +2,22 @@ import { Action, rankThreshold, requiredRank } from '../../../domain/reputation/
 import styles from './NewStatementForm.module.css'
 
 interface LockedActionProps {
-  /** Ce que le contributeur ne peut pas faire, à l'infinitif : « Référencer une personnalité » */
+  /** What the contributor cannot do, as an infinitive: « Référencer une personnalité » */
   what: string
-  /** L'action du barème, qui dit seule le rang qu'elle demande */
+  /** The action of the scale, the only thing that says which rank it asks for */
   action: Action
   reputation: number
 }
 
 /**
- * Ce que le rang ne permet pas encore, dit au lieu d'être offert puis refusé.
+ * What the rank does not allow yet, said instead of offered and then refused.
  *
- * Le formulaire ne montre jamais un bouton qui échouera : à la place, il
- * nomme l'action, le rang qu'elle demande et ce qui reste à gagner. Un
- * contributeur sait ainsi par où y arriver, ce qu'un refus après coup ne lui
- * apprendrait pas.
+ * The form never shows a button that will fail: it names the action, the rank
+ * it asks for and what is left to earn. A contributor then knows the way
+ * there, which a refusal after the fact would not teach her.
  *
- * Le rang et son seuil viennent du barème, jamais de la vue : si l'un bouge,
- * ce bloc suit sans qu'on y pense.
+ * The rank and its threshold come from the scale, never from the view: if
+ * either moves, this block follows without anyone thinking about it.
  */
 export default function LockedAction({ what, action, reputation }: LockedActionProps) {
   const needs = requiredRank(action)

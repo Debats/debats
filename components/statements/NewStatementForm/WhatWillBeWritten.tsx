@@ -1,8 +1,8 @@
 import styles from './NewStatementForm.module.css'
 
-/** Une entité que l'envoi créera, nommée si elle l'est déjà */
+/** An entity the submission will create, named if it is named already */
 export interface Created {
-  /** « La personnalité », « L'organisation », « La position » */
+  /** Its label: « La personnalité », « L'organisation », « La position » */
   what: string
   name: string
 }
@@ -12,14 +12,14 @@ interface WhatWillBeWrittenProps {
 }
 
 /**
- * Ce que l'envoi va écrire, dit avant de cliquer.
+ * What the submission will write, said before the click.
  *
- * Tout part dans une seule transaction : si un champ est refusé, rien n'est
- * enregistré et le formulaire garde tout. C'est pour ça que l'encart annonce
- * sans jamais rendre compte d'un demi-succès — il n'y en a pas.
+ * It all leaves in one transaction: if a field is refused, nothing is saved
+ * and the form keeps everything. That is why this block announces and never
+ * reports a half success — there is none.
  *
- * Une entité en cours de saisie s'annonce aussitôt, nommée ou non : attendre
- * son nom ferait disparaître une écriture qui va bien avoir lieu.
+ * An entity being typed announces itself at once, named or not: waiting for
+ * its name would hide a write that is going to happen anyway.
  */
 export default function WhatWillBeWritten({ created }: WhatWillBeWrittenProps) {
   return (

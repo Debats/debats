@@ -16,7 +16,7 @@
   gap: 16px;
 }
 
-/* Une legend sort du cadre par défaut : float + width la remettent dans le flux de la carte */
+/* A legend escapes its box by default: float + width put it back in the card's flow */
 .sectionTitle {
   composes: title from '../../../styles/text.module.css';
   float: left;
@@ -83,7 +83,7 @@
   gap: 16px;
 }
 
-/* Positions : une carte par option */
+/* Positions: one card per option */
 .options {
   display: flex;
   flex-direction: column;
@@ -147,7 +147,7 @@
   }
 }
 
-/* Ce que le rang ne permet pas encore : dit, jamais offert puis refusé */
+/* What the rank does not allow yet: said, never offered and then refused */
 .locked {
   display: flex;
   gap: 12px;
@@ -179,7 +179,7 @@
   margin: 4px 0 0;
 }
 
-/* Une entité créée en place : le panneau s'installe sous le champ qu'il complète */
+/* An entity created in place: the panel settles under the field it completes */
 .panel {
   display: flex;
   flex-direction: column;
@@ -220,7 +220,7 @@
   cursor: pointer;
 }
 
-/* Ce que l'envoi va écrire, annoncé avant le clic */
+/* What the submission will write, announced before the click */
 .summary {
   background-color: var(--paper-2);
   border-radius: var(--radius-card);
@@ -251,7 +251,7 @@
   margin: 12px 0 0;
 }
 
-/* Ouvrir un panneau depuis une phrase : même grain qu'un lien d'action */
+/* Opening a panel from within a sentence: the same grain as an action link */
 .inlineAction {
   composes: small from '../../../styles/text.module.css';
   background: none;

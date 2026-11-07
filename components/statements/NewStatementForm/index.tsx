@@ -51,9 +51,9 @@ interface NewStatementFormProps {
   initialOrganisation?: NamedEntity
   initialSubject?: { id: string; title: string; slug?: string }
   /**
-   * La réputation du contributeur. Le formulaire en déduit lui-même ce qu'il
-   * propose : un rang ouvre des actions, et une action fermée se dit au lieu
-   * de s'offrir puis de refuser.
+   * The contributor's reputation. The form works out for itself what it
+   * offers: a rank opens actions, and a closed action is said instead of
+   * being offered and then refused.
    */
   reputation: number
 }
@@ -76,18 +76,18 @@ export default function NewStatementForm({
 }: NewStatementFormProps) {
   const { updateDraft } = useStatementDraft()
 
-  // Ce que le rang ouvre, lu une fois : le barème est la seule source
+  // What the rank opens, read once: the scale is the only source
   const canUseArguments = canPerform(reputation, 'add_argument')
   const canAddSubject = canPerform(reputation, 'add_subject')
   const canAddFigure = canPerform(reputation, 'add_personality')
   const canAddOrganisation = canPerform(reputation, 'add_organisation')
 
-  /** Qui s'exprime : la sorte, l'existante choisie ou la nouvelle en cours de saisie */
+  /** Who speaks: the kind, the existing one chosen, or the new one being typed */
   const author = useAuthorChoice({ figure: initialFigure, organisation: initialOrganisation })
 
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
-  /** Une position créée en place : le formulaire la porte jusqu'à l'envoi, rien n'est écrit avant */
+  /** A position created in place: the form carries it until submission, nothing is written before */
   const [creatingPosition, setCreatingPosition] = useState(false)
   const [newPosition, setNewPosition] = useState<PositionDraft>({ title: '', description: '' })
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
@@ -95,7 +95,7 @@ export default function NewStatementForm({
   const [positions, setPositions] = useState<PositionOption[]>([])
   const [loadingPositions, setLoadingPositions] = useState(!!initialSubject?.id)
 
-  /** Ce que l'envoi créera, dans l'ordre où le formulaire le demande */
+  /** What the submission will create, in the order the form asks for it */
   const created: Created[] = [
     ...author.created,
     ...(creatingPosition ? [{ what: 'La position', name: newPosition.title }] : []),
@@ -145,7 +145,7 @@ export default function NewStatementForm({
     updateDraft({ positionTitle: newPosition.title })
   }, [newPosition.title, updateDraft])
 
-  /** Annuler rend la main au choix, et rend celui qu'on avait coché avant la saisie */
+  /** Cancelling gives choosing back, and gives back the one ticked before typing */
   const cancelNewPosition = useCallback(() => {
     setCreatingPosition(false)
     updateDraft({
@@ -169,7 +169,7 @@ export default function NewStatementForm({
     [positions, updateDraft],
   )
 
-  /** Ce que porte la prise de position est tenu ici, et reflété dans l'aperçu. */
+  /** What the statement carries is held here, and mirrored in the preview. */
   const changeContent = useCallback(
     (fields: StatementContentInput) => {
       setContent(fields)
@@ -199,7 +199,7 @@ export default function NewStatementForm({
 
       const form = e.currentTarget
 
-      /** Celle qu'on crée, ou celle qu'on a cochée : jamais les deux */
+      /** The one being created, or the one ticked: never both */
       const position: StatementPositionInput = creatingPosition
         ? {
             kind: 'new',
@@ -216,7 +216,7 @@ export default function NewStatementForm({
         sourceName: getFieldValue(form, 'sourceName'),
         sourceUrl: getFieldValue(form, 'sourceUrl'),
         statedAt: getFieldValue(form, 'statedAt'),
-        // Les arguments cochés et proposés sont portés par les champs cachés du sélecteur
+        // The ticked and proposed arguments are carried by the picker's hidden fields
         arguments: readStatementArguments(new FormData(form)),
       }
 
@@ -290,7 +290,7 @@ export default function NewStatementForm({
           active={AUTHOR_LABELS[author.kind]}
           items={[{ label: 'Une personnalité' }, { label: 'Une organisation' }]}
           onChange={(label) => {
-            // Le segmenté parle en libellés ; la sorte d'auteur est au hook
+            // The segmented control speaks in labels; the kind of author belongs to the hook
             const kind = AUTHOR_KINDS[label]
             if (kind) author.changeKind(kind)
           }}
@@ -424,7 +424,7 @@ export default function NewStatementForm({
             setPositions([])
             setSelectedPositionId('')
             setCreatingPosition(false)
-            // Les positions appartiennent au sujet : changer de sujet rend celle qu'on saisissait caduque
+            // Positions belong to the subject: changing subject voids the one being typed
             setNewPosition({ title: '', description: '' })
             setLoadingPositions(!!id)
             updateDraft({ subjectTitle: label, positionTitle: '' })

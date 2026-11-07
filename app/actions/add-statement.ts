@@ -26,16 +26,16 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
   const { subjectId } = input
 
   /*
-   * Une Server Function reçoit du JSON : son paramètre a le type qu'on déclare,
-   * jamais la garantie qu'il arrive sous cette forme. Les champs jugés par un
-   * schéma se défendent seuls, et les identifiants échouent proprement sur la
-   * lecture qui ne les trouve pas. Ce que le domaine parcourt sans l'interroger
-   * se ramène ici à sa forme : les deux tableaux d'arguments, et l'auteur, dont
-   * la commande aiguille la sorte et lit la charge telle quelle.
+   * A Server Function receives JSON: its parameter has the type we declare,
+   * never the guarantee that it arrives in that shape. Fields judged by a
+   * schema defend themselves, and ids fail cleanly on the read that does not
+   * find them. What the domain walks through without questioning is brought
+   * back to its shape here: the two argument arrays, and the author, whose
+   * kind the command switches on and whose payload it reads as given.
    *
-   * La position s'en passe : son `kind` est lu par un ternaire, donc une sorte
-   * inattendue vaut « celle qu'on a cochée » et finit en refus sur son
-   * identifiant manquant.
+   * The position needs none of it: its `kind` is read by a ternary, so an
+   * unexpected one counts as « the one that was ticked » and ends in a
+   * refusal on its missing id.
    */
   const result = await runLiveForm(
     createStatementUseCase({
@@ -57,8 +57,8 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
 
   const subject = await Effect.runPromise(createSubjectRepository(supabase).findById(subjectId))
   /*
-   * L'auteur dont on donne le lien est celui que la commande a écrit, pas celui
-   * qu'on lui a envoyé : il vient peut-être d'être ouvert par ce même geste.
+   * The author we link to is the one the command wrote, not the one it was
+   * sent: it may have just been created by this very gesture.
    */
   const author = result.right.author
 

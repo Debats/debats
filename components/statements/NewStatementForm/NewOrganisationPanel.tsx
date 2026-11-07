@@ -10,7 +10,7 @@ import TextArea from '../../ui/TextArea'
 import Select from '../../ui/Select'
 import Panel from './Panel'
 
-/** Les champs libres d'une organisation créée en place, sans ses sources */
+/** The free fields of an organisation created in place, without its sources */
 export type OrganisationDraft = Omit<NewOrganisation, 'notorietySources'>
 
 const TYPE_OPTIONS = [
@@ -21,7 +21,7 @@ const TYPE_OPTIONS = [
 interface NewOrganisationPanelProps {
   organisation: OrganisationDraft
   onChange: (organisation: OrganisationDraft) => void
-  /** Les deux sources de notoriété, en paire : leur place compte pendant la saisie */
+  /** The two notoriety sources, as a pair: their place matters while they are typed */
   sources: NotorietySourcePair
   onSources: (sources: NotorietySourcePair) => void
   onCancel: () => void
@@ -29,14 +29,14 @@ interface NewOrganisationPanelProps {
 }
 
 /**
- * Une organisation créée sans quitter le formulaire.
+ * An organisation created without leaving the form.
  *
- * Mêmes règles que pour une personnalité : rien n'est écrit avant l'envoi, le
- * critère de notoriété est celui du site, et la page Wikipédia doit ici décrire
- * une organisation et non une personne — ce que la commande vérifie.
+ * Same rules as for a personality: nothing is written before the submission,
+ * the notoriety criterion is the site's own, and the Wikipedia page must here
+ * describe an organisation and not a person — which the command checks.
  *
- * Pas de logo : un fichier n'est pas un argument sérialisable de Server
- * Function. Il s'ajoute ensuite depuis la page de l'organisation.
+ * No logo: a file is not a serialisable argument of a Server Function. It is
+ * added afterwards, from the organisation's own page.
  */
 export default function NewOrganisationPanel({
   organisation,
