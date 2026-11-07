@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import styles from './NewStatementForm.module.css'
 
 interface PanelProps {
-  /** Ce qu'on ouvre : « Nouvelle personnalité », « Nouvelle position » */
+  /** Ce qu'on crée : « Nouvelle personnalité », « Nouvelle position » */
   title: string
   /** Ce que l'annulation rend : « choisir une personnalité existante » */
   instead: string
@@ -11,7 +11,7 @@ interface PanelProps {
 }
 
 /**
- * Le cadre d'une entité ouverte en place, partagé par les trois panneaux.
+ * Le cadre d'une entité créée en place, partagé par les trois panneaux.
  *
  * La note est tournée sans participe — « en même temps que » plutôt que
  * « écrite avec » — pour que le cadre ne s'accorde avec rien : les trois

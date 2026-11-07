@@ -8,7 +8,7 @@ import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
 
 /**
- * Les champs libres d'une personnalité ouverte en place : ce que la commande
+ * Les champs libres d'une personnalité créée en place : ce que la commande
  * attend, moins les sources de notoriété, qui restent une paire tant qu'on les
  * saisit. Dérivé plutôt que recopié, pour qu'un champ ajouté à la commande ne
  * puisse pas manquer ici sans qu'on le voie.
@@ -30,7 +30,7 @@ interface NewFigurePanelProps {
 }
 
 /**
- * Une personnalité ouverte sans quitter le formulaire.
+ * Une personnalité créée sans quitter le formulaire.
  *
  * Rien n'est écrit ici : le panneau tient les champs que l'envoi portera, dans
  * la même transaction que la prise de position. Le critère de notoriété est le

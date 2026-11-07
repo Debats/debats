@@ -9,7 +9,7 @@ import TextArea from '../../ui/TextArea'
 import Select from '../../ui/Select'
 import Panel from './Panel'
 
-/** Les champs libres d'une organisation ouverte en place, sans ses sources */
+/** Les champs libres d'une organisation créée en place, sans ses sources */
 export type OrganisationDraft = Omit<NewOrganisation, 'notorietySources'>
 
 const TYPE_OPTIONS = [
@@ -28,7 +28,7 @@ interface NewOrganisationPanelProps {
 }
 
 /**
- * Une organisation ouverte sans quitter le formulaire.
+ * Une organisation créée sans quitter le formulaire.
  *
  * Mêmes règles que pour une personnalité : rien n'est écrit avant l'envoi, le
  * critère de notoriété est celui du site, et la page Wikipédia doit ici décrire

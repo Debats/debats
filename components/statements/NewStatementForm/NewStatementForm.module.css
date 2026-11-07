@@ -179,7 +179,7 @@
   margin: 4px 0 0;
 }
 
-/* Une entité ouverte en place : le panneau s'installe sous le champ qu'il complète */
+/* Une entité créée en place : le panneau s'installe sous le champ qu'il complète */
 .panel {
   display: flex;
   flex-direction: column;

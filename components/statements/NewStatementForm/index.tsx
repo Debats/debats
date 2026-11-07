@@ -43,7 +43,7 @@ import LockedAction from './LockedAction'
 import NewFigurePanel, { FigureDraft } from './NewFigurePanel'
 import NewOrganisationPanel, { OrganisationDraft } from './NewOrganisationPanel'
 import NewPositionPanel, { PositionDraft } from './NewPositionPanel'
-import WhatWillBeWritten, { Opened } from './WhatWillBeWritten'
+import WhatWillBeWritten, { Created } from './WhatWillBeWritten'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -99,17 +99,17 @@ export default function NewStatementForm({
   const [selectedFigure, setSelectedFigure] = useState<{ id: string; name: string } | undefined>(
     initialFigure,
   )
-  /** Même raison que pour la personnalité : le Combobox doit pouvoir se rouvrir sur son choix */
+  /** Même raison que pour la personnalité : le Combobox doit pouvoir se remonter sur son choix */
   const [selectedOrganisation, setSelectedOrganisation] = useState<
     { id: string; name: string } | undefined
   >(initialOrganisation)
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
-  /** Une position ouverte en place : le formulaire la porte jusqu'à l'envoi, rien n'est écrit avant */
-  const [openingPosition, setOpeningPosition] = useState(false)
+  /** Une position créée en place : le formulaire la porte jusqu'à l'envoi, rien n'est écrit avant */
+  const [creatingPosition, setCreatingPosition] = useState(false)
   const [newPosition, setNewPosition] = useState<PositionDraft>({ title: '', description: '' })
-  /** Une personnalité ouverte en place : portée jusqu'à l'envoi, rien n'est écrit avant */
-  const [openingFigure, setOpeningFigure] = useState(false)
+  /** Une personnalité créée en place : portée jusqu'à l'envoi, rien n'est écrit avant */
+  const [creatingFigure, setCreatingFigure] = useState(false)
   const [newFigure, setNewFigure] = useState<FigureDraft>({
     name: '',
     presentation: '',
@@ -120,8 +120,8 @@ export default function NewStatementForm({
   const [figureSources, setFigureSources] = useState<NotorietySourcePair>(() =>
     notorietySourcePair([]),
   )
-  /** Une organisation ouverte en place, mêmes règles que pour une personnalité */
-  const [openingOrganisation, setOpeningOrganisation] = useState(false)
+  /** Une organisation créée en place, mêmes règles que pour une personnalité */
+  const [creatingOrganisation, setCreatingOrganisation] = useState(false)
   const [newOrganisation, setNewOrganisation] = useState<OrganisationDraft>({
     name: '',
     acronym: '',
@@ -138,11 +138,11 @@ export default function NewStatementForm({
   const [positions, setPositions] = useState<PositionOption[]>([])
   const [loadingPositions, setLoadingPositions] = useState(!!initialSubject?.id)
 
-  /** Ce que l'envoi ouvrira, dans l'ordre où le formulaire le demande */
-  const opened: Opened[] = [
-    ...(openingFigure ? [{ what: 'La personnalité', name: newFigure.name }] : []),
-    ...(openingOrganisation ? [{ what: 'L’organisation', name: newOrganisation.name }] : []),
-    ...(openingPosition ? [{ what: 'La position', name: newPosition.title }] : []),
+  /** Ce que l'envoi créera, dans l'ordre où le formulaire le demande */
+  const created: Created[] = [
+    ...(creatingFigure ? [{ what: 'La personnalité', name: newFigure.name }] : []),
+    ...(creatingOrganisation ? [{ what: 'L’organisation', name: newOrganisation.name }] : []),
+    ...(creatingPosition ? [{ what: 'La position', name: newPosition.title }] : []),
   ]
 
   const [error, setError] = useState<string>()
@@ -191,25 +191,26 @@ export default function NewStatementForm({
       setAuthorKind(kind)
       setSelectedFigure(undefined)
       setSelectedOrganisation(undefined)
-      setOpeningFigure(false)
-      setOpeningOrganisation(false)
+      setCreatingFigure(false)
+      setCreatingOrganisation(false)
       updateDraft({ authorKind: kind, authorName: '' })
     },
     [authorKind, updateDraft],
   )
 
-  const openFigure = useCallback(() => {
-    setOpeningFigure(true)
+  const startNewFigure = useCallback(() => {
+    setCreatingFigure(true)
     updateDraft({ authorName: newFigure.name })
   }, [newFigure.name, updateDraft])
 
   /**
    * Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant
-   * d'ouvrir. Ce qui a été tapé dans le panneau reste : annuler veut dire
-   * « laisse-moi revoir les existantes », pas « jette ce que j'ai écrit ».
+   * de passer à la saisie. Ce qui a été tapé dans le panneau reste : annuler
+   * veut dire « laisse-moi revoir les existantes », pas « jette ce que j'ai
+   * écrit ».
    */
-  const cancelFigure = useCallback(() => {
-    setOpeningFigure(false)
+  const cancelNewFigure = useCallback(() => {
+    setCreatingFigure(false)
     updateDraft({ authorName: selectedFigure?.name ?? '' })
   }, [selectedFigure, updateDraft])
 
@@ -221,14 +222,14 @@ export default function NewStatementForm({
     [updateDraft],
   )
 
-  const openOrganisation = useCallback(() => {
-    setOpeningOrganisation(true)
+  const startNewOrganisation = useCallback(() => {
+    setCreatingOrganisation(true)
     updateDraft({ authorName: newOrganisation.name })
   }, [newOrganisation.name, updateDraft])
 
-  /** Annuler rend la main au choix, et rend celui qu'on avait fait avant d'ouvrir */
-  const cancelOrganisation = useCallback(() => {
-    setOpeningOrganisation(false)
+  /** Annuler rend la main au choix, et rend celui qu'on avait fait avant la saisie */
+  const cancelNewOrganisation = useCallback(() => {
+    setCreatingOrganisation(false)
     updateDraft({ authorName: selectedOrganisation?.name ?? '' })
   }, [selectedOrganisation, updateDraft])
 
@@ -240,15 +241,14 @@ export default function NewStatementForm({
     [updateDraft],
   )
 
-  const openPosition = useCallback(() => {
-    setOpeningPosition(true)
+  const startNewPosition = useCallback(() => {
+    setCreatingPosition(true)
     updateDraft({ positionTitle: newPosition.title })
   }, [newPosition.title, updateDraft])
 
-  /** Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant d'ouvrir */
-  /** Annuler rend la main au choix, et rend celui qu'on avait coché avant d'ouvrir */
-  const cancelPosition = useCallback(() => {
-    setOpeningPosition(false)
+  /** Annuler rend la main au choix, et rend celui qu'on avait coché avant la saisie */
+  const cancelNewPosition = useCallback(() => {
+    setCreatingPosition(false)
     updateDraft({
       positionTitle: positions.find((p) => p.id === selectedPositionId)?.title ?? '',
     })
@@ -300,8 +300,8 @@ export default function NewStatementForm({
 
       const form = e.currentTarget
 
-      /** Celle qu'on ouvre, ou celle qu'on a cochée : jamais les deux */
-      const position: StatementPositionInput = openingPosition
+      /** Celle qu'on crée, ou celle qu'on a cochée : jamais les deux */
+      const position: StatementPositionInput = creatingPosition
         ? {
             kind: 'new',
             positionTitle: newPosition.title,
@@ -309,8 +309,8 @@ export default function NewStatementForm({
           }
         : { kind: 'existing', id: selectedPositionId }
 
-      /** Celle qu'on ouvre, ou celle qu'on a choisie : jamais les deux */
-      const chosenAuthor: StatementAuthorInput = openingOrganisation
+      /** Celle qu'on crée, ou celle qu'on a choisie : jamais les deux */
+      const chosenAuthor: StatementAuthorInput = creatingOrganisation
         ? {
             kind: 'new_organisation',
             organisation: {
@@ -318,7 +318,7 @@ export default function NewStatementForm({
               notorietySources: organisationSources.filter(Boolean),
             },
           }
-        : openingFigure
+        : creatingFigure
           ? {
               kind: 'new_figure',
               figure: { ...newFigure, notorietySources: figureSources.filter(Boolean) },
@@ -375,10 +375,10 @@ export default function NewStatementForm({
       newFigure,
       newOrganisation,
       newPosition,
-      openingOrganisation,
+      creatingOrganisation,
       organisationSources,
-      openingFigure,
-      openingPosition,
+      creatingFigure,
+      creatingPosition,
       selectedFigure,
       selectedOrganisation,
       selectedPositionId,
@@ -429,13 +429,13 @@ export default function NewStatementForm({
           items={[{ label: 'Une personnalité' }, { label: 'Une organisation' }]}
           onChange={changeAuthorKind}
         />
-        {isOrganisation && openingOrganisation ? (
+        {isOrganisation && creatingOrganisation ? (
           <NewOrganisationPanel
             organisation={newOrganisation}
             onChange={changeOrganisation}
             sources={organisationSources}
             onSources={setOrganisationSources}
-            onCancel={cancelOrganisation}
+            onCancel={cancelNewOrganisation}
             errors={fieldErrors}
           />
         ) : isOrganisation ? (
@@ -457,13 +457,13 @@ export default function NewStatementForm({
                 : undefined
             }
           />
-        ) : openingFigure ? (
+        ) : creatingFigure ? (
           <NewFigurePanel
             figure={newFigure}
             onChange={changeFigure}
             sources={figureSources}
             onSources={setFigureSources}
-            onCancel={cancelFigure}
+            onCancel={cancelNewFigure}
             errors={fieldErrors}
           />
         ) : (
@@ -491,11 +491,15 @@ export default function NewStatementForm({
               nom : communiqué, programme, vote, action.
             </p>
             {canAddOrganisation ? (
-              !openingOrganisation && (
+              !creatingOrganisation && (
                 <p className={styles.hint}>
                   Elle n’existe pas encore ?{' '}
-                  <button type="button" className={styles.inlineAction} onClick={openOrganisation}>
-                    l’ouvrir ici
+                  <button
+                    type="button"
+                    className={styles.inlineAction}
+                    onClick={startNewOrganisation}
+                  >
+                    la créer ici
                   </button>
                 </p>
               )
@@ -514,11 +518,11 @@ export default function NewStatementForm({
               indépendantes.
             </p>
             {canAddFigure ? (
-              !openingFigure && (
+              !creatingFigure && (
                 <p className={styles.hint}>
                   Elle n’existe pas encore ?{' '}
-                  <button type="button" className={styles.inlineAction} onClick={openFigure}>
-                    l’ouvrir ici
+                  <button type="button" className={styles.inlineAction} onClick={startNewFigure}>
+                    la créer ici
                   </button>
                 </p>
               )
@@ -548,8 +552,8 @@ export default function NewStatementForm({
             setSelectedSubjectId(id)
             setPositions([])
             setSelectedPositionId('')
-            setOpeningPosition(false)
-            // Les positions appartiennent au sujet : changer de sujet rend celles qu'on ouvrait caduques
+            setCreatingPosition(false)
+            // Les positions appartiennent au sujet : changer de sujet rend celle qu'on saisissait caduque
             setNewPosition({ title: '', description: '' })
             setLoadingPositions(!!id)
             updateDraft({ subjectTitle: label, positionTitle: '' })
@@ -573,11 +577,11 @@ export default function NewStatementForm({
           <span className={styles.label}>Position défendue</span>
           {!selectedSubjectId ? (
             <p className={styles.hint}>Choisissez d’abord un sujet.</p>
-          ) : openingPosition ? (
+          ) : creatingPosition ? (
             <NewPositionPanel
               position={newPosition}
               onChange={changePosition}
-              onCancel={cancelPosition}
+              onCancel={cancelNewPosition}
               errors={fieldErrors}
             />
           ) : loadingPositions ? (
@@ -612,13 +616,13 @@ export default function NewStatementForm({
           {fieldErrors?.positionId && (
             <span className={styles.fieldError}>{fieldErrors.positionId}</span>
           )}
-          {selectedSubjectId && !openingPosition && !loadingPositions && (
+          {selectedSubjectId && !creatingPosition && !loadingPositions && (
             <p className={styles.hint}>
-              {positions.length === 0 ? 'Proposez la première :' : 'Aucune ne correspond ?'}{' '}
-              <button type="button" className={styles.inlineAction} onClick={openPosition}>
-                {positions.length === 0 ? 'ouvrir une position ici' : 'proposer une position ici'}
+              {positions.length === 0 ? 'Nommez la première :' : 'Aucune ne correspond ?'}{' '}
+              <button type="button" className={styles.inlineAction} onClick={startNewPosition}>
+                proposer une position ici
               </button>
-              {' — '}ouvert dès l’inscription : nommer une position décrit le débat, elle ne le
+              {' — '}accessible dès l’inscription : nommer une position décrit le débat, elle ne le
               tranche pas.
             </p>
           )}
@@ -689,7 +693,7 @@ export default function NewStatementForm({
         </div>
       )}
 
-      <WhatWillBeWritten opened={opened} />
+      <WhatWillBeWritten created={created} />
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>

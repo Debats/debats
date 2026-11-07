@@ -1,14 +1,14 @@
 import styles from './NewStatementForm.module.css'
 
-/** Une entité que l'envoi ouvrira, nommée si elle l'est déjà */
-export interface Opened {
+/** Une entité que l'envoi créera, nommée si elle l'est déjà */
+export interface Created {
   /** « La personnalité », « L'organisation », « La position » */
   what: string
   name: string
 }
 
 interface WhatWillBeWrittenProps {
-  opened: readonly Opened[]
+  created: readonly Created[]
 }
 
 /**
@@ -18,22 +18,22 @@ interface WhatWillBeWrittenProps {
  * enregistré et le formulaire garde tout. C'est pour ça que l'encart annonce
  * sans jamais rendre compte d'un demi-succès — il n'y en a pas.
  *
- * Une entité ouverte s'annonce dès qu'elle l'est, nommée ou non : attendre son
- * nom ferait disparaître une écriture qui va bien avoir lieu.
+ * Une entité en cours de saisie s'annonce aussitôt, nommée ou non : attendre
+ * son nom ferait disparaître une écriture qui va bien avoir lieu.
  */
-export default function WhatWillBeWritten({ opened }: WhatWillBeWrittenProps) {
+export default function WhatWillBeWritten({ created }: WhatWillBeWrittenProps) {
   return (
     <div className={styles.summary}>
       <p className={styles.summaryTitle}>Ce que l’envoi va écrire</p>
       <ul className={styles.summaryList}>
-        {opened.map(({ what, name }) => (
+        {created.map(({ what, name }) => (
           <li key={what}>
             {name ? (
               <>
                 {what} <strong>{name}</strong>
               </>
             ) : (
-              `${what} que vous ouvrez`
+              `${what} que vous créez`
             )}
           </li>
         ))}

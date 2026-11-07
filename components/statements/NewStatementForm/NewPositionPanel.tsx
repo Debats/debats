@@ -4,7 +4,7 @@ import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
 import styles from './NewStatementForm.module.css'
 
-/** Les champs d'une position ouverte en place */
+/** Les champs d'une position créée en place */
 export interface PositionDraft {
   title: string
   description: string
@@ -18,13 +18,13 @@ interface NewPositionPanelProps {
 }
 
 /**
- * Une position ouverte sans quitter le formulaire.
+ * Une position créée sans quitter le formulaire.
  *
  * Rien n'est écrit ici : le panneau tient deux champs que l'envoi portera
  * avec le reste, dans la même transaction que la prise de position.
  *
  * Les champs portent les noms sous lesquels la commande rapporte leurs fautes
- * — `positionTitle` plutôt que `title`, parce qu'un sujet ouvert dans ce même
+ * — `positionTitle` plutôt que `title`, parce qu'un sujet créé dans ce même
  * formulaire aura un titre lui aussi.
  */
 export default function NewPositionPanel({
