@@ -1,6 +1,9 @@
 import styles from './NewStatementForm.module.css'
 
 interface WhatWillBeWrittenProps {
+  /** Une personnalité est en cours d'ouverture, nommée ou pas encore */
+  openingFigure: boolean
+  figureName: string
   /** Une position est en cours d'ouverture, titrée ou pas encore */
   opening: boolean
   positionTitle: string
@@ -17,11 +20,27 @@ interface WhatWillBeWrittenProps {
  * seulement une fois le titre tapé ferait disparaître une écriture qui va
  * bien avoir lieu.
  */
-export default function WhatWillBeWritten({ opening, positionTitle }: WhatWillBeWrittenProps) {
+export default function WhatWillBeWritten({
+  openingFigure,
+  figureName,
+  opening,
+  positionTitle,
+}: WhatWillBeWrittenProps) {
   return (
     <div className={styles.summary}>
       <p className={styles.summaryTitle}>Ce que l’envoi va écrire</p>
       <ul className={styles.summaryList}>
+        {openingFigure && (
+          <li>
+            {figureName ? (
+              <>
+                La personnalité <strong>{figureName}</strong>
+              </>
+            ) : (
+              'La personnalité que vous ouvrez'
+            )}
+          </li>
+        )}
         {opening && (
           <li>
             {positionTitle ? (

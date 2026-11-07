@@ -24,7 +24,10 @@ export async function createStatementAction(
     createStatementUseCase({
       contributor,
       subjectId,
-      author: publicFigureAuthor(String(formData.get('publicFigureId') ?? '')),
+      author: {
+        kind: 'existing',
+        author: publicFigureAuthor(String(formData.get('publicFigureId') ?? '')),
+      },
       position: { kind: 'existing', id: String(formData.get('positionId') ?? '') },
       content: readStatementContent(formData),
       sourceName: String(formData.get('sourceName') ?? ''),

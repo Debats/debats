@@ -92,6 +92,38 @@ export const found =
   <A>(value: A | null | undefined): Effect.Effect<A, Rejected> =>
     value != null ? Effect.succeed(value) : Effect.fail(new Rejected(message, field))
 
+const underPrefix = (prefix: string, field: string) =>
+  `${prefix}${field.charAt(0).toUpperCase()}${field.slice(1)}`
+
+/**
+ * The same refusal, under the names a form gives its inputs when it opens an
+ * entity alongside others.
+ *
+ * The all-in-one contribution form can open a personality and a subject in the
+ * same breath, and both have a presentation: a bare `presentation` would not
+ * say which one is at fault. The command that opens an entity alone keeps the
+ * plain names, because there is nothing to tell it apart from.
+ */
+export const faultsUnder =
+  (prefix: string) =>
+  <A, E, R>(command: Effect.Effect<A, E, R>): Effect.Effect<A, E | Invalid | Rejected, R> =>
+    Effect.mapError(command, (failure): E | Invalid | Rejected => {
+      if (failure instanceof Invalid) {
+        return new Invalid(
+          Object.fromEntries(
+            Object.entries(failure.fields).map(([field, message]) => [
+              underPrefix(prefix, field),
+              message,
+            ]),
+          ),
+        )
+      }
+      if (failure instanceof Rejected && failure.field) {
+        return new Rejected(failure.message, underPrefix(prefix, failure.field))
+      }
+      return failure
+    })
+
 /** What the read side must not find: a value already there is refused, on the field that holds it */
 export const free =
   (message: string, field?: string) =>

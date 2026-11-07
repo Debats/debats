@@ -7,6 +7,7 @@ import {
   decoded,
   faultless,
   faultsOf,
+  faultsUnder,
   fieldsOf,
   found,
   free,
@@ -118,6 +119,53 @@ describe('found and free', () => {
     expect(await run(free('Déjà pris.', 'title')(null))).toEqual(Either.right(undefined))
     expect(await run(free('Déjà pris.', 'title')({ id: 1 }))).toEqual(
       Either.left(new Rejected('Déjà pris.', 'title')),
+    )
+  })
+})
+
+describe('faultsUnder', () => {
+  const run = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(Effect.either(effect))
+
+  it('renames every field of a form refused on several at once', async () => {
+    const outcome = await run(
+      faultsUnder('figure')(
+        Effect.fail(
+          new Invalid({ name: 'Nom trop court.', presentation: 'Présentation trop courte.' }),
+        ),
+      ),
+    )
+
+    expect(Either.isLeft(outcome) && (outcome.left as Invalid).fields).toEqual({
+      figureName: 'Nom trop court.',
+      figurePresentation: 'Présentation trop courte.',
+    })
+  })
+
+  it('renames the field a single refusal blames, and keeps its message', async () => {
+    const outcome = await run(
+      faultsUnder('figure')(Effect.fail(new Rejected('Ce nom est déjà pris.', 'name'))),
+    )
+
+    expect(Either.isLeft(outcome) && outcome.left).toMatchObject({
+      message: 'Ce nom est déjà pris.',
+      field: 'figureName',
+    })
+  })
+
+  it('leaves a refusal that blames no field alone', async () => {
+    const outcome = await run(
+      faultsUnder('figure')(Effect.fail(new Rejected('Vous devez être Éloquent·e.'))),
+    )
+
+    expect(Either.isLeft(outcome) && outcome.left).toMatchObject({
+      message: 'Vous devez être Éloquent·e.',
+      field: undefined,
+    })
+  })
+
+  it('lets a success through untouched', async () => {
+    expect(await run(faultsUnder('figure')(Effect.succeed({ name: 'Alma' })))).toEqual(
+      Either.right({ name: 'Alma' }),
     )
   })
 })

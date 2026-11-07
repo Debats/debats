@@ -103,7 +103,7 @@ export function validateDraft(params: ValidateDraftParams) {
         createStatementUseCase({
           contributor,
           subjectId,
-          author,
+          author: { kind: 'existing', author },
           position: { kind: 'existing', id: positionId },
           // The draft already holds the content as its type calls for it
           content: contentFieldsOf(draft.content),

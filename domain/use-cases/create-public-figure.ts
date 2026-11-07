@@ -1,13 +1,14 @@
 import { Effect, pipe } from 'effect'
 import { generateSlug, PublicFigureId } from '../entities/public-figure'
 import { addPublicFigure } from '../aggregates/public-figure'
+import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { ContributorIdentity, FieldErrors } from './types'
-import { grant, rewardFor } from './reward'
+import { grant, Grant, rewardFor } from './reward'
 import { publicFigureFields, ValidatedPublicFigureFields } from './validate-public-figure-fields'
 import { openStream } from './aggregate-stream'
-import { allowedTo, free, signedIn } from './preconditions'
+import { allowedTo, faultsUnder, free, signedIn } from './preconditions'
 import { uniqueTakenAs } from './run-command'
 import { publicFigureAggregate } from './public-figure-stream'
 
@@ -20,12 +21,27 @@ type CreatePublicFigureParams = {
   notorietySources: string[]
 }
 
+/**
+ * What a form sends to open a personality: the command's own input, minus who
+ * is contributing. The all-in-one contribution form passes this as a typed
+ * object; the dedicated page still sends a FormData, because it carries a photo.
+ */
+export type NewPublicFigure = Omit<CreatePublicFigureParams, 'contributor'>
+
 export type { FieldErrors }
 
-const NAME_TAKEN = 'Une personnalité avec ce nom existe déjà.'
+/** The name is unique across the site: the projection refuses it, the command says so */
+export const PUBLIC_FIGURE_NAME_TAKEN = 'Une personnalité avec ce nom existe déjà.'
 
 /** Read side: the name must be free */
 const figures = Effect.serviceFunctions(PublicFigureRepository)
+
+/** No personality of that name yet: the slug is what would collide */
+const nameFree = (fields: ValidatedPublicFigureFields) =>
+  Effect.flatMap(
+    figures.findBySlug(generateSlug(fields.name)),
+    free(PUBLIC_FIGURE_NAME_TAKEN, 'name'),
+  )
 
 /** Who may propose the figure, with a form that holds up and a name still free */
 const checked = (params: CreatePublicFigureParams) =>
@@ -38,44 +54,89 @@ const checked = (params: CreatePublicFigureParams) =>
       ),
       fields: publicFigureFields(params),
     }),
-    Effect.tap(({ fields }) =>
-      Effect.flatMap(figures.findBySlug(generateSlug(fields.name)), free(NAME_TAKEN, 'name')),
+    Effect.tap(({ fields }) => nameFree(fields)),
+  )
+
+/**
+ * The form of a personality opened from the all-in-one contribution form,
+ * judged whole before anything is written: the right to propose one, the
+ * fields, the notoriety criterion, the Wikipedia page, and a name still free.
+ *
+ * The faults come back under the names that form gives its inputs, because it
+ * can open a subject in the same breath and both have a presentation. The
+ * Wikipedia lookup is a network call, which is why it belongs here — before
+ * the transaction — and never inside it.
+ */
+export const inlinePublicFigureChecked = (
+  params: NewPublicFigure,
+  contributor: ContributorIdentity | null,
+) =>
+  faultsUnder('figure')(
+    pipe(
+      allowedTo(contributor, 'add_personality', 'proposer une nouvelle personnalité'),
+      Effect.andThen(publicFigureFields(params)),
+      Effect.tap(nameFree),
     ),
   )
 
-/** Opens the figure's stream and rewards the contributor; the command names the figure */
+/**
+ * Opens the personality's stream inside the transaction it is given. The
+ * command that proposes a personality alone and the one that proposes her
+ * with her first statement both come through here, so one place knows how a
+ * personality comes into being.
+ *
+ * The reward is left to the caller, who may have others to grant in the same
+ * breath: a contributor's gains go to her stream in a single append.
+ */
+export const recordNewPublicFigure = (
+  events: EventStore,
+  contributorId: string,
+  params: NewPublicFigure,
+  fields: ValidatedPublicFigureFields,
+) => {
+  // The command names the figure: the stream exists from its first event
+  const id = PublicFigureId.make(crypto.randomUUID())
+  return pipe(
+    openStream(
+      publicFigureAggregate,
+      events,
+      id,
+      addPublicFigure({
+        ...fields,
+        wikipediaUrl: params.wikipediaUrl.trim() || undefined,
+        websiteUrl: params.websiteUrl || undefined,
+        notorietySources: params.notorietySources,
+      }),
+      contributorId,
+    ),
+    Effect.map(({ state }) => state.figure),
+  )
+}
+
+/** What proposing a personality earns, for the caller to grant alongside its others */
+export const publicFigureReward = (contributorId: string, figureId: string): Grant =>
+  rewardFor(contributorId, 'added_personality_validated', {
+    relatedEntityType: 'public_figure',
+    relatedEntityId: figureId,
+  })
+
+/** The figure's own transaction, for the command that proposes her alone */
 const persisted = (
   params: CreatePublicFigureParams,
   contributor: ContributorIdentity,
   fields: ValidatedPublicFigureFields,
-) => {
-  const id = PublicFigureId.make(crypto.randomUUID())
-  const added = addPublicFigure({
-    ...fields,
-    wikipediaUrl: params.wikipediaUrl.trim() || undefined,
-    websiteUrl: params.websiteUrl || undefined,
-    notorietySources: params.notorietySources,
-  })
-  return pipe(
+) =>
+  pipe(
     runUnitOfWork((events) =>
       pipe(
-        openStream(publicFigureAggregate, events, id, added, contributor.id),
-        Effect.tap(() =>
-          grant(
-            events,
-            contributor.id,
-            rewardFor(contributor.id, 'added_personality_validated', {
-              relatedEntityType: 'public_figure',
-              relatedEntityId: id,
-            }),
-          ),
+        recordNewPublicFigure(events, contributor.id, params, fields),
+        Effect.tap((figure) =>
+          grant(events, contributor.id, publicFigureReward(contributor.id, figure.id)),
         ),
       ),
     ),
-    uniqueTakenAs('name', NAME_TAKEN),
-    Effect.map(({ state }) => state.figure),
+    uniqueTakenAs('name', PUBLIC_FIGURE_NAME_TAKEN),
   )
-}
 
 /**
  * Validates all inputs without persisting anything; hands the fields as decoded.

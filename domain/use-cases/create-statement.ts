@@ -1,7 +1,9 @@
 import { Effect, pipe } from 'effect'
-import { StatementAuthor, StatementId } from '../entities/statement'
+import { publicFigureAuthor, StatementAuthor, StatementId } from '../entities/statement'
 import { addStatement } from '../aggregates/statement'
+import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
+import { DatabaseError } from '../repositories/errors'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
@@ -27,6 +29,14 @@ import {
   positionReward,
   recordNewPosition,
 } from './create-position'
+import {
+  inlinePublicFigureChecked,
+  NewPublicFigure,
+  PUBLIC_FIGURE_NAME_TAKEN,
+  publicFigureReward,
+  recordNewPublicFigure,
+} from './create-public-figure'
+import { ValidatedPublicFigureFields } from './validate-public-figure-fields'
 import { grantEach, rewardFor } from './reward'
 import { openStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
@@ -42,10 +52,20 @@ export type StatementPositionInput =
   | { kind: 'existing'; id: string }
   | ({ kind: 'new' } & InlinePosition)
 
+/**
+ * Who speaks: a personality or an organisation already referenced, or a
+ * personality the form opens in the same breath. The two axes stay apart —
+ * which kind of author, and existing or to open — so that `StatementAuthor`,
+ * which is the domain's own notion, never carries the second.
+ */
+export type StatementAuthorInput =
+  | { kind: 'existing'; author: StatementAuthor }
+  | { kind: 'new_figure'; figure: NewPublicFigure }
+
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
   subjectId: string
-  author: StatementAuthor
+  author: StatementAuthorInput
   position: StatementPositionInput
   /** Arguments the statement mobilises, chosen or proposed (Éloquent only) */
   arguments: StatementArgumentsInput
@@ -65,57 +85,126 @@ export type NewStatement = Omit<CreateStatementParams, 'contributor'>
 
 export type { FieldErrors }
 
+/** What the preconditions settled about the position: one to open, or one chosen */
+type SettledPosition =
+  | { readonly kind: 'new'; readonly toOpen: { title: string; description: string } }
+  | { readonly kind: 'existing'; readonly id: string }
+
+/** What the preconditions settled about the author: one to open, or one read */
+type SettledAuthor =
+  | {
+      readonly kind: 'new_figure'
+      readonly figure: NewPublicFigure
+      readonly fields: ValidatedPublicFigureFields
+    }
+  | { readonly kind: 'existing'; readonly author: StatementAuthor }
+
 /** Read side: the author and the position must exist, the position on the subject */
 const positions = Effect.serviceFunctions(PositionRepository)
 const figures = Effect.serviceFunctions(PublicFigureRepository)
 const organisations = Effect.serviceFunctions(OrganisationRepository)
 
 /** The author must exist; the message names what was looked for */
-const authorKnown = (author: StatementAuthor) =>
+const authorKnown = (
+  author: StatementAuthor,
+): Effect.Effect<
+  void,
+  Rejected | DatabaseError,
+  PublicFigureRepository | OrganisationRepository
+> =>
   author.kind === 'organisation'
-    ? Effect.flatMap(
-        organisations.findById(author.id),
-        found('L’organisation sélectionnée est introuvable.'),
+    ? Effect.asVoid(
+        Effect.flatMap(
+          organisations.findById(author.id),
+          found('L’organisation sélectionnée est introuvable.'),
+        ),
       )
-    : Effect.flatMap(
-        figures.findById(author.id),
-        found('La personnalité sélectionnée est introuvable.'),
+    : Effect.asVoid(
+        Effect.flatMap(
+          figures.findById(author.id),
+          found('La personnalité sélectionnée est introuvable.'),
+        ),
       )
+
+/** A position already on the subject: it must exist, and be one of its own */
+const positionOnSubject = (subjectId: string, positionId: string) =>
+  pipe(
+    positions.findById(positionId),
+    Effect.flatMap(found('La position sélectionnée est introuvable.')),
+    Effect.filterOrFail(
+      (candidate) => candidate.subjectId === subjectId,
+      () => new Rejected("La position sélectionnée n'appartient pas à ce sujet."),
+    ),
+  )
+
+/**
+ * Which position the statement will hang on, settled before anything is
+ * written: either one read from the tables, or the fields of one to open.
+ * Opening a position is its own right, so it is asked for here.
+ */
+const positionSettled = (
+  position: StatementPositionInput,
+  contributor: ContributorIdentity | null,
+  subjectId: string,
+) =>
+  position.kind === 'new'
+    ? pipe(
+        allowedTo(contributor, 'add_position', 'proposer une nouvelle position'),
+        Effect.andThen(inlinePositionFields(position)),
+        Effect.map((toOpen): SettledPosition => ({ kind: 'new', toOpen })),
+      )
+    : pipe(
+        chosenPositionField(position.id),
+        Effect.andThen(positionOnSubject(subjectId, position.id)),
+        Effect.map((): SettledPosition => ({ kind: 'existing', id: position.id })),
+      )
+
+/**
+ * Which author the statement will carry, settled before anything is written:
+ * a read from the tables, or the fields of a personality to open. Judging the
+ * Wikipedia page is a network call — it happens here, and never inside the
+ * transaction, whose seconds are counted.
+ */
+const authorSettled = (author: StatementAuthorInput, contributor: ContributorIdentity | null) =>
+  author.kind === 'new_figure'
+    ? Effect.map(
+        inlinePublicFigureChecked(author.figure, contributor),
+        (fields): SettledAuthor => ({ kind: 'new_figure', figure: author.figure, fields }),
+      )
+    : Effect.map(
+        authorKnown(author.author),
+        (): SettledAuthor => ({ kind: 'existing', author: author.author }),
+      )
+
+/** The position the statement hangs on: the one opened in this transaction, or the one chosen */
+const positionIn = (
+  events: EventStore,
+  subjectId: string,
+  contributorId: string,
+  settled: SettledPosition,
+) =>
+  settled.kind === 'new'
+    ? pipe(
+        recordNewPosition(events, subjectId, contributorId, settled.toOpen),
+        Effect.map((opened) => opened.id),
+        uniqueTakenAs('positionTitle', POSITION_TITLE_TAKEN),
+      )
+    : Effect.succeed(settled.id)
+
+/** The author the statement carries: the one opened here, or the one read */
+const authorIn = (events: EventStore, contributorId: string, settled: SettledAuthor) =>
+  settled.kind === 'new_figure'
+    ? pipe(
+        recordNewPublicFigure(events, contributorId, settled.figure, settled.fields),
+        Effect.map((figure) => publicFigureAuthor(figure.id)),
+        uniqueTakenAs('figureName', PUBLIC_FIGURE_NAME_TAKEN),
+      )
+    : Effect.succeed(settled.author)
 
 export function createStatementUseCase(params: CreateStatementParams) {
-  const { subjectId, author, position } = params
-  const { sourceName, sourceUrl, statedAt } = params
+  const { subjectId, author, position, sourceName, sourceUrl, statedAt } = params
   // The command names the statement: the stream exists from its first event
   const id = StatementId.make(crypto.randomUUID())
-
-  /** A position already on the subject: it must exist, and be one of its own */
-  const positionOnSubject = (positionId: string) =>
-    pipe(
-      positions.findById(positionId),
-      Effect.flatMap(found('La position sélectionnée est introuvable.')),
-      Effect.filterOrFail(
-        (candidate) => candidate.subjectId === subjectId,
-        () => new Rejected("La position sélectionnée n'appartient pas à ce sujet."),
-      ),
-    )
-
-  /**
-   * Which position the statement will hang on, settled before anything is
-   * written: either one read from the tables, or the fields of one to open.
-   * Opening a position is its own right, so it is asked for here.
-   */
-  const positionSettled =
-    position.kind === 'new'
-      ? pipe(
-          allowedTo(params.contributor, 'add_position', 'proposer une nouvelle position'),
-          Effect.andThen(inlinePositionFields(position)),
-          Effect.map((toOpen) => ({ kind: 'new', toOpen }) as const),
-        )
-      : pipe(
-          chosenPositionField(position.id),
-          Effect.andThen(positionOnSubject(position.id)),
-          Effect.as({ kind: 'existing', id: position.id } as const),
-        )
 
   return pipe(
     Effect.all({
@@ -124,65 +213,61 @@ export function createStatementUseCase(params: CreateStatementParams) {
         statementFields({ sourceName, sourceUrl, statedAt }, day),
       ),
       content: statementContent(params.content),
-      position: positionSettled,
+      position: positionSettled(position, params.contributor, subjectId),
+      author: authorSettled(author, params.contributor),
     }),
-    Effect.tap(() => authorKnown(author)),
     Effect.bind('validated', ({ contributor }) =>
       validateStatementArguments(contributor, params.arguments),
     ),
     /*
      * One transaction for the whole contribution: the proposed arguments open
-     * their streams, a new position lands on its subject, the statement opens
-     * its own, and every reward falls — together, or not at all.
+     * their streams, an opened author and an opened position land on theirs,
+     * the statement opens its own, and every reward falls — together, or not
+     * at all. Each write that can hit a unique constraint names its own field:
+     * one mapping for the whole command would report a position title already
+     * taken under the arguments field.
      */
-    Effect.flatMap(({ contributor, content, fields, position: settled, validated }) =>
+    Effect.flatMap((settled) =>
       runUnitOfWork((events) =>
         pipe(
-          /*
-           * Each write that can hit a unique constraint names its own field:
-           * one mapping for the whole command would report a position title
-           * already taken under the arguments field.
-           */
-          pipe(
-            recordProposedArguments(events, contributor.id, validated),
-            uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
-          ),
+          recordProposedArguments(events, settled.contributor.id, settled.validated),
+          uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
           Effect.bindTo('recorded'),
           Effect.bind('positionId', () =>
-            settled.kind === 'new'
-              ? pipe(
-                  recordNewPosition(events, subjectId, contributor.id, settled.toOpen),
-                  Effect.map((opened) => opened.id),
-                  uniqueTakenAs('positionTitle', POSITION_TITLE_TAKEN),
-                )
-              : Effect.succeed(settled.id),
+            positionIn(events, subjectId, settled.contributor.id, settled.position),
           ),
-          Effect.flatMap(({ recorded, positionId }) =>
+          Effect.bind('author', () => authorIn(events, settled.contributor.id, settled.author)),
+          Effect.flatMap(({ author: written, recorded, positionId }) =>
             pipe(
               openStream(
                 statementAggregate,
                 events,
                 id,
                 addStatement({
-                  author,
+                  author: written,
                   subjectId,
                   positionId,
-                  content,
-                  sourceName: fields.sourceName,
-                  sourceUrl: fields.sourceUrl,
-                  statedAt: new Date(fields.statedAt),
+                  content: settled.content,
+                  sourceName: settled.fields.sourceName,
+                  sourceUrl: settled.fields.sourceUrl,
+                  statedAt: new Date(settled.fields.statedAt),
                   argumentIds: recorded.argumentIds,
                 }),
-                contributor.id,
+                settled.contributor.id,
               ),
               Effect.tap(() =>
-                grantEach(events, contributor.id, [
-                  ...(settled.kind === 'new' ? [positionReward(contributor.id, positionId)] : []),
-                  rewardFor(contributor.id, 'added_statement_validated', {
+                grantEach(events, settled.contributor.id, [
+                  ...(settled.author.kind === 'new_figure'
+                    ? [publicFigureReward(settled.contributor.id, written.id)]
+                    : []),
+                  ...(settled.position.kind === 'new'
+                    ? [positionReward(settled.contributor.id, positionId)]
+                    : []),
+                  rewardFor(settled.contributor.id, 'added_statement_validated', {
                     relatedEntityType: 'statement',
                     relatedEntityId: id,
                   }),
-                  ...argumentRewards(contributor.id, recorded),
+                  ...argumentRewards(settled.contributor.id, recorded),
                 ]),
               ),
             ),

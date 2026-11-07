@@ -22,7 +22,7 @@ export type ActionResult =
 export async function addStatementAction(input: NewStatement): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
-  const { subjectId, author } = input
+  const { subjectId } = input
 
   /*
    * Une Server Function reçoit du JSON : son paramètre a le type qu'on déclare,
@@ -49,6 +49,11 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
   }
 
   const subject = await Effect.runPromise(createSubjectRepository(supabase).findById(subjectId))
+  /*
+   * L'auteur dont on donne le lien est celui que la commande a écrit, pas celui
+   * qu'on lui a envoyé : il vient peut-être d'être ouvert par ce même geste.
+   */
+  const author = result.right.author
 
   if (author.kind === 'organisation') {
     const organisation = await Effect.runPromise(

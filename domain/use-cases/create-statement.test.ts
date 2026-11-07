@@ -8,7 +8,12 @@ import { ArgumentRepository } from '../repositories/argument-repository'
 import { OrganisationRepository } from '../repositories/organisation-repository'
 import { PositionRepository } from '../repositories/position-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
-import { fakeOrganisationRepo, sampleOrganisation } from './organisation-test-helpers'
+import {
+  fakeOrganisationRepo,
+  fakeWikipediaValidator,
+  sampleOrganisation,
+} from './organisation-test-helpers'
+import { WikipediaValidator } from '../services/wikipedia-validator'
 import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
@@ -72,7 +77,7 @@ const organisation = sampleOrganisation()
 
 const validParams = {
   subjectId: 'subject-1',
-  author: publicFigureAuthor('figure-1'),
+  author: { kind: 'existing' as const, author: publicFigureAuthor('figure-1') },
   position: { kind: 'existing' as const, id: 'pos-1' },
   arguments: { argumentIds: [] as string[], newArguments: [] },
   content: {
@@ -91,6 +96,7 @@ const fakes = (
     figures?: PublicFigureRepository
     organisations?: OrganisationRepository
     arguments?: ArgumentRepository
+    wikipedia?: WikipediaValidator
   } = {},
 ) =>
   Layer.mergeAll(
@@ -101,6 +107,10 @@ const fakes = (
       overrides.organisations ?? fakeOrganisationRepo([organisation]),
     ),
     Layer.succeed(ArgumentRepository, overrides.arguments ?? fakeArgumentRepo()),
+    Layer.succeed(
+      WikipediaValidator,
+      overrides.wikipedia ?? fakeWikipediaValidator({ exists: true, isBiography: true }),
+    ),
   )
 
 const execute = runFormWith(fakes())
@@ -222,12 +232,141 @@ describe('createStatementUseCase', () => {
     ).toContain('Choisissez une position')
   })
 
+  it('opens a personality and her statement in the same transaction, and rewards both', async () => {
+    // Le nom est libre : c'est ce que la commande vérifie avant d'écrire
+    const nameIsFree = {
+      ...fakePublicFigureRepo,
+      findBySlug: () => Effect.succeed(null as PublicFigure | null),
+    } as unknown as PublicFigureRepository
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await runFormWith(fakes({ figures: nameIsFree }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        author: {
+          kind: 'new_figure',
+          figure: {
+            name: 'Marine Tondelier',
+            presentation: 'Secrétaire nationale d’Europe Écologie Les Verts.',
+            wikipediaUrl: 'https://fr.wikipedia.org/wiki/Marine_Tondelier',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    const [figure, statement] = deedsIn(journal).slice(-2)
+    expect(figure).toMatchObject({
+      streamType: 'public_figure',
+      type: 'PublicFigureAdded',
+      actorId: 'abc',
+      payload: { name: 'Marine Tondelier', slug: 'marine-tondelier' },
+    })
+    // La prise de position porte la personnalité qu'on vient d'ouvrir
+    expect(statement).toMatchObject({
+      streamType: 'statement',
+      payload: { author: { kind: 'public_figure', id: figure.streamId } },
+    })
+    expect(grantsIn(journal)).toEqual([
+      ['abc', 'added_personality_validated', 50],
+      ['abc', 'added_statement_validated', 50],
+    ])
+  })
+
+  it('refuses a personality under the Éloquent rank before ever asking Wikipedia', async () => {
+    // Un validateur qui échoue le test s'il est appelé : le rang se juge d'abord
+    const neverAsked: WikipediaValidator = {
+      validatePage: () => {
+        throw new Error('Wikipédia consulté avant le contrôle de rang')
+      },
+    }
+
+    const result = await runFormWith(fakes({ wikipedia: neverAsked }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 0 },
+        author: {
+          kind: 'new_figure',
+          figure: {
+            name: 'Marine Tondelier',
+            presentation: 'Secrétaire nationale d’Europe Écologie Les Verts.',
+            wikipediaUrl: 'https://fr.wikipedia.org/wiki/Marine_Tondelier',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+    )
+
+    expect(Either.isLeft(result) && result.left).toContain('Éloquent')
+  })
+
+  it('writes nothing when the Wikipedia page is refused: the judgement comes before the transaction', async () => {
+    const noSuchPage = fakeWikipediaValidator({ exists: false, isBiography: false })
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await runFormWith(fakes({ wikipedia: noSuchPage }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        author: {
+          kind: 'new_figure',
+          figure: {
+            name: 'Marine Tondelier',
+            presentation: 'Secrétaire nationale d’Europe Écologie Les Verts.',
+            wikipediaUrl: 'https://fr.wikipedia.org/wiki/Marine_Tondelier',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+      run,
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string'
+        ? result.left.figureWikipediaUrl
+        : null,
+    ).toBeDefined()
+    // Un appel réseau refusé n'a rien laissé derrière : il a lieu avant toute écriture
+    expect(journal.all()).toEqual([])
+  })
+
+  it('names the personality’s faults under their own field, not the statement’s', async () => {
+    const result = await runFormWith(fakes())(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        author: {
+          kind: 'new_figure',
+          figure: {
+            name: 'A',
+            presentation: 'Court',
+            wikipediaUrl: '',
+            websiteUrl: '',
+            notorietySources: [],
+          },
+        },
+      }),
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string'
+        ? Object.keys(result.left).sort()
+        : [],
+    ).toEqual(['figureName', 'figureNotorietySources', 'figurePresentation'])
+  })
+
   it('should fail when the organisation author is not found', async () => {
     const result = await execute(
       createStatementUseCase({
         ...validParams,
         contributor: { id: 'abc', reputation: 0 },
-        author: organisationAuthor('missing-org'),
+        author: { kind: 'existing', author: organisationAuthor('missing-org') },
       }),
     )
 
@@ -239,7 +378,7 @@ describe('createStatementUseCase', () => {
       createStatementUseCase({
         ...validParams,
         contributor: { id: 'abc', reputation: 0 },
-        author: organisationAuthor(organisation.id),
+        author: { kind: 'existing', author: organisationAuthor(organisation.id) },
       }),
     )
 

@@ -14,6 +14,7 @@ import {
 import {
   FieldErrors,
   NewStatement,
+  StatementAuthorInput,
   StatementPositionInput,
 } from '../../../domain/use-cases/create-statement'
 import {
@@ -34,10 +35,12 @@ import TextField from '../../ui/TextField'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import FormSuccess from '../../ui/FormSuccess'
+import { NotorietySourcePair, notorietySourcePair } from '../../forms/NotorietySources'
 import { useStatementDraft } from '../StatementDraft'
 import ArgumentsPicker from '../ArgumentsPicker'
 import StatementContentFields from '../StatementContentFields'
 import LockedAction from './LockedAction'
+import NewFigurePanel, { FigureDraft } from './NewFigurePanel'
 import NewPositionPanel from './NewPositionPanel'
 import WhatWillBeWritten from './WhatWillBeWritten'
 import styles from './NewStatementForm.module.css'
@@ -86,7 +89,15 @@ export default function NewStatementForm({
   const [authorKind, setAuthorKind] = useState<StatementAuthorKind>(
     initialOrganisation ? 'organisation' : 'public_figure',
   )
-  const [selectedFigureId, setSelectedFigureId] = useState(initialFigure?.id ?? '')
+  /**
+   * La personnalité choisie, avec son nom : le Combobox se démonte quand on
+   * ouvre le panneau, et il faut pouvoir le remonter sur ce qui était choisi.
+   * Un identifiant seul laisserait le champ vide en portant quand même un
+   * auteur à l'envoi.
+   */
+  const [selectedFigure, setSelectedFigure] = useState<{ id: string; name: string } | undefined>(
+    initialFigure,
+  )
   const [selectedOrganisationId, setSelectedOrganisationId] = useState(
     initialOrganisation?.id ?? '',
   )
@@ -96,6 +107,18 @@ export default function NewStatementForm({
   const [openingPosition, setOpeningPosition] = useState(false)
   const [newPositionTitle, setNewPositionTitle] = useState('')
   const [newPositionDescription, setNewPositionDescription] = useState('')
+  /** Une personnalité ouverte en place : portée jusqu'à l'envoi, rien n'est écrit avant */
+  const [openingFigure, setOpeningFigure] = useState(false)
+  const [newFigure, setNewFigure] = useState<FigureDraft>({
+    name: '',
+    presentation: '',
+    wikipediaUrl: '',
+    websiteUrl: '',
+  })
+  // La paire garde la place de chaque source pendant la saisie ; la liste se compose à l'envoi
+  const [figureSources, setFigureSources] = useState<NotorietySourcePair>(() =>
+    notorietySourcePair([]),
+  )
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
 
   const [positions, setPositions] = useState<PositionOption[]>([])
@@ -145,11 +168,35 @@ export default function NewStatementForm({
       const kind = AUTHOR_KINDS[label]
       if (!kind || kind === authorKind) return
       setAuthorKind(kind)
-      setSelectedFigureId('')
+      setSelectedFigure(undefined)
       setSelectedOrganisationId('')
+      setOpeningFigure(false)
       updateDraft({ authorKind: kind, authorName: '' })
     },
     [authorKind, updateDraft],
+  )
+
+  const openFigure = useCallback(() => {
+    setOpeningFigure(true)
+    updateDraft({ authorName: newFigure.name })
+  }, [newFigure.name, updateDraft])
+
+  /**
+   * Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant
+   * d'ouvrir. Ce qui a été tapé dans le panneau reste : annuler veut dire
+   * « laisse-moi revoir les existantes », pas « jette ce que j'ai écrit ».
+   */
+  const cancelFigure = useCallback(() => {
+    setOpeningFigure(false)
+    updateDraft({ authorName: selectedFigure?.name ?? '' })
+  }, [selectedFigure, updateDraft])
+
+  const changeFigure = useCallback(
+    (figure: FigureDraft) => {
+      setNewFigure(figure)
+      updateDraft({ authorName: figure.name })
+    },
+    [updateDraft],
   )
 
   const openPosition = useCallback(() => {
@@ -160,8 +207,6 @@ export default function NewStatementForm({
   /** Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant d'ouvrir */
   const cancelPosition = useCallback(() => {
     setOpeningPosition(false)
-    setNewPositionTitle('')
-    setNewPositionDescription('')
     updateDraft({
       positionTitle: positions.find((p) => p.id === selectedPositionId)?.title ?? '',
     })
@@ -222,12 +267,23 @@ export default function NewStatementForm({
           }
         : { kind: 'existing', id: selectedPositionId }
 
+      /** Celle qu'on ouvre, ou celle qu'on a choisie : jamais les deux */
+      const chosenAuthor: StatementAuthorInput = openingFigure
+        ? {
+            kind: 'new_figure',
+            figure: { ...newFigure, notorietySources: figureSources.filter(Boolean) },
+          }
+        : {
+            kind: 'existing',
+            author:
+              authorKind === 'organisation'
+                ? organisationAuthor(selectedOrganisationId)
+                : publicFigureAuthor(selectedFigure?.id ?? ''),
+          }
+
       const input: NewStatement = {
         subjectId: selectedSubjectId,
-        author:
-          authorKind === 'organisation'
-            ? organisationAuthor(selectedOrganisationId)
-            : publicFigureAuthor(selectedFigureId),
+        author: chosenAuthor,
         position,
         content,
         sourceName: getFieldValue(form, 'sourceName'),
@@ -265,10 +321,13 @@ export default function NewStatementForm({
     [
       authorKind,
       content,
+      figureSources,
+      newFigure,
       newPositionDescription,
       newPositionTitle,
+      openingFigure,
       openingPosition,
-      selectedFigureId,
+      selectedFigure,
       selectedOrganisationId,
       selectedPositionId,
       selectedSubjectId,
@@ -337,6 +396,15 @@ export default function NewStatementForm({
                 : undefined
             }
           />
+        ) : openingFigure ? (
+          <NewFigurePanel
+            figure={newFigure}
+            onChange={changeFigure}
+            sources={figureSources}
+            onSources={setFigureSources}
+            onCancel={cancelFigure}
+            errors={fieldErrors}
+          />
         ) : (
           <Combobox
             key="public_figure"
@@ -347,11 +415,11 @@ export default function NewStatementForm({
             placeholder="Tapez un nom…"
             onSearch={handleSearchFigures}
             onSelect={(id, label) => {
-              setSelectedFigureId(id)
+              setSelectedFigure(id ? { id, name: label } : undefined)
               updateDraft({ authorName: label })
             }}
             initialItem={
-              initialFigure ? { id: initialFigure.id, label: initialFigure.name } : undefined
+              selectedFigure ? { id: selectedFigure.id, label: selectedFigure.name } : undefined
             }
           />
         )}
@@ -383,12 +451,14 @@ export default function NewStatementForm({
               indépendantes.
             </p>
             {canAddFigure ? (
-              <p className={styles.hint}>
-                Elle n’existe pas encore ?{' '}
-                <Link href="/p/ajouter" className={styles.hintLink}>
-                  Créer une personnalité
-                </Link>
-              </p>
+              !openingFigure && (
+                <p className={styles.hint}>
+                  Elle n’existe pas encore ?{' '}
+                  <button type="button" className={styles.inlineAction} onClick={openFigure}>
+                    l’ouvrir ici
+                  </button>
+                </p>
+              )
             ) : (
               <LockedAction
                 what="Référencer une personnalité"
@@ -558,7 +628,12 @@ export default function NewStatementForm({
         </div>
       )}
 
-      <WhatWillBeWritten opening={openingPosition} positionTitle={newPositionTitle} />
+      <WhatWillBeWritten
+        openingFigure={openingFigure}
+        figureName={newFigure.name}
+        opening={openingPosition}
+        positionTitle={newPositionTitle}
+      />
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>
