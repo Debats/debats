@@ -14,14 +14,9 @@ import {
 import {
   FieldErrors,
   NewStatement,
-  StatementAuthorInput,
   StatementPositionInput,
 } from '../../../domain/use-cases/create-statement'
-import {
-  organisationAuthor,
-  publicFigureAuthor,
-  StatementAuthorKind,
-} from '../../../domain/entities/statement'
+import { StatementAuthorKind } from '../../../domain/entities/statement'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { readStatementArguments } from '../../../lib/forms/statement-arguments'
 import {
@@ -35,15 +30,15 @@ import TextField from '../../ui/TextField'
 import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import FormSuccess from '../../ui/FormSuccess'
-import { NotorietySourcePair, notorietySourcePair } from '../../forms/NotorietySources'
 import { useStatementDraft } from '../StatementDraft'
 import ArgumentsPicker from '../ArgumentsPicker'
 import StatementContentFields from '../StatementContentFields'
 import LockedAction from './LockedAction'
-import NewFigurePanel, { FigureDraft } from './NewFigurePanel'
-import NewOrganisationPanel, { OrganisationDraft } from './NewOrganisationPanel'
+import NewFigurePanel from './NewFigurePanel'
+import NewOrganisationPanel from './NewOrganisationPanel'
 import NewPositionPanel, { PositionDraft } from './NewPositionPanel'
 import WhatWillBeWritten, { Created } from './WhatWillBeWritten'
+import { useAuthorChoice } from './useAuthorChoice'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -87,52 +82,14 @@ export default function NewStatementForm({
   const canAddFigure = canPerform(reputation, 'add_personality')
   const canAddOrganisation = canPerform(reputation, 'add_organisation')
 
-  const [authorKind, setAuthorKind] = useState<StatementAuthorKind>(
-    initialOrganisation ? 'organisation' : 'public_figure',
-  )
-  /**
-   * La personnalité choisie, avec son nom : le Combobox se démonte quand on
-   * ouvre le panneau, et il faut pouvoir le remonter sur ce qui était choisi.
-   * Un identifiant seul laisserait le champ vide en portant quand même un
-   * auteur à l'envoi.
-   */
-  const [selectedFigure, setSelectedFigure] = useState<{ id: string; name: string } | undefined>(
-    initialFigure,
-  )
-  /** Même raison que pour la personnalité : le Combobox doit pouvoir se remonter sur son choix */
-  const [selectedOrganisation, setSelectedOrganisation] = useState<
-    { id: string; name: string } | undefined
-  >(initialOrganisation)
+  /** Qui s'exprime : la sorte, l'existante choisie ou la nouvelle en cours de saisie */
+  const author = useAuthorChoice({ figure: initialFigure, organisation: initialOrganisation })
+
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
   const [selectedPositionId, setSelectedPositionId] = useState('')
   /** Une position créée en place : le formulaire la porte jusqu'à l'envoi, rien n'est écrit avant */
   const [creatingPosition, setCreatingPosition] = useState(false)
   const [newPosition, setNewPosition] = useState<PositionDraft>({ title: '', description: '' })
-  /** Une personnalité créée en place : portée jusqu'à l'envoi, rien n'est écrit avant */
-  const [creatingFigure, setCreatingFigure] = useState(false)
-  const [newFigure, setNewFigure] = useState<FigureDraft>({
-    name: '',
-    presentation: '',
-    wikipediaUrl: '',
-    websiteUrl: '',
-  })
-  // La paire garde la place de chaque source pendant la saisie ; la liste se compose à l'envoi
-  const [figureSources, setFigureSources] = useState<NotorietySourcePair>(() =>
-    notorietySourcePair([]),
-  )
-  /** Une organisation créée en place, mêmes règles que pour une personnalité */
-  const [creatingOrganisation, setCreatingOrganisation] = useState(false)
-  const [newOrganisation, setNewOrganisation] = useState<OrganisationDraft>({
-    name: '',
-    acronym: '',
-    organisationType: '',
-    presentation: '',
-    wikipediaUrl: '',
-    websiteUrl: '',
-  })
-  const [organisationSources, setOrganisationSources] = useState<NotorietySourcePair>(() =>
-    notorietySourcePair([]),
-  )
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
 
   const [positions, setPositions] = useState<PositionOption[]>([])
@@ -140,8 +97,7 @@ export default function NewStatementForm({
 
   /** Ce que l'envoi créera, dans l'ordre où le formulaire le demande */
   const created: Created[] = [
-    ...(creatingFigure ? [{ what: 'La personnalité', name: newFigure.name }] : []),
-    ...(creatingOrganisation ? [{ what: 'L’organisation', name: newOrganisation.name }] : []),
+    ...author.created,
     ...(creatingPosition ? [{ what: 'La position', name: newPosition.title }] : []),
   ]
 
@@ -183,63 +139,6 @@ export default function NewStatementForm({
     const results = await searchSubjects(query)
     return results.map((s) => ({ id: s.id, label: s.title }))
   }, [])
-
-  const changeAuthorKind = useCallback(
-    (label: string) => {
-      const kind = AUTHOR_KINDS[label]
-      if (!kind || kind === authorKind) return
-      setAuthorKind(kind)
-      setSelectedFigure(undefined)
-      setSelectedOrganisation(undefined)
-      setCreatingFigure(false)
-      setCreatingOrganisation(false)
-      updateDraft({ authorKind: kind, authorName: '' })
-    },
-    [authorKind, updateDraft],
-  )
-
-  const startNewFigure = useCallback(() => {
-    setCreatingFigure(true)
-    updateDraft({ authorName: newFigure.name })
-  }, [newFigure.name, updateDraft])
-
-  /**
-   * Annuler rend la main au choix, et rend aussi celui qu'on avait fait avant
-   * de passer à la saisie. Ce qui a été tapé dans le panneau reste : annuler
-   * veut dire « laisse-moi revoir les existantes », pas « jette ce que j'ai
-   * écrit ».
-   */
-  const cancelNewFigure = useCallback(() => {
-    setCreatingFigure(false)
-    updateDraft({ authorName: selectedFigure?.name ?? '' })
-  }, [selectedFigure, updateDraft])
-
-  const changeFigure = useCallback(
-    (figure: FigureDraft) => {
-      setNewFigure(figure)
-      updateDraft({ authorName: figure.name })
-    },
-    [updateDraft],
-  )
-
-  const startNewOrganisation = useCallback(() => {
-    setCreatingOrganisation(true)
-    updateDraft({ authorName: newOrganisation.name })
-  }, [newOrganisation.name, updateDraft])
-
-  /** Annuler rend la main au choix, et rend celui qu'on avait fait avant la saisie */
-  const cancelNewOrganisation = useCallback(() => {
-    setCreatingOrganisation(false)
-    updateDraft({ authorName: selectedOrganisation?.name ?? '' })
-  }, [selectedOrganisation, updateDraft])
-
-  const changeOrganisation = useCallback(
-    (organisation: OrganisationDraft) => {
-      setNewOrganisation(organisation)
-      updateDraft({ authorName: organisation.name })
-    },
-    [updateDraft],
-  )
 
   const startNewPosition = useCallback(() => {
     setCreatingPosition(true)
@@ -309,31 +208,9 @@ export default function NewStatementForm({
           }
         : { kind: 'existing', id: selectedPositionId }
 
-      /** Celle qu'on crée, ou celle qu'on a choisie : jamais les deux */
-      const chosenAuthor: StatementAuthorInput = creatingOrganisation
-        ? {
-            kind: 'new_organisation',
-            organisation: {
-              ...newOrganisation,
-              notorietySources: organisationSources.filter(Boolean),
-            },
-          }
-        : creatingFigure
-          ? {
-              kind: 'new_figure',
-              figure: { ...newFigure, notorietySources: figureSources.filter(Boolean) },
-            }
-          : {
-              kind: 'existing',
-              author:
-                authorKind === 'organisation'
-                  ? organisationAuthor(selectedOrganisation?.id ?? '')
-                  : publicFigureAuthor(selectedFigure?.id ?? ''),
-            }
-
       const input: NewStatement = {
         subjectId: selectedSubjectId,
-        author: chosenAuthor,
+        author: author.input,
         position,
         content,
         sourceName: getFieldValue(form, 'sourceName'),
@@ -368,22 +245,7 @@ export default function NewStatementForm({
         setIsPending(false)
       }
     },
-    [
-      authorKind,
-      content,
-      figureSources,
-      newFigure,
-      newOrganisation,
-      newPosition,
-      creatingOrganisation,
-      organisationSources,
-      creatingFigure,
-      creatingPosition,
-      selectedFigure,
-      selectedOrganisation,
-      selectedPositionId,
-      selectedSubjectId,
-    ],
+    [author.input, content, newPosition, creatingPosition, selectedPositionId, selectedSubjectId],
   )
 
   if (successResult) {
@@ -413,7 +275,7 @@ export default function NewStatementForm({
     )
   }
 
-  const isOrganisation = authorKind === 'organisation'
+  const isOrganisation = author.kind === 'organisation'
 
   return (
     <form onSubmit={handleSubmit} onChange={handleFormChange} className={styles.form}>
@@ -425,17 +287,21 @@ export default function NewStatementForm({
         </legend>
         <Segmented
           ariaLabel="Type d’acteur"
-          active={AUTHOR_LABELS[authorKind]}
+          active={AUTHOR_LABELS[author.kind]}
           items={[{ label: 'Une personnalité' }, { label: 'Une organisation' }]}
-          onChange={changeAuthorKind}
+          onChange={(label) => {
+            // Le segmenté parle en libellés ; la sorte d'auteur est au hook
+            const kind = AUTHOR_KINDS[label]
+            if (kind) author.changeKind(kind)
+          }}
         />
-        {isOrganisation && creatingOrganisation ? (
+        {isOrganisation && author.organisation.creating ? (
           <NewOrganisationPanel
-            organisation={newOrganisation}
-            onChange={changeOrganisation}
-            sources={organisationSources}
-            onSources={setOrganisationSources}
-            onCancel={cancelNewOrganisation}
+            organisation={author.organisation.draft}
+            onChange={author.organisation.change}
+            sources={author.organisation.sources}
+            onSources={author.organisation.setSources}
+            onCancel={author.organisation.cancelNew}
             errors={fieldErrors}
           />
         ) : isOrganisation ? (
@@ -447,23 +313,25 @@ export default function NewStatementForm({
             required
             placeholder="Tapez un nom ou un sigle…"
             onSearch={handleSearchOrganisations}
-            onSelect={(id, label) => {
-              setSelectedOrganisation(id ? { id, name: label } : undefined)
-              updateDraft({ authorName: label })
-            }}
+            onSelect={(id, label) =>
+              author.organisation.choose(id ? { id, name: label } : undefined)
+            }
             initialItem={
-              selectedOrganisation
-                ? { id: selectedOrganisation.id, label: selectedOrganisation.name }
+              author.organisation.chosen
+                ? {
+                    id: author.organisation.chosen.id,
+                    label: author.organisation.chosen.name,
+                  }
                 : undefined
             }
           />
-        ) : creatingFigure ? (
+        ) : author.figure.creating ? (
           <NewFigurePanel
-            figure={newFigure}
-            onChange={changeFigure}
-            sources={figureSources}
-            onSources={setFigureSources}
-            onCancel={cancelNewFigure}
+            figure={author.figure.draft}
+            onChange={author.figure.change}
+            sources={author.figure.sources}
+            onSources={author.figure.setSources}
+            onCancel={author.figure.cancelNew}
             errors={fieldErrors}
           />
         ) : (
@@ -475,12 +343,11 @@ export default function NewStatementForm({
             required
             placeholder="Tapez un nom…"
             onSearch={handleSearchFigures}
-            onSelect={(id, label) => {
-              setSelectedFigure(id ? { id, name: label } : undefined)
-              updateDraft({ authorName: label })
-            }}
+            onSelect={(id, label) => author.figure.choose(id ? { id, name: label } : undefined)}
             initialItem={
-              selectedFigure ? { id: selectedFigure.id, label: selectedFigure.name } : undefined
+              author.figure.chosen
+                ? { id: author.figure.chosen.id, label: author.figure.chosen.name }
+                : undefined
             }
           />
         )}
@@ -491,13 +358,13 @@ export default function NewStatementForm({
               nom : communiqué, programme, vote, action.
             </p>
             {canAddOrganisation ? (
-              !creatingOrganisation && (
+              !author.organisation.creating && (
                 <p className={styles.hint}>
                   Elle n’existe pas encore ?{' '}
                   <button
                     type="button"
                     className={styles.inlineAction}
-                    onClick={startNewOrganisation}
+                    onClick={author.organisation.startNew}
                   >
                     la créer ici
                   </button>
@@ -518,10 +385,14 @@ export default function NewStatementForm({
               indépendantes.
             </p>
             {canAddFigure ? (
-              !creatingFigure && (
+              !author.figure.creating && (
                 <p className={styles.hint}>
                   Elle n’existe pas encore ?{' '}
-                  <button type="button" className={styles.inlineAction} onClick={startNewFigure}>
+                  <button
+                    type="button"
+                    className={styles.inlineAction}
+                    onClick={author.figure.startNew}
+                  >
                     la créer ici
                   </button>
                 </p>
