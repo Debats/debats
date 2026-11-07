@@ -1,0 +1,107 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createWikipediaValidator } from './wikipedia-validator'
+
+const CAMUS = 'https://fr.wikipedia.org/wiki/Albert_Camus'
+
+const pageWithItem = (item: string) => ({
+  query: { pages: { '1234': { pageprops: { wikibase_item: item } } } },
+})
+
+const missingPage = { query: { pages: { '-1': { missing: '' } } } }
+
+const instanceOf = (id: string) => ({
+  claims: { P31: [{ mainsnak: { datavalue: { value: { id } } } }] },
+})
+
+/** What each call answers, in the order the validator makes them */
+function answering(...answers: ({ status: number } | object)[]) {
+  const fetching = vi.fn(async () => {
+    const answer = answers.shift()
+    if (!answer) throw new Error('One call too many')
+    if ('status' in answer && typeof answer.status === 'number') {
+      return new Response('', { status: answer.status })
+    }
+    return new Response(JSON.stringify(answer), { status: 200 })
+  })
+  vi.stubGlobal('fetch', fetching)
+  return fetching
+}
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('createWikipediaValidator', () => {
+  it('reads a human as a biography', async () => {
+    answering(pageWithItem('Q991'), instanceOf('Q5'))
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).resolves.toEqual({
+      exists: true,
+      isBiography: true,
+    })
+  })
+
+  it('reads anything else as not a biography', async () => {
+    answering(pageWithItem('Q42756'), instanceOf('Q7278'))
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).resolves.toEqual({
+      exists: true,
+      isBiography: false,
+    })
+  })
+
+  it('reports a title Wikipedia does not hold as absent', async () => {
+    answering(missingPage)
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).resolves.toEqual({
+      exists: false,
+      isBiography: false,
+    })
+  })
+
+  /*
+   * The three refusals below are the point of this file. Each used to answer
+   * « exists: false » or « isBiography: false », which the domain reads as a
+   * verdict: a personality refused because Wikipedia was down, and an
+   * organisation accepted although its page describes a person. Failing lets
+   * the domain apply its own rule — an unjudged URL goes through.
+   */
+  it('fails rather than call a page absent when Wikipedia is down', async () => {
+    answering({ status: 503 })
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('503')
+  })
+
+  it('fails rather than judge when Wikidata is down', async () => {
+    answering(pageWithItem('Q991'), { status: 500 })
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('500')
+  })
+
+  it('fails when the page carries no Wikidata item: nothing says what it describes', async () => {
+    answering({ query: { pages: { '1234': {} } } })
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('No Wikidata item')
+  })
+
+  it('fails when Wikidata claims nothing about what the item is', async () => {
+    answering(pageWithItem('Q991'), { claims: {} })
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('says nothing')
+  })
+
+  it('asks Wikipedia, then Wikidata, and names itself to both', async () => {
+    const fetching = answering(pageWithItem('Q991'), instanceOf('Q5'))
+
+    await createWikipediaValidator().validatePage(CAMUS)
+
+    const [[first, firstInit], [second, secondInit]] = fetching.mock.calls as unknown as [
+      [string, RequestInit],
+      [string, RequestInit],
+    ]
+    expect(first).toContain('fr.wikipedia.org/w/api.php')
+    expect(first).toContain('Albert_Camus')
+    expect(second).toContain('wikidata.org/w/api.php')
+    expect(second).toContain('Q991')
+    expect(firstInit.headers).toEqual({ 'User-Agent': 'Debats.co/1.0 (https://debats.co)' })
+    expect(secondInit.headers).toEqual({ 'User-Agent': 'Debats.co/1.0 (https://debats.co)' })
+  })
+})

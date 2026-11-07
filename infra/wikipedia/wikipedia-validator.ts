@@ -4,11 +4,39 @@ import {
 } from '../../domain/services/wikipedia-validator'
 
 const WIKIDATA_HUMAN_ID = 'Q5'
+const USER_AGENT = 'Debats.co/1.0 (https://debats.co)'
 
+/** The URL's shape is judged by the domain before the validator is ever asked */
 function extractLangAndTitle(url: string): { lang: string; title: string } | null {
   const match = url.match(/^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/(.+)$/)
   if (!match) return null
   return { lang: match[1], title: decodeURIComponent(match[2]) }
+}
+
+/**
+ * Asks a Wikimedia API, or fails.
+ *
+ * A page we could not reach is not a page that does not exist. The domain
+ * lets an unjudged URL through on purpose — the site does not depend on
+ * Wikipedia to accept a contribution — and it can only do that if we refuse
+ * to answer on its behalf. Guessing here used to refuse a personality and, by
+ * the mirror rule, accept an organisation whose page describes a person.
+ */
+async function askWikimedia(url: string): Promise<unknown> {
+  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
+  if (!response.ok) {
+    throw new Error(`Wikimedia answered ${response.status} for ${url}`)
+  }
+  return response.json()
+}
+
+interface WikipediaPage {
+  missing?: string
+  pageprops?: { wikibase_item?: string }
+}
+
+interface Claim {
+  mainsnak?: { datavalue?: { value?: { id?: string } } }
 }
 
 export function createWikipediaValidator(): WikipediaValidator {
@@ -17,55 +45,51 @@ export function createWikipediaValidator(): WikipediaValidator {
       const parsed = extractLangAndTitle(url)
       if (!parsed) return { exists: false, isBiography: false }
 
-      // Step 1: Check page exists and get its Wikidata ID
-      const apiUrl =
-        `https://${parsed.lang}.wikipedia.org/w/api.php` +
-        `?action=query&format=json&prop=pageprops&titles=${encodeURIComponent(parsed.title)}` +
-        `&ppprop=wikibase_item`
+      const page = await askPage(parsed)
 
-      const response = await fetch(apiUrl, {
-        headers: { 'User-Agent': 'Debats.co/1.0 (https://debats.co)' },
-      })
-
-      if (!response.ok) return { exists: false, isBiography: false }
-
-      const data = await response.json()
-      const pages = data.query?.pages
-      if (!pages) return { exists: false, isBiography: false }
-
-      const page = Object.values(pages)[0] as {
-        missing?: string
-        pageprops?: { wikibase_item?: string }
-      }
-
-      if ('missing' in page) {
-        return { exists: false, isBiography: false }
-      }
+      // The API reports a title it does not hold as « missing », with a 200
+      if ('missing' in page) return { exists: false, isBiography: false }
 
       const wikidataId = page.pageprops?.wikibase_item
       if (!wikidataId) {
-        return { exists: true, isBiography: false }
+        // The page is there, but nothing says what it describes
+        throw new Error(`No Wikidata item for ${url}`)
       }
 
-      // Step 2: Check Wikidata for "instance of human" (P31 = Q5)
-      const wikidataUrl =
-        `https://www.wikidata.org/w/api.php` +
-        `?action=wbgetclaims&format=json&entity=${wikidataId}&property=P31`
-
-      const wdResponse = await fetch(wikidataUrl, {
-        headers: { 'User-Agent': 'Debats.co/1.0 (https://debats.co)' },
-      })
-
-      if (!wdResponse.ok) return { exists: true, isBiography: false }
-
-      const wdData = await wdResponse.json()
-      const claims = wdData.claims?.P31 ?? []
-      const isBiography = claims.some(
-        (claim: { mainsnak?: { datavalue?: { value?: { id?: string } } } }) =>
-          claim.mainsnak?.datavalue?.value?.id === WIKIDATA_HUMAN_ID,
-      )
-
-      return { exists: true, isBiography }
+      return { exists: true, isBiography: await isHuman(wikidataId, url) }
     },
   }
+}
+
+/** The page and its Wikidata identifier, as Wikipedia reports them */
+async function askPage(parsed: { lang: string; title: string }): Promise<WikipediaPage> {
+  const data = (await askWikimedia(
+    `https://${parsed.lang}.wikipedia.org/w/api.php` +
+      `?action=query&format=json&prop=pageprops&titles=${encodeURIComponent(parsed.title)}` +
+      `&ppprop=wikibase_item`,
+  )) as { query?: { pages?: Record<string, WikipediaPage> } }
+
+  const pages = data.query?.pages
+  const page = pages && Object.values(pages)[0]
+  if (!page) throw new Error(`Wikipedia answered without a page for ${parsed.title}`)
+  return page
+}
+
+/**
+ * What Wikidata says the item is: a human, or something else. An item that
+ * claims nothing about what it is settles nothing, so it fails rather than
+ * pass for « not a person ».
+ */
+async function isHuman(wikidataId: string, url: string): Promise<boolean> {
+  const data = (await askWikimedia(
+    `https://www.wikidata.org/w/api.php` +
+      `?action=wbgetclaims&format=json&entity=${wikidataId}&property=P31`,
+  )) as { claims?: { P31?: Claim[] } }
+
+  const claims = data.claims?.P31
+  if (!claims || claims.length === 0) {
+    throw new Error(`Wikidata says nothing about what ${wikidataId} is, for ${url}`)
+  }
+
+  return claims.some((claim) => claim.mainsnak?.datavalue?.value?.id === WIKIDATA_HUMAN_ID)
 }
