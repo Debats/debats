@@ -1,5 +1,6 @@
 'use server'
 
+import { NOT_AN_ARTICLE } from '../../domain/use-cases/notoriety'
 import {
   readWikipediaSummary,
   UnfilledReason,
@@ -9,14 +10,31 @@ import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type { WikipediaFacts } from '../../infra/wikipedia/wikipedia-summary'
 
-/**
- * Why nothing was filled. The first four reasons come from the page, the fifth
- * from us: the action is for signed-in contributors, and a visitor who calls
- * it has not met a page problem.
- */
-export type FillFailure = UnfilledReason | 'not_allowed'
+export type FillResult = ({ found: true } & WikipediaFacts) | { found: false; message: string }
 
-export type FillResult = ({ found: true } & WikipediaFacts) | { found: false; reason: FillFailure }
+/**
+ * Pourquoi rien n'a été rempli, dit au contributeur.
+ *
+ * Les messages se font ici et non dans le formulaire, comme partout ailleurs
+ * sur le site : une action rend des phrases (`error`, `fieldErrors`) et le
+ * client les affiche. Le formulaire qui inventerait les siennes à partir d'un
+ * code aurait deux endroits à tenir d'accord, et c'est ce qui a fait dire deux
+ * fois la même chose de deux façons.
+ *
+ * Celui de la page hors article reprend la clause du domaine, qui porte la
+ * même règle : ici on propose d'ouvrir le bon article, là on refuse l'adresse
+ * comme preuve.
+ */
+const MESSAGES: Record<UnfilledReason, string> = {
+  not_wikipedia: 'Ce n’est pas une adresse de page Wikipédia (https://fr.wikipedia.org/wiki/…).',
+  not_a_page: 'Cette page Wikipédia n’existe pas.',
+  not_an_article: `${NOT_AN_ARTICLE} Ouvrez l’article sur Wikipédia et recopiez son adresse.`,
+  ambiguous:
+    'Cette adresse mène à une page d’homonymie, qui ne décrit personne en particulier. Ouvrez la bonne page sur Wikipédia et recopiez son adresse.',
+  unreachable: 'Wikipédia n’a pas répondu. Réessayez dans un instant.',
+}
+
+const NOT_SIGNED_IN = 'Votre session a expiré. Reconnectez-vous pour utiliser le remplissage.'
 
 /**
  * What a Wikipedia page gives a form to copy: its title and its first lines.
@@ -30,7 +48,8 @@ export type FillResult = ({ found: true } & WikipediaFacts) | { found: false; re
  */
 export async function fillFromWikipedia(url: string): Promise<FillResult> {
   const contributor = await getAuthenticatedContributor()
-  if (!contributor) return { found: false, reason: 'not_allowed' }
+  if (!contributor) return { found: false, message: NOT_SIGNED_IN }
 
-  return readWikipediaSummary(url)
+  const summary = await readWikipediaSummary(url)
+  return summary.found ? summary : { found: false, message: MESSAGES[summary.reason] }
 }

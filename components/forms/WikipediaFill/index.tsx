@@ -2,22 +2,11 @@
 
 import { useCallback, useState } from 'react'
 import * as Sentry from '@sentry/nextjs'
-import {
-  FillFailure,
-  fillFromWikipedia,
-  WikipediaFacts,
-} from '../../../app/actions/fill-from-wikipedia'
-import { NOT_AN_ARTICLE } from '../../../domain/use-cases/notoriety-messages'
+import { fillFromWikipedia, WikipediaFacts } from '../../../app/actions/fill-from-wikipedia'
 import styles from './WikipediaFill.module.css'
 
-/** An empty field is answered here: the server is not called for nothing */
-type Outcome = FillFailure | 'empty' | 'filled'
-
 /** What was said, and about which address: editing the address makes it stale */
-interface Said {
-  url: string
-  outcome: Outcome
-}
+type Said = { url: string; filled: true } | { url: string; filled: false; message: string }
 
 interface WikipediaFillProps {
   /** The address as the field holds it at the moment of the click */
@@ -25,19 +14,13 @@ interface WikipediaFillProps {
   onFilled: (facts: WikipediaFacts) => void
 }
 
-const MESSAGES: Record<FillFailure | 'empty', string> = {
-  empty: 'Collez d’abord l’adresse de la page Wikipédia ci-dessus.',
-  not_wikipedia: 'Ce n’est pas une adresse de page Wikipédia (https://fr.wikipedia.org/wiki/…).',
-  not_a_page: 'Cette page Wikipédia n’existe pas.',
-  not_an_article: `${NOT_AN_ARTICLE} Ouvrez l’article sur Wikipédia et recopiez son adresse.`,
-  ambiguous:
-    'Cette adresse mène à une page d’homonymie, qui ne décrit personne en particulier. Ouvrez la bonne page sur Wikipédia et recopiez son adresse.',
-  unreachable: 'Wikipédia n’a pas répondu. Réessayez dans un instant.',
-  not_allowed: 'Votre session a expiré. Reconnectez-vous pour utiliser le remplissage.',
-}
+/** The one thing said here: an empty field is answered without calling the server */
+const NOTHING_TO_READ = 'Collez d’abord l’adresse de la page Wikipédia ci-dessus.'
 
 const FILLED =
   'Nom et présentation recopiés depuis Wikipédia. Relisez-les : un résumé Wikipédia porte parfois des appréciations, que le site ne reprend pas.'
+
+const UNEXPECTED = 'Le remplissage a échoué. Réessayez dans un instant.'
 
 /**
  * Fills the name and the presentation from the Wikipedia page already entered.
@@ -54,6 +37,11 @@ const FILLED =
  * The button stays clickable on an empty field, and says so: a disabled button
  * takes no focus and explains nothing to someone who cannot see the field.
  *
+ * Why a refusal is rendered and not composed: the action says what it could
+ * not do, in words, as every other action of the site does with `error` and
+ * `fieldErrors`. Two places holding the same sentences is what made the site
+ * say the same thing in two ways.
+ *
  * Shared by the four forms that carry a Wikipedia address. What is shared is
  * the behaviour, not the layout: each places this button where its own design
  * wants it.
@@ -64,7 +52,7 @@ export default function WikipediaFill({ url, onFilled }: WikipediaFillProps) {
 
   const fill = useCallback(async () => {
     if (!url.trim()) {
-      setSaid({ url, outcome: 'empty' })
+      setSaid({ url, filled: false, message: NOTHING_TO_READ })
       return
     }
 
@@ -75,20 +63,20 @@ export default function WikipediaFill({ url, onFilled }: WikipediaFillProps) {
       const result = await fillFromWikipedia(url)
       if (result.found) {
         onFilled({ name: result.name, presentation: result.presentation })
-        setSaid({ url, outcome: 'filled' })
+        setSaid({ url, filled: true })
       } else {
-        setSaid({ url, outcome: result.reason })
+        setSaid({ url, filled: false, message: result.message })
       }
     } catch (err) {
       Sentry.captureException(err)
-      setSaid({ url, outcome: 'unreachable' })
+      setSaid({ url, filled: false, message: UNEXPECTED })
     } finally {
       setPending(false)
     }
   }, [onFilled, url])
 
   /* What was said of another address says nothing of this one */
-  const outcome = said?.url === url ? said.outcome : undefined
+  const outcome = said?.url === url ? said : undefined
 
   return (
     <div className={styles.fill}>
@@ -102,8 +90,8 @@ export default function WikipediaFill({ url, onFilled }: WikipediaFillProps) {
        * which is how `SearchField` already does it.
        */}
       <div role="status" aria-live="polite">
-        {outcome === 'filled' && <p className={styles.note}>{FILLED}</p>}
-        {outcome && outcome !== 'filled' && <p className={styles.failure}>{MESSAGES[outcome]}</p>}
+        {outcome?.filled && <p className={styles.note}>{FILLED}</p>}
+        {outcome?.filled === false && <p className={styles.failure}>{outcome.message}</p>}
       </div>
     </div>
   )

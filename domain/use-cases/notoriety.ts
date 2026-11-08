@@ -1,7 +1,6 @@
 import { Effect, pipe, Schedule } from 'effect'
 import { WikipediaValidationResult, WikipediaValidator } from '../services/wikipedia-validator'
 import { FieldErrors, Invalid } from './types'
-import { NOT_AN_ARTICLE } from './notoriety-messages'
 
 const WIKIPEDIA_PAGE = /^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/
 const URL = /^https?:\/\/.+/
@@ -42,11 +41,19 @@ export const UNABLE_TO_CHECK_WIKIPEDIA =
   'Impossible de vérifier cette page Wikipédia pour le moment. Réessayez, ou indiquez deux sources de notoriété à la place.'
 
 /**
- * What the command says about a page that is not an article: the criterion
+ * A page that exists and describes no subject. Wikipedia serves categories,
+ * portals and talk pages under the same `/wiki/` addresses, and the criterion
  * asks for a page about the personality or the organisation, not for any page
- * at all. The clause is shared with the form that fills itself from a page,
- * which follows it with what it can do instead.
+ * at all.
+ *
+ * The clause stands on its own because the action that offers to fill a form
+ * from a page says the same thing and offers something else about it. What
+ * follows it is what each caller can do.
  */
+export const NOT_AN_ARTICLE =
+  'Cette adresse n’est pas un article Wikipédia (catégorie, portail, page de discussion…).'
+
+/** What the command answers: the address it was given cannot serve as a proof */
 export const NOT_A_WIKIPEDIA_ARTICLE = `${NOT_AN_ARTICLE} Donnez l’adresse de l’article.`
 
 /** A hiccup is caught up with once; an outage is said out loud */
