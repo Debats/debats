@@ -1,6 +1,7 @@
 import { Effect, pipe, Schedule } from 'effect'
 import { WikipediaValidationResult, WikipediaValidator } from '../services/wikipedia-validator'
 import { FieldErrors, Invalid } from './types'
+import { NOT_AN_ARTICLE } from './notoriety-messages'
 
 const WIKIPEDIA_PAGE = /^https:\/\/(fr|en)\.wikipedia\.org\/wiki\/.+/
 const URL = /^https?:\/\/.+/
@@ -16,12 +17,12 @@ export function notorietyFaults(wikipediaUrl: string, notorietySources: string[]
       ? {}
       : {
           wikipediaUrl:
-            'L’URL Wikipedia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).',
+            'L’URL Wikipédia est invalide (format attendu : https://fr.wikipedia.org/wiki/...).',
         }
   }
   if (notorietySources.length < 2) {
     return {
-      notorietySources: 'Sans page Wikipedia, au moins 2 sources de notoriété sont requises.',
+      notorietySources: 'Sans page Wikipédia, au moins 2 sources de notoriété sont requises.',
     }
   }
   if (!notorietySources.every((url) => URL.test(url))) {
@@ -38,16 +39,15 @@ export function notorietyFaults(wikipediaUrl: string, notorietySources: string[]
  * satisfy the same criterion, so nobody is stuck waiting for Wikipedia.
  */
 export const UNABLE_TO_CHECK_WIKIPEDIA =
-  'Impossible de vérifier cette page Wikipedia pour le moment. Réessayez, ou indiquez deux sources de notoriété à la place.'
+  'Impossible de vérifier cette page Wikipédia pour le moment. Réessayez, ou indiquez deux sources de notoriété à la place.'
 
 /**
- * What the site says about a page that is not an article. Wikipedia serves
- * categories, portals and talk pages under the same `/wiki/` addresses, and
- * none of them describes a subject: the criterion asks for a page about the
- * personality or the organisation, not for any page at all.
+ * What the command says about a page that is not an article: the criterion
+ * asks for a page about the personality or the organisation, not for any page
+ * at all. The clause is shared with the form that fills itself from a page,
+ * which follows it with what it can do instead.
  */
-export const NOT_A_WIKIPEDIA_ARTICLE =
-  'Cette adresse n’est pas un article Wikipedia (catégorie, portail, page de discussion…). Donnez l’adresse de l’article.'
+export const NOT_A_WIKIPEDIA_ARTICLE = `${NOT_AN_ARTICLE} Donnez l’adresse de l’article.`
 
 /** A hiccup is caught up with once; an outage is said out loud */
 const ONE_RETRY = Schedule.recurs(1).pipe(Schedule.addDelay(() => '300 millis'))
@@ -79,7 +79,7 @@ export const wikipediaPageJudged = (
     Effect.retry(ONE_RETRY),
     Effect.flatMap((page) => {
       const refused = !page.exists
-        ? 'La page Wikipedia n’existe pas.'
+        ? 'La page Wikipédia n’existe pas.'
         : !page.isArticle
           ? NOT_A_WIKIPEDIA_ARTICLE
           : judge(page)

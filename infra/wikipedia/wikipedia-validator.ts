@@ -2,12 +2,9 @@ import {
   WikipediaValidator,
   WikipediaValidationResult,
 } from '../../domain/services/wikipedia-validator'
-import { askWikimedia, extractLangAndTitle } from './wikimedia'
+import { ARTICLE_NAMESPACE, askWikimedia, extractLangAndTitle } from './wikimedia'
 
 const WIKIDATA_HUMAN_ID = 'Q5'
-
-/** The main namespace, where articles live; categories, portals and talk pages have their own */
-const ARTICLE_NAMESPACE = 0
 
 interface WikipediaPage {
   missing?: string

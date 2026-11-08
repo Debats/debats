@@ -1,4 +1,4 @@
-import { extractLangAndTitle, fetchWikimedia } from './wikimedia'
+import { ARTICLE_NAMESPACE, extractLangAndTitle, fetchWikimedia } from './wikimedia'
 
 /**
  * Why a page gave nothing to fill a form with. Each reason is a different
@@ -12,9 +12,6 @@ export type UnfilledReason =
   | 'not_an_article'
   | 'ambiguous'
   | 'unreachable'
-
-/** The main namespace, where articles live; categories and portals have their own */
-const ARTICLE_NAMESPACE = 0
 
 /** Ce qu'une page donne à recopier. Nommé une fois, et porté jusqu'au formulaire */
 export interface WikipediaFacts {

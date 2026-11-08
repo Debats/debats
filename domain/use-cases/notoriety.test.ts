@@ -74,7 +74,7 @@ describe('wikipediaPageJudged', () => {
     }
 
     expect(await run(judged(missing))).toEqual(
-      Either.left(new Invalid({ wikipediaUrl: 'La page Wikipedia n’existe pas.' })),
+      Either.left(new Invalid({ wikipediaUrl: 'La page Wikipédia n’existe pas.' })),
     )
     expect(await run(judged(notABiography))).toEqual(
       Either.left(new Invalid({ wikipediaUrl: 'Pas une biographie.' })),

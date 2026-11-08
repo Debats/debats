@@ -1,6 +1,13 @@
 const USER_AGENT = 'Debats.co/1.0 (https://debats.co)'
 
 /**
+ * The main namespace, where articles live. Categories, portals and talk pages
+ * have their own, are served under the same `/wiki/` addresses, and describe
+ * no subject — which both callers have to notice.
+ */
+export const ARTICLE_NAMESPACE = 0
+
+/**
  * How long we wait for an answer. A contributor is waiting on the other end:
  * both callers turn a failed call into something they can say to her, so
  * hanging would be the one outcome neither can report.
