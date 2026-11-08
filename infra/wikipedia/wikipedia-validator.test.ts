@@ -109,6 +109,44 @@ describe('createWikipediaValidator', () => {
     }
   })
 
+  /*
+   * A redirect is a page like any other to this API: it exists and carries no
+   * Wikidata item, so without `redirects=1` the validator concluded it could
+   * not tell, and « Europe Écologie Les Verts » — which now redirects to
+   * « Les Écologistes » — was answered with « retry in a moment », forever.
+   */
+  it('follows a redirect rather than fail to tell on a renamed entity', async () => {
+    /*
+     * Answers like the real API: asked without `redirects=1`, it hands back
+     * the redirect page itself — ns 0, not missing, and no Wikidata item.
+     * The validator reads that as « nothing says what this page describes ».
+     */
+    const fetching = vi.fn(async (url: string) => {
+      if (url.includes('wikidata.org')) {
+        return new Response(JSON.stringify(instanceOf('Q7278')), { status: 200 })
+      }
+      const body = url.includes('redirects=1')
+        ? {
+            query: {
+              redirects: [{ from: 'Europe Écologie Les Verts', to: 'Les Écologistes' }],
+              pages: { '613786': { pageprops: { wikibase_item: 'Q613786' } } },
+            },
+          }
+        : { query: { pages: { '15933156': { ns: 0, title: 'Europe Écologie Les Verts' } } } }
+      return new Response(JSON.stringify(body), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetching)
+
+    await expect(
+      createWikipediaValidator().validatePage(
+        'https://fr.wikipedia.org/wiki/Europe_%C3%89cologie_Les_Verts',
+      ),
+    ).resolves.toEqual({ exists: true, isBiography: false })
+
+    const [[asked]] = fetching.mock.calls as unknown as [[string]]
+    expect(asked).toContain('redirects=1')
+  })
+
   it('asks Wikipedia, then Wikidata, and names itself to both', async () => {
     const fetching = answering(pageWithItem('Q991'), instanceOf('Q5'))
 
