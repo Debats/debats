@@ -31,7 +31,7 @@ const fakePublicFigureRepo = {
 } as unknown as PublicFigureRepository
 
 const fakeWikipediaValidator: WikipediaValidator = {
-  validatePage: async () => ({ exists: true, isBiography: true }),
+  validatePage: async () => ({ exists: true, isArticle: true, isBiography: true }),
 }
 
 const validParams = {
@@ -197,7 +197,11 @@ describe('createPublicFigureUseCase', () => {
 
   it('should fail when Wikipedia page does not exist', async () => {
     const result = await runFormWith(
-      fakes({ wikipedia: { validatePage: async () => ({ exists: false, isBiography: false }) } }),
+      fakes({
+        wikipedia: {
+          validatePage: async () => ({ exists: false, isArticle: false, isBiography: false }),
+        },
+      }),
     )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
     expect(Either.isLeft(result)).toBe(true)
@@ -208,7 +212,11 @@ describe('createPublicFigureUseCase', () => {
 
   it('should fail when Wikipedia page is not a biography', async () => {
     const result = await runFormWith(
-      fakes({ wikipedia: { validatePage: async () => ({ exists: true, isBiography: false }) } }),
+      fakes({
+        wikipedia: {
+          validatePage: async () => ({ exists: true, isArticle: true, isBiography: false }),
+        },
+      }),
     )(createPublicFigureUseCase({ ...validParams, contributor: { id: 'abc', reputation: 1000 } }))
 
     expect(Either.isLeft(result)).toBe(true)

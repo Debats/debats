@@ -51,7 +51,7 @@ import {
 const ADMIN: ContributorIdentity = { id: 'user-1', reputation: 1_000_000 }
 
 const fakeWikipediaValidator: WikipediaValidator = {
-  validatePage: async () => ({ exists: true, isBiography: true }),
+  validatePage: async () => ({ exists: true, isArticle: true, isBiography: true }),
 }
 
 /**

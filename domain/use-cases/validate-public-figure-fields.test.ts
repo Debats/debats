@@ -5,7 +5,7 @@ import { Invalid } from './types'
 import { publicFigureFields } from './validate-public-figure-fields'
 
 const wikipediaValidator: WikipediaValidator = {
-  validatePage: async () => ({ exists: true, isBiography: true }),
+  validatePage: async () => ({ exists: true, isArticle: true, isBiography: true }),
 }
 
 const run = <A, E>(effect: Effect.Effect<A, E, WikipediaValidator>) =>

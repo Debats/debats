@@ -76,7 +76,11 @@ const fakePublicFigureRepo = {
 const organisation = sampleOrganisation()
 
 /** Une page qui ne décrit pas une personne : ce qu'une organisation doit présenter */
-const pageIsNotAPerson = fakeWikipediaValidator({ exists: true, isBiography: false })
+const pageIsNotAPerson = fakeWikipediaValidator({
+  exists: true,
+  isArticle: true,
+  isBiography: false,
+})
 
 const validParams = {
   subjectId: 'subject-1',
@@ -112,7 +116,8 @@ const fakes = (
     Layer.succeed(ArgumentRepository, overrides.arguments ?? fakeArgumentRepo()),
     Layer.succeed(
       WikipediaValidator,
-      overrides.wikipedia ?? fakeWikipediaValidator({ exists: true, isBiography: true }),
+      overrides.wikipedia ??
+        fakeWikipediaValidator({ exists: true, isArticle: true, isBiography: true }),
     ),
   )
 
@@ -309,7 +314,11 @@ describe('createStatementUseCase', () => {
   })
 
   it('writes nothing when the Wikipedia page is refused: the judgement comes before the transaction', async () => {
-    const noSuchPage = fakeWikipediaValidator({ exists: false, isBiography: false })
+    const noSuchPage = fakeWikipediaValidator({
+      exists: false,
+      isArticle: false,
+      isBiography: false,
+    })
     const { run, journal } = inMemoryUnitOfWork()
 
     const result = await runFormWith(fakes({ wikipedia: noSuchPage }))(
@@ -473,7 +482,11 @@ describe('createStatementUseCase', () => {
 
   it('writes nothing when the organisation’s Wikipedia page describes a person', async () => {
     // Une page de personne ne décrit pas une organisation : le refus précède la transaction
-    const pageIsAPerson = fakeWikipediaValidator({ exists: true, isBiography: true })
+    const pageIsAPerson = fakeWikipediaValidator({
+      exists: true,
+      isArticle: true,
+      isBiography: true,
+    })
     const { run, journal } = inMemoryUnitOfWork()
 
     const result = await runFormWith(

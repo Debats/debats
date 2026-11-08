@@ -130,6 +130,8 @@ export function fakeReputationRepo(): ReputationRepository {
   }
 }
 
-export const fakeWikipediaValidator = (result = { exists: true, isBiography: false }) => ({
+export const fakeWikipediaValidator = (
+  result = { exists: true, isArticle: true, isBiography: false },
+) => ({
   validatePage: async () => result,
 })

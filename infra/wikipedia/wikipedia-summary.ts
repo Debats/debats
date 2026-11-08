@@ -6,7 +6,15 @@ import { extractLangAndTitle, fetchWikimedia } from './wikimedia'
  * a wrong address, a title that does not exist, a title that names several
  * subjects, and Wikipedia not answering are four different problems.
  */
-export type UnfilledReason = 'not_wikipedia' | 'not_a_page' | 'ambiguous' | 'unreachable'
+export type UnfilledReason =
+  | 'not_wikipedia'
+  | 'not_a_page'
+  | 'not_an_article'
+  | 'ambiguous'
+  | 'unreachable'
+
+/** The main namespace, where articles live; categories and portals have their own */
+const ARTICLE_NAMESPACE = 0
 
 /** Ce qu'une page donne à recopier. Nommé une fois, et porté jusqu'au formulaire */
 export interface WikipediaFacts {
@@ -24,6 +32,7 @@ interface SummaryBody {
   type?: string
   title?: string
   extract?: string
+  namespace?: { id?: number }
 }
 
 /**
@@ -56,6 +65,16 @@ export async function readWikipediaSummary(url: string): Promise<WikipediaSummar
     const body = (await response.json()) as SummaryBody
 
     if (body.type === 'disambiguation') return unfilled('ambiguous')
+
+    /*
+     * A category, a portal or a talk page: it exists, and copying its title
+     * would put « Catégorie:Association française » in the name field. The
+     * namespace is read when the payload carries it — it does, on every
+     * answer measured — and a payload without it is still worth its title.
+     */
+    if (body.namespace?.id !== undefined && body.namespace.id !== ARTICLE_NAMESPACE) {
+      return unfilled('not_an_article')
+    }
 
     const name = body.title?.trim()
     if (!name) return unfilled('not_a_page')

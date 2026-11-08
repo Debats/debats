@@ -28,6 +28,8 @@ const MESSAGES: Record<FillFailure | 'empty', string> = {
   empty: 'Collez d’abord l’adresse de la page Wikipédia ci-dessus.',
   not_wikipedia: 'Ce n’est pas une adresse de page Wikipédia (https://fr.wikipedia.org/wiki/…).',
   not_a_page: 'Cette page Wikipédia n’existe pas.',
+  not_an_article:
+    'Cette adresse mène à une catégorie, un portail ou une page de discussion, pas à un article. Ouvrez l’article sur Wikipédia et recopiez son adresse.',
   ambiguous:
     'Cette adresse mène à une page d’homonymie, qui ne décrit personne en particulier. Ouvrez la bonne page sur Wikipédia et recopiez son adresse.',
   unreachable: 'Wikipédia n’a pas répondu. Réessayez dans un instant.',

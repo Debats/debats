@@ -93,7 +93,9 @@ describe('createOrganisationUseCase', () => {
 
   it('rejects a Wikipedia page that does not exist', async () => {
     const result = await runFormWith(
-      fakes({ wikipedia: fakeWikipediaValidator({ exists: false, isBiography: false }) }),
+      fakes({
+        wikipedia: fakeWikipediaValidator({ exists: false, isArticle: false, isBiography: false }),
+      }),
     )(createOrganisationUseCase(validParams()))
 
     expect(fieldErrorsOf(result).wikipediaUrl).toContain('existe pas')
@@ -101,7 +103,9 @@ describe('createOrganisationUseCase', () => {
 
   it('rejects a Wikipedia page that describes a person', async () => {
     const result = await runFormWith(
-      fakes({ wikipedia: fakeWikipediaValidator({ exists: true, isBiography: true }) }),
+      fakes({
+        wikipedia: fakeWikipediaValidator({ exists: true, isArticle: true, isBiography: true }),
+      }),
     )(createOrganisationUseCase(validParams()))
 
     expect(fieldErrorsOf(result).wikipediaUrl).toContain('personne')

@@ -44,7 +44,7 @@ const fakePublicFigureRepo = {
 } as unknown as PublicFigureRepository
 
 const fakeWikipediaValidator: WikipediaValidator = {
-  validatePage: async () => ({ exists: true, isBiography: true }),
+  validatePage: async () => ({ exists: true, isArticle: true, isBiography: true }),
 }
 
 const validParams = {

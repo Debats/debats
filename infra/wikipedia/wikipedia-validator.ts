@@ -6,8 +6,12 @@ import { askWikimedia, extractLangAndTitle } from './wikimedia'
 
 const WIKIDATA_HUMAN_ID = 'Q5'
 
+/** The main namespace, where articles live; categories, portals and talk pages have their own */
+const ARTICLE_NAMESPACE = 0
+
 interface WikipediaPage {
   missing?: string
+  ns?: number
   pageprops?: { wikibase_item?: string }
 }
 
@@ -19,12 +23,25 @@ export function createWikipediaValidator(): WikipediaValidator {
   return {
     async validatePage(url: string): Promise<WikipediaValidationResult> {
       const parsed = extractLangAndTitle(url)
-      if (!parsed) return { exists: false, isBiography: false }
+      if (!parsed) return { exists: false, isArticle: false, isBiography: false }
 
       const page = await askPage(parsed)
 
       // The API reports a title it does not hold as « missing », with a 200
-      if ('missing' in page) return { exists: false, isBiography: false }
+      if ('missing' in page) return { exists: false, isArticle: false, isBiography: false }
+
+      if (page.ns === undefined) {
+        // Every page the API returns carries its namespace: without it we cannot say
+        throw new Error(`Wikipedia did not say which namespace ${url} is in`)
+      }
+      if (page.ns !== ARTICLE_NAMESPACE) {
+        /*
+         * A category, a portal or a talk page. It exists, it has a Wikidata
+         * item of its own, and asking Wikidata about it would answer « not a
+         * person » — which is why the domain asks this before judging.
+         */
+        return { exists: true, isArticle: false, isBiography: false }
+      }
 
       const wikidataId = page.pageprops?.wikibase_item
       if (!wikidataId) {
@@ -32,7 +49,7 @@ export function createWikipediaValidator(): WikipediaValidator {
         throw new Error(`No Wikidata item for ${url}`)
       }
 
-      return { exists: true, isBiography: await isHuman(wikidataId, url) }
+      return { exists: true, isArticle: true, isBiography: await isHuman(wikidataId, url) }
     },
   }
 }

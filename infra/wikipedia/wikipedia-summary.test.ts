@@ -88,6 +88,28 @@ describe('readWikipediaSummary', () => {
     })
   })
 
+  /*
+   * A category exists and has a title, so without this the fill put
+   * « Catégorie:Association française » in the name field. The namespace is
+   * in the answer already — no extra call.
+   */
+  it('refuses a category, a portal or a talk page', async () => {
+    for (const [id, text] of [
+      [14, 'Catégorie'],
+      [100, 'Portail'],
+      [1, 'Discussion'],
+    ] as const) {
+      answering({
+        status: 200,
+        body: { type: 'no-extract', title: `${text}:X`, namespace: { id, text }, extract: '' },
+      })
+
+      await expect(
+        readWikipediaSummary(`https://fr.wikipedia.org/wiki/${text}:X`),
+      ).resolves.toEqual({ found: false, reason: 'not_an_article' })
+    }
+  })
+
   it('says a missing title is missing', async () => {
     answering({ status: 404, body: { type: 'Internal error' } })
 

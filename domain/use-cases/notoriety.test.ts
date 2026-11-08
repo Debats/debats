@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { Effect, Either } from 'effect'
 import { WikipediaValidator } from '../services/wikipedia-validator'
 import { Invalid } from './types'
-import { notorietyFaults, UNABLE_TO_CHECK_WIKIPEDIA, wikipediaPageJudged } from './notoriety'
+import {
+  NOT_A_WIKIPEDIA_ARTICLE,
+  notorietyFaults,
+  UNABLE_TO_CHECK_WIKIPEDIA,
+  wikipediaPageJudged,
+} from './notoriety'
 
 const run = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(Effect.either(effect))
 
@@ -34,9 +39,39 @@ describe('wikipediaPageJudged', () => {
   const judged = (validator: WikipediaValidator) =>
     Effect.provideService(wikipediaPageJudged(page, biographyOnly), WikipediaValidator, validator)
 
+  /*
+   * A category exists, is not a person, and describes nobody: judged on those
+   * two answers alone it satisfied an organisation's notoriety criterion, and
+   * « Catégorie:Association française » passed for a proof of notoriety.
+   */
+  it('refuses a page that is not an article, before judging what it describes', async () => {
+    let judged = false
+    const category = {
+      validatePage: async () => ({ exists: true, isArticle: false, isBiography: false }),
+    }
+
+    const result = await run(
+      Effect.provideService(
+        wikipediaPageJudged(page, (p) => {
+          judged = true
+          return biographyOnly(p)
+        }),
+        WikipediaValidator,
+        category,
+      ),
+    )
+
+    expect(result).toEqual(Either.left(new Invalid({ wikipediaUrl: NOT_A_WIKIPEDIA_ARTICLE })))
+    expect(judged).toBe(false)
+  })
+
   it('refuses a page that does not exist, then one the command judges wrong', async () => {
-    const missing = { validatePage: async () => ({ exists: false, isBiography: false }) }
-    const notABiography = { validatePage: async () => ({ exists: true, isBiography: false }) }
+    const missing = {
+      validatePage: async () => ({ exists: false, isArticle: false, isBiography: false }),
+    }
+    const notABiography = {
+      validatePage: async () => ({ exists: true, isArticle: true, isBiography: false }),
+    }
 
     expect(await run(judged(missing))).toEqual(
       Either.left(new Invalid({ wikipediaUrl: 'La page Wikipedia n’existe pas.' })),
@@ -70,7 +105,7 @@ describe('wikipediaPageJudged', () => {
       validatePage: async () => {
         calls += 1
         if (calls === 1) throw new Error('connexion perdue')
-        return { exists: true, isBiography: true }
+        return { exists: true, isArticle: true, isBiography: true }
       },
     }
 
@@ -83,7 +118,7 @@ describe('wikipediaPageJudged', () => {
     const notABiography = {
       validatePage: async () => {
         calls += 1
-        return { exists: true, isBiography: false }
+        return { exists: true, isArticle: true, isBiography: false }
       },
     }
 

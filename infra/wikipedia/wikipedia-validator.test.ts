@@ -3,8 +3,9 @@ import { createWikipediaValidator } from './wikipedia-validator'
 
 const CAMUS = 'https://fr.wikipedia.org/wiki/Albert_Camus'
 
+/** An article — namespace 0 — carrying its Wikidata item */
 const pageWithItem = (item: string) => ({
-  query: { pages: { '1234': { pageprops: { wikibase_item: item } } } },
+  query: { pages: { '1234': { ns: 0, pageprops: { wikibase_item: item } } } },
 })
 
 const missingPage = { query: { pages: { '-1': { missing: '' } } } }
@@ -35,6 +36,7 @@ describe('createWikipediaValidator', () => {
 
     await expect(createWikipediaValidator().validatePage(CAMUS)).resolves.toEqual({
       exists: true,
+      isArticle: true,
       isBiography: true,
     })
   })
@@ -44,8 +46,32 @@ describe('createWikipediaValidator', () => {
 
     await expect(createWikipediaValidator().validatePage(CAMUS)).resolves.toEqual({
       exists: true,
+      isArticle: true,
       isBiography: false,
     })
+  })
+
+  /*
+   * A category has a Wikidata item of its own — « Catégorie:Femme politique
+   * française » is Q7039440, instance of « Wikimedia category » — so asking
+   * Wikidata about it answers « not a person », which used to satisfy an
+   * organisation's notoriety criterion. The namespace says it first, and the
+   * answer is already in the response we have.
+   */
+  it('reads a category, a portal or a talk page as not an article', async () => {
+    for (const ns of [14, 100, 1]) {
+      answering({ query: { pages: { '1234': { ns, pageprops: { wikibase_item: 'Q7039440' } } } } })
+
+      await expect(
+        createWikipediaValidator().validatePage('https://fr.wikipedia.org/wiki/Cat%C3%A9gorie:X'),
+      ).resolves.toEqual({ exists: true, isArticle: false, isBiography: false })
+    }
+  })
+
+  it('fails rather than guess when Wikipedia does not say the namespace', async () => {
+    answering({ query: { pages: { '1234': { pageprops: { wikibase_item: 'Q991' } } } } })
+
+    await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('namespace')
   })
 
   it('reports a title Wikipedia does not hold as absent', async () => {
@@ -53,6 +79,7 @@ describe('createWikipediaValidator', () => {
 
     await expect(createWikipediaValidator().validatePage(CAMUS)).resolves.toEqual({
       exists: false,
+      isArticle: false,
       isBiography: false,
     })
   })
@@ -77,7 +104,7 @@ describe('createWikipediaValidator', () => {
   })
 
   it('fails when the page carries no Wikidata item: nothing says what it describes', async () => {
-    answering({ query: { pages: { '1234': {} } } })
+    answering({ query: { pages: { '1234': { ns: 0 } } } })
 
     await expect(createWikipediaValidator().validatePage(CAMUS)).rejects.toThrow('No Wikidata item')
   })
@@ -129,7 +156,7 @@ describe('createWikipediaValidator', () => {
         ? {
             query: {
               redirects: [{ from: 'Europe Écologie Les Verts', to: 'Les Écologistes' }],
-              pages: { '613786': { pageprops: { wikibase_item: 'Q613786' } } },
+              pages: { '613786': { ns: 0, pageprops: { wikibase_item: 'Q613786' } } },
             },
           }
         : { query: { pages: { '15933156': { ns: 0, title: 'Europe Écologie Les Verts' } } } }
@@ -141,7 +168,7 @@ describe('createWikipediaValidator', () => {
       createWikipediaValidator().validatePage(
         'https://fr.wikipedia.org/wiki/Europe_%C3%89cologie_Les_Verts',
       ),
-    ).resolves.toEqual({ exists: true, isBiography: false })
+    ).resolves.toEqual({ exists: true, isArticle: true, isBiography: false })
 
     const [[asked]] = fetching.mock.calls as unknown as [[string]]
     expect(asked).toContain('redirects=1')
