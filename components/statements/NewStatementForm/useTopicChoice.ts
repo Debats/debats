@@ -102,9 +102,14 @@ export function useTopicChoice(initial: { subject?: Chosen }): TopicChoice {
     [updateDraft],
   )
 
+  /*
+   * The ticked position is left alone: the subject has not changed, so it is
+   * still one of its own, and `input` ignores it while a subject is being
+   * created. Clearing it would only lose it, and cancelling would not bring
+   * it back — opening a panel costs nothing, here as everywhere else.
+   */
   const startNewSubject = useCallback(() => {
     setCreatingSubject(true)
-    setChosenPositionId('')
     updateDraft({ subjectTitle: subject.title, positionTitle: position.title })
   }, [position.title, subject.title, updateDraft])
 
