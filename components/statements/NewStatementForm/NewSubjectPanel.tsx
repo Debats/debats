@@ -34,6 +34,11 @@ interface NewSubjectPanelProps {
  * being broken rather than on a page nobody reads: a subject is a theme and
  * not a stance, and the question goes in the problématique, never in the
  * title.
+ *
+ * Title, presentation, then problématique — the order /s/ajouter asks them
+ * in, so a contributor who has filled one form is not asked to relearn the
+ * other. The published page reads them in another order, the question sitting
+ * right under the title, and that is its own business.
  */
 export default function NewSubjectPanel({
   subject,
@@ -57,17 +62,6 @@ export default function NewSubjectPanel({
       />
 
       <TextArea
-        label="Problématique"
-        id="subjectProblem"
-        required
-        rows={2}
-        placeholder="La question posée, ex : Faut-il légaliser l’aide active à mourir ?"
-        value={subject.problem}
-        onChange={(e) => withField('problem', e.target.value)}
-        error={errors?.subjectProblem}
-      />
-
-      <TextArea
         label="Présentation"
         id="subjectPresentation"
         required
@@ -76,6 +70,17 @@ export default function NewSubjectPanel({
         value={subject.presentation}
         onChange={(e) => withField('presentation', e.target.value)}
         error={errors?.subjectPresentation}
+      />
+
+      <TextArea
+        label="Problématique"
+        id="subjectProblem"
+        required
+        rows={2}
+        placeholder="La question posée, ex : Faut-il légaliser l’aide active à mourir ?"
+        value={subject.problem}
+        onChange={(e) => withField('problem', e.target.value)}
+        error={errors?.subjectProblem}
       />
 
       <p className={styles.hint}>
