@@ -13,7 +13,8 @@ export interface PositionDraft {
 interface NewPositionPanelProps {
   position: PositionDraft
   onChange: (position: PositionDraft) => void
-  onCancel: () => void
+  /** Absent when this position is the first of a subject being created with it */
+  onCancel?: () => void
   errors?: FieldErrors
 }
 

@@ -36,9 +36,11 @@ import StatementContentFields from '../StatementContentFields'
 import LockedAction from './LockedAction'
 import NewFigurePanel from './NewFigurePanel'
 import NewOrganisationPanel from './NewOrganisationPanel'
-import NewPositionPanel, { PositionDraft } from './NewPositionPanel'
+import NewPositionPanel from './NewPositionPanel'
+import NewSubjectPanel from './NewSubjectPanel'
 import WhatWillBeWritten, { Created } from './WhatWillBeWritten'
 import { useAuthorChoice } from './useAuthorChoice'
+import { useTopicChoice } from './useTopicChoice'
 import styles from './NewStatementForm.module.css'
 
 interface NamedEntity {
@@ -82,24 +84,27 @@ export default function NewStatementForm({
   const canAddFigure = canPerform(reputation, 'add_personality')
   const canAddOrganisation = canPerform(reputation, 'add_organisation')
 
-  /** Who speaks: the kind, the existing one chosen, or the new one being typed */
-  const author = useAuthorChoice({ figure: initialFigure, organisation: initialOrganisation })
+  /*
+   * The page speaks of names and titles, which it also renders itself; the
+   * hooks speak of labels, because what they hold goes straight into a
+   * Combobox. The two vocabularies meet here, once.
+   */
+  const asChosen = (entity?: { id: string; name: string } | { id: string; title: string }) =>
+    entity && { id: entity.id, label: 'name' in entity ? entity.name : entity.title }
 
-  const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject?.id ?? '')
-  const [selectedPositionId, setSelectedPositionId] = useState('')
-  /** A position created in place: the form carries it until submission, nothing is written before */
-  const [creatingPosition, setCreatingPosition] = useState(false)
-  const [newPosition, setNewPosition] = useState<PositionDraft>({ title: '', description: '' })
+  /** Who speaks: the kind, the existing one chosen, or the new one being typed */
+  const author = useAuthorChoice({
+    figure: asChosen(initialFigure),
+    organisation: asChosen(initialOrganisation),
+  })
+
+  /** What it is about: the subject and the position defended on it, chosen or created */
+  const topic = useTopicChoice({ subject: asChosen(initialSubject) })
+
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
 
-  const [positions, setPositions] = useState<PositionOption[]>([])
-  const [loadingPositions, setLoadingPositions] = useState(!!initialSubject?.id)
-
   /** What the submission will create, in the order the form asks for it */
-  const created: Created[] = [
-    ...author.created,
-    ...(creatingPosition ? [{ what: 'La position', name: newPosition.title }] : []),
-  ]
+  const created: Created[] = [...author.created, ...topic.created]
 
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
@@ -109,18 +114,6 @@ export default function NewStatementForm({
     authorHref: string
     authorLabel: string
   }>()
-
-  useEffect(() => {
-    if (!selectedSubjectId) return
-
-    const controller = new AbortController()
-    getPositionsForSubject(selectedSubjectId).then((result) => {
-      if (controller.signal.aborted) return
-      setPositions(result)
-      setLoadingPositions(false)
-    })
-    return () => controller.abort()
-  }, [selectedSubjectId])
 
   const handleSearchFigures = useCallback(async (query: string) => {
     const results = await searchPublicFigures(query)
@@ -139,35 +132,6 @@ export default function NewStatementForm({
     const results = await searchSubjects(query)
     return results.map((s) => ({ id: s.id, label: s.title }))
   }, [])
-
-  const startNewPosition = useCallback(() => {
-    setCreatingPosition(true)
-    updateDraft({ positionTitle: newPosition.title })
-  }, [newPosition.title, updateDraft])
-
-  /** Cancelling gives choosing back, and gives back the one ticked before typing */
-  const cancelNewPosition = useCallback(() => {
-    setCreatingPosition(false)
-    updateDraft({
-      positionTitle: positions.find((p) => p.id === selectedPositionId)?.title ?? '',
-    })
-  }, [positions, selectedPositionId, updateDraft])
-
-  const changePosition = useCallback(
-    (position: PositionDraft) => {
-      setNewPosition(position)
-      updateDraft({ positionTitle: position.title })
-    },
-    [updateDraft],
-  )
-
-  const selectPosition = useCallback(
-    (id: string) => {
-      setSelectedPositionId(id)
-      updateDraft({ positionTitle: positions.find((p) => p.id === id)?.title ?? '' })
-    },
-    [positions, updateDraft],
-  )
 
   /** What the statement carries is held here, and mirrored in the preview. */
   const changeContent = useCallback(
@@ -199,19 +163,9 @@ export default function NewStatementForm({
 
       const form = e.currentTarget
 
-      /** The one being created, or the one ticked: never both */
-      const position: StatementPositionInput = creatingPosition
-        ? {
-            kind: 'new',
-            positionTitle: newPosition.title,
-            positionDescription: newPosition.description,
-          }
-        : { kind: 'existing', id: selectedPositionId }
-
       const input: NewStatement = {
-        subjectId: selectedSubjectId,
         author: author.input,
-        position,
+        topic: topic.input,
         content,
         sourceName: getFieldValue(form, 'sourceName'),
         sourceUrl: getFieldValue(form, 'sourceUrl'),
@@ -245,7 +199,7 @@ export default function NewStatementForm({
         setIsPending(false)
       }
     },
-    [author.input, content, newPosition, creatingPosition, selectedPositionId, selectedSubjectId],
+    [author.input, content, topic.input],
   )
 
   if (successResult) {
@@ -313,17 +267,8 @@ export default function NewStatementForm({
             required
             placeholder="Tapez un nom ou un sigle…"
             onSearch={handleSearchOrganisations}
-            onSelect={(id, label) =>
-              author.organisation.choose(id ? { id, name: label } : undefined)
-            }
-            initialItem={
-              author.organisation.chosen
-                ? {
-                    id: author.organisation.chosen.id,
-                    label: author.organisation.chosen.name,
-                  }
-                : undefined
-            }
+            onSelect={(id, label) => author.organisation.choose(id ? { id, label } : undefined)}
+            initialItem={author.organisation.chosen}
           />
         ) : author.figure.creating ? (
           <NewFigurePanel
@@ -343,12 +288,8 @@ export default function NewStatementForm({
             required
             placeholder="Tapez un nom…"
             onSearch={handleSearchFigures}
-            onSelect={(id, label) => author.figure.choose(id ? { id, name: label } : undefined)}
-            initialItem={
-              author.figure.chosen
-                ? { id: author.figure.chosen.id, label: author.figure.chosen.name }
-                : undefined
-            }
+            onSelect={(id, label) => author.figure.choose(id ? { id, label } : undefined)}
+            initialItem={author.figure.chosen}
           />
         )}
         {isOrganisation ? (
@@ -412,60 +353,66 @@ export default function NewStatementForm({
         <legend className={styles.sectionTitle}>
           <span className={styles.step}>2</span> Sur quoi ?
         </legend>
-        <Combobox
-          label="Sujet"
-          id="subjectId"
-          name="subjectId"
-          required
-          placeholder="Tapez un sujet…"
-          onSearch={handleSearchSubjects}
-          onSelect={(id, label) => {
-            setSelectedSubjectId(id)
-            setPositions([])
-            setSelectedPositionId('')
-            setCreatingPosition(false)
-            // Positions belong to the subject: changing subject voids the one being typed
-            setNewPosition({ title: '', description: '' })
-            setLoadingPositions(!!id)
-            updateDraft({ subjectTitle: label, positionTitle: '' })
-          }}
-          initialItem={
-            initialSubject ? { id: initialSubject.id, label: initialSubject.title } : undefined
-          }
-        />
+        {topic.subject.creating ? (
+          <NewSubjectPanel
+            subject={topic.subject.draft}
+            onChange={topic.subject.change}
+            onCancel={topic.subject.cancelNew}
+            errors={fieldErrors}
+          />
+        ) : (
+          <Combobox
+            label="Sujet"
+            id="subjectId"
+            name="subjectId"
+            required
+            placeholder="Tapez un sujet…"
+            onSearch={handleSearchSubjects}
+            onSelect={(id, label) => topic.subject.choose(id ? { id, label } : undefined)}
+            initialItem={topic.subject.chosen}
+          />
+        )}
         {canAddSubject ? (
-          <p className={styles.hint}>
-            Ce sujet n’existe pas encore ?{' '}
-            <Link href="/s/ajouter" className={styles.hintLink}>
-              Créer un sujet
-            </Link>
-          </p>
+          !topic.subject.creating && (
+            <p className={styles.hint}>
+              Ce sujet n’existe pas encore ?{' '}
+              <button
+                type="button"
+                className={styles.inlineAction}
+                onClick={topic.subject.startNew}
+              >
+                le créer ici
+              </button>
+              {' — '}vous nommerez sa première position juste en dessous.
+            </p>
+          )
         ) : (
           <LockedAction what="Référencer un sujet" action="add_subject" reputation={reputation} />
         )}
 
         <div className={styles.field}>
           <span className={styles.label}>Position défendue</span>
-          {!selectedSubjectId ? (
-            <p className={styles.hint}>Choisissez d’abord un sujet.</p>
-          ) : creatingPosition ? (
+          {topic.position.creating ? (
             <NewPositionPanel
-              position={newPosition}
-              onChange={changePosition}
-              onCancel={cancelNewPosition}
+              position={topic.position.draft}
+              onChange={topic.position.change}
               errors={fieldErrors}
+              /* A subject being created has nothing to go back to: its first position is the only one */
+              onCancel={topic.subject.creating ? undefined : topic.position.cancelNew}
             />
-          ) : loadingPositions ? (
+          ) : !topic.subject.chosen ? (
+            <p className={styles.hint}>Choisissez d’abord un sujet.</p>
+          ) : topic.position.loading ? (
             <p className={styles.hint}>Chargement des positions…</p>
-          ) : positions.length === 0 ? (
+          ) : topic.position.options.length === 0 ? (
             <p className={styles.hint}>Ce sujet n’a pas encore de position.</p>
           ) : (
             <div className={styles.options} role="radiogroup" aria-label="Position défendue">
-              {positions.map((position) => (
+              {topic.position.options.map((option) => (
                 <label
-                  key={position.id}
+                  key={option.id}
                   className={
-                    position.id === selectedPositionId
+                    option.id === topic.position.chosenId
                       ? `${styles.option} ${styles.optionOn}`
                       : styles.option
                   }
@@ -473,13 +420,13 @@ export default function NewStatementForm({
                   <input
                     type="radio"
                     name="positionId"
-                    value={position.id}
+                    value={option.id}
                     required
-                    checked={position.id === selectedPositionId}
-                    onChange={() => selectPosition(position.id)}
+                    checked={option.id === topic.position.chosenId}
+                    onChange={() => topic.position.choose(option.id)}
                     className={styles.radio}
                   />
-                  <span className={styles.optionTitle}>{position.title}</span>
+                  <span className={styles.optionTitle}>{option.title}</span>
                 </label>
               ))}
             </div>
@@ -487,10 +434,16 @@ export default function NewStatementForm({
           {fieldErrors?.positionId && (
             <span className={styles.fieldError}>{fieldErrors.positionId}</span>
           )}
-          {selectedSubjectId && !creatingPosition && !loadingPositions && (
+          {topic.subject.chosen && !topic.position.creating && !topic.position.loading && (
             <p className={styles.hint}>
-              {positions.length === 0 ? 'Nommez la première :' : 'Aucune ne correspond ?'}{' '}
-              <button type="button" className={styles.inlineAction} onClick={startNewPosition}>
+              {topic.position.options.length === 0
+                ? 'Nommez la première :'
+                : 'Aucune ne correspond ?'}{' '}
+              <button
+                type="button"
+                className={styles.inlineAction}
+                onClick={topic.position.startNew}
+              >
                 proposer une position ici
               </button>
               {' — '}accessible dès l’inscription : nommer une position décrit le débat, elle ne le

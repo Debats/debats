@@ -6,7 +6,12 @@ interface PanelProps {
   title: string
   /** What cancelling gives back: « choisir une personnalité existante » */
   instead: string
-  onCancel: () => void
+  /**
+   * Absent when there is nothing to go back to. The first position of a
+   * subject being created is the only one it can have, so no way out of that
+   * panel exists short of giving up the subject itself.
+   */
+  onCancel?: () => void
   children: ReactNode
 }
 
@@ -31,9 +36,11 @@ export default function Panel({ title, instead, onCancel, children }: PanelProps
 
       {children}
 
-      <button type="button" className={styles.panelCancel} onClick={onCancel}>
-        Annuler et {instead}
-      </button>
+      {onCancel && (
+        <button type="button" className={styles.panelCancel} onClick={onCancel}>
+          Annuler et {instead}
+        </button>
+      )}
     </div>
   )
 }

@@ -9,44 +9,18 @@ import {
 import { StatementAuthorInput } from '../../../domain/use-cases/create-statement'
 import { NotorietySourcePair, notorietySourcePair } from '../../forms/NotorietySources'
 import { useStatementDraft } from '../StatementDraft'
+import { Chosen, ExistingOrNew } from './existing-or-new'
 import { FigureDraft } from './NewFigurePanel'
 import { OrganisationDraft } from './NewOrganisationPanel'
 import { Created } from './WhatWillBeWritten'
 
 /**
- * The existing one that was chosen, with its name. The id alone is not
- * enough: the Combobox unmounts when the panel appears, and it must be able
- * to come back on what was chosen rather than empty.
+ * What an author has on top of the shared shape: the two notoriety sources,
+ * as a pair and not as a list. Their place matters while they are being
+ * typed, or what is typed in the second would move up into the first. The
+ * domain's list is composed on submission.
  */
-export interface Chosen {
-  id: string
-  name: string
-}
-
-/**
- * An author field in one of its two states: an existing one chosen from the
- * site's list, or a new one being typed. Never both — `AuthorChoice.input`
- * settles it, and yields the union the command expects.
- */
-interface ExistingOrNew<Draft> {
-  chosen?: Chosen
-  choose: (chosen?: Chosen) => void
-  /** True while a new one is being described instead of one being chosen */
-  creating: boolean
-  startNew: () => void
-  /**
-   * Back to choosing, and back to the choice made before. What was typed
-   * stays: cancelling means « let me look at the existing ones again », not
-   * « throw away what I wrote ».
-   */
-  cancelNew: () => void
-  draft: Draft
-  change: (draft: Draft) => void
-  /**
-   * The two notoriety sources, as a pair and not as a list: their place
-   * matters while they are being typed, or what is typed in the second would
-   * move up into the first. The domain's list is composed on submission.
-   */
+interface NotorietySide {
   sources: NotorietySourcePair
   setSources: (sources: NotorietySourcePair) => void
 }
@@ -54,8 +28,8 @@ interface ExistingOrNew<Draft> {
 export interface AuthorChoice {
   kind: StatementAuthorKind
   changeKind: (kind: StatementAuthorKind) => void
-  figure: ExistingOrNew<FigureDraft>
-  organisation: ExistingOrNew<OrganisationDraft>
+  figure: ExistingOrNew<FigureDraft> & NotorietySide
+  organisation: ExistingOrNew<OrganisationDraft> & NotorietySide
   /** What the submission will carry: chosen or created, never both */
   input: StatementAuthorInput
   /** What the submission will create on the author's side, for the recap */
@@ -132,12 +106,12 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
     [kind, updateDraft],
   )
 
-  const figure: ExistingOrNew<FigureDraft> = {
+  const figure: ExistingOrNew<FigureDraft> & NotorietySide = {
     chosen: chosenFigure,
     choose: useCallback(
       (chosen?: Chosen) => {
         setChosenFigure(chosen)
-        updateDraft({ authorName: chosen?.name ?? '' })
+        updateDraft({ authorName: chosen?.label ?? '' })
       },
       [updateDraft],
     ),
@@ -148,7 +122,7 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
     }, [figureDraft.name, updateDraft]),
     cancelNew: useCallback(() => {
       setCreatingFigure(false)
-      updateDraft({ authorName: chosenFigure?.name ?? '' })
+      updateDraft({ authorName: chosenFigure?.label ?? '' })
     }, [chosenFigure, updateDraft]),
     draft: figureDraft,
     change: useCallback(
@@ -162,12 +136,12 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
     setSources: setFigureSources,
   }
 
-  const organisation: ExistingOrNew<OrganisationDraft> = {
+  const organisation: ExistingOrNew<OrganisationDraft> & NotorietySide = {
     chosen: chosenOrganisation,
     choose: useCallback(
       (chosen?: Chosen) => {
         setChosenOrganisation(chosen)
-        updateDraft({ authorName: chosen?.name ?? '' })
+        updateDraft({ authorName: chosen?.label ?? '' })
       },
       [updateDraft],
     ),
@@ -178,7 +152,7 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
     }, [organisationDraft.name, updateDraft]),
     cancelNew: useCallback(() => {
       setCreatingOrganisation(false)
-      updateDraft({ authorName: chosenOrganisation?.name ?? '' })
+      updateDraft({ authorName: chosenOrganisation?.label ?? '' })
     }, [chosenOrganisation, updateDraft]),
     draft: organisationDraft,
     change: useCallback(
