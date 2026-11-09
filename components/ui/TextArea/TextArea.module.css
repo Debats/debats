@@ -15,6 +15,14 @@
   composes: controlError from '../form-field.module.css';
 }
 
+.textareaWarning {
+  composes: controlWarning from '../form-field.module.css';
+}
+
+.textareaProblem {
+  composes: controlProblem from '../form-field.module.css';
+}
+
 .error {
   composes: error from '../form-field.module.css';
 }

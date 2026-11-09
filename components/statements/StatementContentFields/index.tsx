@@ -10,6 +10,7 @@ import {
 } from '../../../domain/entities/statement'
 import { FieldErrors } from '../../../domain/use-cases/types'
 import { StatementContentInput } from '../../../domain/use-cases/validate-statement-fields'
+import { AdviceByField } from '../../ui/FieldAdvice'
 import TextArea from '../../ui/TextArea'
 import TextField from '../../ui/TextField'
 import styles from './StatementContentFields.module.css'
@@ -18,6 +19,8 @@ interface StatementContentFieldsProps {
   value: StatementContentInput
   onChange: (fields: StatementContentInput) => void
   errors?: FieldErrors
+  /** An opinion on the writing of each field, from an assisted reading */
+  advice?: AdviceByField
 }
 
 const TYPE_HINTS: Record<StatementType, string> = {
@@ -37,6 +40,7 @@ export default function StatementContentFields({
   value,
   onChange,
   errors,
+  advice,
 }: StatementContentFieldsProps) {
   const type = parseStatementType(value.statementType)
   const set = (patch: Partial<StatementContentInput>) => onChange({ ...value, ...patch })
@@ -74,6 +78,7 @@ export default function StatementContentFields({
           value={value.document}
           onChange={(e) => set({ document: e.target.value })}
           error={errors?.document}
+          advice={advice?.document}
         />
       )}
 
@@ -88,6 +93,7 @@ export default function StatementContentFields({
           value={value.quote}
           onChange={(e) => set({ quote: e.target.value })}
           error={errors?.quote}
+          advice={advice?.quote}
         />
       )}
 
@@ -102,6 +108,7 @@ export default function StatementContentFields({
             value={value.votedText}
             onChange={(e) => set({ votedText: e.target.value })}
             error={errors?.votedText}
+            advice={advice?.votedText}
           />
           <div className={styles.typeField}>
             <span className={styles.label}>Sens du vote</span>
@@ -137,6 +144,7 @@ export default function StatementContentFields({
           value={value.deed}
           onChange={(e) => set({ deed: e.target.value })}
           error={errors?.deed}
+          advice={advice?.deed}
         />
       )}
     </>

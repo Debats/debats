@@ -1,4 +1,5 @@
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
+import { AdviceByField } from '../../ui/FieldAdvice'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
@@ -18,6 +19,7 @@ interface NewSubjectPanelProps {
   onChange: (subject: SubjectDraft) => void
   onCancel: () => void
   errors?: FieldErrors
+  advice?: AdviceByField
 }
 
 /**
@@ -45,6 +47,7 @@ export default function NewSubjectPanel({
   onChange,
   onCancel,
   errors,
+  advice,
 }: NewSubjectPanelProps) {
   const withField = (field: keyof SubjectDraft, value: string) =>
     onChange({ ...subject, [field]: value })
@@ -59,6 +62,7 @@ export default function NewSubjectPanel({
         value={subject.title}
         onChange={(e) => withField('title', e.target.value)}
         error={errors?.subjectTitle}
+        advice={advice?.subjectTitle}
       />
 
       <TextArea
@@ -70,6 +74,7 @@ export default function NewSubjectPanel({
         value={subject.presentation}
         onChange={(e) => withField('presentation', e.target.value)}
         error={errors?.subjectPresentation}
+        advice={advice?.subjectPresentation}
       />
 
       <TextArea
@@ -81,6 +86,7 @@ export default function NewSubjectPanel({
         value={subject.problem}
         onChange={(e) => withField('problem', e.target.value)}
         error={errors?.subjectProblem}
+        advice={advice?.subjectProblem}
       />
 
       <p className={styles.hint}>

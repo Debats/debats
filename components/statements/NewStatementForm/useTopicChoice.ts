@@ -10,7 +10,6 @@ import { useStatementDraft } from '../StatementDraft'
 import { Chosen, ExistingOrNew } from './existing-or-new'
 import { EMPTY_SUBJECT, SubjectDraft } from './NewSubjectPanel'
 import { PositionDraft } from './NewPositionPanel'
-import { Created } from './WhatWillBeWritten'
 
 const EMPTY_POSITION: PositionDraft = { title: '', description: '' }
 
@@ -40,8 +39,6 @@ export interface TopicChoice {
 
   /** What the submission will carry: a subject and the position defended on it */
   input: StatementTopic
-  /** What the submission will create on this side, for the recap */
-  created: Created[]
 }
 
 /**
@@ -185,19 +182,6 @@ export function useTopicChoice(initial: { subject?: Chosen }): TopicChoice {
     [chosenPositionId, chosenSubjectId, creatingPosition, creatingSubject, position, subject],
   )
 
-  /*
-   * Derived from what leaves, so the recap cannot announce anything else. A
-   * new subject always carries a position to create; an existing one only
-   * when it was not ticked.
-   */
-  const positionToCreate =
-    input.kind === 'new' ? input.position : input.position.kind === 'new' ? input.position : null
-
-  const created: Created[] = [
-    ...(input.kind === 'new' ? [{ what: 'Le sujet', name: input.subject.title }] : []),
-    ...(positionToCreate ? [{ what: 'La position', name: positionToCreate.positionTitle }] : []),
-  ]
-
   return {
     subject: {
       chosen,
@@ -220,6 +204,5 @@ export function useTopicChoice(initial: { subject?: Chosen }): TopicChoice {
       choose: choosePosition,
     },
     input,
-    created,
   }
 }

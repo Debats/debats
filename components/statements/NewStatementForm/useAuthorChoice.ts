@@ -12,7 +12,6 @@ import { useStatementDraft } from '../StatementDraft'
 import { Chosen, ExistingOrNew } from './existing-or-new'
 import { FigureDraft } from './NewFigurePanel'
 import { OrganisationDraft } from './NewOrganisationPanel'
-import { Created } from './WhatWillBeWritten'
 
 /**
  * What an author has on top of the shared shape: the two notoriety sources,
@@ -32,8 +31,6 @@ export interface AuthorChoice {
   organisation: ExistingOrNew<OrganisationDraft> & NotorietySide
   /** What the submission will carry: chosen or created, never both */
   input: StatementAuthorInput
-  /** What the submission will create on the author's side, for the recap */
-  created: Created[]
 }
 
 const EMPTY_FIGURE: FigureDraft = {
@@ -208,16 +205,5 @@ export function useAuthorChoice(initial: { figure?: Chosen; organisation?: Chose
     ],
   )
 
-  /**
-   * Derived from what leaves, not from a parallel condition: the recap
-   * therefore cannot announce anything other than what the command will get.
-   */
-  const created: Created[] =
-    input.kind === 'new_figure'
-      ? [{ what: 'La personnalité', name: input.figure.name }]
-      : input.kind === 'new_organisation'
-        ? [{ what: 'L’organisation', name: input.organisation.name }]
-        : []
-
-  return { kind, changeKind, figure, organisation, input, created }
+  return { kind, changeKind, figure, organisation, input }
 }

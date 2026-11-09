@@ -137,6 +137,40 @@
   color: var(--ink-2);
 }
 
+/* The assisted reading: an opinion said in one grey line, never an alert */
+.proofreadingStatus {
+  composes: small from '../../../styles/text.module.css';
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-2);
+  margin: 0;
+  min-height: 1.5em;
+}
+
+.proofreadingSpinner {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-3);
+  border-top-color: transparent;
+  animation: proofreading-turn 0.8s linear infinite;
+}
+
+@keyframes proofreading-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proofreadingSpinner {
+    animation: none;
+  }
+}
+
 @media (max-width: 768px) {
   .section {
     padding: 20px;
@@ -189,23 +223,9 @@
   padding: 20px;
 }
 
-.panelHead {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
 .panelTitle {
   composes: title from '../../../styles/text.module.css';
   font-size: 17px;
-  margin: 0;
-}
-
-.panelNote {
-  composes: meta from '../../../styles/text.module.css';
-  color: var(--ink-2);
   margin: 0;
 }
 
@@ -218,37 +238,6 @@
   color: var(--signal-dark);
   text-decoration: underline;
   cursor: pointer;
-}
-
-/* What the submission will write, announced before the click */
-.summary {
-  background-color: var(--paper-2);
-  border-radius: var(--radius-card);
-  padding: 20px;
-}
-
-.summaryTitle {
-  composes: meta from '../../../styles/text.module.css';
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-2);
-  margin: 0 0 12px;
-}
-
-.summaryList {
-  composes: small from '../../../styles/text.module.css';
-  color: var(--ink);
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.summaryNote {
-  composes: small from '../../../styles/text.module.css';
-  color: var(--ink-2);
-  margin: 12px 0 0;
 }
 
 /* Opening a panel from within a sentence: the same grain as an action link */

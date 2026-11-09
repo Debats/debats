@@ -5,6 +5,7 @@ import { NewOrganisation } from '../../../domain/use-cases/create-organisation'
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
 import NotorietySources, { NotorietySourcePair } from '../../forms/NotorietySources'
 import WikipediaFill from '../../forms/WikipediaFill'
+import { AdviceByField } from '../../ui/FieldAdvice'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Select from '../../ui/Select'
@@ -26,6 +27,7 @@ interface NewOrganisationPanelProps {
   onSources: (sources: NotorietySourcePair) => void
   onCancel: () => void
   errors?: FieldErrors
+  advice?: AdviceByField
 }
 
 /**
@@ -45,6 +47,7 @@ export default function NewOrganisationPanel({
   onSources,
   onCancel,
   errors,
+  advice,
 }: NewOrganisationPanelProps) {
   const withField = (field: keyof OrganisationDraft, value: string) =>
     onChange({ ...organisation, [field]: value })
@@ -63,6 +66,7 @@ export default function NewOrganisationPanel({
         value={organisation.name}
         onChange={(e) => withField('name', e.target.value)}
         error={errors?.organisationName}
+        advice={advice?.organisationName}
       />
 
       <TextField
@@ -93,6 +97,7 @@ export default function NewOrganisationPanel({
         value={organisation.presentation}
         onChange={(e) => withField('presentation', e.target.value)}
         error={errors?.organisationPresentation}
+        advice={advice?.organisationPresentation}
       />
 
       <TextField

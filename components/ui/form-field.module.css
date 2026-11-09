@@ -39,6 +39,17 @@
   border-color: var(--danger);
 }
 
+/* An advice on the field: the border carries its colour, the note under it carries the words */
+.controlWarning {
+  border-width: 2px;
+  border-color: var(--warn);
+}
+
+.controlProblem {
+  border-width: 2px;
+  border-color: var(--danger);
+}
+
 .error {
   font-size: 13px;
   color: var(--danger);

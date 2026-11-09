@@ -4,6 +4,7 @@ import { FieldErrors } from '../../../domain/use-cases/create-statement'
 import { NewPublicFigure } from '../../../domain/use-cases/create-public-figure'
 import NotorietySources, { NotorietySourcePair } from '../../forms/NotorietySources'
 import WikipediaFill from '../../forms/WikipediaFill'
+import { AdviceByField } from '../../ui/FieldAdvice'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
@@ -28,6 +29,7 @@ interface NewFigurePanelProps {
   onSources: (sources: NotorietySourcePair) => void
   onCancel: () => void
   errors?: FieldErrors
+  advice?: AdviceByField
 }
 
 /**
@@ -50,6 +52,7 @@ export default function NewFigurePanel({
   onSources,
   onCancel,
   errors,
+  advice,
 }: NewFigurePanelProps) {
   const withField = (field: keyof FigureDraft, value: string) =>
     onChange({ ...figure, [field]: value })
@@ -68,6 +71,7 @@ export default function NewFigurePanel({
         value={figure.name}
         onChange={(e) => withField('name', e.target.value)}
         error={errors?.figureName}
+        advice={advice?.figureName}
       />
 
       <TextArea
@@ -79,6 +83,7 @@ export default function NewFigurePanel({
         value={figure.presentation}
         onChange={(e) => withField('presentation', e.target.value)}
         error={errors?.figurePresentation}
+        advice={advice?.figurePresentation}
       />
 
       <TextField

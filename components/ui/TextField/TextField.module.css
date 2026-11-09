@@ -14,6 +14,14 @@
   composes: controlError from '../form-field.module.css';
 }
 
+.inputWarning {
+  composes: controlWarning from '../form-field.module.css';
+}
+
+.inputProblem {
+  composes: controlProblem from '../form-field.module.css';
+}
+
 .error {
   composes: error from '../form-field.module.css';
 }

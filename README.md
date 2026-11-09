@@ -201,6 +201,14 @@ Les agents de collecte (skills `contribution-pipeline` et compagnie, tâches pla
 
 Routes : `GET /api/catalog` (sujets, positions, personnalités, organisations, métiers), `GET/POST /api/drafts`, `PATCH/DELETE /api/drafts/<id>`, `POST /api/drafts/<id>/review`, `GET /api/public-figures/<slug>`, `PATCH /api/public-figures/<slug>/occupations`, `POST /api/public-figures/<slug>/affiliations`, `DELETE /api/public-figures/<slug>/affiliations/<id>`, `POST /api/organisations`, `PATCH /api/organisations/<slug>`, `GET /api/statements?subject=|figure=|organisation=<slug>`, `GET/PATCH /api/statements/<id>`. Les brouillons attendent une relecture humaine ; les routes d'enrichissement et de correction écrivent directement, par les mêmes commandes que l'interface.
 
+### Relecture assistée
+
+Le formulaire de prise de position demande à Claude un avis sur la rédaction de chaque champ, à la sortie du champ (`infra/ai/proofreader.ts`, action `proofreadContribution`). L'avis ne bloque rien et n'est jamais enregistré. Une variable, à poser en production **avant** de déployer :
+
+| Variable            | Rôle                                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | La clé de l'API Anthropic ; sans elle, la relecture se dit indisponible et la contribution part quand même (ADR 0002) |
+
 ### Lancement
 
 ```bash

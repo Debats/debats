@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, FormEvent } from 'react'
+import { useState, useCallback, useEffect, FocusEvent, FormEvent } from 'react'
 import Link from 'next/link'
 import * as Sentry from '@sentry/nextjs'
 import { addStatementAction, ActionResult } from '../../../app/actions/add-statement'
@@ -38,8 +38,10 @@ import NewFigurePanel from './NewFigurePanel'
 import NewOrganisationPanel from './NewOrganisationPanel'
 import NewPositionPanel from './NewPositionPanel'
 import NewSubjectPanel from './NewSubjectPanel'
-import WhatWillBeWritten, { Created } from './WhatWillBeWritten'
+import ProofreadingStatus from './ProofreadingStatus'
+import { contributionToRead } from './contribution-to-read'
 import { useAuthorChoice } from './useAuthorChoice'
+import { useProofreading } from './useProofreading'
 import { useTopicChoice } from './useTopicChoice'
 import styles from './NewStatementForm.module.css'
 
@@ -103,8 +105,8 @@ export default function NewStatementForm({
 
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
 
-  /** What the submission will create, in the order the form asks for it */
-  const created: Created[] = [...author.created, ...topic.created]
+  /** An opinion on the writing, never enforced: it lives and dies here */
+  const proofreading = useProofreading()
 
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>()
@@ -142,7 +144,11 @@ export default function NewStatementForm({
     [updateDraft],
   )
 
-  /** Les champs libres restent non contrôlés ; l'aperçu se met à jour par délégation. */
+  /**
+   * The free fields stay uncontrolled; the preview follows by delegation. And
+   * a field that changed is a field whose advice no longer applies: inputs
+   * bear as id the name their advice came back on.
+   */
   const handleFormChange = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       const form = e.currentTarget
@@ -150,8 +156,30 @@ export default function NewStatementForm({
         sourceName: getFieldValue(form, 'sourceName'),
         statedAt: getFieldValue(form, 'statedAt'),
       })
+      if (e.target instanceof HTMLElement && e.target.id) proofreading.written(e.target.id)
     },
-    [updateDraft],
+    [proofreading, updateDraft],
+  )
+
+  /** Leaving a field is the end of its writing: the contribution as it stands gets read */
+  const handleFormBlur = useCallback(
+    (e: FocusEvent<HTMLFormElement>) => {
+      if (!(e.target instanceof HTMLElement) || !e.target.id) return
+      const form = e.currentTarget
+      proofreading.left(
+        e.target.id,
+        contributionToRead({
+          author,
+          topic,
+          content,
+          source: {
+            sourceName: getFieldValue(form, 'sourceName'),
+            sourceUrl: getFieldValue(form, 'sourceUrl'),
+          },
+        }),
+      )
+    },
+    [author, content, proofreading, topic],
   )
 
   const handleSubmit = useCallback(
@@ -232,7 +260,12 @@ export default function NewStatementForm({
   const isOrganisation = author.kind === 'organisation'
 
   return (
-    <form onSubmit={handleSubmit} onChange={handleFormChange} className={styles.form}>
+    <form
+      onSubmit={handleSubmit}
+      onChange={handleFormChange}
+      onBlur={handleFormBlur}
+      className={styles.form}
+    >
       {error && <FormError message={error} />}
 
       <fieldset className={styles.section}>
@@ -257,6 +290,7 @@ export default function NewStatementForm({
             onSources={author.organisation.setSources}
             onCancel={author.organisation.cancelNew}
             errors={fieldErrors}
+            advice={proofreading.advice}
           />
         ) : isOrganisation ? (
           <Combobox
@@ -278,6 +312,7 @@ export default function NewStatementForm({
             onSources={author.figure.setSources}
             onCancel={author.figure.cancelNew}
             errors={fieldErrors}
+            advice={proofreading.advice}
           />
         ) : (
           <Combobox
@@ -359,6 +394,7 @@ export default function NewStatementForm({
             onChange={topic.subject.change}
             onCancel={topic.subject.cancelNew}
             errors={fieldErrors}
+            advice={proofreading.advice}
           />
         ) : (
           <Combobox
@@ -397,6 +433,7 @@ export default function NewStatementForm({
               position={topic.position.draft}
               onChange={topic.position.change}
               errors={fieldErrors}
+              advice={proofreading.advice}
               /* A subject being created has nothing to go back to: its first position is the only one */
               onCancel={topic.subject.creating ? undefined : topic.position.cancelNew}
             />
@@ -457,7 +494,12 @@ export default function NewStatementForm({
         <legend className={styles.sectionTitle}>
           <span className={styles.step}>3</span> Sur quelles bases ?
         </legend>
-        <StatementContentFields value={content} onChange={changeContent} errors={fieldErrors} />
+        <StatementContentFields
+          value={content}
+          onChange={changeContent}
+          errors={fieldErrors}
+          advice={proofreading.advice}
+        />
         <p className={styles.hint}>
           Une citation se recopie mot pour mot, sans reformuler ni couper une phrase de manière à en
           changer le sens. Un vote et un acte ne se citent pas : ils se nomment.
@@ -471,6 +513,7 @@ export default function NewStatementForm({
             required
             placeholder="ex : Le Monde, France Inter"
             error={fieldErrors?.sourceName}
+            advice={proofreading.advice.sourceName}
           />
           <div className={styles.field}>
             <label className={styles.label} htmlFor="statedAt">
@@ -490,6 +533,7 @@ export default function NewStatementForm({
           required
           placeholder="https://…"
           error={fieldErrors?.sourceUrl}
+          advice={proofreading.advice.sourceUrl}
         />
       </fieldset>
 
@@ -517,7 +561,7 @@ export default function NewStatementForm({
         </div>
       )}
 
-      <WhatWillBeWritten created={created} />
+      <ProofreadingStatus status={proofreading.status} />
 
       <div className={styles.actions}>
         <Button type="submit" disabled={isPending}>

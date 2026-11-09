@@ -1,4 +1,5 @@
 import { FieldErrors } from '../../../domain/use-cases/create-statement'
+import { AdviceByField } from '../../ui/FieldAdvice'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Panel from './Panel'
@@ -16,6 +17,7 @@ interface NewPositionPanelProps {
   /** Absent when this position is the first of a subject being created with it */
   onCancel?: () => void
   errors?: FieldErrors
+  advice?: AdviceByField
 }
 
 /**
@@ -33,6 +35,7 @@ export default function NewPositionPanel({
   onChange,
   onCancel,
   errors,
+  advice,
 }: NewPositionPanelProps) {
   const withField = (field: keyof PositionDraft, value: string) =>
     onChange({ ...position, [field]: value })
@@ -47,6 +50,7 @@ export default function NewPositionPanel({
         value={position.title}
         onChange={(e) => withField('title', e.target.value)}
         error={errors?.positionTitle}
+        advice={advice?.positionTitle}
       />
 
       <TextArea
@@ -58,6 +62,7 @@ export default function NewPositionPanel({
         value={position.description}
         onChange={(e) => withField('description', e.target.value)}
         error={errors?.positionDescription}
+        advice={advice?.positionDescription}
       />
 
       <p className={styles.hint}>
