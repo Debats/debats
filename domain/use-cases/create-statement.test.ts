@@ -18,6 +18,7 @@ import { fakeArgumentRepo, sampleArgument } from './argument-test-helpers'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
+import { SubjectRepository } from '../repositories/subject-repository'
 import { journalWithSubjects, sampleSubject } from './subject-test-helpers'
 import {
   PublicFigure,
@@ -82,10 +83,23 @@ const pageIsNotAPerson = fakeWikipediaValidator({
   isBiography: false,
 })
 
+/** A subject of the site, with one of its positions ticked */
+const onSubject = (subjectId: string, positionId: string) =>
+  ({
+    kind: 'existing',
+    subjectId,
+    position: { kind: 'existing', id: positionId },
+  }) as const
+
+/** A subject of the site, with a position proposed on it */
+const proposingOn = (
+  subjectId: string,
+  position: { positionTitle: string; positionDescription: string },
+) => ({ kind: 'existing', subjectId, position: { kind: 'new', ...position } }) as const
+
 const validParams = {
-  subjectId: 'subject-1',
   author: { kind: 'existing' as const, author: publicFigureAuthor('figure-1') },
-  position: { kind: 'existing' as const, id: 'pos-1' },
+  topic: onSubject('subject-1', 'pos-1'),
   arguments: { argumentIds: [] as string[], newArguments: [] },
   content: {
     ...EMPTY_CONTENT_INPUT,
@@ -104,9 +118,16 @@ const fakes = (
     organisations?: OrganisationRepository
     arguments?: ArgumentRepository
     wikipedia?: WikipediaValidator
+    subjects?: SubjectRepository
   } = {},
 ) =>
   Layer.mergeAll(
+    /* Only read to tell a free title from a taken one, when a subject is created here */
+    Layer.succeed(
+      SubjectRepository,
+      overrides.subjects ??
+        ({ findBySlug: () => Effect.succeed(null) } as unknown as SubjectRepository),
+    ),
     Layer.succeed(PositionRepository, overrides.positions ?? fakePositionRepo),
     Layer.succeed(PublicFigureRepository, overrides.figures ?? fakePublicFigureRepo),
     Layer.succeed(
@@ -173,13 +194,11 @@ describe('createStatementUseCase', () => {
     const result = await runFormWith(fakes())(
       createStatementUseCase({
         ...validParams,
-        subjectId: subject.id,
         contributor: { id: 'abc', reputation: 0 },
-        position: {
-          kind: 'new',
+        topic: proposingOn(subject.id, {
           positionTitle: 'Pour une aide active à mourir',
           positionDescription: 'Le geste létal est accompli par le corps médical, sous conditions.',
-        },
+        }),
       }),
       run,
     )
@@ -209,13 +228,11 @@ describe('createStatementUseCase', () => {
     const result = await runFormWith(fakes())(
       createStatementUseCase({
         ...validParams,
-        subjectId: subject.id,
         contributor: { id: 'abc', reputation: 0 },
-        position: {
-          kind: 'new',
+        topic: proposingOn(subject.id, {
           positionTitle: 'Ab',
           positionDescription: 'Une description assez longue.',
-        },
+        }),
       }),
       run,
     )
@@ -231,13 +248,136 @@ describe('createStatementUseCase', () => {
       createStatementUseCase({
         ...validParams,
         contributor: { id: 'abc', reputation: 0 },
-        position: { kind: 'existing', id: '' },
+        topic: onSubject('subject-1', ''),
       }),
     )
 
     expect(
       Either.isLeft(result) && typeof result.left !== 'string' ? result.left.positionId : null,
     ).toContain('Choisissez une position')
+  })
+
+  /* Without a subject the position cannot even be looked for: the fault is the subject's */
+  it('blames the subject, not the position, when no subject was chosen', async () => {
+    const result = await execute(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 0 },
+        topic: onSubject('', 'pos-1'),
+      }),
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' ? result.left : null,
+    ).toMatchObject({ subjectId: expect.stringContaining('Choisissez un sujet') })
+  })
+
+  /** A subject created here, with the only position it can have: its first */
+  const creating = (
+    subject: { title: string; presentation: string; problem: string },
+    position: { positionTitle: string; positionDescription: string },
+  ) => ({ kind: 'new', subject, position }) as const
+
+  const SMIC = {
+    title: 'Le montant du SMIC',
+    presentation: 'Le salaire minimum légal, et ce qu’il faudrait en faire.',
+    problem: 'Faut-il augmenter le SMIC ?',
+  }
+
+  const FOR_A_RISE = {
+    positionTitle: 'Pour une hausse du SMIC',
+    positionDescription: 'Le salaire minimum doit suivre le coût de la vie.',
+  }
+
+  /** No subject of that title yet, which is what the command reads before writing */
+  const titleIsFree = { findBySlug: () => Effect.succeed(null) } as unknown as SubjectRepository
+
+  it('writes a subject, its first position and the statement in one transaction, and rewards the three', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await runFormWith(fakes({ subjects: titleIsFree }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        topic: creating(SMIC, FOR_A_RISE),
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    const [subject, position, statement] = deedsIn(journal).slice(-3)
+    expect(subject).toMatchObject({
+      streamType: 'subject',
+      type: 'SubjectAdded',
+      actorId: 'abc',
+      payload: { title: 'Le montant du SMIC', slug: 'le-montant-du-smic' },
+    })
+    /* The position goes on the stream of the subject just opened, not on another */
+    expect(position).toMatchObject({
+      streamType: 'subject',
+      streamId: subject.streamId,
+      type: 'PositionAdded',
+      payload: { title: 'Pour une hausse du SMIC' },
+    })
+    /* A stored payload is `unknown` by design — aggregates decode events, tests read them */
+    const { positionId } = position.payload as { positionId: string }
+    expect(statement).toMatchObject({
+      streamType: 'statement',
+      payload: { subjectId: subject.streamId, positionId },
+    })
+    expect(grantsIn(journal)).toEqual([
+      ['abc', 'added_subject', 50],
+      ['abc', 'added_position_validated', 50],
+      ['abc', 'added_statement_validated', 50],
+    ])
+  })
+
+  it('names the subject’s faults under their own fields, not the position’s', async () => {
+    const result = await runFormWith(fakes({ subjects: titleIsFree }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        topic: creating({ title: 'Ab', presentation: 'Court', problem: 'Hein ?' }, FOR_A_RISE),
+      }),
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' ? Object.keys(result.left) : null,
+    ).toEqual(['subjectTitle', 'subjectPresentation', 'subjectProblem'])
+  })
+
+  it('refuses a subject whose title is taken, on the subject’s own field', async () => {
+    const taken = {
+      findBySlug: () => Effect.succeed(sampleSubject()),
+    } as unknown as SubjectRepository
+
+    const result = await runFormWith(fakes({ subjects: taken }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 1000 },
+        topic: creating(SMIC, FOR_A_RISE),
+      }),
+    )
+
+    expect(
+      Either.isLeft(result) && typeof result.left !== 'string' ? result.left.subjectTitle : null,
+    ).toContain('porte déjà ce titre')
+  })
+
+  it('writes nothing when the rank does not allow creating a subject', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+
+    const result = await runFormWith(fakes({ subjects: titleIsFree }))(
+      createStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 0 },
+        topic: creating(SMIC, FOR_A_RISE),
+      }),
+      run,
+    )
+
+    expect(Either.isLeft(result)).toBe(true)
+    expect(journal.all().length).toBe(0)
   })
 
   it('opens a personality and her statement in the same transaction, and rewards both', async () => {

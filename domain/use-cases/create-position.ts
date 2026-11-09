@@ -36,16 +36,24 @@ export type InlinePosition = S.Schema.Encoded<typeof InlinePositionInput>
  * A position chosen rather than opened. Nothing chosen is its own refusal: a
  * subject with no position yet offers nothing to choose, and « introuvable »
  * would blame the contributor for a list that was empty.
+ *
+ * The subject travels with it, because it is asked for first: without it the
+ * position cannot even be looked for, and the fault would be told on the
+ * position — « choisissez une position » for a subject left empty.
  */
-const ChosenPositionInput = S.Struct({ positionId: S.String.pipe(S.minLength(1)) })
+const ChosenPositionInput = S.Struct({
+  subjectId: S.String.pipe(S.minLength(1)),
+  positionId: S.String.pipe(S.minLength(1)),
+})
 
 const CHOSEN_FIELD_MESSAGES = {
+  subjectId: 'Choisissez un sujet, ou créez-en un.',
   positionId: 'Choisissez une position, ou proposez-en une.',
 }
 
-/** That a position was chosen at all, judged under the name the form gives the choice */
-export const chosenPositionField = (positionId: string) =>
-  fieldsOf(ChosenPositionInput, CHOSEN_FIELD_MESSAGES)({ positionId })
+/** That a subject and a position were chosen at all, each under its own name */
+export const chosenPositionField = (subjectId: string, positionId: string) =>
+  fieldsOf(ChosenPositionInput, CHOSEN_FIELD_MESSAGES)({ subjectId, positionId })
 
 const TITLE_FAULT = 'Le titre doit faire entre 3 et 255 caractères.'
 const DESCRIPTION_FAULT = 'La description doit faire au moins 10 caractères.'

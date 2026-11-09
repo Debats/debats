@@ -102,9 +102,17 @@ export function validateDraft(params: ValidateDraftParams) {
       toldAsOne(
         createStatementUseCase({
           contributor,
-          subjectId,
           author: { kind: 'existing', author },
-          position: { kind: 'existing', id: positionId },
+          /*
+           * A draft names its subject and its position by title, and the two
+           * steps above have already created or found them — so by the time
+           * the statement is written, both exist.
+           */
+          topic: {
+            kind: 'existing',
+            subjectId,
+            position: { kind: 'existing', id: positionId },
+          },
           // The draft already holds the content as its type calls for it
           content: contentFieldsOf(draft.content),
           sourceName: draft.sourceName,

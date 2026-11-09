@@ -23,12 +23,15 @@ export async function createStatementAction(
   const result = await runLiveForm(
     createStatementUseCase({
       contributor,
-      subjectId,
       author: {
         kind: 'existing',
         author: publicFigureAuthor(String(formData.get('publicFigureId') ?? '')),
       },
-      position: { kind: 'existing', id: String(formData.get('positionId') ?? '') },
+      topic: {
+        kind: 'existing',
+        subjectId,
+        position: { kind: 'existing', id: String(formData.get('positionId') ?? '') },
+      },
       content: readStatementContent(formData),
       sourceName: String(formData.get('sourceName') ?? ''),
       sourceUrl: String(formData.get('sourceUrl') ?? ''),

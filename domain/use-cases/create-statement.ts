@@ -27,6 +27,13 @@ import {
   validateStatementArguments,
 } from './statement-arguments'
 import {
+  inlineSubjectChecked,
+  NewSubject,
+  recordNewSubject,
+  SUBJECT_TITLE_TAKEN,
+  subjectReward,
+} from './create-subject'
+import {
   chosenPositionField,
   InlinePosition,
   inlinePositionFields,
@@ -76,11 +83,24 @@ export type StatementAuthorInput =
   | { kind: 'new_figure'; figure: NewPublicFigure }
   | { kind: 'new_organisation'; organisation: NewOrganisation }
 
+/**
+ * What the statement is about: a subject, and the position it defends on it —
+ * what the form asks under « Sur quoi ? ».
+ *
+ * The two travel together because they are not independent: a subject created
+ * in this same breath has no position to choose from, so its position can
+ * only be a new one. Said as two fields, « new subject » and « position I
+ * ticked earlier » would be a combination a client could send and the command
+ * would have to refuse; said as this union, it cannot be written down.
+ */
+export type StatementTopic =
+  | { kind: 'existing'; subjectId: string; position: StatementPositionInput }
+  | { kind: 'new'; subject: NewSubject; position: InlinePosition }
+
 type CreateStatementParams = {
   contributor: ContributorIdentity | null
-  subjectId: string
   author: StatementAuthorInput
-  position: StatementPositionInput
+  topic: StatementTopic
   /** Arguments the statement mobilises, chosen or proposed (Éloquent only) */
   arguments: StatementArgumentsInput
   /** What the statement carries, as the form holds it, read according to its type */
@@ -103,6 +123,18 @@ export type { FieldErrors }
 type SettledPosition =
   | { readonly kind: 'new'; readonly toOpen: { title: string; description: string } }
   | { readonly kind: 'existing'; readonly id: string }
+
+/** The fields of a subject, as its own schema hands them over */
+type SubjectFields = { title: string; presentation: string; problem: string }
+
+/** What the preconditions settled about what the statement is about */
+type SettledTopic =
+  | { readonly kind: 'existing'; readonly subjectId: string; readonly position: SettledPosition }
+  | {
+      readonly kind: 'new'
+      readonly subject: SubjectFields
+      readonly position: { title: string; description: string }
+    }
 
 /** What the preconditions settled about the author: one to open, or one read */
 type SettledAuthor =
@@ -173,9 +205,34 @@ const positionSettled = (
         Effect.map((toOpen): SettledPosition => ({ kind: 'new', toOpen })),
       )
     : pipe(
-        chosenPositionField(position.id),
+        chosenPositionField(subjectId, position.id),
         Effect.andThen(positionOnSubject(subjectId, position.id)),
         Effect.map((): SettledPosition => ({ kind: 'existing', id: position.id })),
+      )
+
+/**
+ * What the statement will hang on, settled before anything is written: a
+ * subject read from the tables with one of its positions, or the fields of a
+ * subject and of the first position to open on it.
+ *
+ * Creating a subject is its own right, and so is proposing a position: a
+ * contribution that opens both is asked for both, and the ranks are judged
+ * here, before the transaction.
+ */
+const topicSettled = (topic: StatementTopic, contributor: ContributorIdentity | null) =>
+  topic.kind === 'new'
+    ? Effect.all({
+        subject: inlineSubjectChecked(topic.subject, contributor),
+        position: Effect.andThen(
+          allowedTo(contributor, 'add_position', 'proposer une nouvelle position'),
+          inlinePositionFields(topic.position),
+        ),
+      }).pipe(
+        Effect.map(({ subject, position }): SettledTopic => ({ kind: 'new', subject, position })),
+      )
+    : Effect.map(
+        positionSettled(topic.position, contributor, topic.subjectId),
+        (position): SettledTopic => ({ kind: 'existing', subjectId: topic.subjectId, position }),
       )
 
 /**
@@ -223,6 +280,48 @@ const positionIn = (
       )
     : Effect.succeed(settled.id)
 
+/** What the statement hangs on, once written: the subject's id and the position's */
+interface WrittenTopic {
+  readonly subjectId: string
+  readonly positionId: string
+}
+
+/**
+ * The subject and the position the statement hangs on: the ones created in
+ * this transaction, or the ones read. A subject created here is written
+ * first, because its position goes on its stream.
+ */
+const topicIn = (events: EventStore, contributorId: string, settled: SettledTopic) =>
+  settled.kind === 'existing'
+    ? Effect.map(
+        positionIn(events, settled.subjectId, contributorId, settled.position),
+        (positionId): WrittenTopic => ({ subjectId: settled.subjectId, positionId }),
+      )
+    : pipe(
+        recordNewSubject(events, contributorId, settled.subject),
+        uniqueTakenAs('subjectTitle', SUBJECT_TITLE_TAKEN),
+        Effect.flatMap((subject) =>
+          Effect.map(
+            positionIn(events, subject.id, contributorId, {
+              kind: 'new',
+              toOpen: settled.position,
+            }),
+            (positionId): WrittenTopic => ({ subjectId: subject.id, positionId }),
+          ),
+        ),
+      )
+
+/** What creating the subject and its first position earned, if they were created */
+const topicRewards = (contributorId: string, settled: SettledTopic, written: WrittenTopic) =>
+  settled.kind === 'new'
+    ? [
+        subjectReward(contributorId, written.subjectId),
+        positionReward(contributorId, written.positionId),
+      ]
+    : settled.position.kind === 'new'
+      ? [positionReward(contributorId, written.positionId)]
+      : []
+
 /** The author the statement carries: the one opened here, or the one read */
 const authorIn = (events: EventStore, contributorId: string, settled: SettledAuthor) => {
   switch (settled.kind) {
@@ -261,7 +360,7 @@ const authorRewards = (contributorId: string, settled: SettledAuthor, writtenId:
 }
 
 export function createStatementUseCase(params: CreateStatementParams) {
-  const { subjectId, author, position, sourceName, sourceUrl, statedAt } = params
+  const { author, topic, sourceName, sourceUrl, statedAt } = params
   // The command names the statement: the stream exists from its first event
   const id = StatementId.make(crypto.randomUUID())
 
@@ -272,7 +371,7 @@ export function createStatementUseCase(params: CreateStatementParams) {
         statementFields({ sourceName, sourceUrl, statedAt }, day),
       ),
       content: statementContent(params.content),
-      position: positionSettled(position, params.contributor, subjectId),
+      topic: topicSettled(topic, params.contributor),
       author: authorSettled(author, params.contributor),
     }),
     Effect.bind('validated', ({ contributor }) =>
@@ -280,7 +379,7 @@ export function createStatementUseCase(params: CreateStatementParams) {
     ),
     /*
      * One transaction for the whole contribution: the proposed arguments open
-     * their streams, an opened author and an opened position land on theirs,
+     * their streams, an opened subject, position and author land on theirs,
      * the statement opens its own, and every reward falls — together, or not
      * at all. Each write that can hit a unique constraint names its own field:
      * one mapping for the whole command would report a position title already
@@ -292,20 +391,18 @@ export function createStatementUseCase(params: CreateStatementParams) {
           recordProposedArguments(events, settled.contributor.id, settled.validated),
           uniqueTakenAs('arguments', ARGUMENT_JUST_CREATED),
           Effect.bindTo('recorded'),
-          Effect.bind('positionId', () =>
-            positionIn(events, subjectId, settled.contributor.id, settled.position),
-          ),
+          Effect.bind('topic', () => topicIn(events, settled.contributor.id, settled.topic)),
           Effect.bind('author', () => authorIn(events, settled.contributor.id, settled.author)),
-          Effect.flatMap(({ author: written, recorded, positionId }) =>
+          Effect.flatMap(({ author: writtenAuthor, recorded, topic: writtenTopic }) =>
             pipe(
               openStream(
                 statementAggregate,
                 events,
                 id,
                 addStatement({
-                  author: written,
-                  subjectId,
-                  positionId,
+                  author: writtenAuthor,
+                  subjectId: writtenTopic.subjectId,
+                  positionId: writtenTopic.positionId,
                   content: settled.content,
                   sourceName: settled.fields.sourceName,
                   sourceUrl: settled.fields.sourceUrl,
@@ -316,10 +413,8 @@ export function createStatementUseCase(params: CreateStatementParams) {
               ),
               Effect.tap(() =>
                 grantEach(events, settled.contributor.id, [
-                  ...authorRewards(settled.contributor.id, settled.author, written.id),
-                  ...(settled.position.kind === 'new'
-                    ? [positionReward(settled.contributor.id, positionId)]
-                    : []),
+                  ...authorRewards(settled.contributor.id, settled.author, writtenAuthor.id),
+                  ...topicRewards(settled.contributor.id, settled.topic, writtenTopic),
                   rewardFor(settled.contributor.id, 'added_statement_validated', {
                     relatedEntityType: 'statement',
                     relatedEntityId: id,

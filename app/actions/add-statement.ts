@@ -6,6 +6,7 @@ import { runLiveForm } from '../../infra/live-services'
 import { createPublicFigureRepository } from '../../infra/database/public-figure-repository-supabase'
 import { createOrganisationRepository } from '../../infra/database/organisation-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { createPositionRepository } from '../../infra/database/position-repository-supabase'
 import {
   createStatementUseCase,
   FieldErrors,
@@ -13,6 +14,7 @@ import {
 } from '../../domain/use-cases/create-statement'
 import { statementArgumentsOf } from '../../lib/forms/statement-arguments'
 import { statementAuthorOf } from '../../lib/forms/statement-author'
+import { statementTopicOf } from '../../lib/forms/statement-topic'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
@@ -23,25 +25,21 @@ export type ActionResult =
 export async function addStatementAction(input: NewStatement): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
-  const { subjectId } = input
 
   /*
    * A Server Function receives JSON: its parameter has the type we declare,
    * never the guarantee that it arrives in that shape. Fields judged by a
    * schema defend themselves, and ids fail cleanly on the read that does not
    * find them. What the domain walks through without questioning is brought
-   * back to its shape here: the two argument arrays, and the author, whose
-   * kind the command switches on and whose payload it reads as given.
-   *
-   * The position needs none of it: its `kind` is read by a ternary, so an
-   * unexpected one counts as « the one that was ticked » and ends in a
-   * refusal on its missing id.
+   * back to its shape here: the two argument arrays, the author and the
+   * topic, whose kinds the command reads and whose payloads it takes as given.
    */
   const result = await runLiveForm(
     createStatementUseCase({
       ...input,
       contributor,
       author: statementAuthorOf(input.author),
+      topic: statementTopicOf(input.topic),
       arguments: statementArgumentsOf(input.arguments),
     }),
     supabase,
@@ -55,11 +53,18 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
     return { success: false, fieldErrors: err }
   }
 
-  const subject = await Effect.runPromise(createSubjectRepository(supabase).findById(subjectId))
   /*
-   * The author we link to is the one the command wrote, not the one it was
-   * sent: it may have just been created by this very gesture.
+   * The subject and the author we link to are the ones the command wrote, not
+   * the ones it was sent: either may have just been created by this very
+   * gesture. A statement holds its position, and a position its subject —
+   * that is where the subject it ended up on is to be read.
    */
+  const position = await Effect.runPromise(
+    createPositionRepository(supabase).findById(result.right.positionId),
+  )
+  const subject = position
+    ? await Effect.runPromise(createSubjectRepository(supabase).findById(position.subjectId))
+    : null
   const author = result.right.author
 
   if (author.kind === 'organisation') {
