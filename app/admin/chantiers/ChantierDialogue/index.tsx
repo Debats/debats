@@ -1,0 +1,103 @@
+'use client'
+
+import {
+  Chantier,
+  CHANTIER_STATUS_LABELS,
+  ChantierMessage,
+} from '../../../../domain/entities/chantier'
+import { withoutTitleLine } from '../../../../domain/services/chantier-title'
+import Composer from '../../../../components/ui/Composer'
+import DialogueSheet, { Sheet } from '../../../../components/ui/DialogueSheet'
+import styles from './ChantierDialogue.module.css'
+
+interface ChantierDialogueProps {
+  chantier: Chantier
+  messages: ChantierMessage[]
+  sheet: Sheet
+  onSheet: (sheet: Sheet) => void
+  onSend: (text: string) => void
+  onClose: () => void
+  sending: boolean
+  /** Whether the chantier still takes messages */
+  open: boolean
+  error?: string
+}
+
+/** What the status line says under the turns, when the agent is not simply waiting */
+const STATUS_LINES: Partial<Record<Chantier['status'], string>> = {
+  working: 'L’agent travaille… Les brouillons arrivent dans la liste au fur et à mesure.',
+  blocked:
+    'L’agent attend une décision ou un budget dans la console Anthropic. Rien ne bougera d’ici.',
+  ended: 'La session de l’agent est terminée : ce chantier ne prend plus de messages.',
+  closed: 'Chantier clôturé.',
+}
+
+/**
+ * The conversation of a chantier: what a person sent, what the agent
+ * answered, where it stands. The first answer loses its title line, which
+ * names the chantier above.
+ */
+export default function ChantierDialogue({
+  chantier,
+  messages,
+  sheet,
+  onSheet,
+  onSend,
+  onClose,
+  sending,
+  open,
+  error,
+}: ChantierDialogueProps) {
+  const firstAnswer = messages.find(({ role }) => role === 'agent')?.id
+  const statusLine = STATUS_LINES[chantier.status]
+
+  return (
+    <DialogueSheet
+      label="L’agent du chantier"
+      note="Conservé avec le chantier"
+      handleNote={CHANTIER_STATUS_LABELS[chantier.status]}
+      sheet={sheet}
+      onSheet={onSheet}
+      composer={
+        <>
+          <Composer
+            id="chantier-ask"
+            label="Votre message à l’agent"
+            placeholder="Dites ce qu’il faut chercher, vérifier ou changer…"
+            onSend={onSend}
+            disabled={!open || sending}
+          />
+          {open && (
+            <button type="button" className={styles.close} onClick={onClose}>
+              Clôturer le chantier
+            </button>
+          )}
+        </>
+      }
+    >
+      {messages.map((message) =>
+        message.role === 'person' ? (
+          <p key={message.id} className={styles.person}>
+            {message.text}
+          </p>
+        ) : (
+          <p key={message.id} className={styles.agent}>
+            {message.id === firstAnswer ? withoutTitleLine(message.text) : message.text}
+          </p>
+        ),
+      )}
+
+      {statusLine && (
+        <p className={styles.status}>
+          {chantier.status === 'working' && <span aria-hidden="true" className={styles.spinner} />}
+          {statusLine}
+        </p>
+      )}
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
+    </DialogueSheet>
+  )
+}

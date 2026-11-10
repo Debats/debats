@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const chantier = request.nextUrl.searchParams.get('chantier')
+  if (chantier) return draftsOfChantier(chantier)
+
   const status = request.nextUrl.searchParams.get('status') ?? 'pending'
   const validStatuses = ['pending', 'rejected', 'revision_requested'] as const
   if (!validStatuses.includes(status as (typeof validStatuses)[number])) {
@@ -43,6 +46,21 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(result.right)
 }
 
+/** The drafts of one chantier, whatever became of them: the agent reads its own work back */
+async function draftsOfChantier(chantierId: string) {
+  if (!UUID.test(chantierId)) {
+    return NextResponse.json({ error: 'Invalid chantier id' }, { status: 400 })
+  }
+  const draftRepo = createDraftStatementRepository(createAdminSupabaseClient())
+  const result = await Effect.runPromise(Effect.either(draftRepo.findByChantier(chantierId)))
+  if (result._tag === 'Left') {
+    return NextResponse.json({ error: 'Database error' }, { status: 500 })
+  }
+  return NextResponse.json(result.right)
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const REQUIRED_FIELDS = [
   'subjectTitle',
   'positionTitle',
@@ -65,6 +83,13 @@ function parseDraftInput(
   if (slugError) return { error: slugError }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date as string)) {
     return { error: 'Invalid date format (expected YYYY-MM-DD)' }
+  }
+
+  if (
+    input.chantier !== undefined &&
+    !(typeof input.chantier === 'string' && UUID.test(input.chantier))
+  ) {
+    return { error: 'Field chantier must be the id of a chantier' }
   }
 
   const parsedAuthor = parseDraftAuthor(input.author)
@@ -106,6 +131,7 @@ function parseDraftInput(
       subjectData: (input.subjectData as NewDraftStatement['subjectData']) ?? null,
       positionData: (input.positionData as NewDraftStatement['positionData']) ?? null,
       origin: input.origin as string,
+      chantierId: (input.chantier as string | undefined) ?? null,
     },
   }
 }

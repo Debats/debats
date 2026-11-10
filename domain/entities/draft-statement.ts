@@ -93,6 +93,8 @@ export type DraftStatement = {
   /** Organisations the public figure author belongs to, empty for an organisation */
   affiliations: DraftAffiliation[]
   origin: string
+  /** The chantier this draft was produced in, when it was */
+  chantierId: string | null
   status: 'pending' | 'validated' | 'rejected' | 'revision_requested'
   rejectionNote: string | null
   createdAt: Date

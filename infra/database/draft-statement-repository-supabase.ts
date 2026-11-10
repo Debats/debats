@@ -92,6 +92,7 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
     occupations: (row.occupations as DraftStatement['occupations']) ?? [],
     affiliations: (row.affiliations as DraftStatement['affiliations']) ?? [],
     origin: row.origin as string,
+    chantierId: (row.chantier_id as string) ?? null,
     status: row.status as DraftStatement['status'],
     rejectionNote: (row.rejection_note as string) ?? null,
     createdAt: new Date(row.created_at as string),
@@ -119,6 +120,7 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
             occupations: draft.occupations,
             affiliations: draft.affiliations,
             origin: draft.origin,
+            chantier_id: draft.chantierId,
           }))
 
           const { data, error } = await supabase.from('draft_statements').insert(rows).select('id')
@@ -193,6 +195,21 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
           return data ? mapRow(data) : null
         },
         catch: (error) => dbError('Failed to fetch draft', error),
+      }),
+
+    findByChantier: (chantierId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('draft_statements')
+            .select('*')
+            .eq('chantier_id', chantierId)
+            .order('created_at', { ascending: false })
+
+          if (error) throw error
+          return data.map(mapRow)
+        },
+        catch: (error) => dbError('Failed to fetch the drafts of a chantier', error),
       }),
 
     update: (

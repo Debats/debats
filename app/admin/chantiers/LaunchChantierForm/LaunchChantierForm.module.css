@@ -1,0 +1,34 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 20px 24px 24px;
+}
+
+.hint {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.error {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--signal);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.note {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}

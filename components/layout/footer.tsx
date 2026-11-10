@@ -70,7 +70,12 @@ export default async function Footer() {
     { href: '/a-propos', label: 'À propos' },
     { href: '/credits', label: 'Crédits' },
     { href: '/mentions-legales', label: 'Mentions légales' },
-    ...(admin ? [{ href: '/admin/drafts', label: 'Brouillons' }] : []),
+    ...(admin
+      ? [
+          { href: '/admin/drafts', label: 'Brouillons' },
+          { href: '/admin/chantiers', label: 'Chantiers' },
+        ]
+      : []),
   ]
 
   return (

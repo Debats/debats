@@ -1,19 +1,24 @@
+'use client'
+
 import { KeyboardEvent, useState } from 'react'
-import styles from './DraftDialogue.module.css'
+import styles from './Composer.module.css'
 
 interface ComposerProps {
-  onAsk: (request: string) => void
+  id: string
+  label: string
+  placeholder: string
+  onSend: (text: string) => void
   disabled: boolean
 }
 
-/** Where the person writes to the assistant: Enter sends, Shift+Enter breaks the line */
-export default function Composer({ onAsk, disabled }: ComposerProps) {
+/** Where a person writes to an assistant: Enter sends, Shift+Enter breaks the line */
+export default function Composer({ id, label, placeholder, onSend, disabled }: ComposerProps) {
   const [text, setText] = useState('')
 
   const send = () => {
-    const request = text.trim()
-    if (!request || disabled) return
-    onAsk(request)
+    const message = text.trim()
+    if (!message || disabled) return
+    onSend(message)
     setText('')
   }
 
@@ -26,20 +31,20 @@ export default function Composer({ onAsk, disabled }: ComposerProps) {
 
   return (
     <div className={styles.composer}>
-      <label htmlFor="draft-dialogue-ask" className={styles.visuallyHidden}>
-        Votre demande à l’IA
+      <label htmlFor={id} className={styles.visuallyHidden}>
+        {label}
       </label>
       <textarea
-        id="draft-dialogue-ask"
+        id={id}
         className={styles.ask}
         rows={2}
-        placeholder="Dites ce qu’il faut changer, ou posez une question…"
+        placeholder={placeholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
       />
-      <div className={styles.composerRow}>
-        <span className={styles.composerHint}>Entrée pour envoyer · Maj+Entrée pour une ligne</span>
+      <div className={styles.row}>
+        <span className={styles.hint}>Entrée pour envoyer · Maj+Entrée pour une ligne</span>
         <button type="button" className={styles.send} onClick={send} disabled={disabled}>
           Envoyer
         </button>

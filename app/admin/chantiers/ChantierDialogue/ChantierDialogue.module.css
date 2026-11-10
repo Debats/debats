@@ -1,0 +1,81 @@
+.person {
+  composes: small from '../../../../styles/text.module.css';
+  align-self: flex-end;
+  max-width: 90%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: var(--ink);
+  color: var(--paper);
+  white-space: pre-line;
+}
+
+.agent {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink);
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background-color: var(--card);
+  white-space: pre-line;
+}
+
+.status {
+  composes: small from '../../../../styles/text.module.css';
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.error {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--signal);
+  margin: 0;
+}
+
+.spinner {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-3);
+  border-top-color: transparent;
+  animation: chantier-turn 0.8s linear infinite;
+}
+
+@keyframes chantier-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.close {
+  composes: meta from '../../../../styles/text.module.css';
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0 16px 16px;
+  cursor: pointer;
+  text-decoration: underline;
+  color: var(--ink-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* In the dark sheet of a small screen */
+@media (max-width: 1023px) {
+  .person {
+    background-color: var(--ink-2);
+  }
+
+  .status,
+  .close {
+    color: var(--line-2);
+  }
+}

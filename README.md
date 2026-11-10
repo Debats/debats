@@ -211,6 +211,28 @@ Le formulaire de prise de position demande à Claude un avis sur la rédaction d
 
 La même clé sert au dialogue d'amendement des brouillons (`/admin/drafts`, « Amender ») : l'admin discute avec Claude, qui relit le brouillon, lit la source (HTML et texte seulement, jamais un PDF) et réécrit les champs dans le formulaire, chacun marqué « Modifié par l'IA » et annulable ; un champ retouché à la main n'est plus touché. Le contrat vit dans `domain/services/draft-revision.ts`, l'adaptateur dans `infra/ai/draft-reviser.ts`, l'action `reviseDraft` est sans état : rien n'est enregistré avant « Valider le brouillon » ou « Enregistrer sans valider ».
 
+### Chantiers
+
+Un chantier (`/admin/chantiers`) part d'une consigne en français, produit des brouillons et garde la conversation qui les a faits. L'agent est une session Managed Agents d'Anthropic, une par chantier, qui monte le dépôt (donc ses skills de `.claude/skills`) et écrit par l'API des brouillons avec la clé d'administration tenue dans un coffre Anthropic ; il continue quand la page est fermée, et la page l'interroge toutes les six secondes tant qu'il travaille (ADR 0003). Tout ce qui doit survivre à la session vit en base : tables `chantiers` et `chantier_messages`, colonne `draft_statements.chantier_id`, champ `chantier` de `POST /api/drafts`.
+
+Configuration en une fois, depuis une machine qui a la clé d'administration du site visé :
+
+```bash
+npm run chantier:setup:production   # crée l'environnement, le coffre (ADMIN_API_KEY pour l'hôte de DEBATS_URL) et l'agent, puis imprime les identifiants
+```
+
+| Variable                    | Rôle                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| `CHANTIER_AGENT_ID`         | L'agent Managed Agents ; relancer le script avec cette variable posée met à jour son prompt |
+| `CHANTIER_ENVIRONMENT_ID`   | L'environnement (conteneur, réseau ouvert)                                                  |
+| `CHANTIER_VAULT_ID`         | Le coffre qui tient `ADMIN_API_KEY`                                                         |
+| `DEBATS_URL`                | L'adresse du site, donnée à l'agent et seul hôte auquel la clé est envoyée                  |
+| `CHANTIER_BUDGET_CENTS`     | Plafond de dépense d'une session, en cents (défaut : 2000)                                  |
+| `CHANTIER_REPOSITORY_URL`   | Le dépôt monté dans la session (défaut : `https://github.com/Debats/debats`)                |
+| `CHANTIER_REPOSITORY_TOKEN` | Jeton GitHub, seulement si le dépôt est privé                                               |
+
+Sans les trois premières, lancer un chantier répond que l'agent n'est pas configuré ; le reste du site n'en dépend pas.
+
 ### Lancement
 
 ```bash

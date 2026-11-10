@@ -3,7 +3,9 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 import { UnitOfWork } from '../domain/events/unit-of-work'
 import { WikipediaValidator } from '../domain/services/wikipedia-validator'
+import { ChantierAgent } from '../domain/services/chantier-agent'
 import { ArgumentRepository } from '../domain/repositories/argument-repository'
+import { ChantierRepository } from '../domain/repositories/chantier-repository'
 import { ContributorRepository } from '../domain/repositories/contributor-repository'
 import { DraftStatementRepository } from '../domain/repositories/draft-statement-repository'
 import { InvitationRepository } from '../domain/repositories/invitation-repository'
@@ -24,7 +26,9 @@ import {
   runFormCommand,
 } from '../domain/use-cases/run-command'
 import { FieldErrors } from '../domain/use-cases/types'
+import { chantierAgentConfig, createChantierAgent } from './ai/chantier-agent-anthropic'
 import { createArgumentRepository } from './database/argument-repository-supabase'
+import { createChantierRepository } from './database/chantier-repository-supabase'
 import { createContributorRepository } from './database/contributor-repository-supabase'
 import { createDraftStatementRepository } from './database/draft-statement-repository-supabase'
 import { createInvitationRepository } from './database/invitation-repository-supabase'
@@ -52,7 +56,9 @@ export function liveServices(supabase: SupabaseClient<Database> = createAdminSup
   return Layer.mergeAll(
     Layer.succeed(UnitOfWork, (work) => runInPostgres(work)),
     Layer.succeed(WikipediaValidator, createWikipediaValidator()),
+    Layer.succeed(ChantierAgent, createChantierAgent(chantierAgentConfig())),
     Layer.succeed(ArgumentRepository, createArgumentRepository(supabase)),
+    Layer.succeed(ChantierRepository, createChantierRepository(supabase)),
     Layer.succeed(ContributorRepository, createContributorRepository(supabase)),
     Layer.succeed(DraftStatementRepository, createDraftStatementRepository(supabase)),
     Layer.succeed(InvitationRepository, createInvitationRepository(supabase)),

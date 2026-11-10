@@ -21,6 +21,8 @@ export interface DraftStatementRepository {
   /** Every group of pending drafts under this grouping, the fullest first */
   countPendingGroups(grouping: DraftGrouping): Effect.Effect<DraftGroup[], DatabaseError>
   findById(id: string): Effect.Effect<DraftStatement | null, DatabaseError>
+  /** Every draft a chantier produced, whatever became of it, the newest first */
+  findByChantier(chantierId: string): Effect.Effect<DraftStatement[], DatabaseError>
   update(
     id: string,
     fields: Partial<Omit<DraftStatement, 'id' | 'createdAt' | 'updatedAt' | 'status'>>,

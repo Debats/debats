@@ -1,0 +1,112 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 20px 22px;
+}
+
+/* A chantier whose agent waits for a person stands out: that is where the work is */
+.waiting {
+  border-color: var(--warn);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.date {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.status {
+  composes: small from '../../../../styles/text.module.css';
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.working {
+  color: var(--ink-2);
+}
+
+.waiting .status,
+.blocked {
+  color: var(--warn);
+}
+
+.ended,
+.closed {
+  color: var(--ink-3);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.titleLink {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
+.brief {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.tally {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meter {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background-color: var(--paper-2);
+}
+
+.meterValidated {
+  background-color: var(--ink);
+}
+
+.meterPending {
+  background-color: var(--warn);
+}
+
+.meterSetAside {
+  background-color: var(--line-2);
+}
+
+.tallyLine {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.lastWord {
+  composes: small from '../../../../styles/text.module.css';
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  white-space: pre-line;
+}
+
+.lastWordWho {
+  composes: meta from '../../../../styles/text.module.css';
+  display: block;
+  margin-bottom: 2px;
+}

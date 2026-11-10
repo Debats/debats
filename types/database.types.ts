@@ -138,6 +138,95 @@ export type Database = {
           },
         ]
       }
+      chantier_messages: {
+        Row: {
+          chantier_id: string
+          created_at: string
+          event_id: string | null
+          id: string
+          role: string
+          text: string
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          role: string
+          text: string
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          role?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantier_messages_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chantiers: {
+        Row: {
+          brief: string
+          created_at: string
+          created_by: string
+          id: string
+          last_event_at: string | null
+          session_id: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          brief: string
+          created_at?: string
+          created_by: string
+          id?: string
+          last_event_at?: string | null
+          session_id?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          brief?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_event_at?: string | null
+          session_id?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantiers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chantiers_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contributors: {
         Row: {
           created_at: string | null
@@ -208,6 +297,7 @@ export type Database = {
           affiliations: Json
           ai_notes: string | null
           arguments: Json
+          chantier_id: string | null
           created_at: string
           date: string
           deed: string | null
@@ -237,6 +327,7 @@ export type Database = {
           affiliations?: Json
           ai_notes?: string | null
           arguments?: Json
+          chantier_id?: string | null
           created_at?: string
           date: string
           deed?: string | null
@@ -266,6 +357,7 @@ export type Database = {
           affiliations?: Json
           ai_notes?: string | null
           arguments?: Json
+          chantier_id?: string | null
           created_at?: string
           date?: string
           deed?: string | null
@@ -291,7 +383,15 @@ export type Database = {
           vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
           voted_text?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "draft_statements_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invitations: {
         Row: {
@@ -1284,18 +1384,6 @@ export type Database = {
           title: string
         }[]
       }
-      merge_arguments: {
-        Args: { source_id: string; target_id: string }
-        Returns: undefined
-      }
-      merge_positions: {
-        Args: { source_id: string; target_id: string }
-        Returns: undefined
-      }
-      soft_delete_organisation: { Args: { p_id: string }; Returns: undefined }
-      soft_delete_position: { Args: { p_id: string }; Returns: undefined }
-      soft_delete_public_figure: { Args: { p_id: string }; Returns: undefined }
-      soft_delete_subject: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       organisation_type:

@@ -1,0 +1,80 @@
+/* The foot of a dialogue: a text area and its send button */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.ask {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background-color: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-control);
+  padding: 9px 12px;
+  resize: vertical;
+}
+
+.ask:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.hint {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.send {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper);
+  background-color: var(--ink);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 9px 18px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Below 1024 px a dialogue is a dark sheet, and the composer sits in it */
+@media (max-width: 1023px) {
+  .composer {
+    border-top-color: rgb(247 245 240 / 15%);
+  }
+
+  .hint {
+    color: var(--ink-3);
+  }
+
+  .send {
+    background-color: var(--signal);
+  }
+}
