@@ -35,7 +35,7 @@ export const NEEDS_CONSOLE =
 
 /** The configuration the environment gives, or null when the chantiers are not set up */
 export function chantierAgentConfig(
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
 ): ChantierAgentConfig | null {
   const agentId = env.CHANTIER_AGENT_ID
   const environmentId = env.CHANTIER_ENVIRONMENT_ID
@@ -80,23 +80,23 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
   const client = new Anthropic()
   const sessions = client.beta.sessions
 
+  /* From the cursor included: an event that shares its time is read again, and mirrored once */
   const eventsSince = async (sessionId: string, after: string | null) => {
     const events: SessionEventLike[] = []
     const page = sessions.events.list(sessionId, {
       order: 'asc',
-      ...(after ? { 'created_at[gt]': after } : {}),
+      ...(after ? { 'created_at[gte]': after } : {}),
     })
     for await (const event of page) events.push(event as SessionEventLike)
     return events
   }
 
-  /* The last stop may have been read in an earlier batch: it is looked up again */
+  /* The last stop may have been read in an earlier batch: the last few events are looked at again, one page only */
   const lastIdleOf = async (sessionId: string): Promise<SessionEventLike | undefined> => {
-    const page = sessions.events.list(sessionId, { order: 'desc', limit: LOOKBACK })
-    for await (const event of page) {
-      if (event.type === 'session.status_idle') return event as SessionEventLike
-    }
-    return undefined
+    const page = await sessions.events.list(sessionId, { order: 'desc', limit: LOOKBACK })
+    return page.data.find((event) => event.type === 'session.status_idle') as
+      | SessionEventLike
+      | undefined
   }
 
   return {

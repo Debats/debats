@@ -11,6 +11,7 @@ import {
   parseDraftOccupations,
   validateSlugifiableFields,
 } from './validation'
+import { createChantierRepository } from '../../../infra/database/chantier-repository-supabase'
 import { createOccupationRepository } from '../../../infra/database/occupation-repository-supabase'
 import { sameOccupationName } from '../../../domain/entities/occupation'
 import { checkAdminApiKey } from '../admin-auth'
@@ -167,6 +168,22 @@ async function canonicaliseOccupations(
   return null
 }
 
+/** A draft names the chantier it belongs to: one that does not exist is the agent's mistake, told as such */
+async function unknownChantier(
+  drafts: NewDraftStatement[],
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+): Promise<string | null> {
+  const named = Array.from(new Set(drafts.flatMap((draft) => draft.chantierId ?? [])))
+  if (named.length === 0) return null
+  const chantiers = createChantierRepository(supabase)
+  for (const id of named) {
+    const found = await Effect.runPromise(Effect.either(chantiers.findById(id)))
+    if (found._tag === 'Left') return 'Could not read the chantiers'
+    if (found.right === null) return `Unknown chantier « ${id} »`
+  }
+  return null
+}
+
 export async function POST(request: NextRequest) {
   if (!checkAdminApiKey(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -193,6 +210,11 @@ export async function POST(request: NextRequest) {
   const occupationError = await canonicaliseOccupations(parsed, supabase)
   if (occupationError) {
     return NextResponse.json({ error: occupationError }, { status: 400 })
+  }
+
+  const chantierError = await unknownChantier(parsed, supabase)
+  if (chantierError) {
+    return NextResponse.json({ error: chantierError }, { status: 400 })
   }
 
   const draftRepo = createDraftStatementRepository(supabase)

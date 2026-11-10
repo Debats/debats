@@ -85,12 +85,17 @@ export default function ChantierWorkspace({
     [chantier.id],
   )
 
+  /* A close that fails may still have closed the row (the agent could not be stopped): the page rereads */
   const close = useCallback(async () => {
     setError(undefined)
     const result = await closeChantierAction(chantier.id)
-    if (result.closed) setChantier(result.chantier)
-    else setError(result.message)
-  }, [chantier.id])
+    if (result.closed) {
+      setChantier(result.chantier)
+    } else {
+      setError(result.message)
+      router.refresh()
+    }
+  }, [chantier.id, router])
 
   return (
     <div className={styles.workspace}>
