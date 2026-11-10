@@ -209,6 +209,8 @@ Le formulaire de prise de position demande à Claude un avis sur la rédaction d
 | ------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `ANTHROPIC_API_KEY` | La clé de l'API Anthropic ; sans elle, la relecture se dit indisponible et la contribution part quand même (ADR 0002) |
 
+La même clé sert au dialogue d'amendement des brouillons (`/admin/drafts`, « Amender ») : l'admin discute avec Claude, qui relit le brouillon, lit la source (HTML et texte seulement, jamais un PDF) et réécrit les champs dans le formulaire, chacun marqué « Modifié par l'IA » et annulable ; un champ retouché à la main n'est plus touché. Le contrat vit dans `domain/services/draft-revision.ts`, l'adaptateur dans `infra/ai/draft-reviser.ts`, l'action `reviseDraft` est sans état : rien n'est enregistré avant « Valider le brouillon » ou « Enregistrer sans valider ».
+
 ### Lancement
 
 ```bash

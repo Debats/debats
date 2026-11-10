@@ -8,10 +8,9 @@ import { DraftStatement } from '../../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../../domain/use-cases/resolve-draft'
 import { validateDraftAction, ActionResult } from '../../../actions/validate-draft-action'
 import { rejectDraftAction, requestRevisionAction } from '../../../actions/reject-draft-action'
-import {
-  amendAndValidateDraftAction,
-  DraftAmendments,
-} from '../../../actions/amend-and-validate-draft-action'
+import { amendAndValidateDraftAction } from '../../../actions/amend-and-validate-draft-action'
+import { amendDraftAction } from '../../../actions/amend-draft-action'
+import { DraftAmendments } from '../../../actions/draft-amendments'
 import { deleteDraftAction } from '../../../actions/delete-draft-action'
 import Button from '../../../../components/ui/Button'
 import EntityStatus from '../EntityStatus'
@@ -77,6 +76,11 @@ export default function DraftCard({ draft, resolution, authorDraftsHref }: Draft
   const handleAmendAndValidate = useCallback(
     (amendments: DraftAmendments) =>
       executeAction(() => amendAndValidateDraftAction(draft.id, amendments)),
+    [draft.id, executeAction],
+  )
+
+  const handleAmendAndSave = useCallback(
+    (amendments: DraftAmendments) => executeAction(() => amendDraftAction(draft.id, amendments)),
     [draft.id, executeAction],
   )
 
@@ -184,6 +188,7 @@ export default function DraftCard({ draft, resolution, authorDraftsHref }: Draft
           draft={draft}
           resolution={resolution}
           onSubmit={handleAmendAndValidate}
+          onSave={handleAmendAndSave}
           onCancel={() => setShowAmendForm(false)}
           disabled={isPending}
         />

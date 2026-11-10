@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { Either } from 'effect'
 import { JSONSchema } from 'effect'
 import * as S from 'effect/Schema'
+import { NEVER_JUDGE_THE_OPINION, SITE_WRITING_RULES } from './site-rules'
+import { structuredAnswer } from './structured-answer'
 
 /**
  * One field of a contribution, as the form holds it. The field's own name
@@ -61,16 +62,9 @@ const RULES = `Tu relis une contribution à Débats.co, une plateforme qui carto
 
 Ton rôle est d'aider à la saisie. Tu ne décides rien : la contribution part quoi que tu dises, et c'est la communauté humaine qui modère.
 
-RÈGLE ABSOLUE : tu juges la RÉDACTION, jamais l'OPINION. Qu'une position te semble fausse, dangereuse ou minoritaire ne te regarde pas. Le site ne dit pas qui a raison. Si tu es tenté d'écrire qu'une idée est mauvaise, tais-toi : ce n'est pas ton travail.
+${NEVER_JUDGE_THE_OPINION}
 
-Les règles du site, par champ :
-
-- Titre du sujet : nomme le thème, jamais un avis, même majoritaire. « Le montant du SMIC », pas « L'augmentation du SMIC ». Un sujet = un débat : pas de fourre-tout. Pas de « en France » quand le contexte français est évident. La question ne va PAS dans le titre.
-- Problématique : la question posée par le sujet, sous forme interrogative.
-- Présentation (sujet, personnalité, organisation) : factuelle et neutre, sans jugement de valeur. Qui ou quoi, en quelques mots.
-- Titre de la position : nomme l'avis défendu, pas la personne qui le défend. Décrit le débat, ne le tranche pas. Pas d'étiquette pour/contre.
-- Citation : recopiée mot pour mot, sans reformulation ni coupe qui change le sens. Elle doit énoncer la position à elle seule : si la phrase ne dit pas ce que l'auteur défend, elle ne convient pas.
-- Nom de la source et adresse de la source : une publication réelle et vérifiable.
+${SITE_WRITING_RULES}
 
 Tu vois tous les champs ensemble, donc regarde aussi leur cohérence : la citation énonce-t-elle bien la position choisie ? la problématique correspond-elle au titre ?
 
@@ -130,25 +124,11 @@ export function createProofreader(): Proofreader {
         ],
       })
 
-      if (message.stop_reason === 'refusal') {
-        throw new Error(
-          `La relecture a été déclinée (${message.stop_details?.category ?? 'sans catégorie'})`,
-        )
-      }
-
-      const text = message.content.find((block) => block.type === 'text')
-      if (!text || text.type !== 'text') {
-        throw new Error('La relecture n’a rien répondu')
-      }
-
-      const read = decodeRead(JSON.parse(text.text))
-      if (Either.isLeft(read)) {
-        throw new Error('La relecture a répondu dans une forme inattendue')
-      }
+      const read = structuredAnswer(message, decodeRead, 'La relecture')
 
       /* Advice about a field nobody asked about has nowhere to go */
       const asked = new Set(fields.map(({ field }) => field))
-      return read.right.advice.filter(({ field }) => asked.has(field))
+      return read.advice.filter(({ field }) => asked.has(field))
     },
   }
 }

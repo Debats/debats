@@ -3,8 +3,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { DraftStatement } from '../../../../domain/entities/draft-statement'
 import { DraftResolution } from '../../../../domain/use-cases/resolve-draft'
-import { contentFieldsOf } from '../../../../domain/use-cases/validate-statement-fields'
-import { DraftAmendments } from '../../../actions/amend-and-validate-draft-action'
+import { isRevisable, RevisableField } from '../../../../domain/services/draft-revision'
+import { DraftAmendments } from '../../../actions/draft-amendments'
 import { searchPublicFigures } from '../../../actions/search-public-figures'
 import { searchOrganisations } from '../../../actions/search-organisations'
 import {
@@ -14,19 +14,27 @@ import {
 } from '../../../../domain/entities/organisation'
 import { searchSubjects } from '../../../actions/search-subjects'
 import { getPositionsForSubject, PositionOption } from '../../../actions/get-positions-for-subject'
+import { StatementContentInput } from '../../../../domain/use-cases/validate-statement-fields'
 import TextField from '../../../../components/ui/TextField'
 import TextArea from '../../../../components/ui/TextArea'
 import Button from '../../../../components/ui/Button'
 import ModeToggle from '../../../../components/ui/ModeToggle'
 import StatementContentFields from '../../../../components/statements/StatementContentFields'
 import EntityField, { EntityFieldValue } from '../EntityField'
-import { buildAmendments } from '../build-amendments'
+import DraftDialogue, { Sheet } from '../DraftDialogue'
+import RevisedField from '../../../../components/ui/RevisedField'
+import { amendValuesOf, buildAmendments } from '../build-amendments'
+import { FIELD_INPUT_IDS, withValue } from '../revision-fields'
+import { useDraftRevision } from '../useDraftRevision'
 import styles from './DraftAmendForm.module.css'
 
 interface DraftAmendFormProps {
   draft: DraftStatement
   resolution: DraftResolution
+  /** Writes the amendments and validates the draft */
   onSubmit: (amendments: DraftAmendments) => Promise<void>
+  /** Writes the amendments and keeps the draft for later */
+  onSave: (amendments: DraftAmendments) => Promise<void>
   onCancel: () => void
   disabled: boolean
 }
@@ -39,90 +47,87 @@ const POSITION_MODE_OPTIONS: [
   { value: 'new', label: 'Nouvelle position' },
 ]
 
+const CONTENT_KEYS = ['quote', 'document', 'votedText', 'deed'] as const
+
+/**
+ * The draft as a form, with the assistant beside it.
+ *
+ * The form is the only state: what the assistant rewrites lands in it,
+ * tinted and undoable field by field, and what a person types locks the
+ * field away from the assistant. Nothing is written before « Valider » or
+ * « Enregistrer », and the conversation dies with the form.
+ */
 export default function DraftAmendForm({
   draft,
   resolution,
   onSubmit,
+  onSave,
   onCancel,
   disabled,
 }: DraftAmendFormProps) {
   const { author } = draft
   const isOrganisation = author.kind === 'organisation'
-  const authorInitial = resolution.author.found
-    ? { id: resolution.author.entity.id, label: resolution.author.entity.name }
-    : undefined
-  const subjectInitial = resolution.subject.found
-    ? { id: resolution.subject.entity.id, label: resolution.subject.entity.title }
-    : undefined
 
-  // Author: a public figure or an organisation
-  const [authorMode, setAuthorMode] = useState<EntityFieldValue['mode']>(
-    authorInitial ? 'existing' : 'new',
-  )
-  const [authorName, setAuthorName] = useState(author.name)
-  const [authorPresentation, setAuthorPresentation] = useState(author.data?.presentation ?? '')
-  const [authorWikipedia, setAuthorWikipedia] = useState(author.data?.wikipediaUrl ?? '')
-  const [authorNotorietySources, setAuthorNotorietySources] = useState<string[]>(
-    author.data?.notorietySources ?? ['', ''],
-  )
-  const [authorOrganisationType, setAuthorOrganisationType] = useState<OrganisationType>(
-    author.kind === 'organisation'
-      ? (author.data?.organisationType ?? 'association')
-      : 'association',
-  )
-
-  // Subject
-  const [subjectMode, setSubjectMode] = useState<EntityFieldValue['mode']>(
-    subjectInitial ? 'existing' : 'new',
-  )
-  const [subjectId, setSubjectId] = useState<string | null>(subjectInitial?.id ?? null)
-  const [subjectTitle, setSubjectTitle] = useState(draft.subjectTitle)
-  const [subjectPresentation, setSubjectPresentation] = useState(
-    draft.subjectData?.presentation ?? '',
-  )
-  const [subjectProblem, setSubjectProblem] = useState(draft.subjectData?.problem ?? '')
-
-  // Position
-  const [positionMode, setPositionMode] = useState<'existing' | 'new'>(
-    resolution.position.found ? 'existing' : 'new',
-  )
+  const [values, setValues] = useState(() => amendValuesOf(draft, resolution))
   const [availablePositions, setAvailablePositions] = useState<PositionOption[]>([])
-  const [selectedPositionId, setSelectedPositionId] = useState(
-    resolution.position.found ? resolution.position.entity.id : '',
-  )
-  const [positionTitle, setPositionTitle] = useState(draft.positionTitle)
-  const [positionDescription, setPositionDescription] = useState(
-    draft.positionData?.description ?? '',
+  const [sheet, setSheet] = useState<Sheet>('bar')
+
+  const openSheet = useCallback(() => setSheet('half'), [])
+  const revision = useDraftRevision({
+    values,
+    setValues,
+    author: { kind: author.kind, found: resolution.author.found },
+    sourceUrl: draft.sourceUrl,
+    onAnswered: openSheet,
+  })
+
+  /* A person writing a field: the value changes, and the assistant leaves it alone from now on */
+  const write = useCallback(
+    (field: RevisableField, value: string) => {
+      setValues((current) => withValue(current, field, value))
+      revision.edited(field)
+    },
+    [revision],
   )
 
-  // Statement
-  const [sourceName, setSourceName] = useState(draft.sourceName)
-  const [content, setContent] = useState(contentFieldsOf(draft.content))
+  const writeContent = useCallback(
+    (content: StatementContentInput) => {
+      CONTENT_KEYS.filter((key) => content[key] !== values.content[key]).forEach(revision.edited)
+      setValues((current) => ({ ...current, content }))
+    },
+    [revision, values.content],
+  )
 
   useEffect(() => {
-    if (subjectMode !== 'existing' || !subjectId) return
+    if (values.subjectMode !== 'existing' || !values.subjectId) return
 
     const controller = new AbortController()
-    getPositionsForSubject(subjectId).then((positions) => {
+    getPositionsForSubject(values.subjectId).then((positions) => {
       if (controller.signal.aborted) return
       setAvailablePositions(positions)
       const match = positions.find((p) => p.title === draft.positionTitle)
-      if (match) setSelectedPositionId(match.id)
+      if (match) {
+        setValues((current) =>
+          current.selectedPositionId ? current : { ...current, selectedPositionId: match.id },
+        )
+      }
     })
     return () => controller.abort()
-  }, [subjectMode, subjectId, draft.positionTitle])
+  }, [values.subjectMode, values.subjectId, draft.positionTitle])
 
   const handleAuthorChange = useCallback((value: EntityFieldValue) => {
-    setAuthorMode(value.mode)
-    setAuthorName(value.name)
+    setValues((current) => ({ ...current, authorMode: value.mode, authorName: value.name }))
   }, [])
 
   const handleSubjectChange = useCallback((value: EntityFieldValue) => {
-    setSubjectMode(value.mode)
-    setSubjectTitle(value.name)
-    setSubjectId(value.mode === 'existing' ? value.id : null)
-    setPositionMode('new')
-    setSelectedPositionId('')
+    setValues((current) => ({
+      ...current,
+      subjectMode: value.mode,
+      subjectTitle: value.name,
+      subjectId: value.mode === 'existing' ? value.id : null,
+      positionMode: 'new',
+      selectedPositionId: '',
+    }))
     setAvailablePositions([])
   }, [])
 
@@ -140,245 +145,296 @@ export default function DraftAmendForm({
     [],
   )
 
-  const handleSubmit = useCallback(async () => {
-    const selectedPosition = availablePositions.find((p) => p.id === selectedPositionId)
-    const amendments = buildAmendments(draft, resolution, {
-      authorMode,
-      authorName,
-      authorPresentation,
-      authorWikipedia,
-      authorNotorietySources,
-      authorOrganisationType,
-      subjectMode,
-      subjectTitle,
-      subjectPresentation,
-      subjectProblem,
-      positionMode,
-      selectedPositionTitle: selectedPosition?.title ?? null,
-      positionTitle,
-      positionDescription,
-      sourceName,
-      content,
+  const amendments = useCallback(() => {
+    const selected = availablePositions.find((p) => p.id === values.selectedPositionId)
+    return buildAmendments(draft, resolution, {
+      ...values,
+      selectedPositionTitle: selected?.title ?? null,
     })
-    await onSubmit(amendments)
-  }, [
-    draft,
-    resolution,
-    authorMode,
-    authorName,
-    authorPresentation,
-    authorWikipedia,
-    authorNotorietySources,
-    authorOrganisationType,
-    subjectMode,
-    subjectTitle,
-    subjectPresentation,
-    subjectProblem,
-    positionMode,
-    selectedPositionId,
-    availablePositions,
-    positionTitle,
-    positionDescription,
-    sourceName,
-    content,
-    onSubmit,
-  ])
+  }, [availablePositions, draft, resolution, values])
+
+  const seeField = useCallback((field: RevisableField) => {
+    setSheet('bar')
+    const input = document.getElementById(FIELD_INPUT_IDS[field])
+    input?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    input?.focus({ preventScroll: true })
+  }, [])
+
+  const revisedField = (field: RevisableField) => ({
+    revised: revision.revised[field] !== undefined,
+    onUndo: () => revision.undo(field),
+  })
+
+  const subjectKey = `${values.subjectMode}-${values.subjectId ?? ''}`
+  const subjectSelection =
+    values.subjectMode === 'existing' && values.subjectId
+      ? { id: values.subjectId, label: values.subjectTitle }
+      : undefined
+  const authorSelection = resolution.author.found
+    ? { id: resolution.author.entity.id, label: resolution.author.entity.name }
+    : undefined
 
   return (
-    <div className={styles.form}>
-      <EntityField
-        label={isOrganisation ? 'Organisation' : 'Personnalité'}
-        draftName={author.name}
-        initialSelection={authorInitial}
-        onSearch={searchAuthors}
-        onChange={handleAuthorChange}
-      >
-        <TextField
-          label="Nom"
-          id="amend-author-name"
-          name="authorName"
-          value={authorName}
-          onChange={(e) => setAuthorName(e.target.value)}
-        />
-        {isOrganisation && (
-          <div className={styles.selectField}>
-            <label className={styles.selectLabel} htmlFor="amend-author-organisation-type">
-              Type d’organisation
-            </label>
-            <select
-              id="amend-author-organisation-type"
-              className={styles.select}
-              value={authorOrganisationType}
-              onChange={(e) => setAuthorOrganisationType(e.target.value as OrganisationType)}
-            >
-              {ORGANISATION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {ORGANISATION_TYPE_LABELS[type]}
-                </option>
+    <div className={styles.workspace}>
+      <div className={styles.form}>
+        <EntityField
+          label={isOrganisation ? 'Organisation' : 'Personnalité'}
+          draftName={author.name}
+          initialSelection={authorSelection}
+          onSearch={searchAuthors}
+          onChange={handleAuthorChange}
+        >
+          <RevisedField {...revisedField('authorName')}>
+            <TextField
+              label="Nom"
+              id={FIELD_INPUT_IDS.authorName}
+              value={values.authorName}
+              onChange={(e) => write('authorName', e.target.value)}
+              advice={revision.advice.authorName}
+            />
+          </RevisedField>
+          {isOrganisation && (
+            <div className={styles.selectField}>
+              <label className={styles.selectLabel} htmlFor="amend-author-organisation-type">
+                Type d’organisation
+              </label>
+              <select
+                id="amend-author-organisation-type"
+                className={styles.select}
+                value={values.authorOrganisationType}
+                onChange={(e) =>
+                  setValues((current) => ({
+                    ...current,
+                    authorOrganisationType: e.target.value as OrganisationType,
+                  }))
+                }
+              >
+                {ORGANISATION_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {ORGANISATION_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <RevisedField {...revisedField('authorPresentation')}>
+            <TextArea
+              label="Présentation"
+              id={FIELD_INPUT_IDS.authorPresentation}
+              value={values.authorPresentation}
+              onChange={(e) => write('authorPresentation', e.target.value)}
+              rows={2}
+              advice={revision.advice.authorPresentation}
+            />
+          </RevisedField>
+          <RevisedField {...revisedField('authorWikipedia')}>
+            <TextField
+              label="URL Wikipedia"
+              id={FIELD_INPUT_IDS.authorWikipedia}
+              value={values.authorWikipedia}
+              onChange={(e) => write('authorWikipedia', e.target.value)}
+              advice={revision.advice.authorWikipedia}
+            />
+          </RevisedField>
+          {!values.authorWikipedia && (
+            <div className={styles.notorietySources}>
+              <label className={styles.notorietyLabel}>
+                Sources de notoriété (min. 2, requises sans Wikipedia)
+              </label>
+              {values.authorNotorietySources.map((url, index) => (
+                <div key={index} className={styles.notorietyRow}>
+                  <TextField
+                    label={`Source ${index + 1}`}
+                    id={`amend-author-notoriety-${index}`}
+                    value={url}
+                    onChange={(e) => {
+                      const next = [...values.authorNotorietySources]
+                      next[index] = e.target.value
+                      setValues((current) => ({ ...current, authorNotorietySources: next }))
+                    }}
+                  />
+                  {values.authorNotorietySources.length > 2 && (
+                    <button
+                      type="button"
+                      className={styles.removeSource}
+                      onClick={() =>
+                        setValues((current) => ({
+                          ...current,
+                          authorNotorietySources: current.authorNotorietySources.filter(
+                            (_, i) => i !== index,
+                          ),
+                        }))
+                      }
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               ))}
-            </select>
-          </div>
-        )}
-        <TextArea
-          label="Présentation"
-          id="amend-author-presentation"
-          name="authorPresentation"
-          value={authorPresentation}
-          onChange={(e) => setAuthorPresentation(e.target.value)}
-          rows={2}
-        />
-        <TextField
-          label="URL Wikipedia"
-          id="amend-author-wikipedia"
-          name="authorWikipedia"
-          value={authorWikipedia}
-          onChange={(e) => setAuthorWikipedia(e.target.value)}
-        />
-        {!authorWikipedia && (
-          <div className={styles.notorietySources}>
-            <label className={styles.notorietyLabel}>
-              Sources de notoriété (min. 2, requises sans Wikipedia)
-            </label>
-            {authorNotorietySources.map((url, index) => (
-              <div key={index} className={styles.notorietyRow}>
-                <TextField
-                  label={`Source ${index + 1}`}
-                  id={`amend-author-notoriety-${index}`}
-                  name={`authorNotoriety${index}`}
-                  value={url}
-                  onChange={(e) => {
-                    const next = [...authorNotorietySources]
-                    next[index] = e.target.value
-                    setAuthorNotorietySources(next)
-                  }}
-                />
-                {authorNotorietySources.length > 2 && (
-                  <button
-                    type="button"
-                    className={styles.removeSource}
-                    onClick={() =>
-                      setAuthorNotorietySources(
-                        authorNotorietySources.filter((_, i) => i !== index),
-                      )
-                    }
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              className={styles.addSource}
-              onClick={() => setAuthorNotorietySources([...authorNotorietySources, ''])}
-            >
-              + Ajouter une source
-            </button>
-          </div>
-        )}
-      </EntityField>
+              <button
+                type="button"
+                className={styles.addSource}
+                onClick={() =>
+                  setValues((current) => ({
+                    ...current,
+                    authorNotorietySources: [...current.authorNotorietySources, ''],
+                  }))
+                }
+              >
+                + Ajouter une source
+              </button>
+            </div>
+          )}
+        </EntityField>
 
-      <EntityField
-        label="Sujet"
-        draftName={draft.subjectTitle}
-        initialSelection={subjectInitial}
-        onSearch={searchSubjectsAction}
-        onChange={handleSubjectChange}
-      >
-        <TextField
-          label="Titre"
-          id="amend-subject-title"
-          name="subjectTitle"
-          value={subjectTitle}
-          onChange={(e) => setSubjectTitle(e.target.value)}
-        />
-        <TextArea
-          label="Présentation"
-          id="amend-subject-presentation"
-          name="subjectPresentation"
-          value={subjectPresentation}
-          onChange={(e) => setSubjectPresentation(e.target.value)}
-          rows={2}
-        />
-        <TextArea
-          label="Problématique"
-          id="amend-subject-problem"
-          name="subjectProblem"
-          value={subjectProblem}
-          onChange={(e) => setSubjectProblem(e.target.value)}
-          rows={2}
-        />
-      </EntityField>
-
-      <fieldset className={styles.fieldset}>
-        <legend className={styles.legend}>Position</legend>
-
-        {subjectMode === 'existing' && availablePositions.length > 0 && (
-          <ModeToggle
-            options={POSITION_MODE_OPTIONS}
-            value={positionMode}
-            onChange={setPositionMode}
-          />
-        )}
-
-        {positionMode === 'existing' && availablePositions.length > 0 ? (
-          <div className={styles.selectField}>
-            <label className={styles.selectLabel} htmlFor="amend-position-select">
-              Position
-            </label>
-            <select
-              id="amend-position-select"
-              className={styles.select}
-              value={selectedPositionId}
-              onChange={(e) => setSelectedPositionId(e.target.value)}
-            >
-              <option value="">— Choisir une position —</option>
-              {availablePositions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <>
+        {/* Keyed on what it holds: an attachment the assistant proposes remounts it on the chosen subject */}
+        <EntityField
+          key={subjectKey}
+          label="Sujet"
+          draftName={draft.subjectTitle}
+          initialSelection={subjectSelection}
+          onSearch={searchSubjectsAction}
+          onChange={handleSubjectChange}
+        >
+          <RevisedField {...revisedField('subjectTitle')}>
             <TextField
               label="Titre"
-              id="amend-position-title"
-              name="positionTitle"
-              value={positionTitle}
-              onChange={(e) => setPositionTitle(e.target.value)}
+              id={FIELD_INPUT_IDS.subjectTitle}
+              value={values.subjectTitle}
+              onChange={(e) => write('subjectTitle', e.target.value)}
+              advice={revision.advice.subjectTitle}
             />
+          </RevisedField>
+          <RevisedField {...revisedField('subjectPresentation')}>
             <TextArea
-              label="Description"
-              id="amend-position-description"
-              name="positionDescription"
-              value={positionDescription}
-              onChange={(e) => setPositionDescription(e.target.value)}
-              rows={2}
+              label="Présentation"
+              id={FIELD_INPUT_IDS.subjectPresentation}
+              value={values.subjectPresentation}
+              onChange={(e) => write('subjectPresentation', e.target.value)}
+              rows={3}
+              advice={revision.advice.subjectPresentation}
             />
-          </>
-        )}
-      </fieldset>
+          </RevisedField>
+          <RevisedField {...revisedField('subjectProblem')}>
+            <TextArea
+              label="Problématique"
+              id={FIELD_INPUT_IDS.subjectProblem}
+              value={values.subjectProblem}
+              onChange={(e) => write('subjectProblem', e.target.value)}
+              rows={2}
+              advice={revision.advice.subjectProblem}
+            />
+          </RevisedField>
+        </EntityField>
 
-      <TextField
-        label="Source"
-        id="amend-source"
-        name="sourceName"
-        value={sourceName}
-        onChange={(e) => setSourceName(e.target.value)}
-      />
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.legend}>Position</legend>
 
-      <StatementContentFields value={content} onChange={setContent} />
+          {values.subjectMode === 'existing' && availablePositions.length > 0 && (
+            <ModeToggle
+              options={POSITION_MODE_OPTIONS}
+              value={values.positionMode}
+              onChange={(positionMode) => setValues((current) => ({ ...current, positionMode }))}
+            />
+          )}
 
-      <div className={styles.actions}>
-        <Button size="small" onClick={handleSubmit} disabled={disabled}>
-          {disabled ? 'Validation…' : 'Valider avec les modifications'}
-        </Button>
-        <Button variant="link" size="small" onClick={onCancel} disabled={disabled}>
-          Annuler
-        </Button>
+          {values.positionMode === 'existing' && availablePositions.length > 0 ? (
+            <div className={styles.selectField}>
+              <label className={styles.selectLabel} htmlFor="amend-position-select">
+                Position
+              </label>
+              <select
+                id="amend-position-select"
+                className={styles.select}
+                value={values.selectedPositionId}
+                onChange={(e) =>
+                  setValues((current) => ({ ...current, selectedPositionId: e.target.value }))
+                }
+              >
+                <option value="">— Choisir une position —</option>
+                {availablePositions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <>
+              <RevisedField {...revisedField('positionTitle')}>
+                <TextField
+                  label="Titre"
+                  id={FIELD_INPUT_IDS.positionTitle}
+                  value={values.positionTitle}
+                  onChange={(e) => write('positionTitle', e.target.value)}
+                  advice={revision.advice.positionTitle}
+                />
+              </RevisedField>
+              <RevisedField {...revisedField('positionDescription')}>
+                <TextArea
+                  label="Description"
+                  id={FIELD_INPUT_IDS.positionDescription}
+                  value={values.positionDescription}
+                  onChange={(e) => write('positionDescription', e.target.value)}
+                  rows={2}
+                  advice={revision.advice.positionDescription}
+                />
+              </RevisedField>
+            </>
+          )}
+        </fieldset>
+
+        <RevisedField {...revisedField('sourceName')}>
+          <TextField
+            label="Source"
+            id={FIELD_INPUT_IDS.sourceName}
+            value={values.sourceName}
+            onChange={(e) => write('sourceName', e.target.value)}
+            advice={revision.advice.sourceName}
+          />
+        </RevisedField>
+
+        <StatementContentFields
+          value={values.content}
+          onChange={writeContent}
+          advice={revision.advice}
+          revised={Object.fromEntries(
+            CONTENT_KEYS.filter((key) => revision.revised[key] !== undefined).map((key) => [
+              key,
+              () => revision.undo(key),
+            ]),
+          )}
+        />
+
+        <div className={styles.actions}>
+          <Button size="small" onClick={() => void onSubmit(amendments())} disabled={disabled}>
+            {disabled ? 'En cours…' : 'Valider le brouillon'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => void onSave(amendments())}
+            disabled={disabled}
+          >
+            Enregistrer sans valider
+          </Button>
+          <Button variant="link" size="small" onClick={onCancel} disabled={disabled}>
+            Annuler
+          </Button>
+        </div>
       </div>
+
+      <DraftDialogue
+        turns={revision.turns}
+        status={revision.status}
+        suggestions={revision.suggestions}
+        revisedCount={Object.keys(revision.revised).filter(isRevisable).length}
+        sheet={sheet}
+        onSheet={setSheet}
+        onAsk={(request) => void revision.ask(request)}
+        onChoose={revision.choose}
+        onSeeField={seeField}
+      />
     </div>
   )
 }

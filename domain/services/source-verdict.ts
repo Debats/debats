@@ -1,4 +1,4 @@
-import { StatementContent, quoteOf } from '../../domain/entities/statement'
+import { StatementContent, quoteOf } from '../entities/statement'
 import { coverageOf, quoteAppearsIn, textOfHtml } from './quote-match'
 
 /** What came back from the source, or why nothing did. */
@@ -65,11 +65,10 @@ export const isReadable = (contentType: string): boolean => {
   return mediaType.startsWith('text/') || mediaType === 'application/xhtml+xml'
 }
 
-export const verdictFor = (
-  content: StatementContent,
-  sourceUrl: string,
-  page: FetchedPage | null,
-): Verdict => {
+/** Words to look for on the page: a statement's content, or a bare quote while it is being written */
+export type Words = StatementContent | { quote: string | undefined }
+
+export const verdictFor = (words: Words, sourceUrl: string, page: FetchedPage | null): Verdict => {
   if (needsABrowser(sourceUrl)) return { kind: 'unverifiable', reason: hostOf(sourceUrl) }
   if (page === null) return { kind: 'unreachable', reason: 'not fetched' }
   if ('error' in page) return { kind: 'unreachable', reason: page.error }
@@ -82,7 +81,7 @@ export const verdictFor = (
   const text = textOfHtml(page.body)
   if (text.length < MIN_PAGE_TEXT) return { kind: 'unverifiable', reason: 'page sans texte' }
 
-  const quote = quoteOf(content)
+  const quote = 'kind' in words ? quoteOf(words) : words.quote
   if (quote === undefined) return { kind: 'reachable' }
   if (quoteAppearsIn(quote, text)) return { kind: 'verified' }
   const coverage = coverageOf(quote, text)

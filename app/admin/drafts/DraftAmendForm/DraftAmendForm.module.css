@@ -1,11 +1,33 @@
+/* The form and the dialogue side by side on a wide screen; the dialogue is a sheet below 1024 px */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+@media (min-width: 1024px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+/* Room under the form for the sheet's bar, which covers the foot of a small screen */
+@media (max-width: 1023px) {
+  .workspace {
+    padding-bottom: 96px;
+  }
+}
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 12px;
   padding: 16px;
-  background-color: #f8f6f0;
+  background-color: var(--paper);
   border-radius: 4px;
+  min-width: 0;
 }
 
 .fieldset {

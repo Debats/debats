@@ -1,0 +1,31 @@
+/* A field the assistant wrote over: amber ground, the mark above, the field itself untouched */
+.revised {
+  background-color: var(--warn-soft);
+  border-radius: 10px;
+  padding: 8px 10px 10px;
+  margin: 0 -10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mark {
+  composes: meta from '../../../styles/text.module.css';
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  color: var(--warn);
+  font-weight: 500;
+}
+
+.undo {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--warn);
+  text-decoration: underline;
+  cursor: pointer;
+}

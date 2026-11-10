@@ -20,7 +20,8 @@
 import { writeFileSync } from 'node:fs'
 import { DraftStatement } from '../domain/entities/draft-statement'
 import { contentLine } from '../domain/entities/statement'
-import { FetchedPage, Verdict, isReadable, verdictFor } from './verify-drafts/verdict'
+import { Verdict, verdictFor } from '../domain/services/source-verdict'
+import { fetchPage } from '../infra/sources/fetch-page'
 
 /** A draft as the API serialises it: the dates are strings */
 type DraftPayload = Omit<DraftStatement, 'createdAt' | 'updatedAt'> & {
@@ -33,8 +34,6 @@ type Checked = { draft: DraftPayload; verdict: Verdict }
 type Options = { apply: boolean; limit: number; out: string | null }
 
 const CONCURRENCY = 6
-const FETCH_TIMEOUT_MS = 15_000
-const USER_AGENT = 'Mozilla/5.0 (compatible; debats.co draft verifier; +https://debats.co)'
 
 /** The verdicts a review is sent for: the words are not there, or the source is gone */
 const FAILING = new Set<Verdict['kind']>(['missing', 'unreachable'])
@@ -92,30 +91,6 @@ function draftsApi(env: NodeJS.ProcessEnv) {
         body: JSON.stringify({ status: 'revision_requested', note }),
       }),
   }
-}
-
-async function fetchPage(url: string): Promise<FetchedPage> {
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      redirect: 'follow',
-    })
-    const contentType = response.headers.get('content-type') ?? ''
-    const body = isReadable(contentType) ? await response.text() : ''
-    return { status: response.status, contentType, body }
-  } catch (error) {
-    return { error: causeOf(error) }
-  }
-}
-
-/** What stopped the fetch, as a person would name it */
-const causeOf = (error: unknown): string => {
-  if (!(error instanceof Error)) return String(error)
-  if (error.name === 'TimeoutError') return 'délai dépassé'
-  // undici wraps the network error: the cause names it (ENOTFOUND, ECONNREFUSED…)
-  const { cause } = error as { cause?: unknown }
-  return cause instanceof Error ? cause.message : error.message
 }
 
 /** Checks the drafts a few at a time, so no source sees a burst */

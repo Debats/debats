@@ -10,7 +10,40 @@ import {
   contentFieldsOf,
   StatementContentInput,
 } from '../../../domain/use-cases/validate-statement-fields'
-import { DraftAmendments } from '../../actions/amend-and-validate-draft-action'
+import { DraftAmendments } from '../../actions/draft-amendments'
+
+/** The values of the amend form, by the names the assistant knows them under; the ids beside them */
+export type AmendValues = Omit<AmendFormState, 'selectedPositionTitle'> & {
+  subjectId: string | null
+  selectedPositionId: string
+}
+
+/** The form as it opens: the draft, placed on what the site already has of it */
+export function amendValuesOf(draft: DraftStatement, resolution: DraftResolution): AmendValues {
+  const { author } = draft
+  return {
+    authorMode: resolution.author.found ? 'existing' : 'new',
+    authorName: author.name,
+    authorPresentation: author.data?.presentation ?? '',
+    authorWikipedia: author.data?.wikipediaUrl ?? '',
+    authorNotorietySources: author.data?.notorietySources ?? ['', ''],
+    authorOrganisationType:
+      author.kind === 'organisation'
+        ? (author.data?.organisationType ?? 'association')
+        : 'association',
+    subjectMode: resolution.subject.found ? 'existing' : 'new',
+    subjectId: resolution.subject.found ? resolution.subject.entity.id : null,
+    subjectTitle: draft.subjectTitle,
+    subjectPresentation: draft.subjectData?.presentation ?? '',
+    subjectProblem: draft.subjectData?.problem ?? '',
+    positionMode: resolution.position.found ? 'existing' : 'new',
+    selectedPositionId: resolution.position.found ? resolution.position.entity.id : '',
+    positionTitle: draft.positionTitle,
+    positionDescription: draft.positionData?.description ?? '',
+    sourceName: draft.sourceName,
+    content: contentFieldsOf(draft.content),
+  }
+}
 
 export type AmendFormState = {
   authorMode: 'existing' | 'new'

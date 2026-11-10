@@ -11,9 +11,15 @@ import {
 import { FieldErrors } from '../../../domain/use-cases/types'
 import { StatementContentInput } from '../../../domain/use-cases/validate-statement-fields'
 import { AdviceByField } from '../../ui/FieldAdvice'
+import RevisedField from '../../ui/RevisedField'
 import TextArea from '../../ui/TextArea'
 import TextField from '../../ui/TextField'
 import styles from './StatementContentFields.module.css'
+
+/** The fields an assistant may write over, each with how to put it back */
+export type RevisedContent = Partial<
+  Record<'document' | 'quote' | 'votedText' | 'deed', () => void>
+>
 
 interface StatementContentFieldsProps {
   value: StatementContentInput
@@ -21,6 +27,8 @@ interface StatementContentFieldsProps {
   errors?: FieldErrors
   /** An opinion on the writing of each field, from an assisted reading */
   advice?: AdviceByField
+  /** The fields an assistant wrote over, marked as such and undoable in place */
+  revised?: RevisedContent
 }
 
 const TYPE_HINTS: Record<StatementType, string> = {
@@ -41,9 +49,14 @@ export default function StatementContentFields({
   onChange,
   errors,
   advice,
+  revised = {},
 }: StatementContentFieldsProps) {
   const type = parseStatementType(value.statementType)
   const set = (patch: Partial<StatementContentInput>) => onChange({ ...value, ...patch })
+  const revisedField = (key: keyof RevisedContent) => ({
+    revised: revised[key] !== undefined,
+    onUndo: () => revised[key]?.(),
+  })
 
   return (
     <>
@@ -69,47 +82,53 @@ export default function StatementContentFields({
       </div>
 
       {type === 'program' && (
-        <TextField
-          label="Document programmatique"
-          id="document"
-          name="document"
-          required
-          placeholder="ex : L’Avenir en commun, Programme 2027"
-          value={value.document}
-          onChange={(e) => set({ document: e.target.value })}
-          error={errors?.document}
-          advice={advice?.document}
-        />
+        <RevisedField {...revisedField('document')}>
+          <TextField
+            label="Document programmatique"
+            id="document"
+            name="document"
+            required
+            placeholder="ex : L’Avenir en commun, Programme 2027"
+            value={value.document}
+            onChange={(e) => set({ document: e.target.value })}
+            error={errors?.document}
+            advice={advice?.document}
+          />
+        </RevisedField>
       )}
 
       {(type === 'declaration' || type === 'program') && (
-        <TextArea
-          label="Citation"
-          id="quote"
-          name="quote"
-          required
-          placeholder="La phrase exacte, mot pour mot (10 caractères minimum)"
-          rows={4}
-          value={value.quote}
-          onChange={(e) => set({ quote: e.target.value })}
-          error={errors?.quote}
-          advice={advice?.quote}
-        />
+        <RevisedField {...revisedField('quote')}>
+          <TextArea
+            label="Citation"
+            id="quote"
+            name="quote"
+            required
+            placeholder="La phrase exacte, mot pour mot (10 caractères minimum)"
+            rows={4}
+            value={value.quote}
+            onChange={(e) => set({ quote: e.target.value })}
+            error={errors?.quote}
+            advice={advice?.quote}
+          />
+        </RevisedField>
       )}
 
       {type === 'vote' && (
         <>
-          <TextField
-            label="Texte soumis au vote"
-            id="votedText"
-            name="votedText"
-            required
-            placeholder="Le texte tel que le scrutin le nomme"
-            value={value.votedText}
-            onChange={(e) => set({ votedText: e.target.value })}
-            error={errors?.votedText}
-            advice={advice?.votedText}
-          />
+          <RevisedField {...revisedField('votedText')}>
+            <TextField
+              label="Texte soumis au vote"
+              id="votedText"
+              name="votedText"
+              required
+              placeholder="Le texte tel que le scrutin le nomme"
+              value={value.votedText}
+              onChange={(e) => set({ votedText: e.target.value })}
+              error={errors?.votedText}
+              advice={advice?.votedText}
+            />
+          </RevisedField>
           <div className={styles.typeField}>
             <span className={styles.label}>Sens du vote</span>
             <div className={styles.choices} role="radiogroup" aria-label="Sens du vote">
@@ -135,17 +154,19 @@ export default function StatementContentFields({
       )}
 
       {type === 'act' && (
-        <TextField
-          label="Acte"
-          id="deed"
-          name="deed"
-          required
-          placeholder="ex : Cosignature de la proposition de loi n° 575"
-          value={value.deed}
-          onChange={(e) => set({ deed: e.target.value })}
-          error={errors?.deed}
-          advice={advice?.deed}
-        />
+        <RevisedField {...revisedField('deed')}>
+          <TextField
+            label="Acte"
+            id="deed"
+            name="deed"
+            required
+            placeholder="ex : Cosignature de la proposition de loi n° 575"
+            value={value.deed}
+            onChange={(e) => set({ deed: e.target.value })}
+            error={errors?.deed}
+            advice={advice?.deed}
+          />
+        </RevisedField>
       )}
     </>
   )

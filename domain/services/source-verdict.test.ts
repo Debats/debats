@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { actContent, declarationContent, voteContent } from '../../domain/entities/statement'
-import { verdictFor } from './verdict'
+import { actContent, declarationContent, voteContent } from '../entities/statement'
+import { verdictFor } from './source-verdict'
 
 const words = declarationContent('Il faut supprimer le droit du sol.')
 

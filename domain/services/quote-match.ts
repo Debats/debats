@@ -73,6 +73,23 @@ export const quoteAppearsIn = (quote: string, pageText: string): boolean => {
   return pieces.length > 0 && pieces.every((piece) => page.includes(piece))
 }
 
+/** How many characters an excerpt shows on each side of what it found */
+const EXCERPT_RADIUS = 400
+
+/**
+ * The passage of a page around the quote's first words, for a reader who
+ * wants to see the words in their place: who said them, in what sentence.
+ * The page is searched as it reads, with its typography; when the quote is
+ * not found that way, the opening of the page is what there is to show.
+ */
+export const excerptAround = (quote: string, pageText: string): string => {
+  const opening = quote.split(CUT)[0].trim().split(/\s+/).slice(0, 5).join(' ')
+  const at = opening ? pageText.toLowerCase().indexOf(opening.toLowerCase()) : -1
+  const start = Math.max(0, (at === -1 ? 0 : at) - EXCERPT_RADIUS)
+  const end = Math.min(pageText.length, (at === -1 ? 0 : at) + EXCERPT_RADIUS)
+  return `${start > 0 ? '…' : ''}${pageText.slice(start, end).trim()}${end < pageText.length ? '…' : ''}`
+}
+
 /** How many words in a row make a window worth looking for */
 const WINDOW = 6
 

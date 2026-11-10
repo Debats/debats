@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { coverageOf, normalise, quoteAppearsIn, textOfHtml } from './quote-match'
+import { coverageOf, excerptAround, normalise, quoteAppearsIn, textOfHtml } from './quote-match'
 
 describe('textOfHtml', () => {
   it('keeps the words of a page and drops its markup, scripts and styles', () => {
@@ -77,5 +77,25 @@ describe('coverageOf', () => {
   it('judges a short quote as a whole', () => {
     expect(coverageOf('mentent aux Français', page)).toBe(1)
     expect(coverageOf('mentent aux Belges', page)).toBe(0)
+  })
+})
+
+describe('excerptAround', () => {
+  const page = `${'Préambule. '.repeat(60)}Il a répété : « Le grand remplacement est une réalité. » Puis il a changé de sujet. ${'Suite. '.repeat(80)}`
+
+  it('shows the page around the first words of the quote, with the typography of the page', () => {
+    const excerpt = excerptAround('le grand remplacement est une réalité', page)
+
+    expect(excerpt).toContain('Il a répété : « Le grand remplacement est une réalité. »')
+    expect(excerpt.startsWith('…')).toBe(true)
+    expect(excerpt.endsWith('…')).toBe(true)
+    expect(excerpt.length).toBeLessThan(900)
+  })
+
+  it('shows the opening of the page when the quote is not found as it reads', () => {
+    const excerpt = excerptAround('Un mythe inventé par la droite', page)
+
+    expect(excerpt.startsWith('Préambule.')).toBe(true)
+    expect(excerpt.endsWith('…')).toBe(true)
   })
 })
