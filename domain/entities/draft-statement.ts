@@ -65,6 +65,16 @@ export const draftOrganisationAuthor = (
   data: DraftOrganisationData | null = null,
 ): DraftAuthor => ({ kind: 'organisation', name, data })
 
+export type DraftStatus = 'pending' | 'validated' | 'rejected' | 'revision_requested'
+
+/** How each status reads on screen */
+export const DRAFT_STATUS_LABELS: Record<DraftStatus, string> = {
+  pending: 'À relire',
+  validated: 'Validé',
+  rejected: 'Rejeté',
+  revision_requested: 'Renvoyé en révision',
+}
+
 export type DraftStatement = {
   id: string
   author: DraftAuthor
@@ -95,7 +105,7 @@ export type DraftStatement = {
   origin: string
   /** The chantier this draft was produced in, when it was */
   chantierId: string | null
-  status: 'pending' | 'validated' | 'rejected' | 'revision_requested'
+  status: DraftStatus
   rejectionNote: string | null
   createdAt: Date
   updatedAt: Date

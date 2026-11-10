@@ -32,7 +32,7 @@ export function chantierOpeningMessage(chantier: { id: string; brief: string }, 
 
 Consigne : ${chantier.brief}
 
-Le site est à ${siteUrl} : export DEBATS_URL=${siteUrl} avant toute commande. Chaque brouillon que vous postez porte "chantier": "${chantier.id}".
+Le site est à ${siteUrl}. Avant tout, posez-le pour toutes vos commandes : echo 'export DEBATS_URL=${siteUrl}' >> ~/.bashrc, puis vérifiez par echo "$DEBATS_URL" dans une nouvelle commande ; si la variable ne persiste pas d'une commande à l'autre, préfixez chaque commande de DEBATS_URL=${siteUrl}. Chaque brouillon que vous postez porte "chantier": "${chantier.id}".
 
 Répondez d'abord par le titre du chantier (une ligne « # … ») et votre plan en quelques lignes, puis attendez le go.`
 }

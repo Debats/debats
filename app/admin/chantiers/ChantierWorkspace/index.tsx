@@ -13,7 +13,8 @@ import styles from './ChantierWorkspace.module.css'
 interface ChantierWorkspaceProps {
   chantier: Chantier
   messages: ChantierMessage[]
-  draftCount: number
+  /** What became of the drafts, in one line */
+  tally: string
   /** The drafts of the chantier, as the server rendered them */
   children: ReactNode
 }
@@ -30,7 +31,7 @@ const POLL_MS = 6_000
 export default function ChantierWorkspace({
   chantier: initial,
   messages: initialMessages,
-  draftCount,
+  tally,
   children,
 }: ChantierWorkspaceProps) {
   const router = useRouter()
@@ -108,11 +109,7 @@ export default function ChantierWorkspace({
               {chantier.brief}
             </p>
           )}
-          <p className={styles.count}>
-            {draftCount === 0
-              ? 'Aucun brouillon pour l’instant'
-              : `${draftCount} brouillon${draftCount > 1 ? 's' : ''}`}
-          </p>
+          <p className={styles.count}>{tally}</p>
         </div>
         {children}
       </div>

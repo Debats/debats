@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect, Either } from 'effect'
+import { tallyDrafts, tallyLine } from '../../../../domain/read-models/chantier-summary'
 import { refreshChantierUseCase } from '../../../../domain/use-cases/refresh-chantier'
 import { resolveDraft } from '../../../../domain/use-cases/resolve-draft'
 import { createDraftStatementRepository } from '../../../../infra/database/draft-statement-repository-supabase'
@@ -10,6 +11,7 @@ import { getAdminContributor } from '../../../actions/admin-guard'
 import styles from '../../drafts/admin-drafts.module.css'
 import DraftList from '../../drafts/DraftList'
 import ChantierWorkspace from '../ChantierWorkspace'
+import SettledDrafts from '../SettledDrafts'
 import { CHANTIERS_PATH } from '../hrefs'
 
 export const metadata: Metadata = {
@@ -51,17 +53,20 @@ export default async function ChantierPage({ params }: Props) {
 
   const { chantier, messages } = refreshed.right
   const services = liveServices(supabase)
-  const drafts = await Effect.runPromise(
-    Effect.flatMap(createDraftStatementRepository(supabase).findByChantier(chantier.id), (all) =>
-      Effect.forEach(
-        all,
-        (draft) =>
-          Effect.map(Effect.provide(resolveDraft(draft), services), (resolution) => ({
-            draft,
-            resolution,
-          })),
-        { concurrency: 4 },
-      ),
+  const produced = await Effect.runPromise(
+    createDraftStatementRepository(supabase).findByChantier(chantier.id),
+  )
+  /* The review cards are for what is waiting: a settled draft is only listed */
+  const settled = produced.filter(({ status }) => status !== 'pending')
+  const pending = await Effect.runPromise(
+    Effect.forEach(
+      produced.filter(({ status }) => status === 'pending'),
+      (draft) =>
+        Effect.map(Effect.provide(resolveDraft(draft), services), (resolution) => ({
+          draft,
+          resolution,
+        })),
+      { concurrency: 4 },
     ),
   )
 
@@ -70,12 +75,19 @@ export default async function ChantierPage({ params }: Props) {
       <Link href={CHANTIERS_PATH} className={styles.backLink}>
         ← Chantiers
       </Link>
-      <ChantierWorkspace chantier={chantier} messages={messages} draftCount={drafts.length}>
-        {drafts.length === 0 ? (
-          <p className={styles.empty}>Aucun brouillon pour l’instant.</p>
+      <ChantierWorkspace
+        chantier={chantier}
+        messages={messages}
+        tally={tallyLine(tallyDrafts(produced))}
+      >
+        {pending.length === 0 ? (
+          <p className={styles.empty}>
+            {produced.length === 0 ? 'Aucun brouillon pour l’instant.' : 'Rien à relire.'}
+          </p>
         ) : (
-          <DraftList drafts={drafts} view={{ grouping: 'subject' }} />
+          <DraftList drafts={pending} view={{ grouping: 'subject' }} />
         )}
+        <SettledDrafts drafts={settled} />
       </ChantierWorkspace>
     </div>
   )

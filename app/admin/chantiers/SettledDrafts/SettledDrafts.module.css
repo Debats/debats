@@ -1,0 +1,55 @@
+.settled {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heading {
+  composes: meta from '../../../../styles/text.module.css';
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item {
+  composes: small from '../../../../styles/text.module.css';
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  background-color: var(--paper-2);
+}
+
+.who {
+  font-weight: 600;
+  min-width: 0;
+}
+
+.position {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.status {
+  flex: none;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.validated {
+  color: var(--ok);
+}
+
+.revision_requested {
+  color: var(--warn);
+}
