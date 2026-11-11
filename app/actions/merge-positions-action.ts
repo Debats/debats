@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { Either } from 'effect'
+import { positionHref } from '../../domain/read-models/hrefs'
 import { runLive } from '../../infra/live-services'
 import { mergePositionsUseCase } from '../../domain/use-cases/merge-positions'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -22,5 +23,5 @@ export async function mergePositionsAction(
     return { success: false, error: result.left }
   }
 
-  redirect(`/s/${subjectSlug}/position/${targetPositionId}`)
+  redirect(positionHref(subjectSlug, result.right.slug))
 }

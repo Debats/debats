@@ -1,19 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { groupSearchHits, parseSearchQuery, SearchHit, searchHitHref, searchHref } from './search'
 
-const hit = (kind: SearchHit['kind'], title: string, slug = 'slug', id = 'id'): SearchHit => ({
-  kind,
-  id,
+const hit = (
+  kind: Exclude<SearchHit['kind'], 'position'>,
+  title: string,
+  slug = 'slug',
+): SearchHit => ({ kind, id: 'id', title, slug, detail: null })
+
+const positionHit = (title: string, slug: string, subjectSlug: string): SearchHit => ({
+  kind: 'position',
+  id: 'id',
   title,
   slug,
+  subjectSlug,
   detail: null,
 })
 
 describe('searchHitHref', () => {
   it('leads to the page of each kind, a position under its subject', () => {
     expect(searchHitHref(hit('subject', 'Le SMIC', 'le-smic'))).toBe('/s/le-smic')
-    expect(searchHitHref(hit('position', 'Augmenter', 'le-smic', 'p-1'))).toBe(
-      '/s/le-smic/position/p-1',
+    expect(searchHitHref(positionHit('Augmenter', 'augmenter', 'le-smic'))).toBe(
+      '/s/le-smic/position/augmenter',
     )
     expect(searchHitHref(hit('public_figure', 'Simone Veil', 'simone-veil'))).toBe('/p/simone-veil')
     expect(searchHitHref(hit('organisation', 'Attac', 'attac'))).toBe('/o/attac')

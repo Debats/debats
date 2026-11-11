@@ -99,7 +99,8 @@ describe('mergePositionsUseCase', () => {
 
     const result = await runWith(fakes([statement]))(mergePositionsUseCase(validParams), run)
 
-    expect(Either.isRight(result)).toBe(true)
+    // The position that remains, for whoever must lead the contributor to it
+    expect(result).toEqual(Either.right(target))
     expect(
       journal
         .all()

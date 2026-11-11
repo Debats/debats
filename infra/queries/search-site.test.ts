@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../supabase/admin'
+import { positionHref } from '../../domain/read-models/hrefs'
+import { searchHitHref } from '../../domain/read-models/search'
 import { searchSite } from './search-site'
 
 /**
@@ -36,6 +38,31 @@ describe.skipIf(!hasDatabase)('search_site', () => {
 
     expect(hits.find((hit) => hit.kind === 'subject')?.id).toBe(subject.id)
     expect(hits[0]).toMatchObject({ kind: 'subject', id: subject.id })
+  })
+
+  it('gives a position the address its page answers to: its own slug under its subject’s', async () => {
+    const { data: position } = await supabase
+      .from('positions')
+      .select('title')
+      .is('deleted_at', null)
+      .order('title')
+      .limit(1)
+      .single()
+    if (!position) throw new Error('No position in the local database')
+
+    const hits = await Effect.runPromise(searchSite(supabase, mangled(position.title), 5))
+    const found = hits.find((hit) => hit.kind === 'position')
+    if (!found) throw new Error('The position was not found under its own title')
+    const { data: row } = await supabase
+      .from('positions')
+      .select('slug, subjects!inner(slug)')
+      .eq('id', found.id)
+      .single()
+    if (!row) throw new Error(`The position ${found.id} is not in the table`)
+    const subjectSlug = (row.subjects as unknown as { slug: string }).slug
+
+    expect(found).toMatchObject({ slug: row.slug, subjectSlug })
+    expect(searchHitHref(found)).toBe(positionHref(subjectSlug, row.slug))
   })
 
   it('keeps at most the asked number of hits per kind', async () => {

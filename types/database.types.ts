@@ -1390,6 +1390,7 @@ export type Database = {
           kind: string
           score: number
           slug: string
+          subject_slug: string
           title: string
         }[]
       }

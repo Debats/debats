@@ -56,7 +56,7 @@ export function mergePositionsUseCase(params: MergePositionsParams) {
         onSource.map((s) => s.id),
       ),
     ),
-    Effect.flatMap(({ contributor, source, statementIds }) =>
+    Effect.tap(({ contributor, source, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(
           decideOnSubject(
@@ -76,6 +76,7 @@ export function mergePositionsUseCase(params: MergePositionsParams) {
         ),
       ),
     ),
-    Effect.asVoid,
+    // The position that remains: the caller leads the contributor to its page
+    Effect.map(({ target }) => target),
   )
 }

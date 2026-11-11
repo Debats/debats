@@ -4,6 +4,9 @@
  * to its page.
  */
 
+import { argumentHref } from './argument'
+import { figureHref, organisationHref, positionHref, subjectHref, themeHref } from './hrefs'
+
 export const SEARCH_HIT_KINDS = [
   'subject',
   'position',
@@ -14,15 +17,27 @@ export const SEARCH_HIT_KINDS = [
 ] as const
 export type SearchHitKind = (typeof SEARCH_HIT_KINDS)[number]
 
-export interface SearchHit {
-  kind: SearchHitKind
+interface FoundThing {
   id: string
   title: string
-  /** The page's slug; for a position, its subject's */
+  /** The slug of the hit itself */
   slug: string
   /** What tells the hit apart: the subject of a position, the acronym of an organisation */
   detail: string | null
 }
+
+/** A hit whose slug is its whole address */
+export interface PageHit extends FoundThing {
+  kind: Exclude<SearchHitKind, 'position'>
+}
+
+/** A position has no page without its subject: its hit always carries the subject's slug */
+export interface PositionHit extends FoundThing {
+  kind: 'position'
+  subjectSlug: string
+}
+
+export type SearchHit = PageHit | PositionHit
 
 export const SEARCH_KIND_LABELS: Record<SearchHitKind, { singular: string; plural: string }> = {
   subject: { singular: 'Sujet', plural: 'Sujets' },
@@ -37,17 +52,17 @@ export const SEARCH_KIND_LABELS: Record<SearchHitKind, { singular: string; plura
 export function searchHitHref(hit: SearchHit): string {
   switch (hit.kind) {
     case 'subject':
-      return `/s/${hit.slug}`
+      return subjectHref(hit.slug)
     case 'position':
-      return `/s/${hit.slug}/position/${hit.id}`
+      return positionHref(hit.subjectSlug, hit.slug)
     case 'public_figure':
-      return `/p/${hit.slug}`
+      return figureHref(hit.slug)
     case 'organisation':
-      return `/o/${hit.slug}`
+      return organisationHref(hit.slug)
     case 'argument':
-      return `/arguments/${hit.slug}`
+      return argumentHref(hit)
     case 'theme':
-      return `/themes/${hit.slug}`
+      return themeHref(hit.slug)
   }
 }
 
