@@ -213,21 +213,22 @@ La même clé sert au dialogue d'amendement des brouillons (`/admin/drafts`, « 
 
 ### Chantiers
 
-Un chantier (`/admin/chantiers`) part d'une consigne en français, produit des brouillons et garde la conversation qui les a faits. L'agent est une session Managed Agents d'Anthropic, une par chantier, qui monte le dépôt (donc ses skills de `.claude/skills`) et écrit par l'API des brouillons avec la clé d'administration tenue dans un coffre Anthropic ; il continue quand la page est fermée, et la page l'interroge toutes les six secondes tant qu'il travaille (ADR 0003). Tout ce qui doit survivre à la session vit en base : tables `chantiers` et `chantier_messages`, colonne `draft_statements.chantier_id`, champ `chantier` de `POST /api/drafts`.
+Un chantier (`/admin/chantiers`) part d'une consigne en français, produit des brouillons et garde la conversation qui les a faits. L'agent est une session Managed Agents d'Anthropic, une par chantier, qui travaille avec les skills de contenu (`debats-agent`, `contribution-pipeline`, `find-*-positions`, `extract-positions-from-media`) publiés sur le compte Anthropic, et écrit par l'API des brouillons avec la clé d'administration tenue dans un coffre Anthropic ; il continue quand la page est fermée, et la page l'interroge toutes les six secondes tant qu'il travaille (ADR 0003). Tout ce qui doit survivre à la session vit en base : tables `chantiers` et `chantier_messages`, colonne `draft_statements.chantier_id`, champ `chantier` de `POST /api/drafts`.
 
-Configuration en une fois, depuis une machine qui a la clé d'administration du site visé :
+Configuration en une fois, depuis une machine qui a la clé d'administration du site visé et les skills :
 
 ```bash
-npm run chantier:setup:production   # crée l'environnement, le coffre (ADMIN_API_KEY, envoyée au seul hôte debats.co) et l'agent, puis imprime les identifiants
+npm run chantier:setup:production   # crée l'environnement, le coffre (ADMIN_API_KEY, envoyée au seul hôte debats.co), publie les skills et crée l'agent, puis imprime les identifiants
 ```
 
-Le script lit `ANTHROPIC_API_KEY` et `ADMIN_API_KEY` dans l'environnement ; rien à faire dans la console Anthropic. Les trois identifiants imprimés sont à poser sur le site, qui les cite pour ouvrir une session à chaque chantier lancé :
+Le script lit `ANTHROPIC_API_KEY`, `ADMIN_API_KEY` et `CHANTIER_SKILLS_DIR` dans l'environnement ; rien à faire dans la console Anthropic. Les skills ne sont pas dans ce dépôt (`.claude` est hors git) : `CHANTIER_SKILLS_DIR` désigne le dossier qui les tient, un sous-dossier par skill avec son `SKILL.md`, et chaque passage du script en publie une nouvelle version. Les trois identifiants imprimés sont à poser sur le site, qui les cite pour ouvrir une session à chaque chantier lancé :
 
 | Variable                    | Rôle                                                                                        |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
 | `CHANTIER_AGENT_ID`         | L'agent Managed Agents ; relancer le script avec cette variable posée met à jour son prompt |
 | `CHANTIER_ENVIRONMENT_ID`   | L'environnement (conteneur, réseau ouvert)                                                  |
 | `CHANTIER_VAULT_ID`         | Le coffre qui tient `ADMIN_API_KEY`                                                         |
+| `CHANTIER_SKILLS_DIR`       | Lu par le script seulement : le dossier des skills à publier, hors dépôt                    |
 | `DEBATS_URL`                | Seulement pour viser un autre site que `https://debats.co` (agent et coffre)                |
 | `CHANTIER_BUDGET_CENTS`     | Plafond de dépense d'une session, en cents (défaut : 2000)                                  |
 | `CHANTIER_REPOSITORY_URL`   | Le dépôt monté dans la session (défaut : `https://github.com/Debats/debats`)                |
