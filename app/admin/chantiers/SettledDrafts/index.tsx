@@ -1,5 +1,13 @@
-import { DRAFT_STATUS_LABELS, DraftStatement } from '../../../../domain/entities/draft-statement'
+import Link from 'next/link'
+import {
+  createdPhrase,
+  DRAFT_STATUS_LABELS,
+  DraftStatement,
+} from '../../../../domain/entities/draft-statement'
 import styles from './SettledDrafts.module.css'
+
+/** The statement a validation put online */
+const statementHref = (statementId: string) => `/prise-de-position/${statementId}`
 
 interface SettledDraftsProps {
   /** The drafts of the chantier that are no longer waiting: validated, rejected, sent back */
@@ -25,7 +33,19 @@ export default function SettledDrafts({ drafts }: SettledDraftsProps) {
               <span className={styles.position}> · {draft.positionTitle}</span>
             </span>
             <span className={`${styles.status} ${styles[draft.status]}`}>
-              {DRAFT_STATUS_LABELS[draft.status]}
+              {draft.validation ? (
+                <>
+                  <Link href={statementHref(draft.validation.statementId)} className={styles.link}>
+                    {DRAFT_STATUS_LABELS.validated}
+                  </Link>
+                  <span className={styles.created}>
+                    {' · '}
+                    {createdPhrase(draft.validation.created)}
+                  </span>
+                </>
+              ) : (
+                DRAFT_STATUS_LABELS[draft.status]
+              )}
             </span>
           </li>
         ))}

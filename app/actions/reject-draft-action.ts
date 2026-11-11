@@ -4,6 +4,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createDraftStatementRepository } from '../../infra/database/draft-statement-repository-supabase'
 import { getAdminContributor } from './admin-guard'
+import { chantierToldOfReview } from './notice-chantier-review'
 import type { ActionResult } from './validate-draft-action'
 
 async function changeDraftStatus(
@@ -32,6 +33,7 @@ async function changeDraftStatus(
     return { success: false, error: errorMessage }
   }
 
+  await chantierToldOfReview(draftId, contributor)
   return { success: true }
 }
 

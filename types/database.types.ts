@@ -320,6 +320,7 @@ export type Database = {
           subject_data: Json | null
           subject_title: string
           updated_at: string
+          validation: Json | null
           vote_choice: Database["public"]["Enums"]["vote_choice"] | null
           voted_text: string | null
         }
@@ -350,6 +351,7 @@ export type Database = {
           subject_data?: Json | null
           subject_title: string
           updated_at?: string
+          validation?: Json | null
           vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
           voted_text?: string | null
         }
@@ -380,6 +382,7 @@ export type Database = {
           subject_data?: Json | null
           subject_title?: string
           updated_at?: string
+          validation?: Json | null
           vote_choice?: Database["public"]["Enums"]["vote_choice"] | null
           voted_text?: string | null
         }

@@ -1,9 +1,11 @@
 import { Clock, Effect, pipe } from 'effect'
 import {
+  CreatedByValidation,
   DraftAffiliation,
   DraftAuthor,
   DraftOrganisationData,
   DraftStatement,
+  DraftValidation,
 } from '../entities/draft-statement'
 import { generateSlug as generatePublicFigureSlug } from '../entities/public-figure'
 import { generateOrganisationSlug } from '../entities/organisation'
@@ -55,14 +57,32 @@ const toldAsOne = <A, R>(
     Effect.fail(new Rejected(Object.values(invalid.fields).join(' '))),
   )
 
+/** What the validation found or made: its id, and whether it had to be created */
+type Resolved = { id: string; created: boolean }
+
 /** The id of what the site knows under that name, or of what the draft lets the site create */
 const knownOrCreated = <R1, R2>(
   lookup: Effect.Effect<{ id: string } | null, DatabaseError, R1>,
   create: () => Effect.Effect<{ id: string }, CommandFailure, R2>,
-): Effect.Effect<string, CommandFailure, R1 | R2> =>
-  Effect.flatMap(lookup, (known) =>
-    known ? Effect.succeed(known.id) : Effect.map(create(), (created) => created.id),
+): Effect.Effect<Resolved, CommandFailure, R1 | R2> =>
+  Effect.flatMap(
+    lookup,
+    (known): Effect.Effect<Resolved, CommandFailure, R2> =>
+      known
+        ? Effect.succeed({ id: known.id, created: false })
+        : Effect.map(create(), (created) => ({ id: created.id, created: true })),
   )
+
+/** The kinds the validation created, in the order it created them: author, subject, position */
+const createdKinds = (
+  author: Resolved & { kind: CreatedByValidation },
+  subject: Resolved,
+  position: Resolved,
+): CreatedByValidation[] => [
+  ...(author.created ? [author.kind] : []),
+  ...(subject.created ? ['subject' as const] : []),
+  ...(position.created ? ['position' as const] : []),
+]
 
 const missingData = (what: string) =>
   Effect.fail(new Rejected(`Données manquantes pour créer ${what}.`))
@@ -94,15 +114,15 @@ export function validateDraft(params: ValidateDraftParams) {
           )
         : Effect.void,
     ),
-    Effect.bind('subjectId', ({ draft, contributor }) => subjectOf(draft, contributor)),
-    Effect.bind('positionId', ({ draft, subjectId, contributor }) =>
-      positionOf(draft, subjectId, contributor),
+    Effect.bind('subject', ({ draft, contributor }) => subjectOf(draft, contributor)),
+    Effect.bind('position', ({ draft, subject, contributor }) =>
+      positionOf(draft, subject.id, contributor),
     ),
-    Effect.flatMap(({ draft, author, subjectId, positionId, contributor }) =>
+    Effect.bind('statement', ({ draft, author, subject, position, contributor }) =>
       toldAsOne(
         createStatementUseCase({
           contributor,
-          author: { kind: 'existing', author },
+          author: { kind: 'existing', author: author.author },
           /*
            * A draft names its subject and its position by title, and the two
            * steps above have already created or found them — so by the time
@@ -110,8 +130,8 @@ export function validateDraft(params: ValidateDraftParams) {
            */
           topic: {
             kind: 'existing',
-            subjectId,
-            position: { kind: 'existing', id: positionId },
+            subjectId: subject.id,
+            position: { kind: 'existing', id: position.id },
           },
           // The draft already holds the content as its type calls for it
           content: contentFieldsOf(draft.content),
@@ -129,8 +149,13 @@ export function validateDraft(params: ValidateDraftParams) {
         }),
       ),
     ),
-    Effect.andThen(() => drafts.updateStatus(draftId, 'validated')),
-    Effect.asVoid,
+    Effect.map(
+      ({ statement, author, subject, position }): DraftValidation => ({
+        statementId: statement.id,
+        created: createdKinds(author, subject, position),
+      }),
+    ),
+    Effect.tap((validation) => drafts.validated(draftId, validation)),
   )
 }
 
@@ -142,22 +167,33 @@ type CreationServices =
   | OrganisationRepository
   | SubjectRepository
 
+/** The author as the statement names her, with whether the validation had to create her */
+type ResolvedAuthor = Resolved & { kind: CreatedByValidation; author: StatementAuthor }
+
 function authorOf(
   author: DraftAuthor,
   contributor: ContributorIdentity,
-): Effect.Effect<StatementAuthor, CommandFailure, CreationServices> {
+): Effect.Effect<ResolvedAuthor, CommandFailure, CreationServices> {
   return author.kind === 'public_figure'
     ? Effect.map(
         knownOrCreated(figures.findBySlug(generatePublicFigureSlug(author.name)), () =>
           createdPublicFigure(author, contributor),
         ),
-        publicFigureAuthor,
+        (resolved) => ({
+          ...resolved,
+          kind: 'public_figure',
+          author: publicFigureAuthor(resolved.id),
+        }),
       )
     : Effect.map(
         knownOrCreated(organisations.findBySlug(generateOrganisationSlug(author.name)), () =>
           createdOrganisation(author.name, author.data, contributor),
         ),
-        organisationAuthor,
+        (resolved) => ({
+          ...resolved,
+          kind: 'organisation',
+          author: organisationAuthor(resolved.id),
+        }),
       )
 }
 
@@ -293,7 +329,7 @@ function affiliated(
       () =>
         createdOrganisation(affiliation.organisation, affiliation.organisationData, contributor),
     ),
-    Effect.flatMap((organisationId) =>
+    Effect.flatMap(({ id: organisationId }) =>
       Effect.flatMap(alreadyRunning(organisationId), (running) =>
         running ? Effect.void : added(organisationId),
       ),

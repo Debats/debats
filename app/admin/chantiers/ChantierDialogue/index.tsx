@@ -93,6 +93,10 @@ export default function ChantierDialogue({
           <p key={message.id} className={styles.person}>
             {message.text}
           </p>
+        ) : message.role === 'review' ? (
+          <p key={message.id} className={styles.review}>
+            {message.text}
+          </p>
         ) : (
           <p key={message.id} className={styles.agent}>
             {message.id === firstAnswer ? withoutTitleLine(message.text) : message.text}

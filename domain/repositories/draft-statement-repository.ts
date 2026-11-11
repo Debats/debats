@@ -1,12 +1,12 @@
 import { Context, Effect } from 'effect'
-import { DraftStatement } from '../entities/draft-statement'
+import { DraftStatement, DraftValidation } from '../entities/draft-statement'
 import { DraftGroup, DraftGrouping } from '../read-models/drafts-view'
 import { DatabaseError } from './errors'
 
 /** A draft to store: everything except what the database assigns itself. */
 export type NewDraftStatement = Omit<
   DraftStatement,
-  'id' | 'status' | 'rejectionNote' | 'createdAt' | 'updatedAt'
+  'id' | 'status' | 'rejectionNote' | 'validation' | 'createdAt' | 'updatedAt'
 >
 
 export interface DraftStatementRepository {
@@ -27,11 +27,14 @@ export interface DraftStatementRepository {
     id: string,
     fields: Partial<Omit<DraftStatement, 'id' | 'createdAt' | 'updatedAt' | 'status'>>,
   ): Effect.Effect<DraftStatement | null, DatabaseError>
+  /** Sets a draft aside, with the note that says why; a validation goes through `validated` */
   updateStatus(
     id: string,
-    status: 'validated' | 'rejected' | 'revision_requested',
+    status: 'rejected' | 'revision_requested',
     rejectionNote?: string,
   ): Effect.Effect<void, DatabaseError>
+  /** Marks the draft validated, keeping what the validation did */
+  validated(id: string, validation: DraftValidation): Effect.Effect<void, DatabaseError>
   deleteById(id: string): Effect.Effect<void, DatabaseError>
 }
 

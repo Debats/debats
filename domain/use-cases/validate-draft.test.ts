@@ -82,10 +82,10 @@ function makeRepos(overrides: {
 
   const draftRepo = {
     findById: vi.fn(() => Effect.succeed('draft' in overrides ? overrides.draft : makeDraft())),
-    updateStatus: vi.fn(() => Effect.succeed(undefined)),
+    validated: vi.fn(() => Effect.succeed(undefined)),
   } as unknown as DraftStatementRepository & {
     findById: ReturnType<typeof vi.fn>
-    updateStatus: ReturnType<typeof vi.fn>
+    validated: ReturnType<typeof vi.fn>
   }
 
   const publicFigureRepo = {
@@ -233,7 +233,7 @@ describe('validateDraft', () => {
     expect(Either.isLeft(visitor) && visitor.left).toContain('connecté')
     expect(Either.isLeft(ideologue) && ideologue.left).toContain('Fondateur')
     expect(repos.journal.all()).toEqual([])
-    expect(repos.draftRepo.updateStatus).not.toHaveBeenCalled()
+    expect(repos.draftRepo.validated).not.toHaveBeenCalled()
   })
 
   it('should fail when draft is not found', async () => {
@@ -257,7 +257,13 @@ describe('validateDraft', () => {
       'PositionAdded',
       'StatementAdded',
     ])
-    expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
+    expect(repos.draftRepo.validated).toHaveBeenCalledWith('draft-1', {
+      statementId: expect.any(String),
+      created: ['public_figure', 'subject', 'position'],
+    })
+    if (Either.isRight(result)) {
+      expect(result.right.created).toEqual(['public_figure', 'subject', 'position'])
+    }
   })
 
   it('should reuse existing entities when they are found', async () => {
@@ -269,7 +275,10 @@ describe('validateDraft', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(deedsIn(repos.journal).map((e) => e.type)).toEqual(['StatementAdded'])
-    expect(repos.draftRepo.updateStatus).toHaveBeenCalledWith('draft-1', 'validated')
+    expect(repos.draftRepo.validated).toHaveBeenCalledWith('draft-1', {
+      statementId: expect.any(String),
+      created: [],
+    })
   })
 
   it('should fail when entity is missing and no creation data', async () => {

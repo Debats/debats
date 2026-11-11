@@ -6,6 +6,7 @@ import {
   DraftOrganisationData,
   DraftPublicFigureData,
   DraftStatement,
+  DraftValidation,
   draftOrganisationAuthor,
   draftPublicFigureAuthor,
 } from '../../domain/entities/draft-statement'
@@ -95,6 +96,7 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
     chantierId: (row.chantier_id as string) ?? null,
     status: row.status as DraftStatement['status'],
     rejectionNote: (row.rejection_note as string) ?? null,
+    validation: (row.validation as DraftValidation) ?? null,
     createdAt: new Date(row.created_at as string),
     updatedAt: new Date(row.updated_at as string),
   }
@@ -249,11 +251,19 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         catch: (error) => dbError('Failed to update draft', error),
       }),
 
-    updateStatus: (
-      id: string,
-      status: 'validated' | 'rejected' | 'revision_requested',
-      rejectionNote?: string,
-    ) =>
+    validated: (id: string, validation: DraftValidation) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase
+            .from('draft_statements')
+            .update({ status: 'validated', rejection_note: null, validation })
+            .eq('id', id)
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to mark draft validated', error),
+      }),
+
+    updateStatus: (id: string, status: 'rejected' | 'revision_requested', rejectionNote?: string) =>
       Effect.tryPromise({
         try: async () => {
           const { error } = await supabase

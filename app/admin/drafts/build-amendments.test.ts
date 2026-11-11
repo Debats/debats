@@ -35,6 +35,7 @@ function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
     chantierId: null,
     status: 'pending',
     rejectionNote: null,
+    validation: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

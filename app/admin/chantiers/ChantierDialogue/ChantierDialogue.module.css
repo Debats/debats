@@ -23,6 +23,17 @@
   white-space: pre-line;
 }
 
+/* A review decision the site relayed to the agent: neither bubble, a note in the margin of the thread */
+.review {
+  composes: meta from '../../../../styles/text.module.css';
+  align-self: flex-end;
+  max-width: 90%;
+  margin: 0;
+  padding: 0 12px;
+  border-right: 2px solid var(--line-2);
+  text-align: right;
+}
+
 .status {
   composes: small from '../../../../styles/text.module.css';
   display: flex;
@@ -86,7 +97,12 @@
   }
 
   .status,
-  .close {
+  .close,
+  .review {
     color: var(--line-2);
+  }
+
+  .review {
+    border-right-color: var(--ink-2);
   }
 }

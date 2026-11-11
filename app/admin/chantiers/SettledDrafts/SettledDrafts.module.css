@@ -50,6 +50,17 @@
   color: var(--ok);
 }
 
+.link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* What the validation had to create, after the status */
+.created {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
 .revision_requested {
   color: var(--warn);
 }

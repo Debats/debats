@@ -7,6 +7,7 @@ import { runLive } from '../../infra/live-services'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
 import { getAdminContributor } from './admin-guard'
 import { applyAmendments, DraftAmendments } from './draft-amendments'
+import { chantierToldOfReview } from './notice-chantier-review'
 import type { ActionResult } from './validate-draft-action'
 
 export type { DraftAmendments } from './draft-amendments'
@@ -34,5 +35,6 @@ export async function amendAndValidateDraftAction(
     return { success: false, error: result.left }
   }
 
+  await chantierToldOfReview(draftId, contributor)
   return { success: true }
 }

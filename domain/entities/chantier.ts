@@ -37,7 +37,8 @@ export type Chantier = {
   updatedAt: Date
 }
 
-export type ChantierMessageRole = 'person' | 'agent'
+/** Who speaks in the thread: the person, the agent, or the site relaying a review decision */
+export type ChantierMessageRole = 'person' | 'agent' | 'review'
 
 export type ChantierMessage = {
   id: string

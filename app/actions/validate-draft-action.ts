@@ -4,6 +4,7 @@ import { Either } from 'effect'
 import { runLive } from '../../infra/live-services'
 import { validateDraft } from '../../domain/use-cases/validate-draft'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
+import { chantierToldOfReview } from './notice-chantier-review'
 
 export type ActionResult = { success: true } | { success: false; error: string }
 
@@ -16,5 +17,6 @@ export async function validateDraftAction(draftId: string): Promise<ActionResult
     return { success: false, error: result.left }
   }
 
+  await chantierToldOfReview(draftId, contributor)
   return { success: true }
 }
