@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { mergeArgumentsAction } from '../../../actions/merge-arguments'
 import { searchArguments } from '../../../actions/search-arguments'
 import { ArgumentSuggestion } from '../../../../domain/read-models/argument'
+import { argumentHref } from '../../../../domain/read-models/hrefs'
 import { plural } from '../../../../lib/plural'
 import Button from '../../../../components/ui/Button'
 import Combobox from '../../../../components/ui/Combobox'
@@ -39,7 +40,7 @@ export default function MergeForm({ argument, onCancel }: MergeFormProps) {
     if (!target) return
     const result = await mergeArgumentsAction(argument.id, target.id)
     if (!result.success) throw new Error(result.error)
-    router.push(`/arguments/${result.targetSlug}`)
+    router.push(argumentHref({ slug: result.targetSlug }))
     router.refresh()
   }, [argument.id, target, router])
 

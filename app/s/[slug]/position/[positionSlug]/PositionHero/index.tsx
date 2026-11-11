@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { subjectHref } from '../../../../../../domain/read-models/hrefs'
 import { plural } from '../../../../../../lib/plural'
 import styles from './PositionHero.module.css'
 
@@ -30,7 +31,7 @@ export default function PositionHero({
     <section className={styles.hero}>
       <div className={styles.container}>
         <nav className={styles.kicker} aria-label="Fil d’Ariane">
-          <Link href={`/s/${subject.slug}`} className={styles.crumb}>
+          <Link href={subjectHref(subject.slug)} className={styles.crumb}>
             {subject.title}
           </Link>
           <span className={styles.crumbSeparator}>/</span>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Button from '../../../components/ui/Button'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { subjectCountsLabel } from '../../../lib/subject-counts'
 import styles from './RandomSubject.module.css'
 
@@ -38,7 +39,7 @@ export default function RandomSubject({ candidates, initialIndex }: RandomSubjec
   return (
     <section className={styles.card}>
       <h2 className={styles.title}>Un sujet au hasard</h2>
-      <Link href={`/s/${subject.slug}`} className={styles.subject}>
+      <Link href={subjectHref(subject.slug)} className={styles.subject}>
         {subject.title}
       </Link>
       <p className={styles.problem}>{subject.problem}</p>

@@ -4,6 +4,7 @@ import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarSta
 import ArgumentChips from '../../../../components/statements/ArgumentChips'
 import { STATEMENT_TYPE_LABELS } from '../../../../domain/entities/statement'
 import { ArgumentRef } from '../../../../domain/read-models/argument'
+import { positionHref } from '../../../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import {
   positionAuthors,
@@ -48,12 +49,13 @@ function othersLabel(position: PositionSummary, others: number): string {
 function FeaturedStatement({
   statement,
   subjectSlug,
-  positionHref,
+  moreHref,
   othersLabel,
 }: {
   statement: PositionLatestStatement
   subjectSlug: string
-  positionHref: string
+  /** The page of the position, where the others are */
+  moreHref: string
   othersLabel: string | null
 }) {
   return (
@@ -84,7 +86,7 @@ function FeaturedStatement({
           {othersLabel && (
             <>
               <span className={styles.separator}>·</span>
-              <Link href={positionHref} className={styles.more}>
+              <Link href={moreHref} className={styles.more}>
                 {othersLabel}
               </Link>
             </>
@@ -103,7 +105,7 @@ export default function PositionCard({
   featured,
 }: PositionCardProps) {
   const count = positionAuthorsCount(position)
-  const positionHref = `/s/${subjectSlug}/position/${position.positionSlug}`
+  const href = positionHref(subjectSlug, position.positionSlug)
   const others = count - 1
 
   return (
@@ -112,7 +114,7 @@ export default function PositionCard({
         <div>
           {featured && <p className={styles.kicker}>La plus soutenue</p>}
           <h3 className={styles.title}>
-            <Link href={positionHref} className={styles.titleLink}>
+            <Link href={href} className={styles.titleLink}>
               {position.positionTitle}
             </Link>
           </h3>
@@ -134,7 +136,7 @@ export default function PositionCard({
           max={10}
           size={36}
           subjectSlug={subjectSlug}
-          moreHref={positionHref}
+          moreHref={href}
         />
         {used.length > 0 ? (
           <ArgumentChips arguments={used} />
@@ -149,7 +151,7 @@ export default function PositionCard({
           <FeaturedStatement
             statement={position.latestStatement}
             subjectSlug={subjectSlug}
-            positionHref={positionHref}
+            moreHref={href}
             othersLabel={others > 0 ? othersLabel(position, others) : null}
           />
         </>

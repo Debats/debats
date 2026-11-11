@@ -8,6 +8,7 @@ import {
   OrganisationSearchResult,
 } from '../../../../actions/search-organisations'
 import { FieldErrors } from '../../../../../domain/use-cases/types'
+import { figureHref } from '../../../../../domain/read-models/hrefs'
 import Combobox from '../../../../../components/ui/Combobox'
 import TextField from '../../../../../components/ui/TextField'
 import Button from '../../../../../components/ui/Button'
@@ -91,7 +92,7 @@ export default function AffiliateFigureForm({
     return (
       <FormSuccess
         title={`${figureName} est maintenant affilié·e à ${added.name}.`}
-        primaryAction={{ label: `Voir ${figureName}`, href: `/p/${figureSlug}` }}
+        primaryAction={{ label: `Voir ${figureName}`, href: figureHref(figureSlug) }}
         secondaryActions={[{ label: 'Affilier à une autre organisation', onClick: reset }]}
       />
     )
@@ -168,7 +169,7 @@ export default function AffiliateFigureForm({
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Enregistrement...' : 'Affilier à cette organisation'}
         </Button>
-        <Button href={`/p/${figureSlug}`} variant="link">
+        <Button href={figureHref(figureSlug)} variant="link">
           Annuler
         </Button>
       </div>

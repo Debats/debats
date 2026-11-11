@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOrganisationAction } from '../../../app/actions/update-organisation'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import { editOrganisationForm, OrganisationFormInput } from '../../../lib/forms/organisation-form'
 import OrganisationForm, { OrganisationFormValues, SubmitOutcome } from '../OrganisationForm'
 
@@ -27,7 +28,7 @@ export default function EditOrganisationForm({
       const formData = editOrganisationForm.encode({ ...values, revision })
       const result = await updateOrganisationAction(organisationId, formData)
       if (result.success) {
-        router.push(`/o/${result.slug}`)
+        router.push(organisationHref(result.slug))
         return { success: true }
       }
       return { success: false, error: result.error, fieldErrors: result.fieldErrors }
@@ -41,7 +42,7 @@ export default function EditOrganisationForm({
       currentSlug={organisationSlug}
       submitLabel="Enregistrer les modifications"
       pendingLabel="Enregistrement..."
-      cancelHref={`/o/${organisationSlug}`}
+      cancelHref={organisationHref(organisationSlug)}
       onSubmit={handleSubmit}
     />
   )

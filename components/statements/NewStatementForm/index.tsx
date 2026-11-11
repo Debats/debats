@@ -17,6 +17,7 @@ import {
   StatementPositionInput,
 } from '../../../domain/use-cases/create-statement'
 import { StatementAuthorKind } from '../../../domain/entities/statement'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { readStatementArguments } from '../../../lib/forms/statement-arguments'
 import {
@@ -235,7 +236,7 @@ export default function NewStatementForm({
     if (successResult.subjectSlug) {
       secondaryActions.push({
         label: 'Voir le sujet',
-        href: `/s/${successResult.subjectSlug}`,
+        href: subjectHref(successResult.subjectSlug),
       })
     }
     if (successResult.authorHref) {

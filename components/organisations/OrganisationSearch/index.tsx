@@ -7,6 +7,7 @@ import {
   searchOrganisations,
   OrganisationSearchResult,
 } from '../../../app/actions/search-organisations'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import OrganisationLogo from '../OrganisationLogo'
 import SearchField from '../../ui/SearchField'
 import styles from './OrganisationSearch.module.css'
@@ -30,7 +31,7 @@ export default function OrganisationSearch() {
       keyExtractor={(organisation) => organisation.id}
       onSearchComplete={handleSearchComplete}
       renderResult={(organisation) => (
-        <Link href={`/o/${organisation.slug}`} className={styles.resultLink}>
+        <Link href={organisationHref(organisation.slug)} className={styles.resultLink}>
           <OrganisationLogo
             slug={organisation.slug}
             name={organisation.name}

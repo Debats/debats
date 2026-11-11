@@ -56,6 +56,3 @@ export function argumentsByPosition(
   }
   return byPosition
 }
-
-/** The page of an argument */
-export const argumentHref = (argument: { slug: string }): string => `/arguments/${argument.slug}`

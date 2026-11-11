@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteSubjectAction } from '../../../actions/delete-subject'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import AdminMenu from '../../../../components/ui/AdminMenu'
 import ConfirmAction from '../../../../components/ui/ConfirmAction'
 
@@ -33,7 +34,9 @@ export default function SubjectAdminMenu({
   return (
     <AdminMenu
       actions={[
-        ...(canEdit ? [{ label: 'Modifier', icon: '✎', href: `/s/${subjectSlug}/modifier` }] : []),
+        ...(canEdit
+          ? [{ label: 'Modifier', icon: '✎', href: `${subjectHref(subjectSlug)}/modifier` }]
+          : []),
         ...(canDelete
           ? [
               {

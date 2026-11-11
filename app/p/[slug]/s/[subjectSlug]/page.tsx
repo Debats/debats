@@ -28,6 +28,7 @@ import {
 } from '../../../../../lib/author-on-subject-seo'
 import ShareButton from '../../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
+import { figureOnSubjectHref } from '../../../../../domain/read-models/hrefs'
 import AuthorSubjectHero from '../../../../../components/statements/AuthorSubjectHero'
 import FigureRoleLine from '../../../../../components/statements/AuthorSubjectHero/FigureRoleLine'
 import AuthorPositions from '../../../../../components/statements/AuthorSubjectBlocks/AuthorPositions'
@@ -163,7 +164,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
           roles={page.roles}
           editHref={
             canEdit
-              ? (statementId) => `/p/${slug}/s/${subjectSlug}/modifier/${statementId}`
+              ? (statementId) => `${figureOnSubjectHref(slug, subjectSlug)}/modifier/${statementId}`
               : undefined
           }
         />

@@ -7,6 +7,7 @@ import {
   AuthorTab,
   authorTabHref,
 } from '../../../domain/read-models/author-tabs'
+import { figureHref } from '../../../domain/read-models/hrefs'
 
 /** The metadata of a public figure page, each tab with its own title and canonical address */
 export async function figureMetadata(slug: string, tab: AuthorTab): Promise<Metadata> {
@@ -17,7 +18,7 @@ export async function figureMetadata(slug: string, tab: AuthorTab): Promise<Meta
     const description = figure.presentation
       ? `${figure.name} - ${figure.presentation}`
       : `Positions et prises de position de ${figure.name} sur les sujets de société.`
-    const url = authorTabHref(`/p/${slug}`, tab)
+    const url = authorTabHref(figureHref(slug), tab)
     const title = tab === 'statements' ? figure.name : `${figure.name} — ${AUTHOR_TAB_LABELS[tab]}`
     return {
       title,

@@ -3,6 +3,7 @@
 import { useState, useCallback, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { renameArgumentAction } from '../../../actions/rename-argument'
+import { argumentHref } from '../../../../domain/read-models/hrefs'
 import { FieldErrors } from '../../../../domain/use-cases/types'
 import Button from '../../../../components/ui/Button'
 import TextArea from '../../../../components/ui/TextArea'
@@ -34,7 +35,7 @@ export default function RenameForm({ argument, revision, onCancel }: RenameFormP
       const result = await renameArgumentAction(argument.id, { title, description, revision })
       setIsPending(false)
       if (result.success) {
-        router.push(`/arguments/${result.slug}`)
+        router.push(argumentHref(result))
         router.refresh()
       } else if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors)

@@ -4,8 +4,14 @@
  * to its page.
  */
 
-import { argumentHref } from './argument'
-import { figureHref, organisationHref, positionHref, subjectHref, themeHref } from './hrefs'
+import {
+  argumentHref,
+  figureHref,
+  organisationHref,
+  positionHref,
+  subjectHref,
+  themeHref,
+} from './hrefs'
 
 export const SEARCH_HIT_KINDS = [
   'subject',

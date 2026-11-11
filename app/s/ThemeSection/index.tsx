@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { themeHref } from '../../../domain/read-models/hrefs'
 import { ThemeSection as ThemeSectionModel } from '../../../domain/read-models/subject-index'
 import { plural } from '../../../lib/plural'
 import CompactSubjectCard from '../CompactSubjectCard'
@@ -13,7 +14,7 @@ interface ThemeSectionProps {
 /** Une thématique de l'index : son sujet le plus documenté, puis tous les autres. */
 export default function ThemeSection({ section }: ThemeSectionProps) {
   const { theme, featured, others, subjectsCount } = section
-  const themeHref = theme ? `/themes/${theme.slug}` : '/themes/autres'
+  const href = theme ? themeHref(theme.slug) : '/themes/autres'
   const countLabel = `${subjectsCount} ${plural(subjectsCount, 'sujet', 'sujets')}`
 
   return (
@@ -21,7 +22,7 @@ export default function ThemeSection({ section }: ThemeSectionProps) {
       <div className={styles.head}>
         <div className={styles.naming}>
           <h2 className={styles.title}>
-            <Link href={themeHref} className={styles.titleLink}>
+            <Link href={href} className={styles.titleLink}>
               {themeSectionName(section)}
             </Link>
           </h2>
@@ -29,7 +30,7 @@ export default function ThemeSection({ section }: ThemeSectionProps) {
             {theme ? theme.description : 'Sujets sans thématique principale'}
           </p>
         </div>
-        <Link href={themeHref} className={styles.count}>
+        <Link href={href} className={styles.count}>
           {countLabel}
         </Link>
       </div>

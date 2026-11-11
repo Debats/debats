@@ -7,6 +7,7 @@ import { createPositionRepository } from '../../../../../../infra/database/posit
 import { getAuthenticatedContributor } from '../../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../../domain/reputation/permissions'
 import { subjectStream } from '../../../../../../domain/aggregates/subject'
+import { positionHref, subjectHref } from '../../../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../components/layout/FormPageHeader'
@@ -27,7 +28,7 @@ export default async function EditPositionPage({ params }: PageProps) {
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor || !canPerform(contributor.reputation, 'edit_position')) {
-    redirect(`/s/${slug}`)
+    redirect(subjectHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -44,7 +45,7 @@ export default async function EditPositionPage({ params }: PageProps) {
 
   // A position lives in its subject's stream: that is the revision the form edits
   const revision = await currentRevision(subjectStream(subject.id))
-  const returnHref = `/s/${slug}/position/${positionSlug}`
+  const returnHref = positionHref(slug, positionSlug)
 
   return (
     <ContentWithSidebar topMargin>

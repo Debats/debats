@@ -5,6 +5,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../../infra/database/subject-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import NewPositionForm from '../../../../components/positions/NewPositionForm'
 import styles from './nouvelle-position.module.css'
@@ -33,7 +34,7 @@ export default async function NewPositionPage({ params }: PageProps) {
 
   const contributor = await getAuthenticatedContributor()
   if (!contributor) {
-    redirect(`/s/${slug}`)
+    redirect(subjectHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -45,7 +46,7 @@ export default async function NewPositionPage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <header className={styles.header}>
-        <Link href={`/s/${slug}`} className={styles.backLink}>
+        <Link href={subjectHref(slug)} className={styles.backLink}>
           &larr; Retour au sujet
         </Link>
         <h1 className={styles.title}>{subject.title}</h1>

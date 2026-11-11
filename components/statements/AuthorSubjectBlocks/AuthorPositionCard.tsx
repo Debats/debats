@@ -5,6 +5,7 @@ import StatementBody from '../StatementBody'
 import EditLink from '../../ui/EditLink'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../domain/entities/statement'
 import { roleOf } from '../../../domain/read-models/author-role'
+import { positionHref } from '../../../domain/read-models/hrefs'
 import {
   authorOnSubjectHref,
   StatementAuthorRef,
@@ -37,7 +38,7 @@ export default function AuthorPositionCard({
     <article className={styles.card}>
       <p className={styles.kicker}>Sa position</p>
       <h3 className={styles.positionTitle}>
-        <Link href={`/s/${subjectSlug}/position/${position.slug}`} className={styles.positionLink}>
+        <Link href={positionHref(subjectSlug, position.slug)} className={styles.positionLink}>
           {position.title}
         </Link>
       </h3>

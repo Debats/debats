@@ -7,6 +7,7 @@ import {
   AuthorTab,
   authorTabHref,
 } from '../../../domain/read-models/author-tabs'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 
 /** The metadata of an organisation page, each tab with its own title and canonical address */
 export async function organisationMetadata(slug: string, tab: AuthorTab): Promise<Metadata> {
@@ -17,7 +18,7 @@ export async function organisationMetadata(slug: string, tab: AuthorTab): Promis
     )
     if (!organisation) return { title: 'Organisation introuvable' }
     const description = `${organisation.name} - ${organisation.presentation}`
-    const url = authorTabHref(`/o/${slug}`, tab)
+    const url = authorTabHref(organisationHref(slug), tab)
     const title =
       tab === 'statements' ? organisation.name : `${organisation.name} — ${AUTHOR_TAB_LABELS[tab]}`
     return {

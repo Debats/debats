@@ -2,10 +2,10 @@ import Link from 'next/link'
 import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarStack'
 import Button from '../../../../components/ui/Button'
 import {
-  argumentHref,
   isPolarisingArgument,
   SubjectArgumentSummary,
 } from '../../../../domain/read-models/argument'
+import { argumentHref, positionHref } from '../../../../domain/read-models/hrefs'
 import { plural } from '../../../../lib/plural'
 import styles from './SubjectArguments.module.css'
 
@@ -55,7 +55,7 @@ export default function SubjectArguments({
                       {argument.positions.map((position) => (
                         <li key={position.id}>
                           <Link
-                            href={`/s/${subjectSlug}/position/${position.slug}`}
+                            href={positionHref(subjectSlug, position.slug)}
                             className={styles.position}
                           >
                             {position.title}

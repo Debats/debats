@@ -2,6 +2,7 @@ import Link from 'next/link'
 import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
 import StatementBody from '../../../../components/statements/StatementBody'
 import StatementSource from '../../../../components/statements/StatementSource'
+import { positionHref, subjectHref } from '../../../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import { ArgumentSubjectUsage } from '../../../../domain/services/argument-usage'
 import { plural } from '../../../../lib/plural'
@@ -22,7 +23,7 @@ export default function ArgumentUsage({ usage }: ArgumentUsageProps) {
       {usage.map(({ subject, positions, statementsCount }) => (
         <article key={subject.id} className={styles.subject}>
           <div className={styles.subjectHead}>
-            <Link href={`/s/${subject.slug}`} className={styles.subjectTitle}>
+            <Link href={subjectHref(subject.slug)} className={styles.subjectTitle}>
               {subject.title}
             </Link>
             <span className={styles.subjectCount}>
@@ -32,7 +33,7 @@ export default function ArgumentUsage({ usage }: ArgumentUsageProps) {
           {positions.map(({ position, entries }) => (
             <section key={position.id} className={styles.position}>
               <Link
-                href={`/s/${subject.slug}/position/${position.slug}`}
+                href={positionHref(subject.slug, position.slug)}
                 className={styles.positionTitle}
               >
                 {position.title}

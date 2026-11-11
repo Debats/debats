@@ -7,6 +7,7 @@ import { createSubjectRepository } from '../../infra/database/subject-repository
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import { FEED_PAGE_SIZE, feedHref, parseFeedParams } from '../../domain/read-models/statement-feed'
 import { roleOf, rolesByFigure } from '../../domain/read-models/author-role'
+import { subjectHref } from '../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../domain/read-models/statement-author'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
@@ -113,7 +114,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
                   title: position.title,
                   href: authorOnSubjectHref(author, subject.slug),
                 }}
-                subject={{ title: subject.title, href: `/s/${subject.slug}` }}
+                subject={{ title: subject.title, href: subjectHref(subject.slug) }}
                 statement={statement}
                 arguments={used}
               />

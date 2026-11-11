@@ -1,5 +1,6 @@
 import Segmented from '../../../../components/ui/Segmented'
 import { StatementAuthorKind } from '../../../../domain/entities/statement'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import styles from './PositionsFilter.module.css'
 
 interface PositionsFilterProps {
@@ -39,7 +40,7 @@ export default function PositionsFilter({
   counts,
   positionsCount,
 }: PositionsFilterProps) {
-  const base = `/s/${subjectSlug}`
+  const base = subjectHref(subjectSlug)
   return (
     <div className={styles.row}>
       <Segmented

@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { dailyIndex } from '../../domain/services/daily-pick'
 import AuthorAvatarStack from '../../components/statements/AuthorAvatarStack'
+import { subjectHref } from '../../domain/read-models/hrefs'
 import { publicFigureRef } from '../../domain/read-models/statement-author'
 import { plural } from '../../lib/plural'
 import styles from './DailySubject.module.css'
@@ -23,7 +24,7 @@ export default async function DailySubject() {
     <section className={styles.card}>
       <p className={styles.kicker}>Le sujet du jour</p>
       <h2 className={styles.title}>
-        <Link href={`/s/${subject.slug}`} className={styles.titleLink}>
+        <Link href={subjectHref(subject.slug)} className={styles.titleLink}>
           {subject.title}
         </Link>
       </h2>
@@ -41,11 +42,11 @@ export default async function DailySubject() {
             max={8}
             size={36}
             subjectSlug={subject.slug}
-            moreHref={`/s/${subject.slug}`}
+            moreHref={subjectHref(subject.slug)}
           />
         )}
       </div>
-      <Link href={`/s/${subject.slug}`} className={styles.more}>
+      <Link href={subjectHref(subject.slug)} className={styles.more}>
         Découvrir les positions
       </Link>
     </section>

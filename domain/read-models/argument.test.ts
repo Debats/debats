@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  argumentHref,
-  argumentsByPosition,
-  isPolarisingArgument,
-  SubjectArgumentSummary,
-} from './argument'
+import { argumentsByPosition, isPolarisingArgument, SubjectArgumentSummary } from './argument'
 
 const summary = (
   id: string,
@@ -51,11 +46,5 @@ describe('arguments read model', () => {
     ])
     expect(byPosition.get('contre')).toEqual([{ id: 'a', title: 'Dignité', slug: 'a' }])
     expect(byPosition.get('autre')).toBeUndefined()
-  })
-
-  it('links an argument to its page', () => {
-    expect(argumentHref({ slug: 'dignite-de-la-personne' })).toBe(
-      '/arguments/dignite-de-la-personne',
-    )
   })
 })

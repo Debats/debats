@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { argumentHref, ArgumentSummary } from '../../../domain/read-models/argument'
+import { ArgumentSummary } from '../../../domain/read-models/argument'
+import { argumentHref } from '../../../domain/read-models/hrefs'
 import { plural } from '../../../lib/plural'
 import styles from './ArgumentCard.module.css'
 

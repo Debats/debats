@@ -12,6 +12,7 @@ import {
   FieldErrors,
   NewStatement,
 } from '../../domain/use-cases/create-statement'
+import { figureHref, organisationHref } from '../../domain/read-models/hrefs'
 import { statementArgumentsOf } from '../../lib/forms/statement-arguments'
 import { statementAuthorOf } from '../../lib/forms/statement-author'
 import { statementTopicOf } from '../../lib/forms/statement-topic'
@@ -74,7 +75,7 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
     return {
       success: true,
       subjectSlug: subject?.slug ?? '',
-      authorHref: organisation ? `/o/${organisation.slug}` : '',
+      authorHref: organisation ? organisationHref(organisation.slug) : '',
       authorLabel: 'Voir l’organisation',
     }
   }
@@ -83,7 +84,7 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
   return {
     success: true,
     subjectSlug: subject?.slug ?? '',
-    authorHref: figure ? `/p/${figure.slug}` : '',
+    authorHref: figure ? figureHref(figure.slug) : '',
     authorLabel: 'Voir la personnalité',
   }
 }

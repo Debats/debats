@@ -3,6 +3,7 @@
 import { useState, useCallback, FormEvent } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import { createPositionAction, ActionResult } from '../../../app/actions/create-position'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { FieldErrors } from '../../../domain/use-cases/create-position'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
@@ -87,7 +88,7 @@ export default function NewPositionForm({
           },
           {
             label: 'Retour au sujet',
-            href: `/s/${subjectSlug}`,
+            href: subjectHref(subjectSlug),
           },
         ]}
       />
@@ -141,7 +142,7 @@ export default function NewPositionForm({
 
       <div className={styles.actions}>
         <Button type="submit">{isPending ? 'Création en cours...' : 'Créer cette position'}</Button>
-        <Button href={`/s/${subjectSlug}`} variant="link">
+        <Button href={subjectHref(subjectSlug)} variant="link">
           Annuler
         </Button>
       </div>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import ShareBar from '../../../../components/charts/ShareBar'
 import ShareLegend from '../../../../components/charts/ShareLegend'
-import { occupationFamilyHref } from '../../../../domain/read-models/occupations'
+import { occupationFamilyHref } from '../../../../domain/read-models/hrefs'
 import {
   FamilyPositionMatrix,
   MatrixCell,

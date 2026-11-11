@@ -6,6 +6,7 @@ import { createPublicFigureRepository } from '../../infra/database/public-figure
 import { PublicFigureActivitySummary } from '../../domain/value-objects/public-figure-activity-summary'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import { canPerform } from '../../domain/reputation/permissions'
+import { figureHref } from '../../domain/read-models/hrefs'
 import Button from '../../components/ui/Button'
 import FigureAvatar from '../../components/figures/FigureAvatar'
 import PersonalitySearch from '../../components/figures/PersonalitySearch'
@@ -25,7 +26,7 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 function FigureCard({ figure, stat }: { figure: PublicFigureActivitySummary; stat: string }) {
   return (
-    <Link href={`/p/${figure.slug}`} className={styles.figureCard}>
+    <Link href={figureHref(figure.slug)} className={styles.figureCard}>
       <FigureAvatar slug={figure.slug} name={figure.name} size={80} />
       <h3 className={styles.figureName}>{figure.name}</h3>
       <span className={styles.figureStat}>{stat}</span>
@@ -38,7 +39,7 @@ function FigureRow({ figure }: { figure: PublicFigureActivitySummary }) {
     <div className={styles.figureRow}>
       <FigureAvatar slug={figure.slug} name={figure.name} size={48} />
       <div className={styles.figureRowInfo}>
-        <Link href={`/p/${figure.slug}`} className={styles.figureRowName}>
+        <Link href={figureHref(figure.slug)} className={styles.figureRowName}>
           {figure.name}
         </Link>
         <span className={styles.figureRowStat}>

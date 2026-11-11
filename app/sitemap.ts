@@ -13,6 +13,14 @@ import {
   groupOrganisationsByType,
   isTruncated,
 } from '../domain/read-models/organisation-summary'
+import {
+  argumentHref,
+  figureHref,
+  occupationFamilyHref,
+  organisationHref,
+  subjectHref,
+  themeHref,
+} from '../domain/read-models/hrefs'
 import { SITE_URL } from './site'
 
 const BASE_URL = SITE_URL
@@ -119,28 +127,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
-      url: `${BASE_URL}/s/${subject.slug}`,
+      url: `${BASE_URL}${subjectHref(subject.slug)}`,
       lastModified: subject.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
 
     const publicFigurePages: MetadataRoute.Sitemap = publicFigures.map((figure) => ({
-      url: `${BASE_URL}/p/${figure.slug}`,
+      url: `${BASE_URL}${figureHref(figure.slug)}`,
       lastModified: figure.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))
 
     const themePages: MetadataRoute.Sitemap = themes.map((theme) => ({
-      url: `${BASE_URL}/themes/${theme.slug}`,
+      url: `${BASE_URL}${themeHref(theme.slug)}`,
       lastModified: theme.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))
 
     const organisationPages: MetadataRoute.Sitemap = organisations.map((organisation) => ({
-      url: `${BASE_URL}/o/${organisation.slug}`,
+      url: `${BASE_URL}${organisationHref(organisation.slug)}`,
       lastModified: organisation.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
@@ -159,13 +167,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const argumentPages: MetadataRoute.Sitemap = argumentSummaries.map((argument) => ({
-      url: `${BASE_URL}/arguments/${argument.slug}`,
+      url: `${BASE_URL}${argumentHref(argument)}`,
       changeFrequency: 'weekly' as const,
       priority: 0.6,
     }))
 
     const occupationPages: MetadataRoute.Sitemap = families.map((family) => ({
-      url: `${BASE_URL}/metiers/${family.slug}`,
+      url: `${BASE_URL}${occupationFamilyHref(family)}`,
       lastModified: family.updatedAt,
       changeFrequency: 'monthly' as const,
       priority: 0.5,

@@ -6,6 +6,7 @@ import { createOrganisationRepository } from '../../../../infra/database/organis
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { organisationStream } from '../../../../domain/aggregates/organisation'
+import { organisationHref } from '../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
@@ -26,7 +27,7 @@ export default async function EditOrganisationPage({ params }: PageProps) {
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor || !canPerform(contributor.reputation, 'edit_organisation')) {
-    redirect(`/o/${slug}`)
+    redirect(organisationHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -40,7 +41,7 @@ export default async function EditOrganisationPage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <FormPageHeader
-        backHref={`/o/${slug}`}
+        backHref={organisationHref(slug)}
         backLabel="Retour à l'organisation"
         title="Modifier l'organisation"
         subtitle={organisation.name}

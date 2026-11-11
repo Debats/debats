@@ -2,6 +2,7 @@ import Link from 'next/link'
 import AuthorAvatar from '../../statements/AuthorAvatar'
 import { formatShortDate } from '../../../lib/format-date'
 import styles from './StatementList.module.css'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { LatestStatement } from '../../../domain/read-models/latest-statement'
 import { authorHref, authorOnSubjectHref } from '../../../domain/read-models/statement-author'
 
@@ -32,7 +33,7 @@ export default function StatementList({ title, statements }: StatementListProps)
                   <em>{statement.positionTitle}</em>
                 </Link>{' '}
                 dans le débat{' '}
-                <Link href={`/s/${statement.subjectSlug}`}>
+                <Link href={subjectHref(statement.subjectSlug)}>
                   <strong>{statement.subjectTitle}</strong>
                 </Link>
               </p>

@@ -10,6 +10,7 @@ import {
   distinctFiguresCount,
   occupationSections,
 } from '../../../domain/read-models/occupation-sections'
+import { figureHref } from '../../../domain/read-models/hrefs'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import PageHero from '../../../components/layout/PageHero'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
@@ -79,7 +80,7 @@ export default async function OccupationFamilyPage({ params }: PageProps) {
                 <h2 className={styles.title}>{section.name}</h2>
                 <div className={styles.grid}>
                   {section.figures.map((figure) => (
-                    <Link key={figure.id} href={`/p/${figure.slug}`} className={styles.card}>
+                    <Link key={figure.id} href={figureHref(figure.slug)} className={styles.card}>
                       <FigureAvatar slug={figure.slug} name={figure.name} size={80} />
                       <span className={styles.name}>{figure.name}</span>
                       <span className={styles.stat}>

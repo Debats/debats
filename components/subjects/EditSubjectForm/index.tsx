@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { updateSubjectAction } from '../../../app/actions/update-subject'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import SubjectForm, { SubjectFormValues } from '../SubjectForm'
 
 interface EditSubjectFormProps {
@@ -28,7 +29,7 @@ export default function EditSubjectForm({
       onSubmit={handleSubmit}
       submitLabel="Enregistrer les modifications"
       pendingLabel="Enregistrement..."
-      cancelHref={`/s/${subjectSlug}`}
+      cancelHref={subjectHref(subjectSlug)}
       subject={subject}
     />
   )

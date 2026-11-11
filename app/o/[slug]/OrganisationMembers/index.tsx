@@ -3,6 +3,7 @@ import { Option } from 'effect'
 import FigureAvatar from '../../../../components/figures/FigureAvatar'
 import RemoveMembershipButton from '../../../../components/organisations/RemoveMembershipButton'
 import ShowMore from '../../../../components/ui/ShowMore'
+import { figureHref, organisationHref } from '../../../../domain/read-models/hrefs'
 import { MembershipWithFigure } from '../../../../domain/repositories/organisation-membership-repository'
 import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './OrganisationMembers.module.css'
@@ -43,7 +44,7 @@ function MemberRow({
     <div role="listitem" className={styles.row}>
       <FigureAvatar slug={figure.slug} name={figure.name} size={36} />
       <div className={styles.info}>
-        <Link href={`/p/${figure.slug}`} className={styles.name}>
+        <Link href={figureHref(figure.slug)} className={styles.name}>
           {figure.name}
         </Link>
         {details.length > 0 && <span className={styles.details}>{details.join(' · ')}</span>}
@@ -84,7 +85,7 @@ export default function OrganisationMembers({
       <div className={styles.header}>
         <p className={styles.title}>Personnalités affiliées</p>
         {canAffiliate && (
-          <Link href={`/o/${organisationSlug}/affilier`} className={styles.action}>
+          <Link href={`${organisationHref(organisationSlug)}/affilier`} className={styles.action}>
             Affilier
           </Link>
         )}

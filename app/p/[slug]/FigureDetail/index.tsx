@@ -7,7 +7,6 @@ import { createThemeRepository } from '../../../../infra/database/theme-reposito
 import { createOrganisationMembershipRepository } from '../../../../infra/database/organisation-membership-repository-supabase'
 import { createOccupationRepository } from '../../../../infra/database/occupation-repository-supabase'
 import { createOccupationFamilyRepository } from '../../../../infra/database/occupation-family-repository-supabase'
-import { occupationFamilyHref } from '../../../../domain/read-models/occupations'
 import { MembershipWithOrganisation } from '../../../../domain/repositories/organisation-membership-repository'
 import { publicFigureAuthor } from '../../../../domain/entities/statement'
 import { publicFigureRef } from '../../../../domain/read-models/statement-author'
@@ -38,6 +37,11 @@ import {
   parseStatementsView,
   statementsViewHref,
 } from '../../../../domain/read-models/statements-view'
+import {
+  figureHref,
+  figureOnSubjectHref,
+  occupationFamilyHref,
+} from '../../../../domain/read-models/hrefs'
 import { statementsOnTheme } from '../../../../domain/services/statements-on-theme'
 import { subjectIdsOnTheme } from '../../../../infra/queries/subject-ids-on-theme'
 import { groupStatementsBySubject } from '../../../../domain/services/statements-by-subject'
@@ -109,9 +113,9 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_personality')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const adminActions = [
-    ...(canEdit ? [{ label: 'Modifier', icon: '✎', href: `/p/${slug}/modifier` }] : []),
+    ...(canEdit ? [{ label: 'Modifier', icon: '✎', href: `${figureHref(slug)}/modifier` }] : []),
     ...(canAffiliate
-      ? [{ label: 'Affilier à une organisation', icon: '⌂', href: `/p/${slug}/affilier` }]
+      ? [{ label: 'Affilier à une organisation', icon: '⌂', href: `${figureHref(slug)}/affilier` }]
       : []),
   ]
 
@@ -129,12 +133,12 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
     '@type': 'Person',
     name: figure.name,
     description: figure.presentation,
-    url: `https://debats.co/p/${figure.slug}`,
+    url: `https://debats.co${figureHref(figure.slug)}`,
     image: `https://debats.co/avatars/${figure.slug}.jpg`,
     ...(Option.isSome(figure.wikipediaUrl) ? { sameAs: [figure.wikipediaUrl.value] } : {}),
   }
 
-  const base = `/p/${slug}`
+  const base = figureHref(slug)
   const self = publicFigureAuthor(figure.id)
 
   return (
@@ -213,7 +217,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
             statements={listed}
             view={view}
             themes={themes}
-            subjectHref={(subjectSlug) => `/p/${slug}/s/${subjectSlug}`}
+            subjectHref={(subjectSlug) => figureOnSubjectHref(slug, subjectSlug)}
             viewHref={(wanted) => statementsViewHref(base, wanted)}
           />
         )}

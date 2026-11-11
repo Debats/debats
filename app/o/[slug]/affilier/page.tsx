@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createOrganisationRepository } from '../../../../infra/database/organisation-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { organisationHref } from '../../../../domain/read-models/hrefs'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import AddMembershipForm from '../../../../components/organisations/AddMembershipForm'
@@ -24,7 +25,7 @@ export default async function AffiliatePage({ params }: PageProps) {
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor || !canPerform(contributor.reputation, 'add_membership')) {
-    redirect(`/o/${slug}`)
+    redirect(organisationHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -37,7 +38,7 @@ export default async function AffiliatePage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <FormPageHeader
-        backHref={`/o/${slug}`}
+        backHref={organisationHref(slug)}
         backLabel={`Retour à ${organisation.name}`}
         title="Affilier une personnalité"
         subtitle={`Membre, élu·e, porte-parole, salarié·e… : qui fait partie de ${organisation.name} ?`}

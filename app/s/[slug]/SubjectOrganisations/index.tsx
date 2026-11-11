@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import OrganisationLogo from '../../../../components/organisations/OrganisationLogo'
+import { organisationHref } from '../../../../domain/read-models/hrefs'
 import { StatementAuthorRef } from '../../../../domain/read-models/statement-author'
 import { PositionSummary } from '../../../../domain/read-models/subject-positions-summary'
 import styles from './SubjectOrganisations.module.css'
@@ -48,7 +49,7 @@ export default function SubjectOrganisations({ positions }: SubjectOrganisations
                 size={32}
               />
               <div className={styles.body}>
-                <Link href={`/o/${organisation.slug}`} className={styles.name}>
+                <Link href={organisationHref(organisation.slug)} className={styles.name}>
                   {organisation.name}
                 </Link>
                 <span className={styles.positions}>{positionTitles.join(' · ')}</span>

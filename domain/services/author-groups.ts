@@ -10,7 +10,7 @@
 
 import { Occupation } from '../entities/occupation'
 import { OccupationFamily } from '../entities/occupation-family'
-import { occupationFamilyHref } from '../read-models/occupations'
+import { occupationFamilyHref, organisationHref } from '../read-models/hrefs'
 import { authorKey } from './author-on-subject'
 import { GroupDefinition } from './group-alignment'
 import { familiesByFigure, OccupationAssignment } from './occupation-distribution'
@@ -34,7 +34,7 @@ export function organisationGroups(
     key: `organisation-${organisation.id}`,
     kind: 'organisation' as const,
     label: `Membres de ${organisation.acronym ?? organisation.name}`,
-    href: `/o/${organisation.slug}`,
+    href: organisationHref(organisation.slug),
     members: new Set(organisation.memberIds.map(figureKey)),
   }))
 }

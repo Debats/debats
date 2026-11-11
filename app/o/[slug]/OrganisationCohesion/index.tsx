@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { figureHref, organisationOnSubjectHref } from '../../../../domain/read-models/hrefs'
 import { SubjectCohesion } from '../../../../domain/services/author-analyses'
 import { plural } from '../../../../lib/plural'
 import styles from './OrganisationCohesion.module.css'
@@ -14,7 +15,7 @@ const names = (figures: Array<{ id: string; name: string; slug: string }>) =>
   figures.map((figure, index) => (
     <span key={figure.id}>
       {index > 0 && ', '}
-      <Link href={`/p/${figure.slug}`} className={styles.member}>
+      <Link href={figureHref(figure.slug)} className={styles.member}>
         {figure.name}
       </Link>
     </span>
@@ -57,7 +58,7 @@ export default function OrganisationCohesion({
             {spoken.map((c) => (
               <li key={c.subject.id} className={styles.row}>
                 <Link
-                  href={`/o/${organisationSlug}/s/${c.subject.slug}`}
+                  href={organisationOnSubjectHref(organisationSlug, c.subject.slug)}
                   className={styles.subject}
                 >
                   {c.subject.title}
@@ -74,7 +75,7 @@ export default function OrganisationCohesion({
                     {c.apart.map((a, index) => (
                       <span key={a.figure.id}>
                         {index > 0 && ', '}
-                        <Link href={`/p/${a.figure.slug}`} className={styles.member}>
+                        <Link href={figureHref(a.figure.slug)} className={styles.member}>
                           {a.figure.name}
                         </Link>{' '}
                         <span className={styles.meta}>

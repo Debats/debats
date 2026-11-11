@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Affiliation } from '../../../domain/read-models/author-subject-page'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import styles from './AuthorSubjectBlocks.module.css'
 
 /** Ce qui présente une personnalité dans le rail : ses métiers, ses affiliations */
@@ -20,7 +21,10 @@ export default function FigureRailLines({
           {organisations.map((organisation, index) => (
             <span key={organisation.slug}>
               {index > 0 && ', '}
-              <Link href={`/o/${organisation.slug}`} className={styles.authorOrganisation}>
+              <Link
+                href={organisationHref(organisation.slug)}
+                className={styles.authorOrganisation}
+              >
                 {organisation.acronym ?? organisation.name}
               </Link>
             </span>

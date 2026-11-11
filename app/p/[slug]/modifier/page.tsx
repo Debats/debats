@@ -13,6 +13,7 @@ import EditPublicFigureForm from '../../../../components/figures/EditPublicFigur
 import { createOccupationRepository } from '../../../../infra/database/occupation-repository-supabase'
 import { createOccupationFamilyRepository } from '../../../../infra/database/occupation-family-repository-supabase'
 import { groupOccupationsByFamily } from '../../../../domain/read-models/occupations'
+import { figureHref } from '../../../../domain/read-models/hrefs'
 import FigureOccupations from './FigureOccupations'
 
 interface PageProps {
@@ -30,7 +31,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor || !canPerform(contributor.reputation, 'edit_personality')) {
-    redirect(`/p/${slug}`)
+    redirect(figureHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -58,7 +59,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <FormPageHeader
-        backHref={`/p/${slug}`}
+        backHref={figureHref(slug)}
         backLabel="Retour à la personnalité"
         title="Modifier la personnalité"
         subtitle={figure.name}

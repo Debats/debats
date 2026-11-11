@@ -66,6 +66,3 @@ export function sortOccupationsHeld(held: OccupationHeld[]): OccupationHeld[] {
       a.occupation.name.localeCompare(b.occupation.name, 'fr'),
   )
 }
-
-/** The page of a family */
-export const occupationFamilyHref = (family: { slug: string }): string => `/metiers/${family.slug}`

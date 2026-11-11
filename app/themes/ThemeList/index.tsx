@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 import { deleteThemeAction } from '../../actions/delete-theme'
 import ConfirmAction from '../../../components/ui/ConfirmAction'
+import { themeHref } from '../../../domain/read-models/hrefs'
 import styles from '../themes.module.css'
 
 interface ThemeData {
@@ -41,7 +42,7 @@ export default function ThemeList({ themes, canManage }: ThemeListProps) {
       {themes.map((theme) => (
         <div key={theme.id} className={styles.item}>
           <div className={styles.info}>
-            <Link href={`/themes/${theme.slug}`} className={styles.name}>
+            <Link href={themeHref(theme.slug)} className={styles.name}>
               {theme.name}
             </Link>
             <p className={styles.description}>{theme.description}</p>

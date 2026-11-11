@@ -4,6 +4,7 @@ import { Effect } from 'effect'
 import { redirect } from 'next/navigation'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import { canPerform, getRank } from '../../domain/reputation/permissions'
+import { subjectHref } from '../../domain/read-models/hrefs'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
@@ -102,7 +103,7 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
       >
         <header className={styles.header}>
           {initialSubject?.slug && (
-            <Link href={`/s/${initialSubject.slug}`} className={styles.back}>
+            <Link href={subjectHref(initialSubject.slug)} className={styles.back}>
               ← {initialSubject.title}
             </Link>
           )}

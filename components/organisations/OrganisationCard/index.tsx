@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import OrganisationLogo from '../OrganisationLogo'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import { OrganisationSummary } from '../../../domain/read-models/organisation-summary'
 import { plural } from '../../../lib/plural'
 import styles from './OrganisationCard.module.css'
@@ -11,7 +12,7 @@ interface OrganisationCardProps {
 /** Carte d'une organisation dans l'index : logo, nom, présentation, membres. */
 export default function OrganisationCard({ organisation }: OrganisationCardProps) {
   return (
-    <Link href={`/o/${organisation.slug}`} className={styles.card}>
+    <Link href={organisationHref(organisation.slug)} className={styles.card}>
       <OrganisationLogo
         slug={organisation.slug}
         name={organisation.name}

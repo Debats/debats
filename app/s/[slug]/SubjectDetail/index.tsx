@@ -13,6 +13,7 @@ import { getSubjectTimeline } from '../../../../infra/queries/subject-timeline'
 import { isMajorSubject } from '../../../../domain/entities/subject'
 import { positionAuthorsCount } from '../../../../domain/read-models/subject-positions-summary'
 import { argumentsByPosition } from '../../../../domain/read-models/argument'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import { statedSpanLabel } from '../../../../domain/services/subject-timeline'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
@@ -117,7 +118,7 @@ export default async function SubjectDetail({
     '@type': 'Article',
     headline: subject.title,
     description: subject.presentation,
-    url: `https://debats.co/s/${subject.slug}`,
+    url: `https://debats.co${subjectHref(subject.slug)}`,
     author: { '@type': 'Organization', name: 'Débats.co', url: 'https://debats.co' },
   }
 
@@ -159,7 +160,7 @@ export default async function SubjectDetail({
           canAddPosition && (
             <>
               Aucune position ne correspond ?{' '}
-              <Link href={`/s/${slug}/nouvelle-position`} className={styles.link}>
+              <Link href={`${subjectHref(slug)}/nouvelle-position`} className={styles.link}>
                 Proposer une nouvelle position
               </Link>
             </>

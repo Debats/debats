@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Option } from 'effect'
 import OrganisationLogo from '../../../../components/organisations/OrganisationLogo'
+import { organisationHref } from '../../../../domain/read-models/hrefs'
 import { MembershipWithOrganisation } from '../../../../domain/repositories/organisation-membership-repository'
 import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './FigureEngagements.module.css'
@@ -22,7 +23,7 @@ export default function CurrentEngagement({
 
   return (
     <li className={styles.currentItem}>
-      <Link href={`/o/${organisation.slug}`} className={styles.feature}>
+      <Link href={organisationHref(organisation.slug)} className={styles.feature}>
         <span className={styles.identity}>
           <OrganisationLogo
             slug={organisation.slug}

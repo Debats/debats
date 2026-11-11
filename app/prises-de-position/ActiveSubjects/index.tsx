@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { SubjectActivitySummary } from '../../../domain/repositories/subject-repository'
 import styles from './ActiveSubjects.module.css'
 
@@ -16,7 +17,7 @@ export default function ActiveSubjects({ subjects }: ActiveSubjectsProps) {
       <ul className={styles.list}>
         {subjects.map((subject) => (
           <li key={subject.id} className={styles.item}>
-            <Link href={`/s/${subject.slug}`} className={styles.subject}>
+            <Link href={subjectHref(subject.slug)} className={styles.subject}>
               {subject.title}
             </Link>
             <span className={styles.count}>{subject.statementsCount}</span>

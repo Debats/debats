@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { figureHref } from '../../../domain/read-models/hrefs'
 import FigureAvatar from '../FigureAvatar'
 import styles from './FigureAvatarRow.module.css'
 
@@ -63,7 +64,7 @@ export default function FigureAvatarRow({
       {figures.slice(0, displayCount).map((figure) => (
         <Link
           key={figure.id}
-          href={`/p/${figure.slug}${hrefSuffix}`}
+          href={`${figureHref(figure.slug)}${hrefSuffix}`}
           className={styles.link}
           title={figure.name}
         >

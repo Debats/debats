@@ -7,6 +7,7 @@ import * as Sentry from '@sentry/nextjs'
 import { updatePublicFigureAction, ActionResult } from '../../../app/actions/update-public-figure'
 import { editPublicFigureForm } from '../../../lib/forms/public-figure-form'
 import { useChosenFile } from '../../../lib/forms/use-chosen-file'
+import { figureHref } from '../../../domain/read-models/hrefs'
 import { FieldErrors } from '../../../domain/use-cases/update-public-figure'
 import NotorietySources, { notorietySourcePair } from '../../forms/NotorietySources'
 import TextField from '../../ui/TextField'
@@ -80,7 +81,7 @@ export default function EditPublicFigureForm({
           if (result.error) setError(result.error)
           if (result.fieldErrors) setFieldErrors(result.fieldErrors)
         } else {
-          router.push(`/p/${result.slug}`)
+          router.push(figureHref(result.slug))
         }
       } catch (err) {
         Sentry.captureException(err)
@@ -193,7 +194,7 @@ export default function EditPublicFigureForm({
         <Button type="submit">
           {isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
         </Button>
-        <Button href={`/p/${figureSlug}`} variant="link">
+        <Button href={figureHref(figureSlug)} variant="link">
           Annuler
         </Button>
       </div>

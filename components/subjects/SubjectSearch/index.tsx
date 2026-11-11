@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import Link from 'next/link'
 import { searchSubjects, SubjectSearchResult } from '../../../app/actions/search-subjects'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import SearchField from '../../ui/SearchField'
 import styles from './SubjectSearch.module.css'
 
@@ -15,7 +16,7 @@ export default function SubjectSearch() {
       onSearch={handleSearch}
       keyExtractor={(s) => s.id}
       renderResult={(subject) => (
-        <Link href={`/s/${subject.slug}`} className={styles.resultLink}>
+        <Link href={subjectHref(subject.slug)} className={styles.resultLink}>
           {subject.title}
         </Link>
       )}

@@ -7,6 +7,7 @@ import {
   searchPublicFigures,
   PublicFigureSearchResult,
 } from '../../../app/actions/search-public-figures'
+import { figureHref } from '../../../domain/read-models/hrefs'
 import FigureAvatar from '../FigureAvatar'
 import SearchField from '../../ui/SearchField'
 import styles from './PersonalitySearch.module.css'
@@ -30,7 +31,7 @@ export default function PersonalitySearch() {
       keyExtractor={(f) => f.id}
       onSearchComplete={handleSearchComplete}
       renderResult={(figure) => (
-        <Link href={`/p/${figure.slug}`} className={styles.resultLink}>
+        <Link href={figureHref(figure.slug)} className={styles.resultLink}>
           <FigureAvatar slug={figure.slug} name={figure.name} size={32} />
           {figure.name}
         </Link>

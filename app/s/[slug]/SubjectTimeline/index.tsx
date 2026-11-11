@@ -1,4 +1,5 @@
 import DatedStatement from '../../../../components/statements/DatedStatement'
+import { positionHref } from '../../../../domain/read-models/hrefs'
 import { TimelineYear } from '../../../../domain/services/subject-timeline'
 import { plural } from '../../../../lib/plural'
 import styles from './SubjectTimeline.module.css'
@@ -44,7 +45,7 @@ export default function SubjectTimeline({ subjectSlug, years }: SubjectTimelineP
               author={entry.author}
               position={{
                 title: entry.position.title,
-                href: `/s/${subjectSlug}/position/${entry.position.slug}`,
+                href: positionHref(subjectSlug, entry.position.slug),
               }}
               statement={entry}
               arguments={entry.arguments}

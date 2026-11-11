@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { runLive } from '../../infra/live-services'
+import { figureHref } from '../../domain/read-models/hrefs'
 import { OccupationAssignmentInput } from '../../domain/read-models/occupations'
 import { setPublicFigureOccupationsUseCase } from '../../domain/use-cases/set-public-figure-occupations'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
@@ -28,6 +29,6 @@ export async function setPublicFigureOccupationsAction(
     return { success: false, error: result.left }
   }
 
-  revalidatePath(`/p/${publicFigureSlug}`)
+  revalidatePath(figureHref(publicFigureSlug))
   return { success: true, revision: result.right }
 }

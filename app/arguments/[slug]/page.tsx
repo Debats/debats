@@ -7,6 +7,7 @@ import { createStatementRepository } from '../../../infra/database/statement-rep
 import { countArgumentAuthors, groupArgumentUsage } from '../../../domain/services/argument-usage'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { argumentStream } from '../../../domain/aggregates/argument'
+import { argumentHref } from '../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../infra/events/stream-revision'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description =
       argument.description ||
       `Qui mobilise l’argument « ${argument.title} », sur quels sujets et pour quelles positions.`
-    const url = `/arguments/${slug}`
+    const url = argumentHref({ slug })
     return {
       title: `${argument.title} — Argument`,
       description,

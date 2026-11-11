@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { runLive } from '../../infra/live-services'
+import { organisationHref } from '../../domain/read-models/hrefs'
 import { removeOrganisationMembershipUseCase } from '../../domain/use-cases/remove-organisation-membership'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -20,6 +21,6 @@ export async function removeOrganisationMembershipAction(
     return { success: false, error: result.left }
   }
 
-  revalidatePath(`/o/${organisationSlug}`)
+  revalidatePath(organisationHref(organisationSlug))
   return { success: true }
 }

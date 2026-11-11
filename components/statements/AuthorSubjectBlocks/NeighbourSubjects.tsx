@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { NeighbourSubject } from '../../../domain/read-models/author-subject-page'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import {
   authorOnSubjectHref,
   StatementAuthorRef,
@@ -32,7 +33,7 @@ export default function NeighbourSubjects({ author, neighbours }: NeighbourSubje
             href={
               neighbour.statements > 0
                 ? authorOnSubjectHref(author, neighbour.slug)
-                : `/s/${neighbour.slug}`
+                : subjectHref(neighbour.slug)
             }
             className={neighbour.statements > 0 ? styles.neighbour : styles.neighbourSilent}
           >

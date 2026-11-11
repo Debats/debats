@@ -7,6 +7,7 @@ import {
   addOrganisationMembershipUseCase,
   FieldErrors,
 } from '../../domain/use-cases/add-organisation-membership'
+import { organisationHref } from '../../domain/read-models/hrefs'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
 export type ActionResult =
@@ -39,6 +40,6 @@ export async function addOrganisationMembershipAction(
       : { success: false, fieldErrors: err }
   }
 
-  revalidatePath(`/o/${organisationSlug}`)
+  revalidatePath(organisationHref(organisationSlug))
   return { success: true }
 }

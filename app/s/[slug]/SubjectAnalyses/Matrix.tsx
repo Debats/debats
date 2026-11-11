@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { occupationFamilyHref } from '../../../../domain/read-models/occupations'
+import { occupationFamilyHref } from '../../../../domain/read-models/hrefs'
 import {
   FamilyPositionMatrix,
   MatrixCell,

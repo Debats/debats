@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { StatedSpan } from '../../../domain/repositories/statement-repository'
 import { statedSpanLabel } from '../../../domain/services/subject-timeline'
 import { plural } from '../../../lib/plural'
@@ -15,7 +16,7 @@ export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps
   return (
     <div className={styles.railCard}>
       <p className={styles.railCardTitle}>Le sujet</p>
-      <Link href={`/s/${subject.slug}`} className={styles.subjectCardName}>
+      <Link href={subjectHref(subject.slug)} className={styles.subjectCardName}>
         {subject.title}
       </Link>
       <p className={styles.subjectCardProblem}>{subject.problem}</p>
@@ -41,10 +42,10 @@ export default function SubjectRailCard({ subject, facts }: SubjectRailCardProps
         )}
       </dl>
 
-      <Link href={`/s/${subject.slug}`} className={styles.railCardLink}>
+      <Link href={subjectHref(subject.slug)} className={styles.railCardLink}>
         Voir toutes les positions
       </Link>
-      <Link href={`/s/${subject.slug}/chronologie`} className={styles.railCardLink}>
+      <Link href={`${subjectHref(subject.slug)}/chronologie`} className={styles.railCardLink}>
         Chronologie du sujet
       </Link>
     </div>

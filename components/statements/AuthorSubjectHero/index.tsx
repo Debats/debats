@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatar from '../AuthorAvatar'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { plural } from '../../../lib/plural'
 import styles from './AuthorSubjectHero.module.css'
@@ -49,7 +50,7 @@ export default function AuthorSubjectHero({
               {author.kind === 'organisation' ? 'Organisation' : 'Personnalité'}
             </Link>
             <span className={styles.crumbSeparator}>/</span>
-            <Link href={`/s/${subject.slug}`} className={styles.crumb}>
+            <Link href={subjectHref(subject.slug)} className={styles.crumb}>
               Sujet
             </Link>
           </nav>
@@ -67,7 +68,7 @@ export default function AuthorSubjectHero({
             {role}
             <p className={styles.subject}>
               sur{' '}
-              <Link href={`/s/${subject.slug}`} className={styles.subjectLink}>
+              <Link href={subjectHref(subject.slug)} className={styles.subjectLink}>
                 {subject.title}
               </Link>
             </p>

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { createSubjectAction } from '../../../app/actions/create-subject'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import SubjectForm, { SubjectFormValues } from '../SubjectForm'
 import FormSuccess from '../../ui/FormSuccess'
 
@@ -20,12 +21,12 @@ export default function NewSubjectForm() {
         title={`Le sujet « ${successResult.title} » a été créé !`}
         primaryAction={{
           label: 'Ajouter une première position',
-          href: `/s/${successResult.slug}/nouvelle-position`,
+          href: `${subjectHref(successResult.slug)}/nouvelle-position`,
         }}
         secondaryActions={[
           {
             label: 'Voir le sujet',
-            href: `/s/${successResult.slug}`,
+            href: subjectHref(successResult.slug),
           },
           {
             label: 'Créer un autre sujet',

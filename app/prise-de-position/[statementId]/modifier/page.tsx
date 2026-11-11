@@ -9,6 +9,7 @@ import { createPublicFigureRepository } from '../../../../infra/database/public-
 import { createOrganisationRepository } from '../../../../infra/database/organisation-repository-supabase'
 import { createArgumentRepository } from '../../../../infra/database/argument-repository-supabase'
 import { StatementAuthor } from '../../../../domain/entities/statement'
+import { figureHref, organisationHref } from '../../../../domain/read-models/hrefs'
 import { statementStream } from '../../../../domain/aggregates/statement'
 import { currentRevision } from '../../../../infra/events/stream-revision'
 import { canPerform } from '../../../../domain/reputation/permissions'
@@ -40,10 +41,12 @@ async function describeAuthor(
     const organisation = await Effect.runPromise(
       createOrganisationRepository(supabase).findById(author.id),
     )
-    return organisation ? { name: organisation.name, href: `/o/${organisation.slug}` } : null
+    return organisation
+      ? { name: organisation.name, href: organisationHref(organisation.slug) }
+      : null
   }
   const figure = await Effect.runPromise(createPublicFigureRepository(supabase).findById(author.id))
-  return figure ? { name: figure.name, href: `/p/${figure.slug}` } : null
+  return figure ? { name: figure.name, href: figureHref(figure.slug) } : null
 }
 
 /**

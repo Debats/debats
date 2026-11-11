@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { createStatementAction } from '../../../app/actions/create-statement'
 import { searchPublicFigures } from '../../../app/actions/search-public-figures'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import StatementForm from '../StatementForm'
 
 interface PositionOption {
@@ -38,7 +39,7 @@ export default function AddStatementForm({
       onSubmit={handleSubmit}
       submitLabel="Ajouter cette prise de position"
       pendingLabel="Ajout en cours..."
-      redirectTo={`/s/${slug}`}
+      redirectTo={subjectHref(slug)}
       positions={positions}
       onSearchFigures={handleSearchFigures}
       canUseArguments={canUseArguments}

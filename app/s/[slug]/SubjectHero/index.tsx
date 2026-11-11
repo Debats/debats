@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import ThemeBadge from '../../../../components/ui/ThemeBadge'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import { formatShortDate } from '../../../../lib/format-date'
 import { plural } from '../../../../lib/plural'
 import styles from './SubjectHero.module.css'
@@ -85,7 +86,7 @@ export default function SubjectHero({
                 {relatedSubjects.map((subject, index) => (
                   <span key={subject.id}>
                     {index > 0 && <span className={styles.relatedSeparator}>·</span>}
-                    <Link href={`/s/${subject.slug}`} className={styles.relatedLink}>
+                    <Link href={subjectHref(subject.slug)} className={styles.relatedLink}>
                       {subject.title}
                     </Link>
                   </span>

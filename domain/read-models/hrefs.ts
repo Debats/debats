@@ -18,3 +18,25 @@ export const organisationHref = (slug: string): string => `/o/${slug}`
 
 /** A theme's page */
 export const themeHref = (slug: string): string => `/themes/${slug}`
+
+/** The page of an argument */
+export const argumentHref = (argument: { slug: string }): string => `/arguments/${argument.slug}`
+
+/** The page of a family of occupations */
+export const occupationFamilyHref = (family: { slug: string }): string => `/metiers/${family.slug}`
+
+/** What an author said on a subject lives under the author's own page */
+const onSubject = (authorPage: string, subjectSlug: string): string =>
+  `${authorPage}/s/${subjectSlug}`
+
+/** What a public figure said on a subject */
+export const figureOnSubjectHref = (figureSlug: string, subjectSlug: string): string =>
+  onSubject(figureHref(figureSlug), subjectSlug)
+
+/** What an organisation said on a subject */
+export const organisationOnSubjectHref = (organisationSlug: string, subjectSlug: string): string =>
+  onSubject(organisationHref(organisationSlug), subjectSlug)
+
+/** The form that edits a statement, whoever its author */
+export const statementEditHref = (statementId: string): string =>
+  `/prise-de-position/${statementId}/modifier`

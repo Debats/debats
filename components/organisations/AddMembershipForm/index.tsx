@@ -4,6 +4,7 @@ import { useState, useCallback, FormEvent } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import { addOrganisationMembershipAction } from '../../../app/actions/add-organisation-membership'
 import { searchPublicFigures } from '../../../app/actions/search-public-figures'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import { FieldErrors } from '../../../domain/use-cases/types'
 import Combobox from '../../ui/Combobox'
 import TextField from '../../ui/TextField'
@@ -78,7 +79,10 @@ export default function AddMembershipForm({
     return (
       <FormSuccess
         title={`${addedName} est maintenant affilié·e à ${organisationName}.`}
-        primaryAction={{ label: `Voir ${organisationName}`, href: `/o/${organisationSlug}` }}
+        primaryAction={{
+          label: `Voir ${organisationName}`,
+          href: organisationHref(organisationSlug),
+        }}
         secondaryActions={[{ label: 'Affilier une autre personnalité', onClick: reset }]}
       />
     )
@@ -155,7 +159,7 @@ export default function AddMembershipForm({
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Enregistrement...' : 'Affilier cette personnalité'}
         </Button>
-        <Button href={`/o/${organisationSlug}`} variant="link">
+        <Button href={organisationHref(organisationSlug)} variant="link">
           Annuler
         </Button>
       </div>

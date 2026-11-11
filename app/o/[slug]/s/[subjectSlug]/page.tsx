@@ -29,6 +29,7 @@ import {
 import ShareButton from '../../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import AuthorSubjectHero from '../../../../../components/statements/AuthorSubjectHero'
+import { organisationHref, statementEditHref } from '../../../../../domain/read-models/hrefs'
 import OrganisationRoleLine from '../../../../../components/statements/AuthorSubjectHero/OrganisationRoleLine'
 import AuthorPositions from '../../../../../components/statements/AuthorSubjectBlocks/AuthorPositions'
 import AuthorRailCard from '../../../../../components/statements/AuthorSubjectBlocks/AuthorRailCard'
@@ -110,7 +111,9 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
       <>
         Débats.co ne connaît encore aucune personnalité affiliée à {organisation.name} : il n’y a
         aucun groupe auquel comparer cette position.{' '}
-        <Link href={`/o/${organisation.slug}/affilier`}>Vous pouvez en affilier une.</Link>
+        <Link href={`${organisationHref(organisation.slug)}/affilier`}>
+          Vous pouvez en affilier une.
+        </Link>
       </>
     ) : (
       'Aucune autre voix de cette organisation n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position.'
@@ -173,9 +176,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
           positions={positions}
           company={company}
           roles={page.roles}
-          editHref={
-            canEdit ? (statementId) => `/prise-de-position/${statementId}/modifier` : undefined
-          }
+          editHref={canEdit ? statementEditHref : undefined}
         />
 
         {positions.length > 0 && (

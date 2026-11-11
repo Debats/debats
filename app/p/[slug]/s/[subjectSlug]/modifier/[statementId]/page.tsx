@@ -11,6 +11,7 @@ import { getAuthenticatedContributor } from '../../../../../../actions/get-authe
 import { canPerform } from '../../../../../../../domain/reputation/permissions'
 import { contentFieldsOf } from '../../../../../../../domain/use-cases/validate-statement-fields'
 import { statementStream } from '../../../../../../../domain/aggregates/statement'
+import { figureOnSubjectHref } from '../../../../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../../components/layout/FormPageHeader'
@@ -35,7 +36,7 @@ export default async function EditStatementPage({ params }: PageProps) {
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor || !canPerform(contributor.reputation, 'edit_statement')) {
-    redirect(`/p/${slug}/s/${subjectSlug}`)
+    redirect(figureOnSubjectHref(slug, subjectSlug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -59,7 +60,7 @@ export default async function EditStatementPage({ params }: PageProps) {
     Effect.runPromise(createArgumentRepository(supabase).findRefsByStatementId(statement.id)),
     currentRevision(statementStream(statement.id)),
   ])
-  const returnHref = `/p/${slug}/s/${subjectSlug}`
+  const returnHref = figureOnSubjectHref(slug, subjectSlug)
 
   return (
     <ContentWithSidebar topMargin>

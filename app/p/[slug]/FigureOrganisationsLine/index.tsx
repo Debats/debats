@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import OrganisationLogo from '../../../../components/organisations/OrganisationLogo'
+import { figureOnSubjectHref, organisationHref } from '../../../../domain/read-models/hrefs'
 import { OrganisationLine } from '../../../../domain/services/author-analyses'
 import { plural } from '../../../../lib/plural'
 import styles from './FigureOrganisationsLine.module.css'
@@ -39,7 +40,7 @@ export default function FigureOrganisationsLine({
                 size={32}
               />
               <div className={styles.body}>
-                <Link href={`/o/${organisation.slug}`} className={styles.name}>
+                <Link href={organisationHref(organisation.slug)} className={styles.name}>
                   {organisation.acronym ?? organisation.name}
                 </Link>
                 <span className={styles.meta}>
@@ -52,7 +53,7 @@ export default function FigureOrganisationsLine({
                     {apart.map((s) => (
                       <li key={s.subject.id} className={styles.apartRow}>
                         <Link
-                          href={`/p/${figureSlug}/s/${s.subject.slug}`}
+                          href={figureOnSubjectHref(figureSlug, s.subject.slug)}
                           className={styles.subject}
                         >
                           {s.subject.title}

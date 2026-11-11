@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Affiliation } from '../../../domain/read-models/author-subject-page'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import styles from './AuthorSubjectHero.module.css'
 
 /**
@@ -26,7 +27,7 @@ export default function FigureRoleLine({
       {organisations.map((organisation) => (
         <Link
           key={organisation.slug}
-          href={`/o/${organisation.slug}`}
+          href={organisationHref(organisation.slug)}
           className={styles.organisation}
         >
           {organisation.acronym ?? organisation.name}

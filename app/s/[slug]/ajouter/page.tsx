@@ -7,6 +7,7 @@ import { createSubjectRepository } from '../../../../infra/database/subject-repo
 import { createPositionRepository } from '../../../../infra/database/position-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import AddStatementForm from '../../../../components/statements/AddStatementForm'
 import styles from './ajouter.module.css'
@@ -35,7 +36,7 @@ export default async function AddStatementPage({ params }: PageProps) {
 
   const contributor = await getAuthenticatedContributor()
   if (!contributor) {
-    redirect(`/s/${slug}`)
+    redirect(subjectHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -50,7 +51,7 @@ export default async function AddStatementPage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <header className={styles.header}>
-        <Link href={`/s/${slug}`} className={styles.backLink}>
+        <Link href={subjectHref(slug)} className={styles.backLink}>
           &larr; Retour au sujet
         </Link>
         <h1 className={styles.title}>{subject.title}</h1>

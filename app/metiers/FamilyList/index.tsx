@@ -7,6 +7,7 @@ import { deleteOccupationAction } from '../../actions/delete-occupation'
 import { deleteOccupationFamilyAction } from '../../actions/delete-occupation-family'
 import ConfirmAction from '../../../components/ui/ConfirmAction'
 import FormError from '../../../components/ui/FormError'
+import { occupationFamilyHref } from '../../../domain/read-models/hrefs'
 import { plural } from '../../../lib/plural'
 import styles from '../metiers.module.css'
 
@@ -58,7 +59,7 @@ export default function FamilyList({ groups, canManage }: FamilyListProps) {
         <section key={family.id} className={styles.family}>
           <div className={styles.head}>
             <h2 className={styles.naming}>
-              <Link href={`/metiers/${family.slug}`} className={styles.name}>
+              <Link href={occupationFamilyHref(family)} className={styles.name}>
                 {family.name}
               </Link>
               <span className={styles.count}>

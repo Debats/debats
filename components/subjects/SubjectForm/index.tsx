@@ -3,6 +3,7 @@
 import { useState, useCallback, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { FieldErrors, NewSubject } from '../../../domain/use-cases/create-subject'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
@@ -66,7 +67,7 @@ export default function SubjectForm({
           onSuccess({ slug: result.slug, title: result.title ?? title })
           setIsPending(false)
         } else {
-          router.push(`/s/${result.slug}`)
+          router.push(subjectHref(result.slug))
         }
       } catch (err) {
         Sentry.captureException(err)

@@ -9,6 +9,7 @@ import { createStatementRepository } from '../../../../../infra/database/stateme
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
+import { positionHref, subjectHref } from '../../../../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
 import AuthorAvatar from '../../../../../components/statements/AuthorAvatar'
 import StatementBody from '../../../../../components/statements/StatementBody'
@@ -107,7 +108,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                       {
                         label: 'Modifier',
                         icon: '✎',
-                        href: `/s/${slug}/position/${positionSlug}/modifier`,
+                        href: `${positionHref(slug, positionSlug)}/modifier`,
                       },
                     ]
                   : []),
@@ -148,7 +149,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
         aside={
           <div className={styles.subjectCard}>
             <p className={styles.subjectCardTitle}>Le sujet</p>
-            <Link href={`/s/${slug}`} className={styles.subjectCardName}>
+            <Link href={subjectHref(slug)} className={styles.subjectCardName}>
               {subject.title}
             </Link>
             <p className={styles.subjectCardProblem}>{subject.problem}</p>
@@ -159,7 +160,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                   {otherPositions.map((other) => (
                     <li key={other.id} className={styles.otherPosition}>
                       <Link
-                        href={`/s/${slug}/position/${other.slug}`}
+                        href={positionHref(slug, other.slug)}
                         className={styles.otherPositionLink}
                       >
                         {other.title}

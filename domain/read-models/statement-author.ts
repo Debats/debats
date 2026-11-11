@@ -1,6 +1,7 @@
 import { Option } from 'effect'
 import { Organisation } from '../entities/organisation'
 import { StatementAuthorKind } from '../entities/statement'
+import { figureHref, organisationHref } from './hrefs'
 
 /**
  * Who took position, as the read side needs it: enough to show an avatar or a
@@ -52,7 +53,7 @@ export const organisationEntityRef = (organisation: Organisation): StatementAuth
 
 /** The author's own page */
 export const authorHref = (author: StatementAuthorRef): string =>
-  author.kind === 'organisation' ? `/o/${author.slug}` : `/p/${author.slug}`
+  author.kind === 'organisation' ? organisationHref(author.slug) : figureHref(author.slug)
 
 /** The author's positions on a subject */
 export const authorOnSubjectHref = (author: StatementAuthorRef, subjectSlug: string): string =>

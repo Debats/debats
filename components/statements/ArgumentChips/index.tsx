@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { argumentHref, ArgumentRef } from '../../../domain/read-models/argument'
+import { ArgumentRef } from '../../../domain/read-models/argument'
+import { argumentHref } from '../../../domain/read-models/hrefs'
 import styles from './ArgumentChips.module.css'
 
 interface ArgumentChipsProps {

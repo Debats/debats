@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { themeHref } from '../../../domain/read-models/hrefs'
 import styles from './ThemeBadge.module.css'
 
 interface ThemeBadgeProps {
@@ -8,7 +9,7 @@ interface ThemeBadgeProps {
 
 export default function ThemeBadge({ name, slug }: ThemeBadgeProps) {
   return (
-    <Link href={`/themes/${slug}`} className={styles.badge}>
+    <Link href={themeHref(slug)} className={styles.badge}>
       {name}
     </Link>
   )

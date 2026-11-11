@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { createPublicFigureRepository } from '../../../../infra/database/public-figure-repository-supabase'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
+import { figureHref } from '../../../../domain/read-models/hrefs'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import AffiliateFigureForm from './AffiliateFigureForm'
@@ -24,7 +25,7 @@ export default async function AffiliateFigurePage({ params }: PageProps) {
 
   const contributor = await getAuthenticatedContributor()
   if (!contributor || !canPerform(contributor.reputation, 'add_membership')) {
-    redirect(`/p/${slug}`)
+    redirect(figureHref(slug))
   }
 
   const supabase = createAdminSupabaseClient()
@@ -34,7 +35,7 @@ export default async function AffiliateFigurePage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <FormPageHeader
-        backHref={`/p/${slug}`}
+        backHref={figureHref(slug)}
         backLabel={`Retour à ${figure.name}`}
         title="Affilier à une organisation"
         subtitle={`Parti, syndicat, association, entreprise… : de quoi ${figure.name} fait-elle ou fait-il partie ?`}

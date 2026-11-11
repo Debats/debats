@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatarStack from '../../statements/AuthorAvatarStack'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { publicFigureRef } from '../../../domain/read-models/statement-author'
 import { subjectCountsLabel } from '../../../lib/subject-counts'
 import styles from './SubjectCard.module.css'
@@ -23,7 +24,7 @@ export default function SubjectCard({ subject, featured }: SubjectCardProps) {
 
   return (
     <Link
-      href={`/s/${subject.slug}`}
+      href={subjectHref(subject.slug)}
       className={featured ? `${styles.card} ${styles.featured}` : styles.card}
     >
       <span className={styles.title}>{subject.title}</span>

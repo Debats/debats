@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import TopArguments from '../../../../components/statements/TopArguments'
 import { ArgumentRef } from '../../../../domain/read-models/argument'
+import { themeHref } from '../../../../domain/read-models/hrefs'
 import { ArgumentCount, ThemeCount, YearCount } from '../../../../domain/services/figure-activity'
 import styles from './FigureAnalyses.module.css'
 
@@ -101,7 +102,7 @@ export default function FigureAnalyses({ themes, perYear, topArguments }: Figure
           <ul className={styles.bars}>
             {themes.map(({ theme, count }) => (
               <li key={theme.id} className={styles.bar}>
-                <Link href={`/themes/${theme.slug}`} className={styles.barLabel}>
+                <Link href={themeHref(theme.slug)} className={styles.barLabel}>
                   {theme.name}
                 </Link>
                 <div className={styles.track}>

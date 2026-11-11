@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { SubjectIndexEntry } from '../../../domain/read-models/subject-index'
 import { plural } from '../../../lib/plural'
 import styles from './SubjectsToDocument.module.css'
@@ -25,7 +26,7 @@ export default function SubjectsToDocument({ subjects }: SubjectsToDocumentProps
       <ul className={styles.list}>
         {subjects.map((subject) => (
           <li key={subject.id} className={styles.item}>
-            <Link href={`/s/${subject.slug}`} className={styles.subject}>
+            <Link href={subjectHref(subject.slug)} className={styles.subject}>
               {subject.title}
             </Link>
             <span className={styles.count}>{statementsLabel(subject.statementsCount)}</span>

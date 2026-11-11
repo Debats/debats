@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatarStack from '../AuthorAvatarStack'
+import { positionHref } from '../../../domain/read-models/hrefs'
 import { PositionStanding } from '../../../domain/services/author-on-subject'
 import styles from './AuthorSubjectBlocks.module.css'
 
@@ -28,7 +29,7 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
       </header>
       <div className={styles.list}>
         {debate.map((standing) => {
-          const href = `/s/${subjectSlug}/position/${standing.position.slug}`
+          const href = positionHref(subjectSlug, standing.position.slug)
           const count = standing.authors.length
           return (
             <article

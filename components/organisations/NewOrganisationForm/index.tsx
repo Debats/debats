@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { createOrganisationAction } from '../../../app/actions/create-organisation'
+import { organisationHref } from '../../../domain/read-models/hrefs'
 import { newOrganisationForm, OrganisationFormInput } from '../../../lib/forms/organisation-form'
 import FormSuccess from '../../ui/FormSuccess'
 import OrganisationForm, { SubmitOutcome } from '../OrganisationForm'
@@ -32,10 +33,10 @@ export default function NewOrganisationForm() {
         title={`${created.name} a été ajoutée !`}
         primaryAction={{
           label: 'Affilier des personnalités',
-          href: `/o/${created.slug}/affilier`,
+          href: `${organisationHref(created.slug)}/affilier`,
         }}
         secondaryActions={[
-          { label: `Voir la page de ${created.name}`, href: `/o/${created.slug}` },
+          { label: `Voir la page de ${created.name}`, href: organisationHref(created.slug) },
           { label: 'Ajouter une autre organisation', onClick: () => setCreated(undefined) },
         ]}
       />

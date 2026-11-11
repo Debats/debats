@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Option } from 'effect'
 import OrganisationLogo from '../../../../components/organisations/OrganisationLogo'
+import { organisationHref } from '../../../../domain/read-models/hrefs'
 import { MembershipWithOrganisation } from '../../../../domain/repositories/organisation-membership-repository'
 import { membershipPeriodLabel } from '../../../../lib/membership-period'
 import styles from './FigureEngagements.module.css'
@@ -29,7 +30,7 @@ export default function FormerEngagement({
         </span>
         <span className={styles.thread} />
       </span>
-      <Link href={`/o/${organisation.slug}`} className={styles.formerLink}>
+      <Link href={organisationHref(organisation.slug)} className={styles.formerLink}>
         {period && <span className={styles.period}>{period}</span>}
         <span className={styles.formerName}>{organisation.name}</span>
         {role && <span className={styles.meta}>{role}</span>}

@@ -31,6 +31,11 @@ import {
   parseStatementsView,
   statementsViewHref,
 } from '../../../../domain/read-models/statements-view'
+import {
+  organisationHref,
+  statementEditHref,
+  subjectHref,
+} from '../../../../domain/read-models/hrefs'
 import { statementsOnTheme } from '../../../../domain/services/statements-on-theme'
 import { subjectIdsOnTheme } from '../../../../infra/queries/subject-ids-on-theme'
 import OrganisationHero from '../OrganisationHero'
@@ -105,7 +110,7 @@ export default async function OrganisationDetail({
     name: organisation.name,
     ...(acronym ? { alternateName: acronym } : {}),
     description: organisation.presentation,
-    url: `https://debats.co/o/${organisation.slug}`,
+    url: `https://debats.co${organisationHref(organisation.slug)}`,
     logo: `https://debats.co/logos/${organisation.slug}.png`,
     ...(Option.isSome(organisation.wikipediaUrl)
       ? { sameAs: [organisation.wikipediaUrl.value] }
@@ -115,7 +120,7 @@ export default async function OrganisationDetail({
   const newStatementHref = contributor
     ? `/nouvelle-prise-de-position?organisationId=${organisation.id}&organisationName=${encodeURIComponent(organisation.name)}`
     : '/contribuer'
-  const base = `/o/${slug}`
+  const base = organisationHref(slug)
   const self = organisationAuthor(organisation.id)
 
   return (
@@ -134,7 +139,7 @@ export default async function OrganisationDetail({
         counts={{ statements: statements.length, subjects: groups.length, members: current.length }}
         adminMenu={
           canEdit && (
-            <AdminMenu actions={[{ label: 'Modifier', icon: '✎', href: `/o/${slug}/modifier` }]} />
+            <AdminMenu actions={[{ label: 'Modifier', icon: '✎', href: `${base}/modifier` }]} />
           )
         }
         actions={
@@ -188,13 +193,9 @@ export default async function OrganisationDetail({
             statements={listed}
             view={view}
             themes={themes}
-            subjectHref={(subjectSlug) => `/s/${subjectSlug}`}
+            subjectHref={subjectHref}
             viewHref={(wanted) => statementsViewHref(base, wanted)}
-            editHref={
-              canEditStatement
-                ? (statementId) => `/prise-de-position/${statementId}/modifier`
-                : undefined
-            }
+            editHref={canEditStatement ? statementEditHref : undefined}
           />
         )}
       </ContentWithSidebar>

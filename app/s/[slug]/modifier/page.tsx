@@ -8,6 +8,7 @@ import { createRelatedSubjectsRepository } from '../../../../infra/database/rela
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { subjectStream } from '../../../../domain/aggregates/subject'
+import { subjectHref } from '../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../infra/events/stream-revision'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
@@ -52,7 +53,7 @@ export default async function EditSubjectPage({ params }: PageProps) {
   return (
     <ContentWithSidebar topMargin>
       <FormPageHeader
-        backHref={`/s/${slug}`}
+        backHref={subjectHref(slug)}
         backLabel="Retour au sujet"
         title="Modifier le sujet"
         subtitle={subject.title}

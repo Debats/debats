@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatarStack from '../../../components/statements/AuthorAvatarStack'
+import { subjectHref } from '../../../domain/read-models/hrefs'
 import { publicFigureRef } from '../../../domain/read-models/statement-author'
 import { SubjectIndexEntry } from '../../../domain/read-models/subject-index'
 import { subjectCountsLabel } from '../../../lib/subject-counts'
@@ -14,7 +15,7 @@ interface FeaturedSubjectCardProps {
 /** Le sujet mis en avant d'une thématique : son titre, sa problématique, qui en parle. */
 export default function FeaturedSubjectCard({ subject, kicker }: FeaturedSubjectCardProps) {
   return (
-    <Link href={`/s/${subject.slug}`} className={styles.card}>
+    <Link href={subjectHref(subject.slug)} className={styles.card}>
       <span className={styles.main}>
         {kicker && <span className={styles.kicker}>{kicker}</span>}
         <span className={styles.title}>{subject.title}</span>
