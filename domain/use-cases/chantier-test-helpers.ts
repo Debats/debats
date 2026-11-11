@@ -17,6 +17,7 @@ export const aChantier = (overrides: Partial<Chantier> = {}): Chantier => ({
   status: 'working',
   sessionId: 'sesn_1',
   lastEventAt: null,
+  sections: [],
   createdBy: ADMIN.id,
   updatedBy: ADMIN.id,
   createdAt: new Date('2026-11-10T10:00:00Z'),

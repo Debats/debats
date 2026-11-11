@@ -129,6 +129,8 @@ export type DraftStatement = {
   origin: string
   /** The chantier this draft was produced in, when it was */
   chantierId: string | null
+  /** The section the agent put the draft under in its chantier; null when it did not */
+  section: string | null
   status: DraftStatus
   rejectionNote: string | null
   /** What validating the draft did, once it is validated */

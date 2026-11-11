@@ -8,8 +8,9 @@ import { createDraftStatementRepository } from '../../../../infra/database/draft
 import { liveServices, runLive } from '../../../../infra/live-services'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { getAdminContributor } from '../../../actions/admin-guard'
+import { chantierSections } from '../../../../domain/read-models/chantier-sections'
 import styles from '../../drafts/admin-drafts.module.css'
-import DraftList from '../../drafts/DraftList'
+import ChantierSections from '../ChantierSections'
 import ChantierWorkspace from '../ChantierWorkspace'
 import SettledDrafts from '../SettledDrafts'
 import { CHANTIERS_PATH } from '../hrefs'
@@ -85,7 +86,7 @@ export default async function ChantierPage({ params }: Props) {
             {produced.length === 0 ? 'Aucun brouillon pour l’instant.' : 'Rien à relire.'}
           </p>
         ) : (
-          <DraftList drafts={pending} view={{ grouping: 'subject' }} />
+          <ChantierSections sections={chantierSections(pending, chantier.sections)} />
         )}
         <SettledDrafts drafts={settled} />
       </ChantierWorkspace>

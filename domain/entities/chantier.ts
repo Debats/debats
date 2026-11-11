@@ -31,6 +31,8 @@ export type Chantier = {
   sessionId: string | null
   /** When the last mirrored session event was processed: where the next mirror reads from */
   lastEventAt: string | null
+  /** The section titles in the reading order the agent chose; a section it did not list comes after */
+  sections: string[]
   createdBy: string
   updatedBy: string
   createdAt: Date

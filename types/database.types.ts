@@ -180,6 +180,7 @@ export type Database = {
           created_by: string
           id: string
           last_event_at: string | null
+          sections: Json
           session_id: string | null
           status: string
           title: string | null
@@ -192,6 +193,7 @@ export type Database = {
           created_by: string
           id?: string
           last_event_at?: string | null
+          sections?: Json
           session_id?: string | null
           status?: string
           title?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           created_by?: string
           id?: string
           last_event_at?: string | null
+          sections?: Json
           session_id?: string | null
           status?: string
           title?: string | null
@@ -298,6 +301,7 @@ export type Database = {
           ai_notes: string | null
           arguments: Json
           chantier_id: string | null
+          section: string | null
           created_at: string
           date: string
           deed: string | null
@@ -329,6 +333,7 @@ export type Database = {
           ai_notes?: string | null
           arguments?: Json
           chantier_id?: string | null
+          section?: string | null
           created_at?: string
           date: string
           deed?: string | null
@@ -360,6 +365,7 @@ export type Database = {
           ai_notes?: string | null
           arguments?: Json
           chantier_id?: string | null
+          section?: string | null
           created_at?: string
           date?: string
           deed?: string | null

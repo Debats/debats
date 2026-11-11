@@ -9,7 +9,7 @@ export type NewChantier = {
 
 /** What may change on a chantier once it exists: the rest is its birth */
 export type ChantierUpdate = Partial<
-  Pick<Chantier, 'title' | 'status' | 'sessionId' | 'lastEventAt'>
+  Pick<Chantier, 'title' | 'status' | 'sessionId' | 'lastEventAt' | 'sections'>
 >
 
 export type NewChantierMessage = {

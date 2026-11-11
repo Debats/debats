@@ -94,6 +94,7 @@ function mapRow(row: Record<string, unknown>): DraftStatement {
     affiliations: (row.affiliations as DraftStatement['affiliations']) ?? [],
     origin: row.origin as string,
     chantierId: (row.chantier_id as string) ?? null,
+    section: (row.section as string) ?? null,
     status: row.status as DraftStatement['status'],
     rejectionNote: (row.rejection_note as string) ?? null,
     validation: (row.validation as DraftValidation) ?? null,
@@ -123,6 +124,7 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
             affiliations: draft.affiliations,
             origin: draft.origin,
             chantier_id: draft.chantierId,
+            section: draft.section,
           }))
 
           const { data, error } = await supabase.from('draft_statements').insert(rows).select('id')
@@ -237,6 +239,7 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
           if (fields.affiliations !== undefined) row.affiliations = fields.affiliations
           if (fields.rejectionNote !== undefined) row.rejection_note = fields.rejectionNote
           if (fields.origin !== undefined) row.origin = fields.origin
+          if (fields.section !== undefined) row.section = fields.section
 
           const { data, error } = await supabase
             .from('draft_statements')

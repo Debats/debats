@@ -26,6 +26,7 @@ function mapChantier(row: Record<string, unknown>): Chantier {
     status,
     sessionId: (row.session_id as string) ?? null,
     lastEventAt: (row.last_event_at as string) ?? null,
+    sections: (row.sections as string[]) ?? [],
     createdBy: row.created_by as string,
     updatedBy: row.updated_by as string,
     createdAt: new Date(row.created_at as string),
@@ -51,6 +52,7 @@ function updateColumns(fields: ChantierUpdate, updatedBy: string): Record<string
     ...(fields.status !== undefined ? { status: fields.status } : {}),
     ...(fields.sessionId !== undefined ? { session_id: fields.sessionId } : {}),
     ...(fields.lastEventAt !== undefined ? { last_event_at: fields.lastEventAt } : {}),
+    ...(fields.sections !== undefined ? { sections: fields.sections } : {}),
     updated_by: updatedBy,
     updated_at: new Date().toISOString(),
   }

@@ -302,6 +302,7 @@ export type DraftPatch = Partial<
     | 'positionData'
     | 'rejectionNote'
     | 'origin'
+    | 'section'
   >
 >
 
@@ -318,7 +319,22 @@ const PATCHABLE_FIELDS: ReadonlySet<string> = new Set<keyof DraftPatch>([
   'positionData',
   'rejectionNote',
   'origin',
+  'section',
 ])
+
+/** A section title as the agent names it in its chantier: short, or null to take the draft out of any */
+export const SECTION_MAX_LENGTH = 80
+
+export function parseDraftSection(value: unknown): { section: string | null } | { error: string } {
+  if (value === undefined || value === null) return { section: null }
+  if (typeof value !== 'string' || !value.trim()) {
+    return { error: 'Field section must be a non-empty string, or null' }
+  }
+  if (value.trim().length > SECTION_MAX_LENGTH) {
+    return { error: `Field section must be at most ${SECTION_MAX_LENGTH} characters` }
+  }
+  return { section: value.trim() }
+}
 
 /** The fields a correction must send as text, never empty */
 const TEXT_FIELDS = ['sourceName', 'sourceUrl', 'subjectTitle', 'positionTitle', 'origin'] as const
@@ -352,6 +368,11 @@ export function parseDraftPatch(body: unknown): ParsedPatch {
   }
 
   const fields: DraftPatch = { ...(input as DraftPatch) }
+  if ('section' in input) {
+    const section = parseDraftSection(input.section)
+    if ('error' in section) return section
+    fields.section = section.section
+  }
   if ('author' in input) {
     const author = parseDraftAuthor(input.author)
     if ('error' in author) return author

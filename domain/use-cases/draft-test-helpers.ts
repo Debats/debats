@@ -40,6 +40,7 @@ export function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStateme
     affiliations: [],
     origin: 'test',
     chantierId: null,
+    section: null,
     status: 'pending',
     rejectionNote: null,
     validation: null,

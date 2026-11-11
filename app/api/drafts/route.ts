@@ -9,6 +9,7 @@ import {
   parseDraftAuthor,
   parseDraftContent,
   parseDraftOccupations,
+  parseDraftSection,
   validateSlugifiableFields,
 } from './validation'
 import { createChantierRepository } from '../../../infra/database/chantier-repository-supabase'
@@ -93,6 +94,9 @@ function parseDraftInput(
     return { error: 'Field chantier must be the id of a chantier' }
   }
 
+  const parsedSection = parseDraftSection(input.section)
+  if ('error' in parsedSection) return parsedSection
+
   const parsedAuthor = parseDraftAuthor(input.author)
   if ('error' in parsedAuthor) return parsedAuthor
 
@@ -133,6 +137,7 @@ function parseDraftInput(
       positionData: (input.positionData as NewDraftStatement['positionData']) ?? null,
       origin: input.origin as string,
       chantierId: (input.chantier as string | undefined) ?? null,
+      section: parsedSection.section,
     },
   }
 }
