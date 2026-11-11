@@ -23,6 +23,10 @@ export interface DraftStatementRepository {
   findById(id: string): Effect.Effect<DraftStatement | null, DatabaseError>
   /** Every draft a chantier produced, whatever became of it, the newest first */
   findByChantier(chantierId: string): Effect.Effect<DraftStatement[], DatabaseError>
+  /** The drafts on these subjects that no chantier holds and no validation settled: what a chantier may adopt */
+  findAdoptableBySubjects(subjectTitles: string[]): Effect.Effect<DraftStatement[], DatabaseError>
+  /** Puts these drafts under a chantier */
+  assignChantier(draftIds: string[], chantierId: string): Effect.Effect<void, DatabaseError>
   update(
     id: string,
     fields: Partial<Omit<DraftStatement, 'id' | 'createdAt' | 'updatedAt' | 'status'>>,

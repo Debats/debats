@@ -23,6 +23,8 @@
     "import:content": "node --env-file=.env.local --import tsx scripts/import-content.ts",
     "import:content:production": "node --env-file=.env.production --import tsx scripts/import-content.ts",
     "supabase:config:push": "node --env-file=.env.production --import tsx scripts/push-prod-auth-config.ts",
+    "chantiers:adopt": "node --env-file=.env.local --import tsx scripts/adopt-chantiers.ts",
+    "chantiers:adopt:production": "node --env-file=.env.production --import tsx scripts/adopt-chantiers.ts",
     "chantier:setup": "node --env-file=.env.local --import tsx scripts/chantier-agent-setup.ts",
     "chantier:setup:production": "node --env-file=.env.production --import tsx scripts/chantier-agent-setup.ts",
     "verify:drafts": "node --env-file=.env.local --import tsx scripts/verify-drafts.ts",

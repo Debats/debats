@@ -1,0 +1,181 @@
+{
+  "Lycées : mobilisations, maintien de l’ordre et vie lycéenne": {
+    "brief": "Reprendre les brouillons sur les lycées : blocages, maintien de l’ordre face aux mobilisations lycéennes, loi « casseurs-payeurs », démocratie lycéenne, emplois du temps, réforme du lycée, contrôle continu, uniforme. Recaler les sujets sur le catalogue, repérer les doublons, puis compléter là où un côté du débat manque.",
+    "subjects": [
+      "Le maintien de l'ordre face aux mobilisations lycéennes",
+      "Le blocage des lycées",
+      "La loi « casseurs-payeurs »",
+      "La démocratie lycéenne",
+      "Les emplois du temps au lycée",
+      "La réforme du lycée de 2019",
+      "La place du contrôle continu au baccalauréat",
+      "L'uniforme scolaire",
+      "L'intelligence artificielle à l'école"
+    ]
+  },
+  "Enseignement supérieur et vie étudiante": {
+    "brief": "Reprendre les brouillons sur Parcoursup, la sélection à l’université, le repas à 1 euro au Crous, les bourses et les frais d’inscription des étudiants étrangers. Vérifier les sources (comptes rendus parlementaires, organisations étudiantes), dédoublonner, puis compléter les voix manquantes, en particulier les organisations étudiantes et les femmes.",
+    "subjects": [
+      "Parcoursup",
+      "La sélection à l'entrée de l'université",
+      "Le repas à 1 euro au Crous",
+      "Le montant des bourses étudiantes",
+      "Les frais d'inscription des étudiants étrangers"
+    ]
+  },
+  "Les moyens de l’école": {
+    "brief": "Reprendre les brouillons sur les moyens de l’éducation, le bâti scolaire, le bio dans les cantines et le Pass Culture. Recaler les sujets, dédoublonner, puis chercher les prises de position récentes du gouvernement, des syndicats enseignants et des collectivités.",
+    "subjects": [
+      "Les moyens de l'éducation",
+      "La rénovation du bâti scolaire",
+      "Le 100 % bio dans les cantines scolaires",
+      "Le Pass Culture"
+    ]
+  },
+  "Proche-Orient et Iran": {
+    "brief": "Reprendre les brouillons sur la guerre en Iran, la participation de la France, les offensives israéliennes au Liban et à Gaza, le détroit d’Ormuz et la question palestinienne. Vingt brouillons ont été rejetés : lire les motifs avant toute reproposition, vérifier chaque citation à sa source, puis compléter tout le spectre.",
+    "subjects": [
+      "La guerre en Iran",
+      "La participation de la France à la guerre en Iran",
+      "L'offensive israélienne au Liban",
+      "L'offensive israélienne à Gaza",
+      "Le détroit d'Ormuz",
+      "La colonisation en Cisjordanie",
+      "La reconnaissance de l'État palestinien",
+      "L'apartheid israélien",
+      "Conflit israélo-palestinien"
+    ]
+  },
+  "Institutions et démocratie": {
+    "brief": "Reprendre les brouillons sur les institutions de la République, le référendum d’initiative citoyenne, la proportionnelle, l’âge de vote, le vote des étrangers, la probité des élus, la décentralisation et la Nouvelle-Calédonie. Plusieurs sujets portent des titres hors catalogue (« 5ème République », « régime de la République ») : les rattacher au bon sujet avant tout.",
+    "subjects": [
+      "Les institutions de la République",
+      "La 5ème République",
+      "La Ve République",
+      "Le régime de la République française",
+      "Le référendum d'initiative citoyenne",
+      "Le scrutin proportionnel aux législatives",
+      "L'âge minimal pour le droit de vote",
+      "La probité des élus",
+      "Le droit de vote des étrangers aux élections locales",
+      "La décentralisation",
+      "Le statut de la Nouvelle-Calédonie",
+      "La règle des 3% du PIB"
+    ]
+  },
+  "Énergie et climat": {
+    "brief": "Reprendre les brouillons sur le nucléaire, les éoliennes terrestres, la fiscalité du carburant, les ZFE et la décroissance. « Énergie nucléaire » et « Le nucléaire » sont un seul sujet : fusionner. Vérifier les citations, puis compléter avec les positions des partis et des ONG.",
+    "subjects": [
+      "Le nucléaire",
+      "Énergie nucléaire",
+      "Les éoliennes terrestres",
+      "La fiscalité sur le carburant",
+      "Les zones à faibles émissions",
+      "La décroissance",
+      "Écologie et mode de vie",
+      "Écologie et frontières",
+      "La consommation de viande",
+      "La 5G"
+    ]
+  },
+  "Science et espace": {
+    "brief": "Reprendre les brouillons sur le collisionneur du CERN, les missions spatiales habitées, le tourisme spatial et l’intelligence artificielle. Vérifier les sources (débat public CNDP, auditions), puis chercher des voix scientifiques et politiques des deux côtés, femmes comprises.",
+    "subjects": [
+      "Le futur collisionneur circulaire du CERN",
+      "Les missions spatiales habitées",
+      "Le tourisme spatial",
+      "L'intelligence artificielle"
+    ]
+  },
+  "Sécurité et justice": {
+    "brief": "Reprendre les brouillons sur l’armement de la police municipale, les peines plancher, la majorité pénale, la peine de mort et la sécurité. Recaler les titres sur le catalogue, dédoublonner, puis compléter le spectre, en particulier les voix de gauche sur la police municipale et de droite sur la majorité pénale.",
+    "subjects": [
+      "L'armement de la police municipale",
+      "Le rôle de la police municipale",
+      "Les peines plancher",
+      "La majorité pénale",
+      "La peine de mort",
+      "La sécurité dans les quartiers populaires",
+      "Lutte contre le terrorisme",
+      "La présomption d'innocence",
+      "Désobéissance civile"
+    ]
+  },
+  "Immigration et asile": {
+    "brief": "Reprendre les brouillons sur l’immigration, le droit du sol, le droit d’asile, les quotas et l’aide médicale d’État. Plusieurs titres sont hors catalogue (« Immigration », « Loi sur l’immigration ») : les rattacher. Vérifier les citations, puis compléter avec les positions récentes des groupes parlementaires.",
+    "subjects": [
+      "L'immigration",
+      "Immigration",
+      "Loi sur l'immigration",
+      "Le droit du sol",
+      "Le droit d'asile",
+      "Les quotas d'immigration",
+      "L'aide médicale d'État",
+      "Théorie du Grand Remplacement",
+      "Le multiculturalisme"
+    ]
+  },
+  "Économie, travail et protection sociale": {
+    "brief": "Reprendre les brouillons sur les aides aux entreprises, les nationalisations, les autoroutes, le SMIC, le temps de travail, le revenu universel, les retraites, les loyers et la fiscalité. Beaucoup viennent d’une passe ancienne aux titres approximatifs (« Fiscalité », « Le capitalisme ») : recaler sur le catalogue ou proposer les sujets manquants, dédoublonner, puis compléter.",
+    "subjects": [
+      "Les aides publiques aux entreprises",
+      "La nationalisation des entreprises stratégiques",
+      "La renationalisation des autoroutes",
+      "Le montant du SMIC",
+      "La durée hebdomadaire du travail",
+      "Le revenu universel",
+      "L'âge légal de départ à la retraite",
+      "La réforme des retraites",
+      "La retraite par capitalisation",
+      "La croissance économique",
+      "Les minima sociaux",
+      "L'encadrement et le plafonnement des loyers",
+      "Le capitalisme",
+      "La dette publique",
+      "Fiscalité",
+      "La régulation de la finance",
+      "Le Code du travail",
+      "La souveraineté alimentaire",
+      "L'accord UE-Mercosur"
+    ]
+  },
+  "Médias et culture": {
+    "brief": "Reprendre les brouillons sur la propriété des médias, la redevance audiovisuelle, la régulation des médias, l’exception culturelle et la liberté d’expression. Vérifier les sources, dédoublonner, puis compléter avec les positions des partis et des professionnels des médias.",
+    "subjects": [
+      "La propriété des médias par les groupes dépendant de l'État",
+      "La redevance audiovisuelle",
+      "La régulation des médias",
+      "L'exception culturelle",
+      "Liberté d'expression"
+    ]
+  },
+  "Société, libertés et laïcité": {
+    "brief": "Reprendre les brouillons sur l’IVG dans la Constitution, l’euthanasie, la masculinité, la laïcité, la PMA et la GPA, le mariage pour tous, l’islam, la chasse. Recaler les titres sur le catalogue, dédoublonner, vérifier les citations, puis compléter le spectre.",
+    "subjects": [
+      "L'inscription du droit à l'IVG dans la Constitution",
+      "L'euthanasie",
+      "La masculinité",
+      "Le masculinisme",
+      "La laïcité",
+      "Procréation Médicalement Assistée (PMA)",
+      "La GPA",
+      "Le mariage des couples de même sexe",
+      "L'islam en France",
+      "Le cadre juridique de l'islam",
+      "La chasse le week-end et pendant les vacances scolaires",
+      "La participation des enfants à la chasse",
+      "La colonisation française"
+    ]
+  },
+  "Défense et Europe": {
+    "brief": "Reprendre les brouillons sur l’OTAN, la dissuasion nucléaire européenne, l’Ukraine, la construction européenne et les relations transatlantiques. Trois brouillons sont renvoyés en révision : les corriger d’abord. Puis compléter avec les positions récentes des partis sur la défense européenne.",
+    "subjects": [
+      "Le commandement intégré de l'OTAN",
+      "La dissuasion nucléaire européenne",
+      "Guerre en Ukraine",
+      "La construction européenne",
+      "La monnaie unique européenne",
+      "Relations transatlantiques"
+    ]
+  }
+}

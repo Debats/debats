@@ -107,7 +107,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
         const session = await sessions.create({
           agent: config.agentId,
           environment_id: config.environmentId,
-          title: chantierTitle(chantier.brief),
+          title: chantier.title ?? chantierTitle(chantier.brief),
           metadata: { chantier: chantier.id },
           vault_ids: config.vaultIds,
           budget: {

@@ -7,9 +7,17 @@
  * mirrored message by message, and the last status it heard of.
  */
 
-export const CHANTIER_STATUSES = ['working', 'waiting', 'blocked', 'ended', 'closed'] as const
+export const CHANTIER_STATUSES = [
+  'pending',
+  'working',
+  'waiting',
+  'blocked',
+  'ended',
+  'closed',
+] as const
 
 /**
+ * - pending: adopted with drafts already there, the agent not launched yet
  * - working: the agent is at it
  * - waiting: the agent answered and waits for a person
  * - blocked: the agent waits for something only the Anthropic console can give
@@ -58,6 +66,7 @@ export const isOpen = (chantier: Chantier): boolean =>
 
 /** How each status reads on screen */
 export const CHANTIER_STATUS_LABELS: Record<ChantierStatus, string> = {
+  pending: 'Agent non lancé',
   working: 'L’agent travaille',
   waiting: 'L’agent vous attend',
   blocked: 'Bloqué côté Anthropic',

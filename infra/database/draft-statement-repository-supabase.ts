@@ -201,6 +201,36 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         catch: (error) => dbError('Failed to fetch draft', error),
       }),
 
+    findAdoptableBySubjects: (subjectTitles: string[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (subjectTitles.length === 0) return []
+          const { data, error } = await supabase
+            .from('draft_statements')
+            .select('*')
+            .in('subject_title', subjectTitles)
+            .is('chantier_id', null)
+            .neq('status', 'validated')
+            .order('created_at', { ascending: false })
+          if (error) throw error
+          return data.map(mapRow)
+        },
+        catch: (error) => dbError('Failed to fetch adoptable drafts', error),
+      }),
+
+    assignChantier: (draftIds: string[], chantierId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (draftIds.length === 0) return
+          const { error } = await supabase
+            .from('draft_statements')
+            .update({ chantier_id: chantierId })
+            .in('id', draftIds)
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to assign drafts to chantier', error),
+      }),
+
     findByChantier: (chantierId: string) =>
       Effect.tryPromise({
         try: async () => {

@@ -40,7 +40,8 @@
 }
 
 .ended,
-.closed {
+.closed,
+.pending {
   color: var(--ink-3);
 }
 

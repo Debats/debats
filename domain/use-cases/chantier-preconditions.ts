@@ -6,7 +6,7 @@ import { Rejected } from './types'
 
 export const CHANTIER_NOT_FOUND = 'Ce chantier n’existe pas.'
 export const CHANTIER_CLOSED = 'Ce chantier est clos : ouvrez-en un autre.'
-export const NO_SESSION = 'Ce chantier n’a pas de session : l’agent n’a pas pu être lancé.'
+export const NO_SESSION = 'Ce chantier n’a pas d’agent : lancez-le d’abord.'
 
 const chantiers = Effect.serviceFunctions(ChantierRepository)
 

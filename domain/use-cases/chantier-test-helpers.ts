@@ -37,6 +37,8 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
         const created = aChantier({
           id: `chantier-${rows.size + 1}`,
           brief: chantier.brief,
+          title: chantier.title ?? null,
+          status: chantier.status ?? 'working',
           sessionId: null,
           createdBy: chantier.createdBy,
           updatedBy: chantier.createdBy,
@@ -83,7 +85,7 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
 }
 
 export type AgentCalls = {
-  opened: string[]
+  opened: { id: string; brief: string; title: string | null; existingDrafts: number }[]
   told: { sessionId: string; text: string }[]
   interrupted: string[]
   forgotten: string[]
@@ -100,10 +102,10 @@ export function fakeAgent(
 ) {
   const calls: AgentCalls = { opened: [], told: [], interrupted: [], forgotten: [] }
   const agent: ChantierAgent = {
-    open: ({ id }) =>
+    open: (chantier) =>
       Effect.suspend(() => {
-        calls.opened.push(id)
-        return behaviour.open ?? Effect.succeed({ sessionId: `sesn_for_${id}` })
+        calls.opened.push(chantier)
+        return behaviour.open ?? Effect.succeed({ sessionId: `sesn_for_${chantier.id}` })
       }),
     tell: (sessionId, text) =>
       Effect.suspend(() => {

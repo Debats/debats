@@ -30,13 +30,39 @@ Règles éditoriales qui priment : la citation doit énoncer la position à elle
 
 Comment tu parles à la personne. Tes messages sont lus dans une interface de dialogue, à côté de la liste des brouillons du chantier, qui affiche le texte tel quel : texte brut, sans Markdown (ni astérisques, ni accents graves, ni titres), des lignes numérotées au besoin. Courts, en français, vouvoiement. Ta toute première réponse à une consigne commence par une ligne « # » suivie du titre que tu donnes au chantier (la seule exception au texte brut), puis expose en quelques lignes comment tu comptes t'y prendre, et s'arrête là : tu attends le go avant de chercher. Ensuite, à chaque tour, dis ce que tu as fait (brouillons postés, avec le nombre par position), ce qui manque (femmes, côté du spectre, sources introuvables), et ce que tu proposes de faire ensuite. Quand une décision ne t'appartient pas, pose la question et arrête-toi. Pas de rapport pour le rapport : trois lignes suffisent quand il n'y a rien de plus à dire. Tu ne parles jamais de ta mise en place technique (variables, dossiers, outils, commandes) : la personne lit un chantier éditorial, pas un terminal. Si un outil ou un skill te manque au point de bloquer le travail, dis-le en une ligne, sans détail.`
 
-/** The message that opens a chantier's session: which chantier, which brief, where the site is */
-export function chantierOpeningMessage(chantier: { id: string; brief: string }, siteUrl: string) {
-  return `Chantier ${chantier.id}.
+/** What opens a session: which chantier, which brief, where the site is, and what is already there */
+export type ChantierOpening = {
+  id: string
+  brief: string
+  /** Given when the chantier adopted drafts already there; the agent names the others */
+  title: string | null
+  /** The drafts the chantier already holds, produced before the agent came */
+  existingDrafts: number
+}
+
+/**
+ * The message that opens a chantier's session. A chantier that starts from
+ * nothing asks for a title and a plan; one that adopted drafts already
+ * carries its title, and asks first for an inventory of what it holds.
+ */
+export function chantierOpeningMessage(chantier: ChantierOpening, siteUrl: string) {
+  const site = `Le site est à ${siteUrl} : une variable ne persiste pas d'une commande à l'autre, préfixez donc chaque commande de DEBATS_URL=${siteUrl} sans en parler. Chaque brouillon que vous postez porte "chantier": "${chantier.id}".`
+
+  if (chantier.existingDrafts === 0) {
+    return `Chantier ${chantier.id}.
 
 Consigne : ${chantier.brief}
 
-Le site est à ${siteUrl} : une variable ne persiste pas d'une commande à l'autre, préfixez donc chaque commande de DEBATS_URL=${siteUrl} sans en parler. Chaque brouillon que vous postez porte "chantier": "${chantier.id}".
+${site}
 
 Répondez d'abord par le titre du chantier (une ligne « # … ») et votre plan en quelques lignes, puis attendez le go.`
+  }
+
+  return `Chantier ${chantier.id}, intitulé « ${chantier.title ?? chantier.brief} », repris : il porte déjà ${chantier.existingDrafts} brouillons, produits avant vous par d'autres passes, parfois avec des titres de sujets qui ne sont pas ceux du catalogue.
+
+Consigne : ${chantier.brief}
+
+${site}
+
+Avant tout, lisez ces brouillons par GET /api/drafts?chantier=${chantier.id} : leur état (à relire, renvoyé en révision avec sa demande, rejeté avec son motif), leurs sujets et positions comparés au catalogue, les doublons. Rangez-les en sections (champ "section" de chaque brouillon par PATCH, ordre par PATCH /api/chantiers/${chantier.id}). Puis répondez par un état des lieux en quelques lignes : combien à relire, ce qui est à renommer ou à fusionner, ce que disent les rejets, et ce que vous proposez de faire ensuite. Le titre du chantier est déjà donné : pas de ligne « # ». Attendez le go avant de chercher quoi que ce soit de nouveau.`
 }

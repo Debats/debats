@@ -1,10 +1,19 @@
 import { Context, Effect } from 'effect'
-import { Chantier, ChantierMessage, ChantierMessageRole } from '../entities/chantier'
+import {
+  Chantier,
+  ChantierMessage,
+  ChantierMessageRole,
+  ChantierStatus,
+} from '../entities/chantier'
 import { DatabaseError } from './errors'
 
 export type NewChantier = {
   brief: string
   createdBy: string
+  /** Given when the chantier adopts drafts already there; the agent names the others */
+  title?: string | null
+  /** 'pending' for an adopted chantier whose agent is not launched; 'working' by default */
+  status?: ChantierStatus
 }
 
 /** What may change on a chantier once it exists: the rest is its birth */

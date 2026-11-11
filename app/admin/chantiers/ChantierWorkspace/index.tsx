@@ -7,6 +7,7 @@ import { Sheet } from '../../../../components/ui/DialogueSheet'
 import { closeChantierAction } from '../../../actions/close-chantier'
 import { deleteChantierAction } from '../../../actions/delete-chantier'
 import { refreshChantierAction } from '../../../actions/refresh-chantier'
+import { startChantierAction } from '../../../actions/start-chantier'
 import { tellChantierAction } from '../../../actions/tell-chantier'
 import ChantierDialogue from '../ChantierDialogue'
 import { CHANTIERS_PATH } from '../hrefs'
@@ -100,6 +101,20 @@ export default function ChantierWorkspace({
     }
   }, [chantier.id, router])
 
+  /* The agent launched on an adopted chantier: it reads what is there, and the page starts listening */
+  const start = useCallback(async () => {
+    setSending(true)
+    setError(undefined)
+    const result = await startChantierAction(chantier.id)
+    if (result.started) {
+      setChantier(result.chantier)
+      setSheet((current) => (current === 'bar' ? 'half' : current))
+    } else {
+      setError(result.message)
+    }
+    setSending(false)
+  }, [chantier.id])
+
   /* Gone for good: the list is the only place left to go; a refusal is shown where it was asked */
   const remove = useCallback(async () => {
     const result = await deleteChantierAction(chantier.id)
@@ -131,6 +146,7 @@ export default function ChantierWorkspace({
         onSend={(text) => void send(text)}
         onClose={() => void close()}
         onDelete={remove}
+        onStart={() => void start()}
         sending={sending}
         open={isOpen(chantier)}
         error={error}

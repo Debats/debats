@@ -65,6 +65,30 @@
   }
 }
 
+/* An adopted chantier whose agent is not launched: the one action in place of the composer */
+.start {
+  padding: 12px 16px 8px;
+  border-top: 1px solid var(--line);
+}
+
+.startButton {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper);
+  background-color: var(--ink);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 9px 18px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.startButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* What can become of the chantier: closed, or gone for good */
 .fate {
   display: flex;

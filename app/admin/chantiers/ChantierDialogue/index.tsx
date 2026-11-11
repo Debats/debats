@@ -20,6 +20,8 @@ interface ChantierDialogueProps {
   onClose: () => void
   /** Deletes the chantier for good; rejects with the reason when it cannot */
   onDelete: () => Promise<void>
+  /** Launches the agent on a chantier that has none yet */
+  onStart: () => void
   sending: boolean
   /** Whether the chantier still takes messages */
   open: boolean
@@ -28,6 +30,8 @@ interface ChantierDialogueProps {
 
 /** What the status line says under the turns, when the agent is not simply waiting */
 const STATUS_LINES: Partial<Record<Chantier['status'], string>> = {
+  pending:
+    'Ce chantier reprend des brouillons déjà là. Lancez l’agent quand vous voulez vous y mettre : il commencera par en faire l’inventaire.',
   working: 'L’agent travaille… Les brouillons arrivent dans la liste au fur et à mesure.',
   blocked:
     'L’agent attend une décision ou un budget dans la console Anthropic. Rien ne bougera d’ici.',
@@ -48,6 +52,7 @@ export default function ChantierDialogue({
   onSend,
   onClose,
   onDelete,
+  onStart,
   sending,
   open,
   error,
@@ -64,15 +69,28 @@ export default function ChantierDialogue({
       onSheet={onSheet}
       composer={
         <>
-          <Composer
-            id="chantier-ask"
-            label="Votre message à l’agent"
-            placeholder="Dites ce qu’il faut chercher, vérifier ou changer…"
-            onSend={onSend}
-            disabled={!open || sending}
-          />
+          {chantier.status === 'pending' ? (
+            <div className={styles.start}>
+              <button
+                type="button"
+                className={styles.startButton}
+                onClick={onStart}
+                disabled={sending}
+              >
+                {sending ? 'Lancement…' : 'Lancer l’agent'}
+              </button>
+            </div>
+          ) : (
+            <Composer
+              id="chantier-ask"
+              label="Votre message à l’agent"
+              placeholder="Dites ce qu’il faut chercher, vérifier ou changer…"
+              onSend={onSend}
+              disabled={!open || sending}
+            />
+          )}
           <div className={styles.fate}>
-            {open && (
+            {open && chantier.status !== 'pending' && (
               <button type="button" className={styles.close} onClick={onClose}>
                 Clôturer le chantier
               </button>

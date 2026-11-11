@@ -67,6 +67,8 @@ export function createChantierRepository(supabase: SupabaseClient): ChantierRepo
             .from('chantiers')
             .insert({
               brief: chantier.brief,
+              title: chantier.title ?? null,
+              status: chantier.status ?? 'working',
               created_by: chantier.createdBy,
               updated_by: chantier.createdBy,
             })
