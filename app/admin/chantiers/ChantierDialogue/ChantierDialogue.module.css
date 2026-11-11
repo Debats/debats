@@ -1,5 +1,8 @@
+/* Not composed from the small recipe: its ink colour would win over the paper one, by stylesheet order */
 .person {
-  composes: small from '../../../../styles/text.module.css';
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
   align-self: flex-end;
   max-width: 90%;
   margin: 0;
