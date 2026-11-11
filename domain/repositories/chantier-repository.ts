@@ -40,6 +40,8 @@ export interface ChantierRepository {
   ): Effect.Effect<ChantierMessage[], DatabaseError>
   /** The conversation in order */
   findMessages(chantierId: string): Effect.Effect<ChantierMessage[], DatabaseError>
+  /** Removes the chantier with everything it owns: its conversation and the drafts it produced */
+  delete(id: string): Effect.Effect<void, DatabaseError>
 }
 
 export const ChantierRepository = Context.GenericTag<ChantierRepository>('ChantierRepository')

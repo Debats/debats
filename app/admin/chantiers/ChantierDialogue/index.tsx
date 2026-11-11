@@ -7,6 +7,7 @@ import {
 } from '../../../../domain/entities/chantier'
 import { withoutTitleLine } from '../../../../domain/services/chantier-title'
 import Composer from '../../../../components/ui/Composer'
+import ConfirmAction from '../../../../components/ui/ConfirmAction'
 import DialogueSheet, { Sheet } from '../../../../components/ui/DialogueSheet'
 import styles from './ChantierDialogue.module.css'
 
@@ -17,6 +18,8 @@ interface ChantierDialogueProps {
   onSheet: (sheet: Sheet) => void
   onSend: (text: string) => void
   onClose: () => void
+  /** Deletes the chantier for good; rejects with the reason when it cannot */
+  onDelete: () => Promise<void>
   sending: boolean
   /** Whether the chantier still takes messages */
   open: boolean
@@ -44,6 +47,7 @@ export default function ChantierDialogue({
   onSheet,
   onSend,
   onClose,
+  onDelete,
   sending,
   open,
   error,
@@ -67,11 +71,20 @@ export default function ChantierDialogue({
             onSend={onSend}
             disabled={!open || sending}
           />
-          {open && (
-            <button type="button" className={styles.close} onClick={onClose}>
-              Clôturer le chantier
-            </button>
-          )}
+          <div className={styles.fate}>
+            {open && (
+              <button type="button" className={styles.close} onClick={onClose}>
+                Clôturer le chantier
+              </button>
+            )}
+            <ConfirmAction
+              triggerLabel="Supprimer le chantier"
+              warning="Le chantier, sa conversation et tous ses brouillons seront effacés, chez Anthropic aussi. Ce qu’une validation a déjà créé sur le site reste."
+              confirmLabel="Supprimer"
+              pendingLabel="Suppression…"
+              onConfirm={onDelete}
+            />
+          </div>
         </>
       }
     >

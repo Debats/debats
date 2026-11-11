@@ -51,12 +51,20 @@
   }
 }
 
+/* What can become of the chantier: closed, or gone for good */
+.fate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
 .close {
   composes: meta from '../../../../styles/text.module.css';
-  align-self: flex-start;
   background: none;
   border: none;
-  padding: 0 16px 16px;
+  padding: 0;
   cursor: pointer;
   text-decoration: underline;
   color: var(--ink-2);

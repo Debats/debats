@@ -75,6 +75,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
       tell: () => notConfigured,
       newsSince: () => notConfigured,
       interrupt: () => notConfigured,
+      forget: () => notConfigured,
     }
   }
 
@@ -154,6 +155,17 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
     interrupt: (sessionId) =>
       Effect.asVoid(
         attempt(() => sessions.events.send(sessionId, { events: [{ type: 'user.interrupt' }] })),
+      ),
+
+    /* A session Anthropic no longer has is as forgotten as one it just erased */
+    forget: (sessionId) =>
+      Effect.asVoid(
+        attempt(() =>
+          sessions.delete(sessionId).catch((error: unknown) => {
+            if (error instanceof Anthropic.APIError && error.status === 404) return
+            throw error
+          }),
+        ),
       ),
   }
 }

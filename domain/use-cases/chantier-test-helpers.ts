@@ -69,6 +69,13 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
       ),
     findMessages: (chantierId) =>
       Effect.sync(() => messages.filter((m) => m.chantierId === chantierId)),
+    delete: (id) =>
+      Effect.sync(() => {
+        rows.delete(id)
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i].chantierId === id) messages.splice(i, 1)
+        }
+      }),
   }
 
   return { repository, rows, messages }
@@ -78,6 +85,7 @@ export type AgentCalls = {
   opened: string[]
   told: { sessionId: string; text: string }[]
   interrupted: string[]
+  forgotten: string[]
 }
 
 /** An agent that answers what the test says, and remembers what it was asked */
@@ -86,9 +94,10 @@ export function fakeAgent(
     open?: Effect.Effect<{ sessionId: string }, AgentUnavailable>
     news?: AgentNews
     tell?: Effect.Effect<void, AgentUnavailable>
+    forget?: Effect.Effect<void, AgentUnavailable>
   } = {},
 ) {
-  const calls: AgentCalls = { opened: [], told: [], interrupted: [] }
+  const calls: AgentCalls = { opened: [], told: [], interrupted: [], forgotten: [] }
   const agent: ChantierAgent = {
     open: ({ id }) =>
       Effect.suspend(() => {
@@ -105,6 +114,11 @@ export function fakeAgent(
     interrupt: (sessionId) =>
       Effect.sync(() => {
         calls.interrupted.push(sessionId)
+      }),
+    forget: (sessionId) =>
+      Effect.suspend(() => {
+        calls.forgotten.push(sessionId)
+        return behaviour.forget ?? Effect.void
       }),
   }
   return { agent, calls }

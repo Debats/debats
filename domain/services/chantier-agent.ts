@@ -44,6 +44,8 @@ export interface ChantierAgent {
   newsSince(sessionId: string, after: string | null): Effect.Effect<AgentNews, AgentUnavailable>
   /** Stops what the agent is doing; it goes idle */
   interrupt(sessionId: string): Effect.Effect<void, AgentUnavailable>
+  /** Ends the session and erases it where it ran; a session already gone is forgotten all the same */
+  forget(sessionId: string): Effect.Effect<void, AgentUnavailable>
 }
 
 export const ChantierAgent = Context.GenericTag<ChantierAgent>('ChantierAgent')

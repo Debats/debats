@@ -154,5 +154,17 @@ export function createChantierRepository(supabase: SupabaseClient): ChantierRepo
         },
         catch: (error) => dbError('Failed to fetch chantier messages', error),
       }),
+
+    /* The drafts go first, by hand: their key only unlinks on delete; the messages cascade */
+    delete: (id: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const drafts = await supabase.from('draft_statements').delete().eq('chantier_id', id)
+          if (drafts.error) throw drafts.error
+          const chantier = await supabase.from('chantiers').delete().eq('id', id)
+          if (chantier.error) throw chantier.error
+        },
+        catch: (error) => dbError('Failed to delete chantier', error),
+      }),
   }
 }

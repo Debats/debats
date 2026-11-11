@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import { Chantier, ChantierMessage, isOpen } from '../../../../domain/entities/chantier'
 import { Sheet } from '../../../../components/ui/DialogueSheet'
 import { closeChantierAction } from '../../../actions/close-chantier'
+import { deleteChantierAction } from '../../../actions/delete-chantier'
 import { refreshChantierAction } from '../../../actions/refresh-chantier'
 import { tellChantierAction } from '../../../actions/tell-chantier'
 import ChantierDialogue from '../ChantierDialogue'
+import { CHANTIERS_PATH } from '../hrefs'
 import styles from './ChantierWorkspace.module.css'
 
 interface ChantierWorkspaceProps {
@@ -98,6 +100,13 @@ export default function ChantierWorkspace({
     }
   }, [chantier.id, router])
 
+  /* Gone for good: the list is the only place left to go; a refusal is shown where it was asked */
+  const remove = useCallback(async () => {
+    const result = await deleteChantierAction(chantier.id)
+    if (!result.deleted) throw new Error(result.message)
+    router.push(CHANTIERS_PATH)
+  }, [chantier.id, router])
+
   return (
     <div className={styles.workspace}>
       <div className={styles.main}>
@@ -121,6 +130,7 @@ export default function ChantierWorkspace({
         onSheet={setSheet}
         onSend={(text) => void send(text)}
         onClose={() => void close()}
+        onDelete={remove}
         sending={sending}
         open={isOpen(chantier)}
         error={error}
