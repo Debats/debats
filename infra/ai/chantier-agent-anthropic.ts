@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/nextjs'
 import { Effect } from 'effect'
 import { AgentNews, AgentUnavailable, ChantierAgent } from '../../domain/services/chantier-agent'
 import { chantierTitle } from '../../domain/services/chantier-title'
+import { SITE_URL } from '../../app/site'
 import { CHANTIER_AGENT_SYSTEM, chantierOpeningMessage } from './chantier-agent-prompt'
 import { newsOf, SessionEventLike } from './chantier-session-news'
 
@@ -28,7 +29,7 @@ const DEFAULT_BUDGET_CENTS = 2000
 const LOOKBACK = 50
 
 export const NOT_CONFIGURED =
-  'L’agent des chantiers n’est pas configuré : CHANTIER_AGENT_ID, CHANTIER_ENVIRONMENT_ID et DEBATS_URL manquent.'
+  'L’agent des chantiers n’est pas configuré : CHANTIER_AGENT_ID et CHANTIER_ENVIRONMENT_ID manquent.'
 export const UNREACHABLE = 'L’agent ne répond pas pour le moment. Réessayez dans un instant.'
 export const NEEDS_CONSOLE =
   'L’agent attend une décision ou un budget dans la console Anthropic : il ne prend pas de message pour l’instant.'
@@ -39,15 +40,15 @@ export function chantierAgentConfig(
 ): ChantierAgentConfig | null {
   const agentId = env.CHANTIER_AGENT_ID
   const environmentId = env.CHANTIER_ENVIRONMENT_ID
-  const siteUrl = env.DEBATS_URL
-  if (!agentId || !environmentId || !siteUrl) return null
+  if (!agentId || !environmentId) return null
   return {
     agentId,
     environmentId,
     vaultIds: env.CHANTIER_VAULT_ID ? [env.CHANTIER_VAULT_ID] : [],
     repositoryUrl: env.CHANTIER_REPOSITORY_URL || DEFAULT_REPOSITORY_URL,
     repositoryToken: env.CHANTIER_REPOSITORY_TOKEN || undefined,
-    siteUrl,
+    /* The site itself, unless the agent is pointed at another one */
+    siteUrl: env.DEBATS_URL || SITE_URL,
     budgetCents: Number(env.CHANTIER_BUDGET_CENTS) || DEFAULT_BUDGET_CENTS,
   }
 }

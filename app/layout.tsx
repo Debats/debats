@@ -10,7 +10,7 @@ import NoticeBanner from '../components/layout/NoticeBanner'
 import FeedbackWidget from '../components/feedback/FeedbackWidget'
 
 import { Metadata, Viewport } from 'next'
-import { siteDescription } from './site'
+import { SITE_URL, siteDescription } from './site'
 import { fontVariables } from './fonts'
 
 // Source de vérité CSS : --signal dans styles/tokens.css
@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://debats.co'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Débats.co - Synthèse des débats de société',
     template: '%s - Débats.co',

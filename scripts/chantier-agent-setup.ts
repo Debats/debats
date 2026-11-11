@@ -11,13 +11,15 @@
  *
  * Environment: ANTHROPIC_API_KEY (the account the sessions run on), ADMIN_API_KEY
  * (the site's key, read from the environment and sent to the vault only),
- * DEBATS_URL (the host the key may be sent to). When CHANTIER_AGENT_ID is set,
+ * DEBATS_URL only to aim at another site than debats.co (the host the key may
+ * be sent to). When CHANTIER_AGENT_ID is set,
  * the agent is updated in place (a new version) instead of created; the
  * environment and the vault are created only when their id is missing.
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import { CHANTIER_AGENT_SYSTEM } from '../infra/ai/chantier-agent-prompt'
+import { SITE_URL } from '../app/site'
 
 const AGENT_NAME = 'Agent de contenu Débats.co'
 const MODEL = 'claude-opus-5-5'
@@ -25,11 +27,8 @@ const MODEL = 'claude-opus-5-5'
 async function main() {
   const env = process.env
   const adminKey = env.ADMIN_API_KEY
-  const siteUrl = env.DEBATS_URL
-  if (!adminKey || !siteUrl) {
-    throw new Error('ADMIN_API_KEY and DEBATS_URL must be set: the vault needs both')
-  }
-  const siteHost = new URL(siteUrl).host
+  if (!adminKey) throw new Error('ADMIN_API_KEY must be set: the vault holds it')
+  const siteHost = new URL(env.DEBATS_URL || SITE_URL).host
   const client = new Anthropic()
 
   const environmentId = env.CHANTIER_ENVIRONMENT_ID || (await createEnvironment(client))

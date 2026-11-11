@@ -4,17 +4,22 @@ import { chantierAgentConfig, DEFAULT_REPOSITORY_URL } from './chantier-agent-an
 const set = {
   CHANTIER_AGENT_ID: 'agent_1',
   CHANTIER_ENVIRONMENT_ID: 'env_1',
-  DEBATS_URL: 'https://debats.co',
 }
 
 describe('chantierAgentConfig', () => {
-  it('is nothing until the agent, its environment and the site are all named', () => {
+  it('is nothing until the agent and its environment are both named', () => {
     expect(chantierAgentConfig({})).toBeNull()
     expect(chantierAgentConfig({ ...set, CHANTIER_AGENT_ID: '' })).toBeNull()
-    expect(chantierAgentConfig({ ...set, DEBATS_URL: undefined })).toBeNull()
+    expect(chantierAgentConfig({ ...set, CHANTIER_ENVIRONMENT_ID: undefined })).toBeNull()
   })
 
-  it('takes its defaults for what is not set: no vault, the public repository, twenty dollars', () => {
+  it('points the agent at another site when DEBATS_URL says so', () => {
+    expect(chantierAgentConfig({ ...set, DEBATS_URL: 'http://localhost:3000' })?.siteUrl).toBe(
+      'http://localhost:3000',
+    )
+  })
+
+  it('takes its defaults for what is not set: no vault, the public repository, the site, twenty dollars', () => {
     expect(chantierAgentConfig(set)).toEqual({
       agentId: 'agent_1',
       environmentId: 'env_1',

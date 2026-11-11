@@ -13,8 +13,9 @@ import {
   groupOrganisationsByType,
   isTruncated,
 } from '../domain/read-models/organisation-summary'
+import { SITE_URL } from './site'
 
-const BASE_URL = 'https://debats.co'
+const BASE_URL = SITE_URL
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [

@@ -218,15 +218,17 @@ Un chantier (`/admin/chantiers`) part d'une consigne en français, produit des b
 Configuration en une fois, depuis une machine qui a la clé d'administration du site visé :
 
 ```bash
-npm run chantier:setup:production   # crée l'environnement, le coffre (ADMIN_API_KEY pour l'hôte de DEBATS_URL) et l'agent, puis imprime les identifiants
+npm run chantier:setup:production   # crée l'environnement, le coffre (ADMIN_API_KEY, envoyée au seul hôte debats.co) et l'agent, puis imprime les identifiants
 ```
+
+Le script lit `ANTHROPIC_API_KEY` et `ADMIN_API_KEY` dans l'environnement ; rien à faire dans la console Anthropic. Les trois identifiants imprimés sont à poser sur le site, qui les cite pour ouvrir une session à chaque chantier lancé :
 
 | Variable                    | Rôle                                                                                        |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
 | `CHANTIER_AGENT_ID`         | L'agent Managed Agents ; relancer le script avec cette variable posée met à jour son prompt |
 | `CHANTIER_ENVIRONMENT_ID`   | L'environnement (conteneur, réseau ouvert)                                                  |
 | `CHANTIER_VAULT_ID`         | Le coffre qui tient `ADMIN_API_KEY`                                                         |
-| `DEBATS_URL`                | L'adresse du site, donnée à l'agent et seul hôte auquel la clé est envoyée                  |
+| `DEBATS_URL`                | Seulement pour viser un autre site que `https://debats.co` (agent et coffre)                |
 | `CHANTIER_BUDGET_CENTS`     | Plafond de dépense d'une session, en cents (défaut : 2000)                                  |
 | `CHANTIER_REPOSITORY_URL`   | Le dépôt monté dans la session (défaut : `https://github.com/Debats/debats`)                |
 | `CHANTIER_REPOSITORY_TOKEN` | Jeton GitHub, seulement si le dépôt est privé                                               |

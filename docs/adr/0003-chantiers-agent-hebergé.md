@@ -20,7 +20,7 @@ Un chantier dure plus qu'une requête et doit continuer quand la page est fermé
 
 ## Conséquences
 
-- Variables à poser en production avant de déployer : `CHANTIER_AGENT_ID`, `CHANTIER_ENVIRONMENT_ID`, `CHANTIER_VAULT_ID`, `DEBATS_URL` (déjà là), et à l'occasion `CHANTIER_BUDGET_CENTS`, `CHANTIER_REPOSITORY_URL`, `CHANTIER_REPOSITORY_TOKEN`. Sans elles, lancer un chantier répond que l'agent n'est pas configuré.
+- Variables à poser en production avant de déployer : `CHANTIER_AGENT_ID`, `CHANTIER_ENVIRONMENT_ID`, `CHANTIER_VAULT_ID`, et à l'occasion `CHANTIER_BUDGET_CENTS`, `CHANTIER_REPOSITORY_URL`, `CHANTIER_REPOSITORY_TOKEN`, `DEBATS_URL` (pour viser un autre site que `https://debats.co`). Sans les deux premières, lancer un chantier répond que l'agent n'est pas configuré.
 - Les Managed Agents sont en bêta : en-tête de version posé par le SDK, forme des événements susceptible de bouger. Le site n'en lit que trois choses (le texte des messages, le statut de session, la raison d'un arrêt), isolées dans `chantier-session-news.ts`.
 - Une session est facturée au temps actif et aux jetons ; le budget par défaut est de 20 $ par chantier. À regarder sur les premiers chantiers.
 - La conversation miroitée ne porte que le texte : ce que l'agent a lu, les commandes qu'il a lancées restent dans la console Anthropic. Un lien vers la session s'ajoutera si le besoin apparaît.
