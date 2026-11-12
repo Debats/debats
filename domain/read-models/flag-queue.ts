@@ -1,24 +1,14 @@
 import { ReviewedEntity } from '../aggregates/review'
-import {
-  FlagOutcome,
-  FlagReason,
-  REVIEWED_ENTITY_TYPES,
-  ReviewedEntityType,
-} from '../aggregates/review-events'
+import { FlagOutcome, REVIEWED_ENTITY_TYPES, ReviewedEntityType } from '../aggregates/review-events'
 import { FLAGS_HREF } from './hrefs'
+import { OpenFlagDetail } from './review'
 
 /**
  * What a moderator reads to settle flags: the flags themselves, gathered by
  * the entity they are about, and enough of each entity to know it at a glance.
  */
-export interface QueuedFlag {
-  id: string
+export interface QueuedFlag extends OpenFlagDetail {
   entity: ReviewedEntity
-  reason: FlagReason
-  comment: string
-  /** The reader's name as the site shows it; null when she gave none */
-  by: string | null
-  at: Date
   /** Null while the flag is open */
   outcome: FlagOutcome | null
   answer: string | null

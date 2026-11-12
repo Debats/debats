@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ReviewDetail } from '../../../domain/read-models/review'
 import ReviewOnEdit from '.'
-import { correctionOf, NO_CHOICE } from './review-choice'
+import { correctionOf, NO_CHOICE } from '../../../domain/read-models/review-on-edit'
 
 /**
  * What an edit form needs of the entity's review: the block to render before

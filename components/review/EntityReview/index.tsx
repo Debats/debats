@@ -17,12 +17,9 @@ interface EntityReviewProps {
 export default function EntityReview({ entity }: EntityReviewProps) {
   const scope = use(ReviewScopeContext)
   if (!scope) return null
-  return (
-    <ReviewMark
-      key={entity.id}
-      entity={entity}
-      mark={markOf(scope.marks, entity.id)}
-      viewer={scope.viewer}
-    />
-  )
+  const mark = markOf(scope.marks, entity.id)
+  // The mark keeps what the viewer's own words made of it; when the page reads it
+  // anew (she signed in, someone else confirmed), it starts again from what was read
+  const asRead = [entity.id, scope.viewer, ...Object.values(mark)].join(':')
+  return <ReviewMark key={asRead} entity={entity} mark={mark} viewer={scope.viewer} />
 }

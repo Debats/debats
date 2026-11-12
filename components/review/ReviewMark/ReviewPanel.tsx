@@ -3,7 +3,6 @@ import { ReviewedEntityType } from '../../../domain/aggregates/review-events'
 import {
   agreed,
   confirmersLine,
-  FLAG_REASON_LABELS,
   markLabel,
   ReviewDetail,
   ReviewMark,
@@ -11,6 +10,7 @@ import {
   Viewer,
 } from '../../../domain/read-models/review'
 import { formatRelativeDate } from '../../../lib/format-date'
+import FlagQuote from '../FlagQuote'
 import Glyph from './Glyph'
 import styles from './ReviewMark.module.css'
 
@@ -67,13 +67,7 @@ export default function ReviewPanel({
 
       {detail?.flags.map((flag) => (
         <div key={flag.id} className={styles.section}>
-          <p className={styles.flagReason}>
-            Signalement en cours · {FLAG_REASON_LABELS[flag.reason]}
-          </p>
-          <p className={styles.flagComment}>« {flag.comment} »</p>
-          <p className={styles.flagMeta}>
-            {flag.by ?? 'Un·e lecteur·rice'} · {formatRelativeDate(flag.at, today).toLowerCase()}
-          </p>
+          <FlagQuote flag={flag} kicker="Signalement en cours" />
         </div>
       ))}
 

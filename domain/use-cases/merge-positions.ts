@@ -6,6 +6,7 @@ import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
 import { allowedTo, found } from './preconditions'
+import { closeReviewOfMerged } from './record-correction'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 import { decideOnEachStatement, statementAggregate } from './statement-stream'
 
@@ -72,6 +73,13 @@ export function mergePositionsUseCase(params: MergePositionsParams) {
               contributor.id,
               moveStatement(targetPositionId),
             ),
+          ),
+          // The source is gone: the flags open on it go with it
+          Effect.andThen(
+            closeReviewOfMerged(events, contributor.id, {
+              type: 'position',
+              id: sourcePositionId,
+            }),
           ),
         ),
       ),

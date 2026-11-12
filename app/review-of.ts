@@ -1,9 +1,9 @@
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { reviewToSpeakOf } from '../components/review/ReviewOnEdit/review-choice'
 import { ReviewScopeValue } from '../components/review/review-scope'
 import { ReviewedEntity } from '../domain/aggregates/review'
 import { ReviewDetail, viewerOf } from '../domain/read-models/review'
+import { reviewToSpeakOf } from '../domain/read-models/review-on-edit'
 import { loadReviewDetail, loadReviewMarks } from '../infra/queries/review'
 
 /**

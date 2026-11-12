@@ -11,6 +11,7 @@ import {
 import { FLAG_REASON_LABELS, thisEntity } from '../../../domain/read-models/review'
 import { NewFlag } from '../../../domain/use-cases/flag-entity'
 import Button from '../../ui/Button'
+import ChoiceCard from '../../ui/ChoiceCard'
 import TextArea from '../../ui/TextArea'
 import styles from './ReviewMark.module.css'
 
@@ -66,15 +67,13 @@ export default function FlagDialog({
             <fieldset className={styles.reasons}>
               <legend className={styles.legend}>Qu’est-ce qui ne va pas ?</legend>
               {FLAG_REASONS.map((value) => (
-                <label key={value} className={styles.reason}>
-                  <input
-                    type="radio"
-                    checked={reason === value}
-                    onChange={() => setReason(value)}
-                    className={styles.radio}
-                  />
+                <ChoiceCard
+                  key={value}
+                  checked={reason === value}
+                  onChange={() => setReason(value)}
+                >
                   {FLAG_REASON_LABELS[value]}
-                </label>
+                </ChoiceCard>
               ))}
               {refused?.fields?.reason && (
                 <p role="alert" className={styles.error}>

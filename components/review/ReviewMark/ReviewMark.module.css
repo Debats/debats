@@ -125,26 +125,6 @@
   border-top: 1px solid var(--line);
 }
 
-.flagReason {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--warn);
-}
-
-.flagComment {
-  margin: 4px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--ink);
-}
-
-.flagMeta {
-  composes: meta from '../../../styles/text.module.css';
-  margin: 4px 0 0;
-  color: var(--ink-2);
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -274,31 +254,6 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--ink);
-}
-
-.reason {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  font-size: 14px;
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.reason:has(:checked) {
-  border-color: var(--ink);
-  background-color: var(--paper);
-}
-
-.radio {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--ink);
 }
 
 .dialogActions {

@@ -186,6 +186,13 @@ export const correct =
   ]
 
 /**
+ * The entity left the site, folded into another: the flags open on it have
+ * nothing left to be about, and are closed with it, as on a removal.
+ */
+export const leaveWithEntity = (): ReviewCascade => (state) =>
+  state.openFlags.length > 0 ? [flagsSettled('removed', undefined)] : []
+
+/**
  * Rebuilds the review from its stream. A stream without events is an entity
  * nobody reviewed yet, not an unknown one: the review has no creation.
  * Every fact but a reset or a settlement is somebody's: unsigned, it is corrupt.

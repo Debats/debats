@@ -16,7 +16,7 @@ import { authorOnSubjectHref } from '../../domain/read-models/statement-author'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { databaseError } from '../database/database-error'
 import { getPrismaClient } from '../prisma/client'
-import { displayNames } from './review'
+import { displayNames } from './display-names'
 
 /** The queue is read whole: a moderation backlog longer than this is a problem of its own */
 const QUEUE_LIMIT = 200

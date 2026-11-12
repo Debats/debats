@@ -22,42 +22,6 @@
   clip-path: inset(50%);
 }
 
-.choice {
-  display: flex;
-  gap: 14px;
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background-color: var(--card);
-  cursor: pointer;
-}
-
-.choice:has(:checked) {
-  border-color: var(--ink);
-}
-
-.radio {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  margin: 3px 0 0;
-  accent-color: var(--ink);
-}
-
-.choiceLabel {
-  display: block;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.choiceNote {
-  display: block;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--ink-2);
-}
-
 .hint {
   margin: 6px 0 0;
   font-size: 13px;

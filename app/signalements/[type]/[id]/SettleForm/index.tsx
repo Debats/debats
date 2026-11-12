@@ -3,6 +3,7 @@
 import { FormEvent, useId, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '../../../../../components/ui/Button'
+import ChoiceCard from '../../../../../components/ui/ChoiceCard'
 import FormError from '../../../../../components/ui/FormError'
 import TextArea from '../../../../../components/ui/TextArea'
 import { ReviewedEntity, Settlement } from '../../../../../domain/aggregates/review'
@@ -80,18 +81,14 @@ export default function SettleForm({ entity, revision, correction, removable }: 
       <fieldset className={styles.choices}>
         <legend className={styles.legend}>Que faire de ce signalement ?</legend>
         {choices.map(({ value, label, note }) => (
-          <label key={value} className={styles.choice}>
-            <input
-              type="radio"
-              className={styles.radio}
-              checked={decision === value}
-              onChange={() => setDecision(value)}
-            />
-            <span>
-              <strong className={styles.choiceLabel}>{label}</strong>
-              <span className={styles.choiceNote}>{note}</span>
-            </span>
-          </label>
+          <ChoiceCard
+            key={value}
+            note={note}
+            checked={decision === value}
+            onChange={() => setDecision(value)}
+          >
+            {label}
+          </ChoiceCard>
         ))}
       </fieldset>
 

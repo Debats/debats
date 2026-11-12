@@ -5,6 +5,7 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
 import { allowedTo } from './preconditions'
+import { closeReviewOfMerged } from './record-correction'
 import { argumentAggregate, decideOnArgument } from './argument-stream'
 import { decideOnEachStatement, statementAggregate } from './statement-stream'
 
@@ -63,6 +64,13 @@ export function mergeArgumentsUseCase(params: MergeArgumentsParams) {
               contributor.id,
               replaceArgument(sourceArgumentId, targetArgumentId),
             ),
+          ),
+          // The source is gone: the flags open on it go with it
+          Effect.tap(() =>
+            closeReviewOfMerged(events, contributor.id, {
+              type: 'argument',
+              id: sourceArgumentId,
+            }),
           ),
           Effect.map(({ state }) => state.argument),
         ),

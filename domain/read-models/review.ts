@@ -85,8 +85,14 @@ const NOUNS: Record<ReviewedEntityType, { this: string; feminine: boolean }> = {
 /** « cette prise de position », « cet argument » */
 export const thisEntity = (type: ReviewedEntityType): string => NOUNS[type].this
 
+/**
+ * The participles a review is told with. Only these: they take their
+ * feminine by a final « e », which is not true of any French word.
+ */
+type Participle = 'Confirmé' | 'vérifié'
+
 /** A participle agreed with the entity: « confirmée » for a statement, « confirmé » for a subject */
-export const agreed = (type: ReviewedEntityType, participle: string): string =>
+export const agreed = (type: ReviewedEntityType, participle: Participle): string =>
   NOUNS[type].feminine ? `${participle}e` : participle
 
 const readers = (count: number) => `${count} ${count <= 1 ? 'lecteur·rice' : 'lecteur·rices'}`

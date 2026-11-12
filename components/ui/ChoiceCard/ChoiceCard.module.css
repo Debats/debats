@@ -1,0 +1,57 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--card);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.card:has(:checked) {
+  border-color: var(--ink);
+}
+
+.card:has(:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Avec une explication, la carte respire et le libellé prend du poids */
+.withNote {
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+}
+
+.radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.withNote .radio {
+  margin-top: 2px;
+}
+
+.label {
+  display: block;
+}
+
+.withNote .label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.note {
+  display: block;
+  line-height: 1.5;
+  color: var(--ink-2);
+}

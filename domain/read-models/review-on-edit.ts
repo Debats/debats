@@ -1,7 +1,11 @@
-import { ReviewDetail } from '../../../domain/read-models/review'
-import { NewCorrection } from '../../../domain/use-cases/record-correction'
+import { NewCorrection } from '../use-cases/record-correction'
+import { ReviewDetail } from './review'
 
-/** What the editor has said so far of the entity's review, as the block holds it */
+/**
+ * What an edit form holds of the entity's review while the editor fills it:
+ * whether her edit answers the open flags, what she answers them, and
+ * whether it changes what readers had confirmed.
+ */
 export interface ReviewChoice {
   settlesFlags: boolean
   answer: string
@@ -17,8 +21,8 @@ export const reviewToSpeakOf = (detail: ReviewDetail): ReviewDetail | null =>
 
 /**
  * What the form sends with the edit: nothing when the entity has no review
- * to speak of. The browser has required the choice on the confirmations
- * before the form was sent; unanswered all the same, they are kept.
+ * to speak of. The browser requires the choice on the confirmations before
+ * the form is sent; unanswered all the same, they are kept.
  */
 export const correctionOf = (
   review: ReviewDetail | null,

@@ -1,14 +1,12 @@
 'use client'
 
 import { useId } from 'react'
-import {
-  confirmersLine,
-  FLAG_REASON_LABELS,
-  ReviewDetail,
-} from '../../../domain/read-models/review'
+import { confirmersLine, ReviewDetail } from '../../../domain/read-models/review'
 import { plural } from '../../../lib/plural'
+import ChoiceCard from '../../ui/ChoiceCard'
 import TextArea from '../../ui/TextArea'
-import { ReviewChoice } from './review-choice'
+import FlagQuote from '../FlagQuote'
+import { ReviewChoice } from '../../../domain/read-models/review-on-edit'
 import styles from './ReviewOnEdit.module.css'
 
 interface ReviewOnEditProps {
@@ -37,11 +35,7 @@ export default function ReviewOnEdit({ review, choice, onChange }: ReviewOnEditP
             {several ? 'Des signalements sont en cours' : 'Un signalement est en cours'}
           </p>
           {flags.map((flag) => (
-            <div key={flag.id}>
-              <p className={styles.reason}>{FLAG_REASON_LABELS[flag.reason]}</p>
-              <p className={styles.comment}>« {flag.comment} »</p>
-              <p className={styles.meta}>{flag.by ?? 'Un·e lecteur·rice'}</p>
-            </div>
+            <FlagQuote key={flag.id} flag={flag} />
           ))}
           <label className={styles.settles}>
             <input
@@ -79,28 +73,22 @@ export default function ReviewOnEdit({ review, choice, onChange }: ReviewOnEditP
             modification change-t-elle ce qui a été vérifié ?
           </p>
           <div className={styles.choices}>
-            <label className={styles.choice}>
-              <input
-                type="radio"
-                name={`${fieldId}-confirmations`}
-                required
-                className={styles.radio}
-                checked={choice.resetConfirmations === false}
-                onChange={() => onChange({ ...choice, resetConfirmations: false })}
-              />
+            <ChoiceCard
+              name={`${fieldId}-confirmations`}
+              required
+              checked={choice.resetConfirmations === false}
+              onChange={() => onChange({ ...choice, resetConfirmations: false })}
+            >
               {confirmations === 1 ? 'La garder' : 'Les garder'}
-            </label>
-            <label className={styles.choice}>
-              <input
-                type="radio"
-                name={`${fieldId}-confirmations`}
-                required
-                className={styles.radio}
-                checked={choice.resetConfirmations === true}
-                onChange={() => onChange({ ...choice, resetConfirmations: true })}
-              />
+            </ChoiceCard>
+            <ChoiceCard
+              name={`${fieldId}-confirmations`}
+              required
+              checked={choice.resetConfirmations === true}
+              onChange={() => onChange({ ...choice, resetConfirmations: true })}
+            >
               {confirmations === 1 ? 'La remettre à zéro' : 'Les remettre à zéro'}
-            </label>
+            </ChoiceCard>
           </div>
         </fieldset>
       )}

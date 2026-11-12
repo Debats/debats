@@ -100,7 +100,11 @@ export const reviewReward = (
     relatedEntityId: entity.id,
   })
 
-/** A moderator upheld the flags that were open: each reader who raised one is rewarded */
+/**
+ * A moderator upheld the flags that were open: each reader who raised one is
+ * rewarded — but not the moderator herself. Flagging an entity and then
+ * upholding one's own flag would be paying oneself.
+ */
 export const rewardUpheldFlags = (
   events: EventStore,
   actorId: string,
@@ -110,5 +114,7 @@ export const rewardUpheldFlags = (
   grantEach(
     events,
     actorId,
-    flaggers(before).map((reader) => reviewReward(reader, 'flag_upheld', entity)),
+    flaggers(before)
+      .filter((reader) => reader !== actorId)
+      .map((reader) => reviewReward(reader, 'flag_upheld', entity)),
   )

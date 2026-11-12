@@ -174,6 +174,25 @@ describe('Reputation System', () => {
     })
   })
 
+  describe('correcting a flagged entity', () => {
+    // An edit may settle the flags open on what it edits (record-correction.ts) without
+    // asking for `settle_flag` again: that holds only while every edit takes that rank
+    const edits: Action[] = [
+      'edit_statement',
+      'edit_subject',
+      'edit_personality',
+      'edit_organisation',
+      'edit_position',
+      'edit_argument',
+    ]
+
+    for (const action of edits) {
+      it(`takes the rank that settles flags to ${action}`, () => {
+        expect(requiredRank(action)).toBe(requiredRank('settle_flag'))
+      })
+    }
+  })
+
   describe('reputationReward', () => {
     it('should return 5 for signed_up', () => {
       expect(reputationReward('signed_up')).toBe(5)

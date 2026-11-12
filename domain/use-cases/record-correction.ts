@@ -1,6 +1,6 @@
 import { Effect, Either, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { correct, ReviewedEntity } from '../aggregates/review'
+import { correct, leaveWithEntity, ReviewedEntity } from '../aggregates/review'
 import { EventStore } from '../events/event-store'
 import { decoded } from './preconditions'
 import { decideOnReview, rewardUpheldFlags } from './review-stream'
@@ -45,6 +45,22 @@ export function recordCorrection(
       written.some((event) => event.type === 'FlagsSettled')
         ? rewardUpheldFlags(events, actorId, entity, before)
         : Effect.void,
+    ),
+    Effect.asVoid,
+  )
+}
+
+/**
+ * Closes, in the transaction of a merge, the flags open on the entity that
+ * disappears into another: a flag is not left open on what is no longer
+ * there. A merge is the answer a duplicate calls for, so the readers who
+ * flagged the entity are rewarded as for a removal.
+ */
+export function closeReviewOfMerged(events: EventStore, actorId: string, entity: ReviewedEntity) {
+  return pipe(
+    decideOnReview(events, entity.id, actorId, (state) => Either.right(leaveWithEntity()(state))),
+    Effect.tap(({ before, written }) =>
+      written.length > 0 ? rewardUpheldFlags(events, actorId, entity, before) : Effect.void,
     ),
     Effect.asVoid,
   )

@@ -6,7 +6,7 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { runWith } from './command-test-helpers'
 import { grantsIn } from './contributor-test-helpers'
 import { INVALID_FORM } from './preconditions'
-import { NewCorrection, recordCorrection } from './record-correction'
+import { closeReviewOfMerged, NewCorrection, recordCorrection } from './record-correction'
 import { leasStatement, reviewFactsIn } from './review-test-helpers'
 
 /** A journal where Nadia confirmed Léa's statement and Camille flagged it */
@@ -74,6 +74,49 @@ describe('recordCorrection', () => {
     await execute(correcting(undefined), run)
 
     expect(reviewFactsIn(journal)).toHaveLength(2)
+  })
+
+  it('does not pay the editor for upholding her own flag', async () => {
+    const { run, journal } = await reviewed()
+
+    await execute(
+      runUnitOfWork((events) =>
+        recordCorrection(events, 'camille', leasStatement, {
+          settlesFlags: true,
+          resetConfirmations: false,
+        }),
+      ),
+      run,
+    )
+
+    expect(reviewFactsIn(journal).at(-1)).toEqual(['camille', 'FlagsSettled'])
+    expect(grantsIn(journal)).toEqual([])
+  })
+
+  it('closes the flags of an entity merged into another, and rewards who raised them', async () => {
+    const { run, journal } = await reviewed()
+
+    await execute(
+      runUnitOfWork((events) => closeReviewOfMerged(events, 'jalil', leasStatement)),
+      run,
+    )
+
+    expect(journal.all().at(-2)).toMatchObject({
+      type: 'FlagsSettled',
+      payload: { outcome: 'removed' },
+    })
+    expect(grantsIn(journal)).toEqual([['camille', 'flag_upheld', 50]])
+  })
+
+  it('writes nothing when the merged entity had no open flag', async () => {
+    const { run, journal } = inMemoryUnitOfWork()
+
+    await execute(
+      runUnitOfWork((events) => closeReviewOfMerged(events, 'jalil', leasStatement)),
+      run,
+    )
+
+    expect(journal.all()).toEqual([])
   })
 
   it('refuses what is not a correction: what arrives from a form has no type', async () => {
