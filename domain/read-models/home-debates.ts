@@ -25,7 +25,15 @@ export interface Debate {
   statementsCount: number
   /** Statements added since the instant the page counts recent ones from */
   recentStatementsCount: number
+  /** The theme the subject belongs to first; null while it has none */
+  theme: DebateTheme | null
   positions: DebatePosition[]
+}
+
+/** A theme as the map of debates names it */
+export interface DebateTheme {
+  name: string
+  slug: string
 }
 
 /** One segment of a subject's bar: the shape `components/charts/ShareBar` draws */
@@ -104,6 +112,56 @@ export function debateShares(debate: Debate): DebateShare[] {
 /** The two most supported positions: the ones the home page quotes face to face */
 export const leadingPositions = (debate: Debate): DebatePosition[] =>
   heldPositions(debate).slice(0, 2)
+
+/** A theme on the map of debates: its most spoken-on subjects, and how many it holds in all */
+export interface ThemeDebates {
+  theme: DebateTheme
+  debates: Debate[]
+  subjectsCount: number
+}
+
+/** The map of debates: the themes it draws, and the ones it only names */
+export interface DebateMap {
+  themes: ThemeDebates[]
+  others: Array<Pick<ThemeDebates, 'theme' | 'subjectsCount'>>
+}
+
+/**
+ * The map of debates: subjects grouped under their first theme, the themes
+ * holding the most subjects first. As many themes as asked are drawn with
+ * their most spoken-on subjects; the others are named with their count, so
+ * no theme is hidden for want of room. A subject without a theme has no
+ * place on a map by theme.
+ */
+export function debateMap(
+  debates: readonly Debate[],
+  room: { themes: number; subjectsPerTheme: number },
+): DebateMap {
+  const groups = new Map<string, { theme: DebateTheme; debates: Debate[] }>()
+  for (const debate of debates) {
+    if (debate.theme === null) continue
+    const group = groups.get(debate.theme.slug) ?? { theme: debate.theme, debates: [] }
+    group.debates.push(debate)
+    groups.set(debate.theme.slug, group)
+  }
+
+  const ranked = Array.from(groups.values())
+    .map(({ theme, debates: held }) => ({
+      theme,
+      subjectsCount: held.length,
+      debates: [...held]
+        .sort((a, b) => b.voices - a.voices || a.title.localeCompare(b.title, 'fr'))
+        .slice(0, room.subjectsPerTheme),
+    }))
+    .sort(
+      (a, b) => b.subjectsCount - a.subjectsCount || a.theme.name.localeCompare(b.theme.name, 'fr'),
+    )
+
+  return {
+    themes: ranked.slice(0, room.themes),
+    others: ranked.slice(room.themes).map(({ theme, subjectsCount }) => ({ theme, subjectsCount })),
+  }
+}
 
 /** The subjects statements were just added to, the busiest first, then the most spoken on */
 export const movingDebates = (debates: readonly Debate[], limit: number): Debate[] =>

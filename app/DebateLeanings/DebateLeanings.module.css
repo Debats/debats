@@ -27,43 +27,6 @@
   gap: 20px;
 }
 
-.row,
-.row:link,
-.row:visited {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--ink);
-}
-
-.rowHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.rowTitle {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  line-height: 1.2;
-}
-
-.row:hover .rowTitle {
-  color: var(--signal);
-}
-
-.rowVoices {
-  composes: meta from '../../styles/text.module.css';
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-
-.rowNote {
-  composes: small from '../../styles/text.module.css';
-  font-size: 13px;
-}
-
 @media (max-width: 768px) {
   .column {
     padding: 20px;

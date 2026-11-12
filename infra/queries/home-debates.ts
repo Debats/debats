@@ -25,6 +25,10 @@ const toDebate = (row: DebateRow): Debate => ({
   voices: Number(row.voices),
   statementsCount: Number(row.statements_count),
   recentStatementsCount: Number(row.recent_statements_count),
+  theme:
+    row.theme_name !== null && row.theme_slug !== null
+      ? { name: row.theme_name.trim(), slug: row.theme_slug }
+      : null,
   positions: (row.positions as unknown as DebatePosition[]).map((position) => ({
     id: position.id,
     title: position.title,

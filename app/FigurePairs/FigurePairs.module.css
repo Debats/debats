@@ -1,0 +1,91 @@
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* auto-fill : une paire seule sur sa ligne garde la largeur d'une carte */
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.faces {
+  display: flex;
+  align-items: center;
+  line-height: 0;
+}
+
+/* Le second visage mord sur le premier, détouré par la teinte de la carte */
+.second {
+  margin-left: -12px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+.names {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.name,
+.name:link,
+.name:visited {
+  color: var(--ink);
+}
+
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.number {
+  composes: number from '../../styles/text.module.css';
+  font-size: 52px;
+  line-height: 0.9;
+}
+
+.unit {
+  composes: small from '../../styles/text.module.css';
+}
+
+.meter {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--line);
+}
+
+.meterFill {
+  background-color: var(--ink);
+}
+
+.examples {
+  composes: small from '../../styles/text.module.css';
+  font-size: 13px;
+}
+
+.example,
+.example:link,
+.example:visited {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 3px;
+}
+
+.name:hover,
+.example:hover {
+  color: var(--signal);
+}

@@ -1436,6 +1436,20 @@ export type Database = {
       }
     }
     Functions: {
+      get_figure_agreements: {
+        Args: { p_limit: number; p_min_subjects: number }
+        Returns: {
+          a_id: string
+          a_name: string
+          a_slug: string
+          agreed_subjects: number
+          b_id: string
+          b_name: string
+          b_slug: string
+          common_subjects: number
+          examples: Json
+        }[]
+      }
       get_home_debates: {
         Args: { p_recent_since: string }
         Returns: {

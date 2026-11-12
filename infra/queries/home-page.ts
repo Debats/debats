@@ -21,6 +21,7 @@ import { StatementRepository } from '../../domain/repositories/statement-reposit
 import { SubjectRepository } from '../../domain/repositories/subject-repository'
 import { createStatementRepository } from '../database/statement-repository-supabase'
 import { createSubjectRepository } from '../database/subject-repository-supabase'
+import { loadFigureAgreements } from './figure-agreements'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
 import { getSubjectPositionsSummary } from './subject-positions-summary'
 
@@ -28,6 +29,13 @@ type Client = SupabaseClient<Database>
 
 /** How many of the site's last statements the rail shows */
 const LATEST_STATEMENTS = 4
+
+/**
+ * How many pairs of figures to read. The page shows each figure once, so the
+ * few it shows are picked among many more: the first pairs all share the same
+ * two or three most present figures.
+ */
+const PAIR_CANDIDATES = 40
 
 const unbounded = { concurrency: 'unbounded' } as const
 
@@ -104,10 +112,11 @@ export const loadHomePage = (
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
         feed: statements.findFeed({}, { limit: LATEST_STATEMENTS, offset: 0 }),
+        agreements: loadFigureAgreements(supabase, PAIR_CANDIDATES),
       },
       unbounded,
     ),
-    Effect.flatMap(({ figures, debates, feed }) =>
+    Effect.flatMap(({ figures, debates, feed, agreements }) =>
       pipe(
         Effect.all(
           {
@@ -121,6 +130,7 @@ export const loadHomePage = (
           debates,
           daily,
           moving,
+          agreements,
           latest: feed.entries,
         })),
       ),

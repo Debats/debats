@@ -3,6 +3,7 @@ import {
   dailyDebate,
   Debate,
   debateLeanings,
+  debateMap,
   debateShares,
   leadingPositions,
   leadOf,
@@ -21,6 +22,7 @@ const debate = (id: string, over: Partial<Debate> = {}): Debate => ({
   voices: MIN_VOICES_TO_COMPARE,
   statementsCount: MIN_VOICES_TO_COMPARE,
   recentStatementsCount: 0,
+  theme: null,
   positions: [],
   ...over,
 })
@@ -152,6 +154,55 @@ describe('newestDebates', () => {
     ]
 
     expect(newestDebates(debates, 2).map((d) => d.id)).toEqual(['new', 'mid'])
+  })
+})
+
+describe('debateMap', () => {
+  const economy = { name: 'Économie', slug: 'economie' }
+  const health = { name: 'Santé', slug: 'sante' }
+  const housing = { name: 'Logement', slug: 'logement' }
+  const on = (id: string, theme: Debate['theme'], voices = 10) => debate(id, { theme, voices })
+
+  it('groups the subjects under their first theme, the theme with most subjects first', () => {
+    const map = debateMap([on('h1', health), on('e1', economy), on('e2', economy)], {
+      themes: 2,
+      subjectsPerTheme: 2,
+    })
+
+    expect(map.themes.map((entry) => [entry.theme.slug, entry.subjectsCount])).toEqual([
+      ['economie', 2],
+      ['sante', 1],
+    ])
+  })
+
+  it('shows under each theme the subjects most voices spoke on, and still counts the others', () => {
+    const map = debateMap(
+      [on('small', economy, 3), on('big', economy, 40), on('mid', economy, 12)],
+      { themes: 1, subjectsPerTheme: 2 },
+    )
+
+    expect(map.themes[0].debates.map((d) => d.id)).toEqual(['big', 'mid'])
+    expect(map.themes[0].subjectsCount).toBe(3)
+  })
+
+  it('names the themes it has no room to draw, with how many subjects each holds', () => {
+    const map = debateMap(
+      [on('e1', economy), on('e2', economy), on('h1', health), on('l1', housing)],
+      { themes: 1, subjectsPerTheme: 2 },
+    )
+
+    expect(map.themes.map((entry) => entry.theme.slug)).toEqual(['economie'])
+    expect(map.others).toEqual([
+      { theme: housing, subjectsCount: 1 },
+      { theme: health, subjectsCount: 1 },
+    ])
+  })
+
+  it('leaves a subject without a theme off the map', () => {
+    const map = debateMap([on('free', null), on('e1', economy)], { themes: 3, subjectsPerTheme: 2 })
+
+    expect(map.themes.flatMap((entry) => entry.debates.map((d) => d.id))).toEqual(['e1'])
+    expect(map.others).toEqual([])
   })
 })
 

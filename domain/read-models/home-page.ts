@@ -2,6 +2,7 @@ import {
   StatementWithAuthor,
   StatementWithAuthorAndSubject,
 } from '../repositories/statement-repository'
+import { FigureAgreement } from './figure-agreements'
 import { Debate, SiteFigures } from './home-debates'
 import { StatementAuthorRef } from './statement-author'
 import { PositionSummary } from './subject-positions-summary'
@@ -39,6 +40,8 @@ export interface HomePage {
   daily: DailySubject | null
   /** The busiest first */
   moving: MovingDebate[]
+  /** The pairs of public figures agreeing on the most subjects: more than the page shows */
+  agreements: FigureAgreement[]
   /** The last statements of the whole site, newest stated first */
   latest: StatementWithAuthorAndSubject[]
 }

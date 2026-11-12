@@ -1,0 +1,72 @@
+.themes {
+  display: grid;
+  /* auto-fill : une thématique seule sur sa ligne garde la largeur d'une carte */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.theme {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.themeHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.themeName {
+  composes: label from '../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.others {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.othersLabel {
+  composes: small from '../../styles/text.module.css';
+}
+
+.other,
+.other:link,
+.other:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background-color: var(--card);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.other:hover {
+  color: var(--signal);
+}
+
+.otherCount {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
+}

@@ -1,6 +1,7 @@
 import { DebateLeanings as Leanings } from '../../domain/read-models/home-debates'
+import DebateRow from '../DebateRow'
 import HomeSection from '../HomeSection'
-import LeaningRow from './LeaningRow'
+import { leaningNote } from './leaning-note'
 import styles from './DebateLeanings.module.css'
 
 /**
@@ -27,7 +28,7 @@ export default function DebateLeanings({ leanings }: { leanings: Leanings }) {
             <h3 className={styles.columnLabel}>{column.label}</h3>
             <ul className={styles.rows}>
               {column.debates.map((debate) => (
-                <LeaningRow key={debate.id} debate={debate} />
+                <DebateRow key={debate.id} debate={debate} note={leaningNote(debate)} />
               ))}
             </ul>
           </div>
