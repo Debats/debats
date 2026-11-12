@@ -25,6 +25,8 @@ export interface DraftStatementRepository {
   findByChantier(chantierId: string): Effect.Effect<DraftStatement[], DatabaseError>
   /** The drafts on these subjects that no chantier holds and no validation settled: what a chantier may adopt */
   findAdoptableBySubjects(subjectTitles: string[]): Effect.Effect<DraftStatement[], DatabaseError>
+  /** The drafts among these ids, whatever their state; an unknown id is simply absent */
+  findByIds(ids: string[]): Effect.Effect<DraftStatement[], DatabaseError>
   /** Puts these drafts under a chantier */
   assignChantier(draftIds: string[], chantierId: string): Effect.Effect<void, DatabaseError>
   update(

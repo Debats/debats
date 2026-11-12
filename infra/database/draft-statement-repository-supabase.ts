@@ -218,6 +218,21 @@ export function createDraftStatementRepository(supabase: SupabaseClient): DraftS
         catch: (error) => dbError('Failed to fetch adoptable drafts', error),
       }),
 
+    findByIds: (ids: string[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (ids.length === 0) return []
+          const { data, error } = await supabase
+            .from('draft_statements')
+            .select('*')
+            .in('id', ids)
+            .order('created_at', { ascending: false })
+          if (error) throw error
+          return data.map(mapRow)
+        },
+        catch: (error) => dbError('Failed to fetch drafts by id', error),
+      }),
+
     assignChantier: (draftIds: string[], chantierId: string) =>
       Effect.tryPromise({
         try: async () => {

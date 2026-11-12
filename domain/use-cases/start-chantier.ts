@@ -18,22 +18,31 @@ const chantiers = Effect.serviceFunctions(ChantierRepository)
 const drafts = Effect.serviceFunctions(DraftStatementRepository)
 const agent = Effect.serviceFunctions(ChantierAgent)
 
+/** What the thread already says in the agent's name, before any agent ran: the recap of a pass before */
+const recapOf = (chantierId: string) =>
+  pipe(
+    chantiers.findMessages(chantierId),
+    Effect.map((messages) => messages.filter(({ role }) => role === 'agent')),
+    Effect.map((said) => (said.length === 0 ? null : said.map(({ text }) => text).join('\n\n'))),
+  )
+
 /**
  * Launches the agent on an adopted chantier: a session opened on the brief,
- * told how many drafts are already there to read first. A session that
- * cannot be opened leaves the chantier as it was, pending, so the person
- * can try again; the failure is told.
+ * told how many drafts are already there to read first, and what the pass
+ * before left in the thread. A session that cannot be opened leaves the
+ * chantier as it was, pending, so the person can try again; the failure is told.
  */
 export function startChantierUseCase(params: StartChantierParams) {
   const opened = (chantier: Chantier, contributorId: string) =>
     pipe(
-      drafts.findByChantier(chantier.id),
-      Effect.flatMap((held) =>
+      Effect.all({ held: drafts.findByChantier(chantier.id), recap: recapOf(chantier.id) }),
+      Effect.flatMap(({ held, recap }) =>
         agent.open({
           id: chantier.id,
           brief: chantier.brief,
           title: chantier.title,
           existingDrafts: held.length,
+          recap,
         }),
       ),
       Effect.flatMap(({ sessionId }) =>

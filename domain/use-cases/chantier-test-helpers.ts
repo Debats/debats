@@ -85,7 +85,13 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
 }
 
 export type AgentCalls = {
-  opened: { id: string; brief: string; title: string | null; existingDrafts: number }[]
+  opened: {
+    id: string
+    brief: string
+    title: string | null
+    existingDrafts: number
+    recap: string | null
+  }[]
   told: { sessionId: string; text: string }[]
   interrupted: string[]
   forgotten: string[]

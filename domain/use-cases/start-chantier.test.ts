@@ -31,12 +31,49 @@ describe('startChantierUseCase', () => {
 
     expect(Either.isRight(result)).toBe(true)
     expect(calls.opened).toEqual([
-      { id: 'chantier-1', brief: adopted.brief, title: 'Énergie et climat', existingDrafts: 54 },
+      {
+        id: 'chantier-1',
+        brief: adopted.brief,
+        title: 'Énergie et climat',
+        existingDrafts: 54,
+        recap: null,
+      },
     ])
     expect(chantiers.rows.get('chantier-1')).toMatchObject({
       status: 'working',
       sessionId: 'sesn_for_chantier-1',
     })
+  })
+
+  it('hands the agent what the thread already says in its name: the recap of the pass before', async () => {
+    const chantiers = inMemoryChantiers([adopted])
+    chantiers.messages.push(
+      {
+        id: 'm1',
+        chantierId: 'chantier-1',
+        role: 'agent',
+        text: 'Vingt-six sujets traités.',
+        eventId: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 'm2',
+        chantierId: 'chantier-1',
+        role: 'agent',
+        text: 'Six brouillons gardés en réserve.',
+        eventId: null,
+        createdAt: new Date(),
+      },
+    )
+    const { agent, calls } = fakeAgent()
+    const result = await runWith(
+      Layer.merge(chantierFakes(chantiers.repository, agent), holding(3)),
+    )(startChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }))
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(calls.opened[0].recap).toBe(
+      'Vingt-six sujets traités.\n\nSix brouillons gardés en réserve.',
+    )
   })
 
   it('leaves the chantier pending, and says why, when the session cannot be opened', async () => {

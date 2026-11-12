@@ -34,12 +34,13 @@ export class AgentUnavailable {
 }
 
 export interface ChantierAgent {
-  /** Opens a session on the brief and starts the agent on it; an adopted chantier says how many drafts it already holds */
+  /** Opens a session on the brief and starts the agent on it; an adopted chantier says how many drafts it already holds, and what the pass before left */
   open(chantier: {
     id: string
     brief: string
     title: string | null
     existingDrafts: number
+    recap: string | null
   }): Effect.Effect<{ sessionId: string }, AgentUnavailable>
   tell(sessionId: string, text: string): Effect.Effect<void, AgentUnavailable>
   /** What happened in the session since the cursor: messages, and where the agent stands */

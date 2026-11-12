@@ -38,12 +38,15 @@ export type ChantierOpening = {
   title: string | null
   /** The drafts the chantier already holds, produced before the agent came */
   existingDrafts: number
+  /** What the pass that produced those drafts left behind: its own account of what it did and left */
+  recap: string | null
 }
 
 /**
  * The message that opens a chantier's session. A chantier that starts from
  * nothing asks for a title and a plan; one that adopted drafts already
- * carries its title, and asks first for an inventory of what it holds.
+ * carries its title, the recap of the pass before when there was one, and
+ * asks first for an inventory of what it holds.
  */
 export function chantierOpeningMessage(chantier: ChantierOpening, siteUrl: string) {
   const site = `Le site est à ${siteUrl} : une variable ne persiste pas d'une commande à l'autre, préfixez donc chaque commande de DEBATS_URL=${siteUrl} sans en parler. Chaque brouillon que vous postez porte "chantier": "${chantier.id}".`
@@ -58,9 +61,17 @@ ${site}
 Répondez d'abord par le titre du chantier (une ligne « # … ») et votre plan en quelques lignes, puis attendez le go.`
   }
 
+  const recap = chantier.recap
+    ? `
+
+Ce que la passe qui a produit ces brouillons a laissé, à lire comme votre propre bilan :
+
+${chantier.recap}`
+    : ''
+
   return `Chantier ${chantier.id}, intitulé « ${chantier.title ?? chantier.brief} », repris : il porte déjà ${chantier.existingDrafts} brouillons, produits avant vous par d'autres passes, parfois avec des titres de sujets qui ne sont pas ceux du catalogue.
 
-Consigne : ${chantier.brief}
+Consigne : ${chantier.brief}${recap}
 
 ${site}
 

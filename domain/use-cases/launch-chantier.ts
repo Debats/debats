@@ -28,7 +28,13 @@ const agent = Effect.serviceFunctions(ChantierAgent)
 export function launchChantierUseCase(params: LaunchChantierParams) {
   const start = (chantier: Chantier, contributorId: string) =>
     pipe(
-      agent.open({ id: chantier.id, brief: chantier.brief, title: null, existingDrafts: 0 }),
+      agent.open({
+        id: chantier.id,
+        brief: chantier.brief,
+        title: null,
+        existingDrafts: 0,
+        recap: null,
+      }),
       Effect.matchEffect({
         onFailure: (failure) =>
           pipe(
