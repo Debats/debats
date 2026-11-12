@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import EntityReview from '../../../../../../components/review/EntityReview'
 import { subjectHref } from '../../../../../../domain/read-models/hrefs'
 import { plural } from '../../../../../../lib/plural'
 import styles from './PositionHero.module.css'
 
 interface PositionHeroProps {
+  id: string
   subject: { title: string; slug: string }
   title: string
   description: string
@@ -20,6 +22,7 @@ interface PositionHeroProps {
 
 /** En-tête de la page d'une position : une réponse possible à la problématique d'un sujet. */
 export default function PositionHero({
+  id,
   subject,
   title,
   description,
@@ -30,13 +33,16 @@ export default function PositionHero({
   return (
     <section className={styles.hero}>
       <div className={styles.container}>
-        <nav className={styles.kicker} aria-label="Fil d’Ariane">
-          <Link href={subjectHref(subject.slug)} className={styles.crumb}>
-            {subject.title}
-          </Link>
-          <span className={styles.crumbSeparator}>/</span>
-          <span className={styles.crumbCurrent}>Position</span>
-        </nav>
+        <div className={styles.kicker}>
+          <nav className={styles.crumbs} aria-label="Fil d’Ariane">
+            <Link href={subjectHref(subject.slug)} className={styles.crumb}>
+              {subject.title}
+            </Link>
+            <span className={styles.crumbSeparator}>/</span>
+            <span className={styles.crumbCurrent}>Position</span>
+          </nav>
+          <EntityReview entity={{ type: 'position', id }} />
+        </div>
 
         <div className={styles.grid}>
           <div className={styles.main}>

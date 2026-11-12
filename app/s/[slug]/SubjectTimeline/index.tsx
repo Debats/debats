@@ -47,7 +47,7 @@ export default function SubjectTimeline({ subjectSlug, years }: SubjectTimelineP
                 title: entry.position.title,
                 href: positionHref(subjectSlug, entry.position.slug),
               }}
-              statement={entry}
+              statement={{ ...entry, id: entry.statementId }}
               arguments={entry.arguments}
             />
           ))}

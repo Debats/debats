@@ -8,6 +8,9 @@ import { createPositionRepository } from '../../../../../infra/database/position
 import { createStatementRepository } from '../../../../../infra/database/statement-repository-supabase'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
+import { reviewOf } from '../../../../review-of'
+import EntityReview from '../../../../../components/review/EntityReview'
+import ReviewScope from '../../../../../components/review/ReviewScope'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
 import { positionHref, subjectHref } from '../../../../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
@@ -87,10 +90,16 @@ export default async function PositionDetailPage({ params }: PageProps) {
     ).size
   const figuresCount = distinctAuthors('public_figure')
   const organisationsCount = distinctAuthors('organisation')
+  // The position itself, and the statements that take it
+  const review = await reviewOf(supabase, contributor, [
+    position.id,
+    ...positionStatements.map(({ statement }) => statement.id),
+  ])
 
   return (
-    <>
+    <ReviewScope {...review}>
       <PositionHero
+        id={position.id}
         subject={subject}
         title={position.title}
         description={position.description}
@@ -212,6 +221,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                       >
                         {statement.sourceName}
                       </a>
+                      <EntityReview entity={{ type: 'statement', id: statement.id }} />
                     </div>
                     <ArgumentChips arguments={used} />
                   </div>
@@ -221,6 +231,6 @@ export default async function PositionDetailPage({ params }: PageProps) {
           )}
         </section>
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }

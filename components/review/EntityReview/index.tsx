@@ -1,0 +1,28 @@
+'use client'
+
+import { use } from 'react'
+import { ReviewedEntity } from '../../../domain/aggregates/review'
+import { markOf } from '../../../domain/read-models/review'
+import ReviewMark from '../ReviewMark'
+import { ReviewScopeContext } from '../review-scope'
+
+interface EntityReviewProps {
+  entity: ReviewedEntity
+}
+
+/**
+ * La marque de vérification d'une entité, telle que la page l'a lue. Hors
+ * d'un `ReviewScope` (une page qui n'a pas lu de marques), rien n'est rendu.
+ */
+export default function EntityReview({ entity }: EntityReviewProps) {
+  const scope = use(ReviewScopeContext)
+  if (!scope) return null
+  return (
+    <ReviewMark
+      key={entity.id}
+      entity={entity}
+      mark={markOf(scope.marks, entity.id)}
+      viewer={scope.viewer}
+    />
+  )
+}

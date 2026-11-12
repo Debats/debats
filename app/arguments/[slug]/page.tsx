@@ -15,6 +15,8 @@ import ShareButton from '../../../components/ui/ShareButton'
 import ArgumentAdminMenu from './ArgumentAdminMenu'
 import ArgumentHero from './ArgumentHero'
 import ArgumentUsage from './ArgumentUsage'
+import ReviewScope from '../../../components/review/ReviewScope'
+import { reviewOf } from '../../review-of'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -57,10 +59,16 @@ export default async function ArgumentDetailPage({ params }: PageProps) {
   const usage = groupArgumentUsage(statements)
   const canRename = !!contributor && canPerform(contributor.reputation, 'edit_argument')
   const canMerge = !!contributor && canPerform(contributor.reputation, 'delete_argument')
+  // The argument itself, and the statements that mobilise it
+  const review = await reviewOf(supabase, contributor, [
+    argument.id,
+    ...statements.map(({ statement }) => statement.id),
+  ])
 
   return (
-    <>
+    <ReviewScope {...review}>
       <ArgumentHero
+        id={argument.id}
         title={argument.title}
         description={argument.description}
         counts={{
@@ -88,6 +96,6 @@ export default async function ArgumentDetailPage({ params }: PageProps) {
       <ContentWithSidebar topMargin>
         <ArgumentUsage usage={usage} />
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }

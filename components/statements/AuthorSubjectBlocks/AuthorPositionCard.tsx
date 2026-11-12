@@ -3,6 +3,7 @@ import AuthorAvatar from '../AuthorAvatar'
 import ArgumentChips from '../ArgumentChips'
 import StatementBody from '../StatementBody'
 import EditLink from '../../ui/EditLink'
+import EntityReview from '../../review/EntityReview'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../domain/entities/statement'
 import { roleOf } from '../../../domain/read-models/author-role'
 import { positionHref } from '../../../domain/read-models/hrefs'
@@ -61,6 +62,7 @@ export default function AuthorPositionCard({
             <span className={styles.separator}>·</span>
             <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
             {editHref && <EditLink href={editHref(statement.id)} />}
+            <EntityReview entity={{ type: 'statement', id: statement.id }} />
           </div>
           <ArgumentChips arguments={used} />
         </div>

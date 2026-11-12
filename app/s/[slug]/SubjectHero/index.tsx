@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import EntityReview from '../../../../components/review/EntityReview'
 import ThemeBadge from '../../../../components/ui/ThemeBadge'
 import { subjectHref } from '../../../../domain/read-models/hrefs'
 import { formatShortDate } from '../../../../lib/format-date'
@@ -25,6 +26,7 @@ interface SubjectCounts {
 }
 
 interface SubjectHeroProps {
+  id: string
   title: string
   problem: string
   presentation: string
@@ -46,6 +48,7 @@ interface SubjectHeroProps {
 const DEFAULT_BANNER = '/images/subject-default.jpg'
 
 export default function SubjectHero({
+  id,
   title,
   problem,
   presentation,
@@ -70,6 +73,7 @@ export default function SubjectHero({
           {themes.map((theme) => (
             <ThemeBadge key={theme.id} name={theme.name} slug={theme.slug} />
           ))}
+          <EntityReview entity={{ type: 'subject', id }} />
         </div>
 
         <div className={styles.grid}>

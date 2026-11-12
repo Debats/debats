@@ -32,6 +32,8 @@ import ShareButton from '../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FigureHero, { Affiliation } from '../FigureHero'
 import StatementsBySubject from '../../../../components/statements/StatementsBySubject'
+import ReviewScope from '../../../../components/review/ReviewScope'
+import { reviewOf } from '../../../review-of'
 import AuthorAnalyses from '../../../../components/statements/AuthorAnalyses'
 import {
   parseStatementsView,
@@ -140,14 +142,20 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
 
   const base = figureHref(slug)
   const self = publicFigureAuthor(figure.id)
+  // The personality herself, and the statements the list shows
+  const review = await reviewOf(supabase, contributor, [
+    figure.id,
+    ...listed.map(({ statement }) => statement.id),
+  ])
 
   return (
-    <>
+    <ReviewScope {...review}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <FigureHero
+        id={figure.id}
         slug={figure.slug}
         name={figure.name}
         presentation={figure.presentation}
@@ -222,6 +230,6 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
           />
         )}
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }

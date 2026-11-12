@@ -12,9 +12,12 @@ import { authorOnSubjectHref } from '../../domain/read-models/statement-author'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
 import ReadingGuide from '../../components/layout/ReadingGuide'
+import ReviewScope from '../../components/review/ReviewScope'
 import DatedStatement from '../../components/statements/DatedStatement'
 import Button from '../../components/ui/Button'
 import { plural } from '../../lib/plural'
+import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
+import { reviewOf } from '../review-of'
 import FeedFilters from './FeedFilters'
 import ActiveSubjects from './ActiveSubjects'
 import styles from './prises-de-position.module.css'
@@ -52,6 +55,11 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
     await Effect.runPromise(
       createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(figureIds),
     ),
+  )
+  const review = await reviewOf(
+    supabase,
+    await getAuthenticatedContributor(),
+    feed.entries.map(({ statement }) => statement.id),
   )
   const shownUpTo = Math.min(page * FEED_PAGE_SIZE, feed.total)
   const hasMore = shownUpTo < feed.total
@@ -104,22 +112,24 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
               : 'Aucune prise de position ne correspond à ces filtres.'}
           </p>
         ) : (
-          <div className={styles.card}>
-            {feed.entries.map(({ statement, author, position, subject, arguments: used }) => (
-              <DatedStatement
-                key={statement.id}
-                author={author}
-                role={roleOf(author, roles)}
-                position={{
-                  title: position.title,
-                  href: authorOnSubjectHref(author, subject.slug),
-                }}
-                subject={{ title: subject.title, href: subjectHref(subject.slug) }}
-                statement={statement}
-                arguments={used}
-              />
-            ))}
-          </div>
+          <ReviewScope {...review}>
+            <div className={styles.card}>
+              {feed.entries.map(({ statement, author, position, subject, arguments: used }) => (
+                <DatedStatement
+                  key={statement.id}
+                  author={author}
+                  role={roleOf(author, roles)}
+                  position={{
+                    title: position.title,
+                    href: authorOnSubjectHref(author, subject.slug),
+                  }}
+                  subject={{ title: subject.title, href: subjectHref(subject.slug) }}
+                  statement={statement}
+                  arguments={used}
+                />
+              ))}
+            </div>
+          </ReviewScope>
         )}
 
         {feed.total > 0 && (

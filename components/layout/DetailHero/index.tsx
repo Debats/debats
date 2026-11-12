@@ -1,4 +1,6 @@
 import { ReactNode } from 'react'
+import { ReviewedEntity } from '../../../domain/aggregates/review'
+import EntityReview from '../../review/EntityReview'
 import ComingSoon from '../../ui/ComingSoon'
 import styles from './DetailHero.module.css'
 
@@ -19,6 +21,8 @@ export interface HeroStat {
 interface DetailHeroProps {
   /** Libellé et pastilles au-dessus du titre */
   kicker: ReactNode
+  /** L'entité que la page présente : sa marque de vérification ferme la ligne du libellé */
+  reviewed: ReviewedEntity
   /** Avatar ou logo à gauche du titre ; absent pour une notion sans visuel (argument) */
   media?: ReactNode
   title: string
@@ -34,6 +38,7 @@ interface DetailHeroProps {
 /** Bandeau d'en-tête d'une page de détail (personnalité, organisation). */
 export default function DetailHero({
   kicker,
+  reviewed,
   media,
   title,
   titleAside,
@@ -45,7 +50,10 @@ export default function DetailHero({
   return (
     <section className={styles.hero}>
       <div className={styles.container}>
-        <div className={styles.kicker}>{kicker}</div>
+        <div className={styles.kicker}>
+          {kicker}
+          <EntityReview entity={reviewed} />
+        </div>
 
         <div className={styles.grid}>
           <div className={styles.main}>

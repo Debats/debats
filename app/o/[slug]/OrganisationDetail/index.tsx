@@ -27,6 +27,8 @@ import SectionTabs from '../../../../components/ui/SectionTabs'
 import ShareButton from '../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import StatementsBySubject from '../../../../components/statements/StatementsBySubject'
+import ReviewScope from '../../../../components/review/ReviewScope'
+import { reviewOf } from '../../../review-of'
 import {
   parseStatementsView,
   statementsViewHref,
@@ -122,14 +124,20 @@ export default async function OrganisationDetail({
     : '/contribuer'
   const base = organisationHref(slug)
   const self = organisationAuthor(organisation.id)
+  // The organisation itself, and the statements the list shows
+  const review = await reviewOf(supabase, contributor, [
+    organisation.id,
+    ...listed.map(({ statement }) => statement.id),
+  ])
 
   return (
-    <>
+    <ReviewScope {...review}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <OrganisationHero
+        id={organisation.id}
         slug={organisation.slug}
         name={organisation.name}
         acronym={acronym}
@@ -199,6 +207,6 @@ export default async function OrganisationDetail({
           />
         )}
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }

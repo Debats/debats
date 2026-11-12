@@ -230,6 +230,35 @@ export type Database = {
           },
         ]
       }
+      confirmations: {
+        Row: {
+          created_at: string
+          created_by: string
+          entity_id: string
+          entity_type: string
+        }
+        Insert: {
+          created_at: string
+          created_by: string
+          entity_id: string
+          entity_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          entity_id?: string
+          entity_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "confirmations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contributors: {
         Row: {
           created_at: string | null
@@ -398,6 +427,63 @@ export type Database = {
             columns: ["chantier_id"]
             isOneToOne: false
             referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flags: {
+        Row: {
+          answer: string | null
+          comment: string
+          created_at: string
+          created_by: string
+          entity_id: string
+          entity_type: string
+          id: string
+          reason: string
+          status: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          answer?: string | null
+          comment: string
+          created_at: string
+          created_by: string
+          entity_id: string
+          entity_type: string
+          id: string
+          reason: string
+          status?: string
+          updated_at: string
+          updated_by: string
+        }
+        Update: {
+          answer?: string | null
+          comment?: string
+          created_at?: string
+          created_by?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flags_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flags_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
         ]
@@ -1382,6 +1468,23 @@ export type Database = {
         }[]
       }
       get_user_id_by_email: { Args: { target_email: string }; Returns: string }
+      contributor_display_names: {
+        Args: { p_ids: string[] }
+        Returns: {
+          display_name: string | null
+          id: string
+        }[]
+      }
+      get_review_marks: {
+        Args: { p_entity_ids: string[]; p_viewer?: string }
+        Returns: {
+          confirmations: number
+          confirmed_by_viewer: boolean
+          entity_id: string
+          flagged_by_viewer: boolean
+          open_flags: number
+        }[]
+      }
       search_site: {
         Args: { p_per_kind?: number; p_query: string }
         Returns: {

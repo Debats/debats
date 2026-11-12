@@ -20,6 +20,7 @@ export interface Affiliation {
 }
 
 interface FigureHeroProps {
+  id: string
   slug: string
   name: string
   presentation: string
@@ -41,6 +42,7 @@ function periodLabel(period: ActivityPeriod | null): string {
 }
 
 export default function FigureHero({
+  id,
   slug,
   name,
   presentation,
@@ -53,6 +55,7 @@ export default function FigureHero({
 }: FigureHeroProps) {
   return (
     <DetailHero
+      reviewed={{ type: 'public_figure', id }}
       kicker={
         <>
           <span className={styles.label}>Personnalité</span>

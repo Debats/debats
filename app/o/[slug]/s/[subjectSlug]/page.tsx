@@ -20,6 +20,8 @@ import {
   positionShares,
 } from '../../../../../domain/services/author-on-subject'
 import { loadOrganisationSubjectPage } from '../../../../../infra/queries/author-subject-page'
+import { reviewOf } from '../../../../review-of'
+import ReviewScope from '../../../../../components/review/ReviewScope'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import {
@@ -102,6 +104,11 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
   const statements = countStatements(positions)
   const voices = countSubjectVoices(page.everyone)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
+  const review = await reviewOf(
+    supabase,
+    contributor,
+    organisationStatements.map(({ statement }) => statement.id),
+  )
 
   // Ses membres se taisent, ou le site ne lui en connaît aucun : une
   // organisation n'a qu'un groupe, le sien, et le dire faux serait affirmer
@@ -120,7 +127,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
     )
 
   return (
-    <>
+    <ReviewScope {...review}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(authorOnSubjectJsonLd(author, subject)) }}
@@ -194,6 +201,6 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
 
         <ContributeCard authorName={author.name} statements={statements} />
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }

@@ -16,6 +16,7 @@ interface DatedStatementProps {
   /** Left out when every entry of the list stands on the same subject */
   subject?: { title: string; href: string }
   statement: {
+    id: string
     content: StatementContent
     sourceName: string
     sourceUrl: string

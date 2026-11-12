@@ -21,6 +21,8 @@ import {
 import { elide } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
+import { reviewOf } from '../../../../review-of'
+import ReviewScope from '../../../../../components/review/ReviewScope'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import {
   authorOnSubjectJsonLd,
@@ -99,6 +101,11 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const statements = countStatements(positions)
   const voices = countSubjectVoices(page.everyone)
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_statement')
+  const review = await reviewOf(
+    supabase,
+    contributor,
+    figureStatements.map(({ statement }) => statement.id),
+  )
 
   // Ses groupes se taisent, ou le site ne lui en connaît aucun : dire l'un
   // pour l'autre, c'est affirmer un parti et un métier qu'on ignore.
@@ -114,7 +121,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
     )
 
   return (
-    <>
+    <ReviewScope {...review}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(authorOnSubjectJsonLd(author, subject)) }}
@@ -184,6 +191,6 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
         <ContributeCard authorName={author.name} statements={statements} />
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }

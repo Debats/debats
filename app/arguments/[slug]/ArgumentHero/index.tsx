@@ -10,6 +10,7 @@ interface ArgumentCounts {
 }
 
 interface ArgumentHeroProps {
+  id: string
   title: string
   description: string
   counts: ArgumentCounts
@@ -20,6 +21,7 @@ interface ArgumentHeroProps {
 
 /** Bandeau d'en-tête de la page d'un argument : le raisonnement, et combien il sert. */
 export default function ArgumentHero({
+  id,
   title,
   description,
   counts,
@@ -28,6 +30,7 @@ export default function ArgumentHero({
 }: ArgumentHeroProps) {
   return (
     <DetailHero
+      reviewed={{ type: 'argument', id }}
       kicker={<span className={styles.label}>Argument</span>}
       title={title}
       titleAside={adminMenu}

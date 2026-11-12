@@ -10,6 +10,7 @@ interface OrganisationCounts {
 }
 
 interface OrganisationHeroProps {
+  id: string
   slug: string
   name: string
   acronym: string | null
@@ -24,6 +25,7 @@ interface OrganisationHeroProps {
 }
 
 export default function OrganisationHero({
+  id,
   slug,
   name,
   acronym,
@@ -36,6 +38,7 @@ export default function OrganisationHero({
 }: OrganisationHeroProps) {
   return (
     <DetailHero
+      reviewed={{ type: 'organisation', id }}
       kicker={
         <>
           <span className={styles.label}>Organisation</span>

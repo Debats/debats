@@ -17,6 +17,13 @@
   margin-bottom: 20px;
 }
 
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .crumb {
   composes: label from '../../../../../../styles/text.module.css';
   color: var(--ink-2);

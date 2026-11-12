@@ -25,6 +25,8 @@ import SubjectHero from '../SubjectHero'
 import SubjectTabs, { SubjectTab } from '../SubjectTabs'
 import SubjectAnalyses from '../SubjectAnalyses'
 import SubjectTimeline from '../SubjectTimeline'
+import ReviewScope from '../../../../components/review/ReviewScope'
+import { reviewOf } from '../../../review-of'
 import PositionsOverview from '../PositionsOverview'
 import PositionsFilter, { parseAuthorKindParam } from '../PositionsFilter'
 import PositionCard from '../PositionCard'
@@ -113,6 +115,12 @@ export default async function SubjectDetail({
     !!contributor &&
     canPerform(contributor.reputation, major ? 'delete_major_subject' : 'delete_minor_subject')
 
+  // The subject itself, and the statements its Chronologie tab lists
+  const review = await reviewOf(supabase, contributor, [
+    subject.id,
+    ...(timeline ?? []).flatMap((year) => year.entries.map((entry) => entry.statementId)),
+  ])
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -123,12 +131,13 @@ export default async function SubjectDetail({
   }
 
   return (
-    <>
+    <ReviewScope {...review}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <SubjectHero
+        id={subject.id}
         title={subject.title}
         problem={subject.problem}
         presentation={subject.presentation}
@@ -247,6 +256,6 @@ export default async function SubjectDetail({
           </>
         )}
       </ContentWithSidebar>
-    </>
+    </ReviewScope>
   )
 }
