@@ -2,25 +2,21 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createBrowserSupabaseClient } from '../../../infra/supabase/browser'
 import type { User } from '@supabase/supabase-js'
-import FlagsEntry from '../../layout/FlagsEntry'
 import Button from '../../ui/Button'
 import LoginModal from '../LoginModal'
+import UserMenu from '../UserMenu'
 import styles from './AuthSection.module.css'
 
 interface AuthSectionProps {
   onAuthChange?: () => void
 }
 
-/** Deux lettres au plus : initiales d'un nom, ou début d'une adresse e-mail. */
-function initials(displayName: string): string {
-  const words = displayName.split(/[\s@._-]+/).filter(Boolean)
-  const letters = words.length > 1 ? words.slice(0, 2).map((w) => w[0]) : displayName.slice(0, 2)
-  return Array.from(letters).join('').toUpperCase()
-}
-
+/**
+ * Le bout de l'en-tête qui dépend de qui regarde : le menu de la personne
+ * connectée, ou l'invitation à contribuer, à se connecter et à s'inscrire.
+ */
 export default function AuthSection({ onAuthChange }: AuthSectionProps) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
@@ -45,29 +41,21 @@ export default function AuthSection({ onAuthChange }: AuthSectionProps) {
   }, [onAuthChange, router])
 
   if (user) {
-    const displayName: string = user.user_metadata?.name || user.email || ''
     return (
       <div className={styles.section}>
-        <FlagsEntry />
-        <Link href="/me" className={styles.avatar} title={displayName}>
-          <span aria-hidden="true">{initials(displayName)}</span>
-          <span className={styles.visuallyHidden}>Mon compte : {displayName}</span>
-        </Link>
-        <Button
-          variant="link"
-          onClick={async () => {
-            const supabase = createBrowserSupabaseClient()
-            await supabase.auth.signOut()
-          }}
-        >
-          Déconnexion
-        </Button>
+        <UserMenu
+          displayName={user.user_metadata?.name || user.email || ''}
+          onSignOut={() => void createBrowserSupabaseClient().auth.signOut()}
+        />
       </div>
     )
   }
 
   return (
     <div className={styles.section}>
+      <Button href="/contribuer" size="small">
+        Contribuer
+      </Button>
       <Button variant="link" onClick={() => setShowLogin(true)}>
         Connexion
       </Button>

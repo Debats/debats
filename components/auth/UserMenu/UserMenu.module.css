@@ -1,0 +1,96 @@
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--paper-2);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.avatar:hover,
+.avatar[data-state='open'] {
+  background-color: var(--line);
+}
+
+.avatar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Des signalements attendent : un point ambre, visible sans ouvrir le menu */
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background-color: var(--warn);
+}
+
+.menu {
+  z-index: 1500;
+  min-width: 220px;
+  padding: 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  box-shadow: 0 12px 32px rgba(21, 23, 28, 0.12);
+  font-family: var(--font-sans);
+}
+
+.name {
+  composes: meta from '../../../styles/text.module.css';
+  padding: 6px 12px 8px;
+  color: var(--ink-2);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  outline: none;
+}
+
+.item:link,
+.item:visited {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.item[data-highlighted] {
+  background-color: var(--paper-2);
+}
+
+.count {
+  composes: meta from '../../../styles/text.module.css';
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 500;
+}
+
+.separator {
+  height: 1px;
+  margin: 6px 4px;
+  background-color: var(--line);
+}

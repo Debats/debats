@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import AuthSection from '../auth/AuthSection'
-import Button from '../ui/Button'
 import ComingSoon from '../ui/ComingSoon'
 import ShareButton from '../ui/ShareButton'
 import { useShareButtonContext } from '../ui/ShareButton/ShareButtonContext'
@@ -96,9 +95,6 @@ export default function Header() {
 
           <div className={styles.tools}>
             <SiteSearch />
-            <Button href="/contribuer" size="small">
-              Contribuer
-            </Button>
             <AuthSection onAuthChange={() => setMenuOpen(false)} />
           </div>
         </div>
