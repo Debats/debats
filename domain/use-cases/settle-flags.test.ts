@@ -8,6 +8,7 @@ import { runFormWith } from './command-test-helpers'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { flagEntityUseCase } from './flag-entity'
 import { leasStatement, moderator, reader, reviewFactsIn, site } from './review-test-helpers'
+import { INVALID_FORM } from './preconditions'
 import { EDITED_MEANWHILE } from './run-command'
 import { NOT_REMOVABLE, settleFlagsUseCase } from './settle-flags'
 
@@ -130,6 +131,18 @@ describe('settleFlagsUseCase', () => {
 
     expect(result).toEqual(Either.left(EDITED_MEANWHILE))
     expect(reviewFactsIn(journal).at(-1)).toEqual(['nadia', 'Flagged'])
+  })
+
+  it('settles nothing as corrected: a form that says so is not one', async () => {
+    const { run, journal } = await flaggedTwice()
+
+    const result = await execute(
+      settleFlagsUseCase({ ...settlement, outcome: 'corrected' as never }),
+      run,
+    )
+
+    expect(result).toEqual(Either.left(INVALID_FORM))
+    expect(reviewFactsIn(journal).at(-1)).toEqual(['sacha', 'Flagged'])
   })
 
   it('has nothing to settle on an entity without an open flag', async () => {

@@ -173,6 +173,25 @@
   color: var(--card);
 }
 
+/* Le chemin vers le traitement, pour qui peut traiter : la seule action pleine du panneau */
+.settle {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background-color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settle:link,
+.settle:visited {
+  color: var(--card);
+  text-decoration: none;
+}
+
 .quietAction {
   border-color: transparent;
   color: var(--ink-2);

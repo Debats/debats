@@ -1,0 +1,57 @@
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty {
+  margin: 24px 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+/* La page de traitement d'une entité */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sectionTitle {
+  composes: label from '../../styles/text.module.css';
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.entity {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+}
+
+.entityTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.entityDetail {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.flags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

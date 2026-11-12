@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { ReviewedEntityType } from '../../../domain/aggregates/review-events'
 import {
   agreed,
@@ -19,6 +20,8 @@ interface ReviewPanelProps {
   /** Null tant que le détail n'est pas lu */
   detail: ReviewDetail | null
   viewer: Viewer
+  /** Où les signalements de l'entité se traitent, pour qui en a le droit */
+  settleHref: string
   busy: boolean
   error: string
   onConfirm: () => void
@@ -37,6 +40,7 @@ export default function ReviewPanel({
   mark,
   detail,
   viewer,
+  settleHref,
   busy,
   error,
   onConfirm,
@@ -72,6 +76,12 @@ export default function ReviewPanel({
           </p>
         </div>
       ))}
+
+      {viewer === 'moderator' && detail && detail.flags.length > 0 && (
+        <Link href={settleHref} className={styles.settle}>
+          {detail.flags.length === 1 ? 'Traiter ce signalement' : 'Traiter ces signalements'}
+        </Link>
+      )}
 
       {viewer === 'visitor' && (
         <p className={`${styles.section} ${styles.panelNote}`}>

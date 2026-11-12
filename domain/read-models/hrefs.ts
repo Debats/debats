@@ -40,3 +40,10 @@ export const organisationOnSubjectHref = (organisationSlug: string, subjectSlug:
 /** The form that edits a statement, whoever its author */
 export const statementEditHref = (statementId: string): string =>
   `/prise-de-position/${statementId}/modifier`
+
+/** The flags waiting for a moderator */
+export const FLAGS_HREF = '/signalements'
+
+/** Where a moderator settles the flags open on one entity, whatever its kind */
+export const flaggedEntityHref = (entity: { type: string; id: string }): string =>
+  `${FLAGS_HREF}/${entity.type}/${entity.id}`

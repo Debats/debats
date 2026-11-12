@@ -1,0 +1,48 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 22px 24px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+}
+
+.body {
+  flex: 1 1 380px;
+  min-width: 0;
+}
+
+.kicker {
+  composes: label from '../../../styles/text.module.css';
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.title {
+  margin: 6px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.titleLink:link,
+.titleLink:visited {
+  color: var(--ink);
+}
+
+.titleLink:hover {
+  color: var(--signal);
+}
+
+.detail {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.flags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}

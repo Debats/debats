@@ -1,9 +1,10 @@
 import { Effect, pipe } from 'effect'
+import * as S from 'effect/Schema'
 import { ReviewedEntity, settle, Settlement } from '../aggregates/review'
 import { withdrawStatement } from '../aggregates/statement'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
-import { allowedTo } from './preconditions'
+import { allowedTo, decoded } from './preconditions'
 import { decideOnReview, rewardUpheldFlags } from './review-stream'
 import { decideOnStatement } from './statement-stream'
 import { ContributorIdentity, Rejected } from './types'
@@ -11,14 +12,23 @@ import { ContributorIdentity, Rejected } from './types'
 export const NOT_REMOVABLE =
   'Seule une prise de position peut être retirée depuis un signalement. Corrigez ce contenu, ou écartez le signalement.'
 
-type SettleFlagsParams = {
+/**
+ * What the settlement form says: how the flags are closed, what the moderator
+ * checked (shown with the flags it closes), and the revision of the review
+ * her page was rendered from, so a flag raised since is not settled unread.
+ */
+export const SettlementForm = S.Struct({
+  outcome: S.Literal('dismissed', 'removed'),
+  answer: S.String,
+  revision: S.NonNegativeInt,
+})
+
+/** A settlement as the form sends it */
+export type NewSettlement = S.Schema.Encoded<typeof SettlementForm>
+
+type SettleFlagsParams = NewSettlement & {
   contributor: ContributorIdentity | null
   entity: ReviewedEntity
-  outcome: Settlement
-  /** What the moderator checked; shown with the flags it closes */
-  answer: string
-  /** The revision of the review the page was rendered from: a flag raised since is not settled unread */
-  revision: number
 }
 
 /** Only a statement leaves the site from here: removing anything else takes its own command */
@@ -46,12 +56,15 @@ const withdrawn = (events: EventStore, entity: ReviewedEntity, moderatorId: stri
  * a review that moved since her page was rendered is refused. A correction
  * goes through the entity's own edit, which settles the flags as it writes.
  */
-export function settleFlagsUseCase(params: SettleFlagsParams) {
-  const { contributor, entity, outcome, answer, revision } = params
+export function settleFlagsUseCase({ contributor, entity, ...form }: SettleFlagsParams) {
   return pipe(
-    allowedTo(contributor, 'settle_flag', 'traiter un signalement'),
-    Effect.tap(() => removable(entity, outcome)),
-    Effect.flatMap((moderator) =>
+    Effect.all({
+      moderator: allowedTo(contributor, 'settle_flag', 'traiter un signalement'),
+      // What arrives from a form has no type: a correction is never settled from here
+      settlement: decoded(SettlementForm)(form),
+    }),
+    Effect.tap(({ settlement }) => removable(entity, settlement.outcome)),
+    Effect.flatMap(({ moderator, settlement: { outcome, answer, revision } }) =>
       runUnitOfWork((events) =>
         pipe(
           decideOnReview(events, entity.id, moderator.id, settle(outcome, answer), revision),

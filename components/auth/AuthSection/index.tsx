@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createBrowserSupabaseClient } from '../../../infra/supabase/browser'
 import type { User } from '@supabase/supabase-js'
+import FlagsEntry from '../../layout/FlagsEntry'
 import Button from '../../ui/Button'
 import LoginModal from '../LoginModal'
 import styles from './AuthSection.module.css'
@@ -47,6 +48,7 @@ export default function AuthSection({ onAuthChange }: AuthSectionProps) {
     const displayName: string = user.user_metadata?.name || user.email || ''
     return (
       <div className={styles.section}>
+        <FlagsEntry />
         <Link href="/me" className={styles.avatar} title={displayName}>
           <span aria-hidden="true">{initials(displayName)}</span>
           <span className={styles.visuallyHidden}>Mon compte : {displayName}</span>

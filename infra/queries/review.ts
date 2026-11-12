@@ -60,7 +60,7 @@ interface ConfirmationRow {
 }
 
 /** The names the site shows contributors under, by contributor id; none for who gave no name */
-function displayNames(
+export function displayNames(
   supabase: SupabaseClient,
   contributorIds: readonly string[],
 ): Effect.Effect<Map<string, string>, DatabaseError> {

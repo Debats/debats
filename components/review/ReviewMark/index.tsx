@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import { Popover } from 'radix-ui'
 import { reviewDetailAction, ReviewResult } from '../../../app/actions/review'
 import { ReviewedEntity } from '../../../domain/aggregates/review'
+import { flaggedEntityHref } from '../../../domain/read-models/hrefs'
 import {
   markLabel,
   ReviewDetail,
@@ -115,6 +116,7 @@ export default function ReviewMark({ entity, mark: initial, viewer }: ReviewMark
               mark={mark}
               detail={detail}
               viewer={viewer}
+              settleHref={flaggedEntityHref(entity)}
               busy={review.busy}
               error={review.error}
               onConfirm={() => say(review.confirm)}
