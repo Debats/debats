@@ -352,6 +352,32 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements with authors for position', error),
       }),
 
+    findOneToReview: (viewerId: string | null, skip: number) =>
+      Effect.tryPromise({
+        try: async () => {
+          // The function picks which statement; the feed query then reads it as any other
+          const picked = await supabase.rpc('get_statement_to_review', {
+            p_viewer: viewerId,
+            p_skip: skip,
+          })
+          if (picked.error) throw picked.error
+          if (!picked.data) return null
+
+          const { data, error } = await supabase
+            .from('statements')
+            .select(feedQuery(undefined))
+            .eq('id', picked.data)
+            .maybeSingle()
+          if (error) throw error
+          return data
+            ? mapStatementWithAuthorAndSubjectRow(
+                data as unknown as StatementWithAuthorAndSubjectRow,
+              )
+            : null
+        },
+        catch: (error) => dbError('Failed to fetch a statement to review', error),
+      }),
+
     findLatestQuotedByPositionId: (positionId: string) =>
       Effect.tryPromise({
         try: async () => {

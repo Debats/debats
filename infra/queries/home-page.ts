@@ -23,6 +23,7 @@ import { createStatementRepository } from '../database/statement-repository-supa
 import { createSubjectRepository } from '../database/subject-repository-supabase'
 import { loadFigureAgreements } from './figure-agreements'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
+import { loadMovedStatements } from './position-changes'
 import { getSubjectPositionsSummary } from './subject-positions-summary'
 
 type Client = SupabaseClient<Database>
@@ -98,11 +99,13 @@ const loadMovingDebates = (
  * figures, the debates and the last statements together, then what depends on
  * those debates — the detail of the subject the day picked, the faces of the
  * subjects that move. `now` is the instant the page renders at: it names the
- * day and where « recent » starts.
+ * day and where « recent » starts. `reviewer` is who looks, null for a
+ * visitor, and how many unreviewed statements she asked to pass over.
  */
 export const loadHomePage = (
   supabase: Client,
   now: Date,
+  reviewer: { id: string | null; skip: number },
 ): Effect.Effect<HomePage, DatabaseError> => {
   const statements = createStatementRepository(supabase)
   const subjects = createSubjectRepository(supabase)
@@ -113,10 +116,12 @@ export const loadHomePage = (
         debates: loadHomeDebates(supabase, recentSince(now)),
         feed: statements.findFeed({}, { limit: LATEST_STATEMENTS, offset: 0 }),
         agreements: loadFigureAgreements(supabase, PAIR_CANDIDATES),
+        movedStatements: loadMovedStatements(supabase),
+        toReview: statements.findOneToReview(reviewer.id, reviewer.skip),
       },
       unbounded,
     ),
-    Effect.flatMap(({ figures, debates, feed, agreements }) =>
+    Effect.flatMap(({ figures, debates, feed, agreements, movedStatements, toReview }) =>
       pipe(
         Effect.all(
           {
@@ -131,6 +136,8 @@ export const loadHomePage = (
           daily,
           moving,
           agreements,
+          movedStatements,
+          toReview,
           latest: feed.entries,
         })),
       ),

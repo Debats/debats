@@ -1466,6 +1466,25 @@ export type Database = {
           voices: number
         }[]
       }
+      get_moved_statements: {
+        Args: never
+        Returns: {
+          created_at: string
+          figure_id: string
+          figure_name: string
+          figure_slug: string
+          position_id: string
+          position_title: string
+          stated_at: string
+          subject_id: string
+          subject_slug: string
+          subject_title: string
+        }[]
+      }
+      get_statement_to_review: {
+        Args: { p_skip?: number; p_viewer?: string | null }
+        Returns: string | null
+      }
       get_site_figures: {
         Args: never
         Returns: {

@@ -61,6 +61,16 @@ export interface StatementRepository {
   ): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
   /**
+   * A statement nobody has confirmed nor flagged yet, the last added first,
+   * never one the viewer added herself; `skip` passes over as many, to ask
+   * for another. Null when every statement has been reviewed.
+   */
+  findOneToReview(
+    viewerId: string | null,
+    skip: number,
+  ): Effect.Effect<StatementWithAuthorAndSubject | null, DatabaseError>
+
+  /**
    * The last statement of a position that carries words (a declaration or a
    * programme): what can be quoted for it. Null when it only holds votes and
    * acts, or nothing.

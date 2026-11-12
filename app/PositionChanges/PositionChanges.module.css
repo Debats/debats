@@ -1,0 +1,79 @@
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* auto-fill : un changement seul garde la largeur d'une carte */
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card,
+.card:link,
+.card:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  padding: 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  transition: box-shadow 0.15s ease;
+}
+
+.card:hover {
+  color: var(--ink);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.line {
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.subject {
+  color: var(--ink-2);
+}
+
+/* La position quittée, la flèche, la position prise */
+.move {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.arrow {
+  color: var(--ink);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.position {
+  font-family: var(--font-serif);
+  font-size: 23px;
+  line-height: 1.15;
+  text-wrap: pretty;
+}

@@ -3,7 +3,11 @@ import { createAdminSupabaseClient } from '../infra/supabase/admin'
 import { loadHomePage } from '../infra/queries/home-page'
 import { pairsToShow } from '../domain/read-models/figure-agreements'
 import { debateLeanings, debateMap, newestDebates } from '../domain/read-models/home-debates'
+import { parseReviewSkip } from '../domain/read-models/home-page'
+import { latestChanges } from '../domain/read-models/position-changes'
+import { viewerOf } from '../domain/read-models/review'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
+import { getAuthenticatedContributor } from './actions/get-authenticated-contributor'
 import HeroSection from './HeroSection'
 import DailySubject from './DailySubject'
 import DebateLeanings from './DebateLeanings'
@@ -12,6 +16,8 @@ import FigurePairs from './FigurePairs'
 import LatestQuotes from './LatestQuotes'
 import MovingDebates from './MovingDebates'
 import NewSubjects from './NewSubjects'
+import PositionChanges from './PositionChanges'
+import ReviewInvite from './ReviewInvite'
 import styles from './home.module.css'
 
 const NEW_SUBJECTS = 5
@@ -24,9 +30,19 @@ const MAP_ROOM = { themes: 6, subjectsPerTheme: 2 }
 
 const PAIRS = 4
 
-export default async function HomePage() {
+const CHANGES = 2
+
+interface PageProps {
+  searchParams: Promise<{ relire?: string }>
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const skip = parseReviewSkip((await searchParams).relire)
+  const contributor = await getAuthenticatedContributor()
   // The page names the instant it renders at: the day's subject and what counts as recent follow
-  const home = await Effect.runPromise(loadHomePage(createAdminSupabaseClient(), new Date()))
+  const home = await Effect.runPromise(
+    loadHomePage(createAdminSupabaseClient(), new Date(), { id: contributor?.id ?? null, skip }),
+  )
 
   return (
     <>
@@ -47,8 +63,12 @@ export default async function HomePage() {
           <DebateLeanings leanings={debateLeanings(home.debates, LEANING_SUBJECTS)} />
           <MovingDebates moving={home.moving} />
           <FigurePairs pairs={pairsToShow(home.agreements, PAIRS)} />
+          <PositionChanges changes={latestChanges(home.movedStatements, CHANGES)} />
         </div>
       </ContentWithSidebar>
+      {home.toReview && (
+        <ReviewInvite toReview={home.toReview} viewer={viewerOf(contributor)} skip={skip} />
+      )}
     </>
   )
 }
