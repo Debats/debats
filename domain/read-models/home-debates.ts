@@ -23,6 +23,8 @@ export interface Debate {
   /** Distinct authors on the subject: one who took two positions is one voice */
   voices: number
   statementsCount: number
+  /** Statements added since the instant the page counts recent ones from */
+  recentStatementsCount: number
   positions: DebatePosition[]
 }
 
@@ -48,13 +50,19 @@ export interface SiteFigures {
 }
 
 /**
- * Below this many voices a subject is not shown as the subject of the day:
- * its bar would compare two or three people, and one of its leading positions
- * would often have nobody to quote.
+ * Below this many voices the home page neither details a subject as the
+ * subject of the day nor compares how it leans: its bar would weigh two or
+ * three people, and one of its leading positions would often have nobody to
+ * quote.
  */
-export const DAILY_MIN_VOICES = 10
+export const MIN_VOICES_TO_COMPARE = 10
 
-/** How far back the home page looks for what was just added */
+const comparable = (debate: Debate): boolean => debate.voices >= MIN_VOICES_TO_COMPARE
+
+/**
+ * How far back the home page looks for what was just added. The page words it
+ * « cette semaine » (`app/MovingDebates`): the two change together.
+ */
 const RECENT_DAYS = 7
 
 /** The instant the home page counts recent statements from, given when it renders */
@@ -67,11 +75,7 @@ export const recentSince = (now: Date): Date =>
  * during the day joins the draw without moving it, unless it wins it.
  */
 export const dailyDebate = (debates: readonly Debate[], today: Date): Debate | null =>
-  dailyPick(
-    debates.filter((debate) => debate.voices >= DAILY_MIN_VOICES),
-    (debate) => debate.id,
-    today,
-  )
+  dailyPick(debates.filter(comparable), (debate) => debate.id, today)
 
 const bySupport = (a: DebatePosition, b: DebatePosition) =>
   b.voices - a.voices || a.title.localeCompare(b.title, 'fr')
@@ -100,6 +104,62 @@ export function debateShares(debate: Debate): DebateShare[] {
 /** The two most supported positions: the ones the home page quotes face to face */
 export const leadingPositions = (debate: Debate): DebatePosition[] =>
   heldPositions(debate).slice(0, 2)
+
+/** The subjects statements were just added to, the busiest first, then the most spoken on */
+export const movingDebates = (debates: readonly Debate[], limit: number): Debate[] =>
+  debates
+    .filter((debate) => debate.recentStatementsCount > 0)
+    .sort((a, b) => b.recentStatementsCount - a.recentStatementsCount || b.voices - a.voices)
+    .slice(0, limit)
+
+/** Where a subject leans: its most supported position, and how far ahead it is */
+export interface DebateLead {
+  position: DebatePosition
+  /** The part of the subject's voices that took this position, between 0 and 1 */
+  share: number
+  /** How many positions gather as many voices as this one, itself included */
+  tied: number
+}
+
+/**
+ * The lead of a subject, measured on its voices: an author who took two
+ * positions is still one voice of the subject, so the part reads « 15 voices
+ * out of 19 took this position ».
+ */
+export function leadOf(debate: Debate): DebateLead | null {
+  const [position, ...others] = heldPositions(debate)
+  if (!position) return null
+  return {
+    position,
+    share: position.voices / debate.voices,
+    tied: 1 + others.filter((other) => other.voices === position.voices).length,
+  }
+}
+
+/** The subjects where voices spread, and those where they lean, never the same on both sides */
+export interface DebateLeanings {
+  /** The least leaning first */
+  split: Debate[]
+  /** The most leaning first */
+  settled: Debate[]
+}
+
+/**
+ * Sets apart the subjects whose voices spread over several positions from
+ * those where one position gathers most of them. Only subjects enough voices
+ * spoke on, with at least two positions taken, are compared. When too few can
+ * be compared to fill both sides, the less leaning half goes to `split`.
+ */
+export function debateLeanings(debates: readonly Debate[], limit: number): DebateLeanings {
+  const ranked = debates
+    .filter((debate) => comparable(debate) && heldPositions(debate).length > 1)
+    .map((debate) => ({ debate, share: leadOf(debate)?.share ?? 0 }))
+    .sort((a, b) => a.share - b.share || a.debate.title.localeCompare(b.debate.title, 'fr'))
+    .map(({ debate }) => debate)
+  const split = ranked.slice(0, Math.min(limit, Math.ceil(ranked.length / 2)))
+  const settled = ranked.slice(split.length).reverse().slice(0, limit)
+  return { split, settled }
+}
 
 /** The subjects opened last, newest first */
 export const newestDebates = (debates: readonly Debate[], limit: number): Debate[] =>

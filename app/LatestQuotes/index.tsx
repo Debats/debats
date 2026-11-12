@@ -6,7 +6,7 @@ import { subjectHref } from '../../domain/read-models/hrefs'
 import { authorHref, authorOnSubjectHref } from '../../domain/read-models/statement-author'
 import { StatementWithAuthorAndSubject } from '../../domain/repositories/statement-repository'
 import { formatShortDate } from '../../lib/format-date'
-import RailSection from '../RailSection'
+import HomeSection from '../HomeSection'
 import styles from './LatestQuotes.module.css'
 
 /**
@@ -17,7 +17,7 @@ export default function LatestQuotes({ entries }: { entries: StatementWithAuthor
   if (entries.length === 0) return null
 
   return (
-    <RailSection
+    <HomeSection
       title="Dernières prises de position"
       more={{ href: FEED_PATH, label: 'Tout le flux' }}
     >
@@ -52,6 +52,6 @@ export default function LatestQuotes({ entries }: { entries: StatementWithAuthor
           </li>
         ))}
       </ol>
-    </RailSection>
+    </HomeSection>
   )
 }

@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   dailyDebate,
-  DAILY_MIN_VOICES,
   Debate,
+  debateLeanings,
   debateShares,
   leadingPositions,
+  leadOf,
+  MIN_VOICES_TO_COMPARE,
+  movingDebates,
   newestDebates,
   recentSince,
 } from './home-debates'
@@ -15,8 +18,9 @@ const debate = (id: string, over: Partial<Debate> = {}): Debate => ({
   slug: `sujet-${id}`,
   problem: 'Faut-il ?',
   createdAt: new Date('2026-01-01T00:00:00Z'),
-  voices: DAILY_MIN_VOICES,
-  statementsCount: DAILY_MIN_VOICES,
+  voices: MIN_VOICES_TO_COMPARE,
+  statementsCount: MIN_VOICES_TO_COMPARE,
+  recentStatementsCount: 0,
   positions: [],
   ...over,
 })
@@ -33,8 +37,8 @@ const noon = (day: string) => new Date(`${day}T12:00:00Z`)
 describe('dailyDebate', () => {
   it('never picks a subject fewer than ten voices spoke on', () => {
     const debates = [
-      debate('thin', { voices: DAILY_MIN_VOICES - 1 }),
-      debate('full', { voices: DAILY_MIN_VOICES }),
+      debate('thin', { voices: MIN_VOICES_TO_COMPARE - 1 }),
+      debate('full', { voices: MIN_VOICES_TO_COMPARE }),
     ]
 
     for (let day = 1; day <= 28; day++) {
@@ -148,5 +152,97 @@ describe('newestDebates', () => {
     ]
 
     expect(newestDebates(debates, 2).map((d) => d.id)).toEqual(['new', 'mid'])
+  })
+})
+
+describe('movingDebates', () => {
+  it('lists the subjects statements were just added to, the busiest first', () => {
+    const debates = [
+      debate('quiet', { recentStatementsCount: 0 }),
+      debate('busy', { recentStatementsCount: 10 }),
+      debate('stirring', { recentStatementsCount: 2 }),
+    ]
+
+    expect(movingDebates(debates, 3).map((d) => d.id)).toEqual(['busy', 'stirring'])
+  })
+
+  it('puts first, of two subjects as busy, the one more voices spoke on', () => {
+    const debates = [
+      debate('few', { recentStatementsCount: 4, voices: 5 }),
+      debate('many', { recentStatementsCount: 4, voices: 30 }),
+    ]
+
+    expect(movingDebates(debates, 1).map((d) => d.id)).toEqual(['many'])
+  })
+})
+
+describe('leadOf', () => {
+  it('names the most supported position and the part of the voices that took it', () => {
+    const lead = leadOf(
+      debate('s', { voices: 19, positions: [position('against', 4), position('for', 15)] }),
+    )
+
+    expect(lead?.position.id).toBe('for')
+    expect(lead?.share).toBeCloseTo(15 / 19)
+    expect(lead?.tied).toBe(1)
+  })
+
+  it('tells how many positions share the lead when they are tied', () => {
+    const lead = leadOf(
+      debate('s', {
+        voices: 17,
+        positions: [position('a', 6), position('b', 6), position('c', 2), position('d', 3)],
+      }),
+    )
+
+    expect(lead?.tied).toBe(2)
+  })
+
+  it('has no lead on a subject nobody spoke on', () => {
+    expect(leadOf(debate('s', { voices: 0, positions: [position('a', 0)] }))).toBeNull()
+  })
+})
+
+describe('debateLeanings', () => {
+  /** A subject whose leading position gathers `lead` voices out of twenty */
+  const leaning = (id: string, lead: number, over: Partial<Debate> = {}) =>
+    debate(id, {
+      voices: 20,
+      positions: [position(`${id}-lead`, lead), position(`${id}-rest`, 20 - lead)],
+      ...over,
+    })
+
+  it('sets apart the subjects where the voices spread from those where they lean', () => {
+    const debates = [leaning('a', 19), leaning('b', 10), leaning('c', 15), leaning('d', 11)]
+
+    const { split, settled } = debateLeanings(debates, 2)
+
+    expect(split.map((d) => d.id)).toEqual(['b', 'd'])
+    expect(settled.map((d) => d.id)).toEqual(['a', 'c'])
+  })
+
+  it('never shows a subject on both sides, even when few can be compared', () => {
+    const debates = [leaning('a', 19), leaning('b', 10), leaning('c', 15)]
+
+    const { split, settled } = debateLeanings(debates, 3)
+
+    expect(split.map((d) => d.id)).toEqual(['b', 'c'])
+    expect(settled.map((d) => d.id)).toEqual(['a'])
+  })
+
+  it('compares only subjects enough voices spoke on', () => {
+    const debates = [leaning('thin', 5, { voices: MIN_VOICES_TO_COMPARE - 1 }), leaning('a', 12)]
+
+    const { split, settled } = debateLeanings(debates, 3)
+
+    expect([...split, ...settled].map((d) => d.id)).toEqual(['a'])
+  })
+
+  it('leaves out a subject with a single position taken: nothing there to spread or lean', () => {
+    const single = debate('single', { voices: 20, positions: [position('only', 20)] })
+
+    const { split, settled } = debateLeanings([single], 3)
+
+    expect([...split, ...settled]).toEqual([])
   })
 })

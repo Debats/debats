@@ -24,6 +24,7 @@ const toDebate = (row: DebateRow): Debate => ({
   createdAt: new Date(row.created_at),
   voices: Number(row.voices),
   statementsCount: Number(row.statements_count),
+  recentStatementsCount: Number(row.recent_statements_count),
   positions: (row.positions as unknown as DebatePosition[]).map((position) => ({
     id: position.id,
     title: position.title,

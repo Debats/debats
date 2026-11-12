@@ -1,0 +1,7 @@
+/* Le rythme vertical entre les blocs de l'accueil : aucun bloc ne sait lequel le précède */
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding-bottom: 72px;
+}

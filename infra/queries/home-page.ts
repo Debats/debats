@@ -5,12 +5,22 @@ import {
   dailyDebate,
   Debate,
   leadingPositions,
+  movingDebates,
   recentSince,
 } from '../../domain/read-models/home-debates'
-import { DAILY_FACES, DailySubject, HomePage } from '../../domain/read-models/home-page'
+import {
+  DAILY_FACES,
+  DailySubject,
+  HomePage,
+  MOVING_DEBATES,
+  MovingDebate,
+} from '../../domain/read-models/home-page'
+import { publicFigureRef } from '../../domain/read-models/statement-author'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { StatementRepository } from '../../domain/repositories/statement-repository'
+import { SubjectRepository } from '../../domain/repositories/subject-repository'
 import { createStatementRepository } from '../database/statement-repository-supabase'
+import { createSubjectRepository } from '../database/subject-repository-supabase'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
 import { getSubjectPositionsSummary } from './subject-positions-summary'
 
@@ -56,16 +66,38 @@ const loadDailySubject = (
       )
 
 /**
+ * The moving subjects with the first faces of who spoke on each: the public
+ * figures the subject card already shows, read for all of them at once.
+ */
+const loadMovingDebates = (
+  subjects: SubjectRepository,
+  debates: Debate[],
+): Effect.Effect<MovingDebate[], DatabaseError> =>
+  pipe(
+    subjects.findSummariesByIds(debates.map((debate) => debate.id)),
+    Effect.map((summaries) =>
+      debates.map((debate) => ({
+        debate,
+        faces: (summaries.find((summary) => summary.id === debate.id)?.figures ?? []).map(
+          publicFigureRef,
+        ),
+      })),
+    ),
+  )
+
+/**
  * Everything the home page shows, as one Effect the page runs once: the
- * figures, the debates and the last statements together, then the detail of
- * the subject the day picked among those debates. `now` is the instant the
- * page renders at: it names the day and where « recent » starts.
+ * figures, the debates and the last statements together, then what depends on
+ * those debates — the detail of the subject the day picked, the faces of the
+ * subjects that move. `now` is the instant the page renders at: it names the
+ * day and where « recent » starts.
  */
 export const loadHomePage = (
   supabase: Client,
   now: Date,
 ): Effect.Effect<HomePage, DatabaseError> => {
   const statements = createStatementRepository(supabase)
+  const subjects = createSubjectRepository(supabase)
   return pipe(
     Effect.all(
       {
@@ -77,8 +109,20 @@ export const loadHomePage = (
     ),
     Effect.flatMap(({ figures, debates, feed }) =>
       pipe(
-        loadDailySubject(supabase, statements, dailyDebate(debates, now)),
-        Effect.map((daily) => ({ figures, debates, daily, latest: feed.entries })),
+        Effect.all(
+          {
+            daily: loadDailySubject(supabase, statements, dailyDebate(debates, now)),
+            moving: loadMovingDebates(subjects, movingDebates(debates, MOVING_DEBATES)),
+          },
+          unbounded,
+        ),
+        Effect.map(({ daily, moving }) => ({
+          figures,
+          debates,
+          daily,
+          moving,
+          latest: feed.entries,
+        })),
       ),
     ),
   )
