@@ -144,9 +144,10 @@ export default function GuidePage() {
           d&apos;apprentissage est nécessaire. Pour apprendre, il faut s&apos;exercer. Ainsi, pour
           chaque contribution au site, un nombre de points est attribué à l&apos;utilisateur.
           L&apos;accumulation de ces points lui donne progressivement accès aux fonctionnalités les
-          plus puissantes de Débats.co. Le signalement par d&apos;autres utilisateurs de la
-          violation des principes inscrits dans ce mode d&apos;emploi peut entraîner la perte de
-          points. Ainsi 5 statuts existent sur Débats.co :
+          plus puissantes de Débats.co. Chacun·e peut aussi relire ce que les autres ont ajouté :
+          confirmer une contribution après l&apos;avoir vérifiée, ou signaler ce qui ne respecte pas
+          les principes inscrits dans ce mode d&apos;emploi. Un signalement auquel la modération
+          donne raison rapporte des points. Ainsi 5 statuts existent sur Débats.co :
         </p>
         <ul>
           <li>
