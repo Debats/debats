@@ -42,6 +42,10 @@ const ACTIONS = {
   add_statement: Rank.Sophiste,
   add_position: Rank.Sophiste,
 
+  // Métèque (0+) : relire ce que d'autres ont ajouté
+  confirm_entity: Rank.Meteque,
+  flag_entity: Rank.Meteque,
+
   // Éloquent (1000+)
   assign_theme: Rank.Eloquent,
   assign_occupation: Rank.Eloquent,
@@ -52,14 +56,6 @@ const ACTIONS = {
   add_organisation: Rank.Eloquent,
   add_membership: Rank.Eloquent,
   invite_user: Rank.Eloquent,
-  approve_subject: Rank.Eloquent,
-  approve_personality: Rank.Eloquent,
-  approve_argument: Rank.Eloquent,
-  approve_position: Rank.Eloquent,
-  reject_subject: Rank.Eloquent,
-  reject_personality: Rank.Eloquent,
-  reject_argument: Rank.Eloquent,
-  reject_position: Rank.Eloquent,
 
   // Idéaliste (10000+)
   add_theme: Rank.Idealiste,
@@ -79,6 +75,7 @@ const ACTIONS = {
   remove_membership: Rank.Idealiste,
   edit_statement: Rank.Idealiste,
   edit_position: Rank.Idealiste,
+  settle_flag: Rank.Idealiste,
 
   // Fondateur (1000000+)
   delete_major_subject: Rank.Fondateur,
@@ -126,24 +123,9 @@ const REWARDS = {
   added_position_validated: 50,
   linked_argument_to_statement: 1,
 
-  // Validation
-  validated_subject: 50,
-  validated_personality: 50,
-  validated_statement: 50,
-  validated_argument: 50,
-  validated_position: 50,
-
-  // Rejections
-  subject_rejected_spam: -1000,
-  subject_rejected_duplicate: -100,
-  subject_rejected_off_topic: -100,
-  personality_rejected_spam: -1000,
-  personality_rejected_duplicate: -100,
-  personality_rejected_off_topic: -100,
-  statement_rejected: -100,
-  argument_rejected: -100,
-  position_rejected: -100,
-  argument_to_statement_link_rejected: -100,
+  // Relecture : confirmer ce qu'on a vérifié, signaler ce qui ne va pas
+  confirmed_entity: 1,
+  flag_upheld: 50,
 
   // Invitations
   invitation_bonus: 0, // variable: floor(inviterReputation / 2)

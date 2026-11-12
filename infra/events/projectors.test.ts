@@ -5,6 +5,7 @@ import { INVITATION_STREAM } from '../../domain/aggregates/invitation'
 import { OCCUPATION_FAMILY_STREAM } from '../../domain/aggregates/occupation-family'
 import { ORGANISATION_STREAM } from '../../domain/aggregates/organisation'
 import { PUBLIC_FIGURE_STREAM } from '../../domain/aggregates/public-figure'
+import { REVIEW_STREAM } from '../../domain/aggregates/review'
 import { STATEMENT_STREAM } from '../../domain/aggregates/statement'
 import { SUBJECT_STREAM } from '../../domain/aggregates/subject'
 import { THEME_STREAM } from '../../domain/aggregates/theme'
@@ -21,6 +22,7 @@ const STREAM_TYPES = [
   OCCUPATION_FAMILY_STREAM,
   CONTRIBUTOR_STREAM,
   INVITATION_STREAM,
+  REVIEW_STREAM,
 ]
 
 /** Needs no database: a forgotten registration would otherwise die on the first command in production */

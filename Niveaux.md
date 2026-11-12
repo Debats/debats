@@ -8,13 +8,13 @@ Voir aussi : [Réputation.md](Réputation.md) (ce que chaque acte rapporte) et
 
 ## Les rangs
 
-| Rang           | Réputation       | Ce qu'il est                                                                                                                                       |
-| -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sophiste**   | < 0              | Score négatif. Mêmes droits qu'un nouvel arrivant, mais avec autant de points de retard à rattraper pour redevenir Métèque.                        |
-| **Métèque**    | 0 à 999          | Vient d'arriver, doit encore faire ses preuves. Peut ajouter des prises de position et proposer des positions.                                     |
-| **Éloquent·e** | 1 000 à 9 999    | Contributeur·rice confirmé·e. Référence de nouveaux sujets, personnalités et organisations, mobilise des arguments, invite d'autres contributeurs. |
-| **Idéaliste**  | 10 000 à 999 999 | Modère. Modifie et supprime le contenu des autres, tient les taxonomies (thématiques, métiers), renomme et fusionne les arguments.                 |
-| **Fondateur**  | ≥ 1 000 000      | Supprime ce qui est devenu structurant pour le site, et dispose de l'accès d'administration.                                                       |
+| Rang           | Réputation       | Ce qu'il est                                                                                                                                                |
+| -------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sophiste**   | < 0              | Score négatif. Les droits d'un nouvel arrivant moins la relecture (ni confirmer ni signaler), et autant de points de retard à rattraper.                    |
+| **Métèque**    | 0 à 999          | Vient d'arriver, doit encore faire ses preuves. Ajoute des prises de position, propose des positions, confirme et signale ce que d'autres ont ajouté.       |
+| **Éloquent·e** | 1 000 à 9 999    | Contributeur·rice confirmé·e. Référence de nouveaux sujets, personnalités et organisations, mobilise des arguments, invite d'autres contributeurs.          |
+| **Idéaliste**  | 10 000 à 999 999 | Modère. Modifie et supprime le contenu des autres, traite les signalements, tient les taxonomies (thématiques, métiers), renomme et fusionne les arguments. |
+| **Fondateur**  | ≥ 1 000 000      | Supprime ce qui est devenu structurant pour le site, et dispose de l'accès d'administration.                                                                |
 
 `getRank(reputation)` rend le rang, `getNextRankThreshold(reputation)` le seuil suivant (ou `null` au sommet), et
 `canPerform(reputation, action)` compare le rang atteint au rang requis par l'action.
@@ -30,7 +30,9 @@ Les noms et l'esprit viennent du mode d'emploi de 2015, repris sur [`/guide`](ap
 L'échelle est directement inspirée des [privilèges de Stack Overflow](https://stackoverflow.com/help/privileges?tab=all) :
 on ne demande pas une candidature, on accumule des actes. Le corollaire est que **la perte de points est le vrai outil
 de modération** : le signalement d'un contenu fallacieux fait redescendre son auteur, jusqu'au rang Sophiste. Ce
-mécanisme-là n'existe pas encore (voir le circuit signalement / approbation dans `TODO.md`).
+mécanisme-là n'a pas été repris : le signalement existe depuis novembre 2026 (voir [Accréditation.md](Accréditation.md)),
+mais il récompense qui signale à raison et ne retire rien à l'auteur·rice du contenu. Aucun gain du barème n'est
+négatif aujourd'hui.
 
 ## Rangs du legacy sans équivalent
 
@@ -47,7 +49,7 @@ Sophiste) : le cinquième, Fondateur, n'était jamais présenté au public. Il l
 
 ## Un point d'attention
 
-Aucun rang ne **retire** de droit : un Sophiste a exactement les droits d'un Métèque. Le score négatif ne coûte donc
-rien sur le moment, il coûte le chemin à refaire avant d'atteindre Éloquent. C'est un choix hérité du legacy (les
-paliers `dummies` et `spammers` n'étaient reliés à aucune restriction), à revoir le jour où le signalement arrive :
-sans restriction, un compte à −5 000 contribue comme un compte neuf.
+Un score négatif ne retire qu'une chose : la relecture. Un Sophiste ajoute des prises de position et propose des
+positions comme un Métèque, mais ne confirme ni ne signale. Pour le reste, le score négatif coûte le chemin à refaire
+avant d'atteindre Éloquent. C'est un choix hérité du legacy (les paliers `dummies` et `spammers` n'étaient reliés à
+aucune restriction) ; comme plus aucun gain n'est négatif, aucun compte ne devient Sophiste aujourd'hui.

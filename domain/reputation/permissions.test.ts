@@ -60,20 +60,26 @@ describe('Reputation System', () => {
       }
     })
 
+    describe('reviewing what others added, open to every account in good standing', () => {
+      const reviewActions: Action[] = ['confirm_entity', 'flag_entity']
+
+      for (const action of reviewActions) {
+        it(`should deny ${action} for Sophiste (-1)`, () => {
+          expect(canPerform(-1, action)).toBe(false)
+        })
+
+        it(`should allow ${action} for Meteque (0)`, () => {
+          expect(canPerform(0, action)).toBe(true)
+        })
+      }
+    })
+
     describe('actions requiring Eloquent rank (1000+)', () => {
       const eloquentActions: Action[] = [
         'add_argument',
         'add_subject',
         'add_personality',
         'invite_user',
-        'approve_subject',
-        'approve_personality',
-        'approve_argument',
-        'approve_position',
-        'reject_subject',
-        'reject_personality',
-        'reject_argument',
-        'reject_position',
       ]
 
       for (const action of eloquentActions) {
@@ -98,6 +104,7 @@ describe('Reputation System', () => {
         'edit_personality',
         'edit_statement',
         'edit_position',
+        'settle_flag',
       ]
 
       for (const action of idealisteActions) {
@@ -192,16 +199,12 @@ describe('Reputation System', () => {
       expect(reputationReward('linked_argument_to_statement')).toBe(1)
     })
 
-    it('should return -1000 for subject_rejected_spam', () => {
-      expect(reputationReward('subject_rejected_spam')).toBe(-1000)
+    it('should return 1 for a confirmation', () => {
+      expect(reputationReward('confirmed_entity')).toBe(1)
     })
 
-    it('should return -100 for subject_rejected_duplicate', () => {
-      expect(reputationReward('subject_rejected_duplicate')).toBe(-100)
-    })
-
-    it('should return -100 for statement_rejected', () => {
-      expect(reputationReward('statement_rejected')).toBe(-100)
+    it('should return 50 for a flag a moderator upheld', () => {
+      expect(reputationReward('flag_upheld')).toBe(50)
     })
 
     it('should return 50 for invitation_accepted', () => {

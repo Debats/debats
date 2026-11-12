@@ -501,8 +501,13 @@ model contributors {
   argument_statements                                                        argument_statements[]
   arguments_arguments_created_byTocontributors                               arguments[]                 @relation("arguments_created_byTocontributors")
   arguments_arguments_updated_byTocontributors                               arguments[]                 @relation("arguments_updated_byTocontributors")
+  chantiers_chantiers_created_byTocontributors                               chantiers[]                 @relation("chantiers_created_byTocontributors")
+  chantiers_chantiers_updated_byTocontributors                               chantiers[]                 @relation("chantiers_updated_byTocontributors")
+  confirmations                                                              confirmations[]
   users                                                                      users                       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_profiles_id_fkey")
   domain_events                                                              domain_events[]
+  flags_flags_created_byTocontributors                                       flags[]                     @relation("flags_created_byTocontributors")
+  flags_flags_updated_byTocontributors                                       flags[]                     @relation("flags_updated_byTocontributors")
   invitations_invitations_invitee_idTocontributors                           invitations[]               @relation("invitations_invitee_idTocontributors")
   invitations_invitations_inviter_idTocontributors                           invitations[]               @relation("invitations_inviter_idTocontributors")
   occupation_families_occupation_families_created_byTocontributors           occupation_families[]       @relation("occupation_families_created_byTocontributors")
@@ -552,10 +557,6 @@ model domain_events {
 model draft_statements {
   id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   quote              String?
-  document_name      String?
-  voted_text         String?
-  vote_choice        vote_choice?
-  deed               String?
   source_name        String         @db.VarChar(255)
   source_url         String
   date               DateTime       @db.Date
@@ -577,7 +578,16 @@ model draft_statements {
   arguments          Json           @default("[]")
   occupations        Json           @default("[]")
   affiliations       Json           @default("[]")
+  voted_text         String?
+  vote_choice        vote_choice?
+  deed               String?
+  document_name      String?
+  chantier_id        String?        @db.Uuid
+  validation         Json?
+  section            String?
+  chantiers          chantiers?     @relation(fields: [chantier_id], references: [id], onUpdate: NoAction)
 
+  @@index([chantier_id])
   @@schema("public")
 }
 
@@ -790,10 +800,6 @@ model statements {
   source_name         String                @db.VarChar(255)
   source_url          String
   quote               String?
-  document_name       String?
-  voted_text          String?
-  vote_choice         vote_choice?
-  deed                String?
   stated_at           DateTime              @db.Date
   created_by          String?               @db.Uuid
   created_at          DateTime?             @default(now()) @db.Timestamptz(6)
@@ -803,6 +809,10 @@ model statements {
   deleted_at          DateTime?             @db.Timestamptz(6)
   statement_type      statement_type        @default(declaration)
   organisation_id     String?               @db.Uuid
+  voted_text          String?
+  vote_choice         vote_choice?
+  deed                String?
+  document_name       String?
   argument_statements argument_statements[]
   contributors        contributors?         @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organisations       organisations?        @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -871,6 +881,82 @@ model themes {
   contributors_themes_updated_byTocontributors contributors     @relation("themes_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([slug], map: "idx_themes_slug")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model chantier_messages {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chantier_id String    @db.Uuid
+  role        String
+  text        String
+  event_id    String?   @unique
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  chantiers   chantiers @relation(fields: [chantier_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([chantier_id, created_at], map: "chantier_messages_chantier_id_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model chantiers {
+  id                                              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  brief                                           String
+  title                                           String?
+  status                                          String              @default("working")
+  session_id                                      String?             @unique
+  last_event_at                                   DateTime?           @db.Timestamptz(6)
+  created_by                                      String              @db.Uuid
+  updated_by                                      String              @db.Uuid
+  created_at                                      DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                                      DateTime            @default(now()) @db.Timestamptz(6)
+  sections                                        Json                @default("[]")
+  chantier_messages                               chantier_messages[]
+  contributors_chantiers_created_byTocontributors contributors        @relation("chantiers_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributors_chantiers_updated_byTocontributors contributors        @relation("chantiers_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  draft_statements                                draft_statements[]
+
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model confirmations {
+  entity_type  String
+  entity_id    String       @db.Uuid
+  created_by   String       @db.Uuid
+  created_at   DateTime     @db.Timestamptz(6)
+  contributors contributors @relation(fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([entity_id, created_by])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model flags {
+  id                                          String       @id @db.Uuid
+  entity_type                                 String
+  entity_id                                   String       @db.Uuid
+  reason                                      String
+  comment                                     String
+  status                                      String       @default("open")
+  answer                                      String?
+  created_by                                  String       @db.Uuid
+  updated_by                                  String       @db.Uuid
+  created_at                                  DateTime     @db.Timestamptz(6)
+  updated_at                                  DateTime     @db.Timestamptz(6)
+  contributors_flags_created_byTocontributors contributors @relation("flags_created_byTocontributors", fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contributors_flags_updated_byTocontributors contributors @relation("flags_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([entity_id, created_by], map: "flags_one_open_per_reader", where: raw("(status = 'open'::text)"))
+  @@index([entity_id], map: "flags_entity_idx")
+  @@index([created_at], map: "flags_open_idx", where: raw("(status = 'open'::text)"))
   @@schema("public")
 }
 

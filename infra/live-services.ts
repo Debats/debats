@@ -16,6 +16,7 @@ import { OrganisationRepository } from '../domain/repositories/organisation-repo
 import { PositionRepository } from '../domain/repositories/position-repository'
 import { PublicFigureRepository } from '../domain/repositories/public-figure-repository'
 import { ReputationRepository } from '../domain/repositories/reputation-repository'
+import { ReviewedEntityRepository } from '../domain/repositories/reviewed-entity-repository'
 import { StatementRepository } from '../domain/repositories/statement-repository'
 import { SubjectRepository } from '../domain/repositories/subject-repository'
 import { ThemeRepository } from '../domain/repositories/theme-repository'
@@ -39,6 +40,7 @@ import { createOrganisationRepository } from './database/organisation-repository
 import { createPositionRepository } from './database/position-repository-supabase'
 import { createPublicFigureRepository } from './database/public-figure-repository-supabase'
 import { createReputationRepository } from './database/reputation-repository-supabase'
+import { createReviewedEntityRepository } from './database/reviewed-entity-repository-supabase'
 import { createStatementRepository } from './database/statement-repository-supabase'
 import { createSubjectRepository } from './database/subject-repository-supabase'
 import { createThemeRepository } from './database/theme-repository-supabase'
@@ -72,6 +74,7 @@ export function liveServices(supabase: SupabaseClient<Database> = createAdminSup
     Layer.succeed(PositionRepository, createPositionRepository(supabase)),
     Layer.succeed(PublicFigureRepository, createPublicFigureRepository(supabase)),
     Layer.succeed(ReputationRepository, createReputationRepository(supabase)),
+    Layer.succeed(ReviewedEntityRepository, createReviewedEntityRepository(supabase)),
     Layer.succeed(StatementRepository, createStatementRepository(supabase)),
     Layer.succeed(SubjectRepository, createSubjectRepository(supabase)),
     Layer.succeed(ThemeRepository, createThemeRepository(supabase)),

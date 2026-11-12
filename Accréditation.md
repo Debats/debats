@@ -31,55 +31,63 @@ Un refus est un `Rejected` typé, rendu en message par `runCommand`. L'interface
 Ajouter une prise de position sourcée et proposer une position sont ouverts dès l'inscription : c'est le cœur de la
 contribution, et c'est par là qu'on gagne de quoi monter.
 
+## Métèque (0 point) — mais pas Sophiste
+
+| Action           | Contrôlée dans                                                     |
+| ---------------- | ------------------------------------------------------------------ |
+| `confirm_entity` | `confirm-entity.ts` (confirmer, retirer sa confirmation)           |
+| `flag_entity`    | `flag-entity.ts` (signaler avec un motif, retirer son signalement) |
+
+Relire ce que d'autres ont ajouté est la contribution du plus faible niveau : un clic pour confirmer qu'on a vérifié,
+un motif et un commentaire pour signaler ce qui ne va pas. Cela vaut pour une prise de position, un sujet, une
+personnalité, une organisation, une position et un argument. Deux limites, tranchées par l'agrégat `review` et non par
+le rang : on ne relit pas ce qu'on a soi-même ajouté, et on ne peut pas à la fois confirmer et signaler le même contenu.
+Ce sont les **seuls droits qu'un score négatif retire** : un compte Sophiste ne confirme ni ne signale.
+
 ## Éloquent·e (1 000 points)
 
-| Action                | Contrôlée dans                           |
-| --------------------- | ---------------------------------------- |
-| `add_subject`         | `create-subject.ts`                      |
-| `add_personality`     | `create-public-figure.ts`                |
-| `add_organisation`    | `create-organisation.ts`                 |
-| `add_argument`        | `statement-arguments.ts`                 |
-| `add_membership`      | `add-organisation-membership.ts`         |
-| `assign_theme`        | `set-subject-themes.ts`                  |
-| `assign_occupation`   | `set-public-figure-occupations.ts`       |
-| `link_subjects`       | `link-subjects.ts`, `unlink-subjects.ts` |
-| `invite_user`         | `invite-user.ts`                         |
-| `approve_subject`     | — _(pas encore implémenté)_              |
-| `approve_personality` | — _(pas encore implémenté)_              |
-| `approve_position`    | — _(pas encore implémenté)_              |
-| `approve_argument`    | — _(pas encore implémenté)_              |
-| `reject_subject`      | — _(pas encore implémenté)_              |
-| `reject_personality`  | — _(pas encore implémenté)_              |
-| `reject_position`     | — _(pas encore implémenté)_              |
-| `reject_argument`     | — _(pas encore implémenté)_              |
+| Action              | Contrôlée dans                           |
+| ------------------- | ---------------------------------------- |
+| `add_subject`       | `create-subject.ts`                      |
+| `add_personality`   | `create-public-figure.ts`                |
+| `add_organisation`  | `create-organisation.ts`                 |
+| `add_argument`      | `statement-arguments.ts`                 |
+| `add_membership`    | `add-organisation-membership.ts`         |
+| `assign_theme`      | `set-subject-themes.ts`                  |
+| `assign_occupation` | `set-public-figure-occupations.ts`       |
+| `link_subjects`     | `link-subjects.ts`, `unlink-subjects.ts` |
+| `invite_user`       | `invite-user.ts`                         |
 
 Référencer une nouvelle entité engage le site : on demande d'avoir d'abord contribué. Les huit actions
-`approve_*` / `reject_*` sont le **circuit signalement / approbation**, défini mais pas encore construit : rejeter,
-c'est signaler un contenu fallacieux ou hors-sujet ; seul un Idéaliste pourra ensuite le supprimer.
+`approve_*` / `reject_*` héritées du legacy n'existent plus : la relecture (confirmer, signaler) est ouverte dès le
+rang Métèque, et c'est le traitement d'un signalement qui demande le rang de modération.
 
 ## Idéaliste (10 000 points)
 
-| Action                     | Contrôlée dans                                            |
-| -------------------------- | --------------------------------------------------------- |
-| `edit_subject`             | `update-subject.ts`                                       |
-| `edit_personality`         | `update-public-figure.ts`                                 |
-| `edit_organisation`        | `update-organisation.ts`                                  |
-| `edit_statement`           | `update-statement.ts`                                     |
-| `edit_position`            | `update-position.ts`                                      |
-| `edit_argument`            | `rename-argument.ts`                                      |
-| `remove_membership`        | `remove-organisation-membership.ts`                       |
-| `add_theme`                | `create-theme.ts`                                         |
-| `delete_theme`             | `delete-theme.ts`                                         |
-| `add_occupation`           | `create-occupation.ts`, `create-occupation-family.ts`     |
-| `delete_occupation`        | `delete-occupation.ts`, `delete-occupation-family.ts`     |
-| `delete_minor_subject`     | `delete-subject.ts`                                       |
-| `delete_argument`          | `merge-arguments.ts` (fusionner, c'est faire disparaître) |
-| `edit_theme`               | — _(aucun use case : une thématique ne se renomme pas)_   |
-| `edit_occupation`          | — _(aucun use case : un métier ne se renomme pas)_        |
-| `delete_minor_personality` | — _(pas de commande de suppression de personnalité)_      |
-| `delete_position`          | — _(pas de commande de suppression de position)_          |
+| Action                     | Contrôlée dans                                                            |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `edit_subject`             | `update-subject.ts`                                                       |
+| `edit_personality`         | `update-public-figure.ts`                                                 |
+| `edit_organisation`        | `update-organisation.ts`                                                  |
+| `edit_statement`           | `update-statement.ts`                                                     |
+| `edit_position`            | `update-position.ts`                                                      |
+| `edit_argument`            | `rename-argument.ts`                                                      |
+| `remove_membership`        | `remove-organisation-membership.ts`                                       |
+| `add_theme`                | `create-theme.ts`                                                         |
+| `delete_theme`             | `delete-theme.ts`                                                         |
+| `add_occupation`           | `create-occupation.ts`, `create-occupation-family.ts`                     |
+| `delete_occupation`        | `delete-occupation.ts`, `delete-occupation-family.ts`                     |
+| `delete_minor_subject`     | `delete-subject.ts`                                                       |
+| `delete_argument`          | `merge-arguments.ts` (fusionner, c'est faire disparaître)                 |
+| `settle_flag`              | `settle-flags.ts` (écarter un signalement, retirer une prise de position) |
+| `edit_theme`               | — _(aucun use case : une thématique ne se renomme pas)_                   |
+| `edit_occupation`          | — _(aucun use case : un métier ne se renomme pas)_                        |
+| `delete_minor_personality` | — _(pas de commande de suppression de personnalité)_                      |
+| `delete_position`          | — _(pas de commande de suppression de position)_                          |
 
-Modifier ou supprimer le travail d'autrui demande le rang de modération. Quatre droits n'ont pas encore de commande à
+Modifier ou supprimer le travail d'autrui demande le rang de modération. Traiter un signalement aussi : l'écarter
+(le contenu reste), retirer la prise de position signalée, ou la corriger — la correction passe par la commande de
+modification de l'entité, qui clôt les signalements ouverts dans sa propre transaction. Quatre droits n'ont pas encore de commande à
 exercer : renommer une thématique et un métier (jamais demandé), supprimer une personnalité et une position (dans
 `TODO.md`).
 

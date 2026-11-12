@@ -5,42 +5,27 @@ const ACTION_LABELS: Record<RewardableAction, string> = {
   signed_up: 'Inscription',
 
   // Création de contenu
-  added_subject: 'Ajout d\u2019un sujet',
+  added_subject: 'Ajout d’un sujet',
   added_subject_validated: 'Sujet validé',
   added_personality_validated: 'Personnalité validée',
   added_organisation_validated: 'Organisation validée',
   added_membership: 'Affiliation d’une personnalité',
-  edited_subject: 'Modification d\u2019un sujet',
-  edited_statement: 'Modification d\u2019une prise de position',
-  edited_personality: 'Modification d\u2019une personnalité',
-  edited_organisation: 'Modification d\u2019une organisation',
-  edited_position: 'Modification d\u2019une position',
+  edited_subject: 'Modification d’un sujet',
+  edited_statement: 'Modification d’une prise de position',
+  edited_personality: 'Modification d’une personnalité',
+  edited_organisation: 'Modification d’une organisation',
+  edited_position: 'Modification d’une position',
   added_statement_validated: 'Prise de position validée',
   added_argument_validated: 'Argument validé',
   added_position_validated: 'Position validée',
   linked_argument_to_statement: 'Argument lié à une prise de position',
 
-  // Validation
-  validated_subject: 'Validation d\u2019un sujet',
-  validated_personality: 'Validation d\u2019une personnalité',
-  validated_statement: 'Validation d\u2019une prise de position',
-  validated_argument: 'Validation d\u2019un argument',
-  validated_position: 'Validation d\u2019une position',
-
-  // Rejets
-  subject_rejected_spam: 'Sujet rejeté (spam)',
-  subject_rejected_duplicate: 'Sujet rejeté (doublon)',
-  subject_rejected_off_topic: 'Sujet rejeté (hors-sujet)',
-  personality_rejected_spam: 'Personnalité rejetée (spam)',
-  personality_rejected_duplicate: 'Personnalité rejetée (doublon)',
-  personality_rejected_off_topic: 'Personnalité rejetée (hors-sujet)',
-  statement_rejected: 'Prise de position rejetée',
-  argument_rejected: 'Argument rejeté',
-  position_rejected: 'Position rejetée',
-  argument_to_statement_link_rejected: 'Lien argument-position rejeté',
+  // Relecture
+  confirmed_entity: 'Confirmation d’un contenu',
+  flag_upheld: 'Signalement fondé',
 
   // Invitations
-  invitation_bonus: 'Bonus d\u2019invitation',
+  invitation_bonus: 'Bonus d’invitation',
   invitation_accepted: 'Invitation acceptée',
 
   // Spéciaux

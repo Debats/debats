@@ -1,7 +1,7 @@
 import { Either } from 'effect'
 import { Statement, StatementAuthor, StatementContent, StatementId } from '../entities/statement'
 import { StoredEvent, StreamRef } from '../events/event-store'
-import { Cascade, Decision, refused } from './decision'
+import { always, Cascade, Decision, refused } from './decision'
 import { isoDate } from './iso-date'
 import { Decoded, replayStream } from './replay'
 import { decodeStatementEvent, StatementEvent, StatementFields } from './statement-events'
@@ -93,6 +93,9 @@ export const editStatement =
     staysOnItsSubject(state, positionSubjectId)
       ? Either.right([statementEdited(input)])
       : refused(OTHER_SUBJECT, 'positionId')
+
+/** A moderator withdraws the statement, found beyond repair; a live statement has nothing to refuse */
+export const withdrawStatement = (): StatementDecision => always(statementDeleted())
 
 /** The statement follows its position, merged into another one */
 export const moveStatement =

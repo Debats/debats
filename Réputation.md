@@ -41,6 +41,14 @@ La projection insère la ligne dans `reputation_events`, et le trigger `trg_sync
 | `edited_position`              |        5 | `update-position.ts`                  |
 | `invitation_accepted`          |       50 | `accept-invitation.ts` (à l'invitant) |
 | `invitation_bonus`             | variable | `accept-invitation.ts` (à l'invité·e) |
+| `confirmed_entity`             |        1 | `confirm-entity.ts`                   |
+| `flag_upheld`                  |       50 | `settle-flags.ts`, `review-stream.ts` |
+
+`confirmed_entity` tombe au clic, une fois par lecteur·rice et par version du contenu : confirmer de nouveau après
+avoir retiré sa confirmation ne rapporte rien, confirmer la version corrigée après une remise à zéro rapporte de
+nouveau. `flag_upheld` ne tombe pas au signalement mais quand un·e modérateur·rice lui donne raison, en corrigeant
+le contenu ou en le retirant : chaque lecteur·rice dont le signalement était ouvert le touche. Un signalement écarté
+ne rapporte ni ne coûte rien.
 
 `invitation_bonus` vaut `floor(réputation de l'invitant / 2)` : on démarre avec la moitié du crédit de celui ou celle
 qui vous a fait entrer. C'est le seul gain hors barème.
@@ -50,33 +58,22 @@ qui vous a fait entrer. C'est le seul gain hors barème.
 Ces montants sont dans `REWARDS` et portent une étiquette dans `action-labels.ts`, mais **aucune commande ne les
 distribue aujourd'hui**. Ils décrivent des fonctionnalités à venir, pas des bugs.
 
-| Action                                |  Points | Ce qui manque pour que ça tombe                                                              |
-| ------------------------------------- | ------: | -------------------------------------------------------------------------------------------- |
-| `signed_up`                           |       5 | Rien ne récompense l'inscription (le profil est créé hors journal, côté authentification)    |
-| `added_subject_validated`             |     200 | Suppose le circuit d'approbation : on touche 50 à la création, 200 quand le sujet est validé |
-| `validated_subject`                   |      50 | Circuit d'approbation (gain au validateur)                                                   |
-| `validated_personality`               |      50 | Circuit d'approbation                                                                        |
-| `validated_statement`                 |      50 | Circuit d'approbation                                                                        |
-| `validated_position`                  |      50 | Circuit d'approbation                                                                        |
-| `validated_argument`                  |      50 | Circuit d'approbation                                                                        |
-| `subject_rejected_spam`               |   −1000 | Circuit de signalement                                                                       |
-| `subject_rejected_duplicate`          |    −100 | Circuit de signalement                                                                       |
-| `subject_rejected_off_topic`          |    −100 | Circuit de signalement                                                                       |
-| `personality_rejected_spam`           |   −1000 | Circuit de signalement                                                                       |
-| `personality_rejected_duplicate`      |    −100 | Circuit de signalement                                                                       |
-| `personality_rejected_off_topic`      |    −100 | Circuit de signalement                                                                       |
-| `statement_rejected`                  |    −100 | Circuit de signalement                                                                       |
-| `position_rejected`                   |    −100 | Circuit de signalement                                                                       |
-| `argument_rejected`                   |    −100 | Circuit de signalement                                                                       |
-| `argument_to_statement_link_rejected` |    −100 | Circuit de signalement                                                                       |
-| `founder`                             | 1000000 | Attribution manuelle, jamais outillée                                                        |
-| `early_bird`                          |   10000 | Récompense des premiers inscrits de la bêta                                                  |
-| `blogged_about`                       |    1000 | Récompense qui a écrit sur Débats.co ailleurs                                                |
+| Action                    |  Points | Ce qui manque pour que ça tombe                                                              |
+| ------------------------- | ------: | -------------------------------------------------------------------------------------------- |
+| `signed_up`               |       5 | Rien ne récompense l'inscription (le profil est créé hors journal, côté authentification)    |
+| `added_subject_validated` |     200 | Suppose le circuit d'approbation : on touche 50 à la création, 200 quand le sujet est validé |
+| `founder`                 | 1000000 | Attribution manuelle, jamais outillée                                                        |
+| `early_bird`              |   10000 | Récompense des premiers inscrits de la bêta                                                  |
+| `blogged_about`           |    1000 | Récompense qui a écrit sur Débats.co ailleurs                                                |
 
-Seize d'entre eux, de `added_subject_validated` à `argument_to_statement_link_rejected`, tiennent au **circuit
-signalement / approbation**, qui n'existe pas encore (voir `TODO.md`). Les
-trois derniers (`founder`, `early_bird`, `blogged_about`) sont des gains exceptionnels qui n'ont jamais eu d'outil
+`added_subject_validated` supposait un circuit d'approbation qui n'a pas été construit sous cette forme. Les trois
+derniers (`founder`, `early_bird`, `blogged_about`) sont des gains exceptionnels qui n'ont jamais eu d'outil
 d'attribution, ni dans le Rails de 2015 ni aujourd'hui.
+
+Quinze gains hérités du legacy ont été **retirés** en novembre 2026, quand la relecture est arrivée sous une autre
+forme : les cinq `validated_*` (gain au validateur) et les dix `*_rejected*` (pénalité à l'auteur·rice d'un contenu
+rejeté, de −100 à −1000). La relecture d'aujourd'hui récompense et ne sanctionne pas : il n'existe plus aucun gain
+négatif au barème. L'historique d'un·e contributeur·rice garde les actions que le barème ne nomme plus.
 
 ## Ce que le legacy avait et qui n'a plus d'objet
 

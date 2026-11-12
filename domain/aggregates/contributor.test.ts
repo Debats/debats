@@ -46,7 +46,7 @@ describe('replayContributor', () => {
         at('2024-01-10'),
       ),
       stored(
-        reputationGranted({ grantId: 'grant-2', action: 'statement_rejected', amount: -100 }),
+        reputationGranted({ grantId: 'grant-2', action: 'edited_subject', amount: -100 }),
         2,
         at('2024-01-11'),
       ),
@@ -62,7 +62,7 @@ describe('replayContributor', () => {
           relatedEntityId: 'subject-1',
           createdAt: at('2024-01-10'),
         },
-        { action: 'statement_rejected', amount: -100, createdAt: at('2024-01-11') },
+        { action: 'edited_subject', amount: -100, createdAt: at('2024-01-11') },
       ],
     })
   })
