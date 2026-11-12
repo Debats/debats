@@ -6,6 +6,7 @@ import { refreshChantierUseCase } from '../../../../domain/use-cases/refresh-cha
 import { resolveDraft } from '../../../../domain/use-cases/resolve-draft'
 import { createDraftStatementRepository } from '../../../../infra/database/draft-statement-repository-supabase'
 import { liveServices, runLive } from '../../../../infra/live-services'
+import { statementWhereabouts } from '../../../../infra/queries/statement-whereabouts'
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { getAdminContributor } from '../../../actions/admin-guard'
 import { chantierSections } from '../../../../domain/read-models/chantier-sections'
@@ -59,6 +60,12 @@ export default async function ChantierPage({ params }: Props) {
   )
   /* The review cards are for what is waiting: a settled draft is only listed */
   const settled = produced.filter(({ status }) => status !== 'pending')
+  const whereabouts = await Effect.runPromise(
+    statementWhereabouts(
+      supabase,
+      settled.flatMap(({ validation }) => (validation ? [validation.statementId] : [])),
+    ),
+  )
   const pending = await Effect.runPromise(
     Effect.forEach(
       produced.filter(({ status }) => status === 'pending'),
@@ -88,7 +95,7 @@ export default async function ChantierPage({ params }: Props) {
         ) : (
           <ChantierSections sections={chantierSections(pending, chantier.sections)} />
         )}
-        <SettledDrafts drafts={settled} />
+        <SettledDrafts drafts={settled} whereabouts={whereabouts} />
       </ChantierWorkspace>
     </div>
   )

@@ -1,7 +1,12 @@
 import { Option } from 'effect'
 import { Organisation } from '../entities/organisation'
 import { StatementAuthorKind } from '../entities/statement'
-import { figureHref, organisationHref } from './hrefs'
+import {
+  figureHref,
+  figureOnSubjectHref,
+  organisationHref,
+  organisationOnSubjectHref,
+} from './hrefs'
 
 /**
  * Who took position, as the read side needs it: enough to show an avatar or a
@@ -51,10 +56,21 @@ export const organisationEntityRef = (organisation: Organisation): StatementAuth
     acronym: Option.getOrNull(organisation.acronym),
   })
 
+/** What an address needs of an author: which kind of page, under which slug */
+export type AuthorAddress = Pick<StatementAuthorRef, 'kind' | 'slug'>
+
+/** Where a statement stands: who made it, on which subject */
+export interface StatementWhereabouts {
+  author: AuthorAddress
+  subjectSlug: string
+}
+
 /** The author's own page */
-export const authorHref = (author: StatementAuthorRef): string =>
+export const authorHref = (author: AuthorAddress): string =>
   author.kind === 'organisation' ? organisationHref(author.slug) : figureHref(author.slug)
 
 /** The author's positions on a subject */
-export const authorOnSubjectHref = (author: StatementAuthorRef, subjectSlug: string): string =>
-  `${authorHref(author)}/s/${subjectSlug}`
+export const authorOnSubjectHref = (author: AuthorAddress, subjectSlug: string): string =>
+  author.kind === 'organisation'
+    ? organisationOnSubjectHref(author.slug, subjectSlug)
+    : figureOnSubjectHref(author.slug, subjectSlug)

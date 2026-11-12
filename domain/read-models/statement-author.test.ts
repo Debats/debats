@@ -30,4 +30,11 @@ describe('statement author references', () => {
     expect(authorHref(organisation)).toBe('/o/attac')
     expect(authorOnSubjectHref(organisation, 'l-ivg')).toBe('/o/attac/s/l-ivg')
   })
+
+  it('needs only the kind and the slug of an author to give an address', () => {
+    expect(authorOnSubjectHref({ kind: 'organisation', slug: 'attac' }, 'l-ivg')).toBe(
+      '/o/attac/s/l-ivg',
+    )
+    expect(authorHref({ kind: 'public_figure', slug: 'simone-veil' })).toBe('/p/simone-veil')
+  })
 })
