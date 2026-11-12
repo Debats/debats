@@ -6,6 +6,7 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { ContributorIdentity } from './types'
 import { grant, rewardFor } from './reward'
 import { allowedTo, decoded } from './preconditions'
+import { NewCorrection, recordCorrection } from './record-correction'
 import { uniqueTakenAs } from './run-command'
 import { decideOnSubject, subjectAggregate } from './subject-stream'
 
@@ -20,6 +21,8 @@ const UpdateSubjectInput = S.Struct({
 export type EditedSubject = S.Schema.Encoded<typeof UpdateSubjectInput> & {
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+  /** What the editor says of the subject's review, when readers confirmed or flagged it */
+  review?: NewCorrection
 }
 
 type UpdateSubjectParams = EditedSubject & {
@@ -47,6 +50,14 @@ export function updateSubjectUseCase(params: UpdateSubjectParams) {
                 relatedEntityType: 'subject',
                 relatedEntityId: subjectId,
               }),
+            ),
+          ),
+          Effect.tap(() =>
+            recordCorrection(
+              events,
+              contributor.id,
+              { type: 'subject', id: subjectId },
+              params.review,
             ),
           ),
         ),

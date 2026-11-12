@@ -22,6 +22,7 @@ import {
 import { grantEach, rewardFor } from './reward'
 import { decideOnStatement, statementAggregate } from './statement-stream'
 import { allowedTo, found } from './preconditions'
+import { NewCorrection, recordCorrection } from './record-correction'
 import { uniqueTakenAs } from './run-command'
 
 type UpdateStatementParams = {
@@ -37,6 +38,8 @@ type UpdateStatementParams = {
   statedAt: string
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+  /** What the editor says of the statement's review, when readers confirmed or flagged it */
+  review?: NewCorrection
 }
 
 export type { FieldErrors }
@@ -117,6 +120,14 @@ export function updateStatementUseCase(params: UpdateStatementParams) {
                   }),
                   ...argumentRewards(contributor.id, recorded),
                 ]),
+              ),
+              Effect.tap(() =>
+                recordCorrection(
+                  events,
+                  contributor.id,
+                  { type: 'statement', id: statementId },
+                  params.review,
+                ),
               ),
             ),
           ),

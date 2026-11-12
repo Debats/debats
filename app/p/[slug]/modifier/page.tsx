@@ -7,6 +7,7 @@ import { getAuthenticatedContributor } from '../../../actions/get-authenticated-
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { publicFigureStream } from '../../../../domain/aggregates/public-figure'
 import { currentRevision } from '../../../../infra/events/stream-revision'
+import { reviewToEdit } from '../../../review-of'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditPublicFigureForm from '../../../../components/figures/EditPublicFigureForm'
@@ -41,11 +42,12 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
   if (!figure) notFound()
 
   const occupationRepo = createOccupationRepository(supabase)
-  const [families, allOccupations, figureOccupations, revision] = await Promise.all([
+  const [families, allOccupations, figureOccupations, revision, review] = await Promise.all([
     Effect.runPromise(createOccupationFamilyRepository(supabase).findAll()),
     Effect.runPromise(occupationRepo.findAll()),
     Effect.runPromise(occupationRepo.findByPublicFigureId(figure.id)),
     currentRevision(publicFigureStream(figure.id)),
+    reviewToEdit(supabase, { type: 'public_figure', id: figure.id }, contributor.id),
   ])
   const canAssignOccupations = canPerform(contributor.reputation, 'assign_occupation')
   const occupationGroups = groupOccupationsByFamily(families, allOccupations).map(
@@ -69,6 +71,7 @@ export default async function EditPublicFigurePage({ params }: PageProps) {
         figureId={figure.id}
         figureSlug={figure.slug}
         revision={revision}
+        review={review}
         initialName={figure.name}
         initialPresentation={figure.presentation}
         initialWikipediaUrl={Option.isSome(figure.wikipediaUrl) ? figure.wikipediaUrl.value : ''}

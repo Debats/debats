@@ -6,6 +6,7 @@ import { PositionRepository } from '../repositories/position-repository'
 import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { allowedTo, fieldsOf, found } from './preconditions'
+import { NewCorrection, recordCorrection } from './record-correction'
 import { decideOnSubject, subjectAggregate, writtenPosition } from './subject-stream'
 
 // The spaces around a title mean nothing: they are dropped before it is judged
@@ -18,6 +19,8 @@ const UpdatePositionInput = S.Struct({
 export type EditedPosition = S.Schema.Encoded<typeof UpdatePositionInput> & {
   /** The revision of the subject's stream the form was rendered from */
   revision: number
+  /** What the editor says of the position's review, when readers confirmed or flagged it */
+  review?: NewCorrection
 }
 
 const FIELD_MESSAGES = {
@@ -62,6 +65,14 @@ export function updatePositionUseCase(params: UpdatePositionParams) {
                 relatedEntityType: 'position',
                 relatedEntityId: positionId,
               }),
+            ),
+          ),
+          Effect.tap(() =>
+            recordCorrection(
+              events,
+              contributor.id,
+              { type: 'position', id: positionId },
+              params.review,
             ),
           ),
         ),

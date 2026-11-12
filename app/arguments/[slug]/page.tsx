@@ -16,7 +16,7 @@ import ArgumentAdminMenu from './ArgumentAdminMenu'
 import ArgumentHero from './ArgumentHero'
 import ArgumentUsage from './ArgumentUsage'
 import ReviewScope from '../../../components/review/ReviewScope'
-import { reviewOf } from '../../review-of'
+import { reviewOf, reviewToEdit } from '../../review-of'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -64,6 +64,11 @@ export default async function ArgumentDetailPage({ params }: PageProps) {
     argument.id,
     ...statements.map(({ statement }) => statement.id),
   ])
+  // Only who may rename is asked what the rename makes of the argument's review
+  const reviewToRename =
+    contributor && canRename
+      ? await reviewToEdit(supabase, { type: 'argument', id: argument.id }, contributor.id)
+      : null
 
   return (
     <ReviewScope {...review}>
@@ -85,6 +90,7 @@ export default async function ArgumentDetailPage({ params }: PageProps) {
                 description: argument.description,
               }}
               revision={revision}
+              review={reviewToRename}
               canRename={canRename}
               canMerge={canMerge}
             />

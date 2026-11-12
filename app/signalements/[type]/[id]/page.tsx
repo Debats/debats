@@ -43,7 +43,7 @@ function correctionOf(entity: ReviewedEntity, card: EntityCard) {
   if (entity.type === 'argument' && card.href)
     return {
       href: card.href,
-      note: 'Le signalement est fondé et l’erreur se répare. Un argument se renomme ou se fusionne depuis le menu « Gérer » de sa page ; revenez ensuite clore le signalement ici.',
+      note: 'Le signalement est fondé et l’erreur se répare. Un argument se renomme depuis le menu « Gérer » de sa page, où vous direz que votre correction y répond : les signalements se closent à l’enregistrement.',
     }
   return null
 }

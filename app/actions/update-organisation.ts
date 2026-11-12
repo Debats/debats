@@ -14,6 +14,7 @@ import {
   persistUpdatedOrganisation,
   FieldErrors,
 } from '../../domain/use-cases/update-organisation'
+import { NewCorrection } from '../../domain/use-cases/record-correction'
 import { generateOrganisationSlug } from '../../domain/entities/organisation'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { editOrganisationForm, EditOrganisationFormData } from '../../lib/forms/organisation-form'
@@ -27,12 +28,14 @@ export type ActionResult =
 export async function updateOrganisationAction(
   organisationId: string,
   formData: EditOrganisationFormData,
+  /** What the editor says of the organisation's review; absent when nobody confirmed or flagged it */
+  review?: NewCorrection,
 ): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
   const { logo, ...fields } = editOrganisationForm.decode(formData)
 
-  const params = { contributor, organisationId, ...fields }
+  const params = { contributor, organisationId, ...fields, review }
 
   // Phase 1: validate
   const validation = await runLiveForm(validateUpdateOrganisation(params), supabase)

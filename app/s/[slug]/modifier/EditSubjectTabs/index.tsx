@@ -4,6 +4,7 @@ import { Tabs } from 'radix-ui'
 import EditSubjectForm from '../../../../../components/subjects/EditSubjectForm'
 import { SubjectFormValues } from '../../../../../components/subjects/SubjectForm'
 import { ThemeOption } from '../../../../../components/ui/ThemeSelector'
+import { ReviewDetail } from '../../../../../domain/read-models/review'
 import SubjectThemes from '../../SubjectThemes'
 import RelatedSubjects from '../../RelatedSubjects'
 import { RelatedSubjectData } from '../../RelatedSubjects/types'
@@ -19,6 +20,8 @@ interface EditSubjectTabsProps {
   relatedSubjects: RelatedSubjectData[]
   /** The revision of the subject's stream the page shows */
   revision: number
+  /** What readers said of the subject, for the content form to ask what the edit makes of it */
+  review: ReviewDetail | null
 }
 
 export default function EditSubjectTabs({
@@ -30,6 +33,7 @@ export default function EditSubjectTabs({
   primaryThemeId,
   relatedSubjects,
   revision,
+  review,
 }: EditSubjectTabsProps) {
   return (
     <Tabs.Root defaultValue="content">
@@ -48,6 +52,7 @@ export default function EditSubjectTabs({
           subjectSlug={subjectSlug}
           subject={subject}
           revision={revision}
+          review={review}
         />
       </Tabs.Content>
 

@@ -4,7 +4,9 @@ import { useState, useCallback, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { updatePositionAction, ActionResult } from '../../../app/actions/update-position'
+import { ReviewDetail } from '../../../domain/read-models/review'
 import { FieldErrors } from '../../../domain/use-cases/update-position'
+import { useReviewOnEdit } from '../../review/ReviewOnEdit/use-review-on-edit'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
 import Button from '../../ui/Button'
@@ -18,6 +20,8 @@ interface EditPositionFormProps {
   initialDescription: string
   /** The revision of the subject's stream the form shows: an edit made meanwhile is not overwritten */
   revision: number
+  /** What readers said of the position, when they confirmed or flagged it: the editor says what her edit makes of it */
+  review: ReviewDetail | null
 }
 
 export default function EditPositionForm({
@@ -26,8 +30,11 @@ export default function EditPositionForm({
   initialTitle,
   initialDescription,
   revision,
+  review,
 }: EditPositionFormProps) {
   const router = useRouter()
+  const reviewed = useReviewOnEdit(review)
+  const { correction } = reviewed
   const [title, setTitle] = useState(initialTitle)
   const [description, setDescription] = useState(initialDescription)
   const [error, setError] = useState<string>()
@@ -46,6 +53,7 @@ export default function EditPositionForm({
           title,
           description,
           revision,
+          review: correction,
         })
 
         setIsPending(false)
@@ -62,7 +70,7 @@ export default function EditPositionForm({
         setIsPending(false)
       }
     },
-    [positionId, title, description, revision, returnHref, router],
+    [positionId, title, description, revision, correction, returnHref, router],
   )
 
   return (
@@ -93,6 +101,8 @@ export default function EditPositionForm({
           error={fieldErrors?.description}
         />
       </div>
+
+      {reviewed.block}
 
       <div className={styles.actions}>
         <Button type="submit">

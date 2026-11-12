@@ -15,6 +15,7 @@ import { currentRevision } from '../../../../infra/events/stream-revision'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { contentFieldsOf } from '../../../../domain/use-cases/validate-statement-fields'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
+import { reviewToEdit } from '../../../review-of'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditStatementForm from '../../../../components/statements/EditStatementForm'
@@ -71,12 +72,13 @@ export default async function EditStatementByIdPage({ params }: PageProps) {
   const position = await Effect.runPromise(positionRepo.findById(statement.positionId))
   if (!position) notFound()
 
-  const [subject, author, positions, initialArguments, revision] = await Promise.all([
+  const [subject, author, positions, initialArguments, revision, review] = await Promise.all([
     Effect.runPromise(createSubjectRepository(supabase).findById(position.subjectId)),
     describeAuthor(supabase, statement.author),
     Effect.runPromise(positionRepo.findBySubjectId(position.subjectId)),
     Effect.runPromise(createArgumentRepository(supabase).findRefsByStatementId(statement.id)),
     currentRevision(statementStream(statement.id)),
+    reviewToEdit(supabase, { type: 'statement', id: statement.id }, contributor.id),
   ])
   if (!subject || !author) notFound()
 
@@ -92,6 +94,7 @@ export default async function EditStatementByIdPage({ params }: PageProps) {
       <EditStatementForm
         statementId={statement.id}
         revision={revision}
+        review={review}
         returnHref={author.href}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}

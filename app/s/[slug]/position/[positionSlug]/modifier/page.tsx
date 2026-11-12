@@ -9,6 +9,7 @@ import { canPerform } from '../../../../../../domain/reputation/permissions'
 import { subjectStream } from '../../../../../../domain/aggregates/subject'
 import { positionHref, subjectHref } from '../../../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../../../infra/events/stream-revision'
+import { reviewToEdit } from '../../../../../review-of'
 import ContentWithSidebar from '../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../components/layout/FormPageHeader'
 import EditPositionForm from '../../../../../../components/positions/EditPositionForm'
@@ -46,6 +47,7 @@ export default async function EditPositionPage({ params }: PageProps) {
   // A position lives in its subject's stream: that is the revision the form edits
   const revision = await currentRevision(subjectStream(subject.id))
   const returnHref = positionHref(slug, positionSlug)
+  const review = await reviewToEdit(supabase, { type: 'position', id: position.id }, contributor.id)
 
   return (
     <ContentWithSidebar topMargin>
@@ -59,6 +61,7 @@ export default async function EditPositionPage({ params }: PageProps) {
       <EditPositionForm
         positionId={position.id}
         revision={revision}
+        review={review}
         returnHref={returnHref}
         initialTitle={position.title}
         initialDescription={position.description}

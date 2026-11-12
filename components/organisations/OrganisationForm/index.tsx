@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, FormEvent } from 'react'
+import { useState, useCallback, FormEvent, ReactNode } from 'react'
 import Image from 'next/image'
 import * as Sentry from '@sentry/nextjs'
 import { ORGANISATION_TYPES, ORGANISATION_TYPE_LABELS } from '../../../domain/entities/organisation'
@@ -59,6 +59,8 @@ interface OrganisationFormProps {
   cancelHref?: string
   /** Envoie le formulaire ; le résultat pilote l'affichage des erreurs */
   onSubmit: (values: OrganisationFormInput) => Promise<SubmitOutcome>
+  /** Ce que l'appelant ajoute au formulaire, juste avant ses boutons (la relecture, à la modification) */
+  children?: ReactNode
 }
 
 const TYPE_OPTIONS = [
@@ -74,6 +76,7 @@ export default function OrganisationForm({
   pendingLabel,
   cancelHref,
   onSubmit,
+  children,
 }: OrganisationFormProps) {
   const [fields, setFields] = useState<TextFields>(() => ({
     name: initialValues.name,
@@ -268,6 +271,8 @@ export default function OrganisationForm({
           onChange={(e) => setValue('websiteUrl')(e.target.value)}
         />
       </div>
+
+      {children}
 
       <div className={formStyles.actions}>
         <Button type="submit" disabled={isPending}>

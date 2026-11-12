@@ -10,6 +10,7 @@ import { canPerform } from '../../../../domain/reputation/permissions'
 import { subjectStream } from '../../../../domain/aggregates/subject'
 import { subjectHref } from '../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../infra/events/stream-revision'
+import { reviewToEdit } from '../../../review-of'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditSubjectTabs from './EditSubjectTabs'
@@ -49,6 +50,7 @@ export default async function EditSubjectPage({ params }: PageProps) {
     Effect.runPromise(relatedRepo.findRelated(subject.id)),
     currentRevision(subjectStream(subject.id)),
   ])
+  const review = await reviewToEdit(supabase, { type: 'subject', id: subject.id }, contributor.id)
 
   return (
     <ContentWithSidebar topMargin>
@@ -63,6 +65,7 @@ export default async function EditSubjectPage({ params }: PageProps) {
         subjectId={subject.id}
         subjectSlug={subject.slug}
         revision={revision}
+        review={review}
         subject={{
           title: subject.title,
           presentation: subject.presentation,

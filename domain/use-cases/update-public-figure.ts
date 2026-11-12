@@ -7,6 +7,7 @@ import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { publicFigureFields, ValidatedPublicFigureFields } from './validate-public-figure-fields'
 import { allowedTo, found, free, signedIn } from './preconditions'
+import { NewCorrection, recordCorrection } from './record-correction'
 import { uniqueTakenAs } from './run-command'
 import { decideOnPublicFigure, publicFigureAggregate } from './public-figure-stream'
 
@@ -20,6 +21,8 @@ type UpdatePublicFigureParams = {
   notorietySources: string[]
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+  /** What the editor says of the figure's review, when readers confirmed or flagged it */
+  review?: NewCorrection
 }
 
 export type { FieldErrors }
@@ -78,6 +81,14 @@ const persisted = (
               relatedEntityType: 'public_figure',
               relatedEntityId: existing.id,
             }),
+          ),
+        ),
+        Effect.tap(() =>
+          recordCorrection(
+            events,
+            contributor.id,
+            { type: 'public_figure', id: existing.id },
+            params.review,
           ),
         ),
       ),

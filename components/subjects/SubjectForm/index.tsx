@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, FormEvent } from 'react'
+import { useState, useCallback, FormEvent, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { subjectHref } from '../../../domain/read-models/hrefs'
@@ -27,6 +27,8 @@ interface SubjectFormProps {
   cancelHref?: string
   subject?: SubjectFormValues
   onSuccess?: (result: { slug: string; title: string }) => void
+  /** Ce que l'appelant ajoute au formulaire, juste avant ses boutons (la relecture, à la modification) */
+  children?: ReactNode
 }
 
 export default function SubjectForm({
@@ -36,6 +38,7 @@ export default function SubjectForm({
   cancelHref,
   subject,
   onSuccess,
+  children,
 }: SubjectFormProps) {
   const router = useRouter()
   const [title, setTitle] = useState(subject?.title ?? '')
@@ -142,6 +145,8 @@ export default function SubjectForm({
           <GuideExample good="Quel rôle le nucléaire doit-il jouer dans la transition énergétique ?" />
         </div>
       </div>
+
+      {children}
 
       <div className={styles.actions}>
         <Button type="submit">{isPending ? pendingLabel : submitLabel}</Button>

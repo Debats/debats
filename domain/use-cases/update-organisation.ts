@@ -7,6 +7,7 @@ import { ContributorIdentity, FieldErrors } from './types'
 import { grant, rewardFor } from './reward'
 import { organisationFields } from './validate-organisation-fields'
 import { allowedTo, found, free, signedIn } from './preconditions'
+import { NewCorrection, recordCorrection } from './record-correction'
 import { uniqueTakenAs } from './run-command'
 import { decideOnOrganisation, organisationAggregate } from './organisation-stream'
 
@@ -22,6 +23,8 @@ export type UpdateOrganisationParams = {
   notorietySources: string[]
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+  /** What the editor says of the organisation's review, when readers confirmed or flagged it */
+  review?: NewCorrection
 }
 
 export type { FieldErrors }
@@ -87,6 +90,14 @@ const persisted = (
               relatedEntityType: 'organisation',
               relatedEntityId: existing.id,
             }),
+          ),
+        ),
+        Effect.tap(() =>
+          recordCorrection(
+            events,
+            contributor.id,
+            { type: 'organisation', id: existing.id },
+            params.review,
           ),
         ),
       ),

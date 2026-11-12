@@ -8,7 +8,9 @@ import { updatePublicFigureAction, ActionResult } from '../../../app/actions/upd
 import { editPublicFigureForm } from '../../../lib/forms/public-figure-form'
 import { useChosenFile } from '../../../lib/forms/use-chosen-file'
 import { figureHref } from '../../../domain/read-models/hrefs'
+import { ReviewDetail } from '../../../domain/read-models/review'
 import { FieldErrors } from '../../../domain/use-cases/update-public-figure'
+import { useReviewOnEdit } from '../../review/ReviewOnEdit/use-review-on-edit'
 import NotorietySources, { notorietySourcePair } from '../../forms/NotorietySources'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
@@ -28,6 +30,8 @@ interface EditPublicFigureFormProps {
   initialNotorietySources: readonly string[]
   /** The revision of the figure's stream the form shows: an edit made meanwhile is not overwritten */
   revision: number
+  /** What readers said of the figure, when they confirmed or flagged it: the editor says what her edit makes of it */
+  review: ReviewDetail | null
 }
 
 export default function EditPublicFigureForm({
@@ -39,8 +43,11 @@ export default function EditPublicFigureForm({
   initialWebsiteUrl,
   initialNotorietySources,
   revision,
+  review,
 }: EditPublicFigureFormProps) {
   const router = useRouter()
+  const reviewed = useReviewOnEdit(review)
+  const { correction } = reviewed
 
   const [name, setName] = useState(initialName)
   const [presentation, setPresentation] = useState(initialPresentation)
@@ -73,7 +80,7 @@ export default function EditPublicFigureForm({
       })
 
       try {
-        const result: ActionResult = await updatePublicFigureAction(figureId, formData)
+        const result: ActionResult = await updatePublicFigureAction(figureId, formData, correction)
 
         setIsPending(false)
 
@@ -98,6 +105,7 @@ export default function EditPublicFigureForm({
       notorietySources,
       photo,
       revision,
+      correction,
       router,
     ],
   )
@@ -189,6 +197,8 @@ export default function EditPublicFigureForm({
           onChange={(e) => setWebsiteUrl(e.target.value)}
         />
       </div>
+
+      {reviewed.block}
 
       <div className={formStyles.actions}>
         <Button type="submit">

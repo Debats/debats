@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, FormEvent, lazy, Suspense } from 'react'
+import { useState, useCallback, FormEvent, lazy, ReactNode, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { FieldErrors } from '../../../domain/use-cases/types'
@@ -44,6 +44,8 @@ interface StatementFormProps {
   initialSourceName?: string
   initialSourceUrl?: string
   initialStatedAt?: string
+  /** Ce que l'appelant ajoute au formulaire, juste avant ses boutons (la relecture, à la modification) */
+  children?: ReactNode
 }
 
 export default function StatementForm({
@@ -61,6 +63,7 @@ export default function StatementForm({
   initialSourceName = '',
   initialSourceUrl = '',
   initialStatedAt = '',
+  children,
 }: StatementFormProps) {
   const router = useRouter()
   const [content, setContent] = useState<StatementContentInput>({
@@ -179,6 +182,8 @@ export default function StatementForm({
           <ArgumentsPicker initialSelected={initialArguments} error={fieldErrors?.arguments} />
         </div>
       )}
+
+      {children}
 
       <div className={styles.actions}>
         <Button type="submit">{isPending ? pendingLabel : submitLabel}</Button>

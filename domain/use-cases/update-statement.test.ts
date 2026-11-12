@@ -6,6 +6,7 @@ import { createPosition, createStatement } from '../entities/entity-test-helpers
 import { declarationContent, publicFigureAuthor } from '../entities/statement'
 import { EMPTY_CONTENT_INPUT } from './validate-statement-fields'
 import { Position } from '../entities/position'
+import { flagged, reviewStream } from '../aggregates/review'
 import { statementAdded, statementStream } from '../aggregates/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { RunUnitOfWork } from '../events/unit-of-work'
@@ -316,6 +317,39 @@ describe('updateStatementUseCase', () => {
       createdBy: 'author-id',
     })
     expect(grantsIn(journal)).toEqual([['abc', 'edited_statement', 5]])
+  })
+
+  it('settles the open flags and rewards who raised them, in the transaction of the edit that answers them', async () => {
+    const { run, journal } = await journalWithStream()
+    await Effect.runPromise(
+      journal.append(
+        reviewStream(existingStatement.id),
+        0,
+        [flagged('statement', { flagId: 'flag-1', reason: 'other', comment: 'Lien mort.' })],
+        { actorId: 'camille' },
+      ),
+    )
+
+    const result = await execute(
+      updateStatementUseCase({
+        ...validParams,
+        contributor: { id: 'abc', reputation: 10000 },
+        review: { settlesFlags: true, answer: 'Lien remplacé.', resetConfirmations: false },
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(deedsIn(journal).map(({ type }) => type)).toEqual([
+      'StatementAdded',
+      'Flagged',
+      'StatementEdited',
+      'FlagsSettled',
+    ])
+    expect(grantsIn(journal)).toEqual([
+      ['abc', 'edited_statement', 5],
+      ['camille', 'flag_upheld', 50],
+    ])
   })
 
   it('should allow keeping the same position', async () => {

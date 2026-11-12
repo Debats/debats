@@ -15,6 +15,7 @@ import {
   persistUpdatedPublicFigure,
   FieldErrors,
 } from '../../domain/use-cases/update-public-figure'
+import { NewCorrection } from '../../domain/use-cases/record-correction'
 import { generateSlug } from '../../domain/entities/public-figure'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { editPublicFigureForm, EditPublicFigureFormData } from '../../lib/forms/public-figure-form'
@@ -27,12 +28,14 @@ export type ActionResult =
 export async function updatePublicFigureAction(
   figureId: string,
   formData: EditPublicFigureFormData,
+  /** What the editor says of the figure's review; absent when nobody confirmed or flagged it */
+  review?: NewCorrection,
 ): Promise<ActionResult> {
   const supabase = createAdminSupabaseClient()
   const contributor = await getAuthenticatedContributor()
 
   const { photo: chosenPhoto, ...fields } = editPublicFigureForm.decode(formData)
-  const useCaseParams = { contributor, figureId, ...fields }
+  const useCaseParams = { contributor, figureId, ...fields, review }
 
   // Phase 1: Validate
   const validation = await runLiveForm(validateUpdatePublicFigure(useCaseParams), supabase)

@@ -5,6 +5,7 @@ import { runUnitOfWork } from '../events/unit-of-work'
 import { ArgumentRepository } from '../repositories/argument-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { allowedTo, found } from './preconditions'
+import { NewCorrection, recordCorrection } from './record-correction'
 import { uniqueTakenAs } from './run-command'
 import { argumentAggregate, decideOnArgument } from './argument-stream'
 
@@ -18,6 +19,8 @@ export type RenamedArgument = {
   description: string
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number
+  /** What the editor says of the argument's review, when readers confirmed or flagged it */
+  review?: NewCorrection
 }
 
 type RenameArgumentParams = RenamedArgument & {
@@ -60,12 +63,22 @@ export function renameArgumentUseCase(params: RenameArgumentParams) {
     Effect.tap(({ existing }) => titleFree(existing)),
     Effect.flatMap(({ contributor, existing }) =>
       runUnitOfWork((events) =>
-        decideOnArgument(
-          events,
-          existing.id,
-          contributor.id,
-          renameArgument({ title, description }),
-          revision,
+        pipe(
+          decideOnArgument(
+            events,
+            existing.id,
+            contributor.id,
+            renameArgument({ title, description }),
+            revision,
+          ),
+          Effect.tap(() =>
+            recordCorrection(
+              events,
+              contributor.id,
+              { type: 'argument', id: existing.id },
+              params.review,
+            ),
+          ),
         ),
       ),
     ),

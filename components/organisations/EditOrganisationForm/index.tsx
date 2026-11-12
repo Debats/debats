@@ -4,7 +4,9 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOrganisationAction } from '../../../app/actions/update-organisation'
 import { organisationHref } from '../../../domain/read-models/hrefs'
+import { ReviewDetail } from '../../../domain/read-models/review'
 import { editOrganisationForm, OrganisationFormInput } from '../../../lib/forms/organisation-form'
+import { useReviewOnEdit } from '../../review/ReviewOnEdit/use-review-on-edit'
 import OrganisationForm, { OrganisationFormValues, SubmitOutcome } from '../OrganisationForm'
 
 interface EditOrganisationFormProps {
@@ -13,6 +15,8 @@ interface EditOrganisationFormProps {
   initialValues: OrganisationFormValues
   /** The revision of the organisation's stream the form shows: an edit made meanwhile is not overwritten */
   revision: number
+  /** What readers said of the organisation, when they confirmed or flagged it: the editor says what her edit makes of it */
+  review: ReviewDetail | null
 }
 
 export default function EditOrganisationForm({
@@ -20,20 +24,23 @@ export default function EditOrganisationForm({
   organisationSlug,
   initialValues,
   revision,
+  review,
 }: EditOrganisationFormProps) {
   const router = useRouter()
+  const reviewed = useReviewOnEdit(review)
+  const { correction } = reviewed
 
   const handleSubmit = useCallback(
     async (values: OrganisationFormInput): Promise<SubmitOutcome> => {
       const formData = editOrganisationForm.encode({ ...values, revision })
-      const result = await updateOrganisationAction(organisationId, formData)
+      const result = await updateOrganisationAction(organisationId, formData, correction)
       if (result.success) {
         router.push(organisationHref(result.slug))
         return { success: true }
       }
       return { success: false, error: result.error, fieldErrors: result.fieldErrors }
     },
-    [organisationId, revision, router],
+    [organisationId, revision, correction, router],
   )
 
   return (
@@ -44,6 +51,8 @@ export default function EditOrganisationForm({
       pendingLabel="Enregistrement..."
       cancelHref={organisationHref(organisationSlug)}
       onSubmit={handleSubmit}
-    />
+    >
+      {reviewed.block}
+    </OrganisationForm>
   )
 }

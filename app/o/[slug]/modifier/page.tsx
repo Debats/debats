@@ -8,6 +8,7 @@ import { canPerform } from '../../../../domain/reputation/permissions'
 import { organisationStream } from '../../../../domain/aggregates/organisation'
 import { organisationHref } from '../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../infra/events/stream-revision'
+import { reviewToEdit } from '../../../review-of'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../components/layout/FormPageHeader'
 import EditOrganisationForm from '../../../../components/organisations/EditOrganisationForm'
@@ -36,7 +37,10 @@ export default async function EditOrganisationPage({ params }: PageProps) {
   )
 
   if (!organisation) notFound()
-  const revision = await currentRevision(organisationStream(organisation.id))
+  const [revision, review] = await Promise.all([
+    currentRevision(organisationStream(organisation.id)),
+    reviewToEdit(supabase, { type: 'organisation', id: organisation.id }, contributor.id),
+  ])
 
   return (
     <ContentWithSidebar topMargin>
@@ -51,6 +55,7 @@ export default async function EditOrganisationPage({ params }: PageProps) {
         organisationId={organisation.id}
         organisationSlug={organisation.slug}
         revision={revision}
+        review={review}
         initialValues={{
           name: organisation.name,
           acronym: Option.getOrElse(organisation.acronym, () => ''),

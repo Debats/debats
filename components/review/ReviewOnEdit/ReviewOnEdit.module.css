@@ -1,0 +1,105 @@
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+/* Les signalements restent sous les yeux pendant la correction */
+.flags {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--radius-card);
+  background-color: var(--warn-soft);
+}
+
+.flagsTitle,
+.reason {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+.comment {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+  margin: 4px 0 0;
+  color: var(--ink-2);
+}
+
+.settles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.box,
+.radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.confirmations {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.note {
+  margin: 4px 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* Les deux réponses côte à côte, l'une sous l'autre quand la place manque */
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  gap: 14px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  font-size: 15px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.choice:has(:checked) {
+  border-color: var(--ink);
+  font-weight: 500;
+}

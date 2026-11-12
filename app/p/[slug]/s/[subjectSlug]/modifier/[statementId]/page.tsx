@@ -13,6 +13,7 @@ import { contentFieldsOf } from '../../../../../../../domain/use-cases/validate-
 import { statementStream } from '../../../../../../../domain/aggregates/statement'
 import { figureOnSubjectHref } from '../../../../../../../domain/read-models/hrefs'
 import { currentRevision } from '../../../../../../../infra/events/stream-revision'
+import { reviewToEdit } from '../../../../../../review-of'
 import ContentWithSidebar from '../../../../../../../components/layout/ContentWithSidebar'
 import FormPageHeader from '../../../../../../../components/layout/FormPageHeader'
 import EditStatementForm from '../../../../../../../components/statements/EditStatementForm'
@@ -55,10 +56,11 @@ export default async function EditStatementPage({ params }: PageProps) {
   if (!statement) notFound()
   if (statement.author.kind !== 'public_figure' || statement.author.id !== figure.id) notFound()
 
-  const [positions, initialArguments, revision] = await Promise.all([
+  const [positions, initialArguments, revision, review] = await Promise.all([
     Effect.runPromise(positionRepo.findBySubjectId(subject.id)),
     Effect.runPromise(createArgumentRepository(supabase).findRefsByStatementId(statement.id)),
     currentRevision(statementStream(statement.id)),
+    reviewToEdit(supabase, { type: 'statement', id: statement.id }, contributor.id),
   ])
   const returnHref = figureOnSubjectHref(slug, subjectSlug)
 
@@ -74,6 +76,7 @@ export default async function EditStatementPage({ params }: PageProps) {
       <EditStatementForm
         statementId={statement.id}
         revision={revision}
+        review={review}
         returnHref={returnHref}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}

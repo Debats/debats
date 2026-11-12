@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { runLiveForm } from '../../infra/live-services'
 import { updateStatementUseCase, FieldErrors } from '../../domain/use-cases/update-statement'
+import { NewCorrection } from '../../domain/use-cases/record-correction'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 import { readStatementArguments } from '../../lib/forms/statement-arguments'
 import { readStatementContent } from './statement-content-fields'
@@ -17,6 +18,8 @@ export async function updateStatementAction(
   formData: FormData,
   /** The revision the form was rendered from: what someone else wrote meanwhile is not overwritten */
   revision: number,
+  /** What the editor says of the statement's review; absent when nobody confirmed or flagged it */
+  review?: NewCorrection,
 ): Promise<ActionResult> {
   const contributor = await getAuthenticatedContributor()
 
@@ -31,6 +34,7 @@ export async function updateStatementAction(
       statedAt: String(formData.get('statedAt') ?? ''),
       arguments: readStatementArguments(formData),
       revision,
+      review,
     }),
   )
 
