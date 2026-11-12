@@ -5,6 +5,7 @@ import type { Database } from '../../types/database.types'
 import {
   Statement,
   StatementId,
+  WORDED_STATEMENT_TYPES,
   organisationAuthor,
   publicFigureAuthor,
 } from '../../domain/entities/statement'
@@ -349,6 +350,28 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           return (data as unknown as StatementWithAuthorRow[]).map(mapStatementWithAuthorRow)
         },
         catch: (error) => dbError('Failed to fetch statements with authors for position', error),
+      }),
+
+    findLatestQuotedByPositionId: (positionId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select(STATEMENT_WITH_AUTHOR_QUERY)
+            .eq('position_id', positionId)
+            .is('deleted_at', null)
+            // A vote keeps a sentence in its `quote` column: the type tells words from facts
+            .in('statement_type', [...WORDED_STATEMENT_TYPES])
+            .order('stated_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          if (error) throw error
+          const [row] = data as unknown as StatementWithAuthorRow[]
+          return row ? mapStatementWithAuthorRow(row) : null
+        },
+        catch: (error) =>
+          dbError('Failed to fetch the latest quoted statement of a position', error),
       }),
 
     findByPublicFigureWithDetails: (publicFigureId: string) =>

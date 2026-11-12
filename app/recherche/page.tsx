@@ -5,7 +5,7 @@ import { searchSite } from '../../infra/queries/search-site'
 import { groupSearchHits, parseSearchQuery } from '../../domain/read-models/search'
 import PageHero from '../../components/layout/PageHero'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
-import SearchForm from './SearchForm'
+import SearchForm from '../../components/search/SearchForm'
 import SearchResults from './SearchResults'
 
 interface PageProps {
@@ -39,7 +39,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         title="Rechercher"
         intro="Un sujet, une position, une personnalité, une organisation, un argument ou une thématique. Les accents et les fautes de frappe sont pardonnés."
       >
-        <SearchForm initialQuery={raw} />
+        <SearchForm initialQuery={raw} autoFocus={raw === ''} />
       </PageHero>
 
       <ContentWithSidebar topMargin>

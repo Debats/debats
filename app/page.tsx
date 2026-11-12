@@ -1,48 +1,33 @@
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../infra/supabase/admin'
-import { createSubjectRepository } from '../infra/database/subject-repository-supabase'
-import { dailyIndex } from '../domain/services/daily-pick'
+import { loadHomePage } from '../infra/queries/home-page'
+import { newestDebates } from '../domain/read-models/home-debates'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
-import ActionLink from '../components/ui/ActionLink'
 import HeroSection from './HeroSection'
 import DailySubject from './DailySubject'
-import SubjectSection from './SubjectSection'
+import LatestQuotes from './LatestQuotes'
+import NewSubjects from './NewSubjects'
 
-const MOST_ACTIVE_LIMIT = 4
-const RECENTLY_ADDED_LIMIT = 4
+const NEW_SUBJECTS = 5
 
-async function MostActiveSubjects() {
-  const supabase = createAdminSupabaseClient()
-  const subjectRepo = createSubjectRepository(supabase)
+export default async function HomePage() {
+  // The page names the instant it renders at: the day's subject and what counts as recent follow
+  const home = await Effect.runPromise(loadHomePage(createAdminSupabaseClient(), new Date()))
 
-  const subjectIds = await Effect.runPromise(subjectRepo.findAllIds())
-  const dailyId =
-    subjectIds.length > 0 ? subjectIds[dailyIndex(subjectIds.length, new Date())] : undefined
-
-  const subjects = await Effect.runPromise(
-    subjectRepo.findSummariesByActivity(MOST_ACTIVE_LIMIT, dailyId),
-  )
-  return <SubjectSection title="Les plus actifs" subjects={subjects} />
-}
-
-async function RecentlyAddedSubjects() {
-  const supabase = createAdminSupabaseClient()
-  const subjectRepo = createSubjectRepository(supabase)
-  const subjects = await Effect.runPromise(
-    subjectRepo.findSummariesByCreatedAt(RECENTLY_ADDED_LIMIT),
-  )
-  return <SubjectSection title="Derniers sujets ajoutés" subjects={subjects} />
-}
-
-export default function HomePage() {
   return (
     <>
-      <HeroSection />
-      <ContentWithSidebar>
-        <DailySubject />
-        <MostActiveSubjects />
-        <RecentlyAddedSubjects />
-        <ActionLink href="/s">Voir tous les sujets →</ActionLink>
+      <HeroSection figures={home.figures} />
+      <ContentWithSidebar
+        hideLatestStatements
+        stickyAside
+        aside={
+          <>
+            <LatestQuotes entries={home.latest} />
+            <NewSubjects subjects={newestDebates(home.debates, NEW_SUBJECTS)} />
+          </>
+        }
+      >
+        {home.daily && <DailySubject daily={home.daily} />}
       </ContentWithSidebar>
     </>
   )

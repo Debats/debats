@@ -46,3 +46,51 @@
 .button:hover {
   background-color: var(--signal-dark);
 }
+
+/* En ouverture de page : la pilule entière est le champ, le bouton est dedans */
+.prominent {
+  max-width: 760px;
+  gap: 0;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--ink);
+  background-color: var(--card);
+}
+
+.prominent:focus-within {
+  box-shadow: 0 0 0 3px rgba(21, 23, 28, 0.08);
+}
+
+.prominent .input {
+  height: 48px;
+  padding-left: 46px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  background-position: 16px center;
+  font-size: 17px;
+}
+
+.prominent .input:focus {
+  box-shadow: none;
+}
+
+.prominent .button {
+  padding: 0 24px;
+  background-color: var(--ink);
+  font-size: 15px;
+}
+
+.prominent .button:hover {
+  background-color: var(--ink-2);
+}
+
+@media (max-width: 480px) {
+  .prominent .input {
+    font-size: 15px;
+  }
+
+  .prominent .button {
+    padding: 0 16px;
+  }
+}

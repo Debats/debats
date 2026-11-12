@@ -1,0 +1,39 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.entry {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.entry:first-child {
+  padding-top: 0;
+}
+
+.title,
+.title:link,
+.title:visited {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.title:hover {
+  color: var(--signal);
+}
+
+.date {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
+  white-space: nowrap;
+}

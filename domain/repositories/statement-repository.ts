@@ -61,6 +61,15 @@ export interface StatementRepository {
   ): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
   /**
+   * The last statement of a position that carries words (a declaration or a
+   * programme): what can be quoted for it. Null when it only holds votes and
+   * acts, or nothing.
+   */
+  findLatestQuotedByPositionId(
+    positionId: string,
+  ): Effect.Effect<StatementWithAuthor | null, DatabaseError>
+
+  /**
    * Get all statements for a public figure with position and subject details
    */
   findByPublicFigureWithDetails(

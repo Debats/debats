@@ -158,26 +158,19 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
         catch: (error) => dbError('Failed to get stats', error),
       }),
 
-    findSummariesByActivity: (limit: number, excludeId?: string) =>
-      fetchSummaries(supabase, 'latest_statement_at', limit, excludeId),
-
-    findSummariesByCreatedAt: (limit: number) => fetchSummaries(supabase, 'created_at', limit),
-
-    findSummaryById: (id: string) =>
+    findSummariesByActivity: (limit: number) =>
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
             .from('v_subject_activity_summary')
             .select('*')
-            .eq('id', id)
-            .maybeSingle()
+            .order('latest_statement_at', { ascending: false, nullsFirst: false })
+            .limit(limit)
 
           if (error) throw error
-          if (!data) return null
-
-          return mapSummaryRow(data)
+          return data.map(mapSummaryRow)
         },
-        catch: (error) => dbError('Failed to fetch subject summary by id', error),
+        catch: (error) => dbError('Failed to fetch subject summaries', error),
       }),
 
     findSummariesByIds: (ids: string[]) =>
@@ -209,22 +202,6 @@ export function createSubjectRepository(supabase: SupabaseClient): SubjectReposi
           return rows.map(mapIndexRow)
         },
         catch: (error) => dbError('Failed to fetch the subjects index', error),
-      }),
-
-    findAllIds: () =>
-      Effect.tryPromise({
-        try: async () => {
-          const rows = await fetchAllRows<{ id: string }>((offset, limit) =>
-            supabase
-              .from('subjects')
-              .select('id', { count: 'exact' })
-              .is('deleted_at', null)
-              .order('id')
-              .range(offset, offset + limit - 1),
-          )
-          return rows.map((row) => row.id)
-        },
-        catch: (error) => dbError('Failed to fetch subject ids', error),
       }),
 
     findIdsWithoutPrimaryTheme: () =>
@@ -283,31 +260,4 @@ function mapSummaryRow(row: Record<string, unknown>): SubjectActivitySummary {
       ? (row.figures as Array<{ id: string; name: string; slug: string }>)
       : [],
   }
-}
-
-function fetchSummaries(
-  supabase: SupabaseClient,
-  orderBy: string,
-  limit: number,
-  excludeId?: string,
-): Effect.Effect<SubjectActivitySummary[], DatabaseError> {
-  return Effect.tryPromise({
-    try: async () => {
-      let query = supabase
-        .from('v_subject_activity_summary')
-        .select('*')
-        .order(orderBy, { ascending: false, nullsFirst: false })
-        .limit(excludeId ? limit + 1 : limit)
-
-      if (excludeId) {
-        query = query.neq('id', excludeId)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-      return data.slice(0, limit).map(mapSummaryRow)
-    },
-    catch: (error) => dbError('Failed to fetch subject summaries', error),
-  })
 }

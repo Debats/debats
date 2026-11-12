@@ -102,9 +102,20 @@ export const actContent = (deed: string): StatementContent =>
 /** The type of a statement is the nature of what it carries. */
 export const statementTypeOf = (content: StatementContent): StatementType => content.kind
 
+/** The types of statement that carry words of their own: what can be quoted. */
+export const WORDED_STATEMENT_TYPES = [
+  'declaration',
+  'program',
+] as const satisfies readonly StatementType[]
+
+type WordedContent = Extract<StatementContent, { kind: (typeof WORDED_STATEMENT_TYPES)[number] }>
+
+const isWorded = (content: StatementContent): content is WordedContent =>
+  (WORDED_STATEMENT_TYPES as readonly StatementType[]).includes(content.kind)
+
 /** The words, when the statement has any of its own. */
 export const quoteOf = (content: StatementContent): string | undefined =>
-  content.kind === 'declaration' || content.kind === 'program' ? content.quote : undefined
+  isWorded(content) ? content.quote : undefined
 
 /**
  * What the statement carries, on one line, for a context that can only show

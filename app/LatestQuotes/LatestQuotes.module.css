@@ -1,0 +1,66 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.meta {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.line {
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.name,
+.name:link,
+.name:visited {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.subject,
+.subject:link,
+.subject:visited {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 3px;
+}
+
+.position {
+  composes: small from '../../styles/text.module.css';
+  font-size: 13px;
+}
+
+.positionLink,
+.positionLink:link,
+.positionLink:visited {
+  color: var(--ink-2);
+}
+
+.name:hover,
+.subject:hover,
+.positionLink:hover {
+  color: var(--signal);
+}

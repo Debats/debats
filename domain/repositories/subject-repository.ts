@@ -5,7 +5,7 @@ import { SubjectStats } from '../value-objects/subject-stats'
 import { DatabaseError } from './errors'
 
 /**
- * Read model for the homepage: subject with pre-aggregated stats and figures.
+ * A subject with pre-aggregated stats and figures: what a subject card shows.
  */
 export interface SubjectActivitySummary {
   id: string
@@ -35,16 +35,11 @@ export interface SubjectRepository {
   /** Writes go through the journal (domain/aggregates/subject.ts); this repository only reads */
   getStats(subjectId: string): Effect.Effect<SubjectStats, DatabaseError>
 
-  findSummariesByActivity(
-    limit: number,
-    excludeId?: string,
-  ): Effect.Effect<SubjectActivitySummary[], DatabaseError>
-  findSummariesByCreatedAt(limit: number): Effect.Effect<SubjectActivitySummary[], DatabaseError>
-  findSummaryById(id: string): Effect.Effect<SubjectActivitySummary | null, DatabaseError>
+  /** The subjects a statement was last stated on, most recent first */
+  findSummariesByActivity(limit: number): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   findSummariesByIds(ids: string[]): Effect.Effect<SubjectActivitySummary[], DatabaseError>
   /** Every live subject with its activity and primary theme: the subjects index */
   findIndexEntries(): Effect.Effect<SubjectIndexEntry[], DatabaseError>
-  findAllIds(): Effect.Effect<string[], DatabaseError>
   findIdsWithoutPrimaryTheme(): Effect.Effect<string[], DatabaseError>
 }
 

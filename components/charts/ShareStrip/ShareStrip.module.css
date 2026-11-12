@@ -1,0 +1,28 @@
+.strip {
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--paper-2);
+}
+
+.thin {
+  height: 8px;
+}
+
+.medium {
+  height: 14px;
+}
+
+.tall {
+  height: 22px;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}

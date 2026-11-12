@@ -6,6 +6,9 @@
 /** A subject's page */
 export const subjectHref = (slug: string): string => `/s/${slug}`
 
+/** The index of every subject */
+export const SUBJECTS_HREF = '/s'
+
 /** A position's page: its own slug under its subject's, never its id */
 export const positionHref = (subjectSlug: string, positionSlug: string): string =>
   `${subjectHref(subjectSlug)}/position/${positionSlug}`

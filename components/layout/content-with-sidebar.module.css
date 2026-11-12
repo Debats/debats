@@ -25,6 +25,21 @@
   gap: 32px;
 }
 
+/*
+ * Le rail colle sous l'en-tête, lui-même collant. Plus haut que l'écran, il
+ * cacherait sa fin jusqu'au bas de la page : il défile alors dans sa propre
+ * hauteur, et tout ce qu'il porte reste atteignable.
+ */
+@media (min-width: 769px) {
+  .sticky {
+    position: sticky;
+    top: 88px;
+    max-height: calc(100vh - 112px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     grid-template-columns: 1fr;

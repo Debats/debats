@@ -1,74 +1,93 @@
 .hero {
   position: relative;
-  background-color: var(--paper-2);
-  padding-bottom: 56px;
-  margin-bottom: 40px;
-}
-
-.banner {
-  position: relative;
-  height: 360px;
   overflow: hidden;
+  background-color: var(--paper-2);
+  margin-bottom: 40px;
 }
 
 .photo {
   object-fit: cover;
   object-position: center 30%;
-  opacity: 0.55;
+  opacity: 0.6;
   mix-blend-mode: multiply;
 }
 
-.banner::after {
-  content: '';
+/* Le papier revient sous le texte : presque opaque à gauche, absent passé le milieu */
+.veil {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    180deg,
-    rgba(239, 236, 229, 0) 20%,
-    rgba(239, 236, 229, 0.85) 70%,
-    var(--paper-2) 100%
+    90deg,
+    rgba(239, 236, 229, 0.9) 0%,
+    rgba(239, 236, 229, 0.7) 20%,
+    rgba(239, 236, 229, 0.3) 40%,
+    rgba(239, 236, 229, 0) 60%
   );
 }
 
 .container {
-  max-width: var(--container-max);
-  margin: -120px auto 0;
-  padding: 0 var(--container-gutter);
   position: relative;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 56px var(--container-gutter) 40px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 18px;
+  gap: 24px;
 }
 
 .title {
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: clamp(44px, 5vw + 16px, 72px);
-  line-height: 1;
+  font-size: clamp(48px, 5vw + 16px, 88px);
+  line-height: 0.95;
   letter-spacing: -0.015em;
   color: var(--ink);
 }
 
 .subtitle {
   composes: voice from '../../styles/text.module.css';
-  max-width: 640px;
+  max-width: 680px;
 }
 
-.actions {
+.figures {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 6px;
+  gap: 16px 56px;
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line-2);
 }
 
+/* Le nombre se lit avant son nom, qui reste le terme défini */
+.figure {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+.figureNumber {
+  composes: number from '../../styles/text.module.css';
+}
+
+.figureLabel {
+  composes: small from '../../styles/text.module.css';
+}
+
+/*
+ * Sur un écran étroit le texte occupe toute la largeur : la photo passerait
+ * dessous. Le voile couvre alors tout le bandeau, la photo n'est plus qu'une
+ * texture.
+ */
 @media (max-width: 768px) {
-  .banner {
-    height: 220px;
+  .veil {
+    background: rgba(239, 236, 229, 0.82);
   }
 
   .container {
-    margin-top: -60px;
-    padding: 0 var(--container-gutter-mobile);
+    padding: 40px var(--container-gutter-mobile) 32px;
+  }
+
+  .figures {
+    gap: 14px 32px;
   }
 }

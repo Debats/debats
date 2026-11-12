@@ -94,7 +94,8 @@ export default function Header() {
           </nav>
 
           <div className={styles.tools}>
-            <SiteSearch />
+            {/* The home page opens on its own search field: a second one would dilute both */}
+            {pathname !== '/' && <SiteSearch />}
             <AuthSection onAuthChange={() => setMenuOpen(false)} />
           </div>
         </div>

@@ -9,6 +9,8 @@ interface ContentWithSidebarProps {
   aside?: React.ReactNode
   /** Ne pas afficher les dernières prises de position du site (la page fournit les siennes) */
   hideLatestStatements?: boolean
+  /** Le rail accompagne la lecture d'une longue colonne ; plus haut que l'écran, il défile dans sa hauteur */
+  stickyAside?: boolean
 }
 
 export default function ContentWithSidebar({
@@ -16,13 +18,14 @@ export default function ContentWithSidebar({
   topMargin,
   aside,
   hideLatestStatements,
+  stickyAside,
 }: ContentWithSidebarProps) {
   const className = topMargin ? `${styles.container} ${styles.withTopMargin}` : styles.container
 
   return (
     <div className={className}>
       <div className={styles.mainContent}>{children}</div>
-      <aside className={styles.sidebar}>
+      <aside className={stickyAside ? `${styles.sidebar} ${styles.sticky}` : styles.sidebar}>
         {aside}
         {!hideLatestStatements && (
           <Suspense fallback={null}>

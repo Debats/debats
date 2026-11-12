@@ -1,11 +1,17 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 28px;
-  margin-bottom: 40px;
+  align-items: stretch;
+  gap: 24px;
+  padding: 40px;
   background-color: var(--card);
   border-radius: var(--radius-card);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .kicker {
@@ -13,7 +19,7 @@
 }
 
 .title {
-  composes: display from '../../styles/text.module.css';
+  composes: displayLarge from '../../styles/text.module.css';
 }
 
 .titleLink,
@@ -28,42 +34,119 @@
 
 .problem {
   composes: voice from '../../styles/text.module.css';
-  font-size: 20px;
+  font-size: 21px;
 }
 
-.foot {
+/* La répartition : le compte, la barre, puis une ligne par position */
+.spread {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.count {
+  composes: small from '../../styles/text.module.css';
+}
+
+.count strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.positions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.position {
+  display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  padding-top: 14px;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.positionTitle,
+.positionTitle:link,
+.positionTitle:visited {
+  flex: 1 1 240px;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.positionTitle:hover {
+  color: var(--signal);
+}
+
+.voices {
+  composes: meta from '../../styles/text.module.css';
+  min-width: 60px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* Les deux positions de tête, face à face */
+.quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+  padding-top: 24px;
   border-top: 1px solid var(--line);
 }
 
-.meta {
-  composes: meta from '../../styles/text.module.css';
+.quote {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.more,
-.more:link,
-.more:visited {
-  align-self: flex-start;
+.quotePosition {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.quoteAuthor {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.quoteBy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.quoteName,
+.quoteName:link,
+.quoteName:visited {
   font-size: 14px;
-  font-weight: 500;
-  color: var(--signal);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  text-decoration-color: rgba(227, 36, 63, 0.4);
+  font-weight: 600;
+  color: var(--ink);
 }
 
-.more:hover {
-  text-decoration-color: var(--signal);
+.quoteName:hover {
+  color: var(--signal);
 }
 
 @media (max-width: 768px) {
   .card {
-    padding: 20px;
+    padding: 24px 20px;
   }
 }

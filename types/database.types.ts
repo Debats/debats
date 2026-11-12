@@ -1436,6 +1436,33 @@ export type Database = {
       }
     }
     Functions: {
+      get_home_debates: {
+        Args: { p_recent_since: string }
+        Returns: {
+          created_at: string
+          id: string
+          positions: Json
+          problem: string
+          recent_statements_count: number
+          slug: string
+          statements_count: number
+          theme_name: string | null
+          theme_slug: string | null
+          title: string
+          voices: number
+        }[]
+      }
+      get_site_figures: {
+        Args: never
+        Returns: {
+          organisations: number
+          positions: number
+          public_figures: number
+          sources: number
+          statements: number
+          subjects: number
+        }[]
+      }
       get_subject_arguments_summary: {
         Args: { p_authors_limit?: number; p_subject_id: string }
         Returns: {

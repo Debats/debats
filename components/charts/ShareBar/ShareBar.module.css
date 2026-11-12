@@ -31,24 +31,6 @@
   color: var(--ink);
 }
 
-.stack {
-  display: flex;
-  height: 22px;
-  border-radius: 4px;
-  overflow: hidden;
-  background-color: var(--paper-2);
-}
-
-.segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
 .value {
   composes: meta from '../../../styles/text.module.css';
   color: var(--ink);
