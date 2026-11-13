@@ -21,13 +21,6 @@ export interface PublicFigureRepository {
   /** Writes go through the journal (domain/aggregates/public-figure.ts); this repository only reads */
   getStats(publicFigureId: string): Effect.Effect<PublicFigureStats, DatabaseError>
 
-  findSummariesByActivity(
-    limit: number,
-    orderBy?: 'subjects_count' | 'latest_statement_at',
-  ): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
-
-  findByLetter(letter: string): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
-
   /** The activity summaries of these figures, by name */
   findSummariesByIds(ids: string[]): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
 }

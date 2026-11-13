@@ -15,15 +15,16 @@ import Button from '../../components/ui/Button'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
 import SubjectSearch from '../../components/subjects/SubjectSearch'
-import IndexStats from './IndexStats'
+import AnchorBar from '../../components/layout/AnchorBar'
+import HeroStats from '../../components/layout/HeroStats'
+import { plural } from '../../lib/plural'
 import IndexViewToggle, { INDEX_VIEW_PARAM, parseIndexView } from './IndexViewToggle'
 import MostActiveSubjects from './MostActiveSubjects'
-import ThemeBar from './ThemeBar'
 import ThemeSection from './ThemeSection'
 import ProposeSubject from './ProposeSubject'
 import RandomSubject from './RandomSubject'
 import SubjectsToDocument from './SubjectsToDocument'
-import { themeSectionAnchor } from './theme-section-anchor'
+import { themeSectionAnchor, themeSectionName } from './theme-section-anchor'
 import styles from './subjects.module.css'
 
 interface PageProps {
@@ -47,6 +48,7 @@ export default async function SubjectsPage({ searchParams }: PageProps) {
   const view = parseIndexView(params[INDEX_VIEW_PARAM])
   const canAddSubject = !!contributor && canPerform(contributor.reputation, 'add_subject')
   const sections = groupSubjectsByTheme(entries)
+  const totals = subjectIndexTotals(entries)
   const candidates = entries.map(
     ({ id, title, slug, problem, statementsCount, publicFiguresCount }) => ({
       id,
@@ -64,13 +66,33 @@ export default async function SubjectsPage({ searchParams }: PageProps) {
         kicker="Explorer"
         title="Les sujets"
         intro="Chaque sujet pose une question qui divise, et rassemble les positions qu'on y trouve, avec les personnalités et les organisations qui les défendent."
-        aside={<IndexStats totals={subjectIndexTotals(entries)} />}
+        aside={
+          <HeroStats
+            stats={[
+              { value: totals.subjects, label: plural(totals.subjects, 'sujet', 'sujets') },
+              { value: totals.themes, label: plural(totals.themes, 'thématique', 'thématiques') },
+              {
+                value: totals.statements,
+                label: plural(totals.statements, 'prise de position', 'prises de position'),
+              },
+            ]}
+          />
+        }
         actions={canAddSubject && <Button href="/s/ajouter">Ajouter un sujet</Button>}
       >
         <SubjectSearch />
       </PageHero>
 
-      {view === 'themes' && sections.length > 0 && <ThemeBar sections={sections} />}
+      {view === 'themes' && sections.length > 0 && (
+        <AnchorBar
+          ariaLabel="Thématiques"
+          items={sections.map((section) => ({
+            anchor: themeSectionAnchor(section),
+            label: themeSectionName(section),
+            count: section.subjectsCount,
+          }))}
+        />
+      )}
 
       <ContentWithSidebar
         topMargin

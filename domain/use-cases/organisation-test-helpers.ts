@@ -117,8 +117,6 @@ export function fakePublicFigureRepo(seed: PublicFigure[] = []): PublicFigureRep
     findByWikipediaUrl: () => Effect.succeed(null),
     searchByName: () => Effect.succeed(seed),
     getStats: () => Effect.succeed({ publicFigureId: '', subjectsCount: 0, statementsCount: 0 }),
-    findSummariesByActivity: () => Effect.succeed([]),
-    findByLetter: () => Effect.succeed([]),
     findSummariesByIds: () => Effect.succeed([]),
   }
 }

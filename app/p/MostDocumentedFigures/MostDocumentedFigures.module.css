@@ -1,0 +1,141 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.item + .item {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 14px 0;
+}
+
+.row:link,
+.row:visited,
+.row:hover {
+  color: var(--ink);
+}
+
+.row:hover .name {
+  color: var(--signal);
+}
+
+.rank {
+  flex: none;
+  width: 34px;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ink-2);
+}
+
+.avatar {
+  flex: none;
+  display: flex;
+}
+
+.identity {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  transition: color 0.15s ease;
+}
+
+.role {
+  composes: small from '../../../styles/text.module.css';
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.measure {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.track {
+  flex: 1;
+  display: flex;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--paper-2);
+  overflow: hidden;
+}
+
+.fill {
+  background-color: var(--ink);
+  border-radius: var(--radius-pill);
+}
+
+.subjects {
+  flex: none;
+  min-width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.count {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.unit {
+  composes: meta from '../../../styles/text.module.css';
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.meta {
+  composes: meta from '../../../styles/text.module.css';
+  flex: 0 0 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.range {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+@media (max-width: 768px) {
+  .list {
+    padding: 4px 16px;
+  }
+
+  .meta {
+    flex: 1 1 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+  }
+}

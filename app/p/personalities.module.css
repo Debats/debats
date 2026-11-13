@@ -1,146 +1,27 @@
-.section {
-  margin-bottom: 48px;
-}
-
-.sectionTitle {
-  composes: title from '../../styles/text.module.css';
-  margin-bottom: 16px;
-}
-
-/* Grille de cartes (les plus actives, activité récente) */
-
-.figureGrid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.figureCard,
-.figureCard:link,
-.figureCard:visited {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 12px;
-  text-align: center;
-  background-color: var(--card);
-  border-radius: var(--radius-card);
-  color: var(--ink);
-  transition: box-shadow 0.15s ease;
-}
-
-.figureCard:hover {
-  color: var(--ink);
-  box-shadow: 0 0 0 1.5px var(--ink);
-}
-
-.figureName {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.figureStat {
-  composes: meta from '../../styles/text.module.css';
-}
-
-/* Liste (index A-Z) */
-
-.letterResults {
-  display: flex;
-  flex-direction: column;
-  padding: 0 24px;
+.empty {
+  composes: body from '../../styles/text.module.css';
+  padding: 24px;
   background-color: var(--card);
   border-radius: var(--radius-card);
 }
 
-.figureRow {
+.toolbar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.figureRow:last-child {
-  border-bottom: none;
-}
-
-.figureRowInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.figureRowName,
-.figureRowName:link,
-.figureRowName:visited {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.figureRowName:hover {
-  color: var(--signal);
-}
-
-.figureRowStat {
-  composes: meta from '../../styles/text.module.css';
-}
-
-/* Barre alphabétique */
-
-.alphabetBar {
-  display: flex;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.letterLink,
-.letterLink:link,
-.letterLink:visited {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  font-family: var(--font-serif);
-  font-size: 17px;
-  color: var(--ink);
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+/* La règle du classement, dite à côté de la bascule qui le choisit */
+.rule {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
 }
 
-.letterLink:hover {
-  background-color: var(--paper-2);
-  color: var(--ink);
-}
-
-.letterActive,
-.letterActive:link,
-.letterActive:visited,
-.letterActive:hover {
-  background-color: var(--ink);
-  color: var(--paper);
-}
-
-.noResults {
-  composes: small from '../../styles/text.module.css';
-  padding: 16px 0;
-}
-
-@media (max-width: 768px) {
-  .figureGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .letterResults {
-    padding: 0 16px;
-  }
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
 }

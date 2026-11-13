@@ -178,37 +178,6 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
         catch: (error) => dbError('Failed to get public figure stats', error),
       }),
 
-    findSummariesByActivity: (limit: number, orderBy = 'latest_statement_at' as const) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('v_public_figure_activity_summary')
-            .select('*')
-            .order(orderBy, { ascending: false, nullsFirst: false })
-            .limit(limit)
-
-          if (error) throw error
-          return data.map(mapSummaryRow)
-        },
-        catch: (error) => dbError('Failed to fetch public figure summaries', error),
-      }),
-
-    findByLetter: (letter: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const rows = await fetchAllRows<ActivitySummaryRow>((offset, limit) =>
-            supabase
-              .from('v_public_figure_activity_summary')
-              .select('*', { count: 'exact' })
-              .ilike('name', `${letter}%`)
-              .order('name')
-              .range(offset, offset + limit - 1),
-          )
-          return rows.map(mapSummaryRow)
-        },
-        catch: (error) => dbError('Failed to fetch public figures by letter', error),
-      }),
-
     findSummariesByIds: (ids: string[]) =>
       Effect.tryPromise({
         try: async () => {

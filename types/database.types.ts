@@ -1376,6 +1376,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_public_figure_index_summary: {
+        Row: {
+          affiliations: Json | null
+          id: string | null
+          latest_statement_at: string | null
+          name: string | null
+          occupations: Json | null
+          presentation: string | null
+          slug: string | null
+          statements_count: number | null
+          subjects_count: number | null
+        }
+        Relationships: []
+      }
       v_subject_activity_summary: {
         Row: {
           created_at: string | null

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Button from '../../../components/ui/Button'
 import { subjectHref } from '../../../domain/read-models/hrefs'
+import { anotherIndex } from '../../../lib/another-index'
 import { subjectCountsLabel } from '../../../lib/subject-counts'
 import styles from './RandomSubject.module.css'
 
@@ -20,13 +21,6 @@ interface RandomSubjectProps {
   candidates: RandomSubjectCandidate[]
   /** Le sujet affiché au chargement, choisi côté serveur pour que l'hydratation soit stable */
   initialIndex: number
-}
-
-/** Un autre index que l'actuel, au hasard ; le même s'il n'y a pas le choix */
-function anotherIndex(current: number, count: number): number {
-  if (count < 2) return current
-  const offset = 1 + Math.floor(Math.random() * (count - 1))
-  return (current + offset) % count
 }
 
 /** Encart du rail : un sujet au hasard, à relancer d'un clic. */

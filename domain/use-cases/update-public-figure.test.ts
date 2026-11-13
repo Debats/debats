@@ -34,13 +34,11 @@ const fakePublicFigureRepo = {
   findByWikipediaUrl: () => Effect.succeed(null as PublicFigure | null),
   getStats: () =>
     Effect.succeed({ publicFigureId: '', subjectsCount: 0, positionsCount: 0, statementsCount: 0 }),
-  findSummariesByActivity: () => Effect.succeed([]),
   findSummariesByCreatedAt: () => Effect.succeed([]),
   findSummaryById: () => Effect.succeed(null),
   findSummariesByIds: () => Effect.succeed([]),
   findIndexEntries: () => Effect.succeed([]),
   findAllIds: () => Effect.succeed([]),
-  findByLetter: () => Effect.succeed([]),
 } as unknown as PublicFigureRepository
 
 const fakeWikipediaValidator: WikipediaValidator = {

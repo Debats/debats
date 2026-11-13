@@ -40,5 +40,8 @@ export type OrganisationMembership = S.Schema.Type<typeof OrganisationMembership
  * belongs with the running ones rather than with those that have ended.
  * The day to judge on comes from the caller: the domain never reads the clock.
  */
-export const isCurrentMembership = (membership: OrganisationMembership, today: Date): boolean =>
+export const isCurrentMembership = (
+  membership: Pick<OrganisationMembership, 'endedOn'>,
+  today: Date,
+): boolean =>
   Option.match(membership.endedOn, { onNone: () => true, onSome: (end) => end >= dayOf(today) })

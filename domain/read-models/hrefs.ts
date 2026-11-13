@@ -13,8 +13,11 @@ export const SUBJECTS_HREF = '/s'
 export const positionHref = (subjectSlug: string, positionSlug: string): string =>
   `${subjectHref(subjectSlug)}/position/${positionSlug}`
 
+/** The index of every public figure */
+export const FIGURES_HREF = '/p'
+
 /** A public figure's page */
-export const figureHref = (slug: string): string => `/p/${slug}`
+export const figureHref = (slug: string): string => `${FIGURES_HREF}/${slug}`
 
 /** An organisation's page */
 export const organisationHref = (slug: string): string => `/o/${slug}`
