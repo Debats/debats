@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserSupabaseClient } from '../../../infra/supabase/browser'
 import type { User } from '@supabase/supabase-js'
+import { CONTRIBUTE_HREF } from '../../../domain/read-models/hrefs'
 import Button from '../../ui/Button'
 import LoginModal from '../LoginModal'
 import UserMenu from '../UserMenu'
@@ -53,7 +54,7 @@ export default function AuthSection({ onAuthChange }: AuthSectionProps) {
 
   return (
     <div className={styles.section}>
-      <Button href="/contribuer" size="small">
+      <Button href={CONTRIBUTE_HREF} size="small">
         Contribuer
       </Button>
       <Button variant="link" onClick={() => setShowLogin(true)}>

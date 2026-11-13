@@ -40,6 +40,7 @@ import {
   statementsViewHref,
 } from '../../../../domain/read-models/statements-view'
 import {
+  CONTRIBUTE_HREF,
   figureHref,
   figureOnSubjectHref,
   occupationFamilyHref,
@@ -177,7 +178,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
                 Ajouter une prise de position
               </Button>
             ) : (
-              <Button href="/contribuer">Ajouter une prise de position</Button>
+              <Button href={CONTRIBUTE_HREF}>Ajouter une prise de position</Button>
             )}
             <ShareButton compact title={figure.name} />
           </>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { DropdownMenu } from 'radix-ui'
-import { FLAGS_HREF } from '../../../domain/read-models/hrefs'
+import { CONTRIBUTE_HREF, FLAGS_HREF } from '../../../domain/read-models/hrefs'
 import { useFlagsToSettle } from './use-flags-to-settle'
 import styles from './UserMenu.module.css'
 
@@ -45,7 +45,7 @@ export default function UserMenu({ displayName, onSignOut }: UserMenuProps) {
             </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild>
-            <Link href="/contribuer" className={styles.item}>
+            <Link href={CONTRIBUTE_HREF} className={styles.item}>
               Contribuer
             </Link>
           </DropdownMenu.Item>

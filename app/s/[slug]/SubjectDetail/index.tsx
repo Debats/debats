@@ -13,7 +13,7 @@ import { getSubjectTimeline } from '../../../../infra/queries/subject-timeline'
 import { isMajorSubject } from '../../../../domain/entities/subject'
 import { positionAuthorsCount } from '../../../../domain/read-models/subject-positions-summary'
 import { argumentsByPosition } from '../../../../domain/read-models/argument'
-import { subjectHref } from '../../../../domain/read-models/hrefs'
+import { addStatementHref, subjectHref } from '../../../../domain/read-models/hrefs'
 import { statedSpanLabel } from '../../../../domain/services/subject-timeline'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
@@ -105,9 +105,7 @@ export default async function SubjectDetail({
     : positions
   const positionArguments = argumentsByPosition(subjectArguments)
 
-  const newStatementHref = contributor
-    ? `/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`
-    : '/contribuer'
+  const newStatementHref = addStatementHref(subject, !!contributor)
   const canAddPosition = !!contributor && canPerform(contributor.reputation, 'add_position')
   const canEditSubject = !!contributor && canPerform(contributor.reputation, 'edit_subject')
   const major = isMajorSubject(subject, stats.statementsCount, new Date())

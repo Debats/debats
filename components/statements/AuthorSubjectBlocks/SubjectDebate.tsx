@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import AuthorAvatarStack from '../AuthorAvatarStack'
-import { positionHref } from '../../../domain/read-models/hrefs'
+import { CONTRIBUTE_HREF, positionHref } from '../../../domain/read-models/hrefs'
 import { PositionStanding } from '../../../domain/services/author-on-subject'
 import styles from './AuthorSubjectBlocks.module.css'
 
@@ -66,7 +66,7 @@ export default function SubjectDebate({ subjectSlug, debate }: SubjectDebateProp
               ) : (
                 <p className={styles.debateEmpty}>
                   Personne ne l’a encore défendue ici.{' '}
-                  <Link href="/contribuer" className={styles.railCardLink}>
+                  <Link href={CONTRIBUTE_HREF} className={styles.railCardLink}>
                     Vous connaissez une déclaration ?
                   </Link>
                 </p>

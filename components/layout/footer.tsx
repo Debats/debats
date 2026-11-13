@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getAdminContributor } from '../../app/actions/admin-guard'
 import { siteDescription } from '../../app/site'
+import { CONTRIBUTE_HREF } from '../../domain/read-models/hrefs'
 import styles from './footer.module.css'
 
 const socialLinks = [
@@ -113,7 +114,7 @@ export default async function Footer() {
           <FooterColumn
             title="Participer"
             links={[
-              { href: '/contribuer', label: 'Contribuer' },
+              { href: CONTRIBUTE_HREF, label: 'Contribuer' },
               { href: '/guide', label: "Mode d'emploi" },
               { href: '/reputation', label: 'Réputation' },
               { href: '/contact', label: 'Contact' },

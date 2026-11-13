@@ -40,6 +40,23 @@ export const figureOnSubjectHref = (figureSlug: string, subjectSlug: string): st
 export const organisationOnSubjectHref = (organisationSlug: string, subjectSlug: string): string =>
   onSubject(organisationHref(organisationSlug), subjectSlug)
 
+/** Where a visitor learns how to contribute, and signs in to do it */
+export const CONTRIBUTE_HREF = '/contribuer'
+
+/** The form that adds a statement, the subject already chosen */
+export const newStatementOnSubjectHref = (subject: { id: string; title: string }): string =>
+  `/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`
+
+/**
+ * Where « ajouter une prise de position » leads on a subject: the form for who
+ * is signed in; the page that explains how to contribute for a visitor, who
+ * could not submit the form.
+ */
+export const addStatementHref = (
+  subject: { id: string; title: string },
+  signedIn: boolean,
+): string => (signedIn ? newStatementOnSubjectHref(subject) : CONTRIBUTE_HREF)
+
 /** The form that edits a statement, whoever its author */
 export const statementEditHref = (statementId: string): string =>
   `/prise-de-position/${statementId}/modifier`

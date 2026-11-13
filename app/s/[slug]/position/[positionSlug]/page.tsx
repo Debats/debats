@@ -12,7 +12,7 @@ import { reviewOf } from '../../../../review-of'
 import EntityReview from '../../../../../components/review/EntityReview'
 import ReviewScope from '../../../../../components/review/ReviewScope'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
-import { positionHref, subjectHref } from '../../../../../domain/read-models/hrefs'
+import { CONTRIBUTE_HREF, positionHref, subjectHref } from '../../../../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
 import AuthorAvatar from '../../../../../components/statements/AuthorAvatar'
 import StatementBody from '../../../../../components/statements/StatementBody'
@@ -142,7 +142,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                 Ajouter une prise de position
               </Button>
             ) : (
-              <Button href="/contribuer">Ajouter une prise de position</Button>
+              <Button href={CONTRIBUTE_HREF}>Ajouter une prise de position</Button>
             )}
             <ShareButton
               compact

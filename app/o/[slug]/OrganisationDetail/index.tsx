@@ -34,6 +34,7 @@ import {
   statementsViewHref,
 } from '../../../../domain/read-models/statements-view'
 import {
+  CONTRIBUTE_HREF,
   organisationHref,
   statementEditHref,
   subjectHref,
@@ -121,7 +122,7 @@ export default async function OrganisationDetail({
 
   const newStatementHref = contributor
     ? `/nouvelle-prise-de-position?organisationId=${organisation.id}&organisationName=${encodeURIComponent(organisation.name)}`
-    : '/contribuer'
+    : CONTRIBUTE_HREF
   const base = organisationHref(slug)
   const self = organisationAuthor(organisation.id)
   // The organisation itself, and the statements the list shows

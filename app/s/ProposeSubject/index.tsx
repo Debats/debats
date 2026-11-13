@@ -1,4 +1,5 @@
 import Button from '../../../components/ui/Button'
+import { CONTRIBUTE_HREF } from '../../../domain/read-models/hrefs'
 import styles from './ProposeSubject.module.css'
 
 interface ProposeSubjectProps {
@@ -15,7 +16,7 @@ export default function ProposeSubject({ canAddSubject }: ProposeSubjectProps) {
         Un sujet, c’est une question qui divise, sans position dans son titre. Les contributeur·ices
         de rang Éloquent peuvent en proposer.
       </p>
-      <Button href={canAddSubject ? '/s/ajouter' : '/contribuer'} variant="inverse">
+      <Button href={canAddSubject ? '/s/ajouter' : CONTRIBUTE_HREF} variant="inverse">
         {canAddSubject ? 'Proposer un sujet' : 'Contribuer'}
       </Button>
     </section>

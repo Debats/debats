@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addStatementHref,
   argumentHref,
   figureHref,
   figureOnSubjectHref,
@@ -31,6 +32,16 @@ describe('the addresses of the site', () => {
   it('puts an author on a subject under the author', () => {
     expect(figureOnSubjectHref('simone-veil', 'le-smic')).toBe('/p/simone-veil/s/le-smic')
     expect(organisationOnSubjectHref('attac', 'le-smic')).toBe('/o/attac/s/le-smic')
+  })
+
+  it('opens the new statement form on a subject for who is signed in', () => {
+    expect(addStatementHref({ id: 'abc', title: 'L’âge & la retraite' }, true)).toBe(
+      '/nouvelle-prise-de-position?subjectId=abc&subjectTitle=L%E2%80%99%C3%A2ge%20%26%20la%20retraite',
+    )
+  })
+
+  it('sends a visitor who wants to add a statement to the page that explains how to contribute', () => {
+    expect(addStatementHref({ id: 'abc', title: 'Le SMIC' }, false)).toBe('/contribuer')
   })
 
   it('edits a statement by its id', () => {

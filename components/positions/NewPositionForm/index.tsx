@@ -3,7 +3,7 @@
 import { useState, useCallback, FormEvent } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import { createPositionAction, ActionResult } from '../../../app/actions/create-position'
-import { subjectHref } from '../../../domain/read-models/hrefs'
+import { newStatementOnSubjectHref, subjectHref } from '../../../domain/read-models/hrefs'
 import { FieldErrors } from '../../../domain/use-cases/create-position'
 import TextField from '../../ui/TextField'
 import TextArea from '../../ui/TextArea'
@@ -79,7 +79,7 @@ export default function NewPositionForm({
         title={`La position « ${successResult.title} » a été créée !`}
         primaryAction={{
           label: 'Ajouter une prise de position',
-          href: `/nouvelle-prise-de-position?subjectId=${subjectId}&subjectTitle=${encodeURIComponent(subjectTitle)}`,
+          href: newStatementOnSubjectHref({ id: subjectId, title: subjectTitle }),
         }}
         secondaryActions={[
           {
