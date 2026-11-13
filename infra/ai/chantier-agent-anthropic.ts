@@ -1,11 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk'
 import * as Sentry from '@sentry/nextjs'
-import { Effect } from 'effect'
+import { Effect, pipe } from 'effect'
 import { AgentNews, AgentUnavailable, ChantierAgent } from '../../domain/services/chantier-agent'
+import { capPushedFurther } from '../../domain/services/chantier-budget'
 import { chantierTitle } from '../../domain/services/chantier-title'
 import { SITE_URL } from '../../app/site'
 import { CHANTIER_AGENT_SYSTEM, chantierOpeningMessage } from './chantier-agent-prompt'
-import { newsOf, SessionEventLike } from './chantier-session-news'
+import { newsOf, SessionEventLike, spendOf } from './chantier-session-news'
 
 /**
  * What a managed session needs to run a chantier. All of it is set up once
@@ -32,7 +33,10 @@ export const NOT_CONFIGURED =
   'L’agent des chantiers n’est pas configuré : CHANTIER_AGENT_ID et CHANTIER_ENVIRONMENT_ID manquent.'
 export const UNREACHABLE = 'L’agent ne répond pas pour le moment. Réessayez dans un instant.'
 export const NEEDS_CONSOLE =
-  'L’agent attend une décision ou un budget dans la console Anthropic : il ne prend pas de message pour l’instant.'
+  'L’agent ne prend pas de message pour l’instant : son budget est atteint, ou il attend une décision dans la console Anthropic.'
+export const PUSH_REFUSED =
+  'Anthropic a refusé de repousser le budget de cette session. Le détail est dans Sentry.'
+export const NO_CAP = 'La session de ce chantier n’a pas de plafond de dépense : rien à repousser.'
 
 /** The configuration the environment gives, or null when the chantiers are not set up */
 export function chantierAgentConfig(
@@ -53,14 +57,21 @@ export function chantierAgentConfig(
   }
 }
 
-/** What stopped a call, in the words the person reads; the cause goes to Sentry */
-function unavailable(error: unknown): AgentUnavailable {
-  Sentry.captureException(error, { tags: { feature: 'chantier' } })
-  const status = error instanceof Anthropic.APIError ? error.status : undefined
-  return new AgentUnavailable(status === 400 ? NEEDS_CONSOLE : UNREACHABLE, error)
-}
+/**
+ * What stopped a call, in the words the person reads; the cause goes to
+ * Sentry. A request the session refuses (400) says why in the words of what
+ * was asked: a message is refused for one reason, a budget for another.
+ */
+const unavailable =
+  (refused: string) =>
+  (error: unknown): AgentUnavailable => {
+    Sentry.captureException(error, { tags: { feature: 'chantier' } })
+    const status = error instanceof Anthropic.APIError ? error.status : undefined
+    return new AgentUnavailable(status === 400 ? refused : UNREACHABLE, error)
+  }
 
-const attempt = <A>(run: () => Promise<A>) => Effect.tryPromise({ try: run, catch: unavailable })
+const attempt = <A>(run: () => Promise<A>, refused: string = NEEDS_CONSOLE) =>
+  Effect.tryPromise({ try: run, catch: unavailable(refused) })
 
 /**
  * The chantier agent as a Managed Agents session: one session per chantier,
@@ -73,6 +84,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
     return {
       open: () => notConfigured,
       tell: () => notConfigured,
+      pushBudget: () => notConfigured,
       newsSince: () => notConfigured,
       interrupt: () => notConfigured,
       forget: () => notConfigured,
@@ -149,8 +161,32 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
         const needsLastStop =
           session.status === 'idle' && !events.some((e) => e.type === 'session.status_idle')
         const lastIdle = needsLastStop ? await lastIdleOf(sessionId) : undefined
-        return newsOf(session.status, events, lastIdle)
+        return newsOf(session, events, lastIdle)
       }),
+
+    /* The cap is moved from what the session says now, not from what the page last read */
+    pushBudget: (sessionId, stepCents) =>
+      pipe(
+        attempt(() => sessions.retrieve(sessionId)),
+        Effect.flatMap((session) => {
+          const spend = spendOf(session)
+          if (!spend) return Effect.fail(new AgentUnavailable(NO_CAP))
+          const capCents = capPushedFurther(spend, stepCents)
+          return Effect.as(
+            attempt(
+              () =>
+                sessions.update(sessionId, {
+                  budget: {
+                    type: 'limit',
+                    max_list_cost: { amount: String(capCents), currency: 'USD' },
+                  },
+                }),
+              PUSH_REFUSED,
+            ),
+            { ...spend, capCents, reached: false },
+          )
+        }),
+      ),
 
     interrupt: (sessionId) =>
       Effect.asVoid(

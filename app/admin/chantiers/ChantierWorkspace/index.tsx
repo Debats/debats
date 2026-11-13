@@ -4,11 +4,14 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Chantier, ChantierMessage, isOpen } from '../../../../domain/entities/chantier'
 import { Sheet } from '../../../../components/ui/DialogueSheet'
+import { AgentBudget } from '../../../../domain/services/chantier-budget'
 import { closeChantierAction } from '../../../actions/close-chantier'
 import { deleteChantierAction } from '../../../actions/delete-chantier'
+import { pushChantierBudgetAction } from '../../../actions/push-chantier-budget'
 import { refreshChantierAction } from '../../../actions/refresh-chantier'
 import { startChantierAction } from '../../../actions/start-chantier'
 import { tellChantierAction } from '../../../actions/tell-chantier'
+import ChantierBudget from '../ChantierBudget'
 import ChantierDialogue from '../ChantierDialogue'
 import { CHANTIERS_PATH } from '../hrefs'
 import styles from './ChantierWorkspace.module.css'
@@ -16,6 +19,8 @@ import styles from './ChantierWorkspace.module.css'
 interface ChantierWorkspaceProps {
   chantier: Chantier
   messages: ChantierMessage[]
+  /** What the agent spent against its cap, when the session said */
+  budget: AgentBudget | null
   /** What became of the drafts, in one line */
   tally: string
   /** The drafts of the chantier, as the server rendered them */
@@ -34,6 +39,7 @@ const POLL_MS = 6_000
 export default function ChantierWorkspace({
   chantier: initial,
   messages: initialMessages,
+  budget: initialBudget,
   tally,
   children,
 }: ChantierWorkspaceProps) {
@@ -41,7 +47,11 @@ export default function ChantierWorkspace({
   const [chantier, setChantier] = useState(initial)
   const [messages, setMessages] = useState(initialMessages)
   const [sheet, setSheet] = useState<Sheet>('bar')
+  const [budget, setBudget] = useState(initialBudget)
   const [sending, setSending] = useState(false)
+  const [pushing, setPushing] = useState(false)
+  /* Shown beside the budget, not in the dialogue: below 1024 px the dialogue is folded to a bar */
+  const [pushRefusal, setPushRefusal] = useState<string>()
   const [error, setError] = useState<string>()
   const heard = useRef(initialMessages.length)
   useEffect(() => {
@@ -49,10 +59,11 @@ export default function ChantierWorkspace({
   }, [messages.length])
 
   const took = useCallback(
-    (next: Chantier, all: ChantierMessage[]) => {
+    (next: Chantier, all: ChantierMessage[], spent: AgentBudget | null) => {
       const grew = all.length > heard.current
       setChantier(next)
       setMessages(all)
+      setBudget(spent)
       if (grew) setSheet((current) => (current === 'bar' ? 'half' : current))
       if (grew || next.status !== 'working') router.refresh()
     },
@@ -67,7 +78,7 @@ export default function ChantierWorkspace({
         setError(result.message)
         return
       }
-      took(result.chantier, result.messages)
+      took(result.chantier, result.messages, result.budget)
     }
     const timer = setInterval(() => void poll(), POLL_MS)
     return () => clearInterval(timer)
@@ -88,6 +99,20 @@ export default function ChantierWorkspace({
     },
     [chantier.id],
   )
+
+  /* The cap one step further: an agent stopped at it resumes by itself, and the page starts listening again */
+  const pushBudget = useCallback(async () => {
+    setPushing(true)
+    setPushRefusal(undefined)
+    const result = await pushChantierBudgetAction(chantier.id)
+    if (result.pushed) {
+      setChantier(result.chantier)
+      setBudget(result.budget)
+    } else {
+      setPushRefusal(result.message)
+    }
+    setPushing(false)
+  }, [chantier.id])
 
   /* A close that fails may still have closed the row (the agent could not be stopped): the page rereads */
   const close = useCallback(async () => {
@@ -135,6 +160,15 @@ export default function ChantierWorkspace({
           )}
           <p className={styles.count}>{tally}</p>
         </div>
+        {budget && (
+          <ChantierBudget
+            budget={budget}
+            pushable={isOpen(chantier)}
+            pushing={pushing}
+            refusal={pushRefusal}
+            onPush={() => void pushBudget()}
+          />
+        )}
         {children}
       </div>
 

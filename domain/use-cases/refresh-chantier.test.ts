@@ -18,6 +18,7 @@ const news = (overrides: Partial<AgentNews> = {}): AgentNews => ({
     { eventId: 'evt_2', role: 'agent', text: '# La taxe Zucman\n\nJe commence par le Sénat.' },
   ],
   until: '2026-11-10T10:05:00Z',
+  budget: null,
   ...overrides,
 })
 
@@ -89,6 +90,31 @@ describe('refreshChantierUseCase', () => {
 
     expect(Either.isRight(again)).toBe(true)
     if (Either.isRight(again)) expect(again.right.messages).toHaveLength(1)
+  })
+
+  it('says what the session spent against its cap', async () => {
+    const chantiers = inMemoryChantiers([aChantier()])
+    const budget = { spentCents: 2173, capCents: 2000, reached: true }
+    const { agent } = fakeAgent({ news: news({ status: 'blocked', budget }) })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.budget).toEqual(budget)
+  })
+
+  it('knows no budget for a chantier it does not ask the session about', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ status: 'closed' })])
+    const { agent } = fakeAgent({
+      news: news({ budget: { spentCents: 100, capCents: 2000, reached: false } }),
+    })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.budget).toBeNull()
   })
 
   it('reads a chantier without a session as it is', async () => {

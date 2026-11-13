@@ -308,16 +308,16 @@ npm run chantier:setup:production   # crée l'environnement, le coffre (ADMIN_AP
 
 Le script lit `ANTHROPIC_API_KEY`, `ADMIN_API_KEY` et `CHANTIER_SKILLS_DIR` dans l'environnement ; rien à faire dans la console Anthropic. Les skills ne sont pas dans ce dépôt (`.claude` est hors git) : `CHANTIER_SKILLS_DIR` désigne le dossier qui les tient, un sous-dossier par skill avec son `SKILL.md`, et chaque passage du script en publie une nouvelle version. Les trois identifiants imprimés sont à poser sur le site, qui les cite pour ouvrir une session à chaque chantier lancé :
 
-| Variable                    | Rôle                                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| `CHANTIER_AGENT_ID`         | L'agent Managed Agents ; relancer le script avec cette variable posée met à jour son prompt |
-| `CHANTIER_ENVIRONMENT_ID`   | L'environnement (conteneur, réseau ouvert)                                                  |
-| `CHANTIER_VAULT_ID`         | Le coffre qui tient `ADMIN_API_KEY`                                                         |
-| `CHANTIER_SKILLS_DIR`       | Lu par le script seulement : le dossier des skills à publier, hors dépôt                    |
-| `DEBATS_URL`                | Seulement pour viser un autre site que `https://debats.co` (agent et coffre)                |
-| `CHANTIER_BUDGET_CENTS`     | Plafond de dépense d'une session, en cents (défaut : 2000)                                  |
-| `CHANTIER_REPOSITORY_URL`   | Le dépôt monté dans la session (défaut : `https://github.com/Debats/debats`)                |
-| `CHANTIER_REPOSITORY_TOKEN` | Jeton GitHub, seulement si le dépôt est privé                                               |
+| Variable                    | Rôle                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `CHANTIER_AGENT_ID`         | L'agent Managed Agents ; relancer le script avec cette variable posée met à jour son prompt                                |
+| `CHANTIER_ENVIRONMENT_ID`   | L'environnement (conteneur, réseau ouvert)                                                                                 |
+| `CHANTIER_VAULT_ID`         | Le coffre qui tient `ADMIN_API_KEY`                                                                                        |
+| `CHANTIER_SKILLS_DIR`       | Lu par le script seulement : le dossier des skills à publier, hors dépôt                                                   |
+| `DEBATS_URL`                | Seulement pour viser un autre site que `https://debats.co` (agent et coffre)                                               |
+| `CHANTIER_BUDGET_CENTS`     | Plafond de départ d'une session, en cents de dollar (défaut : 2000) ; la page du chantier le repousse de 10 $ à la demande |
+| `CHANTIER_REPOSITORY_URL`   | Le dépôt monté dans la session (défaut : `https://github.com/Debats/debats`)                                               |
+| `CHANTIER_REPOSITORY_TOKEN` | Jeton GitHub, seulement si le dépôt est privé                                                                              |
 
 Sans les trois premières, lancer un chantier répond que l'agent n'est pas configuré ; le reste du site n'en dépend pas.
 

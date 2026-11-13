@@ -34,7 +34,7 @@ const STATUS_LINES: Partial<Record<Chantier['status'], string>> = {
     'Ce chantier reprend des brouillons déjà là. Lancez l’agent quand vous voulez vous y mettre : il commencera par en faire l’inventaire.',
   working: 'L’agent travaille… Les brouillons arrivent dans la liste au fur et à mesure.',
   blocked:
-    'L’agent attend une décision ou un budget dans la console Anthropic. Rien ne bougera d’ici.',
+    'L’agent est arrêté : son budget est atteint, ou il attend une décision dans la console Anthropic.',
   ended: 'La session de l’agent est terminée : ce chantier ne prend plus de messages.',
   closed: 'Chantier clôturé.',
 }

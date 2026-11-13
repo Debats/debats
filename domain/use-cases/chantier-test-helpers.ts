@@ -7,6 +7,7 @@ import {
   NewChantierMessage,
 } from '../repositories/chantier-repository'
 import { AgentNews, AgentUnavailable, ChantierAgent } from '../services/chantier-agent'
+import { AgentBudget } from '../services/chantier-budget'
 
 export const ADMIN = { id: 'admin-uuid', reputation: 1_000_000 }
 
@@ -93,6 +94,7 @@ export type AgentCalls = {
     recap: string | null
   }[]
   told: { sessionId: string; text: string }[]
+  pushed: { sessionId: string; stepCents: number }[]
   interrupted: string[]
   forgotten: string[]
 }
@@ -103,10 +105,11 @@ export function fakeAgent(
     open?: Effect.Effect<{ sessionId: string }, AgentUnavailable>
     news?: AgentNews
     tell?: Effect.Effect<void, AgentUnavailable>
+    push?: Effect.Effect<AgentBudget, AgentUnavailable>
     forget?: Effect.Effect<void, AgentUnavailable>
   } = {},
 ) {
-  const calls: AgentCalls = { opened: [], told: [], interrupted: [], forgotten: [] }
+  const calls: AgentCalls = { opened: [], told: [], pushed: [], interrupted: [], forgotten: [] }
   const agent: ChantierAgent = {
     open: (chantier) =>
       Effect.suspend(() => {
@@ -119,7 +122,17 @@ export function fakeAgent(
         return behaviour.tell ?? Effect.void
       }),
     newsSince: () =>
-      Effect.succeed(behaviour.news ?? { status: 'working', messages: [], until: null }),
+      Effect.succeed(
+        behaviour.news ?? { status: 'working', messages: [], until: null, budget: null },
+      ),
+    pushBudget: (sessionId, stepCents) =>
+      Effect.suspend(() => {
+        calls.pushed.push({ sessionId, stepCents })
+        return (
+          behaviour.push ??
+          Effect.succeed({ spentCents: 2173, capCents: 2000 + stepCents, reached: false })
+        )
+      }),
     interrupt: (sessionId) =>
       Effect.sync(() => {
         calls.interrupted.push(sessionId)

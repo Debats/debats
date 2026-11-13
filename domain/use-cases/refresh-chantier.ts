@@ -2,6 +2,7 @@ import { Effect, pipe } from 'effect'
 import { Chantier, ChantierMessage } from '../entities/chantier'
 import { ChantierRepository, ChantierUpdate } from '../repositories/chantier-repository'
 import { AgentNews, ChantierAgent } from '../services/chantier-agent'
+import { AgentBudget } from '../services/chantier-budget'
 import { chantierTitle } from '../services/chantier-title'
 import { chantierFound } from './chantier-preconditions'
 import { allowedTo } from './preconditions'
@@ -15,6 +16,8 @@ type RefreshChantierParams = {
 export type RefreshedChantier = {
   chantier: Chantier
   messages: ChantierMessage[]
+  /** What the session spent against its cap; null when the session was not asked, or runs without a cap */
+  budget: AgentBudget | null
 }
 
 const chantiers = Effect.serviceFunctions(ChantierRepository)
@@ -51,7 +54,8 @@ export function changesFrom(chantier: Chantier, news: AgentNews): ChantierUpdate
  * Brings the site up to date with the session: the agent's new messages are
  * mirrored, its status taken. A person's own messages are mirrored when
  * sent, so the news only contributes the agent's. A chantier without a
- * session has nothing to refresh and is read as it is.
+ * session has nothing to refresh and is read as it is, and so is one a
+ * person closed: its session is not asked, so its budget is not known.
  */
 export function refreshChantierUseCase(params: RefreshChantierParams) {
   const mirror = (chantier: Chantier, sessionId: string, contributorId: string) =>
@@ -68,9 +72,9 @@ export function refreshChantierUseCase(params: RefreshChantierParams) {
           Effect.flatMap(() =>
             chantiers.update(chantier.id, changesFrom(chantier, news), contributorId),
           ),
+          Effect.map((updated) => ({ chantier: updated ?? chantier, budget: news.budget })),
         ),
       ),
-      Effect.map((updated) => updated ?? chantier),
     )
 
   return pipe(
@@ -81,10 +85,14 @@ export function refreshChantierUseCase(params: RefreshChantierParams) {
     Effect.flatMap(({ contributor, chantier }) =>
       chantier.sessionId && chantier.status !== 'closed'
         ? mirror(chantier, chantier.sessionId, contributor.id)
-        : Effect.succeed(chantier),
+        : Effect.succeed({ chantier, budget: null }),
     ),
-    Effect.flatMap((chantier) =>
-      Effect.map(chantiers.findMessages(chantier.id), (messages) => ({ chantier, messages })),
+    Effect.flatMap(({ chantier, budget }) =>
+      Effect.map(chantiers.findMessages(chantier.id), (messages) => ({
+        chantier,
+        messages,
+        budget,
+      })),
     ),
   )
 }
