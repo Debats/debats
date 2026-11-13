@@ -137,12 +137,17 @@ const familiesOf = (entries: FigureIndexEntry[]): FamilyRef[] => {
 }
 
 /**
- * The index by occupation: one section per family in the order of the
- * families, then the families too small to stand alone, then the figures no
- * occupation is known for. A figure with several occupations belongs to
- * several families, but a face is shown once on the page: who appeared in an
- * earlier section leaves her place to the next. A section left with nobody to
- * show is dropped.
+ * The index by occupation: one section per family, the family with the most
+ * members first — whoever held one of its occupations counts, today or before,
+ * and two families of the same size keep the order of the families. Then the
+ * families too small to stand alone, then the figures no occupation is known
+ * for. Counting is the order the site imposes least: the order of the families
+ * is an editorial ranking, which opened the page on the executive.
+ *
+ * A figure with several occupations belongs to several families, but a face
+ * is shown once on the page: who appeared in an earlier section leaves her
+ * place to the next, so the order of the sections also decides where a figure
+ * of several families is seen. A section left with nobody to show is dropped.
  */
 export function groupFiguresByFamily(
   entries: FigureIndexEntry[],
@@ -160,10 +165,9 @@ export function groupFiguresByFamily(
     )
   }
 
-  const families = familiesOf(entries).map((family) => ({
-    family,
-    members: membersOf(entries, new Set([family.id])),
-  }))
+  const families = familiesOf(entries)
+    .map((family) => ({ family, members: membersOf(entries, new Set([family.id])) }))
+    .sort((a, b) => b.members.length - a.members.length || a.family.position - b.family.position)
   const large = families.filter(({ members }) => members.length >= SMALL_FAMILY)
   const small = families.filter(({ members }) => members.length < SMALL_FAMILY)
 

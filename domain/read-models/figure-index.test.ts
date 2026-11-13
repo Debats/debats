@@ -65,16 +65,32 @@ const sectionOf = (sections: FigureIndexSection[], of: FamilyRef) =>
   sections.find((s) => s.kind === 'family' && s.family.id === of.id)
 
 describe('groupFiguresByFamily', () => {
-  it('opens one section per family, in the order of the families', () => {
-    const ministers = Array.from({ length: 6 }, (_, i) =>
+  const ministers = (count: number) =>
+    Array.from({ length: count }, (_, i) =>
       figure(`Ministre ${i}`, 1, [holds('Ministre', executive)]),
     )
-    const sections = groupFiguresByFamily([...deputies(6), ...ministers], today)
+  const familyNames = (sections: FigureIndexSection[]) =>
+    sections.map((s) => (s.kind === 'family' ? s.family.name : s.kind))
 
-    expect(sections.map((s) => (s.kind === 'family' ? s.family.name : s.kind))).toEqual([
-      'Exécutif',
-      'Élu·e national·e',
-    ])
+  it('opens one section per family, the family with the most members first', () => {
+    const sections = groupFiguresByFamily([...ministers(6), ...deputies(9)], today)
+
+    expect(familyNames(sections)).toEqual(['Élu·e national·e', 'Exécutif'])
+  })
+
+  it('counts who held the occupation before as a member, as the bar of families does', () => {
+    const former = Array.from({ length: 4 }, (_, i) =>
+      figure(`Ancien ministre ${i}`, 1, [held('Ministre', executive)]),
+    )
+    const sections = groupFiguresByFamily([...ministers(6), ...former, ...deputies(9)], today)
+
+    expect(familyNames(sections)).toEqual(['Exécutif', 'Élu·e national·e'])
+  })
+
+  it('keeps the order of the families between two that have as many members', () => {
+    const sections = groupFiguresByFamily([...deputies(6), ...ministers(6)], today)
+
+    expect(familyNames(sections)).toEqual(['Exécutif', 'Élu·e national·e'])
   })
 
   it('counts every member of the family but shows six of them', () => {
@@ -105,8 +121,9 @@ describe('groupFiguresByFamily', () => {
     const leaders = Array.from({ length: 6 }, (_, i) =>
       figure(`Chef ${i}`, 1, [holds('Chef·fe de parti', party)]),
     )
-    const sections = groupFiguresByFamily([both, ...deputies(5), ...leaders], today)
+    const sections = groupFiguresByFamily([both, ...deputies(8), ...leaders], today)
 
+    expect(familyNames(sections)).toEqual(['Élu·e national·e', 'Responsable politique'])
     expect(names(sectionOf(sections, national)!)).toContain('Cheffe et députée')
     expect(names(sectionOf(sections, party)!)).not.toContain('Cheffe et députée')
     expect(sectionOf(sections, party)!.figures).toHaveLength(6)
