@@ -18,15 +18,20 @@ export default function SiteFigures({ figures }: { figures: Figures }) {
   ]
 
   return (
-    <section className={styles.band} aria-label="Le site en chiffres">
-      <dl className={styles.figures}>
-        {counted.map(([count, label]) => (
-          <div key={label} className={styles.figure}>
-            <dt className={styles.label}>{label}</dt>
-            <dd className={styles.number}>{count.toLocaleString('fr-FR')}</dd>
-          </div>
-        ))}
-      </dl>
+    <section className={styles.band} aria-labelledby="site-figures">
+      <div className={styles.card}>
+        <h2 id="site-figures" className={styles.kicker}>
+          Débats.co en chiffres
+        </h2>
+        <dl className={styles.figures}>
+          {counted.map(([count, label]) => (
+            <div key={label} className={styles.figure}>
+              <dt className={styles.label}>{label}</dt>
+              <dd className={styles.number}>{count.toLocaleString('fr-FR')}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
   )
 }

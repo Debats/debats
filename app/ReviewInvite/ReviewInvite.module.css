@@ -1,6 +1,7 @@
 .invite {
   max-width: var(--container-max);
-  margin: 0 auto 72px;
+  width: 100%;
+  margin: 0 auto;
   padding: 0 var(--container-gutter);
   /* L'en-tête collant ne doit pas recouvrir le bloc quand « une autre » y ramène */
   scroll-margin-top: 88px;

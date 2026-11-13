@@ -3,5 +3,16 @@
   display: flex;
   flex-direction: column;
   gap: 56px;
-  padding-bottom: 72px;
+}
+
+/*
+ * Ce qui clôt la page, sur toute la largeur, après la colonne et son rail :
+ * la marge est ici et non sous la colonne, pour que le rail, qui descend
+ * jusqu'au bas de la colonne, ne vienne pas buter contre ce qui suit.
+ */
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+  margin-top: 72px;
 }

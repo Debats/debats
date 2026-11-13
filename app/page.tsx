@@ -70,10 +70,12 @@ export default async function HomePage({ searchParams }: PageProps) {
           <PositionChanges changes={latestChanges(home.movedStatements, CHANGES)} />
         </div>
       </ContentWithSidebar>
-      {home.toReview && (
-        <ReviewInvite toReview={home.toReview} viewer={viewerOf(contributor)} skip={skip} />
-      )}
-      <SiteFigures figures={home.figures} />
+      <div className={styles.foot}>
+        {home.toReview && (
+          <ReviewInvite toReview={home.toReview} viewer={viewerOf(contributor)} skip={skip} />
+        )}
+        <SiteFigures figures={home.figures} />
+      </div>
     </>
   )
 }
