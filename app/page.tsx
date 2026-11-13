@@ -18,6 +18,7 @@ import MovingDebates from './MovingDebates'
 import NewSubjects from './NewSubjects'
 import PositionChanges from './PositionChanges'
 import ReviewInvite from './ReviewInvite'
+import SiteFigures from './SiteFigures'
 import styles from './home.module.css'
 
 const NEW_SUBJECTS = 5
@@ -46,7 +47,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
   return (
     <>
-      <HeroSection figures={home.figures} />
+      <HeroSection />
       <ContentWithSidebar
         hideLatestStatements
         stickyAside
@@ -72,6 +73,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       {home.toReview && (
         <ReviewInvite toReview={home.toReview} viewer={viewerOf(contributor)} skip={skip} />
       )}
+      <SiteFigures figures={home.figures} />
     </>
   )
 }

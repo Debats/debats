@@ -47,7 +47,7 @@ export interface DebateShare {
   share: number
 }
 
-/** The site's content, counted: the figures under the home page's title */
+/** The site's content, counted: the figures at the foot of the home page */
 export interface SiteFigures {
   subjects: number
   positions: number

@@ -49,30 +49,6 @@
   max-width: 680px;
 }
 
-.figures {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 56px;
-  margin-top: 8px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line-2);
-}
-
-/* Le nombre se lit avant son nom, qui reste le terme défini */
-.figure {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 2px;
-}
-
-.figureNumber {
-  composes: number from '../../styles/text.module.css';
-}
-
-.figureLabel {
-  composes: small from '../../styles/text.module.css';
-}
-
 /*
  * Sur un écran étroit le texte occupe toute la largeur : la photo passerait
  * dessous. Le voile couvre alors tout le bandeau, la photo n'est plus qu'une
@@ -85,9 +61,5 @@
 
   .container {
     padding: 40px var(--container-gutter-mobile) 32px;
-  }
-
-  .figures {
-    gap: 14px 32px;
   }
 }

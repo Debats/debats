@@ -1,0 +1,42 @@
+.band {
+  max-width: var(--container-max);
+  margin: 0 auto 72px;
+  padding: 0 var(--container-gutter);
+}
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px 40px;
+  margin: 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--line-2);
+}
+
+/* Le nombre se lit avant son nom, qui reste le terme défini */
+.figure {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+.number {
+  composes: number from '../../styles/text.module.css';
+  margin: 0;
+}
+
+.label {
+  composes: small from '../../styles/text.module.css';
+}
+
+@media (max-width: 768px) {
+  .band {
+    padding: 0 var(--container-gutter-mobile);
+  }
+
+  .figures {
+    justify-content: flex-start;
+    gap: 14px 32px;
+  }
+}
