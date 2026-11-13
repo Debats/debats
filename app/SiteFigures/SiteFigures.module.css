@@ -4,11 +4,15 @@
   padding: 0 var(--container-gutter);
 }
 
+/*
+ * Six colonnes égales quand la largeur le permet, moins sinon : une grille
+ * garde les nombres d'une ligne incomplète sous ceux de la ligne du dessus,
+ * là où une ligne flexible les écarterait d'un bord à l'autre.
+ */
 .figures {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 16px 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px 40px;
   margin: 0;
   padding-top: 24px;
   border-top: 1px solid var(--line-2);
@@ -36,7 +40,7 @@
   }
 
   .figures {
-    justify-content: flex-start;
-    gap: 14px 32px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
   }
 }
