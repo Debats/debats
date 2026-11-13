@@ -5,10 +5,6 @@
 }
 
 .head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--ink);
 }
@@ -19,8 +15,4 @@
   font-size: 28px;
   line-height: 1.1;
   color: var(--ink);
-}
-
-.note {
-  composes: small from '../../styles/text.module.css';
 }

@@ -8,10 +8,7 @@ export default function MovingDebates({ moving }: { moving: MovingDebate[] }) {
   if (moving.length === 0) return null
 
   return (
-    <HomeSection
-      title="Les débats qui bougent"
-      note="là où des prises de position viennent d’être ajoutées"
-    >
+    <HomeSection title="Les débats qui bougent">
       <ul className={styles.cards}>
         {moving.map((entry) => (
           <MovingDebateCard key={entry.debate.id} moving={entry} />

@@ -53,7 +53,10 @@ export default async function HomePage({ searchParams }: PageProps) {
         aside={
           <>
             <LatestQuotes entries={home.latest} />
-            <NewSubjects subjects={newestDebates(home.debates, NEW_SUBJECTS)} />
+            <NewSubjects
+              subjects={newestDebates(home.debates, NEW_SUBJECTS)}
+              signedIn={!!contributor}
+            />
           </>
         }
       >

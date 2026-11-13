@@ -14,10 +14,7 @@ export default function DebateMap({ map }: { map: ThemedDebates }) {
   if (map.themes.length === 0) return null
 
   return (
-    <HomeSection
-      title="La carte des débats"
-      note="chaque barre montre comment les voix recensées se répartissent entre les positions"
-    >
+    <HomeSection title="La carte des débats">
       <div className={styles.themes}>
         {map.themes.map((entry) => (
           <ThemeDebatesCard key={entry.theme.slug} entry={entry} />

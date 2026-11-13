@@ -7,11 +7,7 @@
 }
 
 .entry {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 11px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -19,21 +15,62 @@
   padding-top: 0;
 }
 
-.title,
-.title:link,
-.title:visited {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  line-height: 1.2;
+.link,
+.link:link,
+.link:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   color: var(--ink);
 }
 
-.title:hover {
-  color: var(--signal);
+/* La thématique à gauche, le jour d'ouverture à droite */
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.theme {
+  composes: label from '../../styles/text.module.css';
+  color: var(--ink-2);
 }
 
 .date {
   composes: meta from '../../styles/text.module.css';
   color: var(--ink-2);
   white-space: nowrap;
+  /* Sans thématique, la date reste à droite */
+  margin-left: auto;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.15;
+  text-wrap: pretty;
+}
+
+.link:hover .title {
+  color: var(--signal);
+}
+
+.problem {
+  composes: small from '../../styles/text.module.css';
+  text-wrap: pretty;
+}
+
+/* Où en est le sujet à gauche, ce qu'on peut y faire à droite */
+.invitation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-top: 10px;
+}
+
+.standing {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
 }

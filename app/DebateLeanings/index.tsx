@@ -18,10 +18,7 @@ export default function DebateLeanings({ leanings }: { leanings: Leanings }) {
   if (columns.length === 0) return null
 
   return (
-    <HomeSection
-      title="Où les voix se partagent, où elles penchent"
-      note="parmi les voix que le site a recensées — ce n’est pas un sondage"
-    >
+    <HomeSection title="Où les voix se partagent, où elles penchent">
       <div className={styles.columns}>
         {columns.map((column) => (
           <div key={column.label} className={styles.column}>

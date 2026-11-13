@@ -12,10 +12,7 @@ export default function PositionChanges({ changes }: { changes: PositionChange[]
   if (changes.length === 0) return null
 
   return (
-    <HomeSection
-      title="Elle, il a changé de position"
-      note="chaque prise de position est datée : le site garde l’ancienne et la nouvelle"
-    >
+    <HomeSection title="Elle, il a changé de position">
       <ul className={styles.cards}>
         {changes.map((change) => (
           <PositionChangeCard key={`${change.figure.id}-${change.subject.id}`} change={change} />

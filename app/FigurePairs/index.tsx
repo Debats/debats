@@ -13,10 +13,7 @@ export default function FigurePairs({ pairs }: { pairs: FigureAgreement[] }) {
   if (pairs.length === 0) return null
 
   return (
-    <HomeSection
-      title="Qui pense comme qui ?"
-      note="même avis : au moins une position partagée sur le sujet"
-    >
+    <HomeSection title="Qui pense comme qui ?">
       <ul className={styles.cards}>
         {pairs.map((pair) => (
           <FigurePairCard key={`${pair.a.id}-${pair.b.id}`} pair={pair} />
