@@ -54,6 +54,7 @@ export interface SiteFigures {
   statements: number
   publicFigures: number
   organisations: number
+  /** The distinct documents the statements cite, told apart by their address: one name covers many */
   sources: number
 }
 

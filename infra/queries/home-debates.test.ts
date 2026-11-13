@@ -86,7 +86,27 @@ describe.skipIf(!hasDatabase)('get_site_figures', () => {
     expect(figures.statements).toBe(await live('statements'))
     expect(figures.publicFigures).toBe(await live('public_figures'))
     expect(figures.organisations).toBe(await live('organisations'))
-    expect(figures.sources).toBeGreaterThan(0)
-    expect(figures.sources).toBeLessThanOrEqual(figures.statements)
+  }, 30_000)
+
+  it('counts as sources the distinct addresses the live statements cite, not the names given to them', async () => {
+    const supabase = createAdminSupabaseClient()
+    // PostgREST caps a page at a thousand rows: the check reads the statements page after page
+    const PAGE = 1000
+    const urls = new Set<string>()
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from('statements')
+        .select('source_url')
+        .is('deleted_at', null)
+        .order('id')
+        .range(from, from + PAGE - 1)
+      if (error) throw error
+      data.forEach((row) => urls.add(row.source_url))
+      if (data.length < PAGE) break
+    }
+
+    const figures = await Effect.runPromise(loadSiteFigures(supabase))
+
+    expect(figures.sources).toBe(urls.size)
   }, 30_000)
 })
