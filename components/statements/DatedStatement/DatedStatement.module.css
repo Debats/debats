@@ -59,6 +59,15 @@
   color: var(--ink);
 }
 
+.touch {
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.touch::before {
+  content: '· ';
+  color: var(--line-2);
+}
+
 .name:hover,
 .position:hover,
 .subject:hover {

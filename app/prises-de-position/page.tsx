@@ -5,7 +5,13 @@ import { createStatementRepository } from '../../infra/database/statement-reposi
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
-import { FEED_PAGE_SIZE, feedHref, parseFeedParams } from '../../domain/read-models/statement-feed'
+import {
+  FEED_PAGE_SIZE,
+  FeedOrder,
+  feedHref,
+  lastTouch,
+  parseFeedParams,
+} from '../../domain/read-models/statement-feed'
 import { roleOf, rolesByFigure } from '../../domain/read-models/author-role'
 import { subjectHref } from '../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../domain/read-models/statement-author'
@@ -22,25 +28,39 @@ import FeedFilters from './FeedFilters'
 import ActiveSubjects from './ActiveSubjects'
 import styles from './prises-de-position.module.css'
 
+/** How the feed runs in each order, as the hero says it */
+const ORDER_SPANS: Record<FeedOrder, string> = {
+  stated: 'des plus récentes aux plus anciennes',
+  touched: 'des dernières ajoutées ou modifiées sur le site aux plus anciennes',
+}
+
+const introOf = (order: FeedOrder) =>
+  `Toutes les prises de position sourcées, ${ORDER_SPANS[order]}. Chaque entrée renvoie à sa source d’origine.`
+
 export const metadata: Metadata = {
   title: 'Prises de position',
-  description:
-    'Toutes les prises de position sourcées, des plus récentes aux plus anciennes. Chaque entrée renvoie à sa source d’origine.',
+  description: introOf('stated'),
 }
 
 const ACTIVE_SUBJECTS = 6
 
 interface PageProps {
-  searchParams: Promise<{ qui?: string; theme?: string; type?: string; page?: string }>
+  searchParams: Promise<{
+    qui?: string
+    theme?: string
+    type?: string
+    tri?: string
+    page?: string
+  }>
 }
 
 export default async function StatementsFeedPage({ searchParams }: PageProps) {
-  const { filters, page } = parseFeedParams(await searchParams)
+  const { filters, order, page } = parseFeedParams(await searchParams)
 
   const supabase = createAdminSupabaseClient()
   const [feed, themes, activeSubjects] = await Promise.all([
     Effect.runPromise(
-      createStatementRepository(supabase).findFeed(filters, {
+      createStatementRepository(supabase).findFeed(filters, order, {
         limit: FEED_PAGE_SIZE,
         offset: (page - 1) * FEED_PAGE_SIZE,
       }),
@@ -69,7 +89,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
       <PageHero
         kicker="Flux"
         title="Les prises de position"
-        intro="Toutes les prises de position sourcées, des plus récentes aux plus anciennes. Chaque entrée renvoie à sa source d’origine."
+        intro={introOf(order)}
         aside={
           <p className={styles.count}>
             <span className={styles.countNumber}>{feed.total}</span>
@@ -103,7 +123,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
           </>
         }
       >
-        <FeedFilters filters={filters} themes={themes} />
+        <FeedFilters filters={filters} order={order} themes={themes} />
 
         {feed.entries.length === 0 ? (
           <p className={styles.empty}>
@@ -125,6 +145,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
                   }}
                   subject={{ title: subject.title, href: subjectHref(subject.slug) }}
                   statement={statement}
+                  touch={order === 'touched' ? lastTouch(statement) : undefined}
                   arguments={used}
                 />
               ))}
@@ -138,7 +159,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
               {shownUpTo} sur {feed.total}
             </p>
             {hasMore && (
-              <Button href={feedHref(filters, page + 1)} variant="secondary">
+              <Button href={feedHref(filters, order, page + 1)} variant="secondary">
                 Charger la suite
               </Button>
             )}

@@ -11,6 +11,7 @@ import {
 } from '../../domain/entities/statement'
 import { LatestStatement } from '../../domain/read-models/latest-statement'
 import { ArgumentRef } from '../../domain/read-models/argument'
+import { FeedOrder } from '../../domain/read-models/statement-feed'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
@@ -207,6 +208,16 @@ const feedQuery = (themeSlug: string | undefined) => `
   organisations (id, name, slug, acronym),
   ${ARGUMENTS_EMBED}
 `
+
+/**
+ * The columns each order of the feed reads, the second settling the ties of
+ * the first: many statements share a stated day, and a merge touches several
+ * statements at the same instant, so paging needs an order that never wavers.
+ */
+const FEED_ORDER_COLUMNS: Record<FeedOrder, readonly [string, string]> = {
+  stated: ['stated_at', 'created_at'],
+  touched: ['updated_at', 'id'],
+}
 
 function mapStatementWithAuthorAndSubjectRow(
   row: StatementWithAuthorAndSubjectRow,
@@ -545,7 +556,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch the statement ids of a subject', error),
       }),
 
-    findFeed: (filters, page) =>
+    findFeed: (filters, order, page) =>
       Effect.tryPromise({
         try: async () => {
           // The same narrowing for the count and for the page
@@ -574,8 +585,8 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           const { data, error } = await narrowed(
             supabase.from('statements').select(feedQuery(filters.themeSlug)),
           )
-            .order('stated_at', { ascending: false })
-            .order('created_at', { ascending: false })
+            .order(FEED_ORDER_COLUMNS[order][0], { ascending: false })
+            .order(FEED_ORDER_COLUMNS[order][1], { ascending: false })
             .range(page.offset, page.offset + page.limit - 1)
           if (error) throw error
           return {

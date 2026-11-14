@@ -114,7 +114,7 @@ export const loadHomePage = (
       {
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
-        feed: statements.findFeed({}, { limit: LATEST_STATEMENTS, offset: 0 }),
+        feed: statements.findFeed({}, 'stated', { limit: LATEST_STATEMENTS, offset: 0 }),
         agreements: loadFigureAgreements(supabase, PAIR_CANDIDATES),
         movedStatements: loadMovedStatements(supabase),
         toReview: statements.findOneToReview(reviewer.id, reviewer.skip),

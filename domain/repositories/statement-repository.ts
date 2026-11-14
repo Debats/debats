@@ -5,7 +5,7 @@ import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { ArgumentRef } from '../read-models/argument'
-import { FeedFilters } from '../read-models/statement-feed'
+import { FeedFilters, FeedOrder } from '../read-models/statement-feed'
 
 export class DatabaseError extends Error {
   readonly _tag = 'DatabaseError'
@@ -139,9 +139,13 @@ export interface StatementRepository {
   /** The ids of the live statements on any position of a subject */
   findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
 
-  /** The live statements of the whole site, newest stated first, narrowed and paged */
+  /**
+   * The live statements of the whole site, narrowed and paged: newest stated
+   * first, or last touched first
+   */
   findFeed(
     filters: FeedFilters,
+    order: FeedOrder,
     page: { limit: number; offset: number },
   ): Effect.Effect<FeedPage, DatabaseError>
 

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { StatementContent } from '../../../domain/entities/statement'
 import { ArgumentRef } from '../../../domain/read-models/argument'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
+import { StatementTouch } from '../../../domain/read-models/statement-feed'
+import { formatShortDate } from '../../../lib/format-date'
 import ArgumentChips from '../ArgumentChips'
 import AuthorAvatar from '../AuthorAvatar'
 import StatementBody from '../StatementBody'
@@ -22,7 +24,14 @@ interface DatedStatementProps {
     sourceUrl: string
     statedAt: Date
   }
+  /** Given when the list is read by last touch: says why the entry stands where it does */
+  touch?: StatementTouch
   arguments: ArgumentRef[]
+}
+
+const TOUCH_LABELS: Record<StatementTouch['kind'], string> = {
+  added: 'ajoutée le',
+  edited: 'modifiée le',
 }
 
 /** Une prise de position dans une liste datée : qui, pour quoi, la citation, d'où. */
@@ -32,6 +41,7 @@ export default function DatedStatement({
   position,
   subject,
   statement,
+  touch,
   arguments: used,
 }: DatedStatementProps) {
   return (
@@ -60,7 +70,13 @@ export default function DatedStatement({
           )}
         </p>
         <StatementBody content={statement.content} />
-        <StatementSource statement={statement} />
+        <StatementSource statement={statement}>
+          {touch && (
+            <span className={styles.touch}>
+              {TOUCH_LABELS[touch.kind]} {formatShortDate(touch.at)}
+            </span>
+          )}
+        </StatementSource>
         <ArgumentChips arguments={used} />
       </div>
     </article>
