@@ -1,0 +1,22 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+/* Le champ prend la largeur de la carte ; le bouton garde la sienne */
+.field {
+  align-self: stretch;
+}
+
+.title {
+  composes: label from '../../../../styles/text.module.css';
+}
+
+.intro {
+  composes: small from '../../../../styles/text.module.css';
+}

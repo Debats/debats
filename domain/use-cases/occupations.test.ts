@@ -4,6 +4,9 @@ import { createOccupationUseCase } from './create-occupation'
 import { createOccupationFamilyUseCase } from './create-occupation-family'
 import { deleteOccupationUseCase } from './delete-occupation'
 import { deleteOccupationFamilyUseCase } from './delete-occupation-family'
+import { FAMILY_NAME_INVALID } from './occupation-family-name'
+import { renameOccupationFamilyUseCase } from './rename-occupation-family'
+import { EDITED_MEANWHILE } from './run-command'
 import { setPublicFigureOccupationsUseCase } from './set-public-figure-occupations'
 import {
   fakeFamilyRepo,
@@ -63,6 +66,20 @@ describe('createOccupationFamilyUseCase', () => {
     )
 
     expect(Either.isLeft(result) && result.left).toEqual({ name: 'Une famille porte déjà ce nom.' })
+  })
+
+  it.each([
+    ['too short once its spaces are dropped', ' R '],
+    ['without a letter or a digit to draw an address from', '··'],
+  ])('refuses a name %s', async (_, name) => {
+    const unit = inMemoryUnitOfWork()
+    const result = await execute()(
+      createOccupationFamilyUseCase({ ...familyParams, name }),
+      unit.run,
+    )
+
+    expect(Either.isLeft(result) && result.left).toEqual({ name: FAMILY_NAME_INVALID })
+    expect(unit.journal.all()).toEqual([])
   })
 
   it('opens the family stream after the existing families', async () => {
@@ -219,6 +236,117 @@ describe('deleteOccupationFamilyUseCase', () => {
     const result = await execute(deleteOccupationFamilyUseCase(deleteParams), unit.run)
 
     expect(Either.isLeft(result) && result.left).toContain('introuvable')
+  })
+})
+
+describe('renameOccupationFamilyUseCase', () => {
+  const family = sampleFamily('Élu·e national·e', 2)
+  const renameParams = {
+    contributor: idealiste,
+    familyId: family.id,
+    name: ' Parlementaire ',
+    revision: 1,
+  }
+  const execute = (seed = [family]) => runFormWith(familiesKnown(seed))
+
+  it('requires the Idéaliste rank', async () => {
+    const result = await execute()(
+      renameOccupationFamilyUseCase({ ...renameParams, contributor: eloquent }),
+    )
+
+    expect(Either.isLeft(result) && result.left).toContain('Idéaliste')
+  })
+
+  it.each([
+    ['too short once its spaces are dropped', ' P '],
+    ['too long', 'P'.repeat(51)],
+    ['without a letter or a digit to draw an address from', '·· — ··'],
+    ['that is not a text', 42 as unknown as string],
+  ])('refuses a name %s', async (_, name) => {
+    const unit = await journalWithFamilies([family])
+    const result = await execute()(
+      renameOccupationFamilyUseCase({ ...renameParams, name }),
+      unit.run,
+    )
+
+    expect(Either.isLeft(result) && result.left).toEqual({ name: FAMILY_NAME_INVALID })
+    expect(eventsOf(unit)).toEqual([[family.id, 'OccupationFamilyAdded']])
+  })
+
+  it('accepts a name of the longest length a family may bear', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await execute()(
+      renameOccupationFamilyUseCase({ ...renameParams, name: 'P'.repeat(50) }),
+      unit.run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+  })
+
+  it('lets a family correct the writing of its name, though its slug stays its own', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await execute()(
+      renameOccupationFamilyUseCase({ ...renameParams, name: 'Élu·e National·e' }),
+      unit.run,
+    )
+
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      name: 'Élu·e National·e',
+      slug: family.slug,
+    })
+  })
+
+  it('refuses the name of another family', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await execute([family, sampleFamily('Parlementaire', 9)])(
+      renameOccupationFamilyUseCase(renameParams),
+      unit.run,
+    )
+
+    expect(Either.isLeft(result) && result.left).toEqual({ name: 'Une famille porte déjà ce nom.' })
+    expect(eventsOf(unit)).toEqual([[family.id, 'OccupationFamilyAdded']])
+  })
+
+  it('refuses the name the family already bears', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await execute()(
+      renameOccupationFamilyUseCase({ ...renameParams, name: 'Élu·e national·e' }),
+      unit.run,
+    )
+
+    expect(Either.isLeft(result) && result.left).toEqual({ name: 'La famille porte déjà ce nom.' })
+  })
+
+  it('refuses a family nobody knows', async () => {
+    const result = await execute()(renameOccupationFamilyUseCase(renameParams))
+
+    expect(Either.isLeft(result) && result.left).toContain('introuvable')
+  })
+
+  it('records the new name, and returns the family under its new slug', async () => {
+    const unit = await journalWithFamilies([family])
+    const result = await execute()(renameOccupationFamilyUseCase(renameParams), unit.run)
+
+    expect(Either.isRight(result) && result.right).toMatchObject({
+      id: family.id,
+      name: 'Parlementaire',
+      slug: 'parlementaire',
+      position: 2,
+      updatedBy: 'idealiste',
+    })
+    expect(eventsOf(unit)).toEqual([
+      [family.id, 'OccupationFamilyAdded'],
+      [family.id, 'OccupationFamilyRenamed'],
+    ])
+  })
+
+  it('refuses to rename a family that changed since the form was shown', async () => {
+    const unit = await journalWithFamilies([family])
+    await execute()(renameOccupationFamilyUseCase({ ...renameParams, name: 'Élu·e' }), unit.run)
+    const result = await execute()(renameOccupationFamilyUseCase(renameParams), unit.run)
+
+    expect(Either.isLeft(result) && result.left).toBe(EDITED_MEANWHILE)
+    expect(eventsOf(unit)).toHaveLength(2)
   })
 })
 

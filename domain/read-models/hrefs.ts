@@ -28,8 +28,12 @@ export const themeHref = (slug: string): string => `/themes/${slug}`
 /** The page of an argument */
 export const argumentHref = (argument: { slug: string }): string => `/arguments/${argument.slug}`
 
+/** The list of the families of occupations */
+export const OCCUPATIONS_HREF = '/metiers'
+
 /** The page of a family of occupations */
-export const occupationFamilyHref = (family: { slug: string }): string => `/metiers/${family.slug}`
+export const occupationFamilyHref = (family: { slug: string }): string =>
+  `${OCCUPATIONS_HREF}/${family.slug}`
 
 /** What an author said on a subject lives under the author's own page */
 const onSubject = (authorPage: string, subjectSlug: string): string =>

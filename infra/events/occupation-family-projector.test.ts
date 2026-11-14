@@ -4,6 +4,7 @@ import {
   occupationAdded,
   occupationFamilyAdded,
   occupationFamilyDeleted,
+  occupationFamilyRenamed,
   occupationFamilyStream,
   occupationRemoved,
   replayOccupationFamily,
@@ -73,8 +74,27 @@ describe.skipIf(!hasDatabase)('occupation family projector', () => {
     expect(await prisma().occupations.findUnique({ where: { id: economistId } })).not.toBeNull()
   })
 
+  it('gives a renamed family its new name and slug, and leaves its occupations where they are', async () => {
+    const before = await prisma().occupation_families.findUniqueOrThrow({ where: { id: familyId } })
+    await append(4, [occupationFamilyRenamed(`Famille renommée ${suffix}`)])
+
+    const family = await prisma().occupation_families.findUniqueOrThrow({
+      where: { id: familyId },
+      include: { occupations: true },
+    })
+    expect(family).toMatchObject({
+      name: `Famille renommée ${suffix}`,
+      slug: `famille-renommee-${suffix}`,
+      position: 99,
+      created_at: before.created_at,
+      updated_by: actorId,
+    })
+    expect(family.updated_at.getTime()).toBeGreaterThanOrEqual(before.updated_at.getTime())
+    expect(family.occupations.map((o) => o.id)).toEqual([economistId])
+  })
+
   it('removes a deleted family with its occupations', async () => {
-    await append(4, [occupationFamilyDeleted()])
+    await append(5, [occupationFamilyDeleted()])
 
     expect(await prisma().occupation_families.findUnique({ where: { id: familyId } })).toBeNull()
     expect(await prisma().occupations.findUnique({ where: { id: economistId } })).toBeNull()
@@ -84,7 +104,7 @@ describe.skipIf(!hasDatabase)('occupation family projector', () => {
     const history = await Effect.runPromise(runUnitOfWork((journal) => journal.load(stream)))
     const state = replayOccupationFamily(history)
     expect(Either.isRight(state) && state.right).toMatchObject({
-      family: { slug: `famille-de-test-${suffix}` },
+      family: { slug: `famille-renommee-${suffix}` },
       occupations: [{ id: economistId }],
       deletedAt: expect.any(Date),
     })

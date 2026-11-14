@@ -7,7 +7,7 @@ import {
 } from '../aggregates/occupation-family'
 import { OccupationFamilyEvent } from '../aggregates/occupation-family-events'
 import { Occupation } from '../entities/occupation'
-import { EventStore } from '../events/event-store'
+import { EventStore, Revision } from '../events/event-store'
 import { AggregateStream, Decided, decideOn, requireState } from './aggregate-stream'
 
 export const occupationFamilyAggregate: AggregateStream<
@@ -25,7 +25,8 @@ export const decideOnOccupationFamily = (
   familyId: string,
   actorId: string,
   decide: OccupationFamilyDecision,
-) => decideOn(occupationFamilyAggregate, events, familyId, actorId, decide)
+  renderedFrom?: Revision,
+) => decideOn(occupationFamilyAggregate, events, familyId, actorId, decide, renderedFrom)
 
 export const requireOccupationFamilyState = (state: OccupationFamilyState | null) =>
   requireState(occupationFamilyAggregate, state)

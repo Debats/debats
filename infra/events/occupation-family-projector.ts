@@ -6,7 +6,7 @@ import {
 } from '../../domain/aggregates/occupation-family-events'
 import { StoredEvent } from '../../domain/events/event-store'
 import { PrismaTransaction } from '../prisma/client'
-import { auditOf, projectorOf } from './projector'
+import { auditOf, changedBy, projectorOf } from './projector'
 
 /**
  * Keeps the families and occupations tables in step with the family stream.
@@ -23,6 +23,12 @@ async function apply(decoded: OccupationFamilyEvent, stored: StoredEvent, tx: Pr
   switch (decoded.type) {
     case 'OccupationFamilyAdded':
       return createFamily(tx, stored, decoded.payload)
+    case 'OccupationFamilyRenamed':
+      await tx.occupation_families.update({
+        where: { id: stored.streamId },
+        data: { name: decoded.payload.name, slug: decoded.payload.slug, ...changedBy(stored) },
+      })
+      return
     case 'OccupationAdded':
       return createOccupation(tx, stored, decoded.payload)
     case 'OccupationRemoved':

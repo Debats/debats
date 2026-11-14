@@ -34,6 +34,12 @@ export const OccupationAdded = S.Struct({
   payload: OccupationContent,
 })
 
+/** The family changes name, and slug with it: its page moves to the new address */
+export const OccupationFamilyRenamed = S.Struct({
+  type: S.Literal('OccupationFamilyRenamed'),
+  payload: S.Struct({ name: S.String, slug: S.String }),
+})
+
 /** The occupation leaves the list; the figures holding it simply lose it */
 export const OccupationRemoved = S.Struct({
   type: S.Literal('OccupationRemoved'),
@@ -48,6 +54,7 @@ export const OccupationFamilyDeleted = S.Struct({
 
 export const OccupationFamilyEvent = S.Union(
   OccupationFamilyAdded,
+  OccupationFamilyRenamed,
   OccupationAdded,
   OccupationRemoved,
   OccupationFamilyDeleted,

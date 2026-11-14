@@ -6,12 +6,15 @@ import {
   addOccupation,
   addOccupationFamily,
   deleteOccupationFamily,
+  FAMILY_NAME_UNCHANGED,
   OCCUPATION_NOT_FOUND,
   occupationAdded,
   occupationFamilyAdded,
   occupationFamilyDeleted,
+  occupationFamilyRenamed,
   occupationRemoved,
   removeOccupation,
+  renameOccupationFamily,
   replayOccupationFamily,
 } from './occupation-family'
 
@@ -63,6 +66,10 @@ describe('occupation family facts', () => {
       slug: 'economiste',
       description: 'Chercheur·se.',
     })
+    expect(occupationFamilyRenamed(' Parlementaire ').payload).toEqual({
+      name: 'Parlementaire',
+      slug: 'parlementaire',
+    })
   })
 })
 
@@ -88,6 +95,15 @@ describe('occupation family decisions', () => {
     )
     expect(removeOccupation('other')(withEconomist)).toEqual(
       Either.left(new Rejected(OCCUPATION_NOT_FOUND)),
+    )
+  })
+
+  it('rename the family, and refuse the name it already bears whatever the spaces around it', () => {
+    expect(renameOccupationFamily('Recherche')(withEconomist)).toEqual(
+      Either.right([occupationFamilyRenamed('Recherche')]),
+    )
+    expect(renameOccupationFamily(' Chercheur·se et universitaire ')(withEconomist)).toEqual(
+      Either.left(new Rejected(FAMILY_NAME_UNCHANGED, 'name')),
     )
   })
 })
@@ -138,6 +154,20 @@ describe('replayOccupationFamily', () => {
       stored(occupationRemoved(economistId), 3, at('2024-03-01')),
     ])
     expect(Either.isRight(state) && state.right?.occupations).toEqual([])
+  })
+
+  it('gives a renamed family its new name and slug, and says who renamed it and when', () => {
+    const state = rebuilt(added, economist, occupationFamilyRenamed('Recherche'))
+
+    expect(state.family).toMatchObject({
+      name: 'Recherche',
+      slug: 'recherche',
+      position: 3,
+      createdAt: at('2024-01-10'),
+      updatedBy: 'alice',
+      updatedAt: at('2024-01-12'),
+    })
+    expect(state.occupations.map((o) => o.name)).toEqual(['Économiste'])
   })
 
   it('marks a deletion with its date', () => {

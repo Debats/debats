@@ -11,6 +11,11 @@ import {
   occupationSections,
 } from '../../../domain/read-models/occupation-sections'
 import { figureHref } from '../../../domain/read-models/hrefs'
+import { occupationFamilyStream } from '../../../domain/aggregates/occupation-family'
+import { canPerform } from '../../../domain/reputation/permissions'
+import { currentRevision } from '../../../infra/events/stream-revision'
+import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
+import RenameFamilyForm from './RenameFamilyForm'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import PageHero from '../../../components/layout/PageHero'
 import FigureAvatar from '../../../components/figures/FigureAvatar'
@@ -50,15 +55,20 @@ export default async function OccupationFamilyPage({ params }: PageProps) {
   )
   if (!family) notFound()
 
-  const [occupations, assignments] = await Promise.all([
+  const [occupations, assignments, contributor] = await Promise.all([
     Effect.runPromise(occupationRepo.findByFamilyId(family.id)),
     Effect.runPromise(occupationRepo.findAssignmentsByFamilyId(family.id)),
+    getAuthenticatedContributor(),
   ])
   const figures = await Effect.runPromise(
     figureRepo.findSummariesByIds(Array.from(new Set(assignments.map((a) => a.publicFigureId)))),
   )
   const populated = occupationSections(occupations, assignments, figures)
   const total = distinctFiguresCount(populated)
+
+  // Who may add a family may rename one; the form carries the revision it was rendered from
+  const canRename = !!contributor && canPerform(contributor.reputation, 'add_occupation')
+  const revision = canRename ? await currentRevision(occupationFamilyStream(family.id)) : null
 
   return (
     <>
@@ -70,7 +80,14 @@ export default async function OccupationFamilyPage({ params }: PageProps) {
           `${total} ${plural(total, 'personnalité référencée', 'personnalités référencées')} · ${occupations.map((o) => o.name).join(', ')}`
         }
       />
-      <ContentWithSidebar topMargin>
+      <ContentWithSidebar
+        topMargin
+        aside={
+          revision !== null && (
+            <RenameFamilyForm familyId={family.id} name={family.name} revision={revision} />
+          )
+        }
+      >
         {populated.length === 0 ? (
           <p className={styles.empty}>Aucune personnalité n’a encore un métier de cette famille.</p>
         ) : (

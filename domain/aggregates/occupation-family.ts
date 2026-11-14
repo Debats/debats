@@ -68,6 +68,11 @@ export const occupationRemoved = (occupationId: string): OccupationFamilyEvent =
   payload: { occupationId },
 })
 
+export const occupationFamilyRenamed = (name: string): OccupationFamilyEvent => ({
+  type: 'OccupationFamilyRenamed',
+  payload: { name: name.trim(), slug: generateOccupationFamilySlug(name.trim()) },
+})
+
 export const occupationFamilyDeleted = (): OccupationFamilyEvent => ({
   type: 'OccupationFamilyDeleted',
   payload: {},
@@ -97,6 +102,20 @@ export const removeOccupation =
     state.occupations.some((o) => o.id === occupationId)
       ? Either.right([occupationRemoved(occupationId)])
       : refused(OCCUPATION_NOT_FOUND)
+
+export const FAMILY_NAME_UNCHANGED = 'La famille porte déjà ce nom.'
+
+/**
+ * The family takes another name, and the slug that goes with it. Its
+ * occupations, and the figures holding them, are untouched. A name it already
+ * bears is refused: the journal records what changed, not that someone asked.
+ */
+export const renameOccupationFamily =
+  (name: string): OccupationFamilyDecision =>
+  (state) =>
+    name.trim() === state.family.name
+      ? refused(FAMILY_NAME_UNCHANGED, 'name')
+      : Either.right([occupationFamilyRenamed(name)])
 
 /** The occupations go with their family: the projection drops them */
 export const deleteOccupationFamily = (): OccupationFamilyDecision =>
@@ -139,6 +158,19 @@ function apply(
   switch (event.type) {
     case 'OccupationFamilyAdded':
       return { family: familyFrom(stored, event.payload), occupations: [], deletedAt: null }
+    case 'OccupationFamilyRenamed':
+      return (
+        state && {
+          ...state,
+          family: {
+            ...state.family,
+            name: OccupationFamilyName.make(event.payload.name),
+            slug: OccupationFamilySlug.make(event.payload.slug),
+            updatedBy: stored.actorId ?? state.family.updatedBy,
+            updatedAt: stored.occurredAt,
+          },
+        }
+      )
     case 'OccupationAdded':
       return (
         state && {
