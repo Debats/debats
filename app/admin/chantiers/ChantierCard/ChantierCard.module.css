@@ -68,7 +68,8 @@
   margin: 0;
 }
 
-.tally {
+/* A bar and the line that reads it: the drafts, then the budget */
+.measure {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -94,7 +95,7 @@
   background-color: var(--line-2);
 }
 
-.tallyLine {
+.measureLine {
   composes: meta from '../../../../styles/text.module.css';
 }
 

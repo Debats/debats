@@ -1,6 +1,8 @@
 import { AgentBudget, BUDGET_STEP_CENTS } from '../../../../domain/services/chantier-budget'
 import Button from '../../../../components/ui/Button'
 import { dollars } from '../../../../lib/dollars'
+import BudgetBar from '../BudgetBar'
+import { spendLine } from '../spend-line'
 import styles from './ChantierBudget.module.css'
 
 interface ChantierBudgetProps {
@@ -25,19 +27,13 @@ export default function ChantierBudget({
   refusal,
   onPush,
 }: ChantierBudgetProps) {
-  const share = Math.min(1, budget.spentCents / budget.capCents)
-
   return (
     <div className={styles.budget}>
       <p className={styles.line}>
         <span className={styles.label}>Budget de l’agent</span>
-        <span className={styles.figures}>
-          {dollars(budget.spentCents)} consommés sur {dollars(budget.capCents)}
-        </span>
+        <span className={styles.figures}>{spendLine(budget)}</span>
       </p>
-      <div className={styles.track} aria-hidden="true">
-        <div className={styles.fill} style={{ width: `${share * 100}%` }} />
-      </div>
+      <BudgetBar spend={budget} />
       {budget.reached && (
         <p className={styles.reached} role="status">
           Budget atteint : l’agent s’est arrêté, et reprendra de lui-même si vous le repoussez.

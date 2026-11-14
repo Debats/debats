@@ -1,5 +1,5 @@
 import { AgentMessage, AgentNews, AgentStatus } from '../../domain/services/chantier-agent'
-import { AgentBudget } from '../../domain/services/chantier-budget'
+import { AgentBudget, AgentSpend, SpendReading } from '../../domain/services/chantier-budget'
 
 /**
  * The part of a session event the site reads: who spoke and what they said,
@@ -46,13 +46,19 @@ export type SessionSpendLike = {
 export type SessionLike = SessionSpendLike & { status: SessionStatus }
 
 /** What the session spent and the cap it runs under, in cents; null when it runs without a cap */
-export function spendOf(
-  session: SessionSpendLike,
-): Pick<AgentBudget, 'spentCents' | 'capCents'> | null {
+export function spendOf(session: SessionSpendLike): AgentSpend | null {
   if (!session.budget) return null
   return {
     spentCents: Number(session.usage?.list_cost?.amount ?? 0),
     capCents: Number(session.budget.max_list_cost.amount),
+  }
+}
+
+/** What a session says of its spend, settled once nothing runs in it any more */
+export function spendReadingOf(session: SessionLike): SpendReading {
+  return {
+    spend: spendOf(session),
+    settled: session.status === 'idle' || session.status === 'terminated',
   }
 }
 

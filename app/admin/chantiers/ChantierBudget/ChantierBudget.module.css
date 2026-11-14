@@ -25,18 +25,6 @@
   color: var(--ink);
 }
 
-.track {
-  height: 6px;
-  background-color: var(--line);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.fill {
-  height: 6px;
-  background-color: var(--ink);
-}
-
 .refusal {
   composes: small from '../../../../styles/text.module.css';
   color: var(--signal);

@@ -914,6 +914,8 @@ model chantiers {
   created_at                                      DateTime            @default(now()) @db.Timestamptz(6)
   updated_at                                      DateTime            @default(now()) @db.Timestamptz(6)
   sections                                        Json                @default("[]")
+  spent_cents                                     Int?
+  cap_cents                                       Int?
   chantier_messages                               chantier_messages[]
   contributors_chantiers_created_byTocontributors contributors        @relation("chantiers_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   contributors_chantiers_updated_byTocontributors contributors        @relation("chantiers_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)

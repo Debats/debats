@@ -6,7 +6,7 @@ import { capPushedFurther } from '../../domain/services/chantier-budget'
 import { chantierTitle } from '../../domain/services/chantier-title'
 import { SITE_URL } from '../../app/site'
 import { CHANTIER_AGENT_SYSTEM, chantierOpeningMessage } from './chantier-agent-prompt'
-import { newsOf, SessionEventLike, spendOf } from './chantier-session-news'
+import { newsOf, SessionEventLike, spendReadingOf } from './chantier-session-news'
 
 /**
  * What a managed session needs to run a chantier. All of it is set up once
@@ -84,6 +84,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
     return {
       open: () => notConfigured,
       tell: () => notConfigured,
+      spend: () => notConfigured,
       pushBudget: () => notConfigured,
       newsSince: () => notConfigured,
       interrupt: () => notConfigured,
@@ -112,6 +113,13 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
       | SessionEventLike
       | undefined
   }
+
+  /* The session alone, its events left unread: one request, which is what a list of chantiers can afford */
+  const spend = (sessionId: string) =>
+    Effect.map(
+      attempt(() => sessions.retrieve(sessionId)),
+      spendReadingOf,
+    )
 
   return {
     open: (chantier) =>
@@ -164,14 +172,15 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
         return newsOf(session, events, lastIdle)
       }),
 
+    spend,
+
     /* The cap is moved from what the session says now, not from what the page last read */
     pushBudget: (sessionId, stepCents) =>
       pipe(
-        attempt(() => sessions.retrieve(sessionId)),
-        Effect.flatMap((session) => {
-          const spend = spendOf(session)
-          if (!spend) return Effect.fail(new AgentUnavailable(NO_CAP))
-          const capCents = capPushedFurther(spend, stepCents)
+        spend(sessionId),
+        Effect.flatMap(({ spend: spent }) => {
+          if (!spent) return Effect.fail(new AgentUnavailable(NO_CAP))
+          const capCents = capPushedFurther(spent, stepCents)
           return Effect.as(
             attempt(
               () =>
@@ -183,7 +192,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
                 }),
               PUSH_REFUSED,
             ),
-            { ...spend, capCents, reached: false },
+            { ...spent, capCents, reached: false },
           )
         }),
       ),

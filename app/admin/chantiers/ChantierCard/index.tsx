@@ -5,13 +5,18 @@ import {
   ChantierMessage,
 } from '../../../../domain/entities/chantier'
 import { DraftTally, tallyLine } from '../../../../domain/read-models/chantier-summary'
+import { AgentSpend } from '../../../../domain/services/chantier-budget'
 import { withoutTitleLine } from '../../../../domain/services/chantier-title'
+import BudgetBar from '../BudgetBar'
 import { chantierHref } from '../hrefs'
+import { spendLine } from '../spend-line'
 import styles from './ChantierCard.module.css'
 
 interface ChantierCardProps {
   chantier: Chantier
   tally: DraftTally
+  /** What its agent spent against its cap; null when its session could not say, or when it has none */
+  spend: AgentSpend | null
   /** The last thing the agent said, for the card's foot */
   lastWord: ChantierMessage | null
 }
@@ -21,8 +26,8 @@ const LAST_WORD_LENGTH = 180
 const shortened = (text: string) =>
   text.length > LAST_WORD_LENGTH ? `${text.slice(0, LAST_WORD_LENGTH).trimEnd()}…` : text
 
-/** One chantier in the list: its name, its brief, what became of its drafts, the agent's last word */
-export default function ChantierCard({ chantier, tally, lastWord }: ChantierCardProps) {
+/** One chantier in the list: its name, its brief, what became of its drafts, what its agent spent, the agent's last word */
+export default function ChantierCard({ chantier, tally, spend, lastWord }: ChantierCardProps) {
   const title = chantier.title ?? chantier.brief
   return (
     <article className={`${styles.card} ${chantier.status === 'waiting' ? styles.waiting : ''}`}>
@@ -41,7 +46,7 @@ export default function ChantierCard({ chantier, tally, lastWord }: ChantierCard
         </Link>
       </h2>
       {chantier.title && <p className={styles.brief}>{chantier.brief}</p>}
-      <div className={styles.tally}>
+      <div className={styles.measure}>
         {tally.total > 0 && (
           <div aria-hidden="true" className={styles.meter}>
             <span className={styles.meterValidated} style={{ flex: tally.validated }} />
@@ -49,8 +54,14 @@ export default function ChantierCard({ chantier, tally, lastWord }: ChantierCard
             <span className={styles.meterSetAside} style={{ flex: tally.setAside }} />
           </div>
         )}
-        <span className={styles.tallyLine}>{tallyLine(tally)}</span>
+        <span className={styles.measureLine}>{tallyLine(tally)}</span>
       </div>
+      {spend && (
+        <div className={styles.measure}>
+          <BudgetBar spend={spend} />
+          <span className={styles.measureLine}>Budget · {spendLine(spend)}</span>
+        </div>
+      )}
       {lastWord && (
         <p className={styles.lastWord}>
           <span className={styles.lastWordWho}>L’agent</span>

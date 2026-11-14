@@ -1,5 +1,27 @@
 import { describe, expect, it } from 'vitest'
-import { agentStatus, newsOf, SessionEventLike } from './chantier-session-news'
+import { agentStatus, newsOf, SessionEventLike, spendReadingOf } from './chantier-session-news'
+
+describe('spendReadingOf', () => {
+  const capped = {
+    budget: { max_list_cost: { amount: '2000' } },
+    usage: { list_cost: { amount: '412' } },
+  }
+
+  it('reads the figures as settled once the session is at rest or over', () => {
+    const spend = { spentCents: 412, capCents: 2000 }
+    expect(spendReadingOf({ ...capped, status: 'idle' })).toEqual({ spend, settled: true })
+    expect(spendReadingOf({ ...capped, status: 'terminated' })).toEqual({ spend, settled: true })
+  })
+
+  it('reads them as still moving while the session runs or is being rescheduled', () => {
+    expect(spendReadingOf({ ...capped, status: 'running' }).settled).toBe(false)
+    expect(spendReadingOf({ ...capped, status: 'rescheduling' }).settled).toBe(false)
+  })
+
+  it('knows no spend for a session that runs without a cap', () => {
+    expect(spendReadingOf({ status: 'idle' }).spend).toBeNull()
+  })
+})
 
 const said = (id: string, type: string, text: string, at: string): SessionEventLike => ({
   id,

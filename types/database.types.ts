@@ -176,12 +176,14 @@ export type Database = {
       chantiers: {
         Row: {
           brief: string
+          cap_cents: number | null
           created_at: string
           created_by: string
           id: string
           last_event_at: string | null
           sections: Json
           session_id: string | null
+          spent_cents: number | null
           status: string
           title: string | null
           updated_at: string
@@ -189,12 +191,14 @@ export type Database = {
         }
         Insert: {
           brief: string
+          cap_cents?: number | null
           created_at?: string
           created_by: string
           id?: string
           last_event_at?: string | null
           sections?: Json
           session_id?: string | null
+          spent_cents?: number | null
           status?: string
           title?: string | null
           updated_at?: string
@@ -202,12 +206,14 @@ export type Database = {
         }
         Update: {
           brief?: string
+          cap_cents?: number | null
           created_at?: string
           created_by?: string
           id?: string
           last_event_at?: string | null
           sections?: Json
           session_id?: string | null
+          spent_cents?: number | null
           status?: string
           title?: string | null
           updated_at?: string

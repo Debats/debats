@@ -2,8 +2,10 @@ import { Metadata } from 'next'
 import { Effect } from 'effect'
 import { Chantier, ChantierMessage } from '../../../domain/entities/chantier'
 import { tallyDrafts } from '../../../domain/read-models/chantier-summary'
+import { chantierSpend } from '../../../domain/use-cases/chantier-spend'
 import { createChantierRepository } from '../../../infra/database/chantier-repository-supabase'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
+import { liveServices } from '../../../infra/live-services'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { getAdminContributor } from '../../actions/admin-guard'
 import styles from '../drafts/admin-drafts.module.css'
@@ -33,6 +35,7 @@ export default async function ChantiersPage() {
   const supabase = createAdminSupabaseClient()
   const chantiers = createChantierRepository(supabase)
   const drafts = createDraftStatementRepository(supabase)
+  const services = liveServices(supabase)
 
   const cards = await Effect.runPromise(
     Effect.flatMap(chantiers.findAll(), (all: Chantier[]) =>
@@ -40,13 +43,19 @@ export default async function ChantiersPage() {
         all,
         (chantier) =>
           Effect.map(
-            Effect.all({
-              produced: drafts.findByChantier(chantier.id),
-              messages: chantiers.findMessages(chantier.id),
-            }),
-            ({ produced, messages }) => ({
+            /* The three readings at once: the session is asked while the base answers */
+            Effect.all(
+              {
+                produced: drafts.findByChantier(chantier.id),
+                messages: chantiers.findMessages(chantier.id),
+                spend: Effect.provide(chantierSpend(chantier), services),
+              },
+              { concurrency: 'unbounded' },
+            ),
+            ({ produced, messages, spend }) => ({
               chantier,
               tally: tallyDrafts(produced),
+              spend,
               lastWord: lastAgentWord(messages),
             }),
           ),
@@ -69,8 +78,14 @@ export default async function ChantiersPage() {
         <p className={styles.empty}>Aucun chantier pour l’instant.</p>
       ) : (
         <div className={listStyles.list}>
-          {cards.map(({ chantier, tally, lastWord }) => (
-            <ChantierCard key={chantier.id} chantier={chantier} tally={tally} lastWord={lastWord} />
+          {cards.map(({ chantier, tally, spend, lastWord }) => (
+            <ChantierCard
+              key={chantier.id}
+              chantier={chantier}
+              tally={tally}
+              spend={spend}
+              lastWord={lastWord}
+            />
           ))}
         </div>
       )}

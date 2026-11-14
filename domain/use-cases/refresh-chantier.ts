@@ -5,6 +5,7 @@ import { AgentNews, ChantierAgent } from '../services/chantier-agent'
 import { AgentBudget } from '../services/chantier-budget'
 import { chantierTitle } from '../services/chantier-title'
 import { chantierFound } from './chantier-preconditions'
+import { chantierSpend } from './chantier-spend'
 import { allowedTo } from './preconditions'
 import { ContributorIdentity } from './types'
 
@@ -16,7 +17,7 @@ type RefreshChantierParams = {
 export type RefreshedChantier = {
   chantier: Chantier
   messages: ChantierMessage[]
-  /** What the session spent against its cap; null when the session was not asked, or runs without a cap */
+  /** What the session spent against its cap, or what a closed chantier kept of it; null when it has no session, or runs without a cap */
   budget: AgentBudget | null
 }
 
@@ -55,9 +56,17 @@ export function changesFrom(chantier: Chantier, news: AgentNews): ChantierUpdate
  * mirrored, its status taken. A person's own messages are mirrored when
  * sent, so the news only contributes the agent's. A chantier without a
  * session has nothing to refresh and is read as it is, and so is one a
- * person closed: its session is not asked, so its budget is not known.
+ * person closed: its events are not read, and its budget is what it kept
+ * of its spend.
  */
 export function refreshChantierUseCase(params: RefreshChantierParams) {
+  /* Closed, an agent is not held by its cap: there is nothing left to resume, so the cap is never « reached » */
+  const unmoved = (chantier: Chantier) =>
+    Effect.map(chantierSpend(chantier), (spend) => ({
+      chantier,
+      budget: spend && { ...spend, reached: false },
+    }))
+
   const mirror = (chantier: Chantier, sessionId: string, contributorId: string) =>
     pipe(
       agent.newsSince(sessionId, chantier.lastEventAt),
@@ -85,7 +94,7 @@ export function refreshChantierUseCase(params: RefreshChantierParams) {
     Effect.flatMap(({ contributor, chantier }) =>
       chantier.sessionId && chantier.status !== 'closed'
         ? mirror(chantier, chantier.sessionId, contributor.id)
-        : Effect.succeed({ chantier, budget: null }),
+        : unmoved(chantier),
     ),
     Effect.flatMap(({ chantier, budget }) =>
       Effect.map(chantiers.findMessages(chantier.id), (messages) => ({

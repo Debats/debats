@@ -7,7 +7,7 @@ import {
   NewChantierMessage,
 } from '../repositories/chantier-repository'
 import { AgentNews, AgentUnavailable, ChantierAgent } from '../services/chantier-agent'
-import { AgentBudget } from '../services/chantier-budget'
+import { AgentBudget, SpendReading } from '../services/chantier-budget'
 
 export const ADMIN = { id: 'admin-uuid', reputation: 1_000_000 }
 
@@ -19,6 +19,7 @@ export const aChantier = (overrides: Partial<Chantier> = {}): Chantier => ({
   sessionId: 'sesn_1',
   lastEventAt: null,
   sections: [],
+  spend: null,
   createdBy: ADMIN.id,
   updatedBy: ADMIN.id,
   createdAt: new Date('2026-11-10T10:00:00Z'),
@@ -73,6 +74,11 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
       ),
     findMessages: (chantierId) =>
       Effect.sync(() => messages.filter((m) => m.chantierId === chantierId)),
+    keepSpend: (id, spend) =>
+      Effect.sync(() => {
+        const current = rows.get(id)
+        if (current) rows.set(id, { ...current, spend })
+      }),
     delete: (id) =>
       Effect.sync(() => {
         rows.delete(id)
@@ -94,6 +100,10 @@ export type AgentCalls = {
     recap: string | null
   }[]
   told: { sessionId: string; text: string }[]
+  /** The sessions asked for their news */
+  newsAsked: string[]
+  /** The sessions asked what they spent */
+  spendAsked: string[]
   pushed: { sessionId: string; stepCents: number }[]
   interrupted: string[]
   forgotten: string[]
@@ -105,11 +115,20 @@ export function fakeAgent(
     open?: Effect.Effect<{ sessionId: string }, AgentUnavailable>
     news?: AgentNews
     tell?: Effect.Effect<void, AgentUnavailable>
+    spend?: Effect.Effect<SpendReading, AgentUnavailable>
     push?: Effect.Effect<AgentBudget, AgentUnavailable>
     forget?: Effect.Effect<void, AgentUnavailable>
   } = {},
 ) {
-  const calls: AgentCalls = { opened: [], told: [], pushed: [], interrupted: [], forgotten: [] }
+  const calls: AgentCalls = {
+    opened: [],
+    told: [],
+    newsAsked: [],
+    spendAsked: [],
+    pushed: [],
+    interrupted: [],
+    forgotten: [],
+  }
   const agent: ChantierAgent = {
     open: (chantier) =>
       Effect.suspend(() => {
@@ -121,10 +140,16 @@ export function fakeAgent(
         calls.told.push({ sessionId, text })
         return behaviour.tell ?? Effect.void
       }),
-    newsSince: () =>
-      Effect.succeed(
-        behaviour.news ?? { status: 'working', messages: [], until: null, budget: null },
-      ),
+    newsSince: (sessionId) =>
+      Effect.sync(() => {
+        calls.newsAsked.push(sessionId)
+        return behaviour.news ?? { status: 'working', messages: [], until: null, budget: null }
+      }),
+    spend: (sessionId) =>
+      Effect.suspend(() => {
+        calls.spendAsked.push(sessionId)
+        return behaviour.spend ?? Effect.succeed({ spend: null, settled: true })
+      }),
     pushBudget: (sessionId, stepCents) =>
       Effect.suspend(() => {
         calls.pushed.push({ sessionId, stepCents })

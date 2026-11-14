@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Either } from 'effect'
+import { Effect, Either } from 'effect'
 import { AgentNews } from '../services/chantier-agent'
 import {
   aChantier,
@@ -104,11 +104,39 @@ describe('refreshChantierUseCase', () => {
     if (Either.isRight(result)) expect(result.right.budget).toEqual(budget)
   })
 
-  it('knows no budget for a chantier it does not ask the session about', async () => {
-    const chantiers = inMemoryChantiers([aChantier({ status: 'closed' })])
-    const { agent } = fakeAgent({
-      news: news({ budget: { spentCents: 100, capCents: 2000, reached: false } }),
+  it('shows what a closed chantier kept of its spend, without asking its session', async () => {
+    const kept = { spentCents: 412, capCents: 2000 }
+    const chantiers = inMemoryChantiers([aChantier({ status: 'closed', spend: kept })])
+    const { agent, calls } = fakeAgent({
+      news: news({ budget: { spentCents: 100, capCents: 2000, reached: true } }),
     })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.budget).toEqual({ ...kept, reached: false })
+    expect(calls.newsAsked).toEqual([])
+    expect(calls.spendAsked).toEqual([])
+  })
+
+  it('asks the session of a closed chantier that kept nothing yet, and keeps what it spent', async () => {
+    const spent = { spentCents: 2000, capCents: 2000 }
+    const chantiers = inMemoryChantiers([aChantier({ status: 'closed' })])
+    const { agent } = fakeAgent({ spend: Effect.succeed({ spend: spent, settled: true }) })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    /* Closed, the agent is not stopped by its cap: nothing is left to resume */
+    if (Either.isRight(result)) expect(result.right.budget).toEqual({ ...spent, reached: false })
+    expect(chantiers.rows.get('chantier-1')?.spend).toEqual(spent)
+  })
+
+  it('knows no budget for a closed chantier whose session runs without a cap', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ status: 'closed' })])
+    const { agent } = fakeAgent()
     const result = await runWith(chantierFakes(chantiers.repository, agent))(
       refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
     )

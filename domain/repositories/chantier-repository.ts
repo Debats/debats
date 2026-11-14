@@ -5,6 +5,7 @@ import {
   ChantierMessageRole,
   ChantierStatus,
 } from '../entities/chantier'
+import { AgentSpend } from '../services/chantier-budget'
 import { DatabaseError } from './errors'
 
 export type NewChantier = {
@@ -49,6 +50,8 @@ export interface ChantierRepository {
   ): Effect.Effect<ChantierMessage[], DatabaseError>
   /** The conversation in order */
   findMessages(chantierId: string): Effect.Effect<ChantierMessage[], DatabaseError>
+  /** Keeps what the agent of a closed chantier spent. Not a person's edit: the chantier keeps its place in the list and its last editor */
+  keepSpend(id: string, spend: AgentSpend): Effect.Effect<void, DatabaseError>
   /** Removes the chantier with everything it owns: its conversation and the drafts it produced */
   delete(id: string): Effect.Effect<void, DatabaseError>
 }

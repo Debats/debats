@@ -7,6 +7,8 @@
  * mirrored message by message, and the last status it heard of.
  */
 
+import { AgentSpend } from '../services/chantier-budget'
+
 export const CHANTIER_STATUSES = [
   'pending',
   'working',
@@ -41,6 +43,8 @@ export type Chantier = {
   lastEventAt: string | null
   /** The section titles in the reading order the agent chose; a section it did not list comes after */
   sections: string[]
+  /** What its agent had spent, kept once the chantier is closed and the figures no longer move; null until then */
+  spend: AgentSpend | null
   createdBy: string
   updatedBy: string
   createdAt: Date

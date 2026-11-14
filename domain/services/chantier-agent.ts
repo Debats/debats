@@ -1,6 +1,6 @@
 import { Context, Effect } from 'effect'
 import { ChantierMessageRole } from '../entities/chantier'
-import { AgentBudget } from './chantier-budget'
+import { AgentBudget, SpendReading } from './chantier-budget'
 
 /**
  * The agent that works a chantier, as the domain sees it: a session is
@@ -48,6 +48,8 @@ export interface ChantierAgent {
   tell(sessionId: string, text: string): Effect.Effect<void, AgentUnavailable>
   /** What happened in the session since the cursor: messages, and where the agent stands */
   newsSince(sessionId: string, after: string | null): Effect.Effect<AgentNews, AgentUnavailable>
+  /** What the session spent against its cap, and whether the figures may still move; its events are left unread */
+  spend(sessionId: string): Effect.Effect<SpendReading, AgentUnavailable>
   /** Pushes the cap of the session further by the step given; an agent stopped at its cap resumes by itself */
   pushBudget(sessionId: string, stepCents: number): Effect.Effect<AgentBudget, AgentUnavailable>
   /** Stops what the agent is doing; it goes idle */

@@ -9,11 +9,19 @@ import {
   NewChantierMessage,
 } from '../../domain/repositories/chantier-repository'
 import { DatabaseError } from '../../domain/repositories/errors'
+import { AgentSpend } from '../../domain/services/chantier-budget'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
   Sentry.captureException(error, { extra: { message } })
   return new DatabaseError(msg)
+}
+
+/** The two columns are set and null together: the table says so */
+function spendKept(row: Record<string, unknown>): AgentSpend | null {
+  return typeof row.spent_cents === 'number' && typeof row.cap_cents === 'number'
+    ? { spentCents: row.spent_cents, capCents: row.cap_cents }
+    : null
 }
 
 function mapChantier(row: Record<string, unknown>): Chantier {
@@ -27,6 +35,7 @@ function mapChantier(row: Record<string, unknown>): Chantier {
     sessionId: (row.session_id as string) ?? null,
     lastEventAt: (row.last_event_at as string) ?? null,
     sections: (row.sections as string[]) ?? [],
+    spend: spendKept(row),
     createdBy: row.created_by as string,
     updatedBy: row.updated_by as string,
     createdAt: new Date(row.created_at as string),
@@ -157,6 +166,19 @@ export function createChantierRepository(supabase: SupabaseClient): ChantierRepo
           return data.map(mapMessage)
         },
         catch: (error) => dbError('Failed to fetch chantier messages', error),
+      }),
+
+    /* Neither updated_at nor updated_by: nobody edited the chantier, and the list is ordered by its last touch */
+    keepSpend: (id: string, { spentCents, capCents }: AgentSpend) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase
+            .from('chantiers')
+            .update({ spent_cents: spentCents, cap_cents: capCents })
+            .eq('id', id)
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to keep chantier spend', error),
       }),
 
     /* The drafts go first, by hand: their key only unlinks on delete; the messages cascade */
