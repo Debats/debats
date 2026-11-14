@@ -5,8 +5,14 @@ import {
   ChantierUpdate,
   NewChantier,
   NewChantierMessage,
+  UnheardNotice,
 } from '../repositories/chantier-repository'
-import { AgentNews, AgentUnavailable, ChantierAgent } from '../services/chantier-agent'
+import {
+  AgentNews,
+  AgentUnavailable,
+  BudgetReached,
+  ChantierAgent,
+} from '../services/chantier-agent'
 import { AgentBudget, SpendReading } from '../services/chantier-budget'
 
 export const ADMIN = { id: 'admin-uuid', reputation: 1_000_000 }
@@ -31,7 +37,9 @@ export const aChantier = (overrides: Partial<Chantier> = {}): Chantier => ({
 export function inMemoryChantiers(seed: Chantier[] = []) {
   const rows = new Map(seed.map((chantier) => [chantier.id, chantier]))
   const messages: ChantierMessage[] = []
+  const unheard: (UnheardNotice & { chantierId: string })[] = []
   let next = 1
+  let nextUnheard = 1
 
   const repository: ChantierRepository = {
     create: (chantier: NewChantier) =>
@@ -74,6 +82,22 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
       ),
     findMessages: (chantierId) =>
       Effect.sync(() => messages.filter((m) => m.chantierId === chantierId)),
+    keepUnheard: (chantierId, text) =>
+      Effect.sync(() => {
+        unheard.push({ id: `unheard-${nextUnheard++}`, chantierId, text })
+      }),
+    findUnheard: (chantierId) =>
+      Effect.sync(() =>
+        unheard
+          .filter((notice) => notice.chantierId === chantierId)
+          .map(({ id, text }) => ({ id, text })),
+      ),
+    forgetUnheard: (ids) =>
+      Effect.sync(() => {
+        for (let i = unheard.length - 1; i >= 0; i--) {
+          if (ids.includes(unheard[i].id)) unheard.splice(i, 1)
+        }
+      }),
     keepSpend: (id, spend) =>
       Effect.sync(() => {
         const current = rows.get(id)
@@ -88,7 +112,7 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
       }),
   }
 
-  return { repository, rows, messages }
+  return { repository, rows, messages, unheard }
 }
 
 export type AgentCalls = {
@@ -114,7 +138,7 @@ export function fakeAgent(
   behaviour: {
     open?: Effect.Effect<{ sessionId: string }, AgentUnavailable>
     news?: AgentNews
-    tell?: Effect.Effect<void, AgentUnavailable>
+    tell?: Effect.Effect<void, AgentUnavailable | BudgetReached>
     spend?: Effect.Effect<SpendReading, AgentUnavailable>
     push?: Effect.Effect<AgentBudget, AgentUnavailable>
     forget?: Effect.Effect<void, AgentUnavailable>

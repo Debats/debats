@@ -29,6 +29,12 @@ export type NewChantierMessage = {
   eventId: string | null
 }
 
+/** A review notice the agent of a chantier has not heard yet, kept until it does */
+export type UnheardNotice = {
+  id: string
+  text: string
+}
+
 /**
  * Chantiers are process state, written directly: no journal, no projection.
  * Messages are append-only; one that mirrors an event already mirrored is
@@ -50,6 +56,12 @@ export interface ChantierRepository {
   ): Effect.Effect<ChantierMessage[], DatabaseError>
   /** The conversation in order */
   findMessages(chantierId: string): Effect.Effect<ChantierMessage[], DatabaseError>
+  /** Keeps a review notice the agent did not hear, to be told later; it is not in the thread until then */
+  keepUnheard(chantierId: string, text: string): Effect.Effect<void, DatabaseError>
+  /** What the agent has still to be told, the oldest first */
+  findUnheard(chantierId: string): Effect.Effect<UnheardNotice[], DatabaseError>
+  /** Lets go of the notices the agent has now heard */
+  forgetUnheard(ids: readonly string[]): Effect.Effect<void, DatabaseError>
   /** Keeps what the agent of a closed chantier spent. Not a person's edit: the chantier keeps its place in the list and its last editor */
   keepSpend(id: string, spend: AgentSpend): Effect.Effect<void, DatabaseError>
   /** Removes the chantier with everything it owns: its conversation and the drafts it produced */

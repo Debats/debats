@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Effect, Either } from 'effect'
-import { AgentUnavailable } from '../services/chantier-agent'
+import { AgentUnavailable, BUDGET_REACHED, BudgetReached } from '../services/chantier-agent'
 import { CHANTIER_CLOSED, NO_SESSION } from './chantier-preconditions'
 import {
   aChantier,
@@ -45,6 +45,18 @@ describe('tellChantierUseCase', () => {
 
     expect(result).toEqual(Either.left('L’agent attend une décision dans la console.'))
     expect(chantiers.messages).toHaveLength(0)
+  })
+
+  it('says the budget is reached when that is why the session refuses the message', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ status: 'blocked' })])
+    const { agent } = fakeAgent({ tell: Effect.fail(new BudgetReached()) })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      tellChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1', text: 'Continue' }),
+    )
+
+    expect(result).toEqual(Either.left(BUDGET_REACHED))
+    expect(chantiers.messages).toHaveLength(0)
+    expect(chantiers.rows.get('chantier-1')?.status).toBe('blocked')
   })
 
   it('refuses a closed chantier', async () => {

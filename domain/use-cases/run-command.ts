@@ -1,7 +1,7 @@
 import { Effect, Either } from 'effect'
 import { ConcurrencyError, UniqueTaken, UnreadableEvent } from '../events/event-store'
 import { DatabaseError } from '../repositories/errors'
-import { AgentUnavailable } from '../services/chantier-agent'
+import { AgentUnavailable, BudgetReached } from '../services/chantier-agent'
 import { FieldErrors, Invalid, NotFound, Rejected } from './types'
 
 export const EDITED_MEANWHILE =
@@ -18,6 +18,7 @@ export type CommandFailure =
   | DatabaseError
   | UnreadableEvent
   | AgentUnavailable
+  | BudgetReached
 
 /** What a command behind a form can also fail with: several fields at fault */
 export type FormFailure = CommandFailure | Invalid
@@ -77,6 +78,7 @@ function messageOf(failure: CommandFailure): string {
     case 'Rejected':
     case 'NotFound':
     case 'AgentUnavailable':
+    case 'BudgetReached':
       return failure.message
     case 'ConcurrencyError':
       return EDITED_MEANWHILE

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Effect, Either } from 'effect'
-import { AgentUnavailable } from '../services/chantier-agent'
+import { AgentUnavailable, BudgetReached } from '../services/chantier-agent'
 import { BUDGET_STEP_CENTS } from '../services/chantier-budget'
 import { CHANTIER_CLOSED, NO_SESSION } from './chantier-preconditions'
 import {
@@ -39,6 +39,47 @@ describe('pushChantierBudgetUseCase', () => {
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) expect(result.right.chantier.status).toBe('working')
     expect(chantiers.rows.get('chantier-1')?.status).toBe('working')
+  })
+
+  it('tells the agent the reviews it did not hear while it was stopped, and keeps them in the thread', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ status: 'blocked' })])
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-1', 'Relecture : une.'))
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-1', 'Relecture : deux.'))
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-2', 'Relecture : ailleurs.'))
+    const { agent, calls } = fakeAgent()
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(push())
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.chantier.status).toBe('working')
+    expect(calls.told).toEqual([
+      { sessionId: 'sesn_1', text: 'Relecture : une.\n\nRelecture : deux.' },
+    ])
+    expect(chantiers.messages.map(({ role, text }) => ({ role, text }))).toEqual([
+      { role: 'review', text: 'Relecture : une.' },
+      { role: 'review', text: 'Relecture : deux.' },
+    ])
+    expect(chantiers.unheard.map(({ text }) => text)).toEqual(['Relecture : ailleurs.'])
+  })
+
+  it('tells nothing when nothing was left unheard', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ status: 'blocked' })])
+    const { agent, calls } = fakeAgent()
+    await runWith(chantierFakes(chantiers.repository, agent))(push())
+
+    expect(calls.told).toHaveLength(0)
+    expect(chantiers.messages).toHaveLength(0)
+  })
+
+  it('pushes the cap all the same when the agent still does not hear, and keeps what it has to be told', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ status: 'blocked' })])
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-1', 'Relecture : une.'))
+    const { agent } = fakeAgent({ tell: Effect.fail(new BudgetReached()) })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(push())
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.chantier.status).toBe('working')
+    expect(chantiers.messages).toHaveLength(0)
+    expect(chantiers.unheard).toHaveLength(1)
   })
 
   it('leaves the chantier as it was when the session refuses', async () => {

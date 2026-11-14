@@ -1,7 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk'
 import * as Sentry from '@sentry/nextjs'
 import { Effect, pipe } from 'effect'
-import { AgentNews, AgentUnavailable, ChantierAgent } from '../../domain/services/chantier-agent'
+import {
+  AgentNews,
+  AgentUnavailable,
+  BudgetReached,
+  ChantierAgent,
+} from '../../domain/services/chantier-agent'
 import { capPushedFurther } from '../../domain/services/chantier-budget'
 import { chantierTitle } from '../../domain/services/chantier-title'
 import { SITE_URL } from '../../app/site'
@@ -33,7 +38,7 @@ export const NOT_CONFIGURED =
   'L’agent des chantiers n’est pas configuré : CHANTIER_AGENT_ID et CHANTIER_ENVIRONMENT_ID manquent.'
 export const UNREACHABLE = 'L’agent ne répond pas pour le moment. Réessayez dans un instant.'
 export const NEEDS_CONSOLE =
-  'L’agent ne prend pas de message pour l’instant : son budget est atteint, ou il attend une décision dans la console Anthropic.'
+  'L’agent a refusé cette demande : il attend peut-être une décision dans la console Anthropic. Le détail est dans Sentry.'
 export const PUSH_REFUSED =
   'Anthropic a refusé de repousser le budget de cette session. Le détail est dans Sentry.'
 export const NO_CAP = 'La session de ce chantier n’a pas de plafond de dépense : rien à repousser.'
@@ -72,6 +77,27 @@ const unavailable =
 
 const attempt = <A>(run: () => Promise<A>, refused: string = NEEDS_CONSOLE) =>
   Effect.tryPromise({ try: run, catch: unavailable(refused) })
+
+/** How Anthropic opens the refusal of a session that met its cap; the request is a 400 like any other refusal */
+const BUDGET_REFUSAL = 'session budget reached'
+
+/**
+ * Whether a call was refused because the session met its cap. Read on the
+ * words of the refusal, the only place Anthropic says it; were they to
+ * change, the refusal would be reported as any other, not passed over.
+ */
+export function refusedAtBudget(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return (error as { status?: unknown }).status === 400 && error.message.includes(BUDGET_REFUSAL)
+}
+
+/** A message sent to a session: one stopped at its cap says so, and that is no fault to report */
+const attemptToTell = (run: () => Promise<unknown>) =>
+  Effect.tryPromise({
+    try: run,
+    catch: (error) =>
+      refusedAtBudget(error) ? new BudgetReached() : unavailable(NEEDS_CONSOLE)(error),
+  })
 
 /**
  * The chantier agent as a Managed Agents session: one session per chantier,
@@ -153,7 +179,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
 
     tell: (sessionId, text) =>
       Effect.asVoid(
-        attempt(() =>
+        attemptToTell(() =>
           sessions.events.send(sessionId, {
             events: [{ type: 'user.message', content: [{ type: 'text', text }] }],
           }),

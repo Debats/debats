@@ -27,13 +27,30 @@ export type AgentNews = {
   budget: AgentBudget | null
 }
 
-/** The agent could not be reached, or refused what it was sent; the person reads why */
+/**
+ * The agent could not be reached, or refused what it was sent; the person
+ * reads why. This is a fault: the adapter reports its cause where it happens,
+ * so a command that goes on without the agent has nothing left to report.
+ */
 export class AgentUnavailable {
   readonly _tag = 'AgentUnavailable'
   constructor(
     readonly message: string,
     readonly cause?: unknown,
   ) {}
+}
+
+export const BUDGET_REACHED =
+  'L’agent a atteint son budget : il ne prend plus de message tant que vous ne l’avez pas repoussé.'
+
+/**
+ * The agent stopped at its cap and hears nothing until the cap is pushed
+ * further. Not a fault: a state the chantier is expected to reach, which the
+ * person is told and no one is alerted of.
+ */
+export class BudgetReached {
+  readonly _tag = 'BudgetReached'
+  readonly message = BUDGET_REACHED
 }
 
 export interface ChantierAgent {
@@ -45,7 +62,8 @@ export interface ChantierAgent {
     existingDrafts: number
     recap: string | null
   }): Effect.Effect<{ sessionId: string }, AgentUnavailable>
-  tell(sessionId: string, text: string): Effect.Effect<void, AgentUnavailable>
+  /** A session stopped at its cap refuses the message, and says so apart from any other refusal */
+  tell(sessionId: string, text: string): Effect.Effect<void, AgentUnavailable | BudgetReached>
   /** What happened in the session since the cursor: messages, and where the agent stands */
   newsSince(sessionId: string, after: string | null): Effect.Effect<AgentNews, AgentUnavailable>
   /** What the session spent against its cap, and whether the figures may still move; its events are left unread */

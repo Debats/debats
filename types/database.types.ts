@@ -173,6 +173,35 @@ export type Database = {
           },
         ]
       }
+      chantier_unheard_notices: {
+        Row: {
+          chantier_id: string
+          created_at: string
+          id: string
+          text: string
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string
+          id?: string
+          text: string
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string
+          id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantier_unheard_notices_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chantiers: {
         Row: {
           brief: string

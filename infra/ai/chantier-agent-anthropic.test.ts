@@ -1,10 +1,37 @@
 import { describe, expect, it } from 'vitest'
-import { chantierAgentConfig, DEFAULT_REPOSITORY_URL } from './chantier-agent-anthropic'
+import {
+  chantierAgentConfig,
+  DEFAULT_REPOSITORY_URL,
+  refusedAtBudget,
+} from './chantier-agent-anthropic'
 
 const set = {
   CHANTIER_AGENT_ID: 'agent_1',
   CHANTIER_ENVIRONMENT_ID: 'env_1',
 }
+
+describe('refusedAtBudget', () => {
+  const refusal = (status: number, message: string) => Object.assign(new Error(message), { status })
+
+  it('knows the refusal of a session that met its cap', () => {
+    const error = refusal(
+      400,
+      '400 {"type":"error","error":{"type":"invalid_request_error","message":"session budget reached: consumed list cost has met `budget.max_list_cost`; only `user.tool_confirmation`, `user.tool_result`, `user.custom_tool_result`, and `user.interrupt` are accepted"}}',
+    )
+    expect(refusedAtBudget(error)).toBe(true)
+  })
+
+  it('does not take another refusal for it', () => {
+    expect(refusedAtBudget(refusal(400, '400 session is awaiting a tool confirmation'))).toBe(false)
+  })
+
+  it('does not take a failure that is not a refusal for it', () => {
+    expect(refusedAtBudget(refusal(500, 'session budget reached'))).toBe(false)
+    expect(refusedAtBudget(new Error('session budget reached'))).toBe(false)
+    expect(refusedAtBudget('session budget reached')).toBe(false)
+    expect(refusedAtBudget(null)).toBe(false)
+  })
+})
 
 describe('chantierAgentConfig', () => {
   it('is nothing until the agent and its environment are both named', () => {

@@ -168,6 +168,44 @@ export function createChantierRepository(supabase: SupabaseClient): ChantierRepo
         catch: (error) => dbError('Failed to fetch chantier messages', error),
       }),
 
+    keepUnheard: (chantierId: string, text: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { error } = await supabase
+            .from('chantier_unheard_notices')
+            .insert({ chantier_id: chantierId, text })
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to keep an unheard chantier notice', error),
+      }),
+
+    findUnheard: (chantierId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('chantier_unheard_notices')
+            .select('id, text')
+            .eq('chantier_id', chantierId)
+            .order('created_at', { ascending: true })
+          if (error) throw error
+          return data.map((row) => ({ id: row.id as string, text: row.text as string }))
+        },
+        catch: (error) => dbError('Failed to fetch unheard chantier notices', error),
+      }),
+
+    forgetUnheard: (ids: readonly string[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (ids.length === 0) return
+          const { error } = await supabase
+            .from('chantier_unheard_notices')
+            .delete()
+            .in('id', [...ids])
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to forget unheard chantier notices', error),
+      }),
+
     /* Neither updated_at nor updated_by: nobody edited the chantier, and the list is ordered by its last touch */
     keepSpend: (id: string, { spentCents, capCents }: AgentSpend) =>
       Effect.tryPromise({
