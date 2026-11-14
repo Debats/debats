@@ -2,9 +2,10 @@
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Chantier, ChantierMessage, isOpen } from '../../../../domain/entities/chantier'
+import { Chantier, ChantierMessage, hasAgent, isOpen } from '../../../../domain/entities/chantier'
 import { Sheet } from '../../../../components/ui/DialogueSheet'
 import { AgentBudget } from '../../../../domain/services/chantier-budget'
+import { contextWorthReducing } from '../../../../domain/services/chantier-context'
 import { closeChantierAction } from '../../../actions/close-chantier'
 import { deleteChantierAction } from '../../../actions/delete-chantier'
 import { pushChantierBudgetAction } from '../../../actions/push-chantier-budget'
@@ -13,6 +14,8 @@ import { startChantierAction } from '../../../actions/start-chantier'
 import { tellChantierAction } from '../../../actions/tell-chantier'
 import ChantierBudget from '../ChantierBudget'
 import ChantierDialogue from '../ChantierDialogue'
+import ContextReduction from '../ContextReduction'
+import PendingReviews from '../PendingReviews'
 import { CHANTIERS_PATH } from '../hrefs'
 import styles from './ChantierWorkspace.module.css'
 
@@ -21,6 +24,10 @@ interface ChantierWorkspaceProps {
   messages: ChantierMessage[]
   /** What the agent spent against its cap, when the session said */
   budget: AgentBudget | null
+  /** How many reviews are kept for the agent, as the page last read: it grows as drafts are reviewed */
+  reviewsWaiting: number
+  /** How many pages the notebook of the chantier holds, as the page last read */
+  sourcesNoted: number
   /** What became of the drafts, in one line */
   tally: string
   /** The drafts of the chantier, as the server rendered them */
@@ -40,6 +47,8 @@ export default function ChantierWorkspace({
   chantier: initial,
   messages: initialMessages,
   budget: initialBudget,
+  reviewsWaiting: reviewsRead,
+  sourcesNoted,
   tally,
   children,
 }: ChantierWorkspaceProps) {
@@ -48,6 +57,13 @@ export default function ChantierWorkspace({
   const [messages, setMessages] = useState(initialMessages)
   const [sheet, setSheet] = useState<Sheet>('bar')
   const [budget, setBudget] = useState(initialBudget)
+  /* The page rereads the count after each review; handing the reviews over empties it before the page says so */
+  const [reviewsWaiting, setReviewsWaiting] = useState(reviewsRead)
+  const [reviewsSeen, setReviewsSeen] = useState(reviewsRead)
+  if (reviewsSeen !== reviewsRead) {
+    setReviewsSeen(reviewsRead)
+    setReviewsWaiting(reviewsRead)
+  }
   const [sending, setSending] = useState(false)
   const [pushing, setPushing] = useState(false)
   /* Shown beside the budget, not in the dialogue: below 1024 px the dialogue is folded to a bar */
@@ -59,11 +75,12 @@ export default function ChantierWorkspace({
   }, [messages.length])
 
   const took = useCallback(
-    (next: Chantier, all: ChantierMessage[], spent: AgentBudget | null) => {
+    (next: Chantier, all: ChantierMessage[], spent: AgentBudget | null, waiting: number) => {
       const grew = all.length > heard.current
       setChantier(next)
       setMessages(all)
       setBudget(spent)
+      setReviewsWaiting(waiting)
       if (grew) setSheet((current) => (current === 'bar' ? 'half' : current))
       if (grew || next.status !== 'working') router.refresh()
     },
@@ -78,7 +95,7 @@ export default function ChantierWorkspace({
         setError(result.message)
         return
       }
-      took(result.chantier, result.messages, result.budget)
+      took(result.chantier, result.messages, result.budget, result.reviewsWaiting)
     }
     const timer = setInterval(() => void poll(), POLL_MS)
     return () => clearInterval(timer)
@@ -114,6 +131,19 @@ export default function ChantierWorkspace({
     setPushing(false)
   }, [chantier.id])
 
+  /* The agent heard the reviews and is at work on them: the page starts listening again */
+  const reviewsDelivered = useCallback((next: Chantier, notices: ChantierMessage[]) => {
+    setChantier(next)
+    setMessages((current) => [...current, ...notices])
+    setReviewsWaiting(0)
+  }, [])
+
+  /* A new session, at work: the budget the page holds was the old one's, and the next news brings the new one */
+  const contextReduced = useCallback((next: Chantier) => {
+    setChantier(next)
+    setBudget(null)
+  }, [])
+
   /* A close that fails may still have closed the row (the agent could not be stopped): the page rereads */
   const close = useCallback(async () => {
     setError(undefined)
@@ -147,6 +177,9 @@ export default function ChantierWorkspace({
     router.push(CHANTIERS_PATH)
   }, [chantier.id, router])
 
+  /* What is offered for the agent needs someone to reach */
+  const agentListens = hasAgent(chantier)
+
   return (
     <div className={styles.workspace}>
       <div className={styles.main}>
@@ -163,12 +196,31 @@ export default function ChantierWorkspace({
         {budget && (
           <ChantierBudget
             budget={budget}
+            earlierSpentCents={chantier.earlierSpentCents}
             pushable={isOpen(chantier)}
             pushing={pushing}
             refusal={pushRefusal}
             onPush={() => void pushBudget()}
           />
         )}
+        {agentListens && reviewsWaiting > 0 && (
+          <PendingReviews
+            chantierId={chantier.id}
+            waiting={reviewsWaiting}
+            onDelivered={reviewsDelivered}
+          />
+        )}
+        {agentListens &&
+          chantier.contextTokens !== null &&
+          contextWorthReducing(chantier.contextTokens) && (
+            <ContextReduction
+              chantierId={chantier.id}
+              contextTokens={chantier.contextTokens}
+              sourcesNoted={sourcesNoted}
+              working={chantier.status === 'working'}
+              onReduced={contextReduced}
+            />
+          )}
         {children}
       </div>
 

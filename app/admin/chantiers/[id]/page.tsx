@@ -53,7 +53,7 @@ export default async function ChantierPage({ params }: Props) {
     )
   }
 
-  const { chantier, messages, budget } = refreshed.right
+  const { chantier, messages, budget, reviewsWaiting, sourcesNoted } = refreshed.right
   const services = liveServices(supabase)
   const produced = await Effect.runPromise(
     createDraftStatementRepository(supabase).findByChantier(chantier.id),
@@ -87,6 +87,8 @@ export default async function ChantierPage({ params }: Props) {
         chantier={chantier}
         messages={messages}
         budget={budget}
+        reviewsWaiting={reviewsWaiting}
+        sourcesNoted={sourcesNoted}
         tally={tallyLine(tallyDrafts(produced))}
       >
         {pending.length === 0 ? (

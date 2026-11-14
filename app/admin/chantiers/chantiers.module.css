@@ -7,6 +7,12 @@
   margin: -16px 0 24px;
 }
 
+/* What the chantiers listed cost together, just above them */
+.total {
+  composes: meta from '../../../styles/text.module.css';
+  margin: 32px 0 -16px;
+}
+
 .list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));

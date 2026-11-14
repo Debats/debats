@@ -19,6 +19,10 @@ export type RefreshedChantier = {
   messages: ChantierMessage[]
   /** What the session spent against its cap, or what a closed chantier kept of it; null when it has no session, or runs without a cap */
   budget: AgentBudget | null
+  /** How many reviews are kept for the agent, which the person has not handed over yet */
+  reviewsWaiting: number
+  /** How many pages the notebook of the chantier holds: what the agent keeps of its reading if its context is reduced */
+  sourcesNoted: number
 }
 
 const chantiers = Effect.serviceFunctions(ChantierRepository)
@@ -38,7 +42,8 @@ function statusFrom(chantier: Chantier, news: AgentNews, answered: boolean): Cha
 
 /**
  * What the chantier changes into on the news: the agent's status, a name
- * once the agent gave its first answer, the cursor when something was read.
+ * once the agent gave its first answer, the cursor when something was read,
+ * the size of its context when it took a step.
  */
 export function changesFrom(chantier: Chantier, news: AgentNews): ChantierUpdate {
   const firstAnswer = news.messages.find(({ role }) => role === 'agent')?.text
@@ -48,6 +53,7 @@ export function changesFrom(chantier: Chantier, news: AgentNews): ChantierUpdate
       ? { title: chantierTitle(chantier.brief, firstAnswer) }
       : {}),
     ...(news.until ? { lastEventAt: news.until } : {}),
+    ...(news.contextTokens !== null ? { contextTokens: news.contextTokens } : {}),
   }
 }
 
@@ -97,11 +103,20 @@ export function refreshChantierUseCase(params: RefreshChantierParams) {
         : unmoved(chantier),
     ),
     Effect.flatMap(({ chantier, budget }) =>
-      Effect.map(chantiers.findMessages(chantier.id), (messages) => ({
-        chantier,
-        messages,
-        budget,
-      })),
+      Effect.map(
+        Effect.all({
+          messages: chantiers.findMessages(chantier.id),
+          unheard: chantiers.findUnheard(chantier.id),
+          noted: chantiers.findSources(chantier.id),
+        }),
+        ({ messages, unheard, noted }) => ({
+          chantier,
+          messages,
+          budget,
+          reviewsWaiting: unheard.length,
+          sourcesNoted: noted.length,
+        }),
+      ),
     ),
   )
 }

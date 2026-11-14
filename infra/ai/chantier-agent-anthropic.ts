@@ -10,8 +10,8 @@ import {
 import { capPushedFurther } from '../../domain/services/chantier-budget'
 import { chantierTitle } from '../../domain/services/chantier-title'
 import { SITE_URL } from '../../app/site'
-import { CHANTIER_AGENT_SYSTEM, chantierOpeningMessage } from './chantier-agent-prompt'
-import { newsOf, SessionEventLike, spendReadingOf } from './chantier-session-news'
+import { chantierOpeningMessage, chantierTakeoverMessage } from './chantier-agent-prompt'
+import { isIdle, isStep, newsOf, SessionEventLike, spendReadingOf } from './chantier-session-news'
 
 /**
  * What a managed session needs to run a chantier. All of it is set up once
@@ -31,7 +31,7 @@ export interface ChantierAgentConfig {
 
 export const DEFAULT_REPOSITORY_URL = 'https://github.com/Debats/debats'
 const DEFAULT_BUDGET_CENTS = 2000
-/** How many events are looked back through for the last stop, when a batch has none */
+/** How many events are looked back through for the last stop and the last step, when a batch lacks one */
 const LOOKBACK = 50
 
 export const NOT_CONFIGURED =
@@ -109,6 +109,7 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
     const notConfigured = Effect.fail(new AgentUnavailable(NOT_CONFIGURED))
     return {
       open: () => notConfigured,
+      reopen: () => notConfigured,
       tell: () => notConfigured,
       spend: () => notConfigured,
       pushBudget: () => notConfigured,
@@ -132,12 +133,10 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
     return events
   }
 
-  /* The last stop may have been read in an earlier batch: the last few events are looked at again, one page only */
-  const lastIdleOf = async (sessionId: string): Promise<SessionEventLike | undefined> => {
+  /* The last stop and the last step may have been read in an earlier batch: the last few events are looked at again, the latest first, one page only */
+  const lookedBack = async (sessionId: string): Promise<SessionEventLike[]> => {
     const page = await sessions.events.list(sessionId, { order: 'desc', limit: LOOKBACK })
-    return page.data.find((event) => event.type === 'session.status_idle') as
-      | SessionEventLike
-      | undefined
+    return page.data as SessionEventLike[]
   }
 
   /* The session alone, its events left unread: one request, which is what a list of chantiers can afford */
@@ -147,35 +146,39 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
       spendReadingOf,
     )
 
-  return {
-    open: (chantier) =>
-      attempt(async () => {
-        const session = await sessions.create({
-          agent: config.agentId,
-          environment_id: config.environmentId,
-          title: chantier.title ?? chantierTitle(chantier.brief),
-          metadata: { chantier: chantier.id },
-          vault_ids: config.vaultIds,
-          budget: {
-            type: 'limit',
-            max_list_cost: { amount: String(config.budgetCents), currency: 'USD' },
+  /* A session of a chantier, started on its first message: the same agent, sandbox, vault and cap however it opens */
+  const sessionOpenedOn = (
+    chantier: { id: string; brief: string; title: string | null },
+    firstMessage: string,
+  ) =>
+    attempt(async () => {
+      const session = await sessions.create({
+        agent: config.agentId,
+        environment_id: config.environmentId,
+        title: chantier.title ?? chantierTitle(chantier.brief),
+        metadata: { chantier: chantier.id },
+        vault_ids: config.vaultIds,
+        budget: {
+          type: 'limit',
+          max_list_cost: { amount: String(config.budgetCents), currency: 'USD' },
+        },
+        resources: [
+          {
+            type: 'github_repository',
+            url: config.repositoryUrl,
+            ...(config.repositoryToken ? { authorization_token: config.repositoryToken } : {}),
           },
-          resources: [
-            {
-              type: 'github_repository',
-              url: config.repositoryUrl,
-              ...(config.repositoryToken ? { authorization_token: config.repositoryToken } : {}),
-            },
-          ],
-          initial_events: [
-            {
-              type: 'user.message',
-              content: [{ type: 'text', text: chantierOpeningMessage(chantier, config.siteUrl) }],
-            },
-          ],
-        })
-        return { sessionId: session.id }
-      }),
+        ],
+        initial_events: [{ type: 'user.message', content: [{ type: 'text', text: firstMessage }] }],
+      })
+      return { sessionId: session.id }
+    })
+
+  return {
+    open: (chantier) => sessionOpenedOn(chantier, chantierOpeningMessage(chantier, config.siteUrl)),
+
+    reopen: (chantier) =>
+      sessionOpenedOn(chantier, chantierTakeoverMessage(chantier, config.siteUrl)),
 
     tell: (sessionId, text) =>
       Effect.asVoid(
@@ -192,10 +195,11 @@ export function createChantierAgent(config: ChantierAgentConfig | null): Chantie
           sessions.retrieve(sessionId),
           eventsSince(sessionId, after),
         ])
-        const needsLastStop =
-          session.status === 'idle' && !events.some((e) => e.type === 'session.status_idle')
-        const lastIdle = needsLastStop ? await lastIdleOf(sessionId) : undefined
-        return newsOf(session, events, lastIdle)
+        /* At rest, a batch that lacks the last stop or the last step is completed from the events before it */
+        const incomplete =
+          session.status === 'idle' && !(events.some(isIdle) && events.some(isStep))
+        const before = incomplete ? await lookedBack(sessionId) : []
+        return newsOf(session, events, before.find(isIdle), before.find(isStep))
       }),
 
     spend,

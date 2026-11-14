@@ -49,18 +49,22 @@ export const deliveredToChantier = (
 ) => delivered(chantier, role, [text], by)
 
 /**
- * The review notices the agent has still to hear, the oldest first, then the
- * fresh ones, all in one message; null when there is nothing to tell. What
- * was kept is let go of once the session has heard it. Were the site to stop
- * between the two, the agent would hear those notices once more: twice
- * rather than never.
+ * The review notices kept for the agent, the oldest first, all in one
+ * message; null when there is nothing to tell. What was kept is let go of
+ * once the session has heard it. Were the site to stop between the two, the
+ * agent would hear those notices once more: twice rather than never.
  */
-export function reviewsDelivered(chantier: Chantier, by: string, fresh: readonly string[] = []) {
+export function reviewsDelivered(chantier: Chantier, by: string) {
   return Effect.flatMap(chantiers.findUnheard(chantier.id), (unheard) => {
-    const lines = [...unheard.map(({ text }) => text), ...fresh]
-    if (lines.length === 0) return Effect.succeed(null)
-    return Effect.tap(delivered(chantier, 'review', lines, by), () =>
-      chantiers.forgetUnheard(unheard.map(({ id }) => id)),
+    if (unheard.length === 0) return Effect.succeed(null)
+    return Effect.tap(
+      delivered(
+        chantier,
+        'review',
+        unheard.map(({ text }) => text),
+        by,
+      ),
+      () => chantiers.forgetUnheard(unheard.map(({ id }) => id)),
     )
   })
 }

@@ -45,6 +45,12 @@ export type Chantier = {
   sections: string[]
   /** What its agent had spent, kept once the chantier is closed and the figures no longer move; null until then */
   spend: AgentSpend | null
+  /** How many tokens the agent last read at one step: all it carries. Null until a session said, and again once the context was reduced */
+  contextTokens: number | null
+  /** What the sessions the chantier left behind had spent, in US cents at list price: a context reduced starts a new session, with its own cap */
+  earlierSpentCents: number
+  /** The sessions left behind when the context was reduced, the oldest first: kept where they ran, until the chantier is deleted */
+  pastSessionIds: string[]
   createdBy: string
   updatedBy: string
   createdAt: Date
@@ -67,6 +73,10 @@ export type ChantierMessage = {
 /** A chantier still takes messages: it is neither closed by a person nor ended by its session */
 export const isOpen = (chantier: Chantier): boolean =>
   chantier.status !== 'closed' && chantier.status !== 'ended'
+
+/** A chantier whose agent is launched and may still be reached: open, and running in a session. One adopted and not launched yet has no agent */
+export const hasAgent = (chantier: Chantier): boolean =>
+  isOpen(chantier) && chantier.sessionId !== null
 
 /** How each status reads on screen */
 export const CHANTIER_STATUS_LABELS: Record<ChantierStatus, string> = {

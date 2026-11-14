@@ -6,6 +6,7 @@ import {
   ChantierStatus,
 } from '../entities/chantier'
 import { AgentSpend } from '../services/chantier-budget'
+import { ChantierSource } from '../services/chantier-sources'
 import { DatabaseError } from './errors'
 
 export type NewChantier = {
@@ -19,7 +20,17 @@ export type NewChantier = {
 
 /** What may change on a chantier once it exists: the rest is its birth */
 export type ChantierUpdate = Partial<
-  Pick<Chantier, 'title' | 'status' | 'sessionId' | 'lastEventAt' | 'sections'>
+  Pick<
+    Chantier,
+    | 'title'
+    | 'status'
+    | 'sessionId'
+    | 'lastEventAt'
+    | 'sections'
+    | 'contextTokens'
+    | 'earlierSpentCents'
+    | 'pastSessionIds'
+  >
 >
 
 export type NewChantierMessage = {
@@ -56,12 +67,23 @@ export interface ChantierRepository {
   ): Effect.Effect<ChantierMessage[], DatabaseError>
   /** The conversation in order */
   findMessages(chantierId: string): Effect.Effect<ChantierMessage[], DatabaseError>
-  /** Keeps a review notice the agent did not hear, to be told later; it is not in the thread until then */
-  keepUnheard(chantierId: string, text: string): Effect.Effect<void, DatabaseError>
+  /** Keeps a review notice for the agent, to be told later; it is not in the thread until then. The notice of a draft takes the place of the one kept for that draft before, and comes last */
+  keepUnheard(
+    chantierId: string,
+    text: string,
+    draftId?: string,
+  ): Effect.Effect<void, DatabaseError>
   /** What the agent has still to be told, the oldest first */
   findUnheard(chantierId: string): Effect.Effect<UnheardNotice[], DatabaseError>
   /** Lets go of the notices the agent has now heard */
   forgetUnheard(ids: readonly string[]): Effect.Effect<void, DatabaseError>
+  /** Writes sources in the notebook of the chantier; an address already there takes its new note */
+  noteSources(
+    chantierId: string,
+    sources: readonly ChantierSource[],
+  ): Effect.Effect<void, DatabaseError>
+  /** The notebook of the chantier, in the order the addresses were first noted */
+  findSources(chantierId: string): Effect.Effect<ChantierSource[], DatabaseError>
   /** Keeps what the agent of a closed chantier spent. Not a person's edit: the chantier keeps its place in the list and its last editor */
   keepSpend(id: string, spend: AgentSpend): Effect.Effect<void, DatabaseError>
   /** Removes the chantier with everything it owns: its conversation and the drafts it produced */

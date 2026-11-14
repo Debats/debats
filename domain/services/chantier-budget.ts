@@ -24,6 +24,15 @@ export type AgentBudget = AgentSpend & {
   reached: boolean
 }
 
+/**
+ * What a chantier cost so far, in US cents at list price: what its session
+ * spends, and what the sessions it left behind when its context was
+ * reduced had spent. A session that does not say what it spends leaves the
+ * figure short of it.
+ */
+export const chantierCostCents = (spend: AgentSpend | null, earlierSpentCents: number): number =>
+  (spend?.spentCents ?? 0) + earlierSpentCents
+
 /** How far one push moves the cap: ten dollars */
 export const BUDGET_STEP_CENTS = 1000
 

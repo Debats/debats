@@ -25,6 +25,8 @@ export type AgentNews = {
   until: string | null
   /** What the session spent against its cap; null when it runs without one */
   budget: AgentBudget | null
+  /** How many tokens the agent read at its last step, all it carries; null when it took no step since the cursor */
+  contextTokens: number | null
 }
 
 /**
@@ -61,6 +63,16 @@ export interface ChantierAgent {
     title: string | null
     existingDrafts: number
     recap: string | null
+  }): Effect.Effect<{ sessionId: string }, AgentUnavailable>
+  /** Opens a new session on a chantier under way, told what its thread said so far: the agent carries on without what the session before had piled up */
+  reopen(chantier: {
+    id: string
+    brief: string
+    title: string | null
+    existingDrafts: number
+    handover: string | null
+    /** How many pages the notebook of the chantier holds: the agent reads them back from the site when it needs them */
+    notedSources: number
   }): Effect.Effect<{ sessionId: string }, AgentUnavailable>
   /** A session stopped at its cap refuses the message, and says so apart from any other refusal */
   tell(sessionId: string, text: string): Effect.Effect<void, AgentUnavailable | BudgetReached>

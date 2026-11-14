@@ -23,8 +23,13 @@ const agent = Effect.serviceFunctions(ChantierAgent)
  * unseen on the other side.
  */
 export function deleteChantierUseCase(params: DeleteChantierParams) {
+  /* Every session the chantier ran in: those a reduced context left behind, then the one it runs in */
   const forget = (chantier: Chantier) =>
-    chantier.sessionId ? agent.forget(chantier.sessionId) : Effect.void
+    Effect.forEach(
+      [...chantier.pastSessionIds, ...(chantier.sessionId ? [chantier.sessionId] : [])],
+      (sessionId) => agent.forget(sessionId),
+      { discard: true },
+    )
 
   return pipe(
     Effect.all({

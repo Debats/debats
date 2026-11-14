@@ -19,6 +19,7 @@ const news = (overrides: Partial<AgentNews> = {}): AgentNews => ({
   ],
   until: '2026-11-10T10:05:00Z',
   budget: null,
+  contextTokens: null,
   ...overrides,
 })
 
@@ -29,6 +30,15 @@ describe('changesFrom', () => {
       title: 'La taxe Zucman',
       lastEventAt: '2026-11-10T10:05:00Z',
     })
+  })
+
+  it('takes the size of the agent’s context when the news read one, and keeps the last known otherwise', () => {
+    expect(changesFrom(aChantier(), news({ contextTokens: 412_000 }))).toMatchObject({
+      contextTokens: 412_000,
+    })
+    expect(changesFrom(aChantier({ contextTokens: 412_000 }), news())).not.toHaveProperty(
+      'contextTokens',
+    )
   })
 
   it('keeps the name the chantier already has', () => {
@@ -102,6 +112,38 @@ describe('refreshChantierUseCase', () => {
 
     expect(Either.isRight(result)).toBe(true)
     if (Either.isRight(result)) expect(result.right.budget).toEqual(budget)
+  })
+
+  it('says how many reviews wait to be handed to the agent', async () => {
+    const chantiers = inMemoryChantiers([aChantier()])
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-1', 'Relecture : une.'))
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-1', 'Relecture : deux.'))
+    await Effect.runPromise(chantiers.repository.keepUnheard('chantier-2', 'Relecture : ailleurs.'))
+    const { agent } = fakeAgent({ news: news() })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.reviewsWaiting).toBe(2)
+  })
+
+  it('says how many pages the notebook of the chantier holds', async () => {
+    const chantiers = inMemoryChantiers([aChantier()])
+    await Effect.runPromise(
+      chantiers.repository.noteSources('chantier-1', [
+        { url: 'https://senat.fr/a', note: 'Compte rendu de séance.' },
+        { url: 'https://senat.fr/a', note: 'Compte rendu de séance, corrigé.' },
+        { url: 'https://lemonde.fr/b', note: 'Tribune.' },
+      ]),
+    )
+    const { agent } = fakeAgent({ news: news() })
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      refreshChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    if (Either.isRight(result)) expect(result.right.sourcesNoted).toBe(2)
   })
 
   it('shows what a closed chantier kept of its spend, without asking its session', async () => {

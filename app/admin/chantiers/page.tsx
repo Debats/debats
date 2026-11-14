@@ -2,11 +2,13 @@ import { Metadata } from 'next'
 import { Effect } from 'effect'
 import { Chantier, ChantierMessage } from '../../../domain/entities/chantier'
 import { tallyDrafts } from '../../../domain/read-models/chantier-summary'
+import { chantierCostCents } from '../../../domain/services/chantier-budget'
 import { chantierSpend } from '../../../domain/use-cases/chantier-spend'
 import { createChantierRepository } from '../../../infra/database/chantier-repository-supabase'
 import { createDraftStatementRepository } from '../../../infra/database/draft-statement-repository-supabase'
 import { liveServices } from '../../../infra/live-services'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
+import { dollars } from '../../../lib/dollars'
 import { getAdminContributor } from '../../actions/admin-guard'
 import styles from '../drafts/admin-drafts.module.css'
 import ChantierCard from './ChantierCard'
@@ -64,6 +66,12 @@ export default async function ChantiersPage() {
     ),
   )
 
+  /* What the chantiers listed cost together; a session that could not say what it spends leaves the sum short of it */
+  const total = cards.reduce(
+    (sum, { chantier, spend }) => sum + chantierCostCents(spend, chantier.earlierSpentCents),
+    0,
+  )
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>CHANTIERS</h1>
@@ -77,17 +85,23 @@ export default async function ChantiersPage() {
       {cards.length === 0 ? (
         <p className={styles.empty}>Aucun chantier pour l’instant.</p>
       ) : (
-        <div className={listStyles.list}>
-          {cards.map(({ chantier, tally, spend, lastWord }) => (
-            <ChantierCard
-              key={chantier.id}
-              chantier={chantier}
-              tally={tally}
-              spend={spend}
-              lastWord={lastWord}
-            />
-          ))}
-        </div>
+        <>
+          <p className={listStyles.total}>
+            Coût des chantiers ci-dessous : {dollars(total)} au tarif public, agents seuls. Un
+            chantier supprimé emporte ce qu’il a coûté.
+          </p>
+          <div className={listStyles.list}>
+            {cards.map(({ chantier, tally, spend, lastWord }) => (
+              <ChantierCard
+                key={chantier.id}
+                chantier={chantier}
+                tally={tally}
+                spend={spend}
+                lastWord={lastWord}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

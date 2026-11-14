@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { BUDGET_STEP_CENTS, capPushedFurther, spentShare } from './chantier-budget'
+import {
+  BUDGET_STEP_CENTS,
+  capPushedFurther,
+  chantierCostCents,
+  spentShare,
+} from './chantier-budget'
+
+describe('chantierCostCents', () => {
+  it('is what the session spends, for a chantier that ran in one only', () => {
+    expect(chantierCostCents({ spentCents: 1379, capCents: 2000 }, 0)).toBe(1379)
+  })
+
+  it('adds what the sessions left behind had spent', () => {
+    expect(chantierCostCents({ spentCents: 1379, capCents: 2000 }, 8161)).toBe(9540)
+  })
+
+  it('is what was spent before when the session does not say what it spends', () => {
+    expect(chantierCostCents(null, 8161)).toBe(8161)
+    expect(chantierCostCents(null, 0)).toBe(0)
+  })
+})
 
 describe('spentShare', () => {
   it('is the part of the cap already spent', () => {

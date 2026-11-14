@@ -173,22 +173,60 @@ export type Database = {
           },
         ]
       }
+      chantier_sources: {
+        Row: {
+          chantier_id: string
+          created_at: string
+          id: string
+          note: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string
+          id?: string
+          note: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantier_sources_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chantier_unheard_notices: {
         Row: {
           chantier_id: string
           created_at: string
+          draft_id: string | null
           id: string
           text: string
         }
         Insert: {
           chantier_id: string
           created_at?: string
+          draft_id?: string | null
           id?: string
           text: string
         }
         Update: {
           chantier_id?: string
           created_at?: string
+          draft_id?: string | null
           id?: string
           text?: string
         }
@@ -200,16 +238,26 @@ export type Database = {
             referencedRelation: "chantiers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chantier_unheard_notices_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "draft_statements"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chantiers: {
         Row: {
           brief: string
           cap_cents: number | null
+          context_tokens: number | null
           created_at: string
           created_by: string
+          earlier_spent_cents: number
           id: string
           last_event_at: string | null
+          past_session_ids: Json
           sections: Json
           session_id: string | null
           spent_cents: number | null
@@ -221,10 +269,13 @@ export type Database = {
         Insert: {
           brief: string
           cap_cents?: number | null
+          context_tokens?: number | null
           created_at?: string
           created_by: string
+          earlier_spent_cents?: number
           id?: string
           last_event_at?: string | null
+          past_session_ids?: Json
           sections?: Json
           session_id?: string | null
           spent_cents?: number | null
@@ -236,10 +287,13 @@ export type Database = {
         Update: {
           brief?: string
           cap_cents?: number | null
+          context_tokens?: number | null
           created_at?: string
           created_by?: string
+          earlier_spent_cents?: number
           id?: string
           last_event_at?: string | null
+          past_session_ids?: Json
           sections?: Json
           session_id?: string | null
           spent_cents?: number | null

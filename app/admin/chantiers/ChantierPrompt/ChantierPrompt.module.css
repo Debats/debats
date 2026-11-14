@@ -1,0 +1,32 @@
+/* Something the person may do for the agent: a label, a line that says why, the button */
+.prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+  background-color: var(--card);
+  border-radius: 12px;
+}
+
+.label {
+  composes: meta from '../../../../styles/text.module.css';
+  margin: 0;
+}
+
+.text {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink);
+  margin: 0;
+}
+
+.hint {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.refusal {
+  composes: small from '../../../../styles/text.module.css';
+  color: var(--signal);
+  margin: 0;
+}

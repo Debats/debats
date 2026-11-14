@@ -102,7 +102,39 @@ describe('newsOf', () => {
       messages: [],
       until: null,
       budget: null,
+      contextTokens: null,
     })
+  })
+
+  it('reads the size of the context off the last model request of the batch: all it was given to read', () => {
+    const request = (id: string, read: number, written: number, fresh: number) => ({
+      id,
+      type: 'span.model_request_end',
+      model_usage: {
+        input_tokens: fresh,
+        cache_read_input_tokens: read,
+        cache_creation_input_tokens: written,
+        output_tokens: 900,
+      },
+    })
+    const batch = [request('evt_a', 100_000, 2_000, 10), ...events, request('evt_b', 0, 412_000, 4)]
+
+    expect(newsOf({ status: 'idle' }, batch).contextTokens).toBe(412_004)
+    expect(newsOf({ status: 'idle' }, events).contextTokens).toBeNull()
+  })
+
+  it('falls back on the last model request known from before when the batch has none', () => {
+    const before = {
+      id: 'evt_z',
+      type: 'span.model_request_end',
+      model_usage: {
+        input_tokens: 5,
+        cache_read_input_tokens: 660_000,
+        cache_creation_input_tokens: 0,
+      },
+    }
+
+    expect(newsOf({ status: 'idle' }, events, undefined, before).contextTokens).toBe(660_005)
   })
 
   it('says what the session spent against its cap, in cents', () => {

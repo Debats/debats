@@ -31,7 +31,8 @@
   margin: 0;
 }
 
-.reached {
+/* A line that says more about the figures: the cap was reached, or sessions before this one spent too */
+.note {
   composes: small from '../../../../styles/text.module.css';
   color: var(--ink-2);
   margin: 0;

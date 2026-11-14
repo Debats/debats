@@ -30,6 +30,18 @@ describe('deleteChantierUseCase', () => {
     expect(chantiers.messages).toHaveLength(0)
   })
 
+  it('forgets the sessions the chantier left behind when its context was reduced, too', async () => {
+    const chantiers = inMemoryChantiers([aChantier({ pastSessionIds: ['sesn_a', 'sesn_b'] })])
+    const { agent, calls } = fakeAgent()
+    const result = await runWith(chantierFakes(chantiers.repository, agent))(
+      deleteChantierUseCase({ contributor: ADMIN, chantierId: 'chantier-1' }),
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(calls.forgotten).toEqual(['sesn_a', 'sesn_b', 'sesn_1'])
+    expect(chantiers.rows.has('chantier-1')).toBe(false)
+  })
+
   it('removes a chantier that never got a session without asking the agent', async () => {
     const chantiers = inMemoryChantiers([aChantier({ sessionId: null, status: 'ended' })])
     const { agent, calls } = fakeAgent()

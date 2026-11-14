@@ -14,6 +14,7 @@ import {
   ChantierAgent,
 } from '../services/chantier-agent'
 import { AgentBudget, SpendReading } from '../services/chantier-budget'
+import { ChantierSource } from '../services/chantier-sources'
 
 export const ADMIN = { id: 'admin-uuid', reputation: 1_000_000 }
 
@@ -26,6 +27,9 @@ export const aChantier = (overrides: Partial<Chantier> = {}): Chantier => ({
   lastEventAt: null,
   sections: [],
   spend: null,
+  contextTokens: null,
+  earlierSpentCents: 0,
+  pastSessionIds: [],
   createdBy: ADMIN.id,
   updatedBy: ADMIN.id,
   createdAt: new Date('2026-11-10T10:00:00Z'),
@@ -37,7 +41,8 @@ export const aChantier = (overrides: Partial<Chantier> = {}): Chantier => ({
 export function inMemoryChantiers(seed: Chantier[] = []) {
   const rows = new Map(seed.map((chantier) => [chantier.id, chantier]))
   const messages: ChantierMessage[] = []
-  const unheard: (UnheardNotice & { chantierId: string })[] = []
+  const unheard: (UnheardNotice & { chantierId: string; draftId?: string })[] = []
+  const sources: (ChantierSource & { chantierId: string })[] = []
   let next = 1
   let nextUnheard = 1
 
@@ -82,9 +87,11 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
       ),
     findMessages: (chantierId) =>
       Effect.sync(() => messages.filter((m) => m.chantierId === chantierId)),
-    keepUnheard: (chantierId, text) =>
+    keepUnheard: (chantierId, text, draftId) =>
       Effect.sync(() => {
-        unheard.push({ id: `unheard-${nextUnheard++}`, chantierId, text })
+        const before = draftId ? unheard.findIndex((notice) => notice.draftId === draftId) : -1
+        if (before !== -1) unheard.splice(before, 1)
+        unheard.push({ id: `unheard-${nextUnheard++}`, chantierId, text, draftId })
       }),
     findUnheard: (chantierId) =>
       Effect.sync(() =>
@@ -98,6 +105,18 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
           if (ids.includes(unheard[i].id)) unheard.splice(i, 1)
         }
       }),
+    noteSources: (chantierId, noted) =>
+      Effect.sync(() => {
+        for (const { url, note } of noted) {
+          const known = sources.find((s) => s.chantierId === chantierId && s.url === url)
+          if (known) known.note = note
+          else sources.push({ chantierId, url, note })
+        }
+      }),
+    findSources: (chantierId) =>
+      Effect.sync(() =>
+        sources.filter((s) => s.chantierId === chantierId).map(({ url, note }) => ({ url, note })),
+      ),
     keepSpend: (id, spend) =>
       Effect.sync(() => {
         const current = rows.get(id)
@@ -112,7 +131,7 @@ export function inMemoryChantiers(seed: Chantier[] = []) {
       }),
   }
 
-  return { repository, rows, messages, unheard }
+  return { repository, rows, messages, unheard, sources }
 }
 
 export type AgentCalls = {
@@ -122,6 +141,14 @@ export type AgentCalls = {
     title: string | null
     existingDrafts: number
     recap: string | null
+  }[]
+  reopened: {
+    id: string
+    brief: string
+    title: string | null
+    existingDrafts: number
+    handover: string | null
+    notedSources: number
   }[]
   told: { sessionId: string; text: string }[]
   /** The sessions asked for their news */
@@ -137,6 +164,7 @@ export type AgentCalls = {
 export function fakeAgent(
   behaviour: {
     open?: Effect.Effect<{ sessionId: string }, AgentUnavailable>
+    reopen?: Effect.Effect<{ sessionId: string }, AgentUnavailable>
     news?: AgentNews
     tell?: Effect.Effect<void, AgentUnavailable | BudgetReached>
     spend?: Effect.Effect<SpendReading, AgentUnavailable>
@@ -146,6 +174,7 @@ export function fakeAgent(
 ) {
   const calls: AgentCalls = {
     opened: [],
+    reopened: [],
     told: [],
     newsAsked: [],
     spendAsked: [],
@@ -159,6 +188,11 @@ export function fakeAgent(
         calls.opened.push(chantier)
         return behaviour.open ?? Effect.succeed({ sessionId: `sesn_for_${chantier.id}` })
       }),
+    reopen: (chantier) =>
+      Effect.suspend(() => {
+        calls.reopened.push(chantier)
+        return behaviour.reopen ?? Effect.succeed({ sessionId: `sesn_again_for_${chantier.id}` })
+      }),
     tell: (sessionId, text) =>
       Effect.suspend(() => {
         calls.told.push({ sessionId, text })
@@ -167,7 +201,15 @@ export function fakeAgent(
     newsSince: (sessionId) =>
       Effect.sync(() => {
         calls.newsAsked.push(sessionId)
-        return behaviour.news ?? { status: 'working', messages: [], until: null, budget: null }
+        return (
+          behaviour.news ?? {
+            status: 'working',
+            messages: [],
+            until: null,
+            budget: null,
+            contextTokens: null,
+          }
+        )
       }),
     spend: (sessionId) =>
       Effect.suspend(() => {

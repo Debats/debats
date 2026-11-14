@@ -1,6 +1,6 @@
 import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
-import { Chantier, isOpen } from '../entities/chantier'
+import { Chantier, hasAgent } from '../entities/chantier'
 import { DraftStatement } from '../entities/draft-statement'
 import { ChantierRepository } from '../repositories/chantier-repository'
 import { DraftStatementRepository } from '../repositories/draft-statement-repository'
@@ -40,8 +40,7 @@ const chantiers = Effect.serviceFunctions(ChantierRepository)
 const drafts = Effect.serviceFunctions(DraftStatementRepository)
 
 /** A chantier whose agent is at work, or waits in its session: its drafts stay with it */
-const launched = (chantier: Chantier | null) =>
-  chantier !== null && isOpen(chantier) && chantier.sessionId !== null
+const launched = (chantier: Chantier | null) => chantier !== null && hasAgent(chantier)
 
 /** The drafts named by id that a validation has not settled; one under a launched chantier refuses the whole lot */
 function adoptableByIds(ids: readonly string[]) {

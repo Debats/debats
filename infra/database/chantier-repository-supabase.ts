@@ -10,6 +10,7 @@ import {
 } from '../../domain/repositories/chantier-repository'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { AgentSpend } from '../../domain/services/chantier-budget'
+import { ChantierSource } from '../../domain/services/chantier-sources'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -36,6 +37,9 @@ function mapChantier(row: Record<string, unknown>): Chantier {
     lastEventAt: (row.last_event_at as string) ?? null,
     sections: (row.sections as string[]) ?? [],
     spend: spendKept(row),
+    contextTokens: (row.context_tokens as number) ?? null,
+    earlierSpentCents: (row.earlier_spent_cents as number) ?? 0,
+    pastSessionIds: (row.past_session_ids as string[]) ?? [],
     createdBy: row.created_by as string,
     updatedBy: row.updated_by as string,
     createdAt: new Date(row.created_at as string),
@@ -62,6 +66,11 @@ function updateColumns(fields: ChantierUpdate, updatedBy: string): Record<string
     ...(fields.sessionId !== undefined ? { session_id: fields.sessionId } : {}),
     ...(fields.lastEventAt !== undefined ? { last_event_at: fields.lastEventAt } : {}),
     ...(fields.sections !== undefined ? { sections: fields.sections } : {}),
+    ...(fields.contextTokens !== undefined ? { context_tokens: fields.contextTokens } : {}),
+    ...(fields.earlierSpentCents !== undefined
+      ? { earlier_spent_cents: fields.earlierSpentCents }
+      : {}),
+    ...(fields.pastSessionIds !== undefined ? { past_session_ids: fields.pastSessionIds } : {}),
     updated_by: updatedBy,
     updated_at: new Date().toISOString(),
   }
@@ -168,12 +177,19 @@ export function createChantierRepository(supabase: SupabaseClient): ChantierRepo
         catch: (error) => dbError('Failed to fetch chantier messages', error),
       }),
 
-    keepUnheard: (chantierId: string, text: string) =>
+    /* One row per draft: reviewed again, a draft takes its new notice and the time of it, so it is told last. A notice about no draft is always a new row */
+    keepUnheard: (chantierId: string, text: string, draftId?: string) =>
       Effect.tryPromise({
         try: async () => {
-          const { error } = await supabase
-            .from('chantier_unheard_notices')
-            .insert({ chantier_id: chantierId, text })
+          const { error } = await supabase.from('chantier_unheard_notices').upsert(
+            {
+              chantier_id: chantierId,
+              text,
+              draft_id: draftId ?? null,
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: 'draft_id' },
+          )
           if (error) throw error
         },
         catch: (error) => dbError('Failed to keep an unheard chantier notice', error),
@@ -204,6 +220,39 @@ export function createChantierRepository(supabase: SupabaseClient): ChantierRepo
           if (error) throw error
         },
         catch: (error) => dbError('Failed to forget unheard chantier notices', error),
+      }),
+
+    /* One row per address in a chantier: noted again, it takes its new note and keeps its place */
+    noteSources: (chantierId: string, sources: readonly ChantierSource[]) =>
+      Effect.tryPromise({
+        try: async () => {
+          if (sources.length === 0) return
+          const { error } = await supabase.from('chantier_sources').upsert(
+            sources.map(({ url, note }) => ({
+              chantier_id: chantierId,
+              url,
+              note,
+              updated_at: new Date().toISOString(),
+            })),
+            { onConflict: 'chantier_id,url' },
+          )
+          if (error) throw error
+        },
+        catch: (error) => dbError('Failed to note chantier sources', error),
+      }),
+
+    findSources: (chantierId: string) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('chantier_sources')
+            .select('url, note')
+            .eq('chantier_id', chantierId)
+            .order('created_at', { ascending: true })
+          if (error) throw error
+          return data.map((row) => ({ url: row.url as string, note: row.note as string }))
+        },
+        catch: (error) => dbError('Failed to fetch chantier sources', error),
       }),
 
     /* Neither updated_at nor updated_by: nobody edited the chantier, and the list is ordered by its last touch */

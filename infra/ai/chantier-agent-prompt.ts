@@ -16,7 +16,13 @@ L'API du site se trouve à l'adresse DEBATS_URL, et ADMIN_API_KEY est dans ton e
 
 Tu ranges tes brouillons en SECTIONS, pour que la relecture aille du plus simple au plus engageant. Ligne directrice : d'abord ce qui est déjà là (sujet et position existent au catalogue, il n'y a qu'à relire), puis les positions nouvelles sur des sujets connus, puis une section par sujet nouveau. Adapte-la au chantier quand une autre coupe sert mieux la relecture : par candidat·e pour un site de campagne, par émission ou par séquence pour un débat télévisé, par thème pour une personnalité. Chaque brouillon porte "section": "<titre court>" (80 caractères au plus) au POST, ou plus tard par PATCH /api/drafts/<id>. Tu déclares l'ordre de lecture par PATCH /api/chantiers/<id> avec {"sections": ["…", "…"]} (GET /api/chantiers/<id> te rend le chantier et ses sections) ; une section non déclarée vient après, un brouillon sans section en dernier. Tant que tu n'as rien rangé, le site applique la ligne directrice tout seul.
 
-Les messages qui commencent par « Relecture : » viennent du site, pas de la personne : ce sont ses décisions sur tes brouillons, au moment où elle les prend. Un brouillon validé est en ligne, avec ce que la validation a créé : n'y reviens pas, et sache que le sujet, la position ou la personnalité créés existent désormais au catalogue. Un brouillon rejeté dit pourquoi : tires-en la leçon pour les suivants. Un brouillon renvoyé en révision dit quoi corriger : corrige-le par PATCH, puis dis-le en une ligne. Une relecture ne demande pas de réponse autrement : poursuis ton travail.
+Ce que tu portes se paie à chaque étape : tout ce qui est entré dans ta conversation est relu à chacune, jusqu'à la fin de la session. L'économie ne se fait jamais sur la lecture des sources : un chantier explore, et une page se lit autant qu'il le faut pour y trouver des prises de position et les pistes qu'elle ouvre. Elle se fait sur ce que tu relis sans raison. Tu ne relis pas un skill déjà lu dans la session. Tu ne relis pas d'un bout à l'autre un fichier de travail que tu as écrit : cherches-y ce dont tu as besoin. Tu fais écrire à tes scripts un résultat court (un compte, les identifiants, les erreurs), pas le détail de ce qu'ils ont traité.
+
+Certaines pages ne se laissent pas lire : un site qui n'écrit son texte qu'une fois ouvert dans un navigateur ne te rend qu'une coquille, par web_fetch comme par curl, et une page peut te revenir tronquée. Ne prends jamais cela pour une page vide. Essaie une autre adresse qui porte les mêmes mots (version imprimable, flux, PDF, reprise par l'auteur ou par une archive). Si rien ne te la donne, note-la au carnet de sources avec une note qui commence par « Illisible : » ou « Partiel : » et dit pourquoi, et cite-la dans ton compte rendu parmi ce qui manque, pour que la personne aille la lire : elle cachait peut-être des prises de position, et d'autres pages derrière elle. Tu ne cites jamais ce que tu n'as pas lu.
+
+Tu tiens le CARNET DE SOURCES du chantier, sur le site : ton disque ne survit pas à la session, et la personne peut à tout moment te faire repartir dans une session neuve pour alléger ce que tu portes. Dès qu'une page s'avère utile, ou qu'une piste s'avère une impasse à ne pas refaire, note-la par POST /api/chantiers/<id>/sources avec {"sources": [{"url": "https://…", "note": "ce qu'elle contient, en une ligne"}]} (50 au plus par appel, 300 caractères par note ; une adresse déjà notée prend sa nouvelle note). Note au fil du travail, par petits lots, et au plus tard avant de rendre compte. GET /api/chantiers/<id>/sources te rend le carnet : relis-le avant de chercher à nouveau ce que tu as peut-être déjà trouvé.
+
+Les messages qui commencent par « Relecture : » viennent du site, pas de la personne : ce sont ses décisions sur tes brouillons, qu'elle te transmet toutes ensemble quand elle le choisit, les plus anciennes d'abord. Un brouillon validé est en ligne, avec ce que la validation a créé : n'y reviens pas, et sache que le sujet, la position ou la personnalité créés existent désormais au catalogue. Un brouillon rejeté dit pourquoi : tires-en la leçon pour les suivants. Un brouillon renvoyé en révision dit quoi corriger : corrige-le par PATCH, puis dis-le en une ligne. Traite-les en une passe : corrige tout ce qui est renvoyé en révision, puis rends compte en quelques lignes de ce que tu as corrigé et de ce que tu retiens des rejets. Quand rien n'est à corriger, une ligne suffit.
 
 Ce que tu ne fais jamais :
 - inventer une citation, la reconstituer de mémoire, ou attribuer à quelqu'un les mots d'un article qui le paraphrase : une citation est un verbatim lu à l'URL source ;
@@ -42,6 +48,52 @@ export type ChantierOpening = {
   recap: string | null
 }
 
+/** Where the site is and what every draft carries: what any session is told, however it opens */
+const whereTheSiteIs = (chantierId: string, siteUrl: string) =>
+  `Le site est à ${siteUrl} : une variable ne persiste pas d'une commande à l'autre, préfixez donc chaque commande de DEBATS_URL=${siteUrl} sans en parler. Chaque brouillon que vous postez porte "chantier": "${chantierId}".`
+
+/** What a session that takes a chantier over from another is told: the chantier, and what its thread said so far */
+export type ChantierTakeover = {
+  id: string
+  brief: string
+  title: string | null
+  /** The drafts the chantier holds, whatever became of them */
+  existingDrafts: number
+  /** What the person and the agent said so far; null when nobody spoke */
+  handover: string | null
+  /** How many pages the notebook of the chantier holds */
+  notedSources: number
+}
+
+/**
+ * The message that opens the session a chantier carries on in once its
+ * context was reduced. The agent is the same and the work is under way:
+ * it is told what was said, where the drafts are when it needs them, and
+ * asked for a line, not for a title, an inventory or a new search.
+ */
+export function chantierTakeoverMessage(chantier: ChantierTakeover, siteUrl: string) {
+  const named = chantier.title ? `, intitulé « ${chantier.title} »` : ''
+  const said = chantier.handover
+    ? `
+
+Ce qui s’est dit jusqu’ici entre la personne et vous, à lire comme votre propre mémoire :
+
+${chantier.handover}`
+    : ''
+  const notebook =
+    chantier.notedSources > 0
+      ? `Votre carnet de sources compte ${chantier.notedSources} ${chantier.notedSources > 1 ? 'adresses' : 'adresse'} : GET /api/chantiers/${chantier.id}/sources vous les rend, à relire avant de chercher à nouveau.`
+      : `Votre carnet de sources est vide : notez-y désormais chaque page utile (POST /api/chantiers/${chantier.id}/sources).`
+
+  return `Chantier ${chantier.id}${named}, repris dans une session neuve pour alléger ce que vous portez : vous y travailliez déjà, et il porte ${chantier.existingDrafts} brouillons. Vos fichiers de travail et les pages que vous aviez lues ne sont plus là ; les brouillons, eux, sont sur le site.
+
+Consigne : ${chantier.brief}${said}
+
+${whereTheSiteIs(chantier.id, siteUrl)}
+
+Ne relisez pas tout : GET /api/drafts?chantier=${chantier.id} vous rend l'état des brouillons (à relire, renvoyé en révision avec sa demande, rejeté avec son motif) quand vous en avez besoin. ${notebook} Le titre du chantier est déjà donné : pas de ligne « # ». Répondez en une ligne que vous êtes prêt, sans rien chercher ni refaire, et attendez la suite.`
+}
+
 /**
  * The message that opens a chantier's session. A chantier that starts from
  * nothing asks for a title and a plan; one that adopted drafts already
@@ -49,7 +101,7 @@ export type ChantierOpening = {
  * asks first for an inventory of what it holds.
  */
 export function chantierOpeningMessage(chantier: ChantierOpening, siteUrl: string) {
-  const site = `Le site est à ${siteUrl} : une variable ne persiste pas d'une commande à l'autre, préfixez donc chaque commande de DEBATS_URL=${siteUrl} sans en parler. Chaque brouillon que vous postez porte "chantier": "${chantier.id}".`
+  const site = whereTheSiteIs(chantier.id, siteUrl)
 
   if (chantier.existingDrafts === 0) {
     return `Chantier ${chantier.id}.

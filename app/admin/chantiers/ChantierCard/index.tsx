@@ -5,8 +5,9 @@ import {
   ChantierMessage,
 } from '../../../../domain/entities/chantier'
 import { DraftTally, tallyLine } from '../../../../domain/read-models/chantier-summary'
-import { AgentSpend } from '../../../../domain/services/chantier-budget'
+import { AgentSpend, chantierCostCents } from '../../../../domain/services/chantier-budget'
 import { withoutTitleLine } from '../../../../domain/services/chantier-title'
+import { dollars } from '../../../../lib/dollars'
 import BudgetBar from '../BudgetBar'
 import { chantierHref } from '../hrefs'
 import { spendLine } from '../spend-line'
@@ -59,7 +60,11 @@ export default function ChantierCard({ chantier, tally, spend, lastWord }: Chant
       {spend && (
         <div className={styles.measure}>
           <BudgetBar spend={spend} />
-          <span className={styles.measureLine}>Budget · {spendLine(spend)}</span>
+          <span className={styles.measureLine}>
+            Budget · {spendLine(spend)}
+            {chantier.earlierSpentCents > 0 &&
+              ` · ${dollars(chantierCostCents(spend, chantier.earlierSpentCents))} au total`}
+          </span>
         </div>
       )}
       {lastWord && (
