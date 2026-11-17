@@ -109,18 +109,15 @@ export default async function FigureSubjectPage({ params }: PageProps) {
     figureStatements.map(({ statement }) => statement.id),
   )
 
-  // Ses groupes se taisent, ou le site ne lui en connaît aucun : dire l'un
-  // pour l'autre, c'est affirmer un parti et un métier qu'on ignore.
-  const nobodyToCompare =
-    page.alignment.groups === 0 ? (
-      <>
-        Débats.co ne connaît encore ni les métiers {elided('de', author.name)} ni ses affiliations :
-        il n’y a aucun groupe auquel comparer cette position.{' '}
-        <Link href={authorHref(author)}>Vous pouvez les renseigner depuis sa page.</Link>
-      </>
-    ) : (
-      'Aucune autre voix de ses organisations ni de ses métiers n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position.'
-    )
+  // Le site ne lui connaît aucun groupe : on invite à les renseigner. S'il en
+  // a mais qu'ils sont trop peu entendus sur ce sujet, on ne dit rien.
+  const noGroupKnown = page.alignment.groups === 0 && (
+    <>
+      Débats.co ne connaît encore ni les métiers {elided('de', author.name)} ni ses affiliations :
+      il n’y a aucun groupe auquel comparer cette position.{' '}
+      <Link href={authorHref(author)}>Vous pouvez les renseigner depuis sa page.</Link>
+    </>
+  )
 
   return (
     <ReviewScope {...review}>
@@ -182,7 +179,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
           <PositionAlignment
             shares={positionShares(debate)}
             alignment={page.alignment}
-            nobodyToCompare={nobodyToCompare}
+            noGroupKnown={noGroupKnown}
           />
         )}
 

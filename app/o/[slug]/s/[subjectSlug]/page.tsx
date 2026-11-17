@@ -116,21 +116,17 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
     organisationStatements.map(({ statement }) => statement.id),
   )
 
-  // Ses membres se taisent, ou le site ne lui en connaît aucun : une
-  // organisation n'a qu'un groupe, le sien, et le dire faux serait affirmer
-  // des membres qu'on n'a pas.
-  const nobodyToCompare =
-    page.members === 0 ? (
-      <>
-        Débats.co ne connaît encore aucune personnalité affiliée à {organisation.name} : il n’y a
-        aucun groupe auquel comparer cette position.{' '}
-        <Link href={`${organisationHref(organisation.slug)}/affilier`}>
-          Vous pouvez en affilier une.
-        </Link>
-      </>
-    ) : (
-      'Aucune autre voix de cette organisation n’a encore été recensée sur ce sujet : il n’y a personne à qui comparer cette position.'
-    )
+  // Le site ne lui connaît aucun membre : on invite à en affilier. Si elle en
+  // a mais qu'ils sont trop peu entendus sur ce sujet, on ne dit rien.
+  const noGroupKnown = page.members === 0 && (
+    <>
+      Débats.co ne connaît encore aucune personnalité affiliée à {organisation.name} : il n’y a
+      aucun groupe auquel comparer cette position.{' '}
+      <Link href={`${organisationHref(organisation.slug)}/affilier`}>
+        Vous pouvez en affilier une.
+      </Link>
+    </>
+  )
 
   return (
     <ReviewScope {...review}>
@@ -196,7 +192,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
           <PositionAlignment
             shares={positionShares(debate)}
             alignment={page.alignment}
-            nobodyToCompare={nobodyToCompare}
+            noGroupKnown={noGroupKnown}
           />
         )}
 

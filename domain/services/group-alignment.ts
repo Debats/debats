@@ -106,17 +106,28 @@ export interface AlignmentRow extends GroupDefinition {
   alignment: Alignment
 }
 
+/**
+ * Le nombre d'autres voix à partir duquel la part d'un groupe se compare à
+ * celle de l'ensemble. En dessous, l'intervalle couvre la moitié de l'axe :
+ * trois voix dont deux raccord se tiennent entre 21 et 94 %, et le graphique
+ * dessinerait une incertitude au lieu d'un écart. Le groupe n'est alors pas
+ * montré du tout : on compare ce qui est pertinent, sinon on n'affiche rien.
+ */
+export const COMPARABLE_FROM = 10
+
 export interface SubjectAlignment {
   /** Toutes les autres voix du sujet : la référence de chaque groupe */
   everyone: Alignment
-  /** Les groupes où quelqu'un d'autre s'est exprimé, du plus au moins raccord */
+  /** Les groupes assez nombreux pour être comparés, du plus au moins raccord */
   rows: AlignmentRow[]
   /**
-   * Les groupes auxquels l'auteur appartient, muets compris.
+   * Les groupes auxquels l'auteur appartient, muets ou trop peu entendus
+   * compris.
    *
    * Sans ce nombre, `rows` vide voudrait dire deux choses : que ses groupes
-   * se taisent sur ce sujet, ou que le site ne lui connaît aucun groupe. Une
-   * page qui les confond affirme un parti et un métier qu'elle ignore.
+   * n'ont pas assez parlé sur ce sujet, ou que le site ne lui connaît aucun
+   * groupe. Une page qui les confond affirme un parti et un métier qu'elle
+   * ignore.
    */
   groups: number
 }
@@ -124,10 +135,11 @@ export interface SubjectAlignment {
 /**
  * L'auteur est retiré de la référence comme de ses propres groupes : la
  * question est de savoir si les autres le suivent, il n'a pas à peser dans
- * son propre dénominateur. Un groupe dont personne d'autre ne s'est exprimé
- * n'a rien à dire et ne rend pas de ligne — mais il reste compté dans
+ * son propre dénominateur. Un groupe trop peu entendu pour être comparé
+ * ne rend pas de ligne — mais il reste compté dans
  * `groups`, parce que l'ignorer et ne pas l'avoir sont deux situations
- * différentes.
+ * différentes. L'auteur ne fait pas non plus le dixième d'un groupe : le
+ * seuil se lit sur les autres voix, celles que l'intervalle mesure.
  */
 export function alignOnSubject(
   voices: readonly Voice[],
@@ -144,7 +156,7 @@ export function alignOnSubject(
       ...group,
       alignment: alignmentOf(groupVoices(others, hers, group.members), reference),
     }))
-    .filter((row) => row.alignment.total > 0)
+    .filter((row) => row.alignment.total >= COMPARABLE_FROM)
     .sort((a, b) => b.alignment.deviation - a.alignment.deviation)
 
   return { everyone: alignmentOf(all, reference), rows, groups: groups.length }

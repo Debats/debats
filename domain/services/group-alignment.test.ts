@@ -4,6 +4,7 @@ import {
   alignmentOf,
   groupVoices,
   wilsonInterval,
+  COMPARABLE_FROM,
   GroupDefinition,
   Voice,
 } from './group-alignment'
@@ -91,16 +92,40 @@ describe('alignOnSubject', () => {
     members: new Set(members),
   })
 
+  // `n` autres voix, nommées v0, v1… : les `withHer` premières la rejoignent
+  const names = (n: number) => Array.from({ length: n }, (_, index) => `v${index}`)
+  const others = (n: number, withHer: number) =>
+    names(n).map((name, index) => voice(name, index < withHer ? 'pour' : 'contre'))
+
   it('leaves the author out of the reference and of her own groups', () => {
-    const voices = [voice('elle', 'pour'), voice('a', 'pour'), voice('b', 'contre')]
-    const { everyone, rows } = alignOnSubject(voices, hers, 'elle', [group('parti', ['elle', 'a'])])
-    expect(everyone).toMatchObject({ withAuthor: 1, total: 2 })
-    expect(rows[0].alignment).toMatchObject({ withAuthor: 1, total: 1 })
+    const voices = [voice('elle', 'pour'), ...others(12, 4)]
+    const { everyone, rows } = alignOnSubject(voices, hers, 'elle', [
+      group('parti', ['elle', ...names(10)]),
+    ])
+    expect(everyone).toMatchObject({ withAuthor: 4, total: 12 })
+    expect(rows[0].alignment).toMatchObject({ withAuthor: 4, total: 10 })
   })
 
   it('drops a group whose members never spoke on the subject, but still counts it', () => {
     const voices = [voice('elle', 'pour'), voice('a', 'pour')]
     const { rows, groups } = alignOnSubject(voices, hers, 'elle', [group('muet', ['z'])])
+    expect(rows).toEqual([])
+    expect(groups).toBe(1)
+  })
+
+  it('compares a group from ten other voices', () => {
+    const voices = [voice('elle', 'pour'), ...others(COMPARABLE_FROM, 4)]
+    const { rows } = alignOnSubject(voices, hers, 'elle', [
+      group('parti', ['elle', ...names(COMPARABLE_FROM)]),
+    ])
+    expect(rows.map((row) => row.key)).toEqual(['parti'])
+  })
+
+  it('drops a group below ten, the author not making the tenth, but still counts it', () => {
+    const voices = [voice('elle', 'pour'), ...others(COMPARABLE_FROM - 1, 4)]
+    const { rows, groups } = alignOnSubject(voices, hers, 'elle', [
+      group('parti', ['elle', ...names(COMPARABLE_FROM - 1)]),
+    ])
     expect(rows).toEqual([])
     expect(groups).toBe(1)
   })
@@ -113,23 +138,18 @@ describe('alignOnSubject', () => {
   })
 
   it('puts the most aligned group first', () => {
-    const voices = [
-      voice('elle', 'pour'),
-      voice('a', 'pour'),
-      voice('b', 'pour'),
-      voice('c', 'contre'),
-      voice('d', 'contre'),
-    ]
+    // Vingt autres voix : les dix premières la rejoignent, les dix suivantes non
+    const voices = [voice('elle', 'pour'), ...others(20, 10)]
     const { rows } = alignOnSubject(voices, hers, 'elle', [
-      group('tiede', ['a', 'c']),
-      group('chaud', ['a', 'b']),
+      group('tiede', names(20).slice(5, 15)),
+      group('chaud', names(20).slice(0, 10)),
     ])
     expect(rows.map((row) => row.key)).toEqual(['chaud', 'tiede'])
   })
 
   it('measures every group against the same reference', () => {
-    const voices = [voice('elle', 'pour'), voice('a', 'pour'), voice('b', 'contre')]
-    const { everyone, rows } = alignOnSubject(voices, hers, 'elle', [group('parti', ['a'])])
+    const voices = [voice('elle', 'pour'), ...others(20, 10)]
+    const { everyone, rows } = alignOnSubject(voices, hers, 'elle', [group('parti', names(10))])
     expect(rows[0].alignment.deviation).toBeCloseTo(1 - everyone.share)
   })
 

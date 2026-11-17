@@ -19,17 +19,19 @@ interface PositionAlignmentProps {
   shares: PositionShare[]
   alignment: SubjectAlignment
   /**
-   * Ce qu'on dit quand il n'y a personne à comparer. Le texte vient de la
-   * page, qui seule sait de quels groupes il s'agit — et si le site en
-   * connaît.
+   * L'invitation à renseigner les groupes de l'auteur, quand le site ne lui
+   * en connaît aucun. Le texte vient de la page, qui seule sait de quels
+   * groupes il s'agit. Absente quand il en a : des groupes trop peu entendus
+   * pour être comparés ne se disent pas, la carte s'arrête à la barre.
    */
-  nobodyToCompare: React.ReactNode
+  noGroupKnown?: React.ReactNode
 }
 
 /**
  * Où se situe la position de l'auteur : la barre des voix du sujet, puis
  * l'écart entre lui et chaque groupe auquel il appartient. Le graphique
- * n'apparaît que lorsqu'il y a quelqu'un à comparer.
+ * n'apparaît que pour les groupes assez entendus pour être comparés
+ * (`COMPARABLE_FROM`) ; en dessous, rien n'est affiché.
  *
  * Rien ici ne s'accorde en genre : l'auteur est aussi bien une organisation
  * qu'une personnalité, et le site écrit de façon inclusive. Les phrases
@@ -38,7 +40,7 @@ interface PositionAlignmentProps {
 export default function PositionAlignment({
   shares,
   alignment,
-  nobodyToCompare,
+  noGroupKnown,
 }: PositionAlignmentProps) {
   const { everyone, rows } = alignment
 
@@ -75,7 +77,7 @@ export default function PositionAlignment({
         }))}
       />
 
-      {rows.length > 0 ? (
+      {rows.length > 0 && (
         <>
           <h3 className={styles.groupsTitle}>Qui suit cette position, groupe par groupe</h3>
           <AlignmentChart
@@ -91,9 +93,9 @@ export default function PositionAlignment({
             }
           />
         </>
-      ) : (
-        <p className={styles.empty}>{nobodyToCompare}</p>
       )}
+
+      {noGroupKnown && <p className={styles.empty}>{noGroupKnown}</p>}
     </section>
   )
 }
