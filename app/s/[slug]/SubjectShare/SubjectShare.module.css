@@ -1,0 +1,119 @@
+.trigger {
+  composes: button secondary from '../../../../components/ui/Button/Button.module.css';
+  width: 40px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.overlay {
+  composes: overlay from '../../../../styles/dialog.module.css';
+}
+
+.dialog {
+  composes: dialog from '../../../../styles/dialog.module.css';
+  width: min(860px, calc(100vw - 32px));
+}
+
+.title {
+  composes: title from '../../../../styles/dialog.module.css';
+}
+
+/* The text to post with the images, as it will be pasted: its line breaks are part of it */
+.text {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background-color: var(--paper-2);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* The slides side by side: they are swiped here as they will be where they are posted */
+.strip {
+  display: flex;
+  gap: 14px;
+  margin: 22px 0 0;
+  padding: 0 0 12px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+}
+
+.slide {
+  display: flex;
+  flex: 0 0 200px;
+  flex-direction: column;
+  gap: 8px;
+  scroll-snap-align: start;
+}
+
+/* The image keeps its proportions, whatever the width of its slide */
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background-color: var(--paper-2);
+}
+
+.caption {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+
+.rank {
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+}
+
+.loading {
+  margin: 22px 0 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.fault {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.close {
+  display: block;
+  margin: 22px 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--ink);
+}

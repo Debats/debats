@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as Sentry from '@sentry/nextjs'
+import QRCode from 'qrcode'
 import { detectImageFormat, imageMimeType, ImageFormat } from '../domain/services/image-format'
 
 /** Couleurs du design system, en dur : le rendu OpenGraph n'a pas accès au CSS. */
@@ -109,3 +110,16 @@ export const loadLogo = (slug: string) => loadStorageImage(`logos/${slug}.png`, 
 export function truncate(text: string, max: number): string {
   return text.length > max ? text.slice(0, max - 3) + '…' : text
 }
+
+/**
+ * An address as a QR code, in the ink and paper of the site, as a data URI.
+ * Drawn at twice the size it is shown, with the quiet margin a reader needs
+ * to find it on a dark ground.
+ */
+export const qrCodeOf = (url: string, shownSize: number): Promise<string> =>
+  QRCode.toDataURL(url, {
+    errorCorrectionLevel: 'M',
+    margin: 2,
+    width: shownSize * 2,
+    color: { dark: OG_COLORS.ink, light: OG_COLORS.paper },
+  })

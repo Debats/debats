@@ -6,6 +6,10 @@
 /** A subject's page */
 export const subjectHref = (slug: string): string => `/s/${slug}`
 
+/** One slide of the carousel of a subject made to be shared, as an image */
+export const subjectShareSlideHref = (slug: string, slide: string): string =>
+  `${subjectHref(slug)}/partage/${slide}`
+
 /** The index of every subject */
 export const SUBJECTS_HREF = '/s'
 

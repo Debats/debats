@@ -14,6 +14,7 @@ import {
   signJointDeclarationHref,
   statementEditHref,
   subjectHref,
+  subjectShareSlideHref,
   themeHref,
 } from './hrefs'
 
@@ -29,6 +30,10 @@ describe('the addresses of the site', () => {
 
   it('puts a position under its subject, by its own slug', () => {
     expect(positionHref('le-smic', 'augmenter')).toBe('/s/le-smic/position/augmenter')
+  })
+
+  it('puts each slide of the carousel of a subject under the subject', () => {
+    expect(subjectShareSlideHref('le-smic', 'classement')).toBe('/s/le-smic/partage/classement')
   })
 
   it('puts an author on a subject under the author', () => {

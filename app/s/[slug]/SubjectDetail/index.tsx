@@ -14,11 +14,13 @@ import { isMajorSubject } from '../../../../domain/entities/subject'
 import { positionAuthorsCount } from '../../../../domain/read-models/subject-positions-summary'
 import { argumentsByPosition } from '../../../../domain/read-models/argument'
 import { addStatementHref, subjectHref } from '../../../../domain/read-models/hrefs'
+import { shareCaption } from '../../../../domain/read-models/subject-share'
+import { SITE_URL } from '../../../site'
+import SubjectShare from '../SubjectShare'
 import { statedSpanLabel } from '../../../../domain/services/subject-timeline'
 import { canPerform } from '../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../actions/get-authenticated-contributor'
 import Button from '../../../../components/ui/Button'
-import ShareButton from '../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import SubjectAdminMenu from '../SubjectAdminMenu'
 import SubjectHero from '../SubjectHero'
@@ -165,7 +167,11 @@ export default async function SubjectDetail({
         actions={
           <>
             <Button href={newStatementHref}>Ajouter une prise de position</Button>
-            <ShareButton compact title={subject.title} text={subject.presentation} />
+            <SubjectShare
+              slug={subject.slug}
+              title={subject.title}
+              caption={shareCaption(subject, `${SITE_URL}${subjectHref(subject.slug)}`)}
+            />
           </>
         }
         secondaryAction={

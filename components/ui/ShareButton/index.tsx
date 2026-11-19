@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useShareButtonContext } from './ShareButtonContext'
+import ShareIcon from './ShareIcon'
 import styles from './ShareButton.module.css'
 
 interface ShareButtonProps {
@@ -11,17 +12,6 @@ interface ShareButtonProps {
   iconOnly?: boolean
   /** Icône seule dans un bouton rond, à côté de l'action principale d'une page */
   compact?: boolean
-}
-
-const svgProps = {
-  xmlns: 'http://www.w3.org/2000/svg',
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 2,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-  'aria-hidden': true as const,
 }
 
 export default function ShareButton({ title, text, iconOnly, compact }: ShareButtonProps) {
@@ -61,17 +51,7 @@ export default function ShareButton({ title, text, iconOnly, compact }: ShareBut
       type="button"
       aria-label={copied ? 'Lien copié !' : 'Partager cette page'}
     >
-      {copied ? (
-        <svg {...svgProps} width={size} height={size}>
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      ) : (
-        <svg {...svgProps} width={size} height={size}>
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </svg>
-      )}
+      <ShareIcon size={size} done={copied} />
       {!withoutLabel && (copied ? 'Lien copié !' : 'Partager')}
     </button>
   )

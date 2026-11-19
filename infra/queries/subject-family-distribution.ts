@@ -11,7 +11,7 @@ import { createOccupationRepository } from '../database/occupation-repository-su
 import { createStatementRepository } from '../database/statement-repository-supabase'
 
 /** Only public figures have occupations; organisations are left out */
-const figureEntries = (statements: StatementWithAuthor[]) =>
+export const figureEntries = (statements: StatementWithAuthor[]) =>
   statements
     .filter(({ author }) => author.kind === 'public_figure')
     .map(({ position, author }) => ({
