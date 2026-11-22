@@ -291,6 +291,20 @@ function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWith
   }
 }
 
+/** The id of the joint declaration that bears a slug; null when none does */
+async function jointDeclarationIdOf(
+  supabase: SupabaseClient<Database>,
+  slug: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('joint_declarations')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (error) throw error
+  return data?.id ?? null
+}
+
 export function createStatementRepository(supabase: SupabaseClient<Database>): StatementRepository {
   return {
     findById: (id: string) =>
@@ -555,12 +569,19 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
     findFeed: (filters, order, page) =>
       Effect.tryPromise({
         try: async () => {
+          // A joint declaration is named by its slug in the address, by its id on a statement
+          const declarationId = filters.jointDeclarationSlug
+            ? await jointDeclarationIdOf(supabase, filters.jointDeclarationSlug)
+            : undefined
+          // A slug no text bears narrows to nothing, rather than to everything
+          if (declarationId === null) return { entries: [], total: 0 }
           // The same narrowing for the count and for the page
           const narrowed = <Q extends FeedQueryBuilder>(query: Q): Q => {
             let q = query
               .is('deleted_at', null)
               .is('positions.deleted_at', null)
               .is('positions.subjects.deleted_at', null)
+            if (declarationId) q = q.eq('joint_declaration_id', declarationId)
             if (filters.authorKind === 'public_figure') q = q.not('public_figure_id', 'is', null)
             if (filters.authorKind === 'organisation') q = q.not('organisation_id', 'is', null)
             if (filters.statementType) q = q.eq('statement_type', filters.statementType)

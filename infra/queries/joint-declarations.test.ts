@@ -6,8 +6,14 @@ import {
   positionTaken,
   signatoryAdded,
 } from '../../domain/aggregates/joint-declaration'
-import { organisationAuthor, publicFigureAuthor } from '../../domain/entities/statement'
+import { statementAdded, statementStream } from '../../domain/aggregates/statement'
+import {
+  declarationContent,
+  organisationAuthor,
+  publicFigureAuthor,
+} from '../../domain/entities/statement'
 import { createJointDeclarationRepository } from '../database/joint-declaration-repository-supabase'
+import { createStatementRepository } from '../database/statement-repository-supabase'
 import { runUnitOfWork } from '../events/unit-of-work'
 import { getPrismaClient } from '../prisma/client'
 import { createAdminSupabaseClient } from '../supabase/admin'
@@ -22,6 +28,7 @@ const hasDatabase = Boolean(process.env.DATABASE_URL)
 const prisma = () => getPrismaClient()
 
 const declarationId = crypto.randomUUID()
+const statementId = crypto.randomUUID()
 const tag = declarationId.slice(0, 8)
 const slug = `appel-de-test-${tag}`
 const sourceUrl = `https://example.org/appel-${tag}`
@@ -66,14 +73,68 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
         ),
       ),
     )
+    // The signature of the public figure, as the command would have written it
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(
+          statementStream(statementId),
+          0,
+          [
+            statementAdded({
+              author: publicFigureAuthor(figure.id),
+              subjectId: position.subject_id,
+              positionId: position.id,
+              content: declarationContent(quote),
+              sourceName: 'Le Monde',
+              sourceUrl,
+              statedAt: new Date('2026-11-21'),
+              argumentIds: [],
+              jointDeclarationId: declarationId,
+            }),
+          ],
+          { actorId: actor.id },
+        ),
+      ),
+    )
   })
 
   afterAll(async () => {
+    await prisma().statements.deleteMany({ where: { id: statementId } })
     await prisma().joint_declarations.deleteMany({ where: { id: declarationId } })
     await prisma().domain_events.deleteMany({
-      where: { stream_type: 'joint_declaration', stream_id: declarationId },
+      where: {
+        OR: [
+          { stream_type: 'joint_declaration', stream_id: declarationId },
+          { stream_type: 'statement', stream_id: statementId },
+        ],
+      },
     })
     await prisma().$disconnect()
+  })
+
+  it('narrows the feed to the signatures of the text, each naming it', async () => {
+    const feed = await Effect.runPromise(
+      createStatementRepository(supabase).findFeed({ jointDeclarationSlug: slug }, 'stated', {
+        limit: 20,
+        offset: 0,
+      }),
+    )
+
+    expect(feed.total).toBe(1)
+    expect(feed.entries.map(({ statement }) => [statement.id, statement.jointDeclaration])).toEqual(
+      [[statementId, { id: declarationId, title: `Appel de test ${tag}`, slug }]],
+    )
+  })
+
+  it('narrows the feed to nothing for a slug no text bears', async () => {
+    const feed = await Effect.runPromise(
+      createStatementRepository(supabase).findFeed(
+        { jointDeclarationSlug: `inconnu-${tag}` },
+        'stated',
+        { limit: 20, offset: 0 },
+      ),
+    )
+    expect(feed).toEqual({ entries: [], total: 0 })
   })
 
   it('reads the page of a text: what it takes position on, and who signed it, in order', async () => {

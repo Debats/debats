@@ -5,6 +5,8 @@ export interface FeedFilters {
   authorKind?: StatementAuthorKind
   themeSlug?: string
   statementType?: StatementType
+  /** Only the signatures of this joint declaration */
+  jointDeclarationSlug?: string
 }
 
 /**
@@ -39,6 +41,7 @@ export function parseFeedParams(params: {
   qui?: string
   theme?: string
   type?: string
+  declaration?: string
   tri?: string
   page?: string
 }): { filters: FeedFilters; order: FeedOrder; page: number } {
@@ -50,6 +53,7 @@ export function parseFeedParams(params: {
       ...(authorKind ? { authorKind } : {}),
       ...(params.theme ? { themeSlug: params.theme } : {}),
       ...(statementType ? { statementType } : {}),
+      ...(params.declaration ? { jointDeclarationSlug: params.declaration } : {}),
     },
     order: params.tri === TOUCHED_ORDER_PARAM ? 'touched' : 'stated',
     page: Number.isInteger(page) && page > 0 ? page : 1,
@@ -62,6 +66,7 @@ export function feedHref(filters: FeedFilters, order: FeedOrder, page = 1): stri
   if (filters.authorKind) query.set('qui', AUTHOR_KIND_PARAMS[filters.authorKind])
   if (filters.themeSlug) query.set('theme', filters.themeSlug)
   if (filters.statementType) query.set('type', filters.statementType)
+  if (filters.jointDeclarationSlug) query.set('declaration', filters.jointDeclarationSlug)
   if (order === 'touched') query.set('tri', TOUCHED_ORDER_PARAM)
   if (page > 1) query.set('page', String(page))
   const search = query.toString()

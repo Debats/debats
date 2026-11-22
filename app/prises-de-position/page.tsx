@@ -3,6 +3,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
+import { createJointDeclarationRepository } from '../../infra/database/joint-declaration-repository-supabase'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import {
@@ -49,6 +50,7 @@ interface PageProps {
     qui?: string
     theme?: string
     type?: string
+    declaration?: string
     tri?: string
     page?: string
   }>
@@ -58,7 +60,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
   const { filters, order, page } = parseFeedParams(await searchParams)
 
   const supabase = createAdminSupabaseClient()
-  const [feed, themes, activeSubjects] = await Promise.all([
+  const [feed, themes, activeSubjects, declarations] = await Promise.all([
     Effect.runPromise(
       createStatementRepository(supabase).findFeed(filters, order, {
         limit: FEED_PAGE_SIZE,
@@ -67,6 +69,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
     ),
     Effect.runPromise(createThemeRepository(supabase).findAll()),
     Effect.runPromise(createSubjectRepository(supabase).findSummariesByActivity(ACTIVE_SUBJECTS)),
+    Effect.runPromise(createJointDeclarationRepository(supabase).findAll()),
   ])
   const figureIds = Array.from(
     new Set(feed.entries.filter((e) => e.author.kind === 'public_figure').map((e) => e.author.id)),
@@ -123,7 +126,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
           </>
         }
       >
-        <FeedFilters filters={filters} order={order} themes={themes} />
+        <FeedFilters filters={filters} order={order} themes={themes} declarations={declarations} />
 
         {feed.entries.length === 0 ? (
           <p className={styles.empty}>

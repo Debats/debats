@@ -47,6 +47,14 @@ describe('feedHref', () => {
     )
   })
 
+  it('narrows to the signatures of one joint declaration, named by its slug', () => {
+    const href = feedHref({ jointDeclarationSlug: 'le-manifeste-de-paris' }, 'stated')
+    expect(href).toBe('/prises-de-position?declaration=le-manifeste-de-paris')
+    expect(parseFeedParams({ declaration: 'le-manifeste-de-paris' }).filters).toEqual({
+      jointDeclarationSlug: 'le-manifeste-de-paris',
+    })
+  })
+
   it('reads back the address it wrote', () => {
     const query = new URLSearchParams(feedHref({ themeSlug: 'ecologie' }, 'touched').split('?')[1])
     expect(parseFeedParams(Object.fromEntries(query))).toEqual({
