@@ -113,6 +113,10 @@ export const addStatementHref = (
 export const statementEditHref = (statementId: string): string =>
   `${STATEMENTS_HREF}/${statementId}/modifier`
 
+/** The form that says a statement already on the site is the signature of a joint declaration */
+export const attachStatementHref = (statementId: string): string =>
+  `${STATEMENTS_HREF}/${statementId}/rattacher`
+
 /** The flags waiting for a moderator */
 export const FLAGS_HREF = '/signalements'
 

@@ -12,7 +12,14 @@ import {
   publicFigureRef,
   StatementAuthorRef,
 } from '../../domain/read-models/statement-author'
+import { contentLine, StatementAuthor } from '../../domain/entities/statement'
+import {
+  AttachmentPlan,
+  attachmentPlanOf,
+  AuthoredStatement,
+} from '../../domain/read-models/attachment-plan'
 import { DatabaseError } from '../../domain/repositories/errors'
+import { StatementContentColumns, toStatementContent } from '../database/statement-content-columns'
 import { databaseError } from '../database/database-error'
 import {
   JointDeclarationRow,
@@ -177,4 +184,79 @@ export function loadJointDeclarationIndex(
     },
     catch: (error) => databaseError('Failed to fetch the joint declarations', error),
   })
+}
+
+const AUTHORED_COLUMNS = `
+  id, position_id, source_name, source_url, stated_at, joint_declaration_id,
+  statement_type, quote, document_name, voted_text, vote_choice, deed`
+
+type AuthoredRow = StatementContentColumns & {
+  id: string
+  position_id: string
+  source_name: string
+  source_url: string
+  stated_at: string
+  joint_declaration_id: string | null
+}
+
+/** What an author already says on the positions a text takes, signatures of the text included */
+function loadAuthoredOn(
+  supabase: SupabaseClient<Database>,
+  author: StatementAuthor,
+  positionIds: string[],
+): Effect.Effect<AuthoredStatement[], DatabaseError> {
+  return Effect.tryPromise({
+    try: async () => {
+      if (positionIds.length === 0) return []
+      const { data, error } = await supabase
+        .from('statements')
+        .select(AUTHORED_COLUMNS)
+        .eq(author.kind === 'organisation' ? 'organisation_id' : 'public_figure_id', author.id)
+        .in('position_id', positionIds)
+        .is('deleted_at', null)
+        .order('stated_at', { ascending: false })
+
+      if (error) throw error
+      return (data as AuthoredRow[]).map((row) => ({
+        id: row.id,
+        positionId: row.position_id,
+        summary: contentLine(toStatementContent(row)),
+        sourceName: row.source_name,
+        sourceUrl: row.source_url,
+        statedAt: new Date(row.stated_at),
+        jointDeclarationId: row.joint_declaration_id,
+      }))
+    },
+    catch: (error) => databaseError('Failed to fetch what an author says on a text', error),
+  })
+}
+
+/**
+ * What attaching a statement to the text that bears this slug will do, or
+ * null when no text bears it: the positions the text takes, and what the
+ * author of the statement already holds on each.
+ */
+export function loadAttachmentPlan(
+  supabase: SupabaseClient<Database>,
+  statement: {
+    id: string
+    author: StatementAuthor
+    positionId: string
+    subjectId: string
+    sourceUrl: string
+  },
+  slug: string,
+): Effect.Effect<AttachmentPlan | null, DatabaseError> {
+  return Effect.flatMap(loadJointDeclarationPage(supabase, slug), (text) =>
+    text === null
+      ? Effect.succeed(null)
+      : Effect.map(
+          loadAuthoredOn(
+            supabase,
+            statement.author,
+            text.stances.map((stance) => stance.position.id),
+          ),
+          (authored) => attachmentPlanOf(text, statement, authored),
+        ),
+  )
 }

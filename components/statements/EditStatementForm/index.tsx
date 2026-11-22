@@ -6,6 +6,7 @@ import { ArgumentRef } from '../../../domain/read-models/argument'
 import { ReviewDetail } from '../../../domain/read-models/review'
 import { useReviewOnEdit } from '../../review/ReviewOnEdit/use-review-on-edit'
 import { JointDeclarationRef } from '../../../domain/entities/joint-declaration'
+import AttachToDeclarationPrompt from '../AttachToDeclarationPrompt'
 import SignedJointlyNotice from '../SignedJointlyNotice'
 import StatementForm from '../StatementForm'
 import { StatementContentInput } from '../../../domain/use-cases/validate-statement-fields'
@@ -58,7 +59,11 @@ export default function EditStatementForm({
 
   return (
     <>
-      {signedWith && <SignedJointlyNotice declaration={signedWith} />}
+      {signedWith ? (
+        <SignedJointlyNotice declaration={signedWith} />
+      ) : (
+        <AttachToDeclarationPrompt statementId={statementId} />
+      )}
       <StatementForm
         onSubmit={handleSubmit}
         submitLabel="Enregistrer les modifications"

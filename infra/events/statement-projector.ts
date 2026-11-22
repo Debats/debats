@@ -29,6 +29,19 @@ async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTra
       })
       await syncArguments(tx, id, decoded.payload.argumentIds, stored.actorId)
       return
+    case 'StatementJoinedDeclaration':
+      await tx.statements.update({
+        where: { id },
+        data: {
+          joint_declaration_id: decoded.payload.jointDeclarationId,
+          source_name: decoded.payload.sourceName,
+          source_url: decoded.payload.sourceUrl,
+          stated_at: new Date(decoded.payload.statedAt),
+          ...fromStatementContent(decoded.payload.content),
+          updated_at: stored.occurredAt,
+        },
+      })
+      return
     case 'StatementMoved':
       await tx.statements.update({
         where: { id },

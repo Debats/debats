@@ -8,7 +8,7 @@ import {
 } from '../entities/joint-declaration'
 import { declarationContent, StatementAuthor } from '../entities/statement'
 import { StoredEvent, StreamRef } from '../events/event-store'
-import type { StatementAddition } from './statement'
+import type { Signature } from './statement'
 import { Cascade, Decision, refused, Rejected } from './decision'
 import { isoDate } from './iso-date'
 import { blankToUndefined } from './optional-text'
@@ -72,7 +72,7 @@ export const signatureOf = (
   state: JointDeclarationState,
   author: StatementAuthor,
   taken: TakenPosition,
-): StatementAddition => ({
+): Signature => ({
   author,
   subjectId: taken.subjectId,
   positionId: taken.positionId,

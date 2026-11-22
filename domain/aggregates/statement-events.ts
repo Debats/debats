@@ -49,6 +49,22 @@ export const StatementEdited = S.Struct({
   payload: StatementFields,
 })
 
+/**
+ * A statement of the author's own was found to be the signature of a joint
+ * declaration: from now on it says what the text says, from the text's
+ * source, on the text's day. Its position and its arguments stay as they are.
+ */
+export const StatementJoinedDeclaration = S.Struct({
+  type: S.Literal('StatementJoinedDeclaration'),
+  payload: S.Struct({
+    jointDeclarationId: S.String,
+    content: StatementFields.fields.content,
+    sourceName: S.String,
+    sourceUrl: S.String,
+    statedAt: StatementFields.fields.statedAt,
+  }),
+})
+
 /** The statement now stands on another position of the same subject: its position was merged */
 export const StatementMoved = S.Struct({
   type: S.Literal('StatementMoved'),
@@ -75,6 +91,7 @@ export const StatementDeleted = S.Struct({
 export const StatementEvent = S.Union(
   StatementAdded,
   StatementEdited,
+  StatementJoinedDeclaration,
   StatementMoved,
   StatementMovedToSubject,
   StatementArgumentsSet,

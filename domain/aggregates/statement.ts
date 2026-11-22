@@ -78,6 +78,20 @@ export const statementEdited = (input: StatementRevisionInput): StatementEvent =
   payload: fields(input),
 })
 
+/** What a signature says, as `signatureOf` builds it from the text: an addition that names its joint declaration */
+export type Signature = StatementAddition & { jointDeclarationId: string }
+
+export const statementJoinedDeclaration = (signature: Signature): StatementEvent => ({
+  type: 'StatementJoinedDeclaration',
+  payload: {
+    jointDeclarationId: signature.jointDeclarationId,
+    content: signature.content,
+    sourceName: signature.sourceName,
+    sourceUrl: signature.sourceUrl,
+    statedAt: isoDate(signature.statedAt),
+  },
+})
+
 export const statementMoved = (positionId: string): StatementEvent => ({
   type: 'StatementMoved',
   payload: { positionId },
@@ -138,6 +152,31 @@ export const editStatement =
     return staysOnItsSubject(state, positionSubjectId)
       ? Either.right([statementEdited(input)])
       : refused(OTHER_SUBJECT, 'positionId')
+  }
+
+export const ALREADY_A_SIGNATURE =
+  'Cette prise de position est déjà la signature d’une déclaration commune.'
+export const NOT_THE_POSITION_OF_THE_TEXT =
+  'La déclaration commune ne prend pas la position de cette prise de position.'
+export const NOT_THE_SIGNATORY = 'Cette prise de position n’est pas celle de ce·tte signataire.'
+
+const sameAuthor = (a: StatementAuthor, b: StatementAuthor) => a.kind === b.kind && a.id === b.id
+
+/**
+ * A statement of the author's own is found to be their signature of a joint
+ * declaration, written before the site knew the text. It becomes the
+ * signature the text would have made for this author on this position — and
+ * nothing else: another position or another author would make the statement
+ * say what was never said.
+ */
+export const joinJointDeclaration =
+  (signature: Signature): StatementDecision =>
+  (state) => {
+    if (state.jointDeclarationId !== null) return refused(ALREADY_A_SIGNATURE)
+    if (!sameAuthor(state.statement.author, signature.author)) return refused(NOT_THE_SIGNATORY)
+    return state.statement.positionId === signature.positionId
+      ? Either.right([statementJoinedDeclaration(signature)])
+      : refused(NOT_THE_POSITION_OF_THE_TEXT)
   }
 
 /** A moderator withdraws the statement, found beyond repair; a live statement has nothing to refuse */
@@ -214,6 +253,21 @@ function apply(
             updatedAt: stored.occurredAt,
           },
           argumentIds: event.payload.argumentIds,
+        }
+      )
+    case 'StatementJoinedDeclaration':
+      return (
+        state && {
+          ...state,
+          jointDeclarationId: event.payload.jointDeclarationId,
+          statement: {
+            ...state.statement,
+            content: event.payload.content,
+            sourceName: event.payload.sourceName,
+            sourceUrl: event.payload.sourceUrl,
+            statedAt: new Date(event.payload.statedAt),
+            updatedAt: stored.occurredAt,
+          },
         }
       )
     case 'StatementMoved':

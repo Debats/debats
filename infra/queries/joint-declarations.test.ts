@@ -6,8 +6,13 @@ import {
   positionTaken,
   signatoryAdded,
 } from '../../domain/aggregates/joint-declaration'
-import { statementAdded, statementStream } from '../../domain/aggregates/statement'
 import {
+  statementAdded,
+  statementJoinedDeclaration,
+  statementStream,
+} from '../../domain/aggregates/statement'
+import {
+  actContent,
   declarationContent,
   organisationAuthor,
   publicFigureAuthor,
@@ -17,7 +22,11 @@ import { createStatementRepository } from '../database/statement-repository-supa
 import { runUnitOfWork } from '../events/unit-of-work'
 import { getPrismaClient } from '../prisma/client'
 import { createAdminSupabaseClient } from '../supabase/admin'
-import { loadJointDeclarationIndex, loadJointDeclarationPage } from './joint-declarations'
+import {
+  loadAttachmentPlan,
+  loadJointDeclarationIndex,
+  loadJointDeclarationPage,
+} from './joint-declarations'
 
 /**
  * Runs against the local database (`npm run test:db`): a joint declaration
@@ -30,6 +39,7 @@ const prisma = () => getPrismaClient()
 const declarationId = crypto.randomUUID()
 const statementId = crypto.randomUUID()
 const secondStatementId = crypto.randomUUID()
+const deedId = crypto.randomUUID()
 const tag = declarationId.slice(0, 8)
 const slug = `appel-de-test-${tag}`
 const sourceUrl = `https://example.org/appel-${tag}`
@@ -101,14 +111,17 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
 
   afterAll(async () => {
     await prisma().statements.deleteMany({
-      where: { id: { in: [statementId, secondStatementId] } },
+      where: { id: { in: [statementId, secondStatementId, deedId] } },
     })
     await prisma().joint_declarations.deleteMany({ where: { id: declarationId } })
     await prisma().domain_events.deleteMany({
       where: {
         OR: [
           { stream_type: 'joint_declaration', stream_id: declarationId },
-          { stream_type: 'statement', stream_id: { in: [statementId, secondStatementId] } },
+          {
+            stream_type: 'statement',
+            stream_id: { in: [statementId, secondStatementId, deedId] },
+          },
         ],
       },
     })
@@ -197,6 +210,69 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
       statements.findSignatureIds(declarationId, publicFigureAuthor(figure.id)),
     )
     expect([...made].sort()).toEqual([statementId, secondStatementId].sort())
+  })
+
+  it('plans the attachment of a deed of the organisation, then makes it the signature the text makes', async () => {
+    const actor = await prisma().contributors.findFirstOrThrow({ select: { id: true } })
+    const author = organisationAuthor(organisation.id)
+    const deed = {
+      author,
+      subjectId: position.subject_id,
+      positionId: position.id,
+      content: actContent('Signataire de l’appel de test'),
+      sourceName: 'Seuil',
+      sourceUrl: 'https://example.org/seuil',
+      statedAt: new Date('2026-11-20'),
+      argumentIds: [],
+    }
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(statementStream(deedId), 0, [statementAdded(deed)], { actorId: actor.id }),
+      ),
+    )
+
+    const plan = await Effect.runPromise(
+      loadAttachmentPlan(supabase, { id: deedId, ...deed }, slug),
+    )
+    expect(plan?.refusal).toBeUndefined()
+    expect(plan?.stances.find((stance) => stance.positionId === position.id)).toMatchObject({
+      kind: 'attached',
+      replaces: false,
+      quote,
+    })
+    expect(
+      await Effect.runPromise(loadAttachmentPlan(supabase, { id: deedId, ...deed }, 'none')),
+    ).toBe(null)
+
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(
+          statementStream(deedId),
+          1,
+          [
+            statementJoinedDeclaration({
+              ...deed,
+              content: declarationContent(quote),
+              sourceName: 'Le Monde',
+              sourceUrl,
+              statedAt: new Date('2026-11-21'),
+              jointDeclarationId: declarationId,
+            }),
+          ],
+          { actorId: actor.id },
+        ),
+      ),
+    )
+    expect(await prisma().statements.findUniqueOrThrow({ where: { id: deedId } })).toMatchObject({
+      joint_declaration_id: declarationId,
+      statement_type: 'declaration',
+      quote,
+      deed: null,
+      source_name: 'Le Monde',
+      source_url: sourceUrl,
+      stated_at: new Date('2026-11-21'),
+      position_id: position.id,
+    })
   })
 
   it('narrows the feed to nothing for a slug no text bears', async () => {

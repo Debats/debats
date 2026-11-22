@@ -5,9 +5,13 @@ import { StoredEvent, UnreadableEvent } from '../events/event-store'
 import { Rejected } from './decision'
 import {
   addStatement,
+  ALREADY_A_SIGNATURE,
   editStatement,
   followSubject,
+  joinJointDeclaration,
   moveStatement,
+  NOT_THE_POSITION_OF_THE_TEXT,
+  NOT_THE_SIGNATORY,
   OTHER_SUBJECT,
   removeStatement,
   replaceArgument,
@@ -17,6 +21,7 @@ import {
   statementArgumentsSet,
   statementDeleted,
   statementEdited,
+  statementJoinedDeclaration,
   statementMoved,
   statementMovedToSubject,
   withArgumentReplaced,
@@ -135,6 +140,55 @@ describe('statement decisions', () => {
     ])('refuse to change %s: the text says it, for every signatory', (_, change) => {
       expect(editStatement({ ...addition, ...change }, 'subject-1')(signed)).toEqual(
         Either.left(new Rejected(SIGNED_JOINTLY)),
+      )
+    })
+  })
+
+  describe('when found to be the signature of a joint declaration', () => {
+    const signature = {
+      ...addition,
+      content: declarationContent('Les mots du texte qui énoncent la position.'),
+      sourceName: 'Manifeste de Paris',
+      sourceUrl: 'https://parismanifesto.world',
+      statedAt: at('2026-11-21'),
+      argumentIds: [],
+      jointDeclarationId: 'declaration-1',
+    }
+
+    it('take the words, the source and the day of the text, and keep their arguments', () => {
+      const decided = joinJointDeclaration(signature)(onSubjectOne)
+      expect(decided).toEqual(Either.right([statementJoinedDeclaration(signature)]))
+
+      const joined = rebuilt(added, statementJoinedDeclaration(signature))
+      expect(joined.jointDeclarationId).toBe('declaration-1')
+      expect(joined.statement).toMatchObject({
+        positionId: addition.positionId,
+        content: signature.content,
+        sourceName: 'Manifeste de Paris',
+        sourceUrl: 'https://parismanifesto.world',
+        // The day alone is recorded, as for every statement
+        statedAt: new Date('2026-11-21'),
+      })
+      expect(joined.argumentIds).toEqual(onSubjectOne.argumentIds)
+    })
+
+    it('refuse a text that takes another position: the statement would say what its author did not', () => {
+      expect(joinJointDeclaration({ ...signature, positionId: 'pos-2' })(onSubjectOne)).toEqual(
+        Either.left(new Rejected(NOT_THE_POSITION_OF_THE_TEXT)),
+      )
+    })
+
+    it('refuse another signatory than their author', () => {
+      const other = { ...signature, author: publicFigureAuthor('someone-else') }
+      expect(joinJointDeclaration(other)(onSubjectOne)).toEqual(
+        Either.left(new Rejected(NOT_THE_SIGNATORY)),
+      )
+    })
+
+    it('refuse a second text: a statement is the signature of one', () => {
+      const signed = rebuilt(added, statementJoinedDeclaration(signature))
+      expect(joinJointDeclaration(signature)(signed)).toEqual(
+        Either.left(new Rejected(ALREADY_A_SIGNATURE)),
       )
     })
   })

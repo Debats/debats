@@ -1,0 +1,13 @@
+/* A question, not a warning: quieter than the notice of a signature */
+.prompt {
+  composes: small from '../../../styles/text.module.css';
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-card);
+  background-color: var(--paper);
+  color: var(--ink-2);
+}
+
+.link {
+  composes: link from '../SignedJointlyNotice/SignedJointlyNotice.module.css';
+}
