@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NEW_STATEMENT_HREF } from '../../../domain/read-models/hrefs'
 import { elided } from '../../../lib/elision'
 import styles from './ContributeCard.module.css'
 
@@ -27,7 +28,7 @@ export default function ContributeCard({ authorName, statements }: ContributeCar
         source : elle apparaîtra ici après relecture.
       </p>
       <div className={styles.actions}>
-        <Link href="/nouvelle-prise-de-position" className={styles.primary}>
+        <Link href={NEW_STATEMENT_HREF} className={styles.primary}>
           Ajouter une prise de position
         </Link>
         <Link href="/guide" className={styles.secondary}>

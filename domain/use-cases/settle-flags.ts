@@ -1,12 +1,16 @@
 import { Effect, pipe } from 'effect'
 import * as S from 'effect/Schema'
 import { ReviewedEntity, settle, Settlement } from '../aggregates/review'
-import { withdrawStatement } from '../aggregates/statement'
+import { withdrawSignatory } from '../aggregates/joint-declaration'
+import { removeStatement, withdrawStatement } from '../aggregates/statement'
+import { StatementAuthor } from '../entities/statement'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
+import { StatementRepository } from '../repositories/statement-repository'
+import { decideOnEachJointDeclaration } from './joint-declaration-stream'
 import { allowedTo, decoded } from './preconditions'
 import { decideOnReview, rewardUpheldFlags } from './review-stream'
-import { decideOnStatement } from './statement-stream'
+import { decideOnEachStatement, decideOnStatement } from './statement-stream'
 import { ContributorIdentity, Rejected } from './types'
 
 export const NOT_REMOVABLE =
@@ -48,12 +52,69 @@ const withdrawn = (events: EventStore, entity: ReviewedEntity, moderatorId: stri
     Effect.catchTag('NotFound', () => Effect.void),
   )
 
+/** Read side: whether the statement is a signature, and the others the same signature made */
+const statements = Effect.serviceFunctions(StatementRepository)
+
+/** What goes with a signature that is removed: the text it signed, who signed, their other statements on it */
+type WithdrawnSignature = {
+  declarationId: string
+  signatory: StatementAuthor
+  otherStatementIds: string[]
+}
+
+/**
+ * The signature the removed statement is part of; null for a statement of
+ * the author's own, for anything kept, and for one already gone.
+ */
+const signatureRemovedWith = (entity: ReviewedEntity, outcome: Settlement) =>
+  outcome !== 'removed'
+    ? Effect.succeed(null)
+    : Effect.flatMap(statements.findById(entity.id), (statement) => {
+        const declaration = statement?.jointDeclaration
+        return statement && declaration
+          ? Effect.map(
+              statements.findSignatureIds(declaration.id, statement.author),
+              (ids): WithdrawnSignature | null => ({
+                declarationId: declaration.id,
+                signatory: statement.author,
+                otherStatementIds: ids.filter((id) => id !== entity.id),
+              }),
+            )
+          : Effect.succeed(null)
+      })
+
+/**
+ * Signing is signing the whole text: a signature found wrong on one position
+ * is wrong on all of them. The signatory leaves the text, with every
+ * statement the signature made.
+ */
+const signatoryWithdrawn = (
+  events: EventStore,
+  signature: WithdrawnSignature | null,
+  moderatorId: string,
+) =>
+  signature === null
+    ? Effect.void
+    : pipe(
+        decideOnEachStatement(events, signature.otherStatementIds, moderatorId, removeStatement()),
+        Effect.andThen(
+          decideOnEachJointDeclaration(
+            events,
+            [signature.declarationId],
+            moderatorId,
+            withdrawSignatory(signature.signatory),
+          ),
+        ),
+      )
+
 /**
  * A moderator closes the open flags of an entity without editing it: they
  * do not hold (dismissed, the entity stays as it is) or the entity is beyond
  * repair (removed, in the same transaction, and the readers who flagged it
  * are rewarded). Either way she answers for it, and for the flags she read:
- * a review that moved since her page was rendered is refused. A correction
+ * a review that moved since her page was rendered is refused. A statement
+ * removed that is the signature of a joint declaration takes the whole
+ * signature with it: the signatory leaves the text. A correction
  * goes through the entity's own edit, which settles the flags as it writes.
  */
 export function settleFlagsUseCase({ contributor, entity, ...form }: SettleFlagsParams) {
@@ -64,7 +125,8 @@ export function settleFlagsUseCase({ contributor, entity, ...form }: SettleFlags
       settlement: decoded(SettlementForm)(form),
     }),
     Effect.tap(({ settlement }) => removable(entity, settlement.outcome)),
-    Effect.flatMap(({ moderator, settlement: { outcome, answer, revision } }) =>
+    Effect.bind('signature', ({ settlement }) => signatureRemovedWith(entity, settlement.outcome)),
+    Effect.flatMap(({ moderator, signature, settlement: { outcome, answer, revision } }) =>
       runUnitOfWork((events) =>
         pipe(
           decideOnReview(events, entity.id, moderator.id, settle(outcome, answer), revision),
@@ -72,6 +134,7 @@ export function settleFlagsUseCase({ contributor, entity, ...form }: SettleFlags
             outcome === 'removed'
               ? pipe(
                   withdrawn(events, entity, moderator.id),
+                  Effect.andThen(signatoryWithdrawn(events, signature, moderator.id)),
                   Effect.andThen(rewardUpheldFlags(events, moderator.id, entity, before)),
                 )
               : Effect.void,

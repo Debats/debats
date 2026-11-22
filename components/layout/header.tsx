@@ -8,6 +8,11 @@ import AuthSection from '../auth/AuthSection'
 import ComingSoon from '../ui/ComingSoon'
 import ShareButton from '../ui/ShareButton'
 import { useShareButtonContext } from '../ui/ShareButton/ShareButtonContext'
+import {
+  ARGUMENTS_HREF,
+  JOINT_DECLARATIONS_HREF,
+  STATEMENTS_HREF,
+} from '../../domain/read-models/hrefs'
 import SiteSearch from './SiteSearch'
 import SearchIcon from './SiteSearch/SearchIcon'
 import styles from './header.module.css'
@@ -18,7 +23,7 @@ interface NavEntry {
 }
 
 /** Une entrée sans href est annoncée mais pas encore disponible */
-/** Whether the page lives in this section: `/p/x` under `/p`, but `/prises-de-position` not under `/p` */
+/** Whether the page lives in this section: `/p/x` under `/p`, but `/pdp` not under `/p` */
 const isUnder = (pathname: string, href: string) =>
   pathname === href || pathname.startsWith(`${href}/`)
 
@@ -26,9 +31,9 @@ const navEntries: NavEntry[] = [
   { label: 'Sujets', href: '/s' },
   { label: 'Personnalités', href: '/p' },
   { label: 'Organisations', href: '/o' },
-  { label: 'Arguments', href: '/arguments' },
-  { label: 'Prises de position', href: '/prises-de-position' },
-  { label: 'Méthode', href: '/guide' },
+  { label: 'Déclarations', href: JOINT_DECLARATIONS_HREF },
+  { label: 'Arguments', href: ARGUMENTS_HREF },
+  { label: 'Prises de position', href: STATEMENTS_HREF },
 ]
 
 export default function Header() {

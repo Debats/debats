@@ -1,4 +1,5 @@
 import { STATEMENT_TYPES, StatementAuthorKind, StatementType } from '../entities/statement'
+import { STATEMENTS_HREF } from './hrefs'
 
 /** What narrows the feed of statements */
 export interface FeedFilters {
@@ -16,8 +17,6 @@ export interface FeedFilters {
 export type FeedOrder = 'stated' | 'touched'
 
 export const FEED_PAGE_SIZE = 20
-
-export const FEED_PATH = '/prises-de-position'
 
 /** Value of the `qui` parameter for each kind of author, as the subject page spells it */
 const AUTHOR_KIND_PARAMS: Record<StatementAuthorKind, string> = {
@@ -70,7 +69,7 @@ export function feedHref(filters: FeedFilters, order: FeedOrder, page = 1): stri
   if (order === 'touched') query.set('tri', TOUCHED_ORDER_PARAM)
   if (page > 1) query.set('page', String(page))
   const search = query.toString()
-  return search ? `${FEED_PATH}?${search}` : FEED_PATH
+  return search ? `${STATEMENTS_HREF}?${search}` : STATEMENTS_HREF
 }
 
 /** The last time the site touched a statement: the day it was added, or a later change */

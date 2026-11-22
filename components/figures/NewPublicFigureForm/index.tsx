@@ -4,7 +4,7 @@ import { useState, useCallback, FormEvent } from 'react'
 import Image from 'next/image'
 import * as Sentry from '@sentry/nextjs'
 import { createPublicFigureAction, ActionResult } from '../../../app/actions/create-public-figure'
-import { figureHref } from '../../../domain/read-models/hrefs'
+import { figureHref, newStatementOfFigureHref } from '../../../domain/read-models/hrefs'
 import { FieldErrors } from '../../../domain/use-cases/create-public-figure'
 import { newPublicFigureForm } from '../../../lib/forms/public-figure-form'
 import { useChosenFile } from '../../../lib/forms/use-chosen-file'
@@ -101,7 +101,7 @@ export default function NewPublicFigureForm() {
         title={`${successResult.name} a été ajouté·e !`}
         primaryAction={{
           label: `Ajouter une prise de position pour ${successResult.name}`,
-          href: `/nouvelle-prise-de-position?figureId=${successResult.id}&figureName=${encodeURIComponent(successResult.name)}`,
+          href: newStatementOfFigureHref(successResult),
         }}
         secondaryActions={[
           {

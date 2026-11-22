@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { JointDeclarationOption } from '../../../app/actions/joint-declarations'
 import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
 import Button from '../../ui/Button'
@@ -21,9 +20,15 @@ export default function JointSourceHint({ declaration, onSign, onDismiss }: Join
     <div className={styles.sourceHint} role="status">
       <p className={styles.sourceHintText}>
         Cette source est celle d’une déclaration commune :{' '}
-        <Link href={jointDeclarationHref(declaration)} className={styles.sourceHintLink}>
+        {/* In a tab of its own: looking at the text does not throw away what is typed here */}
+        <a
+          href={jointDeclarationHref(declaration)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.sourceHintLink}
+        >
           {declaration.title}
-        </Link>
+        </a>
         . S’agit-il d’une signature de ce texte ?
       </p>
       <div className={styles.sourceHintActions}>

@@ -73,6 +73,7 @@ export default function EditStatementForm({
         initialSourceName={initialSourceName}
         initialSourceUrl={initialSourceUrl}
         initialStatedAt={initialStatedAt}
+        argumentsOnly={!!signedWith}
       >
         {reviewed.block}
       </StatementForm>

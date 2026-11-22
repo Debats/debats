@@ -7,6 +7,7 @@ import {
   parseDraftJointDeclaration,
   parseDraftOccupations,
   parseDraftPatch,
+  signatureFault,
   parseDraftReview,
   validateSlugifiableFields,
 } from './validation'
@@ -342,6 +343,34 @@ describe('parseDraftJointDeclaration', () => {
     expect(
       parseDraftJointDeclaration({ title: 'Le Manifeste de Paris', presentation: 42 }),
     ).toEqual({ error: 'Field jointDeclaration.presentation must be a string' })
+  })
+})
+
+describe('signatureFault', () => {
+  const words = { kind: 'declaration' }
+  const text = { title: 'Le Manifeste de Paris' }
+
+  it('finds nothing wrong with a draft that names no joint declaration, whatever it holds', () => {
+    expect(signatureFault({ content: { kind: 'vote' }, arguments: [{}] })).toBeNull()
+    expect(
+      signatureFault({ content: { kind: 'vote' }, arguments: [{}], jointDeclaration: null }),
+    ).toBeNull()
+  })
+
+  it('finds nothing wrong with words signed without arguments', () => {
+    expect(signatureFault({ content: words, arguments: [], jointDeclaration: text })).toBeNull()
+  })
+
+  it('refuses a signature that is not words', () => {
+    expect(
+      signatureFault({ content: { kind: 'vote' }, arguments: [], jointDeclaration: text }),
+    ).toMatch(/only applies to a content of kind "declaration"/)
+  })
+
+  it('refuses a signature that carries arguments: its validation would drop them', () => {
+    expect(signatureFault({ content: words, arguments: [{}], jointDeclaration: text })).toMatch(
+      /arguments does not apply/,
+    )
   })
 })
 

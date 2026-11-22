@@ -15,6 +15,16 @@ const nextConfig = {
         destination: '/s/:slug',
         permanent: true,
       },
+      // The addresses these pages answered at before they were shortened: links to them still lead somewhere
+      { source: '/arguments', destination: '/a', permanent: true },
+      { source: '/arguments/:slug', destination: '/a/:slug', permanent: true },
+      { source: '/prises-de-position', destination: '/pdp', permanent: true },
+      { source: '/nouvelle-prise-de-position', destination: '/pdp/ajouter', permanent: true },
+      {
+        source: '/prise-de-position/:statementId/modifier',
+        destination: '/pdp/:statementId/modifier',
+        permanent: true,
+      },
     ]
   },
   rewrites() {

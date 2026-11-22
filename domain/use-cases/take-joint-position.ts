@@ -35,7 +35,9 @@ export function takeJointPositionUseCase(params: TakeJointPositionParams) {
       contributor: allowedTo(asking, 'add_joint_declaration', 'compléter une déclaration commune'),
       input: decoded(TakeJointPositionInput)(fields),
     }),
-    Effect.bind('taken', ({ input }) => takenPositionRead(input, 'quote')),
+    Effect.bind('taken', ({ input }) =>
+      takenPositionRead(input, { quote: 'quote', position: 'positionId' }),
+    ),
     Effect.flatMap(({ contributor, input, taken }) =>
       runUnitOfWork((events) =>
         pipe(

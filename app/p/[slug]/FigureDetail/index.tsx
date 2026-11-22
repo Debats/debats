@@ -43,6 +43,7 @@ import {
   CONTRIBUTE_HREF,
   figureHref,
   figureOnSubjectHref,
+  newStatementOfFigureHref,
   occupationFamilyHref,
 } from '../../../../domain/read-models/hrefs'
 import { statementsOnTheme } from '../../../../domain/services/statements-on-theme'
@@ -172,11 +173,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
         actions={
           <>
             {contributor ? (
-              <Button
-                href={`/nouvelle-prise-de-position?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`}
-              >
-                Ajouter une prise de position
-              </Button>
+              <Button href={newStatementOfFigureHref(figure)}>Ajouter une prise de position</Button>
             ) : (
               <Button href={CONTRIBUTE_HREF}>Ajouter une prise de position</Button>
             )}

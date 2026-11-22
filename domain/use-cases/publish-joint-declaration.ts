@@ -55,6 +55,8 @@ const FIELD_MESSAGES = {
 }
 
 export const JOINT_DECLARATION_TITLE_TAKEN = 'Une déclaration commune porte déjà ce titre.'
+export const sourceAlreadyReferenced = (known: { title: string }) =>
+  `Cette source est déjà celle de la déclaration commune « ${known.title} ».`
 export const TAKEN_POSITION_NOT_FOUND = 'Une des positions sélectionnées est introuvable.'
 export const TAKEN_QUOTE_TOO_SHORT =
   'Chaque position est accompagnée des mots du texte qui l’énoncent, en 10 caractères au moins.'
@@ -77,11 +79,15 @@ export const quoteStatesThePosition = (quote: string, field: string) =>
  * What the text takes position on, read from the tables: the subject of a
  * position is the position's to say, never the form's.
  */
-export const takenPositionRead = (taken: { positionId: string; quote: string }, field: string) =>
+export const takenPositionRead = (
+  taken: { positionId: string; quote: string },
+  /** The fields of the form a refusal is told under: the words, and the position */
+  fields: { quote: string; position: string },
+) =>
   pipe(
-    quoteStatesThePosition(taken.quote, field),
+    quoteStatesThePosition(taken.quote, fields.quote),
     Effect.andThen(positions.findById(taken.positionId)),
-    Effect.flatMap(found(TAKEN_POSITION_NOT_FOUND, field)),
+    Effect.flatMap(found(TAKEN_POSITION_NOT_FOUND, fields.position)),
     Effect.map(
       (position): TakenPosition => ({
         subjectId: position.subjectId,
@@ -114,8 +120,19 @@ export function publishJointDeclarationUseCase(params: PublishJointDeclarationPa
         free(JOINT_DECLARATION_TITLE_TAKEN, 'title'),
       ),
     ),
+    // A text is one page: a second text on the same source is the same text under another title
+    Effect.tap(({ input }) =>
+      Effect.flatMap(declarations.findBySourceUrl(input.sourceUrl), (known) =>
+        known
+          ? Effect.fail(new Rejected(sourceAlreadyReferenced(known), 'sourceUrl'))
+          : Effect.void,
+      ),
+    ),
     Effect.bind('taken', ({ input }) =>
-      Effect.forEach(input.positions, (taken) => takenPositionRead(taken, 'positions')),
+      Effect.forEach(input.positions, (taken) =>
+        // The form shows its positions as one list: whatever is wrong with one is told under it
+        takenPositionRead(taken, { quote: 'positions', position: 'positions' }),
+      ),
     ),
     Effect.bind('published', ({ input, taken }) =>
       publishJointDeclaration({ ...input, declaredAt: new Date(input.declaredAt) }, taken),

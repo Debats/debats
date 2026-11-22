@@ -28,3 +28,48 @@
 .dateInput {
   composes: control from '../../ui/form-field.module.css';
 }
+
+/* What a signature says: shown as a record, not as fields — it is the text's to change */
+.said {
+  padding: 16px 20px;
+  background-color: var(--paper-2);
+  border-radius: var(--radius-card);
+}
+
+.saidFacts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.saidTerm {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.saidValue {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.saidLink,
+.saidLink:link,
+.saidLink:visited {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.saidLink:hover {
+  color: var(--signal);
+}
+
+.argumentsNote {
+  composes: small from '../../../styles/text.module.css';
+  color: var(--ink-2);
+  margin: 0;
+}

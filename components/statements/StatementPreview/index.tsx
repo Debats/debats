@@ -48,7 +48,10 @@ function parseDate(value: string): Date | null {
 export default function StatementPreview() {
   const { draft } = useStatementDraft()
   const says = draftSays(draft)
-  const isEmpty = !draft.authorName && !says && !draft.positionTitle
+  // A signature says what its text says: nothing typed for a statement of one's own is shown
+  const isEmpty = draft.signing
+    ? !draft.authorName && !draft.declarationTitle
+    : !draft.authorName && !says && !draft.positionTitle
   const date = parseDate(draft.statedAt)
   const isOrganisation = draft.authorKind === 'organisation'
 
@@ -71,30 +74,47 @@ export default function StatementPreview() {
                 {draft.authorName || (isOrganisation ? 'Une organisation' : 'Une personnalité')}
               </strong>
               <br />
-              pour <em>{draft.positionTitle || '…'}</em>
-              {draft.subjectTitle && (
+              {draft.signing ? (
                 <>
-                  {' '}
-                  sur <em>{draft.subjectTitle}</em>
+                  signataire de <em>{draft.declarationTitle || '…'}</em>
+                </>
+              ) : (
+                <>
+                  pour <em>{draft.positionTitle || '…'}</em>
+                  {draft.subjectTitle && (
+                    <>
+                      {' '}
+                      sur <em>{draft.subjectTitle}</em>
+                    </>
+                  )}
                 </>
               )}
             </p>
           </div>
-          {says &&
-            (draft.statementType === 'vote' || draft.statementType === 'act' ? (
-              <p className={styles.fact}>{says}</p>
-            ) : (
-              <blockquote className={styles.quote}>{says}</blockquote>
-            ))}
-          <p className={styles.meta}>
-            {[
-              STATEMENT_TYPE_LABELS[parseStatementType(draft.statementType)],
-              date ? formatShortDate(date) : null,
-              draft.sourceName || null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
+          {draft.signing ? (
+            <p className={styles.empty}>
+              Une prise de position par sujet que le texte engage : la position, la citation, la
+              source et la date sont celles du texte.
+            </p>
+          ) : (
+            <>
+              {says &&
+                (draft.statementType === 'vote' || draft.statementType === 'act' ? (
+                  <p className={styles.fact}>{says}</p>
+                ) : (
+                  <blockquote className={styles.quote}>{says}</blockquote>
+                ))}
+              <p className={styles.meta}>
+                {[
+                  STATEMENT_TYPE_LABELS[parseStatementType(draft.statementType)],
+                  date ? formatShortDate(date) : null,
+                  draft.sourceName || null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </>
+          )}
         </>
       )}
     </aside>

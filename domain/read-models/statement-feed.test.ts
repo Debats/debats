@@ -32,7 +32,7 @@ describe('parseFeedParams', () => {
 
 describe('feedHref', () => {
   it('leaves the defaults out of the address', () => {
-    expect(feedHref({}, 'stated', 1)).toBe('/prises-de-position')
+    expect(feedHref({}, 'stated', 1)).toBe('/pdp')
   })
 
   it('carries every filter, the order and the page', () => {
@@ -42,14 +42,12 @@ describe('feedHref', () => {
         'touched',
         2,
       ),
-    ).toBe(
-      '/prises-de-position?qui=personnalites&theme=economie&type=program&tri=modification&page=2',
-    )
+    ).toBe('/pdp?qui=personnalites&theme=economie&type=program&tri=modification&page=2')
   })
 
   it('narrows to the signatures of one joint declaration, named by its slug', () => {
     const href = feedHref({ jointDeclarationSlug: 'le-manifeste-de-paris' }, 'stated')
-    expect(href).toBe('/prises-de-position?declaration=le-manifeste-de-paris')
+    expect(href).toBe('/pdp?declaration=le-manifeste-de-paris')
     expect(parseFeedParams({ declaration: 'le-manifeste-de-paris' }).filters).toEqual({
       jointDeclarationSlug: 'le-manifeste-de-paris',
     })

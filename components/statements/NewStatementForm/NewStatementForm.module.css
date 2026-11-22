@@ -17,6 +17,25 @@
 }
 
 /* A legend escapes its box by default: float + width put it back in the card's flow */
+/*
+ * The statement of one's own, as a group the door can set aside: it lays its
+ * sections out as the form does, and leaves the page — not the tree — while
+ * a signature is being added.
+ */
+.own {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.ownAside {
+  display: none;
+}
+
 .sectionTitle {
   composes: title from '../../../styles/text.module.css';
   float: left;

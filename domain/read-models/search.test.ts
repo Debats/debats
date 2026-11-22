@@ -24,7 +24,7 @@ describe('searchHitHref', () => {
     )
     expect(searchHitHref(hit('public_figure', 'Simone Veil', 'simone-veil'))).toBe('/p/simone-veil')
     expect(searchHitHref(hit('organisation', 'Attac', 'attac'))).toBe('/o/attac')
-    expect(searchHitHref(hit('argument', 'Coût', 'cout'))).toBe('/arguments/cout')
+    expect(searchHitHref(hit('argument', 'Coût', 'cout'))).toBe('/a/cout')
     expect(searchHitHref(hit('theme', 'Économie', 'economie'))).toBe('/themes/economie')
   })
 })

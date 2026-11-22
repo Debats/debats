@@ -48,6 +48,12 @@ export const SignatoryAdded = S.Struct({
   payload: S.Struct({ author: StatementAuthor }),
 })
 
+/** A signature was found wrong and withdrawn: the signatory holds none of the text's positions any more */
+export const SignatoryWithdrawn = S.Struct({
+  type: S.Literal('SignatoryWithdrawn'),
+  payload: S.Struct({ author: StatementAuthor }),
+})
+
 /** A position the text takes was merged into another of the same subject: the text takes that one */
 export const TakenPositionMerged = S.Struct({
   type: S.Literal('TakenPositionMerged'),
@@ -64,6 +70,7 @@ export const JointDeclarationEvent = S.Union(
   JointDeclarationPublished,
   PositionTaken,
   SignatoryAdded,
+  SignatoryWithdrawn,
   TakenPositionMerged,
   SubjectDisengaged,
 )

@@ -1,0 +1,57 @@
+/* The entry stands in the same list as a statement: it takes its frame and its header from it */
+.entry {
+  composes: entry from '../DatedStatement/DatedStatement.module.css';
+}
+
+.body {
+  composes: body from '../DatedStatement/DatedStatement.module.css';
+}
+
+.head {
+  composes: head from '../DatedStatement/DatedStatement.module.css';
+}
+
+.name {
+  composes: name from '../DatedStatement/DatedStatement.module.css';
+}
+
+.role {
+  composes: role from '../DatedStatement/DatedStatement.module.css';
+}
+
+.signed {
+  margin-top: -4px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.declaration,
+.declaration:link,
+.declaration:visited {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--ink);
+}
+
+.declaration:hover {
+  color: var(--signal);
+}
+
+/* The line of provenance of a statement, said of the text */
+.source {
+  composes: source from '../StatementSource/StatementSource.module.css';
+  composes: meta from '../../../styles/text.module.css';
+}
+
+.type {
+  composes: type from '../StatementSource/StatementSource.module.css';
+}
+
+.link {
+  composes: sourceLink from '../StatementSource/StatementSource.module.css';
+}
+
+.separator {
+  composes: separator from '../StatementSource/StatementSource.module.css';
+}

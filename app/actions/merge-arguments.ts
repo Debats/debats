@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { runLive } from '../../infra/live-services'
+import { ARGUMENTS_HREF } from '../../domain/read-models/hrefs'
 import { mergeArgumentsUseCase } from '../../domain/use-cases/merge-arguments'
 import { getAuthenticatedContributor } from './get-authenticated-contributor'
 
@@ -22,6 +23,6 @@ export async function mergeArgumentsAction(
     return { success: false, error: result.left }
   }
 
-  revalidatePath('/arguments')
+  revalidatePath(ARGUMENTS_HREF)
   return { success: true, targetSlug: result.right.slug }
 }

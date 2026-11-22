@@ -25,8 +25,12 @@ export const organisationHref = (slug: string): string => `/o/${slug}`
 /** A theme's page */
 export const themeHref = (slug: string): string => `/themes/${slug}`
 
+/** The index of every argument */
+export const ARGUMENTS_HREF = '/a'
+
 /** The page of an argument */
-export const argumentHref = (argument: { slug: string }): string => `/arguments/${argument.slug}`
+export const argumentHref = (argument: { slug: string }): string =>
+  `${ARGUMENTS_HREF}/${argument.slug}`
 
 /** The list of the families of occupations */
 export const OCCUPATIONS_HREF = '/metiers'
@@ -48,7 +52,7 @@ export const organisationOnSubjectHref = (organisationSlug: string, subjectSlug:
   onSubject(organisationHref(organisationSlug), subjectSlug)
 
 /** The index of the joint declarations: tribunes, manifestos, appeals, open letters */
-export const JOINT_DECLARATIONS_HREF = '/declarations'
+export const JOINT_DECLARATIONS_HREF = '/d'
 
 /** The page of a joint declaration */
 export const jointDeclarationHref = (declaration: { slug: string }): string =>
@@ -57,9 +61,26 @@ export const jointDeclarationHref = (declaration: { slug: string }): string =>
 /** The form that references a new joint declaration */
 export const NEW_JOINT_DECLARATION_HREF = `${JOINT_DECLARATIONS_HREF}/ajouter`
 
+/** The feed of every statement, and the root of the pages that add or edit one */
+export const STATEMENTS_HREF = '/pdp'
+
+/** The form that adds a statement */
+export const NEW_STATEMENT_HREF = `${STATEMENTS_HREF}/ajouter`
+
 /** The statement form, opened on the signature of a joint declaration already chosen */
 export const signJointDeclarationHref = (declaration: { slug: string }): string =>
-  `/nouvelle-prise-de-position?declaration=${declaration.slug}`
+  `${NEW_STATEMENT_HREF}?declaration=${declaration.slug}`
+
+/** The form that adds a statement, its author already chosen: a personality */
+export const newStatementOfFigureHref = (figure: { id: string; name: string }): string =>
+  `${NEW_STATEMENT_HREF}?figureId=${figure.id}&figureName=${encodeURIComponent(figure.name)}`
+
+/** The form that adds a statement, its author already chosen: an organisation */
+export const newStatementOfOrganisationHref = (organisation: {
+  id: string
+  name: string
+}): string =>
+  `${NEW_STATEMENT_HREF}?organisationId=${organisation.id}&organisationName=${encodeURIComponent(organisation.name)}`
 
 /** The form that says a joint declaration takes one more position */
 export const takeJointPositionHref = (declaration: { slug: string }): string =>
@@ -70,7 +91,13 @@ export const CONTRIBUTE_HREF = '/contribuer'
 
 /** The form that adds a statement, the subject already chosen */
 export const newStatementOnSubjectHref = (subject: { id: string; title: string }): string =>
-  `/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`
+  `${NEW_STATEMENT_HREF}?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}`
+
+/** The form that adds a statement, the subject and the position already chosen */
+export const newStatementOnPositionHref = (
+  subject: { id: string; title: string },
+  position: { id: string },
+): string => `${newStatementOnSubjectHref(subject)}&positionId=${position.id}`
 
 /**
  * Where « ajouter une prise de position » leads on a subject: the form for who
@@ -84,7 +111,7 @@ export const addStatementHref = (
 
 /** The form that edits a statement, whoever its author */
 export const statementEditHref = (statementId: string): string =>
-  `/prise-de-position/${statementId}/modifier`
+  `${STATEMENTS_HREF}/${statementId}/modifier`
 
 /** The flags waiting for a moderator */
 export const FLAGS_HREF = '/signalements'

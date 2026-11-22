@@ -21,7 +21,16 @@ interface SettleFormProps {
   correction: { href: string; note: string } | null
   /** L'entité peut quitter le site depuis ici : seule une prise de position en ligne le peut */
   removable: boolean
+  /** Le titre de la déclaration commune dont la prise de position est une signature : la retirer retire toute la signature */
+  signedText?: string
 }
+
+const REMOVAL_NOTE =
+  'Le contenu ne peut pas être sauvé : citation introuvable, doublon, hors sujet. Le retrait est définitif, et donne raison aux signalements.'
+
+/** Signer, c'est tout signer : retirer une signature, c'est la retirer sur toutes les positions du texte */
+const signatureRemovalNote = (signedText: string) =>
+  `Cette prise de position est la signature de « ${signedText} ». La retirer retire la signature entière : l’auteur·rice quitte les signataires du texte, et toutes les prises de position que sa signature a créées quittent le site. Le retrait est définitif, et donne raison aux signalements.`
 
 const SUBMIT_LABELS: Record<Settlement, string> = {
   dismissed: 'Écarter le signalement',
@@ -33,7 +42,13 @@ const SUBMIT_LABELS: Record<Settlement, string> = {
  * entité : corriger (par le formulaire de l'entité), écarter, ou retirer.
  * Écarter et retirer se répondent ici.
  */
-export default function SettleForm({ entity, revision, correction, removable }: SettleFormProps) {
+export default function SettleForm({
+  entity,
+  revision,
+  correction,
+  removable,
+  signedText,
+}: SettleFormProps) {
   const router = useRouter()
   const fieldId = useId()
   const [decision, setDecision] = useState<Decision>(correction ? 'correct' : 'dismissed')
@@ -57,7 +72,7 @@ export default function SettleForm({ entity, revision, correction, removable }: 
           {
             value: 'removed' as const,
             label: 'Retirer du site',
-            note: 'Le contenu ne peut pas être sauvé : citation introuvable, doublon, hors sujet. Le retrait est définitif, et donne raison aux signalements.',
+            note: signedText ? signatureRemovalNote(signedText) : REMOVAL_NOTE,
           },
         ]
       : []),

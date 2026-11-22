@@ -1,19 +1,19 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Effect } from 'effect'
-import { redirect } from 'next/navigation'
-import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
-import { canPerform, getRank } from '../../domain/reputation/permissions'
-import { subjectHref } from '../../domain/read-models/hrefs'
-import { createAdminSupabaseClient } from '../../infra/supabase/admin'
-import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
-import { loadJointDeclarationPage } from '../../infra/queries/joint-declarations'
-import { signaturePreviewOf } from '../../domain/read-models/joint-declaration'
-import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
-import NewStatementForm from '../../components/statements/NewStatementForm'
-import { StatementDraftProvider } from '../../components/statements/StatementDraft'
-import StatementPreview from '../../components/statements/StatementPreview'
-import styles from './nouvelle-prise-de-position.module.css'
+import { notFound, redirect } from 'next/navigation'
+import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
+import { canPerform, getRank } from '../../../domain/reputation/permissions'
+import { subjectHref } from '../../../domain/read-models/hrefs'
+import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
+import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
+import { loadJointDeclarationPage } from '../../../infra/queries/joint-declarations'
+import { signaturePreviewOf } from '../../../domain/read-models/joint-declaration'
+import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
+import NewStatementForm from '../../../components/statements/NewStatementForm'
+import { StatementDraftProvider } from '../../../components/statements/StatementDraft'
+import StatementPreview from '../../../components/statements/StatementPreview'
+import styles from './new-statement.module.css'
 
 export const metadata: Metadata = {
   title: 'Nouvelle prise de position',
@@ -68,6 +68,8 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
         loadJointDeclarationPage(createAdminSupabaseClient(), declarationSlug),
       )
     : null
+  // A text named in the address that the site does not have: nothing to sign, and nothing to guess
+  if (declarationSlug && !declarationPage) notFound()
   const initialDeclaration = declarationPage
     ? {
         option: {
@@ -85,6 +87,8 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
         authorKind: initialOrganisation ? 'organisation' : 'public_figure',
         authorName: initialAuthor?.name ?? '',
         subjectTitle: initialSubject?.title ?? '',
+        signing: !!initialDeclaration,
+        declarationTitle: initialDeclaration?.option.title ?? '',
       }}
     >
       <ContentWithSidebar

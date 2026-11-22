@@ -4,10 +4,14 @@ import {
   argumentHref,
   figureHref,
   figureOnSubjectHref,
+  newStatementOfFigureHref,
+  newStatementOfOrganisationHref,
+  newStatementOnPositionHref,
   occupationFamilyHref,
   organisationHref,
   organisationOnSubjectHref,
   positionHref,
+  signJointDeclarationHref,
   statementEditHref,
   subjectHref,
   themeHref,
@@ -19,9 +23,7 @@ describe('the addresses of the site', () => {
     expect(figureHref('simone-veil')).toBe('/p/simone-veil')
     expect(organisationHref('attac')).toBe('/o/attac')
     expect(themeHref('economie')).toBe('/themes/economie')
-    expect(argumentHref({ slug: 'dignite-de-la-personne' })).toBe(
-      '/arguments/dignite-de-la-personne',
-    )
+    expect(argumentHref({ slug: 'dignite-de-la-personne' })).toBe('/a/dignite-de-la-personne')
     expect(occupationFamilyHref({ slug: 'executif' })).toBe('/metiers/executif')
   })
 
@@ -36,7 +38,7 @@ describe('the addresses of the site', () => {
 
   it('opens the new statement form on a subject for who is signed in', () => {
     expect(addStatementHref({ id: 'abc', title: 'L’âge & la retraite' }, true)).toBe(
-      '/nouvelle-prise-de-position?subjectId=abc&subjectTitle=L%E2%80%99%C3%A2ge%20%26%20la%20retraite',
+      '/pdp/ajouter?subjectId=abc&subjectTitle=L%E2%80%99%C3%A2ge%20%26%20la%20retraite',
     )
   })
 
@@ -44,7 +46,28 @@ describe('the addresses of the site', () => {
     expect(addStatementHref({ id: 'abc', title: 'Le SMIC' }, false)).toBe('/contribuer')
   })
 
+  it('opens the new statement form on an author already chosen, whatever the name holds', () => {
+    expect(newStatementOfFigureHref({ id: 'abc', name: 'Élisabeth Borne & co' })).toBe(
+      '/pdp/ajouter?figureId=abc&figureName=%C3%89lisabeth%20Borne%20%26%20co',
+    )
+    expect(newStatementOfOrganisationHref({ id: 'abc', name: 'La France insoumise' })).toBe(
+      '/pdp/ajouter?organisationId=abc&organisationName=La%20France%20insoumise',
+    )
+  })
+
+  it('opens the new statement form on a position of a subject', () => {
+    expect(newStatementOnPositionHref({ id: 'abc', title: 'Le SMIC' }, { id: 'def' })).toBe(
+      '/pdp/ajouter?subjectId=abc&subjectTitle=Le%20SMIC&positionId=def',
+    )
+  })
+
+  it('opens the new statement form on the signature of a joint declaration', () => {
+    expect(signJointDeclarationHref({ slug: 'le-manifeste-de-paris' })).toBe(
+      '/pdp/ajouter?declaration=le-manifeste-de-paris',
+    )
+  })
+
   it('edits a statement by its id', () => {
-    expect(statementEditHref('abc')).toBe('/prise-de-position/abc/modifier')
+    expect(statementEditHref('abc')).toBe('/pdp/abc/modifier')
   })
 })

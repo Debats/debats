@@ -29,6 +29,7 @@ const prisma = () => getPrismaClient()
 
 const declarationId = crypto.randomUUID()
 const statementId = crypto.randomUUID()
+const secondStatementId = crypto.randomUUID()
 const tag = declarationId.slice(0, 8)
 const slug = `appel-de-test-${tag}`
 const sourceUrl = `https://example.org/appel-${tag}`
@@ -99,13 +100,15 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
   })
 
   afterAll(async () => {
-    await prisma().statements.deleteMany({ where: { id: statementId } })
+    await prisma().statements.deleteMany({
+      where: { id: { in: [statementId, secondStatementId] } },
+    })
     await prisma().joint_declarations.deleteMany({ where: { id: declarationId } })
     await prisma().domain_events.deleteMany({
       where: {
         OR: [
           { stream_type: 'joint_declaration', stream_id: declarationId },
-          { stream_type: 'statement', stream_id: statementId },
+          { stream_type: 'statement', stream_id: { in: [statementId, secondStatementId] } },
         ],
       },
     })
@@ -147,6 +150,53 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
         statements.findSignatureId(declarationId, organisationAuthor(organisation.id), position.id),
       ),
     ).toBeNull()
+  })
+
+  it('counts a signature once in the feed, whatever the number of statements it made', async () => {
+    const statements = createStatementRepository(supabase)
+    const elsewhere = await prisma().positions.findFirstOrThrow({
+      where: {
+        deleted_at: null,
+        subject_id: { not: position.subject_id },
+        subjects: { deleted_at: null },
+      },
+      select: { id: true, subject_id: true },
+    })
+    const actor = await prisma().contributors.findFirstOrThrow({ select: { id: true } })
+    // The same signatory on a second position of the text, recorded after the first
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(
+          statementStream(secondStatementId),
+          0,
+          [
+            statementAdded({
+              author: publicFigureAuthor(figure.id),
+              subjectId: elsewhere.subject_id,
+              positionId: elsewhere.id,
+              content: declarationContent(quote),
+              sourceName: 'Le Monde',
+              sourceUrl,
+              statedAt: new Date('2026-11-21'),
+              argumentIds: [],
+              jointDeclarationId: declarationId,
+            }),
+          ],
+          { actorId: actor.id },
+        ),
+      ),
+    )
+
+    const feed = await Effect.runPromise(
+      statements.findFeed({ jointDeclarationSlug: slug }, 'stated', { limit: 20, offset: 0 }),
+    )
+    expect(feed.total).toBe(1)
+    expect(feed.entries.map(({ statement }) => statement.id)).toEqual([statementId])
+
+    const made = await Effect.runPromise(
+      statements.findSignatureIds(declarationId, publicFigureAuthor(figure.id)),
+    )
+    expect([...made].sort()).toEqual([statementId, secondStatementId].sort())
   })
 
   it('narrows the feed to nothing for a slug no text bears', async () => {

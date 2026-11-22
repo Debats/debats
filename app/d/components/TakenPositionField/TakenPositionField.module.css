@@ -19,6 +19,21 @@
   composes: control from '../../../../components/ui/form-field.module.css';
 }
 
+.error {
+  composes: error from '../../../../components/ui/form-field.module.css';
+}
+
+/* Trying again, from within the sentence that says what failed */
+.retry {
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--signal-dark);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .remove {
   composes: small from '../../../../styles/text.module.css';
   align-self: flex-start;

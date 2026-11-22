@@ -1,7 +1,9 @@
-import Link from 'next/link'
 import { NEW_JOINT_DECLARATION_HREF } from '../../../domain/read-models/hrefs'
+import { canPerform } from '../../../domain/reputation/permissions'
 import { formatDate } from '../../../lib/format-date'
 import Combobox from '../../ui/Combobox'
+import LockedAction from './LockedAction'
+import UnreadableSignature from './UnreadableSignature'
 import { JointSignature } from './useJointSignature'
 import styles from './NewStatementForm.module.css'
 
@@ -9,6 +11,8 @@ interface JointSignaturePanelProps {
   joint: JointSignature
   /** Who signs, as the form names them so far; empty until chosen or typed */
   signatoryName: string
+  /** The contributor's reputation: referencing a text that is missing takes a rank */
+  reputation: number
   error?: string
 }
 
@@ -20,6 +24,7 @@ interface JointSignaturePanelProps {
 export default function JointSignaturePanel({
   joint,
   signatoryName,
+  reputation,
   error,
 }: JointSignaturePanelProps) {
   const { preview } = joint
@@ -40,14 +45,35 @@ export default function JointSignaturePanel({
         initialItem={joint.chosen}
       />
       {error && <span className={styles.fieldError}>{error}</span>}
-      <p className={styles.hint}>
-        Elle n’existe pas encore ?{' '}
-        <Link href={NEW_JOINT_DECLARATION_HREF} className={styles.hintLink}>
-          Créer une déclaration commune
-        </Link>
-      </p>
+      {canPerform(reputation, 'add_joint_declaration') ? (
+        <p className={styles.hint}>
+          Elle n’existe pas encore ?{' '}
+          {/* In a tab of its own: what is typed here is not thrown away to go and reference the text */}
+          <a
+            href={NEW_JOINT_DECLARATION_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.hintLink}
+          >
+            Créer une déclaration commune
+          </a>{' '}
+          (nouvel onglet), puis revenez la chercher ici.
+        </p>
+      ) : (
+        <LockedAction
+          what="Référencer une déclaration commune"
+          action="add_joint_declaration"
+          reputation={reputation}
+        />
+      )}
 
-      {joint.chosen && !preview && <p className={styles.hint}>Lecture du texte…</p>}
+      {joint.chosen && !preview && !joint.unreadable && (
+        <p className={styles.hint}>Lecture du texte…</p>
+      )}
+
+      {joint.unreadable && (
+        <UnreadableSignature reason={joint.unreadable} onReadAgain={joint.readAgain} />
+      )}
 
       {preview && (
         <div className={styles.recap}>

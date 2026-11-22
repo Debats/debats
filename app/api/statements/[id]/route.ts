@@ -57,7 +57,7 @@ const argumentsOf = (loaded: LoadedStatement, patch: StatementPatch): StatementA
 
 /**
  * Corrects a statement already on the site, field by field, as the form of
- * `/prise-de-position/<id>/modifier` does with the whole form: the fields not
+ * `/pdp/<id>/modifier` does with the whole form: the fields not
  * sent keep their value, `content` and `arguments` are replaced whole.
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

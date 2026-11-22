@@ -13,7 +13,12 @@ import { subjectAt } from '../../../merged-subject'
 import EntityReview from '../../../../../components/review/EntityReview'
 import ReviewScope from '../../../../../components/review/ReviewScope'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
-import { CONTRIBUTE_HREF, positionHref, subjectHref } from '../../../../../domain/read-models/hrefs'
+import {
+  CONTRIBUTE_HREF,
+  newStatementOnPositionHref,
+  positionHref,
+  subjectHref,
+} from '../../../../../domain/read-models/hrefs'
 import { authorOnSubjectHref } from '../../../../../domain/read-models/statement-author'
 import AuthorAvatar from '../../../../../components/statements/AuthorAvatar'
 import StatementBody from '../../../../../components/statements/StatementBody'
@@ -139,9 +144,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
         actions={
           <>
             {contributor ? (
-              <Button
-                href={`/nouvelle-prise-de-position?subjectId=${subject.id}&subjectTitle=${encodeURIComponent(subject.title)}&positionId=${position.id}`}
-              >
+              <Button href={newStatementOnPositionHref(subject, position)}>
                 Ajouter une prise de position
               </Button>
             ) : (

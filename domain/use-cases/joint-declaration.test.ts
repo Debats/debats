@@ -26,6 +26,7 @@ import { WikipediaValidator } from '../services/wikipedia-validator'
 import {
   JOINT_DECLARATION_TITLE_TAKEN,
   publishJointDeclarationUseCase,
+  sourceAlreadyReferenced,
   TAKEN_POSITION_NOT_FOUND,
   TAKEN_QUOTE_TOO_SHORT,
 } from './publish-joint-declaration'
@@ -105,6 +106,20 @@ describe('publishJointDeclarationUseCase', () => {
       publishJointDeclarationUseCase(newDeclaration),
     )
     expect(Either.isLeft(result) && result.left).toEqual({ title: JOINT_DECLARATION_TITLE_TAKEN })
+  })
+
+  it('refuses a source another joint declaration bears, however it is typed: the same page is the same text', async () => {
+    const known = sampleJointDeclaration()
+    const result = await runFormWith(fakes(fakeJointDeclarationRepo([known])))(
+      publishJointDeclarationUseCase({
+        ...newDeclaration,
+        title: 'Un autre titre pour le même texte',
+        sourceUrl: 'http://www.parismanifesto.world/',
+      }),
+    )
+    expect(Either.isLeft(result) && result.left).toEqual({
+      sourceUrl: sourceAlreadyReferenced(known),
+    })
   })
 
   it('refuses a position the site does not know', async () => {

@@ -325,6 +325,29 @@ const PATCHABLE_FIELDS: ReadonlySet<string> = new Set<keyof DraftPatch>([
   'jointDeclaration',
 ])
 
+/**
+ * What keeps a draft from being the signature of the joint declaration it
+ * names, or null when nothing does — and for a draft that names none. Asked
+ * of a new draft and of a corrected one alike: a correction must not make a
+ * draft its validation would refuse.
+ */
+export function signatureFault(draft: {
+  content: { kind: string }
+  arguments: readonly unknown[]
+  jointDeclaration?: DraftJointDeclaration | null
+}): string | null {
+  if (!draft.jointDeclaration) return null
+  // A signature says what the text says: only words can be a signature
+  if (draft.content.kind !== 'declaration') {
+    return 'Field jointDeclaration only applies to a content of kind "declaration"'
+  }
+  // The validation makes a signature from the text alone: arguments it could not carry are refused, not dropped
+  if (draft.arguments.length > 0) {
+    return 'Field arguments does not apply to a signature of a joint declaration: add them to the statement once it is published'
+  }
+  return null
+}
+
 const JOINT_DECLARATION_TITLE_MIN = 3
 const JOINT_DECLARATION_TITLE_MAX = 150
 

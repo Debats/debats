@@ -122,6 +122,7 @@ export default async function SettleFlagsPage({ params }: PageProps) {
                 correction={correctionOf(entity, card)}
                 // A statement already gone with its subject is still settled as removed: its flags were right
                 removable={entity.type === 'statement'}
+                signedText={statement?.jointDeclaration?.title}
               />
             </section>
           )}

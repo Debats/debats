@@ -1,9 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { Effect, Either } from 'effect'
+import { Effect, Either, Layer } from 'effect'
 import { ANSWER_REQUIRED, NOTHING_TO_SETTLE, ReviewedEntity } from '../aggregates/review'
 import { statementAdded, statementDeleted, statementStream } from '../aggregates/statement'
-import { declarationContent, publicFigureAuthor } from '../entities/statement'
+import { declarationContent, organisationAuthor, publicFigureAuthor } from '../entities/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
+import { StatementRepository } from '../repositories/statement-repository'
+import {
+  journalWithJointDeclarations,
+  sampleJointDeclaration,
+} from './joint-declaration-test-helpers'
 import { runFormWith } from './command-test-helpers'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { flagEntityUseCase } from './flag-entity'
@@ -12,7 +17,22 @@ import { INVALID_FORM } from './preconditions'
 import { EDITED_MEANWHILE } from './run-command'
 import { NOT_REMOVABLE, settleFlagsUseCase } from './settle-flags'
 
-const execute = runFormWith(site)
+const veil = publicFigureAuthor('figure-1')
+const manifesto = sampleJointDeclaration()
+
+/** The read side of the statements: Léa's is a signature of the manifesto, or one of the author's own */
+const statementsWhere = (signature: { otherStatementIds: string[] } | null) =>
+  Layer.succeed(StatementRepository, {
+    findById: () =>
+      Effect.succeed({
+        author: veil,
+        ...(signature ? { jointDeclaration: manifesto } : {}),
+      }),
+    findSignatureIds: () =>
+      Effect.succeed(signature ? [leasStatement.id, ...signature.otherStatementIds] : []),
+  } as unknown as StatementRepository)
+
+const execute = runFormWith(Layer.merge(site, statementsWhere(null)))
 
 const flagBy = (id: string, entity: ReviewedEntity = leasStatement) =>
   flagEntityUseCase({
@@ -87,6 +107,59 @@ describe('settleFlagsUseCase', () => {
       ['camille', 'flag_upheld', 50],
       ['sacha', 'flag_upheld', 50],
     ])
+  })
+
+  it('withdraws the whole signature when the statement removed is one: who did not sign one position signed none', async () => {
+    const unit = await journalWithJointDeclarations([
+      manifesto,
+      {
+        positions: [
+          { subjectId: 'subject-1', positionId: 'position-1', quote: 'Citation du texte.' },
+          { subjectId: 'subject-2', positionId: 'position-2', quote: 'Autre citation.' },
+        ],
+        signatories: [veil, organisationAuthor('organisation-attac')],
+      },
+    ])
+    const signed = (positionId: string, subjectId: string) =>
+      statementAdded({
+        author: veil,
+        subjectId,
+        positionId,
+        content: declarationContent('Citation du texte, suffisamment longue.'),
+        sourceName: 'Manifeste de Paris',
+        sourceUrl: 'https://parismanifesto.world',
+        statedAt: new Date('2026-11-21'),
+        argumentIds: [],
+        jointDeclarationId: manifesto.id,
+      })
+    const opened = (id: string, event: ReturnType<typeof statementAdded>) =>
+      Effect.runPromise(unit.journal.append(statementStream(id), 0, [event], { actorId: 'lea' }))
+    await opened(leasStatement.id, signed('position-1', 'subject-1'))
+    await opened('statement-2', signed('position-2', 'subject-2'))
+    const asSignature = runFormWith(
+      Layer.merge(site, statementsWhere({ otherStatementIds: ['statement-2'] })),
+    )
+    await asSignature(flagBy('camille'), unit.run)
+
+    const result = await asSignature(
+      settleFlagsUseCase({ ...settlement, outcome: 'removed', revision: 1 }),
+      unit.run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(
+      deedsIn(unit.journal)
+        .filter((event) => event.type === 'StatementDeleted')
+        .map((event) => event.streamId),
+    ).toEqual(['statement-1', 'statement-2'])
+    expect(deedsIn(unit.journal)).toContainEqual(
+      expect.objectContaining({
+        streamType: 'joint_declaration',
+        streamId: manifesto.id,
+        type: 'SignatoryWithdrawn',
+        payload: { author: veil },
+      }),
+    )
   })
 
   it('settles the flags of a statement already gone with its subject, instead of leaving them open on nothing', async () => {

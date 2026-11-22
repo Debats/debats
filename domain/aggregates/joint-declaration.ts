@@ -111,6 +111,11 @@ export const signatoryAdded = (author: StatementAuthor): JointDeclarationEvent =
   payload: { author },
 })
 
+export const signatoryWithdrawn = (author: StatementAuthor): JointDeclarationEvent => ({
+  type: 'SignatoryWithdrawn',
+  payload: { author },
+})
+
 export const takenPositionMerged = (sourceId: string, targetId: string): JointDeclarationEvent => ({
   type: 'TakenPositionMerged',
   payload: { sourceId, targetId },
@@ -193,6 +198,17 @@ export const disengageFrom =
     engages(state.positions, subjectId) ? [subjectDisengaged(subjectId)] : []
 
 /**
+ * A signature of the text is withdrawn by a moderator, found beyond repair.
+ * Signing is signing the whole text, so the signatory leaves it whole: the
+ * other statements the signature made go on their own streams
+ * (`removeStatement`), and the next position the text takes is not theirs.
+ */
+export const withdrawSignatory =
+  (author: StatementAuthor): JointDeclarationCascade =>
+  (state) =>
+    hasSigned(state, author) ? [signatoryWithdrawn(author)] : []
+
+/**
  * Rebuilds the joint declaration from its stream; null for a stream without
  * events. A joint declaration always has an author (the column is not null).
  */
@@ -216,6 +232,15 @@ function apply(
         state && {
           ...touched(state, stored),
           signatories: [...state.signatories, event.payload.author],
+        }
+      )
+    case 'SignatoryWithdrawn':
+      return (
+        state && {
+          ...touched(state, stored),
+          signatories: state.signatories.filter(
+            (signatory) => !sameAuthor(signatory, event.payload.author),
+          ),
         }
       )
     case 'TakenPositionMerged':

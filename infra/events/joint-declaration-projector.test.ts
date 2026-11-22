@@ -6,6 +6,7 @@ import {
   positionTaken,
   replayJointDeclaration,
   signatoryAdded,
+  signatoryWithdrawn,
   signatureOf,
   subjectDisengaged,
   takenPositionMerged,
@@ -160,6 +161,29 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
 
     // The text takes the position again, for the test that follows
     await append(7, [positionTaken(taken)])
+  })
+
+  it('lets go of a signatory withdrawn, and ranks who signs next after the last, never beside them', async () => {
+    await append(8, [signatoryWithdrawn(publicFigureAuthor(figureId))])
+    expect(
+      await prisma().joint_declaration_signatories.findMany({
+        where: { joint_declaration_id: declarationId },
+        select: { public_figure_id: true, organisation_id: true, rank: true },
+      }),
+    ).toEqual([{ public_figure_id: null, organisation_id: organisationId, rank: 2 }])
+
+    // Found to have signed after all
+    await append(9, [signatoryAdded(publicFigureAuthor(figureId))])
+    expect(
+      await prisma().joint_declaration_signatories.findMany({
+        where: { joint_declaration_id: declarationId },
+        select: { public_figure_id: true, rank: true },
+        orderBy: { rank: 'asc' },
+      }),
+    ).toEqual([
+      { public_figure_id: null, rank: 2 },
+      { public_figure_id: figureId, rank: 3 },
+    ])
   })
 
   it('names the joint declaration on the statement a signature makes', async () => {

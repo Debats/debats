@@ -3,6 +3,7 @@
 import { Either } from 'effect'
 import { revalidatePath } from 'next/cache'
 import { runLiveForm } from '../../infra/live-services'
+import { ARGUMENTS_HREF } from '../../domain/read-models/hrefs'
 import {
   renameArgumentUseCase,
   FieldErrors,
@@ -30,6 +31,6 @@ export async function renameArgumentAction(
       : { success: false, fieldErrors: err }
   }
 
-  revalidatePath('/arguments')
+  revalidatePath(ARGUMENTS_HREF)
   return { success: true, slug: result.right.slug }
 }

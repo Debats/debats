@@ -1652,6 +1652,29 @@ export type Database = {
       }
     }
     Views: {
+      feed_statements: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deed: string | null
+          deleted_at: string | null
+          document_name: string | null
+          id: string | null
+          joint_declaration_id: string | null
+          organisation_id: string | null
+          position_id: string | null
+          public_figure_id: string | null
+          quote: string | null
+          source_name: string | null
+          source_url: string | null
+          stated_at: string | null
+          statement_type: Database["public"]["Enums"]["statement_type"] | null
+          updated_at: string | null
+          vote_choice: Database["public"]["Enums"]["vote_choice"] | null
+          voted_text: string | null
+        }
+        Relationships: []
+      }
       v_argument_summary: {
         Row: {
           description: string | null

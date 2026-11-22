@@ -162,6 +162,15 @@ export interface StatementRepository {
     positionId: string,
   ): Effect.Effect<string | null, DatabaseError>
 
+  /**
+   * The ids of the live statements a signatory holds by signing a joint
+   * declaration, one per position the text takes
+   */
+  findSignatureIds(
+    jointDeclarationId: string,
+    author: StatementAuthor,
+  ): Effect.Effect<string[], DatabaseError>
+
   /** The ids of the live statements mobilising an argument */
   findIdsByArgumentId(argumentId: string): Effect.Effect<string[], DatabaseError>
 

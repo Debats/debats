@@ -3,7 +3,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { createThemeRepository } from '../../infra/database/theme-repository-supabase'
-import { createJointDeclarationRepository } from '../../infra/database/joint-declaration-repository-supabase'
+import { loadJointDeclarationIndex } from '../../infra/queries/joint-declarations'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
 import { createOccupationRepository } from '../../infra/database/occupation-repository-supabase'
 import {
@@ -21,6 +21,7 @@ import PageHero from '../../components/layout/PageHero'
 import ReadingGuide from '../../components/layout/ReadingGuide'
 import ReviewScope from '../../components/review/ReviewScope'
 import DatedStatement from '../../components/statements/DatedStatement'
+import SignedDeclaration from '../../components/statements/SignedDeclaration'
 import Button from '../../components/ui/Button'
 import { plural } from '../../lib/plural'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
@@ -69,7 +70,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
     ),
     Effect.runPromise(createThemeRepository(supabase).findAll()),
     Effect.runPromise(createSubjectRepository(supabase).findSummariesByActivity(ACTIVE_SUBJECTS)),
-    Effect.runPromise(createJointDeclarationRepository(supabase).findAll()),
+    Effect.runPromise(loadJointDeclarationIndex(supabase)),
   ])
   const figureIds = Array.from(
     new Set(feed.entries.filter((e) => e.author.kind === 'public_figure').map((e) => e.author.id)),
@@ -126,7 +127,16 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
           </>
         }
       >
-        <FeedFilters filters={filters} order={order} themes={themes} declarations={declarations} />
+        <FeedFilters
+          filters={filters}
+          order={order}
+          themes={themes}
+          declarations={declarations.map(({ slug, title, signatories }) => ({
+            slug,
+            title,
+            signatures: signatories.length,
+          }))}
+        />
 
         {feed.entries.length === 0 ? (
           <p className={styles.empty}>
@@ -137,21 +147,36 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
         ) : (
           <ReviewScope {...review}>
             <div className={styles.card}>
-              {feed.entries.map(({ statement, author, position, subject, arguments: used }) => (
-                <DatedStatement
-                  key={statement.id}
-                  author={author}
-                  role={roleOf(author, roles)}
-                  position={{
-                    title: position.title,
-                    href: authorOnSubjectHref(author, subject.slug),
-                  }}
-                  subject={{ title: subject.title, href: subjectHref(subject.slug) }}
-                  statement={statement}
-                  touch={order === 'touched' ? lastTouch(statement) : undefined}
-                  arguments={used}
-                />
-              ))}
+              {feed.entries.map(({ statement, author, position, subject, arguments: used }) =>
+                statement.jointDeclaration ? (
+                  <SignedDeclaration
+                    key={statement.id}
+                    author={author}
+                    role={roleOf(author, roles)}
+                    declaration={statement.jointDeclaration}
+                    source={{
+                      name: statement.sourceName,
+                      url: statement.sourceUrl,
+                      statedAt: statement.statedAt,
+                    }}
+                    touch={order === 'touched' ? lastTouch(statement) : undefined}
+                  />
+                ) : (
+                  <DatedStatement
+                    key={statement.id}
+                    author={author}
+                    role={roleOf(author, roles)}
+                    position={{
+                      title: position.title,
+                      href: authorOnSubjectHref(author, subject.slug),
+                    }}
+                    subject={{ title: subject.title, href: subjectHref(subject.slug) }}
+                    statement={statement}
+                    touch={order === 'touched' ? lastTouch(statement) : undefined}
+                    arguments={used}
+                  />
+                ),
+              )}
             </div>
           </ReviewScope>
         )}

@@ -30,6 +30,7 @@ export default function TakeJointPositionForm({
   const [taken, setTaken] = useState<TakenPositionDraft>(EMPTY_TAKEN_POSITION)
   const [error, setError] = useState<string>()
   const [quoteError, setQuoteError] = useState<string>()
+  const [positionError, setPositionError] = useState<string>()
   const [isPending, setIsPending] = useState(false)
 
   const handleSubmit = useCallback(
@@ -37,6 +38,7 @@ export default function TakeJointPositionForm({
       e.preventDefault()
       setError(undefined)
       setQuoteError(undefined)
+      setPositionError(undefined)
       setIsPending(true)
 
       try {
@@ -52,8 +54,8 @@ export default function TakeJointPositionForm({
         setIsPending(false)
         const faults = result.fieldErrors ?? {}
         setQuoteError(faults.quote)
-        // A refusal about the position itself has no field of its own to sit under
-        setError(result.error ?? faults.positionId)
+        setPositionError(faults.positionId)
+        setError(result.error)
       } catch (err) {
         Sentry.captureException(err)
         setError('Une erreur inattendue est survenue. Veuillez réessayer.')
@@ -66,7 +68,13 @@ export default function TakeJointPositionForm({
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       {error && <FormError message={error} />}
-      <TakenPositionField id="taken" value={taken} onChange={setTaken} error={quoteError} />
+      <TakenPositionField
+        id="taken"
+        value={taken}
+        onChange={setTaken}
+        error={quoteError}
+        positionError={positionError}
+      />
       {signatories > 0 && (
         <p className={styles.hint}>
           {signatories > 1

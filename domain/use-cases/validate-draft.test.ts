@@ -59,6 +59,7 @@ import { OrganisationMembership } from '../entities/organisation-membership'
 import { Subject } from '../entities/subject'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/position'
 import { ContributorIdentity } from './types'
+import { sameSource } from '../value-objects/source-address'
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import {
   makeDraft,
@@ -114,6 +115,12 @@ function makeRepos(overrides: {
     findBySlug: (slug: string) =>
       Effect.sync(
         () => declarationStates().find((s) => s.declaration.slug === slug)?.declaration ?? null,
+      ),
+    findBySourceUrl: (url: string) =>
+      Effect.sync(
+        () =>
+          declarationStates().find((s) => sameSource(s.declaration.sourceUrl, url))?.declaration ??
+          null,
       ),
     findHeld: (id: string) =>
       Effect.sync(() => {
@@ -711,6 +718,28 @@ describe('validateDraft', () => {
         statementId: written?.streamId,
         created: [],
       })
+    })
+
+    it('joins the text the site knows by its source, whatever title the draft gives it', async () => {
+      const repos = makeRepos({
+        figure,
+        subject,
+        positions: [position],
+        draft: makeDraft({
+          jointDeclaration: { title: 'Manifeste de Paris contre l’oligarchie' },
+          // The same page, typed another way
+          sourceUrl: 'https://www.parismanifesto.world/',
+        }),
+        declaration: { text, held: { positions: [onTheSubject], signatories: [] } },
+      })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(deedsIn(repos.journal).map((e) => e.type)).toEqual([
+        'SignatoryAdded',
+        'StatementAdded',
+      ])
+      expect(signaturesIn(repos.journal)).toEqual([[figure.id, position.id, text.id]])
     })
 
     it('writes nothing when the text already takes the position and the author already signed: it finds the statement', async () => {

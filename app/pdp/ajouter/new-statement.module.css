@@ -3,7 +3,7 @@
 }
 
 .back {
-  composes: meta from '../../styles/text.module.css';
+  composes: meta from '../../../styles/text.module.css';
   display: inline-block;
   margin-bottom: 16px;
   color: var(--ink-2);
@@ -19,12 +19,12 @@
 }
 
 .title {
-  composes: display from '../../styles/text.module.css';
+  composes: display from '../../../styles/text.module.css';
   margin: 0 0 10px;
 }
 
 .intro {
-  composes: body from '../../styles/text.module.css';
+  composes: body from '../../../styles/text.module.css';
   max-width: 600px;
 }
 
@@ -38,11 +38,11 @@
 }
 
 .cardTitle {
-  composes: label from '../../styles/text.module.css';
+  composes: label from '../../../styles/text.module.css';
 }
 
 .cardText {
-  composes: small from '../../styles/text.module.css';
+  composes: small from '../../../styles/text.module.css';
 }
 
 .cardText strong {
@@ -68,7 +68,7 @@
 }
 
 .checkItem {
-  composes: small from '../../styles/text.module.css';
+  composes: small from '../../../styles/text.module.css';
   display: flex;
   gap: 10px;
 }

@@ -114,8 +114,19 @@ function signedInWords(params: SignedFromDraftParams, quote: string) {
           ),
     )
 
+  /**
+   * The text the draft speaks of, when the site knows it: by its source
+   * first — the same page is the same text, whatever title the draft gives
+   * it — then by its title.
+   */
+  const knownText = Effect.flatMap(declarations.findBySourceUrl(draft.sourceUrl), (bySource) =>
+    bySource
+      ? Effect.succeed(bySource)
+      : declarations.findBySlug(generateJointDeclarationSlug(text.title)),
+  )
+
   return pipe(
-    declarations.findBySlug(generateJointDeclarationSlug(text.title)),
+    knownText,
     Effect.flatMap((known) =>
       known
         ? Effect.as(positionTaken(known.id), { declarationId: known.id, created: false })

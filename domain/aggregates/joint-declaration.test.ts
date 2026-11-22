@@ -13,11 +13,13 @@ import {
   publishJointDeclaration,
   replayJointDeclaration,
   signatoryAdded,
+  signatoryWithdrawn,
   signatureOf,
   SUBJECT_ALREADY_ENGAGED,
   subjectDisengaged,
   takenPositionMerged,
   takePosition,
+  withdrawSignatory,
 } from './joint-declaration'
 
 const streamId = '1f2e3d4c-5b6a-4798-8a9b-0c1d2e3f4a5b'
@@ -186,6 +188,32 @@ describe('what happens to the text when a position leaves the site', () => {
       subjectDisengaged('subject-media'),
     )
     expect(disengaged.positions).toEqual([onAi])
+  })
+})
+
+describe('what happens to the text when a signature is found wrong', () => {
+  const veil = publicFigureAuthor('figure-veil')
+  const attac = organisationAuthor('organisation-attac')
+  const state = stateOf(published, positionTaken(onMedia), signatoryAdded(veil))
+
+  it('withdraws the signatory: who did not sign one position signed none', () => {
+    expect(withdrawSignatory(veil)(state)).toEqual([signatoryWithdrawn(veil)])
+  })
+
+  it('has nothing to say of who never signed it', () => {
+    expect(withdrawSignatory(attac)(state)).toEqual([])
+  })
+
+  it('no longer counts the signatory, who may be found to have signed after all', () => {
+    const withdrawn = stateOf(
+      published,
+      positionTaken(onMedia),
+      signatoryAdded(veil),
+      signatoryAdded(attac),
+      signatoryWithdrawn(veil),
+    )
+    expect(withdrawn.signatories).toEqual([attac])
+    expect(Either.isRight(addSignatory(veil)(withdrawn))).toBe(true)
   })
 })
 

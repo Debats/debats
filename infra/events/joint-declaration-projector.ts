@@ -30,6 +30,14 @@ async function apply(decoded: JointDeclarationEvent, stored: StoredEvent, tx: Pr
     case 'SignatoryAdded':
       await addSignatory(tx, stored, decoded.payload.author)
       return touch(tx, stored)
+    case 'SignatoryWithdrawn':
+      await tx.joint_declaration_signatories.deleteMany({
+        where: {
+          joint_declaration_id: stored.streamId,
+          ...signatoryColumns(decoded.payload.author),
+        },
+      })
+      return touch(tx, stored)
     case 'TakenPositionMerged':
       await tx.joint_declaration_positions.updateMany({
         where: { joint_declaration_id: stored.streamId, position_id: decoded.payload.sourceId },
@@ -68,8 +76,10 @@ async function takePosition(
   stored: StoredEvent,
   payload: TakenPositionPayload,
 ) {
-  const held = await tx.joint_declaration_positions.count({
+  // After the last rank, not after the count: a position that left the text leaves a gap, never a tie
+  const last = await tx.joint_declaration_positions.aggregate({
     where: { joint_declaration_id: stored.streamId },
+    _max: { rank: true },
   })
   await tx.joint_declaration_positions.create({
     data: {
@@ -77,23 +87,29 @@ async function takePosition(
       subject_id: payload.subjectId,
       position_id: payload.positionId,
       quote: payload.quote,
-      rank: held + 1,
+      rank: (last._max.rank ?? 0) + 1,
       created_by: actorOf(stored, 'a position of a joint declaration'),
       created_at: stored.occurredAt,
     },
   })
 }
 
+/** The signatory in the two columns of its row: exactly one of them is set */
+const signatoryColumns = (author: StatementAuthor) => ({
+  public_figure_id: author.kind === 'public_figure' ? author.id : null,
+  organisation_id: author.kind === 'organisation' ? author.id : null,
+})
+
 async function addSignatory(tx: PrismaTransaction, stored: StoredEvent, author: StatementAuthor) {
-  const signed = await tx.joint_declaration_signatories.count({
+  const last = await tx.joint_declaration_signatories.aggregate({
     where: { joint_declaration_id: stored.streamId },
+    _max: { rank: true },
   })
   await tx.joint_declaration_signatories.create({
     data: {
       joint_declaration_id: stored.streamId,
-      public_figure_id: author.kind === 'public_figure' ? author.id : null,
-      organisation_id: author.kind === 'organisation' ? author.id : null,
-      rank: signed + 1,
+      ...signatoryColumns(author),
+      rank: (last._max.rank ?? 0) + 1,
       created_by: actorOf(stored, 'a signatory of a joint declaration'),
       created_at: stored.occurredAt,
     },

@@ -2,7 +2,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getAdminContributor } from '../../app/actions/admin-guard'
 import { siteDescription } from '../../app/site'
-import { CONTRIBUTE_HREF } from '../../domain/read-models/hrefs'
+import {
+  ARGUMENTS_HREF,
+  CONTRIBUTE_HREF,
+  JOINT_DECLARATIONS_HREF,
+} from '../../domain/read-models/hrefs'
 import styles from './footer.module.css'
 
 const socialLinks = [
@@ -106,7 +110,8 @@ export default async function Footer() {
               { href: '/s', label: 'Sujets' },
               { href: '/p', label: 'Personnalités' },
               { href: '/o', label: 'Organisations' },
-              { href: '/arguments', label: 'Arguments' },
+              { href: JOINT_DECLARATIONS_HREF, label: 'Déclarations communes' },
+              { href: ARGUMENTS_HREF, label: 'Arguments' },
               { href: '/themes', label: 'Thématiques' },
               { href: '/metiers', label: 'Métiers' },
             ]}

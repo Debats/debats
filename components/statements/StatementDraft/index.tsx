@@ -16,6 +16,13 @@ export interface StatementDraft extends StatementContentInput {
   positionTitle: string
   sourceName: string
   statedAt: string
+  /**
+   * La saisie est la signature d'une déclaration commune : la position, les
+   * mots, la source et la date sont alors ceux du texte, pas ceux du brouillon.
+   */
+  signing: boolean
+  /** Le titre du texte signé ; vide tant qu'il n'est pas choisi */
+  declarationTitle: string
 }
 
 export const EMPTY_DRAFT: StatementDraft = {
@@ -25,6 +32,8 @@ export const EMPTY_DRAFT: StatementDraft = {
   positionTitle: '',
   sourceName: '',
   statedAt: '',
+  signing: false,
+  declarationTitle: '',
   statementType: 'declaration',
   quote: '',
   document: '',

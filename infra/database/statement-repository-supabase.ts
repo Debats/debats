@@ -206,6 +206,14 @@ const feedQuery = (themeSlug: string | undefined) => `
 `
 
 /**
+ * What the feed lists: the statements, a signature of a joint declaration
+ * counted once whatever the number of positions the text takes (the view of
+ * migration 20261122130000). The entry of a signature says who signed which
+ * text, so the one statement that stands for it only lends its day.
+ */
+const FEED_SOURCE = 'feed_statements'
+
+/**
  * The columns each order of the feed reads, the second settling the ties of
  * the first: many statements share a stated day, and a merge touches several
  * statements at the same instant, so paging needs an order that never wavers.
@@ -592,7 +600,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           }
           const counted = await narrowed(
             supabase
-              .from('statements')
+              .from(FEED_SOURCE)
               .select(feedQuery(filters.themeSlug), { count: 'exact', head: true }),
           )
           if (counted.error) throw counted.error
@@ -600,7 +608,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           // PostgREST refuses a range past the end: a page beyond the last one is simply empty
           if (page.offset >= total) return { entries: [], total }
           const { data, error } = await narrowed(
-            supabase.from('statements').select(feedQuery(filters.themeSlug)),
+            supabase.from(FEED_SOURCE).select(feedQuery(filters.themeSlug)),
           )
             .order(FEED_ORDER_COLUMNS[order][0], { ascending: false })
             .order(FEED_ORDER_COLUMNS[order][1], { ascending: false })
@@ -633,6 +641,22 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           return data?.id ?? null
         },
         catch: (error) => dbError('Failed to fetch the statement of a signature', error),
+      }),
+
+    findSignatureIds: (jointDeclarationId, author) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select('id')
+            .eq('joint_declaration_id', jointDeclarationId)
+            .eq(author.kind === 'organisation' ? 'organisation_id' : 'public_figure_id', author.id)
+            .is('deleted_at', null)
+
+          if (error) throw error
+          return data.map((row) => row.id)
+        },
+        catch: (error) => dbError('Failed to fetch the statements of a signature', error),
       }),
 
     findStatedSpanBySubjectId: (subjectId: string) =>
@@ -675,16 +699,25 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
     findLatest: (limit: number, subjectId?: string) =>
       Effect.tryPromise({
         try: async () => {
-          const query = supabase
-            .from('statements')
-            .select(LATEST_STATEMENT_QUERY)
-            .is('deleted_at', null)
-            .order('stated_at', { ascending: false })
-            .limit(limit)
-
+          /*
+           * Across the site a signature counts once, as in the feed; on one
+           * subject it is the statement the signatory holds there, whichever
+           * of the signature's statements stands for it elsewhere.
+           */
           const { data, error } = await (subjectId
-            ? query.eq('positions.subject_id', subjectId)
-            : query)
+            ? supabase
+                .from('statements')
+                .select(LATEST_STATEMENT_QUERY)
+                .is('deleted_at', null)
+                .eq('positions.subject_id', subjectId)
+                .order('stated_at', { ascending: false })
+                .limit(limit)
+            : supabase
+                .from(FEED_SOURCE)
+                .select(LATEST_STATEMENT_QUERY)
+                .is('deleted_at', null)
+                .order('stated_at', { ascending: false })
+                .limit(limit))
 
           if (error) throw error
           return (data as unknown as LatestStatementRow[]).map((row) =>
@@ -698,7 +731,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
       Effect.tryPromise({
         try: async () => {
           const { data, error } = await supabase
-            .from('statements')
+            .from(FEED_SOURCE)
             .select(LATEST_STATEMENT_QUERY)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })

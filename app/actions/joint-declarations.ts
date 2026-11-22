@@ -151,9 +151,10 @@ export interface JointDeclarationOption {
 
 /** The joint declarations whose title holds what was typed */
 export async function searchJointDeclarations(query: string): Promise<JointDeclarationOption[]> {
-  if (query.trim().length < 2) return []
+  const typed = text(query).trim()
+  if (typed.length < 2) return []
   const found = await Effect.runPromise(
-    createJointDeclarationRepository(createAdminSupabaseClient()).searchByTitle(query.trim()),
+    createJointDeclarationRepository(createAdminSupabaseClient()).searchByTitle(typed),
   )
   return found.map(({ id, title, slug }) => ({ id, title, slug }))
 }
@@ -162,7 +163,7 @@ export async function searchJointDeclarations(query: string): Promise<JointDecla
 export async function jointDeclarationFromSource(
   sourceUrl: string,
 ): Promise<JointDeclarationOption | null> {
-  const address = sourceUrl.trim()
+  const address = text(sourceUrl).trim()
   if (!address) return null
   const found = await Effect.runPromise(
     createJointDeclarationRepository(createAdminSupabaseClient()).findBySourceUrl(address),
@@ -172,6 +173,8 @@ export async function jointDeclarationFromSource(
 
 /** What signing this text will make, or null when no text bears the slug */
 export async function previewSignature(slug: string): Promise<SignaturePreview | null> {
-  const page = await Effect.runPromise(loadJointDeclarationPage(createAdminSupabaseClient(), slug))
+  const named = text(slug).trim()
+  if (!named) return null
+  const page = await Effect.runPromise(loadJointDeclarationPage(createAdminSupabaseClient(), named))
   return page ? signaturePreviewOf(page) : null
 }

@@ -12,6 +12,7 @@ import Button from '../../ui/Button'
 import FormError from '../../ui/FormError'
 import ArgumentsPicker from '../ArgumentsPicker'
 import StatementContentFields from '../StatementContentFields'
+import SaidByTheText from './SaidByTheText'
 import {
   EMPTY_CONTENT_INPUT,
   StatementContentInput,
@@ -44,6 +45,12 @@ interface StatementFormProps {
   initialSourceName?: string
   initialSourceUrl?: string
   initialStatedAt?: string
+  /**
+   * La prise de position est la signature d'une déclaration commune : sa
+   * position, ses mots, sa source et sa date sont ceux du texte. Ils sont
+   * montrés et envoyés tels quels ; seuls les arguments se modifient.
+   */
+  argumentsOnly?: boolean
   /** Ce que l'appelant ajoute au formulaire, juste avant ses boutons (la relecture, à la modification) */
   children?: ReactNode
 }
@@ -63,6 +70,7 @@ export default function StatementForm({
   initialSourceName = '',
   initialSourceUrl = '',
   initialStatedAt = '',
+  argumentsOnly = false,
   children,
 }: StatementFormProps) {
   const router = useRouter()
@@ -119,62 +127,86 @@ export default function StatementForm({
         </Suspense>
       )}
 
-      <div className={styles.selectField}>
-        <label className={styles.selectLabel} htmlFor="positionId">
-          Position
-        </label>
-        <select
-          className={styles.select}
-          id="positionId"
-          name="positionId"
-          required
-          defaultValue={initialPositionId}
-        >
-          <option value="">Sélectionner une position</option>
-          {positions.map((position) => (
-            <option key={position.id} value={position.id}>
-              {position.title}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <StatementContentFields value={content} onChange={setContent} errors={fieldErrors} />
-
-      <TextField
-        label="Nom de la source"
-        id="sourceName"
-        name="sourceName"
-        required
-        placeholder="ex : Le Monde, France Inter"
-        defaultValue={initialSourceName}
-        error={fieldErrors?.sourceName}
-      />
-
-      <TextField
-        label="Lien vers la source"
-        id="sourceUrl"
-        name="sourceUrl"
-        required
-        placeholder="https://..."
-        defaultValue={initialSourceUrl}
-        error={fieldErrors?.sourceUrl}
-      />
-
-      <div className={styles.dateField}>
-        <label className={styles.dateLabel} htmlFor="statedAt">
-          Date de la déclaration
-        </label>
-        <input
-          className={styles.dateInput}
-          id="statedAt"
-          name="statedAt"
-          type="date"
-          required
-          defaultValue={initialStatedAt}
+      {argumentsOnly ? (
+        <SaidByTheText
+          positionId={initialPositionId}
+          positionTitle={
+            positions.find((position) => position.id === initialPositionId)?.title ?? ''
+          }
+          content={content}
+          sourceName={initialSourceName}
+          sourceUrl={initialSourceUrl}
+          statedAt={initialStatedAt}
         />
-        {fieldErrors?.statedAt && <span className={styles.fieldError}>{fieldErrors.statedAt}</span>}
-      </div>
+      ) : (
+        <>
+          <div className={styles.selectField}>
+            <label className={styles.selectLabel} htmlFor="positionId">
+              Position
+            </label>
+            <select
+              className={styles.select}
+              id="positionId"
+              name="positionId"
+              required
+              defaultValue={initialPositionId}
+            >
+              <option value="">Sélectionner une position</option>
+              {positions.map((position) => (
+                <option key={position.id} value={position.id}>
+                  {position.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <StatementContentFields value={content} onChange={setContent} errors={fieldErrors} />
+
+          <TextField
+            label="Nom de la source"
+            id="sourceName"
+            name="sourceName"
+            required
+            placeholder="ex : Le Monde, France Inter"
+            defaultValue={initialSourceName}
+            error={fieldErrors?.sourceName}
+          />
+
+          <TextField
+            label="Lien vers la source"
+            id="sourceUrl"
+            name="sourceUrl"
+            required
+            placeholder="https://..."
+            defaultValue={initialSourceUrl}
+            error={fieldErrors?.sourceUrl}
+          />
+
+          <div className={styles.dateField}>
+            <label className={styles.dateLabel} htmlFor="statedAt">
+              Date de la déclaration
+            </label>
+            <input
+              className={styles.dateInput}
+              id="statedAt"
+              name="statedAt"
+              type="date"
+              required
+              defaultValue={initialStatedAt}
+            />
+            {fieldErrors?.statedAt && (
+              <span className={styles.fieldError}>{fieldErrors.statedAt}</span>
+            )}
+          </div>
+        </>
+      )}
+
+      {argumentsOnly && !canUseArguments && (
+        <p className={styles.argumentsNote}>
+          Relier une prise de position aux arguments qu’elle mobilise est réservé aux
+          contributeur·ices de rang Éloquent : il n’y a rien d’autre à modifier ici.
+        </p>
+      )}
 
       {canUseArguments && (
         <div className={styles.selectField}>

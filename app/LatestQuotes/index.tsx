@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import AuthorAvatar from '../../components/statements/AuthorAvatar'
 import StatementBody from '../../components/statements/StatementBody'
-import { FEED_PATH } from '../../domain/read-models/statement-feed'
+import { STATEMENTS_HREF } from '../../domain/read-models/hrefs'
 import { subjectHref } from '../../domain/read-models/hrefs'
 import { authorHref, authorOnSubjectHref } from '../../domain/read-models/statement-author'
 import { StatementWithAuthorAndSubject } from '../../domain/repositories/statement-repository'
@@ -19,7 +19,7 @@ export default function LatestQuotes({ entries }: { entries: StatementWithAuthor
   return (
     <HomeSection
       title="Dernières prises de position"
-      more={{ href: FEED_PATH, label: 'Tout le flux' }}
+      more={{ href: STATEMENTS_HREF, label: 'Tout le flux' }}
     >
       <ol className={styles.list}>
         {entries.map(({ statement, author, position, subject }) => (

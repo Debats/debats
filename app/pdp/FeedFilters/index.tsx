@@ -7,14 +7,19 @@ import {
   FeedOrder,
   feedHref,
 } from '../../../domain/read-models/statement-feed'
+import { declarationOptions, FeedDeclaration } from './declaration-options'
 import styles from './FeedFilters.module.css'
 
 interface FeedFiltersProps {
   filters: Filters
   order: FeedOrder
   themes: Theme[]
-  /** The joint declarations a reader may narrow the feed to the signatures of */
-  declarations: { slug: string; title: string }[]
+  /**
+   * The joint declarations of the site, with how many signatures each has
+   * when the page counted them: the feed is offered to narrow to the signed
+   * ones only.
+   */
+  declarations: FeedDeclaration[]
 }
 
 const KIND_LABELS = { all: 'Tout', public_figure: 'Personnalités', organisation: 'Organisations' }
@@ -26,6 +31,8 @@ const ORDER_LABELS: Record<FeedOrder, string> = {
 
 /** Les filtres et le tri du flux, tous portés par l'adresse de la page. */
 export default function FeedFilters({ filters, order, themes, declarations }: FeedFiltersProps) {
+  const offeredDeclarations = declarationOptions(declarations, filters.jointDeclarationSlug)
+
   return (
     <div className={styles.controls}>
       <div className={styles.toolbar}>
@@ -74,14 +81,14 @@ export default function FeedFilters({ filters, order, themes, declarations }: Fe
             }))}
             value={filters.statementType}
           />
-          {declarations.length > 0 && (
+          {offeredDeclarations.length > 0 && (
             <NavSelect
               ariaLabel="Déclaration commune"
               any={{
                 label: 'Avec ou sans déclaration commune',
                 href: feedHref({ ...filters, jointDeclarationSlug: undefined }, order),
               }}
-              options={declarations.map((declaration) => ({
+              options={offeredDeclarations.map((declaration) => ({
                 value: declaration.slug,
                 label: declaration.title,
                 href: feedHref({ ...filters, jointDeclarationSlug: declaration.slug }, order),

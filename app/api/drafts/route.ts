@@ -11,6 +11,7 @@ import {
   parseDraftJointDeclaration,
   parseDraftOccupations,
   parseDraftSection,
+  signatureFault,
   validateSlugifiableFields,
 } from './validation'
 import { createChantierRepository } from '../../../infra/database/chantier-repository-supabase'
@@ -115,18 +116,8 @@ function parseDraftInput(
 
   const parsedText = parseDraftJointDeclaration(input.jointDeclaration)
   if ('error' in parsedText) return parsedText
-  // A signature says what the text says: only words can be a signature
-  if (parsedText.jointDeclaration && parsedContent.content.kind !== 'declaration') {
-    return { error: 'Field jointDeclaration only applies to a content of kind "declaration"' }
-  }
-
-  // The validation makes a signature from the text alone: arguments it could not carry are refused, not dropped
-  if (parsedText.jointDeclaration && parsedArguments.arguments.length > 0) {
-    return {
-      error:
-        'Field arguments does not apply to a signature of a joint declaration: add them to the statement once it is published',
-    }
-  }
+  const fault = signatureFault({ ...parsedContent, ...parsedArguments, ...parsedText })
+  if (fault) return { error: fault }
 
   // Occupations and affiliations describe the person, so an organisation has neither.
   if (
