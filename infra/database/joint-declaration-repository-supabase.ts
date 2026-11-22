@@ -8,6 +8,7 @@ import {
   JointDeclarationSlug,
   JointDeclarationTitle,
 } from '../../domain/entities/joint-declaration'
+import { organisationAuthor, publicFigureAuthor } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { JointDeclarationRepository } from '../../domain/repositories/joint-declaration-repository'
 import { sameSource, sourceKey } from '../../domain/value-objects/source-address'
@@ -111,6 +112,42 @@ export function createJointDeclarationRepository(
           return same ? mapJointDeclarationRow(same) : null
         },
         catch: (error) => dbError('Failed to fetch joint declaration by source', error),
+      }),
+
+    findHeld: (declarationId) =>
+      Effect.tryPromise({
+        try: async () => {
+          const [positions, signatories] = await Promise.all([
+            supabase
+              .from('joint_declaration_positions')
+              .select('subject_id, position_id, quote, rank')
+              .eq('joint_declaration_id', declarationId)
+              .order('rank'),
+            supabase
+              .from('joint_declaration_signatories')
+              .select('public_figure_id, organisation_id, rank')
+              .eq('joint_declaration_id', declarationId)
+              .order('rank'),
+          ])
+          if (positions.error) throw positions.error
+          if (signatories.error) throw signatories.error
+
+          return {
+            positions: positions.data.map((row) => ({
+              subjectId: row.subject_id,
+              positionId: row.position_id,
+              quote: row.quote,
+            })),
+            signatories: signatories.data.flatMap((row) =>
+              row.organisation_id
+                ? [organisationAuthor(row.organisation_id)]
+                : row.public_figure_id
+                  ? [publicFigureAuthor(row.public_figure_id)]
+                  : [],
+            ),
+          }
+        },
+        catch: (error) => dbError('Failed to fetch what a joint declaration holds', error),
       }),
 
     findIdsByPositionId: (positionId) => idsWhere('position_id', positionId),

@@ -6,6 +6,7 @@ import {
   DraftAffiliation,
   DraftArgument,
   DraftAuthor,
+  DraftJointDeclaration,
   DraftOccupation,
   DraftOrganisationData,
   DraftPublicFigureData,
@@ -303,6 +304,7 @@ export type DraftPatch = Partial<
     | 'rejectionNote'
     | 'origin'
     | 'section'
+    | 'jointDeclaration'
   >
 >
 
@@ -320,7 +322,47 @@ const PATCHABLE_FIELDS: ReadonlySet<string> = new Set<keyof DraftPatch>([
   'rejectionNote',
   'origin',
   'section',
+  'jointDeclaration',
 ])
+
+const JOINT_DECLARATION_TITLE_MIN = 3
+const JOINT_DECLARATION_TITLE_MAX = 150
+
+/**
+ * Parses the joint declaration a draft is a signature of: its title, as the
+ * site will name it, and what it is in a line. The title is what the
+ * validation finds the text by, so it must make a slug.
+ */
+export function parseDraftJointDeclaration(
+  value: unknown,
+): { jointDeclaration: DraftJointDeclaration | null } | { error: string } {
+  if (value === undefined || value === null) return { jointDeclaration: null }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return { error: 'Field jointDeclaration must be an object with a title' }
+  }
+
+  const { title, presentation } = value as Record<string, unknown>
+  const trimmedTitle = typeof title === 'string' ? title.trim() : ''
+  if (
+    trimmedTitle.length < JOINT_DECLARATION_TITLE_MIN ||
+    trimmedTitle.length > JOINT_DECLARATION_TITLE_MAX ||
+    !slugify(trimmedTitle)
+  ) {
+    return {
+      error: `Field jointDeclaration.title must be ${JOINT_DECLARATION_TITLE_MIN} to ${JOINT_DECLARATION_TITLE_MAX} characters, with at least one alphanumeric character`,
+    }
+  }
+  if (presentation !== undefined && presentation !== null && typeof presentation !== 'string') {
+    return { error: 'Field jointDeclaration.presentation must be a string' }
+  }
+
+  const trimmedPresentation = typeof presentation === 'string' ? presentation.trim() : ''
+  return {
+    jointDeclaration: trimmedPresentation
+      ? { title: trimmedTitle, presentation: trimmedPresentation }
+      : { title: trimmedTitle },
+  }
+}
 
 /** A section title as the agent names it in its chantier: short, or null to take the draft out of any */
 export const SECTION_MAX_LENGTH = 80
@@ -372,6 +414,11 @@ export function parseDraftPatch(body: unknown): ParsedPatch {
     const section = parseDraftSection(input.section)
     if ('error' in section) return section
     fields.section = section.section
+  }
+  if ('jointDeclaration' in input) {
+    const text = parseDraftJointDeclaration(input.jointDeclaration)
+    if ('error' in text) return text
+    fields.jointDeclaration = text.jointDeclaration
   }
   if ('author' in input) {
     const author = parseDraftAuthor(input.author)

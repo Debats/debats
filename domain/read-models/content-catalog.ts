@@ -41,12 +41,26 @@ export interface CatalogOccupationFamily {
   occupations: CatalogOccupation[]
 }
 
+/**
+ * A joint declaration the site knows: a draft that is a signature of it names
+ * it by this exact title, and takes its source and its day from it.
+ */
+export interface CatalogJointDeclaration {
+  slug: string
+  title: string
+  sourceUrl: string
+  /** The day the text was made public, as a calendar day */
+  declaredAt: string
+}
+
 export interface ContentCatalog {
   subjects: CatalogSubject[]
   publicFigures: CatalogPublicFigure[]
   organisations: CatalogOrganisation[]
   /** The closed list a public figure's occupations are taken from, by family */
   occupations: CatalogOccupationFamily[]
+  /** The texts signed by several the site knows, the most recent first */
+  jointDeclarations: CatalogJointDeclaration[]
 }
 
 /** Flat rows read from the database, before assembly. */
@@ -57,6 +71,7 @@ export interface ContentCatalogRows {
   organisations: Array<{ id: string; slug: string; name: string; acronym: string | null }>
   occupationFamilies: Array<{ id: string; slug: string; name: string; position: number }>
   occupations: Array<{ id: string; familyId: string; slug: string; name: string }>
+  jointDeclarations: CatalogJointDeclaration[]
 }
 
 const byLabel = (a: string, b: string) => a.localeCompare(b, 'fr')
@@ -100,5 +115,9 @@ export function buildContentCatalog(rows: ContentCatalogRows): ContentCatalog {
           .map((occupation) => ({ slug: occupation.slug, name: occupation.name }))
           .sort((a, b) => byLabel(a.name, b.name)),
       })),
+    // Calendar days sort as the strings they are
+    jointDeclarations: [...rows.jointDeclarations].sort(
+      (a, b) => b.declaredAt.localeCompare(a.declaredAt) || byLabel(a.title, b.title),
+    ),
   }
 }

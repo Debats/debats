@@ -51,6 +51,7 @@ export function fakeJointDeclarationRepo(
     findBySourceUrl: (url) =>
       Effect.succeed(seed.find((d) => sameSource(d.sourceUrl, url)) ?? null),
     searchByTitle: () => Effect.succeed(seed),
+    findHeld: () => Effect.succeed({ positions: [], signatories: [] }),
     findIdsByPositionId: (positionId) => Effect.succeed(reached[positionId] ?? []),
     findIdsBySubjectId: (subjectId) => Effect.succeed(reached[subjectId] ?? []),
   }

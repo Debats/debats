@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildContentCatalog } from './content-catalog'
 
-const noOccupations = { occupationFamilies: [], occupations: [] }
+const nothingElse = { occupationFamilies: [], occupations: [], jointDeclarations: [] }
 
 describe('buildContentCatalog', () => {
   it('nests positions under the subject they belong to', () => {
@@ -23,7 +23,7 @@ describe('buildContentCatalog', () => {
       ],
       publicFigures: [],
       organisations: [],
-      ...noOccupations,
+      ...nothingElse,
     })
 
     expect(catalog.subjects).toEqual([
@@ -44,7 +44,7 @@ describe('buildContentCatalog', () => {
       positions: [],
       publicFigures: [],
       organisations: [],
-      ...noOccupations,
+      ...nothingElse,
     })
 
     expect(catalog.subjects[0].positions).toEqual([])
@@ -56,7 +56,7 @@ describe('buildContentCatalog', () => {
       positions: [{ id: 'pos-1', subjectId: 'gone', slug: 'orpheline', title: 'Orpheline' }],
       publicFigures: [],
       organisations: [],
-      ...noOccupations,
+      ...nothingElse,
     })
 
     expect(catalog.subjects).toEqual([])
@@ -82,7 +82,7 @@ describe('buildContentCatalog', () => {
           acronym: 'CGT',
         },
       ],
-      ...noOccupations,
+      ...nothingElse,
     })
 
     expect(catalog.subjects.map((s) => s.title)).toEqual(["L'école", 'Les retraites'])
@@ -106,7 +106,7 @@ describe('buildContentCatalog', () => {
           acronym: 'CGT',
         },
       ],
-      ...noOccupations,
+      ...nothingElse,
     })
 
     expect(catalog.organisations).toEqual([
@@ -134,6 +134,7 @@ describe('buildContentCatalog', () => {
         { id: 'o-2', familyId: 'f-1', slug: 'depute-e', name: 'Député·e' },
         { id: 'o-3', familyId: 'f-2', slug: 'economiste', name: 'Économiste' },
       ],
+      jointDeclarations: [],
     })
 
     expect(catalog.occupations).toEqual([
@@ -152,5 +153,41 @@ describe('buildContentCatalog', () => {
       },
       { slug: 'artiste', name: 'Artiste', occupations: [] },
     ])
+  })
+
+  it('lists the joint declarations by the exact title a draft must name, the most recent first', () => {
+    const catalog = buildContentCatalog({
+      subjects: [],
+      positions: [],
+      publicFigures: [],
+      organisations: [],
+      occupationFamilies: [],
+      occupations: [],
+      jointDeclarations: [
+        {
+          slug: 'manifeste-hiatus',
+          title: 'Manifeste Hiatus',
+          sourceUrl: 'https://hiatus.ooo/',
+          declaredAt: '2025-02-07',
+        },
+        {
+          slug: 'le-manifeste-de-paris',
+          title: 'Le Manifeste de Paris',
+          sourceUrl: 'https://parismanifesto.world',
+          declaredAt: '2026-11-21',
+        },
+      ],
+    })
+
+    expect(catalog.jointDeclarations.map((declaration) => declaration.title)).toEqual([
+      'Le Manifeste de Paris',
+      'Manifeste Hiatus',
+    ])
+    expect(catalog.jointDeclarations[0]).toEqual({
+      slug: 'le-manifeste-de-paris',
+      title: 'Le Manifeste de Paris',
+      sourceUrl: 'https://parismanifesto.world',
+      declaredAt: '2026-11-21',
+    })
   })
 })

@@ -589,6 +589,7 @@ model draft_statements {
   chantier_id        String?        @db.Uuid
   validation         Json?
   section            String?
+  joint_declaration  Json?
   chantiers          chantiers?     @relation(fields: [chantier_id], references: [id], onUpdate: NoAction)
 
   @@index([chantier_id])

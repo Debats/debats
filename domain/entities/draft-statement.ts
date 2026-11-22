@@ -48,6 +48,18 @@ export type DraftAffiliation = {
 }
 
 /**
+ * The joint declaration the draft is a signature of: a tribune, a manifesto,
+ * an appeal, an open letter. Named by its title, as a subject is; the text's
+ * source and day are the draft's own. The validation references the text when
+ * the site does not know it, adds the draft's position to it when the text
+ * was silent on the subject, and adds the author to its signatories.
+ */
+export type DraftJointDeclaration = {
+  title: string
+  presentation?: string
+}
+
+/**
  * Who takes position in the draft: a public figure or an organisation, never both.
  * `data` is only needed when the entity does not exist yet.
  */
@@ -68,7 +80,12 @@ export const draftOrganisationAuthor = (
 export type DraftStatus = 'pending' | 'validated' | 'rejected' | 'revision_requested'
 
 /** What a validation may create rather than reuse */
-export type CreatedByValidation = 'subject' | 'position' | 'public_figure' | 'organisation'
+export type CreatedByValidation =
+  | 'subject'
+  | 'position'
+  | 'public_figure'
+  | 'organisation'
+  | 'joint_declaration'
 
 /** What validating the draft did on the site: the statement, and what had to be created for it */
 export type DraftValidation = {
@@ -83,6 +100,7 @@ export function createdPhrase(created: CreatedByValidation[]): string {
     position: 'la position',
     public_figure: 'la personnalité',
     organisation: 'l’organisation',
+    joint_declaration: 'la déclaration commune',
   }
   if (created.length === 0) return 'n’a rien eu à créer'
   const listed = created.map((kind) => names[kind])
@@ -126,6 +144,8 @@ export type DraftStatement = {
   occupations: DraftOccupation[]
   /** Organisations the public figure author belongs to, empty for an organisation */
   affiliations: DraftAffiliation[]
+  /** The joint declaration the draft is a signature of; null for a statement of the author's own */
+  jointDeclaration: DraftJointDeclaration | null
   origin: string
   /** The chantier this draft was produced in, when it was */
   chantierId: string | null

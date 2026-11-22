@@ -10,7 +10,27 @@ import {
   draftOrganisationAuthor,
   draftPublicFigureAuthor,
 } from '../entities/draft-statement'
-import { voteContent } from '../entities/statement'
+import {
+  declarationContent,
+  organisationAuthor,
+  publicFigureAuthor,
+  StatementAuthor,
+  voteContent,
+} from '../entities/statement'
+import { JointDeclaration } from '../entities/joint-declaration'
+import {
+  jointDeclarationPublished,
+  jointDeclarationStream,
+  positionTaken,
+  replayJointDeclaration,
+  signatoryAdded,
+} from '../aggregates/joint-declaration'
+import { statementAdded, StatementAddition, statementStream } from '../aggregates/statement'
+import { StatementAddedPayload } from '../aggregates/statement-events'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
+import { StatementRepository } from '../repositories/statement-repository'
+import { DeclarationHeld, sampleJointDeclaration } from './joint-declaration-test-helpers'
+import { NO_ARGUMENT_ON_SIGNATURE, ONLY_WORDS_SIGN } from './sign-from-draft'
 import { DraftStatementRepository } from '../repositories/draft-statement-repository'
 import { PublicFigureRepository } from '../repositories/public-figure-repository'
 import { SubjectRepository } from '../repositories/subject-repository'
@@ -67,12 +87,61 @@ function makeRepos(overrides: {
   arguments?: Argument[]
   occupations?: Occupation[]
   memberships?: OrganisationMembership[]
+  /** A joint declaration the site already knows, with what it holds and the signatures already made */
+  declaration?: { text: JointDeclaration; held: DeclarationHeld; signatures?: StatementAddition[] }
 }) {
   const unit = inMemoryUnitOfWork()
 
   /** The stream of one aggregate as the journal holds it after the validation */
   const streamOf = (streamType: string, id: string) =>
     unit.journal.all().filter((e) => e.streamType === streamType && e.streamId === id)
+
+  /** The joint declarations the journal holds, as the tables would then hold them */
+  const declarationStates = () =>
+    Array.from(
+      new Set(
+        unit.journal
+          .all()
+          .filter((e) => e.streamType === 'joint_declaration')
+          .map((e) => e.streamId),
+      ),
+    ).flatMap((id) => {
+      const state = replayJointDeclaration(streamOf('joint_declaration', id))
+      return Either.isRight(state) && state.right ? [state.right] : []
+    })
+
+  const declarationRepo = {
+    findBySlug: (slug: string) =>
+      Effect.sync(
+        () => declarationStates().find((s) => s.declaration.slug === slug)?.declaration ?? null,
+      ),
+    findHeld: (id: string) =>
+      Effect.sync(() => {
+        const state = declarationStates().find((s) => s.declaration.id === id)
+        return {
+          positions: [...(state?.positions ?? [])],
+          signatories: [...(state?.signatories ?? [])],
+        }
+      }),
+  } as unknown as JointDeclarationRepository
+
+  /** The statement a signature made, as the journal holds it */
+  const statementRepo = {
+    findSignatureId: (declarationId: string, author: StatementAuthor, positionId: string) =>
+      Effect.sync(() => {
+        const made = unit.journal.all().find((e) => {
+          const payload = e.payload as Partial<StatementAddedPayload>
+          return (
+            e.type === 'StatementAdded' &&
+            payload.jointDeclarationId === declarationId &&
+            payload.positionId === positionId &&
+            payload.author?.kind === author.kind &&
+            payload.author?.id === author.id
+          )
+        })
+        return made?.streamId ?? null
+      }),
+  } as unknown as StatementRepository
 
   /** A figure added through the journal during the validation, as the table would then hold her */
   const figureFromJournal = (id: string): PublicFigure | null => {
@@ -186,6 +255,32 @@ function makeRepos(overrides: {
         ),
       )
     }
+    if (overrides.declaration) {
+      const { text, held, signatures = [] } = overrides.declaration
+      await Effect.runPromise(
+        unit.journal.append(
+          jointDeclarationStream(text.id),
+          0,
+          [
+            jointDeclarationPublished(text),
+            ...(held.positions ?? []).map(positionTaken),
+            ...(held.signatories ?? []).map(signatoryAdded),
+          ],
+          { actorId: text.createdBy },
+        ),
+      )
+      for (let index = 0; index < signatures.length; index++) {
+        const signature = signatures[index]
+        await Effect.runPromise(
+          unit.journal.append(
+            statementStream(`seeded-signature-${index}`),
+            0,
+            [statementAdded(signature)],
+            { actorId: text.createdBy },
+          ),
+        )
+      }
+    }
     opened = unit.journal.all().length
   }
 
@@ -202,6 +297,8 @@ function makeRepos(overrides: {
       fakeMembershipRepo(overrides.memberships ?? [], seededFigures, seededOrganisations),
     ),
     Layer.succeed(WikipediaValidator, fakeWikipediaValidator),
+    Layer.succeed(JointDeclarationRepository, declarationRepo),
+    Layer.succeed(StatementRepository, statementRepo),
   )
 
   return {
@@ -525,6 +622,182 @@ describe('validateDraft', () => {
 
       expect(Either.isRight(result)).toBe(true)
       expect(payloadsOf(repos.journal, 'MembershipAdded')).toEqual([])
+    })
+  })
+
+  describe('a draft that is the signature of a joint declaration', () => {
+    const figure = makePublicFigure()
+    const subject = makeSubject()
+    const position = makePosition()
+    const text = sampleJointDeclaration()
+    const quote = 'Une citation importante sur le sujet'
+    const signature = makeDraft({ jointDeclaration: { title: text.title } })
+    const author = publicFigureAuthor(figure.id)
+    const elsewhere = { subjectId: 'sub-9', positionId: 'pos-9', quote: 'Les mots du texte.' }
+    const onTheSubject = { subjectId: subject.id, positionId: position.id, quote }
+
+    /** The statements the validation wrote, as `[author id, position id, joint declaration id]` */
+    const signaturesIn = (journal: { all(): Array<{ type: string; payload: unknown }> }) =>
+      (payloadsOf(journal, 'StatementAdded') as StatementAddedPayload[]).map((payload) => [
+        payload.author.id,
+        payload.positionId,
+        payload.jointDeclarationId,
+      ])
+
+    it('references the text, with the position and the signatory the draft names, when the site does not know it', async () => {
+      const repos = makeRepos({ draft: signature })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(deedsIn(repos.journal).map((e) => e.type)).toEqual([
+        'PublicFigureAdded',
+        'SubjectAdded',
+        'PositionAdded',
+        'JointDeclarationPublished',
+        'PositionTaken',
+        'SignatoryAdded',
+        'StatementAdded',
+      ])
+      expect(payloadsOf(repos.journal, 'JointDeclarationPublished')).toMatchObject([
+        {
+          title: 'Le Manifeste de Paris',
+          sourceName: 'Le Monde',
+          sourceUrl: 'https://lemonde.fr/article',
+          declaredAt: '2024-01-15',
+        },
+      ])
+      expect(payloadsOf(repos.journal, 'PositionTaken')).toMatchObject([{ quote }])
+      const written = deedsIn(repos.journal).at(-1)
+      expect(repos.draftRepo.validated).toHaveBeenCalledWith('draft-1', {
+        statementId: written?.streamId,
+        created: ['public_figure', 'subject', 'position', 'joint_declaration'],
+      })
+      // One signature found: one statement's worth, beside what creating the rest earned
+      expect(
+        grantsIn(repos.journal).filter((g) => g[1] === 'added_statement_validated'),
+      ).toHaveLength(1)
+    })
+
+    it('adds the position to a text that was silent on the subject, for who had signed and for who signs now', async () => {
+      const repos = makeRepos({
+        figure,
+        subject,
+        positions: [position],
+        draft: signature,
+        declaration: {
+          text,
+          held: { positions: [elsewhere], signatories: [organisationAuthor('org-9')] },
+        },
+      })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(deedsIn(repos.journal).map((e) => e.type)).toEqual([
+        'PositionTaken',
+        'StatementAdded',
+        'SignatoryAdded',
+        'StatementAdded',
+        'StatementAdded',
+      ])
+      expect(signaturesIn(repos.journal)).toEqual([
+        // Who had signed takes the position the draft taught the text
+        ['org-9', position.id, text.id],
+        // Who signs now takes every position of the text
+        [figure.id, 'pos-9', text.id],
+        [figure.id, position.id, text.id],
+      ])
+      const written = deedsIn(repos.journal).at(-1)
+      expect(repos.draftRepo.validated).toHaveBeenCalledWith('draft-1', {
+        statementId: written?.streamId,
+        created: [],
+      })
+    })
+
+    it('writes nothing when the text already takes the position and the author already signed: it finds the statement', async () => {
+      const repos = makeRepos({
+        figure,
+        subject,
+        positions: [position],
+        draft: signature,
+        declaration: {
+          text,
+          held: { positions: [onTheSubject], signatories: [author] },
+          signatures: [
+            {
+              author,
+              subjectId: subject.id,
+              positionId: position.id,
+              content: declarationContent(quote),
+              sourceName: text.sourceName,
+              sourceUrl: text.sourceUrl,
+              statedAt: text.declaredAt,
+              argumentIds: [],
+              jointDeclarationId: text.id,
+            },
+          ],
+        },
+      })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isRight(result)).toBe(true)
+      expect(repos.journal.all()).toEqual([])
+      expect(repos.draftRepo.validated).toHaveBeenCalledWith('draft-1', {
+        statementId: 'seeded-signature-0',
+        created: [],
+      })
+    })
+
+    it('refuses a draft whose position is not the one the text takes on the subject', async () => {
+      const repos = makeRepos({
+        figure,
+        subject,
+        positions: [position],
+        draft: signature,
+        declaration: {
+          text,
+          held: { positions: [{ ...onTheSubject, positionId: 'another-position' }] },
+        },
+      })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isLeft(result) && result.left).toBe(
+        '« Le Manifeste de Paris » prend déjà une autre position sur ce sujet.',
+      )
+      expect(repos.journal.all()).toEqual([])
+      expect(repos.draftRepo.validated).not.toHaveBeenCalled()
+    })
+
+    it('refuses a vote or a deed as a signature: a text is signed in its words', async () => {
+      const repos = makeRepos({
+        figure,
+        subject,
+        positions: [position],
+        draft: makeDraft({
+          jointDeclaration: { title: text.title },
+          content: voteContent('Projet de loi', 'pour'),
+        }),
+      })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isLeft(result) && result.left).toBe(ONLY_WORDS_SIGN)
+      expect(repos.draftRepo.validated).not.toHaveBeenCalled()
+    })
+
+    it('refuses a signature that carries arguments rather than drop them without a word', async () => {
+      const repos = makeRepos({
+        figure,
+        subject,
+        positions: [position],
+        draft: makeDraft({
+          jointDeclaration: { title: text.title },
+          arguments: [{ title: 'Justice fiscale' }],
+        }),
+      })
+      const result = await repos.validate(ADMIN)
+
+      expect(Either.isLeft(result) && result.left).toBe(NO_ARGUMENT_ON_SIGNATURE)
+      expect(repos.journal.all()).toEqual([])
+      expect(repos.draftRepo.validated).not.toHaveBeenCalled()
     })
   })
 })

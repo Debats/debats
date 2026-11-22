@@ -616,6 +616,25 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch the statements feed', error),
       }),
 
+    findSignatureId: (jointDeclarationId, author, positionId) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { data, error } = await supabase
+            .from('statements')
+            .select('id')
+            .eq('joint_declaration_id', jointDeclarationId)
+            .eq('position_id', positionId)
+            .eq(author.kind === 'organisation' ? 'organisation_id' : 'public_figure_id', author.id)
+            .is('deleted_at', null)
+            .limit(1)
+            .maybeSingle()
+
+          if (error) throw error
+          return data?.id ?? null
+        },
+        catch: (error) => dbError('Failed to fetch the statement of a signature', error),
+      }),
+
     findStatedSpanBySubjectId: (subjectId: string) =>
       Effect.tryPromise({
         try: async () => {

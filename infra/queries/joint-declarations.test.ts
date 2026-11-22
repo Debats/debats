@@ -126,6 +126,29 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     )
   })
 
+  it('tells what the text holds, and finds the statement a signature made', async () => {
+    const held = await Effect.runPromise(
+      createJointDeclarationRepository(supabase).findHeld(declarationId),
+    )
+    expect(held).toEqual({
+      positions: [{ subjectId: position.subject_id, positionId: position.id, quote }],
+      signatories: [publicFigureAuthor(figure.id), organisationAuthor(organisation.id)],
+    })
+
+    const statements = createStatementRepository(supabase)
+    expect(
+      await Effect.runPromise(
+        statements.findSignatureId(declarationId, publicFigureAuthor(figure.id), position.id),
+      ),
+    ).toBe(statementId)
+    // The organisation signed, but this suite wrote no statement for it
+    expect(
+      await Effect.runPromise(
+        statements.findSignatureId(declarationId, organisationAuthor(organisation.id), position.id),
+      ),
+    ).toBeNull()
+  })
+
   it('narrows the feed to nothing for a slug no text bears', async () => {
     const feed = await Effect.runPromise(
       createStatementRepository(supabase).findFeed(

@@ -36,6 +36,17 @@ export const uniqueTakenAs =
       isUniqueTaken(failure) ? new Rejected(message, field) : (failure as Exclude<E, UniqueTaken>),
     )
 
+/**
+ * What a command behind a form says, told as one message: for a caller that
+ * has no form to blame a field on, a draft being validated.
+ */
+export const toldAsOne = <A, R>(
+  command: Effect.Effect<A, FormFailure, R>,
+): Effect.Effect<A, CommandFailure, R> =>
+  Effect.catchTag(command, 'Invalid', (invalid) =>
+    Effect.fail(new Rejected(Object.values(invalid.fields).join(' '))),
+  )
+
 const isUniqueTaken = (failure: unknown): failure is UniqueTaken =>
   typeof failure === 'object' && failure !== null && (failure as UniqueTaken)._tag === 'UniqueTaken'
 

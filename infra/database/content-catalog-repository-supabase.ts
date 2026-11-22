@@ -54,39 +54,51 @@ export function createContentCatalogRepository(supabase: SupabaseClient): Conten
     getCatalog: () =>
       Effect.tryPromise({
         try: async () => {
-          const [subjects, positions, publicFigures, organisations, families, occupations] =
-            await Promise.all([
-              fetchLiveRows<{ id: string; slug: string; title: string }>(
-                supabase,
-                'subjects',
-                'id,slug,title',
-              ),
-              fetchLiveRows<{ id: string; subject_id: string; slug: string; title: string }>(
-                supabase,
-                'positions',
-                'id,subject_id,slug,title',
-              ),
-              fetchLiveRows<{ id: string; slug: string; name: string }>(
-                supabase,
-                'public_figures',
-                'id,slug,name',
-              ),
-              fetchLiveRows<{ id: string; slug: string; name: string; acronym: string | null }>(
-                supabase,
-                'organisations',
-                'id,slug,name,acronym',
-              ),
-              fetchAllRows<{ id: string; slug: string; name: string; position: number }>(
-                supabase,
-                'occupation_families',
-                'id,slug,name,position',
-              ),
-              fetchAllRows<{ id: string; family_id: string; slug: string; name: string }>(
-                supabase,
-                'occupations',
-                'id,family_id,slug,name',
-              ),
-            ])
+          const [
+            subjects,
+            positions,
+            publicFigures,
+            organisations,
+            families,
+            occupations,
+            jointDeclarations,
+          ] = await Promise.all([
+            fetchLiveRows<{ id: string; slug: string; title: string }>(
+              supabase,
+              'subjects',
+              'id,slug,title',
+            ),
+            fetchLiveRows<{ id: string; subject_id: string; slug: string; title: string }>(
+              supabase,
+              'positions',
+              'id,subject_id,slug,title',
+            ),
+            fetchLiveRows<{ id: string; slug: string; name: string }>(
+              supabase,
+              'public_figures',
+              'id,slug,name',
+            ),
+            fetchLiveRows<{ id: string; slug: string; name: string; acronym: string | null }>(
+              supabase,
+              'organisations',
+              'id,slug,name,acronym',
+            ),
+            fetchAllRows<{ id: string; slug: string; name: string; position: number }>(
+              supabase,
+              'occupation_families',
+              'id,slug,name,position',
+            ),
+            fetchAllRows<{ id: string; family_id: string; slug: string; name: string }>(
+              supabase,
+              'occupations',
+              'id,family_id,slug,name',
+            ),
+            fetchAllRows<{ slug: string; title: string; source_url: string; declared_at: string }>(
+              supabase,
+              'joint_declarations',
+              'slug,title,source_url,declared_at',
+            ),
+          ])
 
           return buildContentCatalog({
             subjects,
@@ -104,6 +116,12 @@ export function createContentCatalogRepository(supabase: SupabaseClient): Conten
               familyId: o.family_id,
               slug: o.slug,
               name: o.name,
+            })),
+            jointDeclarations: jointDeclarations.map((declaration) => ({
+              slug: declaration.slug,
+              title: declaration.title,
+              sourceUrl: declaration.source_url,
+              declaredAt: declaration.declared_at,
             })),
           })
         },

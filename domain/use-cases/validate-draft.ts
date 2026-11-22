@@ -33,7 +33,8 @@ import { contentFieldsOf } from './validate-statement-fields'
 import { organisationAuthor, publicFigureAuthor, StatementAuthor } from '../entities/statement'
 import { ContributorIdentity, Rejected } from './types'
 import { allowedTo, found } from './preconditions'
-import { CommandFailure, FormFailure } from './run-command'
+import { CommandFailure, toldAsOne } from './run-command'
+import { signedFromDraft } from './sign-from-draft'
 
 type ValidateDraftParams = {
   draftId: string
@@ -48,14 +49,6 @@ const subjects = Effect.serviceFunctions(SubjectRepository)
 const positions = Effect.serviceFunctions(PositionRepository)
 const occupations = Effect.serviceFunctions(OccupationRepository)
 const memberships = Effect.serviceFunctions(OrganisationMembershipRepository)
-
-/** What a command behind a form says, told as one message: the draft has no form to blame a field on */
-const toldAsOne = <A, R>(
-  command: Effect.Effect<A, FormFailure, R>,
-): Effect.Effect<A, CommandFailure, R> =>
-  Effect.catchTag(command, 'Invalid', (invalid) =>
-    Effect.fail(new Rejected(Object.values(invalid.fields).join(' '))),
-  )
 
 /** What the validation found or made: its id, and whether it had to be created */
 type Resolved = { id: string; created: boolean }
@@ -118,44 +111,92 @@ export function validateDraft(params: ValidateDraftParams) {
     Effect.bind('position', ({ draft, subject, contributor }) =>
       positionOf(draft, subject.id, contributor),
     ),
-    Effect.bind('statement', ({ draft, author, subject, position, contributor }) =>
-      toldAsOne(
-        createStatementUseCase({
-          contributor,
-          author: { kind: 'existing', author: author.author },
-          /*
-           * A draft names its subject and its position by title, and the two
-           * steps above have already created or found them — so by the time
-           * the statement is written, both exist.
-           */
-          topic: {
-            kind: 'existing',
-            subjectId: subject.id,
-            position: { kind: 'existing', id: position.id },
-          },
-          // The draft already holds the content as its type calls for it
-          content: contentFieldsOf(draft.content),
-          sourceName: draft.sourceName,
-          sourceUrl: draft.sourceUrl,
-          statedAt: draft.date,
-          // Titles only: an existing argument is reused, a new one created.
-          arguments: {
-            argumentIds: [],
-            newArguments: draft.arguments.map(({ title, description }) => ({
-              title,
-              description: description ?? '',
-            })),
-          },
-        }),
-      ),
+    Effect.bind('written', ({ draft, author, subject, position, contributor }) =>
+      writtenFromDraft(draft, author.author, subject.id, position.id, contributor),
     ),
     Effect.map(
-      ({ statement, author, subject, position }): DraftValidation => ({
-        statementId: statement.id,
-        created: createdKinds(author, subject, position),
+      ({ written, author, subject, position }): DraftValidation => ({
+        statementId: written.statementId,
+        created: [
+          ...createdKinds(author, subject, position),
+          ...(written.declarationCreated ? ['joint_declaration' as const] : []),
+        ],
       }),
     ),
     Effect.tap((validation) => drafts.validated(draftId, validation)),
+  )
+}
+
+/** What the validation wrote for the draft: its statement, and whether a joint declaration came with it */
+type Written = { statementId: string; declarationCreated: boolean }
+
+type WritingServices =
+  | Effect.Effect.Context<ReturnType<typeof signedFromDraft>>
+  | Effect.Effect.Context<ReturnType<typeof statementFromDraft>>
+
+/**
+ * The statement the draft makes, once what it names exists: a signature of
+ * the joint declaration it names — referenced, completed and signed as the
+ * site lacks it — or a statement of the author's own.
+ */
+function writtenFromDraft(
+  draft: DraftStatement,
+  author: StatementAuthor,
+  subjectId: string,
+  positionId: string,
+  contributor: ContributorIdentity,
+): Effect.Effect<Written, CommandFailure, WritingServices> {
+  return draft.jointDeclaration
+    ? signedFromDraft({
+        contributor,
+        text: draft.jointDeclaration,
+        draft,
+        author,
+        subjectId,
+        positionId,
+      })
+    : statementFromDraft(draft, author, subjectId, positionId, contributor)
+}
+
+/** The statement of the author's own that a draft makes */
+function statementFromDraft(
+  draft: DraftStatement,
+  author: StatementAuthor,
+  subjectId: string,
+  positionId: string,
+  contributor: ContributorIdentity,
+) {
+  return pipe(
+    toldAsOne(
+      createStatementUseCase({
+        contributor,
+        author: { kind: 'existing', author },
+        /*
+         * A draft names its subject and its position by title, and the
+         * validation has already created or found them — so by the time
+         * the statement is written, both exist.
+         */
+        topic: {
+          kind: 'existing',
+          subjectId,
+          position: { kind: 'existing', id: positionId },
+        },
+        // The draft already holds the content as its type calls for it
+        content: contentFieldsOf(draft.content),
+        sourceName: draft.sourceName,
+        sourceUrl: draft.sourceUrl,
+        statedAt: draft.date,
+        // Titles only: an existing argument is reused, a new one created.
+        arguments: {
+          argumentIds: [],
+          newArguments: draft.arguments.map(({ title, description }) => ({
+            title,
+            description: description ?? '',
+          })),
+        },
+      }),
+    ),
+    Effect.map((statement) => ({ statementId: statement.id as string, declarationCreated: false })),
   )
 }
 

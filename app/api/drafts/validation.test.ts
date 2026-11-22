@@ -4,6 +4,7 @@ import {
   parseDraftArguments,
   parseDraftAuthor,
   parseDraftContent,
+  parseDraftJointDeclaration,
   parseDraftOccupations,
   parseDraftPatch,
   parseDraftReview,
@@ -287,7 +288,76 @@ describe('parseDraftContent', () => {
   })
 })
 
+describe('parseDraftJointDeclaration', () => {
+  it('reads no joint declaration when the draft names none', () => {
+    expect(parseDraftJointDeclaration(undefined)).toEqual({ jointDeclaration: null })
+    expect(parseDraftJointDeclaration(null)).toEqual({ jointDeclaration: null })
+  })
+
+  it('reads the title of the text, without the spaces around it', () => {
+    expect(parseDraftJointDeclaration({ title: '  Le Manifeste de Paris ' })).toEqual({
+      jointDeclaration: { title: 'Le Manifeste de Paris' },
+    })
+  })
+
+  it('keeps a presentation that says something, and drops one that does not', () => {
+    expect(
+      parseDraftJointDeclaration({
+        title: 'Le Manifeste de Paris',
+        presentation: " Contre l'oligarchie internationale ",
+      }),
+    ).toEqual({
+      jointDeclaration: {
+        title: 'Le Manifeste de Paris',
+        presentation: "Contre l'oligarchie internationale",
+      },
+    })
+    expect(
+      parseDraftJointDeclaration({ title: 'Le Manifeste de Paris', presentation: '  ' }),
+    ).toEqual({ jointDeclaration: { title: 'Le Manifeste de Paris' } })
+  })
+
+  it.each([
+    ['a string', 'Le Manifeste de Paris'],
+    ['a list', [{ title: 'Le Manifeste de Paris' }]],
+  ])('refuses %s in place of the object', (_, value) => {
+    expect(parseDraftJointDeclaration(value)).toEqual({
+      error: 'Field jointDeclaration must be an object with a title',
+    })
+  })
+
+  it.each([
+    ['too short', 'Le'],
+    ['too long', 'a'.repeat(151)],
+    ['without a letter or a digit', '« … »'],
+    ['not a text', 42],
+  ])('refuses a title %s', (_, title) => {
+    expect(parseDraftJointDeclaration({ title })).toEqual({
+      error:
+        'Field jointDeclaration.title must be 3 to 150 characters, with at least one alphanumeric character',
+    })
+  })
+
+  it('refuses a presentation that is not a text', () => {
+    expect(
+      parseDraftJointDeclaration({ title: 'Le Manifeste de Paris', presentation: 42 }),
+    ).toEqual({ error: 'Field jointDeclaration.presentation must be a string' })
+  })
+})
+
 describe('parseDraftPatch', () => {
+  it('reads a joint declaration through its own parser, and lets a correction take it off', () => {
+    expect(parseDraftPatch({ jointDeclaration: { title: ' Le Manifeste de Paris ' } })).toEqual({
+      fields: { jointDeclaration: { title: 'Le Manifeste de Paris' } },
+    })
+    expect(parseDraftPatch({ jointDeclaration: null })).toEqual({
+      fields: { jointDeclaration: null },
+    })
+    expect(parseDraftPatch({ jointDeclaration: 'Le Manifeste de Paris' })).toEqual({
+      error: 'Field jointDeclaration must be an object with a title',
+    })
+  })
+
   it('accepts a correction of the content, in the shape the domain gives it', () => {
     expect(
       parseDraftPatch({

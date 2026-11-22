@@ -57,7 +57,11 @@ const sameAuthor = (a: StatementAuthor, b: StatementAuthor) => a.kind === b.kind
 
 /** Whether this personality or organisation has signed the text */
 export const hasSigned = (state: JointDeclarationState, author: StatementAuthor): boolean =>
-  state.signatories.some((signatory) => sameAuthor(signatory, author))
+  isAmong(state.signatories, author)
+
+/** Whether a personality or an organisation is one of these signatories, kind and id alike */
+export const isAmong = (signatories: readonly StatementAuthor[], author: StatementAuthor) =>
+  signatories.some((signatory) => sameAuthor(signatory, author))
 
 /**
  * The statement a signature makes on one position of the text: the position,

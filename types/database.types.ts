@@ -425,6 +425,7 @@ export type Database = {
           deed: string | null
           document_name: string | null
           id: string
+          joint_declaration: Json | null
           occupations: Json
           organisation_data: Json | null
           organisation_name: string | null
@@ -457,6 +458,7 @@ export type Database = {
           deed?: string | null
           document_name?: string | null
           id?: string
+          joint_declaration?: Json | null
           occupations?: Json
           organisation_data?: Json | null
           organisation_name?: string | null
@@ -489,6 +491,7 @@ export type Database = {
           deed?: string | null
           document_name?: string | null
           id?: string
+          joint_declaration?: Json | null
           occupations?: Json
           organisation_data?: Json | null
           organisation_name?: string | null

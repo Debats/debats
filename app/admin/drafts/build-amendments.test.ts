@@ -31,6 +31,7 @@ function makeDraft(overrides: Partial<DraftStatement> = {}): DraftStatement {
     arguments: [],
     occupations: [],
     affiliations: [],
+    jointDeclaration: null,
     origin: 'test',
     chantierId: null,
     section: null,

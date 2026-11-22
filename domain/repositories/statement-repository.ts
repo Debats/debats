@@ -152,6 +152,16 @@ export interface StatementRepository {
   /** The first and last days an opinion was stated on a subject; null without any */
   findStatedSpanBySubjectId(subjectId: string): Effect.Effect<StatedSpan | null, DatabaseError>
 
+  /**
+   * The id of the statement a signatory holds on one position of a joint
+   * declaration; null when the signature made none there
+   */
+  findSignatureId(
+    jointDeclarationId: string,
+    author: StatementAuthor,
+    positionId: string,
+  ): Effect.Effect<string | null, DatabaseError>
+
   /** The ids of the live statements mobilising an argument */
   findIdsByArgumentId(argumentId: string): Effect.Effect<string[], DatabaseError>
 

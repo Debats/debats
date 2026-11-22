@@ -18,6 +18,7 @@ import StatementBody from '../../../../components/statements/StatementBody'
 import AuthorCreationPreview from '../AuthorCreationPreview'
 import CreationPreview from '../CreationPreview'
 import DraftEnrichment from '../DraftEnrichment'
+import DraftSignature from '../DraftSignature'
 import RejectForm from '../RejectForm'
 import DraftAmendForm from '../DraftAmendForm'
 import styles from './DraftCard.module.css'
@@ -124,6 +125,10 @@ export default function DraftCard({ draft, resolution, authorDraftsHref }: Draft
         <EntityStatus label={draft.subjectTitle} resolution={resolution.subject} linkPrefix="/s/" />
         <EntityStatus label={draft.positionTitle} resolution={resolution.position} />
       </div>
+
+      {draft.jointDeclaration && (
+        <DraftSignature declaration={draft.jointDeclaration} authorName={draft.author.name} />
+      )}
 
       {!resolution.author.found && <AuthorCreationPreview author={draft.author} />}
 

@@ -8,6 +8,7 @@ import {
   parseDraftArguments,
   parseDraftAuthor,
   parseDraftContent,
+  parseDraftJointDeclaration,
   parseDraftOccupations,
   parseDraftSection,
   validateSlugifiableFields,
@@ -112,6 +113,21 @@ function parseDraftInput(
   const parsedAffiliations = parseDraftAffiliations(input.affiliations)
   if ('error' in parsedAffiliations) return parsedAffiliations
 
+  const parsedText = parseDraftJointDeclaration(input.jointDeclaration)
+  if ('error' in parsedText) return parsedText
+  // A signature says what the text says: only words can be a signature
+  if (parsedText.jointDeclaration && parsedContent.content.kind !== 'declaration') {
+    return { error: 'Field jointDeclaration only applies to a content of kind "declaration"' }
+  }
+
+  // The validation makes a signature from the text alone: arguments it could not carry are refused, not dropped
+  if (parsedText.jointDeclaration && parsedArguments.arguments.length > 0) {
+    return {
+      error:
+        'Field arguments does not apply to a signature of a joint declaration: add them to the statement once it is published',
+    }
+  }
+
   // Occupations and affiliations describe the person, so an organisation has neither.
   if (
     parsedAuthor.author.kind === 'organisation' &&
@@ -126,6 +142,7 @@ function parseDraftInput(
       arguments: parsedArguments.arguments,
       occupations: parsedOccupations.occupations,
       affiliations: parsedAffiliations.affiliations,
+      jointDeclaration: parsedText.jointDeclaration,
       content: parsedContent.content,
       subjectTitle: input.subjectTitle as string,
       positionTitle: input.positionTitle as string,
