@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer } from 'effect'
-import { mergeSubjectsUseCase } from './merge-subjects'
+import { mergeSubjectsUseCase, TEXT_ENGAGES_BOTH } from './merge-subjects'
+import {
+  jointDeclarationPublished,
+  jointDeclarationStream,
+  positionTaken,
+} from '../aggregates/joint-declaration'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
+import { fakeJointDeclarationRepo, sampleJointDeclaration } from './joint-declaration-test-helpers'
 import { createStatement } from '../entities/entity-test-helpers'
 import { declarationContent, publicFigureAuthor } from '../entities/statement'
 import { StatementRepository } from '../repositories/statement-repository'
@@ -43,11 +50,19 @@ const onGel = statementOn(gel.id)
 
 const idealist = { id: 'idealist', reputation: 10_000 }
 
-/** The read side: the statements standing on the subject that disappears */
-const fakes = (statementIds: string[] = []) =>
-  Layer.succeed(StatementRepository, {
-    findIdsBySubjectId: () => Effect.succeed(statementIds),
-  } as unknown as StatementRepository)
+const manifesto = sampleJointDeclaration()
+
+/**
+ * The read side: the statements standing on the subject that disappears, and
+ * the joint declarations that engage each subject, by subject id
+ */
+const fakes = (statementIds: string[] = [], engaging: Record<string, string[]> = {}) =>
+  Layer.merge(
+    Layer.succeed(StatementRepository, {
+      findIdsBySubjectId: () => Effect.succeed(statementIds),
+    } as unknown as StatementRepository),
+    Layer.succeed(JointDeclarationRepository, fakeJointDeclarationRepo([manifesto], engaging)),
+  )
 
 /** Both subjects as the merge page showed them: two positions each, nothing else written */
 const merge = {
@@ -89,8 +104,31 @@ async function seedStatements(journal: Journal) {
   }
 }
 
-const execute = (params: typeof merge, run?: RunUnitOfWork, statementIds: string[] = []) =>
-  runWith(fakes(statementIds))(mergeSubjectsUseCase(params), run)
+const execute = (
+  params: typeof merge,
+  run?: RunUnitOfWork,
+  statementIds: string[] = [],
+  engaging: Record<string, string[]> = {},
+) => runWith(fakes(statementIds, engaging))(mergeSubjectsUseCase(params), run)
+
+/** The manifesto takes the position « favorable » of the subject that disappears */
+async function seedManifesto(journal: Journal) {
+  await Effect.runPromise(
+    journal.append(
+      jointDeclarationStream(manifesto.id),
+      0,
+      [
+        jointDeclarationPublished(manifesto),
+        positionTaken({
+          subjectId: duplicate.id,
+          positionId: favorable.id,
+          quote: 'Les mots du texte.',
+        }),
+      ],
+      { actorId: 'founder' },
+    ),
+  )
+}
 
 describe('mergeSubjectsUseCase', () => {
   it('refuses a visitor who is not signed in', async () => {
@@ -145,6 +183,36 @@ describe('mergeSubjectsUseCase', () => {
       { subjectId: kept.id, positionId: pour.id },
       { subjectId: kept.id, positionId: gel.id },
     ])
+  })
+
+  it('leads a joint declaration that engaged the subject to the one that remains, on the position its own became', async () => {
+    const { run, journal } = await bothSubjects()
+    await seedManifesto(journal)
+
+    const result = await execute(merge, run, [], { [duplicate.id]: [manifesto.id] })
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(journal.all().at(-1)).toMatchObject({
+      streamType: 'joint_declaration',
+      streamId: manifesto.id,
+      type: 'EngagedSubjectMerged',
+      // « Favorable » was folded into « Pour »: the text takes that one
+      payload: { sourceSubjectId: duplicate.id, subjectId: kept.id, positionId: pour.id },
+    })
+  })
+
+  it('refuses when a joint declaration engages both subjects: it would speak twice on the one that remains', async () => {
+    const { run, journal } = await bothSubjects()
+    await seedManifesto(journal)
+    const before = journal.all().length
+
+    const result = await execute(merge, run, [], {
+      [duplicate.id]: [manifesto.id],
+      [kept.id]: [manifesto.id],
+    })
+
+    expect(Either.isLeft(result) && result.left).toBe(TEXT_ENGAGES_BOTH)
+    expect(journal.all()).toHaveLength(before)
   })
 
   it('hands the themes and the links over, and leads a linked subject to the one that remains', async () => {

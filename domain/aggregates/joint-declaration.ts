@@ -121,6 +121,15 @@ export const takenPositionMerged = (sourceId: string, targetId: string): JointDe
   payload: { sourceId, targetId },
 })
 
+export const engagedSubjectMerged = (
+  sourceSubjectId: string,
+  subjectId: string,
+  positionId: string,
+): JointDeclarationEvent => ({
+  type: 'EngagedSubjectMerged',
+  payload: { sourceSubjectId, subjectId, positionId },
+})
+
 export const subjectDisengaged = (subjectId: string): JointDeclarationEvent => ({
   type: 'SubjectDisengaged',
   payload: { subjectId },
@@ -191,6 +200,26 @@ export const followMergedPosition =
       ? [takenPositionMerged(sourceId, targetId)]
       : []
 
+/**
+ * The text follows a subject it engages, merged into another: `positionAfter`
+ * tells, from the position the text takes, the one it takes there. Its
+ * signatories' statements follow on their own streams (`followSubject`). A
+ * text that engages both subjects is the merge's to refuse: it would speak
+ * twice on the one that remains.
+ */
+export const followEngagedSubject =
+  (
+    sourceSubjectId: string,
+    targetSubjectId: string,
+    positionAfter: (positionId: string) => string,
+  ): JointDeclarationCascade =>
+  (state) =>
+    state.positions
+      .filter((taken) => taken.subjectId === sourceSubjectId)
+      .map((taken) =>
+        engagedSubjectMerged(sourceSubjectId, targetSubjectId, positionAfter(taken.positionId)),
+      )
+
 /** The text stops engaging a subject that leaves the site, with the statements made on it */
 export const disengageFrom =
   (subjectId: string): JointDeclarationCascade =>
@@ -250,6 +279,21 @@ function apply(
           positions: state.positions.map((taken) =>
             taken.positionId === event.payload.sourceId
               ? { ...taken, positionId: event.payload.targetId }
+              : taken,
+          ),
+        }
+      )
+    case 'EngagedSubjectMerged':
+      return (
+        state && {
+          ...touched(state, stored),
+          positions: state.positions.map((taken) =>
+            taken.subjectId === event.payload.sourceSubjectId
+              ? {
+                  ...taken,
+                  subjectId: event.payload.subjectId,
+                  positionId: event.payload.positionId,
+                }
               : taken,
           ),
         }

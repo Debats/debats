@@ -44,6 +44,15 @@ async function apply(decoded: JointDeclarationEvent, stored: StoredEvent, tx: Pr
         data: { position_id: decoded.payload.targetId },
       })
       return touch(tx, stored)
+    case 'EngagedSubjectMerged':
+      await tx.joint_declaration_positions.updateMany({
+        where: {
+          joint_declaration_id: stored.streamId,
+          subject_id: decoded.payload.sourceSubjectId,
+        },
+        data: { subject_id: decoded.payload.subjectId, position_id: decoded.payload.positionId },
+      })
+      return touch(tx, stored)
     case 'SubjectDisengaged':
       await tx.joint_declaration_positions.deleteMany({
         where: { joint_declaration_id: stored.streamId, subject_id: decoded.payload.subjectId },

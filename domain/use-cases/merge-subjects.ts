@@ -8,10 +8,13 @@ import {
   SubjectState,
 } from '../aggregates/subject'
 import { PositionFate } from '../aggregates/subject-events'
+import { followEngagedSubject } from '../aggregates/joint-declaration'
 import { followSubject } from '../aggregates/statement'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
 import { StatementRepository } from '../repositories/statement-repository'
+import { decideOnEachJointDeclaration } from './joint-declaration-stream'
 import { ContributorIdentity, Rejected } from './types'
 import { allowedTo, decoded } from './preconditions'
 import { closeReviewOfMerged } from './record-correction'
@@ -34,8 +37,9 @@ export type SubjectsMerge = S.Schema.Encoded<typeof SubjectsMergeInput>
 
 type MergeSubjectsParams = SubjectsMerge & { contributor: ContributorIdentity | null }
 
-/** Read side: which statements stand on the subject that disappears */
+/** Read side: which statements stand on the subject that disappears, which joint declarations engage either */
 const statements = Effect.serviceFunctions(StatementRepository)
+const declarations = Effect.serviceFunctions(JointDeclarationRepository)
 
 /**
  * Folds a duplicate subject into the one that should remain. The target
@@ -60,19 +64,44 @@ export function mergeSubjectsUseCase(params: MergeSubjectsParams) {
     Effect.bind('statementIds', ({ merge }) =>
       statements.findIdsBySubjectId(merge.sourceSubjectId),
     ),
-    Effect.flatMap(({ contributor, merge, statementIds }) =>
-      runUnitOfWork((events) => recordMerge(events, contributor.id, merge, statementIds)),
+    Effect.bind('declarationIds', ({ merge }) => declarationsFollowing(merge)),
+    Effect.flatMap(({ contributor, merge, statementIds, declarationIds }) =>
+      runUnitOfWork((events) =>
+        recordMerge(events, contributor.id, merge, statementIds, declarationIds),
+      ),
     ),
   )
 }
 
 type Merge = S.Schema.Type<typeof SubjectsMergeInput>
 
+export const TEXT_ENGAGES_BOTH =
+  'Une déclaration commune prend position sur les deux sujets : elle en prendrait deux sur celui qui reste. Retirez d’abord l’une de ses positions.'
+
+/**
+ * The joint declarations that engage the subject that disappears: they follow
+ * it. One that also engages the subject that remains would speak twice on it,
+ * which a text never does — the merge is refused.
+ */
+const declarationsFollowing = ({ sourceSubjectId, targetSubjectId }: Merge) =>
+  pipe(
+    Effect.all({
+      onSource: declarations.findIdsBySubjectId(sourceSubjectId),
+      onTarget: declarations.findIdsBySubjectId(targetSubjectId),
+    }),
+    Effect.filterOrFail(
+      ({ onSource, onTarget }) => !onSource.some((id) => onTarget.includes(id)),
+      () => new Rejected(TEXT_ENGAGES_BOTH),
+    ),
+    Effect.map(({ onSource }) => onSource),
+  )
+
 function recordMerge(
   events: EventStore,
   actorId: string,
   merge: Merge,
   statementIds: readonly string[],
+  declarationIds: readonly string[],
 ) {
   const { sourceSubjectId, targetSubjectId, positions } = merge
   return pipe(
@@ -102,6 +131,15 @@ function recordMerge(
         statementIds,
         actorId,
         followSubject(targetSubjectId, positionAfter(positions)),
+      ),
+    ),
+    // A joint declaration that engaged the source engages the target: its next signatory will
+    Effect.tap(() =>
+      decideOnEachJointDeclaration(
+        events,
+        declarationIds,
+        actorId,
+        followEngagedSubject(sourceSubjectId, targetSubjectId, positionAfter(positions)),
       ),
     ),
     // What is gone takes its open flags with it: the subject, and each position folded

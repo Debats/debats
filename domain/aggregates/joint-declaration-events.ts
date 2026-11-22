@@ -60,6 +60,15 @@ export const TakenPositionMerged = S.Struct({
   payload: S.Struct({ sourceId: S.String, targetId: S.String }),
 })
 
+/**
+ * A subject the text engaged was merged into another: the text takes position
+ * on that one, on the position its own became there (carried over, or folded).
+ */
+export const EngagedSubjectMerged = S.Struct({
+  type: S.Literal('EngagedSubjectMerged'),
+  payload: S.Struct({ sourceSubjectId: S.String, subjectId: S.String, positionId: S.String }),
+})
+
 /** A subject the text engaged left the site: the text no longer takes position on it */
 export const SubjectDisengaged = S.Struct({
   type: S.Literal('SubjectDisengaged'),
@@ -72,6 +81,7 @@ export const JointDeclarationEvent = S.Union(
   SignatoryAdded,
   SignatoryWithdrawn,
   TakenPositionMerged,
+  EngagedSubjectMerged,
   SubjectDisengaged,
 )
 export type JointDeclarationEvent = S.Schema.Type<typeof JointDeclarationEvent>
