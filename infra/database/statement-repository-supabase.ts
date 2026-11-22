@@ -44,7 +44,16 @@ function mapAuthor(row: Pick<StatementRow, 'public_figure_id' | 'organisation_id
   throw new Error('Statement without author')
 }
 
-function mapStatementRow(row: StatementRow): Statement {
+/** The joint declaration a signature comes from, when the query joined it */
+interface JointDeclarationJoin {
+  id: string
+  title: string
+  slug: string
+}
+
+function mapStatementRow(
+  row: StatementRow & { joint_declarations?: JointDeclarationJoin | null },
+): Statement {
   return Statement.make({
     id: StatementId.make(row.id),
     author: mapAuthor(row),
@@ -53,6 +62,7 @@ function mapStatementRow(row: StatementRow): Statement {
     sourceName: row.source_name,
     sourceUrl: row.source_url,
     statedAt: new Date(row.stated_at),
+    ...(row.joint_declarations ? { jointDeclaration: row.joint_declarations } : {}),
     createdBy: row.created_by ?? undefined,
     createdAt: new Date(row.created_at!),
     updatedAt: new Date(row.updated_at!),
@@ -122,6 +132,7 @@ function toArgumentRefs(links: ArgumentLinkJoin[] | null): ArgumentRef[] {
 const STATEMENT_COLUMNS = `
   id, public_figure_id, organisation_id, position_id, source_name, source_url, stated_at,
   statement_type, quote, document_name, voted_text, vote_choice, deed,
+  joint_declaration_id, joint_declarations (id, title, slug),
   created_by, created_at, updated_at, deleted_at`
 
 const STATEMENT_WITH_AUTHOR_QUERY = `
@@ -287,7 +298,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select('*')
+            .select(STATEMENT_COLUMNS)
             .eq('id', id)
             .is('deleted_at', null)
             .single()
@@ -307,7 +318,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select('*')
+            .select(STATEMENT_COLUMNS)
             .eq('public_figure_id', publicFigureId)
             .is('deleted_at', null)
 
@@ -322,7 +333,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         try: async () => {
           const { data, error } = await supabase
             .from('statements')
-            .select('*')
+            .select(STATEMENT_COLUMNS)
             .eq('position_id', positionId)
             .is('deleted_at', null)
 

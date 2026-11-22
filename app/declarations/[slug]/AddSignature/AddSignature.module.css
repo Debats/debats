@@ -1,0 +1,18 @@
+.card {
+  composes: railCard from '../../../../styles/blocks.module.css';
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.text {
+  composes: small from '../../../../styles/text.module.css';
+  font-size: 15px;
+}

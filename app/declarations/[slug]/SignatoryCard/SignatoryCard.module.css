@@ -1,0 +1,35 @@
+.card,
+.card:link,
+.card:visited {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 14px 16px;
+  color: var(--ink);
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.card:hover .name {
+  color: var(--signal);
+}
+
+.role {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}

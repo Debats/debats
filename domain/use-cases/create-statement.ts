@@ -1,17 +1,9 @@
 import { Effect, pipe } from 'effect'
-import {
-  organisationAuthor,
-  publicFigureAuthor,
-  StatementAuthor,
-  StatementId,
-} from '../entities/statement'
+import { StatementId } from '../entities/statement'
 import { addStatement } from '../aggregates/statement'
 import { EventStore } from '../events/event-store'
 import { runUnitOfWork } from '../events/unit-of-work'
-import { DatabaseError } from '../repositories/errors'
 import { PositionRepository } from '../repositories/position-repository'
-import { PublicFigureRepository } from '../repositories/public-figure-repository'
-import { OrganisationRepository } from '../repositories/organisation-repository'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 import { today } from './today'
 import {
@@ -41,22 +33,7 @@ import {
   positionReward,
   recordNewPosition,
 } from './create-position'
-import {
-  inlineOrganisationChecked,
-  NewOrganisation,
-  ORGANISATION_NAME_TAKEN,
-  organisationReward,
-  recordNewOrganisation,
-} from './create-organisation'
-import { OrganisationType } from '../entities/organisation'
-import {
-  inlinePublicFigureChecked,
-  NewPublicFigure,
-  PUBLIC_FIGURE_NAME_TAKEN,
-  publicFigureReward,
-  recordNewPublicFigure,
-} from './create-public-figure'
-import { ValidatedPublicFigureFields } from './validate-public-figure-fields'
+import { authorIn, authorRewards, authorSettled, StatementAuthorInput } from './statement-author'
 import { grantEach, rewardFor } from './reward'
 import { openStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
@@ -72,16 +49,8 @@ export type StatementPositionInput =
   | { kind: 'existing'; id: string }
   | ({ kind: 'new' } & InlinePosition)
 
-/**
- * Who speaks: a personality or an organisation already referenced, or a
- * personality the form opens in the same breath. The two axes stay apart —
- * which kind of author, and existing or to open — so that `StatementAuthor`,
- * which is the domain's own notion, never carries the second.
- */
-export type StatementAuthorInput =
-  | { kind: 'existing'; author: StatementAuthor }
-  | { kind: 'new_figure'; figure: NewPublicFigure }
-  | { kind: 'new_organisation'; organisation: NewOrganisation }
+// The forms name the author's input from here, where they name the command's
+export type { StatementAuthorInput }
 
 /**
  * What the statement is about: a subject, and the position it defends on it —
@@ -136,46 +105,8 @@ type SettledTopic =
       readonly position: { title: string; description: string }
     }
 
-/** What the preconditions settled about the author: one to open, or one read */
-type SettledAuthor =
-  | {
-      readonly kind: 'new_figure'
-      readonly figure: NewPublicFigure
-      readonly fields: ValidatedPublicFigureFields
-    }
-  | {
-      readonly kind: 'new_organisation'
-      readonly organisation: NewOrganisation
-      readonly organisationType: OrganisationType
-    }
-  | { readonly kind: 'existing'; readonly author: StatementAuthor }
-
-/** Read side: the author and the position must exist, the position on the subject */
+/** Read side: the position must exist, on the subject */
 const positions = Effect.serviceFunctions(PositionRepository)
-const figures = Effect.serviceFunctions(PublicFigureRepository)
-const organisations = Effect.serviceFunctions(OrganisationRepository)
-
-/** The author must exist; the message names what was looked for */
-const authorKnown = (
-  author: StatementAuthor,
-): Effect.Effect<
-  void,
-  Rejected | DatabaseError,
-  PublicFigureRepository | OrganisationRepository
-> =>
-  author.kind === 'organisation'
-    ? Effect.asVoid(
-        Effect.flatMap(
-          organisations.findById(author.id),
-          found('L’organisation sélectionnée est introuvable.'),
-        ),
-      )
-    : Effect.asVoid(
-        Effect.flatMap(
-          figures.findById(author.id),
-          found('La personnalité sélectionnée est introuvable.'),
-        ),
-      )
 
 /** A position already on the subject: it must exist, and be one of its own */
 const positionOnSubject = (subjectId: string, positionId: string) =>
@@ -235,36 +166,6 @@ const topicSettled = (topic: StatementTopic, contributor: ContributorIdentity | 
         (position): SettledTopic => ({ kind: 'existing', subjectId: topic.subjectId, position }),
       )
 
-/**
- * Which author the statement will carry, settled before anything is written:
- * a read from the tables, or the fields of a personality to open. Judging the
- * Wikipedia page is a network call — it happens here, and never inside the
- * transaction, whose seconds are counted.
- */
-const authorSettled = (author: StatementAuthorInput, contributor: ContributorIdentity | null) => {
-  switch (author.kind) {
-    case 'new_figure':
-      return Effect.map(
-        inlinePublicFigureChecked(author.figure, contributor),
-        (fields): SettledAuthor => ({ kind: 'new_figure', figure: author.figure, fields }),
-      )
-    case 'new_organisation':
-      return Effect.map(
-        inlineOrganisationChecked(author.organisation, contributor),
-        ({ organisationType }): SettledAuthor => ({
-          kind: 'new_organisation',
-          organisation: author.organisation,
-          organisationType,
-        }),
-      )
-    case 'existing':
-      return Effect.map(
-        authorKnown(author.author),
-        (): SettledAuthor => ({ kind: 'existing', author: author.author }),
-      )
-  }
-}
-
 /** The position the statement hangs on: the one opened in this transaction, or the one chosen */
 const positionIn = (
   events: EventStore,
@@ -321,43 +222,6 @@ const topicRewards = (contributorId: string, settled: SettledTopic, written: Wri
     : settled.position.kind === 'new'
       ? [positionReward(contributorId, written.positionId)]
       : []
-
-/** The author the statement carries: the one opened here, or the one read */
-const authorIn = (events: EventStore, contributorId: string, settled: SettledAuthor) => {
-  switch (settled.kind) {
-    case 'new_figure':
-      return pipe(
-        recordNewPublicFigure(events, contributorId, settled.figure, settled.fields),
-        Effect.map((figure) => publicFigureAuthor(figure.id)),
-        uniqueTakenAs('figureName', PUBLIC_FIGURE_NAME_TAKEN),
-      )
-    case 'new_organisation':
-      return pipe(
-        recordNewOrganisation(
-          events,
-          contributorId,
-          settled.organisation,
-          settled.organisationType,
-        ),
-        Effect.map((organisation) => organisationAuthor(organisation.id)),
-        uniqueTakenAs('organisationName', ORGANISATION_NAME_TAKEN),
-      )
-    case 'existing':
-      return Effect.succeed(settled.author)
-  }
-}
-
-/** What opening the author earned, if one was opened at all */
-const authorRewards = (contributorId: string, settled: SettledAuthor, writtenId: string) => {
-  switch (settled.kind) {
-    case 'new_figure':
-      return [publicFigureReward(contributorId, writtenId)]
-    case 'new_organisation':
-      return [organisationReward(contributorId, writtenId)]
-    case 'existing':
-      return []
-  }
-}
 
 export function createStatementUseCase(params: CreateStatementParams) {
   const { author, topic, sourceName, sourceUrl, statedAt } = params

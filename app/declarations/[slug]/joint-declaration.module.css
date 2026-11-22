@@ -1,0 +1,61 @@
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.block + .block {
+  margin-top: 40px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.lead {
+  composes: small from '../../../styles/text.module.css';
+  font-size: 15px;
+}
+
+.stances {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signatories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sourceLink,
+.sourceLink:link,
+.sourceLink:visited {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.sourceLink:hover {
+  color: var(--signal);
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 26px;
+  }
+}

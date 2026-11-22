@@ -95,6 +95,7 @@ export default async function EditStatementByIdPage({ params }: PageProps) {
         statementId={statement.id}
         revision={revision}
         review={review}
+        signedWith={statement.jointDeclaration}
         returnHref={author.href}
         positions={positions.map((p) => ({ id: p.id, title: p.title }))}
         canUseArguments={canPerform(contributor.reputation, 'add_argument')}

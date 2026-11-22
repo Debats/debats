@@ -1,5 +1,11 @@
 import { Either } from 'effect'
-import { Statement, StatementAuthor, StatementContent, StatementId } from '../entities/statement'
+import {
+  contentLine,
+  Statement,
+  StatementAuthor,
+  StatementContent,
+  StatementId,
+} from '../entities/statement'
 import { StoredEvent, StreamRef } from '../events/event-store'
 import { always, Cascade, Decision, refused } from './decision'
 import { isoDate } from './iso-date'
@@ -18,6 +24,8 @@ export interface StatementState {
   statement: Statement
   /** The subject it stands on; null for a stream opened before the events said it */
   subjectId: string | null
+  /** The joint declaration it is a signature of; null for a statement of the author's own */
+  jointDeclarationId: string | null
   argumentIds: readonly string[]
   deletedAt: Date | null
 }
@@ -50,12 +58,20 @@ const fields = (input: StatementRevisionInput): StatementFields => ({
 export type StatementAddition = StatementRevisionInput & {
   author: StatementAuthor
   subjectId: string
+  /** The joint declaration the statement is a signature of, when it is one */
+  jointDeclarationId?: string
 }
 
-export const statementAdded = (input: StatementAddition): StatementEvent => ({
-  type: 'StatementAdded',
-  payload: { author: input.author, subjectId: input.subjectId, ...fields(input) },
-})
+export const statementAdded = (input: StatementAddition) =>
+  ({
+    type: 'StatementAdded',
+    payload: {
+      author: input.author,
+      subjectId: input.subjectId,
+      ...(input.jointDeclarationId ? { jointDeclarationId: input.jointDeclarationId } : {}),
+      ...fields(input),
+    },
+  }) satisfies StatementEvent
 
 export const statementEdited = (input: StatementRevisionInput): StatementEvent => ({
   type: 'StatementEdited',
@@ -87,17 +103,42 @@ export type StatementDecision = Decision<StatementState, StatementEvent>
 export type StatementCascade = Cascade<StatementState, StatementEvent>
 
 export const OTHER_SUBJECT = 'La nouvelle position doit appartenir au même sujet.'
+export const SIGNED_JOINTLY =
+  'Cette prise de position est la signature d’une déclaration commune : seuls ses arguments se modifient ici.'
+
+/**
+ * Whether an edit leaves what the statement says as it is. A signature says
+ * what its text says, for every signatory at once: its arguments are the only
+ * thing of its own.
+ */
+const keepsWhatIsSaid = (state: StatementState, input: StatementRevisionInput): boolean => {
+  const { statement } = state
+  return (
+    input.positionId === statement.positionId &&
+    input.content.kind === statement.content.kind &&
+    contentLine(input.content) === contentLine(statement.content) &&
+    input.sourceName === statement.sourceName &&
+    input.sourceUrl === statement.sourceUrl &&
+    isoDate(input.statedAt) === isoDate(statement.statedAt)
+  )
+}
 
 /** A contributor adds a statement; its id is the stream's, chosen by the command */
 export const addStatement = (input: StatementAddition): StatementEvent[] => [statementAdded(input)]
 
-/** A contributor changes what the statement says; its position may only move within its subject */
+/**
+ * A contributor changes what the statement says; its position may only move
+ * within its subject, and a signature only changes its arguments.
+ */
 export const editStatement =
   (input: StatementRevisionInput, positionSubjectId: string): StatementDecision =>
-  (state) =>
-    staysOnItsSubject(state, positionSubjectId)
+  (state) => {
+    if (state.jointDeclarationId !== null && !keepsWhatIsSaid(state, input))
+      return refused(SIGNED_JOINTLY)
+    return staysOnItsSubject(state, positionSubjectId)
       ? Either.right([statementEdited(input)])
       : refused(OTHER_SUBJECT, 'positionId')
+  }
 
 /** A moderator withdraws the statement, found beyond repair; a live statement has nothing to refuse */
 export const withdrawStatement = (): StatementDecision => always(statementDeleted())
@@ -159,6 +200,7 @@ function apply(
           updatedAt: stored.occurredAt,
         }),
         subjectId: event.payload.subjectId ?? null,
+        jointDeclarationId: event.payload.jointDeclarationId ?? null,
         argumentIds: event.payload.argumentIds,
         deletedAt: null,
       }

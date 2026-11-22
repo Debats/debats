@@ -1,0 +1,93 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date {
+  composes: meta from '../../../styles/text.module.css';
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.12;
+  text-wrap: pretty;
+}
+
+.titleLink,
+.titleLink:link,
+.titleLink:visited {
+  color: var(--ink);
+}
+
+.titleLink:hover {
+  color: var(--signal);
+}
+
+.presentation {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.subject,
+.subject:link,
+.subject:visited {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 14px;
+  color: var(--ink);
+  background-color: var(--paper);
+  border-radius: var(--radius-pill);
+}
+
+.subject:hover {
+  color: var(--signal);
+}
+
+.signatories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.count {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+}

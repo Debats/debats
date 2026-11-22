@@ -9,6 +9,7 @@ import { ChantierRepository } from '../domain/repositories/chantier-repository'
 import { ContributorRepository } from '../domain/repositories/contributor-repository'
 import { DraftStatementRepository } from '../domain/repositories/draft-statement-repository'
 import { InvitationRepository } from '../domain/repositories/invitation-repository'
+import { JointDeclarationRepository } from '../domain/repositories/joint-declaration-repository'
 import { OccupationFamilyRepository } from '../domain/repositories/occupation-family-repository'
 import { OccupationRepository } from '../domain/repositories/occupation-repository'
 import { OrganisationMembershipRepository } from '../domain/repositories/organisation-membership-repository'
@@ -33,6 +34,7 @@ import { createChantierRepository } from './database/chantier-repository-supabas
 import { createContributorRepository } from './database/contributor-repository-supabase'
 import { createDraftStatementRepository } from './database/draft-statement-repository-supabase'
 import { createInvitationRepository } from './database/invitation-repository-supabase'
+import { createJointDeclarationRepository } from './database/joint-declaration-repository-supabase'
 import { createOccupationFamilyRepository } from './database/occupation-family-repository-supabase'
 import { createOccupationRepository } from './database/occupation-repository-supabase'
 import { createOrganisationMembershipRepository } from './database/organisation-membership-repository-supabase'
@@ -64,6 +66,7 @@ export function liveServices(supabase: SupabaseClient<Database> = createAdminSup
     Layer.succeed(ContributorRepository, createContributorRepository(supabase)),
     Layer.succeed(DraftStatementRepository, createDraftStatementRepository(supabase)),
     Layer.succeed(InvitationRepository, createInvitationRepository(supabase)),
+    Layer.succeed(JointDeclarationRepository, createJointDeclarationRepository(supabase)),
     Layer.succeed(OccupationFamilyRepository, createOccupationFamilyRepository(supabase)),
     Layer.succeed(OccupationRepository, createOccupationRepository(supabase)),
     Layer.succeed(

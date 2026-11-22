@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { ARGUMENT_STREAM } from '../../domain/aggregates/argument'
 import { CONTRIBUTOR_STREAM } from '../../domain/aggregates/contributor'
 import { INVITATION_STREAM } from '../../domain/aggregates/invitation'
+import { JOINT_DECLARATION_STREAM } from '../../domain/aggregates/joint-declaration'
 import { OCCUPATION_FAMILY_STREAM } from '../../domain/aggregates/occupation-family'
 import { ORGANISATION_STREAM } from '../../domain/aggregates/organisation'
 import { PUBLIC_FIGURE_STREAM } from '../../domain/aggregates/public-figure'
@@ -23,6 +24,7 @@ const STREAM_TYPES = [
   CONTRIBUTOR_STREAM,
   INVITATION_STREAM,
   REVIEW_STREAM,
+  JOINT_DECLARATION_STREAM,
 ]
 
 /** Needs no database: a forgotten registration would otherwise die on the first command in production */

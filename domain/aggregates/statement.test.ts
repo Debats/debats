@@ -12,6 +12,7 @@ import {
   removeStatement,
   replaceArgument,
   replayStatement,
+  SIGNED_JOINTLY,
   statementAdded,
   statementArgumentsSet,
   statementDeleted,
@@ -105,6 +106,37 @@ describe('statement decisions', () => {
   it('let a stream opened before it named its subject take any position', () => {
     const unnamed = rebuilt({ ...added, payload: { ...added.payload, subjectId: undefined } })
     expect(editStatement(edit, 'subject-2')(unnamed)).toEqual(Either.right([edited]))
+  })
+
+  describe('on a statement that is the signature of a joint declaration', () => {
+    const signature = { ...addition, jointDeclarationId: 'declaration-1' }
+    const signed = rebuilt(statementAdded(signature))
+
+    it('name the joint declaration it comes from', () => {
+      expect(statementAdded(signature).payload.jointDeclarationId).toBe('declaration-1')
+      expect(signed.jointDeclarationId).toBe('declaration-1')
+      expect(onSubjectOne.jointDeclarationId).toBeNull()
+    })
+
+    it('let its arguments change: they are the only thing of its own', () => {
+      const otherArguments = { ...addition, argumentIds: ['arg-2', 'arg-3'] }
+      expect(editStatement(otherArguments, 'subject-1')(signed)).toEqual(
+        Either.right([statementEdited(otherArguments)]),
+      )
+    })
+
+    it.each([
+      ['its position', { positionId: 'pos-2' }],
+      ['its words', { content: declarationContent('Une autre citation, tout aussi longue.') }],
+      ['its nature', { content: voteContent('Proposition de loi', 'pour') }],
+      ['the name of its source', { sourceName: 'Libération' }],
+      ['the link to its source', { sourceUrl: 'https://liberation.fr/article' }],
+      ['its date', { statedAt: at('2024-01-16') }],
+    ])('refuse to change %s: the text says it, for every signatory', (_, change) => {
+      expect(editStatement({ ...addition, ...change }, 'subject-1')(signed)).toEqual(
+        Either.left(new Rejected(SIGNED_JOINTLY)),
+      )
+    })
   })
 
   it('follow the position merged into another', () => {

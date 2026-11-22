@@ -1,0 +1,28 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background-color: var(--warn-soft);
+  border-radius: var(--radius-card);
+}
+
+.text {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.link,
+.link:link,
+.link:visited {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link:hover {
+  color: var(--signal);
+}

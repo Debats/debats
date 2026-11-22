@@ -37,3 +37,20 @@ a.sourceLink:hover {
 .date {
   composes: meta from '../../../styles/text.module.css';
 }
+
+/* La prise de position est la signature d'un texte : on le nomme, et on y mène */
+.signature {
+  composes: meta from '../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+a.signatureLink:link,
+a.signatureLink:visited {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a.signatureLink:hover {
+  color: var(--signal);
+}

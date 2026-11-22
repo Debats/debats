@@ -1,4 +1,7 @@
 import { ReactNode } from 'react'
+import Link from 'next/link'
+import { JointDeclarationRef } from '../../../domain/entities/joint-declaration'
+import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
 import {
   STATEMENT_TYPE_LABELS,
   StatementContent,
@@ -17,6 +20,8 @@ interface StatementSourceProps {
     sourceName: string
     sourceUrl: string
     statedAt: Date
+    /** La déclaration commune dont la prise de position est une signature, quand elle en est une */
+    jointDeclaration?: JointDeclarationRef
   }
   /** Compléments en fin de ligne : lien de modification, autres auteurs… */
   children?: ReactNode
@@ -42,6 +47,20 @@ export default function StatementSource({ statement, children }: StatementSource
       </a>
       <span className={styles.separator}>·</span>
       <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
+      {statement.jointDeclaration && (
+        <>
+          <span className={styles.separator}>·</span>
+          <span className={styles.signature}>
+            signataire de{' '}
+            <Link
+              href={jointDeclarationHref(statement.jointDeclaration)}
+              className={styles.signatureLink}
+            >
+              {statement.jointDeclaration.title}
+            </Link>
+          </span>
+        </>
+      )}
       {children}
       <EntityReview entity={{ type: 'statement', id: statement.id }} />
     </div>

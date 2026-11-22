@@ -625,6 +625,216 @@ export type Database = {
           },
         ]
       }
+      joint_declaration_positions: {
+        Row: {
+          created_at: string
+          created_by: string
+          joint_declaration_id: string
+          position_id: string
+          quote: string
+          rank: number
+          subject_id: string
+        }
+        Insert: {
+          created_at: string
+          created_by: string
+          joint_declaration_id: string
+          position_id: string
+          quote: string
+          rank: number
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          joint_declaration_id?: string
+          position_id?: string
+          quote?: string
+          rank?: number
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "joint_declaration_positions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_positions_joint_declaration_id_fkey"
+            columns: ["joint_declaration_id"]
+            isOneToOne: false
+            referencedRelation: "joint_declarations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_positions_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_positions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_positions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_subject_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_positions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_subject_index_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      joint_declaration_signatories: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          joint_declaration_id: string
+          organisation_id: string | null
+          public_figure_id: string | null
+          rank: number
+        }
+        Insert: {
+          created_at: string
+          created_by: string
+          id?: string
+          joint_declaration_id: string
+          organisation_id?: string | null
+          public_figure_id?: string | null
+          rank: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          joint_declaration_id?: string
+          organisation_id?: string | null
+          public_figure_id?: string | null
+          rank?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "joint_declaration_signatories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_signatories_joint_declaration_id_fkey"
+            columns: ["joint_declaration_id"]
+            isOneToOne: false
+            referencedRelation: "joint_declarations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_signatories_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_signatories_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "v_organisation_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_signatories_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "public_figures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_signatories_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "v_public_figure_activity_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declaration_signatories_public_figure_id_fkey"
+            columns: ["public_figure_id"]
+            isOneToOne: false
+            referencedRelation: "v_public_figure_index_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      joint_declarations: {
+        Row: {
+          created_at: string
+          created_by: string
+          declared_at: string
+          id: string
+          presentation: string | null
+          slug: string
+          source_name: string
+          source_url: string
+          title: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at: string
+          created_by: string
+          declared_at: string
+          id: string
+          presentation?: string | null
+          slug: string
+          source_name: string
+          source_url: string
+          title: string
+          updated_at: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          declared_at?: string
+          id?: string
+          presentation?: string | null
+          slug?: string
+          source_name?: string
+          source_url?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "joint_declarations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "joint_declarations_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       occupation_families: {
         Row: {
           created_at: string
@@ -1167,6 +1377,7 @@ export type Database = {
           deleted_at: string | null
           document_name: string | null
           id: string
+          joint_declaration_id: string | null
           organisation_id: string | null
           position_id: string
           public_figure_id: string | null
@@ -1186,6 +1397,7 @@ export type Database = {
           deleted_at?: string | null
           document_name?: string | null
           id?: string
+          joint_declaration_id?: string | null
           organisation_id?: string | null
           position_id: string
           public_figure_id?: string | null
@@ -1205,6 +1417,7 @@ export type Database = {
           deleted_at?: string | null
           document_name?: string | null
           id?: string
+          joint_declaration_id?: string | null
           organisation_id?: string | null
           position_id?: string
           public_figure_id?: string | null
@@ -1223,6 +1436,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statements_joint_declaration_id_fkey"
+            columns: ["joint_declaration_id"]
+            isOneToOne: false
+            referencedRelation: "joint_declarations"
             referencedColumns: ["id"]
           },
           {

@@ -494,30 +494,34 @@ model arguments {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model contributors {
-  id                                                                         String                      @id(map: "user_profiles_pkey") @db.Uuid
-  reputation                                                                 Int?                        @default(0)
-  created_at                                                                 DateTime?                   @default(now()) @db.Timestamptz(6)
-  updated_at                                                                 DateTime?                   @default(now()) @db.Timestamptz(6)
+  id                                                                         String                          @id(map: "user_profiles_pkey") @db.Uuid
+  reputation                                                                 Int?                            @default(0)
+  created_at                                                                 DateTime?                       @default(now()) @db.Timestamptz(6)
+  updated_at                                                                 DateTime?                       @default(now()) @db.Timestamptz(6)
   argument_statements                                                        argument_statements[]
-  arguments_arguments_created_byTocontributors                               arguments[]                 @relation("arguments_created_byTocontributors")
-  arguments_arguments_updated_byTocontributors                               arguments[]                 @relation("arguments_updated_byTocontributors")
-  chantiers_chantiers_created_byTocontributors                               chantiers[]                 @relation("chantiers_created_byTocontributors")
-  chantiers_chantiers_updated_byTocontributors                               chantiers[]                 @relation("chantiers_updated_byTocontributors")
+  arguments_arguments_created_byTocontributors                               arguments[]                     @relation("arguments_created_byTocontributors")
+  arguments_arguments_updated_byTocontributors                               arguments[]                     @relation("arguments_updated_byTocontributors")
+  chantiers_chantiers_created_byTocontributors                               chantiers[]                     @relation("chantiers_created_byTocontributors")
+  chantiers_chantiers_updated_byTocontributors                               chantiers[]                     @relation("chantiers_updated_byTocontributors")
   confirmations                                                              confirmations[]
-  users                                                                      users                       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_profiles_id_fkey")
+  users                                                                      users                           @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_profiles_id_fkey")
   domain_events                                                              domain_events[]
-  flags_flags_created_byTocontributors                                       flags[]                     @relation("flags_created_byTocontributors")
-  flags_flags_updated_byTocontributors                                       flags[]                     @relation("flags_updated_byTocontributors")
-  invitations_invitations_invitee_idTocontributors                           invitations[]               @relation("invitations_invitee_idTocontributors")
-  invitations_invitations_inviter_idTocontributors                           invitations[]               @relation("invitations_inviter_idTocontributors")
-  occupation_families_occupation_families_created_byTocontributors           occupation_families[]       @relation("occupation_families_created_byTocontributors")
-  occupation_families_occupation_families_updated_byTocontributors           occupation_families[]       @relation("occupation_families_updated_byTocontributors")
-  occupations_occupations_created_byTocontributors                           occupations[]               @relation("occupations_created_byTocontributors")
-  occupations_occupations_updated_byTocontributors                           occupations[]               @relation("occupations_updated_byTocontributors")
-  organisation_memberships_organisation_memberships_created_byTocontributors organisation_memberships[]  @relation("organisation_memberships_created_byTocontributors")
-  organisation_memberships_organisation_memberships_updated_byTocontributors organisation_memberships[]  @relation("organisation_memberships_updated_byTocontributors")
-  organisations_organisations_created_byTocontributors                       organisations[]             @relation("organisations_created_byTocontributors")
-  organisations_organisations_updated_byTocontributors                       organisations[]             @relation("organisations_updated_byTocontributors")
+  flags_flags_created_byTocontributors                                       flags[]                         @relation("flags_created_byTocontributors")
+  flags_flags_updated_byTocontributors                                       flags[]                         @relation("flags_updated_byTocontributors")
+  invitations_invitations_invitee_idTocontributors                           invitations[]                   @relation("invitations_invitee_idTocontributors")
+  invitations_invitations_inviter_idTocontributors                           invitations[]                   @relation("invitations_inviter_idTocontributors")
+  joint_declaration_positions                                                joint_declaration_positions[]
+  joint_declaration_signatories                                              joint_declaration_signatories[]
+  joint_declarations_joint_declarations_created_byTocontributors             joint_declarations[]            @relation("joint_declarations_created_byTocontributors")
+  joint_declarations_joint_declarations_updated_byTocontributors             joint_declarations[]            @relation("joint_declarations_updated_byTocontributors")
+  occupation_families_occupation_families_created_byTocontributors           occupation_families[]           @relation("occupation_families_created_byTocontributors")
+  occupation_families_occupation_families_updated_byTocontributors           occupation_families[]           @relation("occupation_families_updated_byTocontributors")
+  occupations_occupations_created_byTocontributors                           occupations[]                   @relation("occupations_created_byTocontributors")
+  occupations_occupations_updated_byTocontributors                           occupations[]                   @relation("occupations_updated_byTocontributors")
+  organisation_memberships_organisation_memberships_created_byTocontributors organisation_memberships[]      @relation("organisation_memberships_created_byTocontributors")
+  organisation_memberships_organisation_memberships_updated_byTocontributors organisation_memberships[]      @relation("organisation_memberships_updated_byTocontributors")
+  organisations_organisations_created_byTocontributors                       organisations[]                 @relation("organisations_created_byTocontributors")
+  organisations_organisations_updated_byTocontributors                       organisations[]                 @relation("organisations_updated_byTocontributors")
   positions                                                                  positions[]
   public_figure_occupations                                                  public_figure_occupations[]
   public_figures                                                             public_figures[]
@@ -526,8 +530,8 @@ model contributors {
   statements                                                                 statements[]
   subject_themes                                                             subject_themes[]
   subjects                                                                   subjects[]
-  themes_themes_created_byTocontributors                                     themes[]                    @relation("themes_created_byTocontributors")
-  themes_themes_updated_byTocontributors                                     themes[]                    @relation("themes_updated_byTocontributors")
+  themes_themes_created_byTocontributors                                     themes[]                        @relation("themes_created_byTocontributors")
+  themes_themes_updated_byTocontributors                                     themes[]                        @relation("themes_updated_byTocontributors")
 
   @@schema("public")
 }
@@ -675,23 +679,24 @@ model organisation_memberships {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model organisations {
-  id                                                  String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                                                String                     @unique @db.VarChar(150)
-  slug                                                String                     @unique @db.VarChar(150)
-  acronym                                             String?                    @db.VarChar(30)
+  id                                                  String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                                                String                          @unique @db.VarChar(150)
+  slug                                                String                          @unique @db.VarChar(150)
+  acronym                                             String?                         @db.VarChar(30)
   organisation_type                                   organisation_type
   presentation                                        String
   wikipedia_url                                       String?
   website_url                                         String?
-  notoriety_sources                                   String[]                   @default([])
-  created_by                                          String                     @db.Uuid
-  updated_by                                          String                     @db.Uuid
-  created_at                                          DateTime                   @default(now()) @db.Timestamptz(6)
-  updated_at                                          DateTime                   @default(now()) @db.Timestamptz(6)
-  deleted_at                                          DateTime?                  @db.Timestamptz(6)
+  notoriety_sources                                   String[]                        @default([])
+  created_by                                          String                          @db.Uuid
+  updated_by                                          String                          @db.Uuid
+  created_at                                          DateTime                        @default(now()) @db.Timestamptz(6)
+  updated_at                                          DateTime                        @default(now()) @db.Timestamptz(6)
+  deleted_at                                          DateTime?                       @db.Timestamptz(6)
+  joint_declaration_signatories                       joint_declaration_signatories[]
   organisation_memberships                            organisation_memberships[]
-  contributors_organisations_created_byTocontributors contributors               @relation("organisations_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  contributors_organisations_updated_byTocontributors contributors               @relation("organisations_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributors_organisations_created_byTocontributors contributors                    @relation("organisations_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributors_organisations_updated_byTocontributors contributors                    @relation("organisations_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   statements                                          statements[]
 
   @@index([id], map: "idx_organisations_not_deleted", where: raw("(deleted_at IS NULL)"))
@@ -701,18 +706,19 @@ model organisations {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model positions {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title        String        @db.VarChar(255)
-  description  String
-  subject_id   String        @db.Uuid
-  created_by   String?       @db.Uuid
-  created_at   DateTime?     @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime?     @default(now()) @db.Timestamptz(6)
-  deleted_at   DateTime?     @db.Timestamptz(6)
-  slug         String        @db.VarChar(100)
-  contributors contributors? @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  subjects     subjects      @relation(fields: [subject_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  statements   statements[]
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                       String                        @db.VarChar(255)
+  description                 String
+  subject_id                  String                        @db.Uuid
+  created_by                  String?                       @db.Uuid
+  created_at                  DateTime?                     @default(now()) @db.Timestamptz(6)
+  updated_at                  DateTime?                     @default(now()) @db.Timestamptz(6)
+  deleted_at                  DateTime?                     @db.Timestamptz(6)
+  slug                        String                        @db.VarChar(100)
+  joint_declaration_positions joint_declaration_positions[]
+  contributors                contributors?                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subjects                    subjects                      @relation(fields: [subject_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  statements                  statements[]
 
   @@unique([subject_id, slug], map: "idx_positions_subject_slug")
   @@index([id], map: "idx_positions_not_deleted", where: raw("(deleted_at IS NULL)"))
@@ -739,21 +745,22 @@ model public_figure_occupations {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model public_figures {
-  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                      String                      @unique @db.VarChar(100)
-  slug                      String                      @unique @db.VarChar(100)
-  presentation              String
-  wikipedia_url             String?
-  website_url               String?
-  created_by                String                      @db.Uuid
-  created_at                DateTime?                   @default(now()) @db.Timestamptz(6)
-  updated_at                DateTime?                   @default(now()) @db.Timestamptz(6)
-  notoriety_sources         String[]                    @default([])
-  deleted_at                DateTime?                   @db.Timestamptz(6)
-  organisation_memberships  organisation_memberships[]
-  public_figure_occupations public_figure_occupations[]
-  contributors              contributors                @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  statements                statements[]
+  id                            String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                          String                          @unique @db.VarChar(100)
+  slug                          String                          @unique @db.VarChar(100)
+  presentation                  String
+  wikipedia_url                 String?
+  website_url                   String?
+  created_by                    String                          @db.Uuid
+  created_at                    DateTime?                       @default(now()) @db.Timestamptz(6)
+  updated_at                    DateTime?                       @default(now()) @db.Timestamptz(6)
+  notoriety_sources             String[]                        @default([])
+  deleted_at                    DateTime?                       @db.Timestamptz(6)
+  joint_declaration_signatories joint_declaration_signatories[]
+  organisation_memberships      organisation_memberships[]
+  public_figure_occupations     public_figure_occupations[]
+  contributors                  contributors                    @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  statements                    statements[]
 
   @@index([id], map: "idx_public_figures_not_deleted", where: raw("(deleted_at IS NULL)"))
   @@index([slug], map: "idx_public_figures_slug")
@@ -796,34 +803,37 @@ model reputation_events {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model statements {
-  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  source_name         String                @db.VarChar(255)
-  source_url          String
-  quote               String?
-  stated_at           DateTime              @db.Date
-  created_by          String?               @db.Uuid
-  created_at          DateTime?             @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime?             @default(now()) @db.Timestamptz(6)
-  public_figure_id    String?               @db.Uuid
-  position_id         String                @db.Uuid
-  deleted_at          DateTime?             @db.Timestamptz(6)
-  statement_type      statement_type        @default(declaration)
-  organisation_id     String?               @db.Uuid
-  voted_text          String?
-  vote_choice         vote_choice?
-  deed                String?
-  document_name       String?
-  argument_statements argument_statements[]
-  contributors        contributors?         @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organisations       organisations?        @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  positions           positions             @relation(fields: [position_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  public_figures      public_figures?       @relation(fields: [public_figure_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source_name          String                @db.VarChar(255)
+  source_url           String
+  quote                String?
+  stated_at            DateTime              @db.Date
+  created_by           String?               @db.Uuid
+  created_at           DateTime?             @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?             @default(now()) @db.Timestamptz(6)
+  public_figure_id     String?               @db.Uuid
+  position_id          String                @db.Uuid
+  deleted_at           DateTime?             @db.Timestamptz(6)
+  statement_type       statement_type        @default(declaration)
+  organisation_id      String?               @db.Uuid
+  voted_text           String?
+  vote_choice          vote_choice?
+  deed                 String?
+  document_name        String?
+  joint_declaration_id String?               @db.Uuid
+  argument_statements  argument_statements[]
+  contributors         contributors?         @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  joint_declarations   joint_declarations?   @relation(fields: [joint_declaration_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organisations        organisations?        @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  positions            positions             @relation(fields: [position_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  public_figures       public_figures?       @relation(fields: [public_figure_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([id], map: "idx_statements_not_deleted", where: raw("(deleted_at IS NULL)"))
   @@index([organisation_id], map: "idx_statements_organisation_id", where: raw("(organisation_id IS NOT NULL)"))
   @@index([position_id], map: "idx_statements_position_id")
   @@index([public_figure_id], map: "idx_statements_public_figure_id")
   @@index([stated_at], map: "idx_statements_stated_at")
+  @@index([joint_declaration_id], map: "statements_joint_declaration_idx", where: raw("(joint_declaration_id IS NOT NULL)"))
   @@schema("public")
 }
 
@@ -845,24 +855,25 @@ model subject_themes {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model subjects {
-  id                                                       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title                                                    String             @unique @db.VarChar(100)
-  slug                                                     String             @unique @db.VarChar(100)
+  id                                                       String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                                                    String                        @unique @db.VarChar(100)
+  slug                                                     String                        @unique @db.VarChar(100)
   presentation                                             String
   problem                                                  String
   picture_url                                              String?
-  created_by                                               String?            @db.Uuid
-  created_at                                               DateTime?          @default(now()) @db.Timestamptz(6)
-  updated_at                                               DateTime?          @default(now()) @db.Timestamptz(6)
-  deleted_at                                               DateTime?          @db.Timestamptz(6)
-  merged_into_id                                           String?            @db.Uuid
+  created_by                                               String?                       @db.Uuid
+  created_at                                               DateTime?                     @default(now()) @db.Timestamptz(6)
+  updated_at                                               DateTime?                     @default(now()) @db.Timestamptz(6)
+  deleted_at                                               DateTime?                     @db.Timestamptz(6)
+  merged_into_id                                           String?                       @db.Uuid
+  joint_declaration_positions                              joint_declaration_positions[]
   positions                                                positions[]
-  subjects                                                 subjects?          @relation("subjectsTosubjects", fields: [merged_into_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  other_subjects                                           subjects[]         @relation("subjectsTosubjects")
-  related_subjects_related_subjects_subject_id_1Tosubjects related_subjects[] @relation("related_subjects_subject_id_1Tosubjects")
-  related_subjects_related_subjects_subject_id_2Tosubjects related_subjects[] @relation("related_subjects_subject_id_2Tosubjects")
+  subjects                                                 subjects?                     @relation("subjectsTosubjects", fields: [merged_into_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_subjects                                           subjects[]                    @relation("subjectsTosubjects")
+  related_subjects_related_subjects_subject_id_1Tosubjects related_subjects[]            @relation("related_subjects_subject_id_1Tosubjects")
+  related_subjects_related_subjects_subject_id_2Tosubjects related_subjects[]            @relation("related_subjects_subject_id_2Tosubjects")
   subject_themes                                           subject_themes?
-  contributors                                             contributors?      @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributors                                             contributors?                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([id], map: "idx_subjects_not_deleted", where: raw("(deleted_at IS NULL)"))
   @@index([slug], map: "idx_subjects_slug")
@@ -962,6 +973,74 @@ model flags {
   @@unique([entity_id, created_by], map: "flags_one_open_per_reader", where: raw("(status = 'open'::text)"))
   @@index([entity_id], map: "flags_entity_idx")
   @@index([created_at], map: "flags_open_idx", where: raw("(status = 'open'::text)"))
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model joint_declaration_positions {
+  joint_declaration_id String             @db.Uuid
+  subject_id           String             @db.Uuid
+  position_id          String             @db.Uuid
+  quote                String
+  rank                 Int
+  created_by           String             @db.Uuid
+  created_at           DateTime           @db.Timestamptz(6)
+  contributors         contributors       @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  joint_declarations   joint_declarations @relation(fields: [joint_declaration_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  positions            positions          @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subjects             subjects           @relation(fields: [subject_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([joint_declaration_id, subject_id])
+  @@index([position_id], map: "joint_declaration_positions_position_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model joint_declaration_signatories {
+  joint_declaration_id String             @db.Uuid
+  public_figure_id     String?            @db.Uuid
+  organisation_id      String?            @db.Uuid
+  rank                 Int
+  created_by           String             @db.Uuid
+  created_at           DateTime           @db.Timestamptz(6)
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contributors         contributors       @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  joint_declarations   joint_declarations @relation(fields: [joint_declaration_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organisations        organisations?     @relation(fields: [organisation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  public_figures       public_figures?    @relation(fields: [public_figure_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([joint_declaration_id, public_figure_id], map: "joint_declaration_signatories_figure_key", where: raw("(public_figure_id IS NOT NULL)"))
+  @@unique([joint_declaration_id, organisation_id], map: "joint_declaration_signatories_organisation_key", where: raw("(organisation_id IS NOT NULL)"))
+  @@index([public_figure_id], map: "joint_declaration_signatories_figure_idx", where: raw("(public_figure_id IS NOT NULL)"))
+  @@index([organisation_id], map: "joint_declaration_signatories_organisation_idx", where: raw("(organisation_id IS NOT NULL)"))
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model joint_declarations {
+  id                                                       String                          @id @db.Uuid
+  title                                                    String                          @db.VarChar(150)
+  slug                                                     String                          @unique
+  presentation                                             String?
+  source_name                                              String                          @db.VarChar(255)
+  source_url                                               String
+  declared_at                                              DateTime                        @db.Date
+  created_by                                               String                          @db.Uuid
+  updated_by                                               String                          @db.Uuid
+  created_at                                               DateTime                        @db.Timestamptz(6)
+  updated_at                                               DateTime                        @db.Timestamptz(6)
+  joint_declaration_positions                              joint_declaration_positions[]
+  joint_declaration_signatories                            joint_declaration_signatories[]
+  contributors_joint_declarations_created_byTocontributors contributors                    @relation("joint_declarations_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributors_joint_declarations_updated_byTocontributors contributors                    @relation("joint_declarations_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  statements                                               statements[]
+
+  @@index([declared_at(sort: Desc)])
+  @@index([source_url])
   @@schema("public")
 }
 

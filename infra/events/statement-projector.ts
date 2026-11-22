@@ -65,6 +65,7 @@ async function createRow(
       id: stored.streamId,
       public_figure_id: payload.author.kind === 'public_figure' ? payload.author.id : null,
       organisation_id: payload.author.kind === 'organisation' ? payload.author.id : null,
+      joint_declaration_id: payload.jointDeclarationId ?? null,
       ...contentColumns(payload),
       created_by: stored.actorId,
       created_at: stored.occurredAt,

@@ -1,0 +1,32 @@
+.taken {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background-color: var(--paper-2);
+  border-radius: var(--radius-card);
+}
+
+.field {
+  composes: field from '../../../../components/ui/form-field.module.css';
+}
+
+.label {
+  composes: label from '../../../../components/ui/form-field.module.css';
+}
+
+.control {
+  composes: control from '../../../../components/ui/form-field.module.css';
+}
+
+.remove {
+  composes: small from '../../../../styles/text.module.css';
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--signal-dark);
+  text-decoration: underline;
+  cursor: pointer;
+}

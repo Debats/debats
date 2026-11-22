@@ -41,6 +41,7 @@ const ACTIONS = {
   // Sophiste et Métèque (tous les utilisateurs authentifiés)
   add_statement: Rank.Sophiste,
   add_position: Rank.Sophiste,
+  add_joint_declaration: Rank.Sophiste,
 
   // Métèque (0+) : relire ce que d'autres ont ajouté
   confirm_entity: Rank.Meteque,

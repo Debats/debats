@@ -7,6 +7,8 @@ import { canPerform, getRank } from '../../domain/reputation/permissions'
 import { subjectHref } from '../../domain/read-models/hrefs'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { loadJointDeclarationPage } from '../../infra/queries/joint-declarations'
+import { signaturePreviewOf } from '../../domain/read-models/joint-declaration'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import NewStatementForm from '../../components/statements/NewStatementForm'
 import { StatementDraftProvider } from '../../components/statements/StatementDraft'
@@ -59,6 +61,23 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
     const subject = await Effect.runPromise(subjectRepo.findById(subjectId))
     initialSubject = { id: subjectId, title: subjectTitle, slug: subject?.slug }
   }
+  // Reached from a joint declaration's page: the form opens on a signature of it
+  const declarationSlug = param('declaration')
+  const declarationPage = declarationSlug
+    ? await Effect.runPromise(
+        loadJointDeclarationPage(createAdminSupabaseClient(), declarationSlug),
+      )
+    : null
+  const initialDeclaration = declarationPage
+    ? {
+        option: {
+          id: declarationPage.declaration.id,
+          title: declarationPage.declaration.title,
+          slug: declarationPage.declaration.slug,
+        },
+        preview: signaturePreviewOf(declarationPage),
+      }
+    : undefined
 
   return (
     <StatementDraftProvider
@@ -117,6 +136,7 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
           initialFigure={initialFigure}
           initialOrganisation={initialOrganisation}
           initialSubject={initialSubject}
+          initialDeclaration={initialDeclaration}
           reputation={contributor.reputation}
         />
       </ContentWithSidebar>

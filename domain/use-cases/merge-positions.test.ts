@@ -6,7 +6,14 @@ import { declarationContent, publicFigureAuthor, Statement } from '../entities/s
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { statementAdded, statementStream } from '../aggregates/statement'
+import {
+  jointDeclarationPublished,
+  jointDeclarationStream,
+  positionTaken,
+} from '../aggregates/joint-declaration'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
 import { runWith } from './command-test-helpers'
+import { fakeJointDeclarationRepo, sampleJointDeclaration } from './joint-declaration-test-helpers'
 import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
 
 const subject = sampleSubject()
@@ -41,11 +48,20 @@ const validParams = {
   contributor: founder,
 }
 
-/** The read side as the test wants it: which statements stand on the source */
-const fakes = (statements: Statement[] = []) =>
+const declaration = sampleJointDeclaration()
+
+/**
+ * The read side as the test wants it: which statements stand on the source,
+ * and which joint declarations took it
+ */
+const fakes = (statements: Statement[] = [], takenBy: string[] = []) =>
   Layer.mergeAll(
     Layer.succeed(PositionRepository, positionRepo),
     Layer.succeed(StatementRepository, statementRepo(statements)),
+    Layer.succeed(
+      JointDeclarationRepository,
+      fakeJointDeclarationRepo([declaration], { [source.id]: takenBy }),
+    ),
   )
 
 const execute = runWith(fakes())
@@ -109,6 +125,41 @@ describe('mergePositionsUseCase', () => {
     ).toEqual([
       ['subject', 'PositionMergedInto', { sourceId: source.id, targetId: target.id }],
       ['statement', 'StatementMoved', { positionId: target.id }],
+    ])
+  })
+
+  it('makes a joint declaration that took the source take the target: its next signatory will', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [source, target]])
+    await Effect.runPromise(
+      journal.append(
+        jointDeclarationStream(declaration.id),
+        0,
+        [
+          jointDeclarationPublished(declaration),
+          positionTaken({
+            subjectId: subject.id,
+            positionId: source.id,
+            quote: 'Les mots du texte.',
+          }),
+        ],
+        { actorId: 'author-id' },
+      ),
+    )
+
+    const result = await runWith(fakes([], [declaration.id]))(
+      mergePositionsUseCase(validParams),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(
+      journal
+        .all()
+        .slice(-2)
+        .map((e) => [e.streamType, e.type, e.payload]),
+    ).toEqual([
+      ['subject', 'PositionMergedInto', { sourceId: source.id, targetId: target.id }],
+      ['joint_declaration', 'TakenPositionMerged', { sourceId: source.id, targetId: target.id }],
     ])
   })
 

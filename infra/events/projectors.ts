@@ -1,6 +1,7 @@
 import { ARGUMENT_STREAM } from '../../domain/aggregates/argument'
 import { CONTRIBUTOR_STREAM } from '../../domain/aggregates/contributor'
 import { INVITATION_STREAM } from '../../domain/aggregates/invitation'
+import { JOINT_DECLARATION_STREAM } from '../../domain/aggregates/joint-declaration'
 import { OCCUPATION_FAMILY_STREAM } from '../../domain/aggregates/occupation-family'
 import { ORGANISATION_STREAM } from '../../domain/aggregates/organisation'
 import { PUBLIC_FIGURE_STREAM } from '../../domain/aggregates/public-figure'
@@ -11,6 +12,7 @@ import { THEME_STREAM } from '../../domain/aggregates/theme'
 import { projectArgument } from './argument-projector'
 import { projectContributor } from './contributor-projector'
 import { projectInvitation } from './invitation-projector'
+import { projectJointDeclaration } from './joint-declaration-projector'
 import { projectOccupationFamily } from './occupation-family-projector'
 import { projectOrganisation } from './organisation-projector'
 import { projectPublicFigure } from './public-figure-projector'
@@ -32,4 +34,5 @@ export const projectors: ProjectorRegistry = {
   [CONTRIBUTOR_STREAM]: projectContributor,
   [INVITATION_STREAM]: projectInvitation,
   [REVIEW_STREAM]: projectReview,
+  [JOINT_DECLARATION_STREAM]: projectJointDeclaration,
 }

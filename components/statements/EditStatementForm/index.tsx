@@ -5,6 +5,8 @@ import { updateStatementAction } from '../../../app/actions/update-statement'
 import { ArgumentRef } from '../../../domain/read-models/argument'
 import { ReviewDetail } from '../../../domain/read-models/review'
 import { useReviewOnEdit } from '../../review/ReviewOnEdit/use-review-on-edit'
+import { JointDeclarationRef } from '../../../domain/entities/joint-declaration'
+import SignedJointlyNotice from '../SignedJointlyNotice'
 import StatementForm from '../StatementForm'
 import { StatementContentInput } from '../../../domain/use-cases/validate-statement-fields'
 
@@ -28,6 +30,8 @@ interface EditStatementFormProps {
   revision: number
   /** What readers said of the statement, when they confirmed or flagged it: the editor says what her edit makes of it */
   review: ReviewDetail | null
+  /** The joint declaration the statement is a signature of: what it says is then the text's to change */
+  signedWith?: JointDeclarationRef
 }
 
 export default function EditStatementForm({
@@ -43,6 +47,7 @@ export default function EditStatementForm({
   initialStatedAt,
   revision,
   review,
+  signedWith,
 }: EditStatementFormProps) {
   const reviewed = useReviewOnEdit(review)
   const { correction } = reviewed
@@ -52,22 +57,25 @@ export default function EditStatementForm({
   )
 
   return (
-    <StatementForm
-      onSubmit={handleSubmit}
-      submitLabel="Enregistrer les modifications"
-      pendingLabel="Enregistrement..."
-      redirectTo={returnHref}
-      cancelHref={returnHref}
-      positions={positions}
-      canUseArguments={canUseArguments}
-      initialArguments={initialArguments}
-      initialPositionId={initialPositionId}
-      initialContent={initialContent}
-      initialSourceName={initialSourceName}
-      initialSourceUrl={initialSourceUrl}
-      initialStatedAt={initialStatedAt}
-    >
-      {reviewed.block}
-    </StatementForm>
+    <>
+      {signedWith && <SignedJointlyNotice declaration={signedWith} />}
+      <StatementForm
+        onSubmit={handleSubmit}
+        submitLabel="Enregistrer les modifications"
+        pendingLabel="Enregistrement..."
+        redirectTo={returnHref}
+        cancelHref={returnHref}
+        positions={positions}
+        canUseArguments={canUseArguments}
+        initialArguments={initialArguments}
+        initialPositionId={initialPositionId}
+        initialContent={initialContent}
+        initialSourceName={initialSourceName}
+        initialSourceUrl={initialSourceUrl}
+        initialStatedAt={initialStatedAt}
+      >
+        {reviewed.block}
+      </StatementForm>
+    </>
   )
 }

@@ -1,0 +1,43 @@
+.card {
+  composes: railCard from '../../../../styles/blocks.module.css';
+  gap: 14px;
+}
+
+.title {
+  composes: railCardTitle from '../../../../styles/blocks.module.css';
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.term {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.link,
+.link:link,
+.link:visited {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.link:hover {
+  color: var(--signal);
+}

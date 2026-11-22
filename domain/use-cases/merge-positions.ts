@@ -1,7 +1,10 @@
 import { Effect, pipe } from 'effect'
 import { mergePositions } from '../aggregates/subject'
 import { moveStatement } from '../aggregates/statement'
+import { followMergedPosition } from '../aggregates/joint-declaration'
 import { runUnitOfWork } from '../events/unit-of-work'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
+import { decideOnEachJointDeclaration } from './joint-declaration-stream'
 import { PositionRepository } from '../repositories/position-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity, Rejected } from './types'
@@ -16,9 +19,13 @@ type MergePositionsParams = {
   contributor: ContributorIdentity | null
 }
 
-/** Read side: which subject the positions belong to, and which statements stand on the source */
+/**
+ * Read side: which subject the positions belong to, and which statements and
+ * joint declarations stand on the source
+ */
 const positions = Effect.serviceFunctions(PositionRepository)
 const statements = Effect.serviceFunctions(StatementRepository)
+const declarations = Effect.serviceFunctions(JointDeclarationRepository)
 
 /**
  * The source position disappears into the target. The subject records the
@@ -57,7 +64,8 @@ export function mergePositionsUseCase(params: MergePositionsParams) {
         onSource.map((s) => s.id),
       ),
     ),
-    Effect.tap(({ contributor, source, statementIds }) =>
+    Effect.bind('declarationIds', () => declarations.findIdsByPositionId(sourcePositionId)),
+    Effect.tap(({ contributor, declarationIds, source, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(
           decideOnSubject(
@@ -72,6 +80,15 @@ export function mergePositionsUseCase(params: MergePositionsParams) {
               statementIds,
               contributor.id,
               moveStatement(targetPositionId),
+            ),
+          ),
+          // A joint declaration that took the source takes the target: its next signatory will
+          Effect.andThen(
+            decideOnEachJointDeclaration(
+              events,
+              declarationIds,
+              contributor.id,
+              followMergedPosition(sourcePositionId, targetPositionId),
             ),
           ),
           // The source is gone: the flags open on it go with it

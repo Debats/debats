@@ -1,0 +1,82 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.subject {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subjectTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.inkLink,
+.inkLink:link,
+.inkLink:visited {
+  color: var(--ink);
+}
+
+.inkLink:hover {
+  color: var(--signal);
+}
+
+.problem {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.position {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background-color: var(--paper);
+  border-radius: var(--radius-control);
+}
+
+.label {
+  composes: label from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.positionLink,
+.positionLink:link,
+.positionLink:visited {
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.positionLink:hover {
+  color: var(--signal);
+}
+
+.quote {
+  composes: quote from '../../../../styles/text.module.css';
+  font-size: 17px;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+}

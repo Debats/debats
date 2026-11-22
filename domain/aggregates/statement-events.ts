@@ -27,6 +27,12 @@ const StatementAddedPayload = S.Struct({
    * 2026 and from the backfill, which the decision then cannot defend.
    */
   subjectId: S.optional(S.String),
+  /**
+   * The joint declaration the statement is a signature of: its position, its
+   * words, its source and its date are the text's, and only change with it.
+   * Absent from a statement of the author's own.
+   */
+  jointDeclarationId: S.optional(S.String),
   ...StatementFields.fields,
 })
 export type StatementAddedPayload = S.Schema.Type<typeof StatementAddedPayload>

@@ -240,6 +240,86 @@
   cursor: pointer;
 }
 
+/* What a signature will make: the positions of the text, said before they are written */
+.recap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--paper);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+}
+
+.recapLead {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.recapList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recapItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recapSubject {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.recapPosition {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.recapMeta {
+  composes: meta from '../../../styles/text.module.css';
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* The source typed is the one of a joint declaration: a question, not an error */
+.sourceHint {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--warn-soft);
+  border-radius: var(--radius-card);
+  padding: 16px 20px;
+}
+
+.sourceHintText {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.sourceHintLink,
+.sourceHintLink:link,
+.sourceHintLink:visited {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sourceHintActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 /* Opening a panel from within a sentence: the same grain as an action link */
 .inlineAction {
   composes: small from '../../../styles/text.module.css';

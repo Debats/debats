@@ -2,7 +2,10 @@ import { Effect, pipe } from 'effect'
 import { isMajorSubject } from '../entities/subject'
 import { deleteSubject } from '../aggregates/subject'
 import { removeStatement } from '../aggregates/statement'
+import { disengageFrom } from '../aggregates/joint-declaration'
 import { runUnitOfWork } from '../events/unit-of-work'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
+import { decideOnEachJointDeclaration } from './joint-declaration-stream'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { ContributorIdentity } from './types'
@@ -16,9 +19,10 @@ type DeleteSubjectParams = {
   subjectId: string
 }
 
-/** Read side: how much the subject weighs, and which statements go with it */
+/** Read side: how much the subject weighs, which statements go with it, which joint declarations engaged it */
 const subjects = Effect.serviceFunctions(SubjectRepository)
 const statements = Effect.serviceFunctions(StatementRepository)
+const declarations = Effect.serviceFunctions(JointDeclarationRepository)
 
 /**
  * Deleting a subject takes its positions with it (same stream) and every
@@ -48,12 +52,22 @@ export function deleteSubjectUseCase(params: DeleteSubjectParams) {
     ),
     Effect.bindTo('contributor'),
     Effect.bind('statementIds', () => statements.findIdsBySubjectId(subjectId)),
-    Effect.flatMap(({ contributor, statementIds }) =>
+    Effect.bind('declarationIds', () => declarations.findIdsBySubjectId(subjectId)),
+    Effect.flatMap(({ contributor, declarationIds, statementIds }) =>
       runUnitOfWork((events) =>
         pipe(
           decideOnSubject(events, subjectId, contributor.id, deleteSubject()),
           Effect.andThen(
             decideOnEachStatement(events, statementIds, contributor.id, removeStatement()),
+          ),
+          // A joint declaration that engaged the subject no longer does: its signatures on it are gone
+          Effect.andThen(
+            decideOnEachJointDeclaration(
+              events,
+              declarationIds,
+              contributor.id,
+              disengageFrom(subjectId),
+            ),
           ),
         ),
       ),

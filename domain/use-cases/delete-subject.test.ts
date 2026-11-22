@@ -7,7 +7,14 @@ import { Subject } from '../entities/subject'
 import { SubjectRepository } from '../repositories/subject-repository'
 import { StatementRepository } from '../repositories/statement-repository'
 import { statementAdded, statementDeleted, statementStream } from '../aggregates/statement'
+import {
+  jointDeclarationPublished,
+  jointDeclarationStream,
+  positionTaken,
+} from '../aggregates/joint-declaration'
+import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
 import { runWith } from './command-test-helpers'
+import { fakeJointDeclarationRepo, sampleJointDeclaration } from './joint-declaration-test-helpers'
 import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
 
 const subject: Subject = { ...sampleSubject(), createdAt: new Date('2020-01-01') }
@@ -41,11 +48,20 @@ const statementRepo = (statements: Statement[]) =>
 
 const validParams = { subjectId: subject.id }
 
-/** The read side as the test wants it: how heavy the subject is, which statements stand on it */
-const fakes = (statementsCount = 0, statements: Statement[] = []) =>
+const declaration = sampleJointDeclaration()
+
+/**
+ * The read side as the test wants it: how heavy the subject is, which
+ * statements stand on it, which joint declarations engaged it
+ */
+const fakes = (statementsCount = 0, statements: Statement[] = [], engagedBy: string[] = []) =>
   Layer.mergeAll(
     Layer.succeed(SubjectRepository, subjectRepo(statementsCount)),
     Layer.succeed(StatementRepository, statementRepo(statements)),
+    Layer.succeed(
+      JointDeclarationRepository,
+      fakeJointDeclarationRepo([declaration], { [subject.id]: engagedBy }),
+    ),
   )
 
 const execute = runWith(fakes())
@@ -78,6 +94,38 @@ describe('deleteSubjectUseCase', () => {
     expect(Either.isRight(result)).toBe(true)
     const deletions = journal.all().filter((e) => e.type === 'StatementDeleted')
     expect(deletions).toHaveLength(1)
+  })
+
+  it('makes a joint declaration that engaged the subject let go of it', async () => {
+    const { run, journal } = await journalWithSubjects([subject, [position]])
+    await Effect.runPromise(
+      journal.append(
+        jointDeclarationStream(declaration.id),
+        0,
+        [
+          jointDeclarationPublished(declaration),
+          positionTaken({
+            subjectId: subject.id,
+            positionId: position.id,
+            quote: 'Les mots du texte.',
+          }),
+        ],
+        { actorId: 'author-id' },
+      ),
+    )
+
+    const result = await runWith(fakes(0, [], [declaration.id]))(
+      deleteSubjectUseCase({ ...validParams, contributor: { id: 'abc', reputation: 10000 } }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(
+      journal
+        .all()
+        .slice(-1)
+        .map((e) => [e.streamType, e.type, e.payload]),
+    ).toEqual([['joint_declaration', 'SubjectDisengaged', { subjectId: subject.id }]])
   })
 
   it('should fail when subject does not exist', async () => {

@@ -1,4 +1,5 @@
 import * as S from 'effect/Schema'
+import { JointDeclarationRef } from './joint-declaration'
 
 export const StatementId = S.String.pipe(S.brand('StatementId'))
 export type StatementId = S.Schema.Type<typeof StatementId>
@@ -143,6 +144,11 @@ export const Statement = S.Struct({
   /** Verifiability is the promise of the site, so a source is never optional */
   sourceUrl: S.String.pipe(S.minLength(1)),
   statedAt: S.Date,
+  /**
+   * The joint declaration the statement is a signature of, when the read side
+   * joined it. A command decides on the id alone, which its stream holds.
+   */
+  jointDeclaration: S.optional(JointDeclarationRef),
   createdBy: S.optional(S.String),
   createdAt: S.Date,
   updatedAt: S.Date,

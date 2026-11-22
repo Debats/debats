@@ -13,9 +13,12 @@ import {
   groupOrganisationsByType,
   isTruncated,
 } from '../domain/read-models/organisation-summary'
+import { createJointDeclarationRepository } from '../infra/database/joint-declaration-repository-supabase'
 import {
   argumentHref,
   figureHref,
+  JOINT_DECLARATIONS_HREF,
+  jointDeclarationHref,
   occupationFamilyHref,
   organisationHref,
   subjectHref,
@@ -61,6 +64,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}/prises-de-position`,
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}${JOINT_DECLARATIONS_HREF}`,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
     {
       url: `${BASE_URL}/metiers`,
@@ -116,6 +124,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       organisationSummaries,
       argumentSummaries,
       families,
+      jointDeclarations,
     ] = await Promise.all([
       Effect.runPromise(subjectRepo.findAll()),
       Effect.runPromise(publicFigureRepo.findAll()),
@@ -124,6 +133,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       Effect.runPromise(organisationRepo.findSummaries()),
       Effect.runPromise(argumentRepo.findSummaries()),
       Effect.runPromise(familyRepo.findAll()),
+      Effect.runPromise(createJointDeclarationRepository(supabase).findAll()),
     ])
 
     const subjectPages: MetadataRoute.Sitemap = subjects.map((subject) => ({
@@ -179,6 +189,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     }))
 
+    const jointDeclarationPages: MetadataRoute.Sitemap = jointDeclarations.map((declaration) => ({
+      url: `${BASE_URL}${jointDeclarationHref(declaration)}`,
+      lastModified: declaration.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }))
+
     return [
       ...staticPages,
       ...subjectPages,
@@ -188,6 +205,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...themePages,
       ...argumentPages,
       ...occupationPages,
+      ...jointDeclarationPages,
     ]
   } catch (error) {
     Sentry.captureException(error, { extra: { context: 'sitemap generation' } })

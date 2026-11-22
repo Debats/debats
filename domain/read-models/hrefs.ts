@@ -47,6 +47,24 @@ export const figureOnSubjectHref = (figureSlug: string, subjectSlug: string): st
 export const organisationOnSubjectHref = (organisationSlug: string, subjectSlug: string): string =>
   onSubject(organisationHref(organisationSlug), subjectSlug)
 
+/** The index of the joint declarations: tribunes, manifestos, appeals, open letters */
+export const JOINT_DECLARATIONS_HREF = '/declarations'
+
+/** The page of a joint declaration */
+export const jointDeclarationHref = (declaration: { slug: string }): string =>
+  `${JOINT_DECLARATIONS_HREF}/${declaration.slug}`
+
+/** The form that references a new joint declaration */
+export const NEW_JOINT_DECLARATION_HREF = `${JOINT_DECLARATIONS_HREF}/ajouter`
+
+/** The statement form, opened on the signature of a joint declaration already chosen */
+export const signJointDeclarationHref = (declaration: { slug: string }): string =>
+  `/nouvelle-prise-de-position?declaration=${declaration.slug}`
+
+/** The form that says a joint declaration takes one more position */
+export const takeJointPositionHref = (declaration: { slug: string }): string =>
+  `${jointDeclarationHref(declaration)}/position`
+
 /** Where a visitor learns how to contribute, and signs in to do it */
 export const CONTRIBUTE_HREF = '/contribuer'
 
