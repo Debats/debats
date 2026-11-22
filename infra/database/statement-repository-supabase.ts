@@ -13,7 +13,6 @@ import { LatestStatement } from '../../domain/read-models/latest-statement'
 import { ArgumentRef } from '../../domain/read-models/argument'
 import { FeedOrder } from '../../domain/read-models/statement-feed'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
-import { Subject, SubjectId, SubjectTitle, SubjectSlug } from '../../domain/entities/subject'
 import {
   organisationRef,
   publicFigureRef,
@@ -27,6 +26,7 @@ import {
   StatementWithAuthorAndSubject,
 } from '../../domain/repositories/statement-repository'
 import { toStatementContent } from './statement-content-columns'
+import { mapRowToEntity as mapSubjectRow, SubjectRow } from './subject-repository-supabase'
 
 function dbError(message: string, error: unknown): DatabaseError {
   const msg = `${message}: ${error instanceof Error ? error.message : JSON.stringify(error)}`
@@ -36,7 +36,6 @@ function dbError(message: string, error: unknown): DatabaseError {
 
 type StatementRow = Database['public']['Tables']['statements']['Row']
 type PositionRow = Database['public']['Tables']['positions']['Row']
-type SubjectRow = Database['public']['Tables']['subjects']['Row']
 
 /** The database guarantees exactly one of the two author columns is set */
 function mapAuthor(row: Pick<StatementRow, 'public_figure_id' | 'organisation_id'>) {
@@ -67,20 +66,6 @@ function mapPositionRow(row: PositionRow): Position {
     slug: PositionSlug.make(row.slug),
     description: row.description,
     subjectId: row.subject_id,
-    createdBy: row.created_by ?? undefined,
-    createdAt: new Date(row.created_at!),
-    updatedAt: new Date(row.updated_at!),
-  })
-}
-
-function mapSubjectRow(row: SubjectRow): Subject {
-  return Subject.make({
-    id: SubjectId.make(row.id),
-    title: SubjectTitle.make(row.title),
-    slug: SubjectSlug.make(row.slug),
-    presentation: row.presentation,
-    problem: row.problem,
-    pictureUrl: row.picture_url ?? undefined,
     createdBy: row.created_by ?? undefined,
     createdAt: new Date(row.created_at!),
     updatedAt: new Date(row.updated_at!),

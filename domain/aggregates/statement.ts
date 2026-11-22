@@ -67,6 +67,11 @@ export const statementMoved = (positionId: string): StatementEvent => ({
   payload: { positionId },
 })
 
+export const statementMovedToSubject = (subjectId: string, positionId: string): StatementEvent => ({
+  type: 'StatementMovedToSubject',
+  payload: { subjectId, positionId },
+})
+
 export const statementArgumentsSet = (argumentIds: readonly string[]): StatementEvent => ({
   type: 'StatementArgumentsSet',
   payload: { argumentIds: [...argumentIds] },
@@ -101,6 +106,14 @@ export const withdrawStatement = (): StatementDecision => always(statementDelete
 export const moveStatement =
   (positionId: string): StatementCascade =>
   () => [statementMoved(positionId)]
+
+/**
+ * The statement follows its subject, merged into another: `positionAfter`
+ * tells, from the position it stands on, the one it stands on there.
+ */
+export const followSubject =
+  (subjectId: string, positionAfter: (positionId: string) => string): StatementCascade =>
+  (state) => [statementMovedToSubject(subjectId, positionAfter(state.statement.positionId))]
 
 /** The statement goes away with its subject */
 export const removeStatement = (): StatementCascade => () => [statementDeleted()]
@@ -170,6 +183,18 @@ function apply(
             positionId: event.payload.positionId,
             updatedAt: stored.occurredAt,
           },
+        }
+      )
+    case 'StatementMovedToSubject':
+      return (
+        state && {
+          ...state,
+          statement: {
+            ...state.statement,
+            positionId: event.payload.positionId,
+            updatedAt: stored.occurredAt,
+          },
+          subjectId: event.payload.subjectId,
         }
       )
     case 'StatementArgumentsSet':

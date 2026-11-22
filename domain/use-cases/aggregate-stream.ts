@@ -120,6 +120,43 @@ export function decideOn<State, Event extends DomainEvent>(
   decide: Decision<State, Event>,
   renderedFrom?: Revision,
 ): Effect.Effect<Decided<State>, StreamFailure | UnreadableEvent> {
+  return pipe(
+    standing(aggregate, events, id, renderedFrom),
+    Effect.flatMap(({ history, state }) =>
+      pipe(
+        decide(state),
+        Effect.flatMap((decided) =>
+          appendAndReplay(aggregate, events, id, history, decided, actorId),
+        ),
+      ),
+    ),
+  )
+}
+
+/**
+ * A live aggregate as its stream says it stands, in the transaction, at the
+ * revision a page showed when one is given: what a command reads to decide,
+ * on this aggregate or, from it, on another. Nothing is written.
+ */
+export function asItStands<State, Event extends DomainEvent>(
+  aggregate: AggregateStream<State, Event>,
+  events: EventStore,
+  id: string,
+  renderedFrom?: Revision,
+): Effect.Effect<Decided<State>, DatabaseError | ConcurrencyError | NotFound | UnreadableEvent> {
+  return Effect.map(standing(aggregate, events, id, renderedFrom), ({ history, state }) => ({
+    state,
+    revision: streamRevision(history),
+  }))
+}
+
+/** The history of a live aggregate and the state it replays to, refused as `decideOn` says */
+function standing<State, Event extends DomainEvent>(
+  aggregate: AggregateStream<State, Event>,
+  events: EventStore,
+  id: string,
+  renderedFrom?: Revision,
+) {
   const stillAt = (history: StoredEvent[]) =>
     renderedFrom === undefined || streamRevision(history) === renderedFrom
   return pipe(
@@ -133,10 +170,7 @@ export function decideOn<State, Event extends DomainEvent>(
         aggregate.replay(history),
         Effect.flatMap((state) => requireState(aggregate, state)),
         Effect.filterOrFail(aggregate.isLive, () => new NotFound(aggregate.notFound)),
-        Effect.flatMap(decide),
-        Effect.flatMap((decided) =>
-          appendAndReplay(aggregate, events, id, history, decided, actorId),
-        ),
+        Effect.map((state) => ({ history, state })),
       ),
     ),
   )

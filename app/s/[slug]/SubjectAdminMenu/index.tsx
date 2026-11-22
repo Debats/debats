@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteSubjectAction } from '../../../actions/delete-subject'
 import { subjectHref } from '../../../../domain/read-models/hrefs'
+import { subjectMergeHref } from '../../../../domain/read-models/subject-merge'
 import AdminMenu from '../../../../components/ui/AdminMenu'
 import ConfirmAction from '../../../../components/ui/ConfirmAction'
 
@@ -11,6 +12,7 @@ interface SubjectAdminMenuProps {
   subjectId: string
   subjectSlug: string
   canEdit: boolean
+  canMerge: boolean
   canDelete: boolean
 }
 
@@ -18,6 +20,7 @@ export default function SubjectAdminMenu({
   subjectId,
   subjectSlug,
   canEdit,
+  canMerge,
   canDelete,
 }: SubjectAdminMenuProps) {
   const router = useRouter()
@@ -36,6 +39,15 @@ export default function SubjectAdminMenu({
       actions={[
         ...(canEdit
           ? [{ label: 'Modifier', icon: '✎', href: `${subjectHref(subjectSlug)}/modifier` }]
+          : []),
+        ...(canMerge
+          ? [
+              {
+                label: 'Fusionner dans un autre sujet',
+                icon: '⇢',
+                href: subjectMergeHref(subjectSlug),
+              },
+            ]
           : []),
         ...(canDelete
           ? [

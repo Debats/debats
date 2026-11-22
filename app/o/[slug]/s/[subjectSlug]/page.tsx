@@ -31,7 +31,12 @@ import {
 import ShareButton from '../../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../../components/layout/ContentWithSidebar'
 import AuthorSubjectHero from '../../../../../components/statements/AuthorSubjectHero'
-import { organisationHref, statementEditHref } from '../../../../../domain/read-models/hrefs'
+import {
+  organisationHref,
+  organisationOnSubjectHref,
+  statementEditHref,
+} from '../../../../../domain/read-models/hrefs'
+import { subjectAt } from '../../../../s/merged-subject'
 import OrganisationRoleLine from '../../../../../components/statements/AuthorSubjectHero/OrganisationRoleLine'
 import AuthorPositions from '../../../../../components/statements/AuthorPositions'
 import AuthorRailCard from '../../../../../components/statements/AuthorRailCard'
@@ -82,10 +87,10 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
 
   const [organisation, subject] = await Promise.all([
     Effect.runPromise(createOrganisationRepository(supabase).findBySlug(slug)),
-    Effect.runPromise(createSubjectRepository(supabase).findBySlug(subjectSlug)),
+    subjectAt(supabase, subjectSlug, (successor) => organisationOnSubjectHref(slug, successor)),
   ])
 
-  if (!organisation || !subject) notFound()
+  if (!organisation) notFound()
 
   const [organisationStatements, contributor] = await Promise.all([
     Effect.runPromise(statementRepo.findByOrganisationAndSubject(organisation.id, subject.id)),

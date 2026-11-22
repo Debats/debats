@@ -49,6 +49,12 @@ export const StatementMoved = S.Struct({
   payload: S.Struct({ positionId: S.String }),
 })
 
+/** The statement now stands on another subject: its own was merged into it, and its position followed or was folded */
+export const StatementMovedToSubject = S.Struct({
+  type: S.Literal('StatementMovedToSubject'),
+  payload: S.Struct({ subjectId: S.String, positionId: S.String }),
+})
+
 /** The statement now mobilises another set of arguments: one of them was merged into another */
 export const StatementArgumentsSet = S.Struct({
   type: S.Literal('StatementArgumentsSet'),
@@ -64,6 +70,7 @@ export const StatementEvent = S.Union(
   StatementAdded,
   StatementEdited,
   StatementMoved,
+  StatementMovedToSubject,
   StatementArgumentsSet,
   StatementDeleted,
 )

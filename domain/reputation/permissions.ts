@@ -65,6 +65,7 @@ const ACTIONS = {
   edit_occupation: Rank.Idealiste,
   delete_occupation: Rank.Idealiste,
   delete_minor_subject: Rank.Idealiste,
+  merge_subjects: Rank.Idealiste,
   delete_minor_personality: Rank.Idealiste,
   delete_argument: Rank.Idealiste,
   delete_position: Rank.Idealiste,

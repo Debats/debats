@@ -22,6 +22,7 @@ import { elided } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
+import { subjectAt } from '../../../../s/merged-subject'
 import ReviewScope from '../../../../../components/review/ReviewScope'
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import {
@@ -79,10 +80,10 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
   const [figure, subject] = await Promise.all([
     Effect.runPromise(createPublicFigureRepository(supabase).findBySlug(slug)),
-    Effect.runPromise(createSubjectRepository(supabase).findBySlug(subjectSlug)),
+    subjectAt(supabase, subjectSlug, (successor) => figureOnSubjectHref(slug, successor)),
   ])
 
-  if (!figure || !subject) notFound()
+  if (!figure) notFound()
 
   const [figureStatements, contributor] = await Promise.all([
     Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),

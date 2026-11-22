@@ -80,6 +80,42 @@ export const PositionRemoved = S.Struct({
 
 export const SubjectDeleted = S.Struct({ type: S.Literal('SubjectDeleted'), payload: S.Struct({}) })
 
+/**
+ * What becomes of a position when its subject is merged into another: folded
+ * into a position of that subject, or, without `into`, carried over as it is.
+ */
+export const PositionFate = S.Struct({
+  positionId: S.String,
+  /** A position of the subject that remains: an empty id is no position at all */
+  into: S.optional(S.NonEmptyString),
+})
+export type PositionFate = S.Schema.Type<typeof PositionFate>
+
+/** The subject disappears into another; its statements record their own move */
+export const SubjectMergedInto = S.Struct({
+  type: S.Literal('SubjectMergedInto'),
+  payload: S.Struct({ targetId: S.String, positions: S.Array(PositionFate) }),
+})
+
+const Instant = S.String.pipe(S.filter((value) => !Number.isNaN(Date.parse(value))))
+
+/**
+ * A position carried over by a merge. It was added on another stream: the
+ * event says by whom and when, which the merge does not change.
+ */
+export const CarriedPosition = S.Struct({
+  ...PositionContent.fields,
+  createdBy: S.optional(S.String),
+  createdAt: Instant,
+})
+export type CarriedPosition = S.Schema.Type<typeof CarriedPosition>
+
+/** The subject took another in: the positions carried over are now its own, under the same ids */
+export const SubjectAbsorbed = S.Struct({
+  type: S.Literal('SubjectAbsorbed'),
+  payload: S.Struct({ subjectId: S.String, positions: S.Array(CarriedPosition) }),
+})
+
 export const SubjectEvent = S.Union(
   SubjectAdded,
   SubjectEdited,
@@ -91,6 +127,8 @@ export const SubjectEvent = S.Union(
   PositionMergedInto,
   PositionRemoved,
   SubjectDeleted,
+  SubjectMergedInto,
+  SubjectAbsorbed,
 )
 export type SubjectEvent = S.Schema.Type<typeof SubjectEvent>
 

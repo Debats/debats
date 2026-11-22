@@ -855,7 +855,10 @@ model subjects {
   created_at                                               DateTime?          @default(now()) @db.Timestamptz(6)
   updated_at                                               DateTime?          @default(now()) @db.Timestamptz(6)
   deleted_at                                               DateTime?          @db.Timestamptz(6)
+  merged_into_id                                           String?            @db.Uuid
   positions                                                positions[]
+  subjects                                                 subjects?          @relation("subjectsTosubjects", fields: [merged_into_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_subjects                                           subjects[]         @relation("subjectsTosubjects")
   related_subjects_related_subjects_subject_id_1Tosubjects related_subjects[] @relation("related_subjects_subject_id_1Tosubjects")
   related_subjects_related_subjects_subject_id_2Tosubjects related_subjects[] @relation("related_subjects_subject_id_2Tosubjects")
   subject_themes                                           subject_themes?

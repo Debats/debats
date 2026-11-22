@@ -17,8 +17,10 @@ import { StoredEvent, StreamRef } from '../events/event-store'
 import { always, Decision, refused } from './decision'
 import { Decoded, replayStream } from './replay'
 import {
+  CarriedPosition,
   decodeSubjectEvent,
   PositionContent,
+  PositionFate,
   SubjectContent,
   SubjectEvent,
   ThemeAssignmentPayload,
@@ -108,6 +110,22 @@ export const positionMergedInto = (sourceId: string, targetId: string): SubjectE
 
 export const subjectDeleted = (): SubjectEvent => ({ type: 'SubjectDeleted', payload: {} })
 
+export const subjectMergedInto = (
+  targetId: string,
+  fates: readonly PositionFate[],
+): SubjectEvent => ({
+  type: 'SubjectMergedInto',
+  payload: { targetId, positions: [...fates] },
+})
+
+export const subjectAbsorbed = (
+  subjectId: string,
+  positions: readonly CarriedPosition[],
+): SubjectEvent => ({
+  type: 'SubjectAbsorbed',
+  payload: { subjectId, positions: [...positions] },
+})
+
 /* Decisions: what a command asks of the subject, decided from its state */
 
 export type SubjectDecision = Decision<SubjectState, SubjectEvent>
@@ -151,6 +169,109 @@ export const mergePositions =
       ? Either.right([positionMergedInto(sourceId, targetId)])
       : refused(POSITION_GONE)
 
+export const POSITIONS_UNSETTLED =
+  'Chaque position du sujet à fusionner doit être reportée ou fondue dans une autre, une seule fois.'
+export const TARGET_POSITION_GONE = 'Une des positions du sujet conservé n’existe plus.'
+export const sameNameOnTarget = (title: string) =>
+  `La position « ${title} » porte le nom d’une position du sujet conservé : fondez-la dans celle-ci, ou renommez-la d’abord.`
+
+/** Where a statement stands once its subject is merged: on the position its own was folded into, or on its own */
+export const positionAfter =
+  (fates: readonly PositionFate[]) =>
+  (positionId: string): string =>
+    fates.find((fate) => fate.positionId === positionId)?.into ?? positionId
+
+/** The subject disappears into another, once each of its open positions has one fate */
+export const mergeSubjectInto =
+  (targetId: string, fates: readonly PositionFate[]): SubjectDecision =>
+  (state) => {
+    const settled = fates.map((fate) => fate.positionId).sort()
+    const open = livePositions(state)
+      .map((p) => p.id)
+      .sort()
+    return settled.length === open.length && settled.every((id, index) => id === open[index])
+      ? Either.right([subjectMergedInto(targetId, fates)])
+      : refused(POSITIONS_UNSETTLED)
+  }
+
+/**
+ * The subject that remains takes another in, as that one stood before the
+ * merge: the positions carried over become its own, and it gains the themes
+ * and the links it lacked. Its own title, presentation and problem stay.
+ */
+export const absorbSubject =
+  (absorbed: SubjectState, fates: readonly PositionFate[]): SubjectDecision =>
+  (state) => {
+    const carried = carriedOver(absorbed, fates)
+    const refusal = foldIntoPositionGone(state, fates) ?? nameAlreadyTaken(state, carried)
+    return refusal
+      ? refused(refusal)
+      : Either.right([
+          subjectAbsorbed(absorbed.subject.id, carried.map(asCarried)),
+          ...themesGained(state, absorbed),
+          ...linksInherited(state, absorbed),
+        ])
+  }
+
+/** The open positions of the subject that disappears that no fate folds into another */
+const carriedOver = (absorbed: SubjectState, fates: readonly PositionFate[]): Position[] =>
+  livePositions(absorbed).filter((p) =>
+    fates.some((fate) => fate.positionId === p.id && !fate.into),
+  )
+
+/** The refusal of a fold into a position the subject that remains no longer has, if any */
+const foldIntoPositionGone = (state: SubjectState, fates: readonly PositionFate[]) =>
+  fates.every((fate) => !fate.into || findPosition(state, fate.into))
+    ? undefined
+    : TARGET_POSITION_GONE
+
+/**
+ * The refusal of a position carried over under a name the subject that
+ * remains already has, if any: a slug is unique on its subject for good,
+ * positions gone included.
+ */
+function nameAlreadyTaken(state: SubjectState, carried: readonly Position[]) {
+  const twin = carried.find((p) => state.positions.some((own) => own.position.slug === p.slug))
+  return twin && sameNameOnTarget(twin.title)
+}
+
+const asCarried = (position: Position): CarriedPosition => ({
+  positionId: position.id,
+  title: position.title,
+  slug: position.slug,
+  description: position.description,
+  createdBy: position.createdBy,
+  createdAt: position.createdAt.toISOString(),
+})
+
+/**
+ * The primary theme of the subject that remains stays the only one. A subject
+ * that had no theme has no primary one to keep: it takes the other's as they
+ * are, since themes never go without a primary one.
+ */
+function themesGained(state: SubjectState, absorbed: SubjectState): SubjectEvent[] {
+  const hasPrimary = state.themes.some((own) => own.isPrimary)
+  const gained = absorbed.themes
+    .filter((theme) => !state.themes.some((own) => own.themeId === theme.themeId))
+    .map(({ themeId, isPrimary }) => ({ themeId, isPrimary: isPrimary && !hasPrimary }))
+  return gained.length > 0 ? [subjectThemesSet([...state.themes, ...gained])] : []
+}
+
+function linksInherited(state: SubjectState, absorbed: SubjectState): SubjectEvent[] {
+  return absorbed.relatedSubjectIds
+    .filter((id) => id !== state.subject.id && !state.relatedSubjectIds.includes(id))
+    .map(subjectLinked)
+}
+
+/** A subject linked to one merged into another: its link follows, unless it already had it */
+export const followMergedSubject =
+  (sourceId: string, targetId: string): SubjectDecision =>
+  (state) =>
+    Either.right([
+      subjectUnlinked(sourceId),
+      ...(state.relatedSubjectIds.includes(targetId) ? [] : [subjectLinked(targetId)]),
+    ])
+
 /** Rebuilds the subject from its stream; null for a stream without events */
 export const replaySubject = replayStream(decodeSubjectEvent, apply)
 
@@ -171,13 +292,26 @@ function apply(
   if (!state) return null
   switch (event.type) {
     case 'SubjectDeleted':
-      // The positions go with their subject
+    case 'SubjectMergedInto':
+      // The positions go with their subject: gone, folded, or now another subject's
       return {
         ...state,
         deletedAt: stored.occurredAt,
         positions: state.positions.map((p) =>
           p.deletedAt ? p : { ...p, deletedAt: stored.occurredAt },
         ),
+      }
+    case 'SubjectAbsorbed':
+      return {
+        ...state,
+        positions: [
+          ...state.positions,
+          ...event.payload.positions.map((carried) => ({
+            position: carriedPositionFrom(stored, state.subject.id, carried),
+            deletedAt: null,
+          })),
+        ],
+        relatedSubjectIds: state.relatedSubjectIds.filter((id) => id !== event.payload.subjectId),
       }
     case 'SubjectEdited':
       return {
@@ -259,6 +393,19 @@ function subjectFrom(stored: StoredEvent, payload: SubjectContent): Subject {
     createdBy: stored.actorId ?? undefined,
     createdAt: stored.occurredAt,
     updatedAt: stored.occurredAt,
+  })
+}
+
+/** A position carried over by a merge: added by its author on its day, changed by the merge */
+function carriedPositionFrom(
+  stored: StoredEvent,
+  subjectId: string,
+  carried: CarriedPosition,
+): Position {
+  return Position.make({
+    ...positionFrom(stored, subjectId, carried),
+    createdBy: carried.createdBy,
+    createdAt: new Date(carried.createdAt),
   })
 }
 

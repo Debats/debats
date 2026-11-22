@@ -96,6 +96,7 @@ describe('Reputation System', () => {
     describe('actions requiring Idealiste rank (10000+)', () => {
       const idealisteActions: Action[] = [
         'delete_minor_subject',
+        'merge_subjects',
         'delete_minor_personality',
         'delete_argument',
         'delete_position',

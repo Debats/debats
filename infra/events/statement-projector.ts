@@ -35,6 +35,13 @@ async function apply(decoded: StatementEvent, stored: StoredEvent, tx: PrismaTra
         data: { position_id: decoded.payload.positionId, updated_at: stored.occurredAt },
       })
       return
+    case 'StatementMovedToSubject':
+      // The subject is read through the position: a statement whose position came along keeps its row as it is
+      await tx.statements.updateMany({
+        where: { id, NOT: { position_id: decoded.payload.positionId } },
+        data: { position_id: decoded.payload.positionId, updated_at: stored.occurredAt },
+      })
+      return
     case 'StatementArgumentsSet':
       await tx.statements.update({ where: { id }, data: { updated_at: stored.occurredAt } })
       await syncArguments(tx, id, decoded.payload.argumentIds, stored.actorId)

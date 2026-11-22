@@ -7,6 +7,7 @@ import {
 } from '../../domain/aggregates/subject-events'
 import { StoredEvent } from '../../domain/events/event-store'
 import { PrismaTransaction } from '../prisma/client'
+import { leadDraftsToSubject } from './drafts-of-merged-subject'
 import { projectorOf } from './projector'
 
 /**
@@ -73,7 +74,43 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
         data: deletedOn(stored.occurredAt),
       })
       return
+    case 'SubjectMergedInto':
+      return mergeAway(tx, stored, decoded.payload)
+    case 'SubjectAbsorbed':
+      // The positions carried over keep their id, so the statements on them follow
+      await tx.positions.updateMany({
+        where: { id: { in: decoded.payload.positions.map((p) => p.positionId) } },
+        data: { subject_id: subjectId, updated_at: stored.occurredAt },
+      })
+      return
   }
+}
+
+/**
+ * The subject is gone, and says where: its old address redirects there. The
+ * positions folded go with it; those carried over are moved by the subject
+ * that took them, whichever of the two events comes first. No link is left
+ * to a subject nobody can open, and the drafts that named it name the subject
+ * that remains.
+ */
+async function mergeAway(
+  tx: PrismaTransaction,
+  stored: StoredEvent,
+  payload: Extract<SubjectEvent, { type: 'SubjectMergedInto' }>['payload'],
+) {
+  const subjectId = stored.streamId
+  await tx.subjects.update({
+    where: { id: subjectId },
+    data: { ...deletedOn(stored.occurredAt), merged_into_id: payload.targetId },
+  })
+  await tx.positions.updateMany({
+    where: { id: { in: payload.positions.filter((p) => p.into).map((p) => p.positionId) } },
+    data: deletedOn(stored.occurredAt),
+  })
+  await tx.related_subjects.deleteMany({
+    where: { OR: [{ subject_id_1: subjectId }, { subject_id_2: subjectId }] },
+  })
+  await leadDraftsToSubject(tx, subjectId, payload.targetId, payload.positions)
 }
 
 /** A soft delete is a change of the row: it moves updated_at too */

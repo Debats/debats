@@ -9,6 +9,7 @@ import { createStatementRepository } from '../../../../../infra/database/stateme
 import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
+import { subjectAt } from '../../../merged-subject'
 import EntityReview from '../../../../../components/review/EntityReview'
 import ReviewScope from '../../../../../components/review/ReviewScope'
 import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
@@ -60,8 +61,10 @@ export default async function PositionDetailPage({ params }: PageProps) {
   const positionRepo = createPositionRepository(supabase)
   const statementRepo = createStatementRepository(supabase)
 
-  const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
-  if (!subject) notFound()
+  // A position carried over by a merge kept its slug; one folded away is gone, as after any fold
+  const subject = await subjectAt(supabase, slug, (successor) =>
+    positionHref(successor, positionSlug),
+  )
 
   const [position, contributor] = await Promise.all([
     Effect.runPromise(positionRepo.findBySubjectAndSlug(subject.id, positionSlug)),

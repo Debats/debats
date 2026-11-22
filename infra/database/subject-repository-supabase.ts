@@ -18,7 +18,19 @@ function dbError(message: string, error: unknown): DatabaseError {
   return new DatabaseError(msg)
 }
 
-export type SubjectRow = Database['public']['Tables']['subjects']['Row']
+/** The columns a subject entity is read from, whatever else the selection brings along */
+export type SubjectRow = Pick<
+  Database['public']['Tables']['subjects']['Row'],
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'presentation'
+  | 'problem'
+  | 'picture_url'
+  | 'created_by'
+  | 'created_at'
+  | 'updated_at'
+>
 
 export const mapRowToEntity = (row: SubjectRow) =>
   Subject.make({

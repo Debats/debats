@@ -1335,6 +1335,7 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           id: string
+          merged_into_id: string | null
           picture_url: string | null
           presentation: string
           problem: string
@@ -1347,6 +1348,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           id?: string
+          merged_into_id?: string | null
           picture_url?: string | null
           presentation: string
           problem: string
@@ -1359,6 +1361,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           id?: string
+          merged_into_id?: string | null
           picture_url?: string | null
           presentation?: string
           problem?: string

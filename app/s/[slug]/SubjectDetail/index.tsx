@@ -22,7 +22,8 @@ import ShareButton from '../../../../components/ui/ShareButton'
 import ContentWithSidebar from '../../../../components/layout/ContentWithSidebar'
 import SubjectAdminMenu from '../SubjectAdminMenu'
 import SubjectHero from '../SubjectHero'
-import SubjectTabs, { SubjectTab } from '../SubjectTabs'
+import SubjectTabs, { SubjectTab, subjectTabHref } from '../SubjectTabs'
+import { subjectAt } from '../../merged-subject'
 import SubjectAnalyses from '../SubjectAnalyses'
 import SubjectTimeline from '../SubjectTimeline'
 import ReviewScope from '../../../../components/review/ReviewScope'
@@ -57,9 +58,9 @@ export default async function SubjectDetail({
   const supabase = createAdminSupabaseClient()
   const subjectRepo = createSubjectRepository(supabase)
 
-  const subject = await Effect.runPromise(subjectRepo.findBySlug(slug))
-
-  if (!subject) notFound()
+  const subject = await subjectAt(supabase, slug, (successor) =>
+    subjectTabHref(successor, activeTab),
+  )
 
   const statementRepo = createStatementRepository(supabase)
   const themeRepo = createThemeRepository(supabase)
@@ -112,6 +113,7 @@ export default async function SubjectDetail({
   const canDelete =
     !!contributor &&
     canPerform(contributor.reputation, major ? 'delete_major_subject' : 'delete_minor_subject')
+  const canMerge = !!contributor && canPerform(contributor.reputation, 'merge_subjects')
 
   // The subject itself, and the statements its Chronologie tab lists
   const review = await reviewOf(supabase, contributor, [
@@ -148,11 +150,12 @@ export default async function SubjectDetail({
           statements: stats.statementsCount,
         }}
         adminMenu={
-          (canEditSubject || canDelete) && (
+          (canEditSubject || canMerge || canDelete) && (
             <SubjectAdminMenu
               subjectId={subject.id}
               subjectSlug={subject.slug}
               canEdit={canEditSubject}
+              canMerge={canMerge}
               canDelete={canDelete}
             />
           )

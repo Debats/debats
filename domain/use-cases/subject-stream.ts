@@ -9,7 +9,7 @@ import {
 import { SubjectEvent } from '../aggregates/subject-events'
 import { Position } from '../entities/position'
 import { EventStore, Revision } from '../events/event-store'
-import { AggregateStream, Decided, decideOn, requireState } from './aggregate-stream'
+import { AggregateStream, asItStands, Decided, decideOn, requireState } from './aggregate-stream'
 
 export const subjectAggregate: AggregateStream<SubjectState, SubjectEvent> = {
   streamType: SUBJECT_STREAM,
@@ -25,6 +25,15 @@ export const decideOnSubject = (
   decide: SubjectDecision,
   renderedFrom?: Revision,
 ) => decideOn(subjectAggregate, events, subjectId, actorId, decide, renderedFrom)
+
+/**
+ * A subject as its stream says it stands, read in the transaction of a
+ * command that decides on another aggregate from it; nothing is written.
+ * Unknown or deleted, it is NotFound; moved past the revision a page
+ * showed, a ConcurrencyError.
+ */
+export const subjectAsItStands = (events: EventStore, subjectId: string, renderedFrom?: Revision) =>
+  asItStands(subjectAggregate, events, subjectId, renderedFrom)
 
 export const requireSubjectState = (state: SubjectState | null) =>
   requireState(subjectAggregate, state)

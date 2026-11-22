@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { isRedirectError } from 'next/dist/client/components/redirect-error'
-import * as Sentry from '@sentry/nextjs'
+import { useRedirectingAction } from '../../../../../../hooks/useRedirectingAction'
 import { mergePositionsAction } from '../../../../../actions/merge-positions-action'
 import Button from '../../../../../../components/ui/Button'
 import styles from './MergePositionForm.module.css'
@@ -24,28 +23,16 @@ export default function MergePositionForm({
   otherPositions,
 }: MergePositionFormProps) {
   const [targetId, setTargetId] = useState('')
-  const [isPending, setIsPending] = useState(false)
-  const [error, setError] = useState<string>()
+  const { run, isPending, error } = useRedirectingAction()
 
-  const handleMerge = useCallback(async () => {
+  const handleMerge = useCallback(() => {
     if (!targetId) return
-    setError(undefined)
-    setIsPending(true)
-
-    try {
-      const result = await mergePositionsAction(sourcePositionId, targetId, subjectSlug)
-      // redirect() throws NEXT_REDIRECT, so we only reach here on business error
-      if (result && !result.success) {
-        setError(result.error)
-        setIsPending(false)
-      }
-    } catch (err: unknown) {
-      if (isRedirectError(err)) throw err
-      Sentry.captureException(err, { extra: { sourcePositionId, targetId } })
-      setError('Une erreur inattendue est survenue.')
-      setIsPending(false)
-    }
-  }, [sourcePositionId, subjectSlug, targetId])
+    // On success the action redirects to the position that remains
+    return run(() => mergePositionsAction(sourcePositionId, targetId, subjectSlug), {
+      sourcePositionId,
+      targetId,
+    })
+  }, [run, sourcePositionId, subjectSlug, targetId])
 
   if (otherPositions.length === 0) return null
 

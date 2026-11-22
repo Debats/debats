@@ -3,28 +3,37 @@ import { Either } from 'effect'
 import { StoredEvent, UnreadableEvent } from '../events/event-store'
 import { Rejected } from './decision'
 import {
+  absorbSubject,
   addPosition,
   addSubject,
   deleteSubject,
   editPosition,
   editSubject,
   findPosition,
+  followMergedSubject,
   linkSubject,
   livePositions,
   mergePositions,
+  mergeSubjectInto,
+  POSITIONS_UNSETTLED,
+  positionAfter,
   POSITION_GONE,
   POSITION_NOT_FOUND,
   positionAdded,
   positionEdited,
   positionMergedInto,
   replaySubject,
+  sameNameOnTarget,
   setSubjectThemes,
+  subjectAbsorbed,
   subjectAdded,
   subjectDeleted,
   subjectEdited,
   subjectLinked,
+  subjectMergedInto,
   subjectThemesSet,
   subjectUnlinked,
+  TARGET_POSITION_GONE,
   unlinkSubject,
 } from './subject'
 
@@ -126,6 +135,194 @@ describe('subject decisions', () => {
     expect(mergePositions('pos-1', 'pos-2')(merged)).toEqual(
       Either.left(new Rejected(POSITION_GONE)),
     )
+  })
+})
+
+describe('merging a subject into another', () => {
+  const absorbedId = '7c1f0a52-6f0e-4d0b-8a57-1d2e3f4a5b6c'
+  const duplicate = {
+    title: 'Le SMIC',
+    presentation: 'Une autre présentation suffisamment longue.',
+    problem: 'Le SMIC est-il trop bas ?',
+  }
+  const favorable = positionAdded({
+    positionId: 'dup-1',
+    title: 'Favorable à une hausse',
+    description: 'Une description suffisamment longue.',
+  })
+  const gel = positionAdded({
+    positionId: 'dup-2',
+    title: 'Pour un gel',
+    description: 'Une description suffisamment longue.',
+  })
+
+  /** The subject that disappears, in a stream of its own */
+  const absorbed = (...events: Array<{ type: string; payload: unknown }>) => {
+    const state = replaySubject(stream(...events).map((e) => ({ ...e, streamId: absorbedId })))
+    if (Either.isLeft(state) || !state.right) throw new Error('expected a state')
+    return state.right
+  }
+
+  const fates = [{ positionId: 'dup-1', into: 'pos-1' }, { positionId: 'dup-2' }]
+  const carriedGel = {
+    positionId: 'dup-2',
+    title: 'Pour un gel',
+    slug: 'pour-un-gel',
+    description: 'Une description suffisamment longue.',
+    // Whoever added it to the subject that disappears, and when: the third event of that stream
+    createdBy: 'alice',
+    createdAt: '2024-01-12T10:00:00.000Z',
+  }
+  const target = rebuilt(added, pour, contre)
+  const source = absorbed(subjectAdded(duplicate), favorable, gel)
+
+  it('the subject that disappears settles each of its open positions', () => {
+    expect(mergeSubjectInto('target', fates)(source)).toEqual(
+      Either.right([subjectMergedInto('target', fates)]),
+    )
+  })
+
+  it('the subject that disappears refuses a position left without a fate, or one it does not have', () => {
+    expect(mergeSubjectInto('target', [{ positionId: 'dup-2' }])(source)).toEqual(
+      Either.left(new Rejected(POSITIONS_UNSETTLED)),
+    )
+    expect(mergeSubjectInto('target', [...fates, { positionId: 'pos-9' }])(source)).toEqual(
+      Either.left(new Rejected(POSITIONS_UNSETTLED)),
+    )
+    expect(mergeSubjectInto('target', [...fates, { positionId: 'dup-2' }])(source)).toEqual(
+      Either.left(new Rejected(POSITIONS_UNSETTLED)),
+    )
+  })
+
+  it('the subject that remains takes the positions carried over, as they were named', () => {
+    expect(absorbSubject(source, fates)(target)).toEqual(
+      Either.right([subjectAbsorbed(absorbedId, [carriedGel])]),
+    )
+  })
+
+  it('the subject that remains refuses a fold into a position it no longer has', () => {
+    const withoutPour = rebuilt(added, pour, contre, positionMergedInto('pos-1', 'pos-2'))
+    expect(absorbSubject(source, fates)(withoutPour)).toEqual(
+      Either.left(new Rejected(TARGET_POSITION_GONE)),
+    )
+  })
+
+  it('the subject that remains refuses a position carried over under a name it already has, even on a position gone', () => {
+    const twin = absorbed(
+      subjectAdded(duplicate),
+      positionAdded({ ...pourInput, positionId: 'dup-3' }),
+    )
+    const refusal = Either.left(new Rejected(sameNameOnTarget('Pour une hausse')))
+    expect(absorbSubject(twin, [{ positionId: 'dup-3' }])(target)).toEqual(refusal)
+
+    const pourGone = rebuilt(added, pour, contre, positionMergedInto('pos-1', 'pos-2'))
+    expect(absorbSubject(twin, [{ positionId: 'dup-3' }])(pourGone)).toEqual(refusal)
+  })
+
+  it('the subject that remains gains the themes it lacked, never a second primary one', () => {
+    const themed = rebuilt(added, subjectThemesSet([{ themeId: 'eco', isPrimary: true }]))
+    const from = absorbed(
+      subjectAdded(duplicate),
+      subjectThemesSet([
+        { themeId: 'soc', isPrimary: true },
+        { themeId: 'eco', isPrimary: false },
+      ]),
+    )
+    expect(absorbSubject(from, [])(themed)).toEqual(
+      Either.right([
+        subjectAbsorbed(absorbedId, []),
+        subjectThemesSet([
+          { themeId: 'eco', isPrimary: true },
+          { themeId: 'soc', isPrimary: false },
+        ]),
+      ]),
+    )
+  })
+
+  it('the subject that remains, when it had no theme, takes those of the other with their primary one', () => {
+    const themes = [
+      { themeId: 'soc', isPrimary: true },
+      { themeId: 'eco', isPrimary: false },
+    ]
+    const from = absorbed(subjectAdded(duplicate), subjectThemesSet(themes))
+    expect(absorbSubject(from, [])(rebuilt(added))).toEqual(
+      Either.right([subjectAbsorbed(absorbedId, []), subjectThemesSet(themes)]),
+    )
+  })
+
+  it('the subject that remains inherits the links it lacked, never one to itself', () => {
+    const linked = rebuilt(added, subjectLinked('shared'), subjectLinked(absorbedId))
+    const from = absorbed(
+      subjectAdded(duplicate),
+      subjectLinked('shared'),
+      subjectLinked('retraites'),
+      subjectLinked(streamId),
+    )
+    expect(absorbSubject(from, [])(linked)).toEqual(
+      Either.right([subjectAbsorbed(absorbedId, []), subjectLinked('retraites')]),
+    )
+  })
+
+  it('a subject linked to the one that disappears now links to the one that remains', () => {
+    const linkedToSource = rebuilt(added, subjectLinked('source'))
+    expect(followMergedSubject('source', 'target')(linkedToSource)).toEqual(
+      Either.right([subjectUnlinked('source'), subjectLinked('target')]),
+    )
+    const linkedToBoth = rebuilt(added, subjectLinked('source'), subjectLinked('target'))
+    expect(followMergedSubject('source', 'target')(linkedToBoth)).toEqual(
+      Either.right([subjectUnlinked('source')]),
+    )
+  })
+
+  it('tells where a statement stands after the merge', () => {
+    const after = positionAfter(fates)
+    expect([after('dup-1'), after('dup-2'), after('unknown')]).toEqual([
+      'pos-1',
+      'dup-2',
+      'unknown',
+    ])
+  })
+
+  it('replays the subject that disappears as gone, positions included', () => {
+    const state = absorbed(
+      subjectAdded(duplicate),
+      favorable,
+      gel,
+      subjectMergedInto('target', fates),
+    )
+    expect(state.deletedAt).toEqual(at('2024-01-13'))
+    expect(livePositions(state)).toEqual([])
+  })
+
+  it('replays the subject that remains with the positions it took, and without a link to what it absorbed', () => {
+    const state = rebuilt(
+      added,
+      pour,
+      subjectLinked(absorbedId),
+      subjectAbsorbed(absorbedId, [carriedGel]),
+    )
+    expect(livePositions(state).map((p) => [p.id, p.slug, p.subjectId])).toEqual([
+      ['pos-1', 'pour-une-hausse', streamId],
+      ['dup-2', 'pour-un-gel', streamId],
+    ])
+    expect(state.relatedSubjectIds).toEqual([])
+  })
+
+  it('replays a position carried over as added by its author on its day, changed on the day of the merge', () => {
+    const merge = stored(
+      subjectAbsorbed(absorbedId, [carriedGel]),
+      2,
+      at('2024-03-01'),
+      'the-one-who-merges',
+    )
+    const state = replaySubject([...stream(added), merge])
+    const gelNow = Either.isRight(state) && state.right && findPosition(state.right, 'dup-2')
+
+    expect(gelNow).toMatchObject({
+      createdBy: 'alice',
+      createdAt: at('2024-01-12'),
+      updatedAt: at('2024-03-01'),
+    })
   })
 })
 

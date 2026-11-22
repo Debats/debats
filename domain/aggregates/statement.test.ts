@@ -6,6 +6,7 @@ import { Rejected } from './decision'
 import {
   addStatement,
   editStatement,
+  followSubject,
   moveStatement,
   OTHER_SUBJECT,
   removeStatement,
@@ -16,6 +17,7 @@ import {
   statementDeleted,
   statementEdited,
   statementMoved,
+  statementMovedToSubject,
   withArgumentReplaced,
 } from './statement'
 
@@ -109,6 +111,16 @@ describe('statement decisions', () => {
     expect(moveStatement('pos-9')(onSubjectOne)).toEqual([statementMoved('pos-9')])
   })
 
+  it('follow the subject merged into another, onto the position that takes it there', () => {
+    const position = onSubjectOne.statement.positionId
+    expect(followSubject('subject-2', () => 'pos-9')(onSubjectOne)).toEqual([
+      statementMovedToSubject('subject-2', 'pos-9'),
+    ])
+    expect(followSubject('subject-2', (id) => id)(onSubjectOne)).toEqual([
+      statementMovedToSubject('subject-2', position),
+    ])
+  })
+
   it('go away with the subject', () => {
     expect(removeStatement()(onSubjectOne)).toEqual([statementDeleted()])
   })
@@ -184,6 +196,16 @@ describe('replayStatement', () => {
   it('folds a merged argument into its target without doubling it', () => {
     expect(withArgumentReplaced(['a', 'b'], 'a', 'c')).toEqual(['b', 'c'])
     expect(withArgumentReplaced(['a', 'c'], 'a', 'c')).toEqual(['c'])
+  })
+
+  it('stands on its new subject once it followed a merge: a position of the old one is refused', () => {
+    const moved = rebuilt(added, statementMovedToSubject('subject-2', 'pos-9'))
+
+    expect(moved).toMatchObject({ subjectId: 'subject-2', statement: { positionId: 'pos-9' } })
+    expect(editStatement(edit, 'subject-2')(moved)).toEqual(Either.right([edited]))
+    expect(editStatement(edit, 'subject-1')(moved)).toEqual(
+      Either.left(new Rejected(OTHER_SUBJECT, 'positionId')),
+    )
   })
 
   it('marks a deletion', () => {

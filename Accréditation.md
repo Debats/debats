@@ -78,6 +78,7 @@ rang Métèque, et c'est le traitement d'un signalement qui demande le rang de m
 | `add_occupation`           | `create-occupation.ts`, `create-occupation-family.ts`                     |
 | `delete_occupation`        | `delete-occupation.ts`, `delete-occupation-family.ts`                     |
 | `delete_minor_subject`     | `delete-subject.ts`                                                       |
+| `merge_subjects`           | `merge-subjects.ts` (quel que soit le poids du sujet absorbé)             |
 | `delete_argument`          | `merge-arguments.ts` (fusionner, c'est faire disparaître)                 |
 | `settle_flag`              | `settle-flags.ts` (écarter un signalement, retirer une prise de position) |
 | `edit_theme`               | — _(aucun use case : une thématique ne se renomme pas)_                   |
