@@ -10,6 +10,7 @@ import { statementWhereabouts } from '../../../../infra/queries/statement-wherea
 import { createAdminSupabaseClient } from '../../../../infra/supabase/admin'
 import { getAdminContributor } from '../../../actions/admin-guard'
 import { chantierSections } from '../../../../domain/read-models/chantier-sections'
+import { draftedDeclarations } from '../../../../domain/read-models/joint-declaration-draft'
 import styles from '../../drafts/admin-drafts.module.css'
 import ChantierSections from '../ChantierSections'
 import ChantierWorkspace from '../ChantierWorkspace'
@@ -77,6 +78,8 @@ export default async function ChantierPage({ params }: Props) {
       { concurrency: 4 },
     ),
   )
+  /* The signatures of one text are read as one, wherever the agent ranged them */
+  const drafted = draftedDeclarations(pending)
 
   return (
     <div className={styles.container}>
@@ -96,7 +99,10 @@ export default async function ChantierPage({ params }: Props) {
             {produced.length === 0 ? 'Aucun brouillon pour l’instant.' : 'Rien à relire.'}
           </p>
         ) : (
-          <ChantierSections sections={chantierSections(pending, chantier.sections)} />
+          <ChantierSections
+            declarations={drafted.declarations}
+            sections={chantierSections(drafted.others, chantier.sections)}
+          />
         )}
         <SettledDrafts drafts={settled} whereabouts={whereabouts} />
       </ChantierWorkspace>

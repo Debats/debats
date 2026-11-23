@@ -1,0 +1,155 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+}
+
+.eyebrow {
+  composes: meta from '../../../../styles/text.module.css';
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0;
+}
+
+.text {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.meta {
+  composes: meta from '../../../../styles/text.module.css';
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.source {
+  color: var(--signal);
+  text-decoration: none;
+}
+
+.source:hover {
+  text-decoration: underline;
+}
+
+.heading {
+  composes: meta from '../../../../styles/text.module.css';
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+}
+
+.count {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.positions,
+.signatories {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.positions {
+  gap: 16px;
+}
+
+.signatories {
+  gap: 6px;
+}
+
+.position {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quote {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--ink);
+  margin: 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--line-2);
+}
+
+.named {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signatory {
+  display: flex;
+  flex-direction: column;
+}
+
+.warning {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--warn);
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--warn-soft);
+  border-radius: 6px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.error {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--danger);
+  margin: 0;
+}
+
+.drafts {
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.draftsSummary {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.draftsList {
+  margin-top: 16px;
+}
