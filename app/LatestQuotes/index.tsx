@@ -7,6 +7,7 @@ import { authorHref, authorOnSubjectHref } from '../../domain/read-models/statem
 import { StatementWithAuthorAndSubject } from '../../domain/repositories/statement-repository'
 import { formatShortDate } from '../../lib/format-date'
 import HomeSection from '../HomeSection'
+import SignedQuote from './SignedQuote'
 import styles from './LatestQuotes.module.css'
 
 /**
@@ -22,35 +23,44 @@ export default function LatestQuotes({ entries }: { entries: StatementWithAuthor
       more={{ href: STATEMENTS_HREF, label: 'Tout le flux' }}
     >
       <ol className={styles.list}>
-        {entries.map(({ statement, author, position, subject }) => (
-          <li key={statement.id} className={styles.entry}>
-            <p className={styles.meta}>
-              {formatShortDate(statement.statedAt)} · {statement.sourceName}
-            </p>
-            <div className={styles.who}>
-              <AuthorAvatar author={author} size={36} />
-              <p className={styles.line}>
-                <Link href={authorHref(author)} className={styles.name}>
-                  {author.name}
-                </Link>{' '}
-                sur{' '}
-                <Link href={subjectHref(subject.slug)} className={styles.subject}>
-                  {subject.title}
+        {entries.map(({ statement, author, position, subject }) =>
+          statement.jointDeclaration ? (
+            <SignedQuote
+              key={statement.id}
+              author={author}
+              declaration={statement.jointDeclaration}
+              source={{ name: statement.sourceName, statedAt: statement.statedAt }}
+            />
+          ) : (
+            <li key={statement.id} className={styles.entry}>
+              <p className={styles.meta}>
+                {formatShortDate(statement.statedAt)} · {statement.sourceName}
+              </p>
+              <div className={styles.who}>
+                <AuthorAvatar author={author} size={36} />
+                <p className={styles.line}>
+                  <Link href={authorHref(author)} className={styles.name}>
+                    {author.name}
+                  </Link>{' '}
+                  sur{' '}
+                  <Link href={subjectHref(subject.slug)} className={styles.subject}>
+                    {subject.title}
+                  </Link>
+                </p>
+              </div>
+              <StatementBody content={statement.content} />
+              <p className={styles.position}>
+                pour{' '}
+                <Link
+                  href={authorOnSubjectHref(author, subject.slug)}
+                  className={styles.positionLink}
+                >
+                  {position.title}
                 </Link>
               </p>
-            </div>
-            <StatementBody content={statement.content} />
-            <p className={styles.position}>
-              pour{' '}
-              <Link
-                href={authorOnSubjectHref(author, subject.slug)}
-                className={styles.positionLink}
-              >
-                {position.title}
-              </Link>
-            </p>
-          </li>
-        ))}
+            </li>
+          ),
+        )}
       </ol>
     </HomeSection>
   )

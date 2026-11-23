@@ -247,7 +247,8 @@ const LATEST_STATEMENT_QUERY = `
     )
   ),
   public_figures (id, name, slug),
-  organisations (id, name, slug, acronym)
+  organisations (id, name, slug, acronym),
+  joint_declarations (id, title, slug)
 `
 
 interface LatestStatementRow {
@@ -258,11 +259,24 @@ interface LatestStatementRow {
   positions: { title: string; slug: string; subjects: { title: string; slug: string } }
   public_figures: FigureJoin | null
   organisations: OrganisationJoin | null
+  joint_declarations: JointDeclarationJoin | null
 }
 
-function mapLatestStatementRow(row: LatestStatementRow, datedBy: 'stated_at' | 'created_at') {
+/**
+ * `standsFor` says what a row born of a signature stands for: the whole
+ * signature across the site, where it is one entry, or the one statement the
+ * signatory holds on the subject whose rail it is read on.
+ */
+function mapLatestStatementRow(
+  row: LatestStatementRow,
+  datedBy: 'stated_at' | 'created_at',
+  standsFor: 'signature' | 'statement',
+): LatestStatement {
   const date = datedBy === 'stated_at' ? row.stated_at : row.created_at
   return {
+    ...(standsFor === 'signature' && row.joint_declarations
+      ? { jointDeclaration: row.joint_declarations }
+      : {}),
     statementId: row.id,
     author: toAuthorRef(row.public_figures, row.organisations),
     positionTitle: row.positions.title,
@@ -721,7 +735,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
 
           if (error) throw error
           return (data as unknown as LatestStatementRow[]).map((row) =>
-            mapLatestStatementRow(row, 'stated_at'),
+            mapLatestStatementRow(row, 'stated_at', subjectId ? 'statement' : 'signature'),
           )
         },
         catch: (error) => dbError('Failed to fetch latest statements', error),
@@ -739,7 +753,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
 
           if (error) throw error
           return (data as unknown as LatestStatementRow[]).map((row) =>
-            mapLatestStatementRow(row, 'created_at'),
+            mapLatestStatementRow(row, 'created_at', 'signature'),
           )
         },
         catch: (error) => dbError('Failed to fetch latest reported statements', error),

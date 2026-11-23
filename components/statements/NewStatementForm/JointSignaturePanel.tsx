@@ -79,7 +79,7 @@ export default function JointSignaturePanel({
         <div className={styles.recap}>
           <p className={styles.recapLead}>
             {signatoryName || 'Le ou la signataire'} rejoindra les signataires. Sa signature vaut
-            prise de position sur chaque sujet du texte :
+            prise de position sur chacune des positions du texte :
           </p>
           <ul className={styles.recapList}>
             {preview.stances.map((stance) => (

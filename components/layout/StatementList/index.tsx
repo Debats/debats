@@ -2,7 +2,7 @@ import Link from 'next/link'
 import AuthorAvatar from '../../statements/AuthorAvatar'
 import { formatShortDate } from '../../../lib/format-date'
 import styles from './StatementList.module.css'
-import { subjectHref } from '../../../domain/read-models/hrefs'
+import { jointDeclarationHref, subjectHref } from '../../../domain/read-models/hrefs'
 import { LatestStatement } from '../../../domain/read-models/latest-statement'
 import { authorHref, authorOnSubjectHref } from '../../../domain/read-models/statement-author'
 
@@ -26,16 +26,27 @@ export default function StatementList({ title, statements }: StatementListProps)
                 <Link href={authorHref(statement.author)}>
                   <strong>{statement.author.name}</strong>
                 </Link>{' '}
-                {statement.author.kind === 'organisation'
-                  ? 'a pris position pour'
-                  : 's’est déclaré·e pour'}{' '}
-                <Link href={authorOnSubjectHref(statement.author, statement.subjectSlug)}>
-                  <em>{statement.positionTitle}</em>
-                </Link>{' '}
-                dans le débat{' '}
-                <Link href={subjectHref(statement.subjectSlug)}>
-                  <strong>{statement.subjectTitle}</strong>
-                </Link>
+                {statement.jointDeclaration ? (
+                  <>
+                    a signé{' '}
+                    <Link href={jointDeclarationHref(statement.jointDeclaration)}>
+                      <em>{statement.jointDeclaration.title}</em>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {statement.author.kind === 'organisation'
+                      ? 'a pris position pour'
+                      : 's’est déclaré·e pour'}{' '}
+                    <Link href={authorOnSubjectHref(statement.author, statement.subjectSlug)}>
+                      <em>{statement.positionTitle}</em>
+                    </Link>{' '}
+                    dans le débat{' '}
+                    <Link href={subjectHref(statement.subjectSlug)}>
+                      <strong>{statement.subjectTitle}</strong>
+                    </Link>
+                  </>
+                )}
               </p>
               <p className={styles.date}>{formatShortDate(statement.statedAt)}</p>
             </div>

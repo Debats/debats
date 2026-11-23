@@ -93,8 +93,8 @@ export default function StatementPreview() {
           </div>
           {draft.signing ? (
             <p className={styles.empty}>
-              Une prise de position par sujet que le texte engage : la position, la citation, la
-              source et la date sont celles du texte.
+              Une prise de position pour chaque position que le texte prend : la position, la
+              citation, la source et la date sont celles du texte.
             </p>
           ) : (
             <>
