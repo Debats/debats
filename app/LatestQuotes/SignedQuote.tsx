@@ -36,7 +36,6 @@ export default function SignedQuote({ author, declaration, source }: SignedQuote
           </Link>
         </p>
       </div>
-      <p className={styles.position}>Déclaration commune</p>
     </li>
   )
 }

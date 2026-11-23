@@ -42,6 +42,9 @@ export const JointDeclaration = S.Struct({
 
 export type JointDeclaration = S.Schema.Type<typeof JointDeclaration>
 
+/** How the signature of a joint declaration is labelled, where another statement shows its type */
+export const JOINT_DECLARATION_LABEL = 'Déclaration commune'
+
 /** A joint declaration as a page names it and links to it, from one of its signatures */
 export const JointDeclarationRef = S.Struct({ id: S.String, title: S.String, slug: S.String })
 export type JointDeclarationRef = S.Schema.Type<typeof JointDeclarationRef>

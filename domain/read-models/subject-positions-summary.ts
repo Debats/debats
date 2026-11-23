@@ -1,3 +1,4 @@
+import { JointDeclarationRef } from '../entities/joint-declaration'
 import { StatementType } from '../entities/statement'
 import { ArgumentRef } from './argument'
 import { StatementAuthorRef } from './statement-author'
@@ -10,6 +11,8 @@ export interface PositionLatestStatement {
   sourceName: string
   sourceUrl: string | null
   statementType: StatementType
+  /** The joint declaration the statement is a signature of, when it is one */
+  jointDeclaration?: JointDeclarationRef
   author: StatementAuthorRef
   arguments: ArgumentRef[]
 }

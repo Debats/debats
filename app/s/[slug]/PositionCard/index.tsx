@@ -2,9 +2,10 @@ import Link from 'next/link'
 import AuthorAvatar from '../../../../components/statements/AuthorAvatar'
 import AuthorAvatarStack from '../../../../components/statements/AuthorAvatarStack'
 import ArgumentChips from '../../../../components/statements/ArgumentChips'
-import { STATEMENT_TYPE_LABELS } from '../../../../domain/entities/statement'
+import ProvenanceLine from '../../../../components/statements/ProvenanceLine'
 import { ArgumentRef } from '../../../../domain/read-models/argument'
 import { positionHref } from '../../../../domain/read-models/hrefs'
+import { provenanceOf } from '../../../../domain/read-models/statement-provenance'
 import { authorOnSubjectHref } from '../../../../domain/read-models/statement-author'
 import {
   positionAuthors,
@@ -69,29 +70,18 @@ function FeaturedStatement({
           <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
         </div>
         <blockquote className={styles.quote}>{statement.quote}</blockquote>
-        <div className={styles.source}>
-          <span className={styles.type}>{STATEMENT_TYPE_LABELS[statement.statementType]}</span>
-          {statement.sourceUrl ? (
-            <a
-              href={statement.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.sourceLink}
-            >
-              {statement.sourceName}
-            </a>
-          ) : (
-            <span className={styles.sourceLink}>{statement.sourceName}</span>
-          )}
-          {othersLabel && (
-            <>
-              <span className={styles.separator}>·</span>
-              <Link href={moreHref} className={styles.more}>
-                {othersLabel}
-              </Link>
-            </>
-          )}
-        </div>
+        <ProvenanceLine
+          provenance={provenanceOf(statement)}
+          notes={
+            othersLabel
+              ? [
+                  <Link key="others" href={moreHref} className={styles.more}>
+                    {othersLabel}
+                  </Link>,
+                ]
+              : []
+          }
+        />
         <ArgumentChips arguments={statement.arguments} />
       </div>
     </div>

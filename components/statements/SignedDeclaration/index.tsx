@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { JointDeclarationRef } from '../../../domain/entities/joint-declaration'
 import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
+import { provenanceOfText } from '../../../domain/read-models/statement-provenance'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { StatementTouch } from '../../../domain/read-models/statement-feed'
 import { formatShortDate } from '../../../lib/format-date'
 import AuthorAvatar from '../AuthorAvatar'
+import ProvenanceLine from '../ProvenanceLine'
 import styles from './SignedDeclaration.module.css'
 
 interface SignedDeclarationProps {
@@ -51,22 +53,21 @@ export default function SignedDeclaration({
             {declaration.title}
           </Link>
         </p>
-        <p className={styles.source}>
-          <span className={styles.type}>Déclaration commune</span>
-          <a href={source.url} target="_blank" rel="noopener noreferrer" className={styles.link}>
-            {source.name}
-          </a>
-          <span className={styles.separator}>·</span>
-          <span>{formatShortDate(source.statedAt)}</span>
-          {touch && (
-            <>
-              <span className={styles.separator}>·</span>
-              <span>
-                {TOUCH_LABELS[touch.kind]} {formatShortDate(touch.at)}
-              </span>
-            </>
-          )}
-        </p>
+        <ProvenanceLine
+          provenance={provenanceOfText(source)}
+          notes={[
+            <span key="day" className={styles.date}>
+              {formatShortDate(source.statedAt)}
+            </span>,
+            ...(touch
+              ? [
+                  <span key="touch" className={styles.date}>
+                    {TOUCH_LABELS[touch.kind]} {formatShortDate(touch.at)}
+                  </span>,
+                ]
+              : []),
+          ]}
+        />
       </div>
     </article>
   )

@@ -27,6 +27,7 @@ import {
   loadJointDeclarationIndex,
   loadJointDeclarationPage,
 } from './joint-declarations'
+import { getSubjectPositionsSummary } from './subject-positions-summary'
 
 /**
  * Runs against the local database (`npm run test:db`): a joint declaration
@@ -140,6 +141,57 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     expect(feed.entries.map(({ statement }) => [statement.id, statement.jointDeclaration])).toEqual(
       [[statementId, { id: declarationId, title: `Appel de test ${tag}`, slug }]],
     )
+  })
+
+  it('names the text on the statement a subject page features, when it is a signature', async () => {
+    // Dated after everything else on the position, so that it is the one featured; gone before the next test
+    const featuredId = crypto.randomUUID()
+    const actor = await prisma().contributors.findFirstOrThrow({ select: { id: true } })
+    await Effect.runPromise(
+      runUnitOfWork((journal) =>
+        journal.append(
+          statementStream(featuredId),
+          0,
+          [
+            statementAdded({
+              author: organisationAuthor(organisation.id),
+              subjectId: position.subject_id,
+              positionId: position.id,
+              content: declarationContent(quote),
+              sourceName: 'Le Monde',
+              sourceUrl,
+              statedAt: new Date('2099-01-01'),
+              argumentIds: [],
+              jointDeclarationId: declarationId,
+            }),
+          ],
+          { actorId: actor.id },
+        ),
+      ),
+    )
+
+    try {
+      const summaries = await Effect.runPromise(
+        getSubjectPositionsSummary(supabase, position.subject_id),
+      )
+      const featured = summaries.find((summary) => summary.positionId === position.id)
+
+      expect(featured?.latestStatement).toMatchObject({
+        id: featuredId,
+        jointDeclaration: { id: declarationId, title: `Appel de test ${tag}`, slug },
+      })
+      // A position whose featured statement is the author's own names no text
+      for (const other of summaries) {
+        if (other.positionId !== position.id) {
+          expect(other.latestStatement?.jointDeclaration?.id).not.toBe(declarationId)
+        }
+      }
+    } finally {
+      await prisma().statements.deleteMany({ where: { id: featuredId } })
+      await prisma().domain_events.deleteMany({
+        where: { stream_type: 'statement', stream_id: featuredId },
+      })
+    }
   })
 
   it('tells what the text holds, and finds the statement a signature made', async () => {

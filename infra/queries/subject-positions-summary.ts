@@ -7,6 +7,7 @@ import {
 } from '../../domain/read-models/subject-positions-summary'
 import { StatementAuthorRef } from '../../domain/read-models/statement-author'
 import { ArgumentRef } from '../../domain/read-models/argument'
+import { JointDeclarationRef } from '../../domain/entities/joint-declaration'
 import { parseStatementType, StatementAuthorKind } from '../../domain/entities/statement'
 import { DatabaseError } from '../../domain/repositories/errors'
 
@@ -17,6 +18,8 @@ interface LatestStatementRow {
   source_name: string
   source_url: string | null
   statement_type: string
+  /** The joint declaration the statement is a signature of; null for one of the author's own */
+  joint_declaration: JointDeclarationRef | null
   author: StatementAuthorRef
   arguments: ArgumentRef[] | null
 }
@@ -24,6 +27,7 @@ interface LatestStatementRow {
 function toLatestStatement(row: LatestStatementRow | null): PositionLatestStatement | null {
   if (!row) return null
   return {
+    ...(row.joint_declaration ? { jointDeclaration: row.joint_declaration } : {}),
     id: row.id,
     quote: row.quote,
     statedAt: new Date(row.stated_at),

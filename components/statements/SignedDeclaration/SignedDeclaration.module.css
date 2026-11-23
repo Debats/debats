@@ -38,20 +38,6 @@
   color: var(--signal);
 }
 
-/* The line of provenance of a statement, said of the text */
-.source {
-  composes: source from '../StatementSource/StatementSource.module.css';
+.date {
   composes: meta from '../../../styles/text.module.css';
-}
-
-.type {
-  composes: type from '../StatementSource/StatementSource.module.css';
-}
-
-.link {
-  composes: sourceLink from '../StatementSource/StatementSource.module.css';
-}
-
-.separator {
-  composes: separator from '../StatementSource/StatementSource.module.css';
 }

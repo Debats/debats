@@ -10,9 +10,8 @@ import { canPerform } from '../../../../../domain/reputation/permissions'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
 import { subjectAt } from '../../../merged-subject'
-import EntityReview from '../../../../../components/review/EntityReview'
 import ReviewScope from '../../../../../components/review/ReviewScope'
-import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../../../domain/entities/statement'
+import StatementSource from '../../../../../components/statements/StatementSource'
 import {
   CONTRIBUTE_HREF,
   newStatementOnPositionHref,
@@ -215,20 +214,7 @@ export default async function PositionDetailPage({ params }: PageProps) {
                       <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
                     </div>
                     <StatementBody content={statement.content} />
-                    <div className={styles.source}>
-                      <span className={styles.type}>
-                        {STATEMENT_TYPE_LABELS[statementTypeOf(statement.content)]}
-                      </span>
-                      <a
-                        href={statement.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.sourceLink}
-                      >
-                        {statement.sourceName}
-                      </a>
-                      <EntityReview entity={{ type: 'statement', id: statement.id }} />
-                    </div>
+                    <StatementSource statement={statement} dated={false} />
                     <ArgumentChips arguments={used} />
                   </div>
                 </article>

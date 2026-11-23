@@ -2,9 +2,8 @@ import Link from 'next/link'
 import AuthorAvatar from '../AuthorAvatar'
 import ArgumentChips from '../ArgumentChips'
 import StatementBody from '../StatementBody'
+import StatementSource from '../StatementSource'
 import EditLink from '../../ui/EditLink'
-import EntityReview from '../../review/EntityReview'
-import { STATEMENT_TYPE_LABELS, statementTypeOf } from '../../../domain/entities/statement'
 import { roleOf } from '../../../domain/read-models/author-role'
 import { positionHref } from '../../../domain/read-models/hrefs'
 import {
@@ -12,7 +11,6 @@ import {
   StatementAuthorRef,
 } from '../../../domain/read-models/statement-author'
 import { PositionGroup } from '../../../domain/services/author-on-subject'
-import { formatShortDate } from '../../../lib/format-date'
 import styles from './AuthorPositions.module.css'
 
 interface AuthorPositionCardProps {
@@ -47,23 +45,9 @@ export default function AuthorPositionCard({
       {statements.map(({ statement, arguments: used }) => (
         <div key={statement.id} className={styles.statement}>
           <StatementBody content={statement.content} />
-          <div className={styles.source}>
-            <span className={styles.type}>
-              {STATEMENT_TYPE_LABELS[statementTypeOf(statement.content)]}
-            </span>
-            <a
-              href={statement.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.sourceLink}
-            >
-              {statement.sourceName}
-            </a>
-            <span className={styles.separator}>·</span>
-            <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
+          <StatementSource statement={statement}>
             {editHref && <EditLink href={editHref(statement.id)} />}
-            <EntityReview entity={{ type: 'statement', id: statement.id }} />
-          </div>
+          </StatementSource>
           <ArgumentChips arguments={used} />
         </div>
       ))}

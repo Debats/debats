@@ -1,14 +1,10 @@
 import { ReactNode } from 'react'
-import Link from 'next/link'
 import { JointDeclarationRef } from '../../../domain/entities/joint-declaration'
-import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
-import {
-  STATEMENT_TYPE_LABELS,
-  StatementContent,
-  statementTypeOf,
-} from '../../../domain/entities/statement'
+import { StatementContent, statementTypeOf } from '../../../domain/entities/statement'
+import { provenanceOf } from '../../../domain/read-models/statement-provenance'
 import { formatShortDate } from '../../../lib/format-date'
 import EntityReview from '../../review/EntityReview'
+import ProvenanceLine from '../ProvenanceLine'
 import styles from './StatementSource.module.css'
 
 interface StatementSourceProps {
@@ -23,46 +19,39 @@ interface StatementSourceProps {
     /** La déclaration commune dont la prise de position est une signature, quand elle en est une */
     jointDeclaration?: JointDeclarationRef
   }
+  /** Faux quand la page donne déjà le jour ailleurs sur la carte */
+  dated?: boolean
   /** Compléments en fin de ligne : lien de modification, autres auteurs… */
   children?: ReactNode
 }
 
 /**
- * La ligne de provenance d'une prise de position : type, source, date, puis
- * ce que les lecteur·rices en ont vérifié, quand la page a lu les marques.
+ * La ligne de provenance d'une prise de position : ce qu'elle est et où elle
+ * se lit (`provenanceOf`), sa date, puis ce que les lecteur·rices en ont
+ * vérifié, quand la page a lu les marques.
  */
-export default function StatementSource({ statement, children }: StatementSourceProps) {
+export default function StatementSource({
+  statement,
+  dated = true,
+  children,
+}: StatementSourceProps) {
+  const { id, content, sourceName, sourceUrl, statedAt, jointDeclaration } = statement
+  const provenance = provenanceOf({
+    statementType: statementTypeOf(content),
+    sourceName,
+    sourceUrl,
+    jointDeclaration,
+  })
+  const day = (
+    <span key="day" className={styles.date}>
+      {formatShortDate(statedAt)}
+    </span>
+  )
+
   return (
-    <div className={styles.source}>
-      <span className={styles.type}>
-        {STATEMENT_TYPE_LABELS[statementTypeOf(statement.content)]}
-      </span>
-      <a
-        href={statement.sourceUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.sourceLink}
-      >
-        {statement.sourceName}
-      </a>
-      <span className={styles.separator}>·</span>
-      <span className={styles.date}>{formatShortDate(statement.statedAt)}</span>
-      {statement.jointDeclaration && (
-        <>
-          <span className={styles.separator}>·</span>
-          <span className={styles.signature}>
-            signataire de{' '}
-            <Link
-              href={jointDeclarationHref(statement.jointDeclaration)}
-              className={styles.signatureLink}
-            >
-              {statement.jointDeclaration.title}
-            </Link>
-          </span>
-        </>
-      )}
+    <ProvenanceLine provenance={provenance} notes={dated ? [day] : []}>
       {children}
-      <EntityReview entity={{ type: 'statement', id: statement.id }} />
-    </div>
+      <EntityReview entity={{ type: 'statement', id }} />
+    </ProvenanceLine>
   )
 }
