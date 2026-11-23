@@ -8,8 +8,6 @@ import { getAuthenticatedContributor } from '../../actions/get-authenticated-con
 import { canPerform } from '../../../domain/reputation/permissions'
 import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
 import { signatoriesLabel } from '../../../domain/read-models/joint-declaration'
-import { feedHref } from '../../../domain/read-models/statement-feed'
-import ActionLink from '../../../components/ui/ActionLink'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import HeroStats from '../../../components/layout/HeroStats'
 import PageHero from '../../../components/layout/PageHero'
@@ -155,7 +153,6 @@ export default async function JointDeclarationPage({ params }: PageProps) {
             </ul>
           )}
           <p className={styles.lead}>
-            Le site ne montre que les signatures qu’il a recensées.{' '}
             <a
               href={declaration.sourceUrl}
               target="_blank"
@@ -165,11 +162,6 @@ export default async function JointDeclarationPage({ params }: PageProps) {
               Voir le texte et ses signataires à la source
             </a>
           </p>
-          {signatories.length > 0 && (
-            <ActionLink href={feedHref({ jointDeclarationSlug: declaration.slug }, 'stated')}>
-              Lire chaque signature dans le flux des prises de position
-            </ActionLink>
-          )}
         </section>
       </ContentWithSidebar>
     </>
