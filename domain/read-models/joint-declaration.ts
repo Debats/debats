@@ -4,7 +4,7 @@ import { JointDeclaration } from '../entities/joint-declaration'
 import { subjectHref } from './hrefs'
 import { StatementAuthorRef } from './statement-author'
 
-/** What a joint declaration says on one subject, as its page shows it */
+/** One position a joint declaration takes, as its page shows it; several may share a subject */
 export interface TakenStance {
   subject: { id: string; title: string; slug: string; problem: string }
   position: { id: string; title: string; slug: string }

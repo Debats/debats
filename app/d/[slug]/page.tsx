@@ -101,7 +101,7 @@ export default async function JointDeclarationPage({ params }: PageProps) {
               title="Comment lire cette page"
               steps={[
                 'Une déclaration commune est un texte que plusieurs personnes ou organisations signent ensemble.',
-                'Chaque signature compte comme une prise de position de son auteur·rice, sur chaque sujet que le texte engage.',
+                'Chaque signature compte comme une prise de position de son auteur·rice, sur chaque position que le texte prend.',
                 'Le site ne montre que les signataires qu’il a recensé·es. La liste complète est à la source.',
               ]}
             />
@@ -126,7 +126,7 @@ export default async function JointDeclarationPage({ params }: PageProps) {
           {engaged && (
             <div className={styles.stances}>
               {stances.map((stance) => (
-                <TakenStanceCard key={stance.subject.id} stance={stance} />
+                <TakenStanceCard key={stance.position.id} stance={stance} />
               ))}
             </div>
           )}

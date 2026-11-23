@@ -144,14 +144,17 @@ describe('draftedDeclarations', () => {
     expect(declarations[0].title).toBe('Le Manifeste de Paris')
   })
 
-  it('names the subjects the drafts give two positions on: a text speaks once per subject', () => {
+  it('reads two positions on one subject as two positions of the text: it may take several', () => {
     const [text] = draftedDeclarations([
       signature({ id: 'd1', who: 'A', subject: 'Les médias', position: 'Indépendance' }),
-      signature({ id: 'd2', who: 'B', subject: 'Les médias', position: 'Nationalisation' }),
+      signature({ id: 'd2', who: 'B', subject: 'Les médias', position: 'Droit de révocation' }),
     ]).declarations
 
-    expect(text.contested).toEqual(['Les médias'])
-    expect(text.canValidate).toBe(false)
+    expect(text.positions.map(({ positionTitle }) => positionTitle)).toEqual([
+      'Indépendance',
+      'Droit de révocation',
+    ])
+    expect(text.canValidate).toBe(true)
   })
 
   it('can be validated only when each of its drafts can', () => {

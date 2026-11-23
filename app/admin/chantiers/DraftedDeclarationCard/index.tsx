@@ -37,7 +37,7 @@ export default function DraftedDeclarationCard({
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string>()
   const [showReturnForm, setShowReturnForm] = useState(false)
-  const { positions, signatories, items, contested } = declaration
+  const { positions, signatories, items } = declaration
   const draftIds = items.map(({ draft }) => draft.id)
 
   /* Ce qui a été traité avant un refus le reste : la page relit dans tous les cas */
@@ -106,13 +106,6 @@ export default function DraftedDeclarationCard({
           />
         ))}
       </ul>
-
-      {contested.length > 0 && (
-        <p className={styles.warning}>
-          Les brouillons donnent deux positions au texte sur {contested.join(', ')} : un texte parle
-          une fois par sujet. Écartez ou amendez le brouillon en trop avant de valider.
-        </p>
-      )}
 
       <p className={styles.text}>
         Valider référence le texte si le site ne le connaît pas, puis donne à chaque signataire une

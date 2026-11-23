@@ -26,7 +26,10 @@ export const jointDeclarationStream = (id: string): StreamRef => ({
   streamId: id,
 })
 
-/** What the text says on one subject: the position it takes, in its own words */
+/**
+ * A position the text takes, in its own words. A text may take several on
+ * the same subject — two measures it calls for, say — but each one once.
+ */
 export interface TakenPosition {
   subjectId: string
   positionId: string
@@ -122,12 +125,12 @@ export const takenPositionMerged = (sourceId: string, targetId: string): JointDe
 })
 
 export const engagedSubjectMerged = (
-  sourceSubjectId: string,
+  sourcePositionId: string,
   subjectId: string,
   positionId: string,
 ): JointDeclarationEvent => ({
   type: 'EngagedSubjectMerged',
-  payload: { sourceSubjectId, subjectId, positionId },
+  payload: { sourcePositionId, subjectId, positionId },
 })
 
 export const subjectDisengaged = (subjectId: string): JointDeclarationEvent => ({
@@ -143,35 +146,42 @@ export type JointDeclarationDecision = Decision<JointDeclarationState, JointDecl
 export type JointDeclarationCascade = Cascade<JointDeclarationState, JointDeclarationEvent>
 
 export const NO_POSITION_TAKEN = 'Une déclaration commune prend au moins une position.'
-export const SUBJECT_ALREADY_ENGAGED = 'Cette déclaration commune prend déjà position sur ce sujet.'
+export const POSITION_ALREADY_TAKEN = 'Cette déclaration commune prend déjà cette position.'
 export const ALREADY_SIGNATORY = 'Cette signature est déjà enregistrée.'
 
 const engages = (positions: readonly TakenPosition[], subjectId: string) =>
   positions.some((taken) => taken.subjectId === subjectId)
 
-const engagesASubjectTwice = (positions: readonly TakenPosition[]) =>
-  positions.some((taken, index) => engages(positions.slice(0, index), taken.subjectId))
+const takes = (positions: readonly TakenPosition[], positionId: string) =>
+  positions.some((taken) => taken.positionId === positionId)
+
+const takesAPositionTwice = (positions: readonly TakenPosition[]) =>
+  positions.some((taken, index) => takes(positions.slice(0, index), taken.positionId))
+
+/** The positions, each once: the first to name a position keeps its words */
+const eachOnce = (positions: readonly TakenPosition[]): TakenPosition[] =>
+  positions.filter((taken, index) => !takes(positions.slice(0, index), taken.positionId))
 
 /**
  * A contributor references the text and what it takes position on; its id is
  * the stream's, chosen by the command. A text that takes no position has
- * nothing for a signatory to hold, and a text speaks once on a subject.
+ * nothing for a signatory to hold, and a text takes a position once.
  */
 export const publishJointDeclaration = (
   input: JointDeclarationInput,
   positions: readonly TakenPosition[],
 ): Either.Either<JointDeclarationEvent[], Rejected> => {
   if (positions.length === 0) return refused(NO_POSITION_TAKEN, 'positions')
-  if (engagesASubjectTwice(positions)) return refused(SUBJECT_ALREADY_ENGAGED, 'positions')
+  if (takesAPositionTwice(positions)) return refused(POSITION_ALREADY_TAKEN, 'positions')
   return Either.right([jointDeclarationPublished(input), ...positions.map(positionTaken)])
 }
 
-/** The text is found to take a position on one more subject */
+/** The text is found to take one more position, on a subject it engaged already or on another */
 export const takePosition =
   (taken: TakenPosition): JointDeclarationDecision =>
   (state) =>
-    engages(state.positions, taken.subjectId)
-      ? refused(SUBJECT_ALREADY_ENGAGED, 'positionId')
+    takes(state.positions, taken.positionId)
+      ? refused(POSITION_ALREADY_TAKEN, 'positionId')
       : Either.right([positionTaken(taken)])
 
 /**
@@ -192,6 +202,8 @@ export const addSignatory =
  * The text follows a position it takes, merged into another of its subject.
  * Its signatories' statements follow on their own streams (`moveStatement`):
  * without this, the next signatory would be given a position that is gone.
+ * A text that took both takes the one that remains, once, in the words it
+ * had for the first of the two.
  */
 export const followMergedPosition =
   (sourceId: string, targetId: string): JointDeclarationCascade =>
@@ -202,10 +214,9 @@ export const followMergedPosition =
 
 /**
  * The text follows a subject it engages, merged into another: `positionAfter`
- * tells, from the position the text takes, the one it takes there. Its
- * signatories' statements follow on their own streams (`followSubject`). A
- * text that engages both subjects is the merge's to refuse: it would speak
- * twice on the one that remains.
+ * tells, from each position the text takes on it, the one it takes there. Its
+ * signatories' statements follow on their own streams (`followSubject`). Two
+ * positions folded into the same one leave the text taking it once.
  */
 export const followEngagedSubject =
   (
@@ -217,7 +228,7 @@ export const followEngagedSubject =
     state.positions
       .filter((taken) => taken.subjectId === sourceSubjectId)
       .map((taken) =>
-        engagedSubjectMerged(sourceSubjectId, targetSubjectId, positionAfter(taken.positionId)),
+        engagedSubjectMerged(taken.positionId, targetSubjectId, positionAfter(taken.positionId)),
       )
 
 /** The text stops engaging a subject that leaves the site, with the statements made on it */
@@ -276,10 +287,12 @@ function apply(
       return (
         state && {
           ...touched(state, stored),
-          positions: state.positions.map((taken) =>
-            taken.positionId === event.payload.sourceId
-              ? { ...taken, positionId: event.payload.targetId }
-              : taken,
+          positions: eachOnce(
+            state.positions.map((taken) =>
+              taken.positionId === event.payload.sourceId
+                ? { ...taken, positionId: event.payload.targetId }
+                : taken,
+            ),
           ),
         }
       )
@@ -287,14 +300,16 @@ function apply(
       return (
         state && {
           ...touched(state, stored),
-          positions: state.positions.map((taken) =>
-            taken.subjectId === event.payload.sourceSubjectId
-              ? {
-                  ...taken,
-                  subjectId: event.payload.subjectId,
-                  positionId: event.payload.positionId,
-                }
-              : taken,
+          positions: eachOnce(
+            state.positions.map((taken) =>
+              taken.positionId === event.payload.sourcePositionId
+                ? {
+                    ...taken,
+                    subjectId: event.payload.subjectId,
+                    positionId: event.payload.positionId,
+                  }
+                : taken,
+            ),
           ),
         }
       )

@@ -33,8 +33,8 @@ export default function AddSignature({
         <>
           <h2 className={styles.title}>Il manque une signature ?</h2>
           <p className={styles.text}>
-            Ajoutez un·e signataire : ses prises de position sur chaque sujet du texte sont créées
-            d’un coup.
+            Ajoutez un·e signataire : une prise de position est créée pour chacune des positions du
+            texte, d’un coup.
           </p>
           <Button href={canSign ? signJointDeclarationHref(declaration) : CONTRIBUTE_HREF}>
             {canSign ? 'Ajouter une signature' : 'Contribuer'}
@@ -44,8 +44,8 @@ export default function AddSignature({
         <>
           <h2 className={styles.title}>Ce texte ne prend plus position</h2>
           <p className={styles.text}>
-            Dites sur quel sujet il s’engage, avec les mots qui l’énoncent : ses signataires
-            prendront cette position, et il pourra de nouveau être signé.
+            Dites quelle position il prend, avec les mots qui l’énoncent : ses signataires prendront
+            cette position, et il pourra de nouveau être signé.
           </p>
         </>
       )}

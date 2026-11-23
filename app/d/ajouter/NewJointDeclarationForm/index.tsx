@@ -24,7 +24,7 @@ const EMPTY_TEXT = { title: '', presentation: '', sourceName: '', sourceUrl: '',
 
 /**
  * Le formulaire qui référence une déclaration commune : le texte, puis les
- * positions qu'il prend, sujet par sujet. Ses signataires s'ajoutent ensuite,
+ * positions qu'il prend, une à une. Ses signataires s'ajoutent ensuite,
  * un·e à un·e, depuis sa page.
  */
 export default function NewJointDeclarationForm() {
@@ -146,8 +146,8 @@ export default function NewJointDeclarationForm() {
           <span className={styles.step}>2</span> Ce que le texte défend
         </legend>
         <p className={styles.hint}>
-          Une position par sujet que le texte engage, chacune avec les mots qui l’énoncent. Signer
-          le texte, c’est prendre chacune d’elles.
+          Chaque position que le texte prend, avec les mots qui l’énoncent ; il peut en prendre
+          plusieurs sur un même sujet. Signer le texte, c’est prendre chacune d’elles.
         </p>
         {rows.map((row, index) => (
           <TakenPositionField

@@ -98,13 +98,22 @@ describe('attachmentPlanOf', () => {
     expect(plan.stances[2]).toMatchObject({ candidates: [] })
   })
 
-  it('refuses a statement on a subject the text is silent on', () => {
-    const elsewhere = { ...onMedia, positionId: 'pos-school', subjectId: 'subject-school' }
-    expect(attachmentPlanOf(text, elsewhere, []).refusal).toBe('silent')
+  it('refuses a statement on a position the text does not take, until the text is said to take it', () => {
+    const elsewhere = { ...onMedia, positionId: 'pos-school' }
+    expect(attachmentPlanOf(text, elsewhere, []).refusal).toBe('position_not_taken')
   })
 
-  it('refuses a statement for another position than the one the text takes on its subject', () => {
-    const against = { ...onMedia, positionId: 'pos-media-against' }
-    expect(attachmentPlanOf(text, against, []).refusal).toBe('other_position')
+  it('plans a text that takes two positions on one subject as it does any other', () => {
+    const second = {
+      ...stance('media'),
+      position: { id: 'pos-media-revocation', title: 'Droit de révocation', slug: 'revocation' },
+    }
+    const twice = { ...text, stances: [stance('media'), second] }
+    const onSecond = { ...onMedia, id: 'deed-revocation', positionId: 'pos-media-revocation' }
+
+    const plan = attachmentPlanOf(twice, onSecond, [])
+
+    expect(plan.refusal).toBeUndefined()
+    expect(plan.stances.map((s) => s.kind)).toEqual(['open', 'attached'])
   })
 })

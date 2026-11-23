@@ -27,7 +27,7 @@ export const JointDeclarationPublished = S.Struct({
   payload: JointDeclarationContent,
 })
 
-/** What the text says on one subject: the position it takes, in its own words */
+/** A position the text takes, in its own words; several may be on the same subject */
 const TakenPositionPayload = S.Struct({
   subjectId: S.String,
   positionId: S.String,
@@ -36,7 +36,7 @@ const TakenPositionPayload = S.Struct({
 })
 export type TakenPositionPayload = S.Schema.Type<typeof TakenPositionPayload>
 
-/** The text takes a position on a subject it was silent on */
+/** The text takes a position it did not take yet */
 export const PositionTaken = S.Struct({
   type: S.Literal('PositionTaken'),
   payload: TakenPositionPayload,
@@ -61,12 +61,13 @@ export const TakenPositionMerged = S.Struct({
 })
 
 /**
- * A subject the text engaged was merged into another: the text takes position
- * on that one, on the position its own became there (carried over, or folded).
+ * A subject the text engaged was merged into another: a position the text
+ * took on it is now the one it became there (carried over, or folded). One
+ * event per position the text took on the subject that is gone.
  */
 export const EngagedSubjectMerged = S.Struct({
   type: S.Literal('EngagedSubjectMerged'),
-  payload: S.Struct({ sourceSubjectId: S.String, subjectId: S.String, positionId: S.String }),
+  payload: S.Struct({ sourcePositionId: S.String, subjectId: S.String, positionId: S.String }),
 })
 
 /** A subject the text engaged left the site: the text no longer takes position on it */

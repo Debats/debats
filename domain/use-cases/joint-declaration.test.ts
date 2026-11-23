@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Layer } from 'effect'
-import { ALREADY_SIGNATORY, SUBJECT_ALREADY_ENGAGED } from '../aggregates/joint-declaration'
+import { ALREADY_SIGNATORY, POSITION_ALREADY_TAKEN } from '../aggregates/joint-declaration'
 import { organisationAuthor, publicFigureAuthor, StatementAuthor } from '../entities/statement'
 import { inMemoryUnitOfWork } from '../events/event-store-memory'
 import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
@@ -142,7 +142,7 @@ describe('publishJointDeclarationUseCase', () => {
     expect(Either.isLeft(result) && result.left).toEqual({ positions: TAKEN_QUOTE_TOO_SHORT })
   })
 
-  it('refuses two positions on the same subject', async () => {
+  it('records two positions on the same subject', async () => {
     const result = await execute(
       publishJointDeclarationUseCase({
         ...newDeclaration,
@@ -152,7 +152,20 @@ describe('publishJointDeclarationUseCase', () => {
         ],
       }),
     )
-    expect(Either.isLeft(result) && result.left).toEqual({ positions: SUBJECT_ALREADY_ENGAGED })
+    expect(Either.isRight(result)).toBe(true)
+  })
+
+  it('refuses the same position twice', async () => {
+    const result = await execute(
+      publishJointDeclarationUseCase({
+        ...newDeclaration,
+        positions: [
+          { positionId: onMedia.id, quote: mediaQuote },
+          { positionId: onMedia.id, quote: mediaQuote },
+        ],
+      }),
+    )
+    expect(Either.isLeft(result) && result.left).toEqual({ positions: POSITION_ALREADY_TAKEN })
   })
 
   it('records the text and the positions it takes, each on the subject the position names', async () => {
@@ -379,7 +392,7 @@ describe('takeJointPositionUseCase', () => {
     expect(grantsIn(unit.journal)).toEqual([])
   })
 
-  it('refuses a second position on a subject the text already engages, and writes nothing', async () => {
+  it('takes a second position on a subject the text already engages, for every signatory', async () => {
     const unit = await seeded()
     const before = unit.journal.all().length
     const result = await execute(
@@ -387,7 +400,24 @@ describe('takeJointPositionUseCase', () => {
       unit.run,
     )
 
-    expect(Either.isLeft(result) && result.left).toEqual({ positionId: SUBJECT_ALREADY_ENGAGED })
+    expect(Either.isRight(result)).toBe(true)
+    expect(
+      unit.journal
+        .all()
+        .slice(before)
+        .map(({ type }) => type),
+    ).toEqual(['PositionTaken', ...signatories.map(() => 'StatementAdded')])
+  })
+
+  it('refuses a position the text already takes, and writes nothing', async () => {
+    const unit = await seeded()
+    const before = unit.journal.all().length
+    const result = await execute(
+      takeJointPositionUseCase({ ...onOneMore, positionId: onMedia.id }),
+      unit.run,
+    )
+
+    expect(Either.isLeft(result) && result.left).toEqual({ positionId: POSITION_ALREADY_TAKEN })
     expect(unit.journal.all()).toHaveLength(before)
   })
 

@@ -75,26 +75,13 @@ export function mergeSubjectsUseCase(params: MergeSubjectsParams) {
 
 type Merge = S.Schema.Type<typeof SubjectsMergeInput>
 
-export const TEXT_ENGAGES_BOTH =
-  'Une déclaration commune prend position sur les deux sujets : elle en prendrait deux sur celui qui reste. Retirez d’abord l’une de ses positions.'
-
 /**
  * The joint declarations that engage the subject that disappears: they follow
- * it. One that also engages the subject that remains would speak twice on it,
- * which a text never does — the merge is refused.
+ * it, each position they took on it becoming what it is on the subject that
+ * remains. One that engaged both simply takes more positions there.
  */
-const declarationsFollowing = ({ sourceSubjectId, targetSubjectId }: Merge) =>
-  pipe(
-    Effect.all({
-      onSource: declarations.findIdsBySubjectId(sourceSubjectId),
-      onTarget: declarations.findIdsBySubjectId(targetSubjectId),
-    }),
-    Effect.filterOrFail(
-      ({ onSource, onTarget }) => !onSource.some((id) => onTarget.includes(id)),
-      () => new Rejected(TEXT_ENGAGES_BOTH),
-    ),
-    Effect.map(({ onSource }) => onSource),
-  )
+const declarationsFollowing = ({ sourceSubjectId }: Merge) =>
+  declarations.findIdsBySubjectId(sourceSubjectId)
 
 function recordMerge(
   events: EventStore,

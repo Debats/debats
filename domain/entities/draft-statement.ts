@@ -52,7 +52,7 @@ export type DraftAffiliation = {
  * an appeal, an open letter. Named by its title, as a subject is; the text's
  * source and day are the draft's own. The validation references the text when
  * the site does not know it, adds the draft's position to it when the text
- * was silent on the subject, and adds the author to its signatories.
+ * did not take it yet, and adds the author to its signatories.
  */
 export type DraftJointDeclaration = {
   title: string

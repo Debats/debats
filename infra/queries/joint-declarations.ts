@@ -177,7 +177,12 @@ export function loadJointDeclarationIndex(
           subjects: [...row.joint_declaration_positions]
             .sort((a, b) => a.rank - b.rank)
             .filter((taken) => !taken.subjects.deleted_at)
-            .map((taken) => ({ title: taken.subjects.title, slug: taken.subjects.slug })),
+            .map((taken) => ({ title: taken.subjects.title, slug: taken.subjects.slug }))
+            // A text may take several positions on a subject: the subject is named once
+            .filter(
+              (subject, index, subjects) =>
+                subjects.findIndex((other) => other.slug === subject.slug) === index,
+            ),
           signatories: signatoriesOf(row.joint_declaration_signatories),
         }),
       )

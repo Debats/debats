@@ -17,7 +17,7 @@ import { uniqueTakenAs } from './run-command'
 import { today } from './today'
 import { ContributorIdentity, FieldErrors, Rejected } from './types'
 
-/** What the text says on one subject, as the form holds it: a position chosen, and the words quoted */
+/** One position the text takes, as the form holds it: a position chosen, and the words quoted */
 const TakenPositionInput = S.Struct({ positionId: S.String, quote: S.Trim })
 export type NewTakenPosition = S.Schema.Encoded<typeof TakenPositionInput>
 

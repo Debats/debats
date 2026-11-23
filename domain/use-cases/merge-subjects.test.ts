@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { Either, Effect, Layer } from 'effect'
-import { mergeSubjectsUseCase, TEXT_ENGAGES_BOTH } from './merge-subjects'
+import { mergeSubjectsUseCase } from './merge-subjects'
 import {
   jointDeclarationPublished,
   jointDeclarationStream,
   positionTaken,
+  replayJointDeclaration,
 } from '../aggregates/joint-declaration'
 import { JointDeclarationRepository } from '../repositories/joint-declaration-repository'
 import { fakeJointDeclarationRepo, sampleJointDeclaration } from './joint-declaration-test-helpers'
@@ -197,22 +198,35 @@ describe('mergeSubjectsUseCase', () => {
       streamId: manifesto.id,
       type: 'EngagedSubjectMerged',
       // « Favorable » was folded into « Pour »: the text takes that one
-      payload: { sourceSubjectId: duplicate.id, subjectId: kept.id, positionId: pour.id },
+      payload: { sourcePositionId: favorable.id, subjectId: kept.id, positionId: pour.id },
     })
   })
 
-  it('refuses when a joint declaration engages both subjects: it would speak twice on the one that remains', async () => {
+  it('lets a joint declaration that engaged both subjects take its positions on the one that remains', async () => {
     const { run, journal } = await bothSubjects()
     await seedManifesto(journal)
-    const before = journal.all().length
+    await Effect.runPromise(
+      journal.append(
+        jointDeclarationStream(manifesto.id),
+        2,
+        [positionTaken({ subjectId: kept.id, positionId: contre.id, quote: 'D’autres mots.' })],
+        { actorId: 'founder' },
+      ),
+    )
 
     const result = await execute(merge, run, [], {
       [duplicate.id]: [manifesto.id],
       [kept.id]: [manifesto.id],
     })
 
-    expect(Either.isLeft(result) && result.left).toBe(TEXT_ENGAGES_BOTH)
-    expect(journal.all()).toHaveLength(before)
+    expect(Either.isRight(result)).toBe(true)
+    const text = replayJointDeclaration(
+      journal.all().filter((event) => event.streamId === manifesto.id),
+    )
+    expect(Either.getOrThrow(text)?.positions.map(({ positionId }) => positionId)).toEqual([
+      pour.id,
+      contre.id,
+    ])
   })
 
   it('hands the themes and the links over, and leads a linked subject to the one that remains', async () => {

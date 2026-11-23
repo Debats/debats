@@ -6,6 +6,8 @@ import {
   addSignatory,
   ALREADY_SIGNATORY,
   disengageFrom,
+  engagedSubjectMerged,
+  followEngagedSubject,
   followMergedPosition,
   jointDeclarationPublished,
   NO_POSITION_TAKEN,
@@ -15,7 +17,7 @@ import {
   signatoryAdded,
   signatoryWithdrawn,
   signatureOf,
-  SUBJECT_ALREADY_ENGAGED,
+  POSITION_ALREADY_TAKEN,
   subjectDisengaged,
   takenPositionMerged,
   takePosition,
@@ -101,12 +103,16 @@ describe('publishing a joint declaration', () => {
     expect(Either.isLeft(refusal) && refusal.left.message).toBe(NO_POSITION_TAKEN)
   })
 
-  it('refuses two positions on the same subject', () => {
-    const refusal = publishJointDeclaration(manifesto, [
-      onMedia,
-      { ...onMedia, positionId: 'another-position-on-media' },
-    ])
-    expect(Either.isLeft(refusal) && refusal.left.message).toBe(SUBJECT_ALREADY_ENGAGED)
+  it('takes two positions on the same subject: a text may call for two measures on it', () => {
+    const alsoOnMedia = { ...onMedia, positionId: 'another-position-on-media' }
+    expect(publishJointDeclaration(manifesto, [onMedia, alsoOnMedia])).toEqual(
+      Either.right([published, positionTaken(onMedia), positionTaken(alsoOnMedia)]),
+    )
+  })
+
+  it('refuses the same position twice', () => {
+    const refusal = publishJointDeclaration(manifesto, [onMedia, { ...onMedia, quote: 'again' }])
+    expect(Either.isLeft(refusal) && refusal.left.message).toBe(POSITION_ALREADY_TAKEN)
   })
 })
 
@@ -116,10 +122,16 @@ describe('taking one more position', () => {
     expect(takePosition(onAi)(state)).toEqual(Either.right([positionTaken(onAi)]))
   })
 
-  it('refuses a second position on a subject the text already engages', () => {
+  it('records a second position on a subject the text already engages', () => {
     const state = stateOf(published, positionTaken(onMedia))
-    const refusal = takePosition({ ...onMedia, positionId: 'another-position-on-media' })(state)
-    expect(Either.isLeft(refusal) && refusal.left.message).toBe(SUBJECT_ALREADY_ENGAGED)
+    const alsoOnMedia = { ...onMedia, positionId: 'another-position-on-media' }
+    expect(takePosition(alsoOnMedia)(state)).toEqual(Either.right([positionTaken(alsoOnMedia)]))
+  })
+
+  it('refuses a position the text already takes', () => {
+    const state = stateOf(published, positionTaken(onMedia))
+    const refusal = takePosition({ ...onMedia, quote: 'again' })(state)
+    expect(Either.isLeft(refusal) && refusal.left.message).toBe(POSITION_ALREADY_TAKEN)
   })
 })
 
@@ -178,6 +190,58 @@ describe('what happens to the text when a position leaves the site', () => {
       takenPositionMerged('position-media', 'position-media-merged'),
     )
     expect(merged.positions).toEqual([{ ...onMedia, positionId: 'position-media-merged' }, onAi])
+  })
+
+  it('takes the position that remains once, when it took both: the words of the first stay', () => {
+    const alsoOnMedia = { ...onMedia, positionId: 'another-position-on-media', quote: 'autrement' }
+    const merged = stateOf(
+      published,
+      positionTaken(onMedia),
+      positionTaken(alsoOnMedia),
+      takenPositionMerged('another-position-on-media', 'position-media'),
+    )
+    expect(merged.positions).toEqual([onMedia])
+  })
+
+  it('follows each position it takes on a subject merged into another', () => {
+    const alsoOnMedia = { ...onMedia, positionId: 'another-position-on-media', quote: 'autrement' }
+    const twice = stateOf(published, positionTaken(onMedia), positionTaken(alsoOnMedia))
+    const after = (positionId: string) =>
+      positionId === 'position-media' ? 'position-press' : positionId
+
+    const followed = followEngagedSubject('subject-media', 'subject-press', after)(twice)
+
+    expect(followed).toEqual([
+      engagedSubjectMerged('position-media', 'subject-press', 'position-press'),
+      engagedSubjectMerged(
+        'another-position-on-media',
+        'subject-press',
+        'another-position-on-media',
+      ),
+    ])
+    expect(
+      stateOf(published, positionTaken(onMedia), positionTaken(alsoOnMedia), ...followed).positions,
+    ).toEqual([
+      { ...onMedia, subjectId: 'subject-press', positionId: 'position-press' },
+      { ...alsoOnMedia, subjectId: 'subject-press' },
+    ])
+  })
+
+  it('takes once a position two of its own were folded into, with the subject that is gone', () => {
+    const alsoOnMedia = { ...onMedia, positionId: 'another-position-on-media', quote: 'autrement' }
+    const folded = stateOf(
+      published,
+      positionTaken(onMedia),
+      positionTaken(alsoOnMedia),
+      ...followEngagedSubject(
+        'subject-media',
+        'subject-press',
+        () => 'position-press',
+      )(stateOf(published, positionTaken(onMedia), positionTaken(alsoOnMedia))),
+    )
+    expect(folded.positions).toEqual([
+      { ...onMedia, subjectId: 'subject-press', positionId: 'position-press' },
+    ])
   })
 
   it('keeps the positions it takes on the subjects that remain', () => {

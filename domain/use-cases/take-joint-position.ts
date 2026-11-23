@@ -22,7 +22,8 @@ type TakeJointPositionParams = NewJointPosition & {
 }
 
 /**
- * Records that a joint declaration takes position on one more subject. Every
+ * Records that a joint declaration takes one more position, on a subject it
+ * engaged already or on another. Every
  * signatory signed the whole text, so each of them takes the new position in
  * the same transaction, as a statement of their own. Nothing is earned: the
  * signatures were rewarded when they were found.

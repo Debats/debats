@@ -38,7 +38,7 @@ export default async function TakeJointPositionPage({ params }: PageProps) {
         backHref={href}
         backLabel={page.declaration.title}
         title="Le texte prend une autre position"
-        subtitle="Un sujet de plus que le texte engage, avec les mots qui l’énoncent"
+        subtitle="Une position de plus que le texte défend, sur un sujet qu’il engage déjà ou sur un autre, avec les mots qui l’énoncent"
       />
       <TakeJointPositionForm
         declarationId={page.declaration.id}

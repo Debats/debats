@@ -47,10 +47,10 @@ export type PlannedStance = {
 )
 
 /**
- * Why the statement cannot be the signature of this text: the text says
- * nothing on its subject, or takes another position on it.
+ * Why the statement cannot be the signature of this text: the text does not
+ * take its position — not yet, whatever else it takes on the subject.
  */
-export type AttachmentRefusal = 'silent' | 'other_position'
+export type AttachmentRefusal = 'position_not_taken'
 
 /** What attaching a statement to a joint declaration will do, said before it is done */
 export interface AttachmentPlan {
@@ -65,13 +65,13 @@ export interface AttachmentPlan {
  *
  * `authored` is what the same author already said on the positions of the
  * text. Their statements on the other positions are offered to be attached
- * too — a coauthor recorded once per subject is one signature — and the ones
+ * too — a coauthor recorded once per position is one signature — and the ones
  * that share the source of the statement are suggested: they were most
  * likely recorded from the same text.
  */
 export function attachmentPlanOf(
   text: JointDeclarationPage,
-  statement: { id: string; positionId: string; subjectId: string; sourceUrl: string },
+  statement: { id: string; positionId: string; sourceUrl: string },
   authored: readonly AuthoredStatement[],
 ): AttachmentPlan {
   const { declaration } = text
@@ -126,12 +126,11 @@ export function attachmentPlanOf(
 
 function refusalOf(
   text: JointDeclarationPage,
-  statement: { positionId: string; subjectId: string },
+  statement: { positionId: string },
 ): { refusal?: AttachmentRefusal } {
-  if (text.stances.some((stance) => stance.position.id === statement.positionId)) return {}
-  return text.stances.some((stance) => stance.subject.id === statement.subjectId)
-    ? { refusal: 'other_position' }
-    : { refusal: 'silent' }
+  return text.stances.some((stance) => stance.position.id === statement.positionId)
+    ? {}
+    : { refusal: 'position_not_taken' }
 }
 
 /** The statements a plan attaches unless told otherwise: the one asked for, and the ones suggested, one per position */

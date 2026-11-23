@@ -84,19 +84,15 @@ function signedInWords(params: SignedFromDraftParams, quote: string) {
     }),
   )
 
-  /** The text takes the draft's position: already, or from now on; never another on the same subject */
+  /** The text takes the draft's position: already, or from now on, beside any other it takes on the subject */
   const positionTaken = (declarationId: string) =>
-    Effect.flatMap(declarations.findHeld(declarationId), (held) => {
-      const onSubject = held.positions.find((position) => position.subjectId === subjectId)
-      if (!onSubject) {
-        return Effect.asVoid(
-          toldAsOne(takeJointPositionUseCase({ contributor, declarationId, ...taken })),
-        )
-      }
-      return onSubject.positionId === positionId
+    Effect.flatMap(declarations.findHeld(declarationId), (held) =>
+      held.positions.some((position) => position.positionId === positionId)
         ? Effect.void
-        : Effect.fail(new Rejected(`« ${text.title} » prend déjà une autre position sur ce sujet.`))
-    })
+        : Effect.asVoid(
+            toldAsOne(takeJointPositionUseCase({ contributor, declarationId, ...taken })),
+          ),
+    )
 
   /** The author is among the signatories: already, or from now on */
   const signed = (declarationId: string) =>

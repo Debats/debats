@@ -776,7 +776,7 @@ describe('validateDraft', () => {
       })
     })
 
-    it('refuses a draft whose position is not the one the text takes on the subject', async () => {
+    it('adds the position beside another the text takes on the same subject: a text may take several', async () => {
       const repos = makeRepos({
         figure,
         subject,
@@ -789,11 +789,17 @@ describe('validateDraft', () => {
       })
       const result = await repos.validate(ADMIN)
 
-      expect(Either.isLeft(result) && result.left).toBe(
-        '« Le Manifeste de Paris » prend déjà une autre position sur ce sujet.',
-      )
-      expect(repos.journal.all()).toEqual([])
-      expect(repos.draftRepo.validated).not.toHaveBeenCalled()
+      expect(Either.isRight(result)).toBe(true)
+      expect(deedsIn(repos.journal).map((e) => e.type)).toEqual([
+        'PositionTaken',
+        'SignatoryAdded',
+        'StatementAdded',
+        'StatementAdded',
+      ])
+      expect(signaturesIn(repos.journal)).toEqual([
+        [figure.id, 'another-position', text.id],
+        [figure.id, position.id, text.id],
+      ])
     })
 
     it('refuses a vote or a deed as a signature: a text is signed in its words', async () => {

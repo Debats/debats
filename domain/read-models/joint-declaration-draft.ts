@@ -34,8 +34,6 @@ export type JointDeclarationDraft = {
   date: string
   positions: DraftedPosition[]
   signatories: DraftedSignatory[]
-  /** Subjects the drafts give two positions on: a text speaks once per subject, the second would be refused */
-  contested: string[]
   /** The drafts the declaration is read from, in the order they were given */
   items: ReviewableDraft[]
   canValidate: boolean
@@ -80,19 +78,8 @@ function signatoriesOf(items: ReviewableDraft[]): DraftedSignatory[] {
   return signatories
 }
 
-const contestedIn = (positions: DraftedPosition[]): string[] =>
-  Array.from(
-    new Set(
-      positions
-        .map(({ subjectTitle }) => subjectTitle)
-        .filter((title, index, titles) => titles.indexOf(title) !== index),
-    ),
-  )
-
 function declarationOf(items: ReviewableDraft[]): JointDeclarationDraft {
   const [{ draft: first }] = items
-  const positions = positionsOf(items)
-  const contested = contestedIn(positions)
   return {
     title: first.jointDeclaration?.title ?? '',
     presentation:
@@ -100,11 +87,10 @@ function declarationOf(items: ReviewableDraft[]): JointDeclarationDraft {
     sourceName: first.sourceName,
     sourceUrl: first.sourceUrl,
     date: first.date,
-    positions,
+    positions: positionsOf(items),
     signatories: signatoriesOf(items),
-    contested,
     items,
-    canValidate: contested.length === 0 && items.every(({ resolution }) => resolution.canValidate),
+    canValidate: items.every(({ resolution }) => resolution.canValidate),
   }
 }
 

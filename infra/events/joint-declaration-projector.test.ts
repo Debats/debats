@@ -152,7 +152,23 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
     ).toEqual([{ position_id: other.id, quote: taken.quote }])
 
     await append(5, [takenPositionMerged(other.id, taken.positionId)])
-    await append(6, [subjectDisengaged(taken.subjectId)])
+
+    // A second position on the same subject, then merged into the first: the text takes it once, in its first words
+    await append(6, [positionTaken({ ...taken, positionId: other.id, quote: 'D’autres mots.' })])
+    expect(
+      await prisma().joint_declaration_positions.count({
+        where: { joint_declaration_id: declarationId, subject_id: taken.subjectId },
+      }),
+    ).toBe(2)
+    await append(7, [takenPositionMerged(other.id, taken.positionId)])
+    expect(
+      await prisma().joint_declaration_positions.findMany({
+        where: { joint_declaration_id: declarationId },
+        select: { position_id: true, quote: true },
+      }),
+    ).toEqual([{ position_id: taken.positionId, quote: taken.quote }])
+
+    await append(8, [subjectDisengaged(taken.subjectId)])
     expect(
       await prisma().joint_declaration_positions.count({
         where: { joint_declaration_id: declarationId },
@@ -160,11 +176,11 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
     ).toBe(0)
 
     // The text takes the position again, for the test that follows
-    await append(7, [positionTaken(taken)])
+    await append(9, [positionTaken(taken)])
   })
 
   it('lets go of a signatory withdrawn, and ranks who signs next after the last, never beside them', async () => {
-    await append(8, [signatoryWithdrawn(publicFigureAuthor(figureId))])
+    await append(10, [signatoryWithdrawn(publicFigureAuthor(figureId))])
     expect(
       await prisma().joint_declaration_signatories.findMany({
         where: { joint_declaration_id: declarationId },
@@ -173,7 +189,7 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
     ).toEqual([{ public_figure_id: null, organisation_id: organisationId, rank: 2 }])
 
     // Found to have signed after all
-    await append(9, [signatoryAdded(publicFigureAuthor(figureId))])
+    await append(11, [signatoryAdded(publicFigureAuthor(figureId))])
     expect(
       await prisma().joint_declaration_signatories.findMany({
         where: { joint_declaration_id: declarationId },

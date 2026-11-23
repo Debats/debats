@@ -165,7 +165,7 @@ export default function AttachStatementForm({ statement, backHref }: AttachState
         </p>
       )}
 
-      {plan?.refusal && <AttachmentRefused refusal={plan.refusal} declaration={plan.declaration} />}
+      {plan?.refusal && <AttachmentRefused declaration={plan.declaration} />}
 
       {plan && !plan.refusal && (
         <fieldset className={styles.plan}>

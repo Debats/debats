@@ -992,8 +992,9 @@ model joint_declaration_positions {
   positions            positions          @relation(fields: [position_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subjects             subjects           @relation(fields: [subject_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([joint_declaration_id, subject_id])
+  @@id([joint_declaration_id, position_id])
   @@index([position_id], map: "joint_declaration_positions_position_idx")
+  @@index([subject_id], map: "joint_declaration_positions_subject_idx")
   @@schema("public")
 }
 

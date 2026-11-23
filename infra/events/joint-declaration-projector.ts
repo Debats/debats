@@ -39,18 +39,14 @@ async function apply(decoded: JointDeclarationEvent, stored: StoredEvent, tx: Pr
       })
       return touch(tx, stored)
     case 'TakenPositionMerged':
-      await tx.joint_declaration_positions.updateMany({
-        where: { joint_declaration_id: stored.streamId, position_id: decoded.payload.sourceId },
-        data: { position_id: decoded.payload.targetId },
+      await followPosition(tx, stored.streamId, decoded.payload.sourceId, {
+        position_id: decoded.payload.targetId,
       })
       return touch(tx, stored)
     case 'EngagedSubjectMerged':
-      await tx.joint_declaration_positions.updateMany({
-        where: {
-          joint_declaration_id: stored.streamId,
-          subject_id: decoded.payload.sourceSubjectId,
-        },
-        data: { subject_id: decoded.payload.subjectId, position_id: decoded.payload.positionId },
+      await followPosition(tx, stored.streamId, decoded.payload.sourcePositionId, {
+        subject_id: decoded.payload.subjectId,
+        position_id: decoded.payload.positionId,
       })
       return touch(tx, stored)
     case 'SubjectDisengaged':
@@ -101,6 +97,30 @@ async function takePosition(
       created_at: stored.occurredAt,
     },
   })
+}
+
+/**
+ * A position the text takes becomes another: merged into it, or carried with
+ * its subject. When the text already takes the one it becomes, it takes it
+ * once: the row that follows goes, the one that was there keeps its words.
+ */
+async function followPosition(
+  tx: PrismaTransaction,
+  declarationId: string,
+  sourcePositionId: string,
+  becomes: { subject_id?: string; position_id: string },
+) {
+  const source = { joint_declaration_id: declarationId, position_id: sourcePositionId }
+  const alreadyTaken =
+    becomes.position_id !== sourcePositionId &&
+    (await tx.joint_declaration_positions.count({
+      where: { joint_declaration_id: declarationId, position_id: becomes.position_id },
+    })) > 0
+  if (alreadyTaken) {
+    await tx.joint_declaration_positions.deleteMany({ where: source })
+    return
+  }
+  await tx.joint_declaration_positions.updateMany({ where: source, data: becomes })
 }
 
 /** The signatory in the two columns of its row: exactly one of them is set */

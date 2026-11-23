@@ -8,7 +8,7 @@ import Combobox from '../../../../components/ui/Combobox'
 import TextArea from '../../../../components/ui/TextArea'
 import styles from './TakenPositionField.module.css'
 
-/** What a joint declaration says on one subject, while it is being typed */
+/** One position a joint declaration takes, while it is being typed */
 export interface TakenPositionDraft {
   /** The subject chosen, in the shape its Combobox takes back */
   subject?: { id: string; label: string }

@@ -112,17 +112,6 @@
   flex-direction: column;
 }
 
-.warning {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--warn);
-  margin: 0;
-  padding: 10px 12px;
-  background: var(--warn-soft);
-  border-radius: 6px;
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;

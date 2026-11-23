@@ -31,7 +31,7 @@ export default async function NewJointDeclarationPage() {
           title="Ce qui est attendu"
           steps={[
             'Un texte public signé par plusieurs personnalités ou organisations : tribune, manifeste, appel, lettre ouverte.',
-            'Une position par sujet, choisie parmi celles du sujet, avec la phrase du texte qui l’énonce.',
+            'Chaque position que le texte prend, choisie parmi celles de son sujet, avec la phrase du texte qui l’énonce. Il peut en prendre plusieurs sur un même sujet.',
             'Les signataires s’ajoutent ensuite, depuis la page du texte : chacun·e prend toutes ses positions.',
           ]}
         />

@@ -20,8 +20,8 @@ export default function DraftSignature({ declaration, authorName }: DraftSignatu
       <p className={styles.text}>
         Valider ajoute {authorName} aux signataires du texte, et sa prise de position sur{' '}
         <strong>chacune</strong> des positions qu’il prend. Si le site ne connaît pas ce texte, il
-        est référencé avec la source et la date de ce brouillon ; s’il était muet sur ce sujet,
-        cette position lui est ajoutée, pour tou·tes ses signataires.
+        est référencé avec la source et la date de ce brouillon ; s’il ne prenait pas cette
+        position, elle lui est ajoutée, pour tou·tes ses signataires.
       </p>
     </div>
   )

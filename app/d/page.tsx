@@ -66,7 +66,7 @@ export default async function JointDeclarationsPage() {
               title="Qu’est-ce qu’une déclaration commune ?"
               steps={[
                 'Un texte public que plusieurs personnalités ou organisations signent ensemble.',
-                'Chaque signature est une prise de position de son auteur·rice, sur chaque sujet que le texte engage.',
+                'Chaque signature est une prise de position de son auteur·rice, sur chaque position que le texte prend.',
                 'Signer n’est pas tout approuver : le site retient ce que le texte demande, pas ce qu’on lui prête.',
               ]}
             />
