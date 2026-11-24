@@ -522,6 +522,8 @@ model contributors {
   organisation_memberships_organisation_memberships_updated_byTocontributors organisation_memberships[]      @relation("organisation_memberships_updated_byTocontributors")
   organisations_organisations_created_byTocontributors                       organisations[]                 @relation("organisations_created_byTocontributors")
   organisations_organisations_updated_byTocontributors                       organisations[]                 @relation("organisations_updated_byTocontributors")
+  position_judgements_position_judgements_created_byTocontributors           position_judgements[]           @relation("position_judgements_created_byTocontributors")
+  position_judgements_position_judgements_updated_byTocontributors           position_judgements[]           @relation("position_judgements_updated_byTocontributors")
   positions                                                                  positions[]
   public_figure_occupations                                                  public_figure_occupations[]
   public_figures                                                             public_figures[]
@@ -559,38 +561,39 @@ model domain_events {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model draft_statements {
-  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  quote              String?
-  source_name        String         @db.VarChar(255)
-  source_url         String
-  date               DateTime       @db.Date
-  ai_notes           String?
-  public_figure_name String?
-  subject_title      String
-  position_title     String
-  public_figure_data Json?
-  subject_data       Json?
-  position_data      Json?
-  status             String         @default("pending") @db.VarChar(20)
-  rejection_note     String?
-  created_at         DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime       @default(now()) @db.Timestamptz(6)
-  origin             String
-  organisation_name  String?
-  organisation_data  Json?
-  statement_type     statement_type @default(declaration)
-  arguments          Json           @default("[]")
-  occupations        Json           @default("[]")
-  affiliations       Json           @default("[]")
-  voted_text         String?
-  vote_choice        vote_choice?
-  deed               String?
-  document_name      String?
-  chantier_id        String?        @db.Uuid
-  validation         Json?
-  section            String?
-  joint_declaration  Json?
-  chantiers          chantiers?     @relation(fields: [chantier_id], references: [id], onUpdate: NoAction)
+  id                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quote                    String?
+  source_name              String                    @db.VarChar(255)
+  source_url               String
+  date                     DateTime                  @db.Date
+  ai_notes                 String?
+  public_figure_name       String?
+  subject_title            String
+  position_title           String
+  public_figure_data       Json?
+  subject_data             Json?
+  position_data            Json?
+  status                   String                    @default("pending") @db.VarChar(20)
+  rejection_note           String?
+  created_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  origin                   String
+  organisation_name        String?
+  organisation_data        Json?
+  statement_type           statement_type            @default(declaration)
+  arguments                Json                      @default("[]")
+  occupations              Json                      @default("[]")
+  affiliations             Json                      @default("[]")
+  voted_text               String?
+  vote_choice              vote_choice?
+  deed                     String?
+  document_name            String?
+  chantier_id              String?                   @db.Uuid
+  validation               Json?
+  section                  String?
+  joint_declaration        Json?
+  chantier_unheard_notices chantier_unheard_notices?
+  chantiers                chantiers?                @relation(fields: [chantier_id], references: [id], onUpdate: NoAction)
 
   @@index([chantier_id])
   @@schema("public")
@@ -707,19 +710,21 @@ model organisations {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model positions {
-  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title                       String                        @db.VarChar(255)
-  description                 String
-  subject_id                  String                        @db.Uuid
-  created_by                  String?                       @db.Uuid
-  created_at                  DateTime?                     @default(now()) @db.Timestamptz(6)
-  updated_at                  DateTime?                     @default(now()) @db.Timestamptz(6)
-  deleted_at                  DateTime?                     @db.Timestamptz(6)
-  slug                        String                        @db.VarChar(100)
-  joint_declaration_positions joint_declaration_positions[]
-  contributors                contributors?                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  subjects                    subjects                      @relation(fields: [subject_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  statements                  statements[]
+  id                                                               String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                                                            String                        @db.VarChar(255)
+  description                                                      String
+  subject_id                                                       String                        @db.Uuid
+  created_by                                                       String?                       @db.Uuid
+  created_at                                                       DateTime?                     @default(now()) @db.Timestamptz(6)
+  updated_at                                                       DateTime?                     @default(now()) @db.Timestamptz(6)
+  deleted_at                                                       DateTime?                     @db.Timestamptz(6)
+  slug                                                             String                        @db.VarChar(100)
+  joint_declaration_positions                                      joint_declaration_positions[]
+  position_judgements_position_judgements_position_id_1Topositions position_judgements[]         @relation("position_judgements_position_id_1Topositions")
+  position_judgements_position_judgements_position_id_2Topositions position_judgements[]         @relation("position_judgements_position_id_2Topositions")
+  contributors                                                     contributors?                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subjects                                                         subjects                      @relation(fields: [subject_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  statements                                                       statements[]
 
   @@unique([subject_id, slug], map: "idx_positions_subject_slug")
   @@index([id], map: "idx_positions_not_deleted", where: raw("(deleted_at IS NULL)"))
@@ -869,12 +874,12 @@ model subjects {
   merged_into_id                                           String?                       @db.Uuid
   joint_declaration_positions                              joint_declaration_positions[]
   positions                                                positions[]
-  subjects                                                 subjects?                     @relation("subjectsTosubjects", fields: [merged_into_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  other_subjects                                           subjects[]                    @relation("subjectsTosubjects")
   related_subjects_related_subjects_subject_id_1Tosubjects related_subjects[]            @relation("related_subjects_subject_id_1Tosubjects")
   related_subjects_related_subjects_subject_id_2Tosubjects related_subjects[]            @relation("related_subjects_subject_id_2Tosubjects")
   subject_themes                                           subject_themes?
   contributors                                             contributors?                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subjects                                                 subjects?                     @relation("subjectsTosubjects", fields: [merged_into_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_subjects                                           subjects[]                    @relation("subjectsTosubjects")
 
   @@index([id], map: "idx_subjects_not_deleted", where: raw("(deleted_at IS NULL)"))
   @@index([slug], map: "idx_subjects_slug")
@@ -918,22 +923,27 @@ model chantier_messages {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model chantiers {
-  id                                              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                              String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   brief                                           String
   title                                           String?
-  status                                          String              @default("working")
-  session_id                                      String?             @unique
-  last_event_at                                   DateTime?           @db.Timestamptz(6)
-  created_by                                      String              @db.Uuid
-  updated_by                                      String              @db.Uuid
-  created_at                                      DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at                                      DateTime            @default(now()) @db.Timestamptz(6)
-  sections                                        Json                @default("[]")
+  status                                          String                     @default("working")
+  session_id                                      String?                    @unique
+  last_event_at                                   DateTime?                  @db.Timestamptz(6)
+  created_by                                      String                     @db.Uuid
+  updated_by                                      String                     @db.Uuid
+  created_at                                      DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                      DateTime                   @default(now()) @db.Timestamptz(6)
+  sections                                        Json                       @default("[]")
   spent_cents                                     Int?
   cap_cents                                       Int?
+  context_tokens                                  Int?
+  earlier_spent_cents                             Int                        @default(0)
+  past_session_ids                                Json                       @default("[]")
   chantier_messages                               chantier_messages[]
-  contributors_chantiers_created_byTocontributors contributors        @relation("chantiers_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  contributors_chantiers_updated_byTocontributors contributors        @relation("chantiers_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  chantier_sources                                chantier_sources[]
+  chantier_unheard_notices                        chantier_unheard_notices[]
+  contributors_chantiers_created_byTocontributors contributors               @relation("chantiers_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributors_chantiers_updated_byTocontributors contributors               @relation("chantiers_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   draft_statements                                draft_statements[]
 
   @@schema("public")
@@ -1043,6 +1053,58 @@ model joint_declarations {
 
   @@index([declared_at(sort: Desc)])
   @@index([source_url])
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model chantier_sources {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chantier_id String    @db.Uuid
+  url         String
+  note        String
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @default(now()) @db.Timestamptz(6)
+  chantiers   chantiers @relation(fields: [chantier_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([chantier_id, url], map: "chantier_sources_one_per_address")
+  @@index([chantier_id, created_at], map: "chantier_sources_chantier_id_idx")
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model chantier_unheard_notices {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chantier_id      String            @db.Uuid
+  text             String
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  draft_id         String?           @unique(map: "chantier_unheard_notices_one_per_draft") @db.Uuid
+  chantiers        chantiers         @relation(fields: [chantier_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  draft_statements draft_statements? @relation(fields: [draft_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([chantier_id, created_at], map: "chantier_unheard_notices_chantier_id_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model position_judgements {
+  position_id_1                                             String       @db.Uuid
+  position_id_2                                             String       @db.Uuid
+  compatible                                                Boolean
+  created_by                                                String       @db.Uuid
+  updated_by                                                String       @db.Uuid
+  created_at                                                DateTime     @db.Timestamptz(6)
+  updated_at                                                DateTime     @db.Timestamptz(6)
+  contributors_position_judgements_created_byTocontributors contributors @relation("position_judgements_created_byTocontributors", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  positions_position_judgements_position_id_1Topositions    positions    @relation("position_judgements_position_id_1Topositions", fields: [position_id_1], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  positions_position_judgements_position_id_2Topositions    positions    @relation("position_judgements_position_id_2Topositions", fields: [position_id_2], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contributors_position_judgements_updated_byTocontributors contributors @relation("position_judgements_updated_byTocontributors", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([position_id_1, position_id_2])
+  @@index([position_id_2], map: "idx_position_judgements_2")
   @@schema("public")
 }
 

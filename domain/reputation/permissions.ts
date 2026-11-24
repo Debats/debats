@@ -77,6 +77,7 @@ const ACTIONS = {
   remove_membership: Rank.Idealiste,
   edit_statement: Rank.Idealiste,
   edit_position: Rank.Idealiste,
+  judge_positions: Rank.Idealiste,
   settle_flag: Rank.Idealiste,
 
   // Fondateur (1000000+)

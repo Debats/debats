@@ -1095,6 +1095,65 @@ export type Database = {
           },
         ]
       }
+      position_judgements: {
+        Row: {
+          compatible: boolean
+          created_at: string
+          created_by: string
+          position_id_1: string
+          position_id_2: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          compatible: boolean
+          created_at: string
+          created_by: string
+          position_id_1: string
+          position_id_2: string
+          updated_at: string
+          updated_by: string
+        }
+        Update: {
+          compatible?: boolean
+          created_at?: string
+          created_by?: string
+          position_id_1?: string
+          position_id_2?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "position_judgements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "position_judgements_position_id_1_fkey"
+            columns: ["position_id_1"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "position_judgements_position_id_2_fkey"
+            columns: ["position_id_2"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "position_judgements_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       positions: {
         Row: {
           created_at: string | null

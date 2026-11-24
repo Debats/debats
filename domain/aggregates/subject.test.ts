@@ -11,6 +11,8 @@ import {
   editSubject,
   findPosition,
   followMergedSubject,
+  judgePositions,
+  judgeUnjudgedPositions,
   linkSubject,
   livePositions,
   mergePositions,
@@ -19,9 +21,11 @@ import {
   positionAfter,
   POSITION_GONE,
   POSITION_NOT_FOUND,
+  SAME_POSITION,
   positionAdded,
   positionEdited,
   positionMergedInto,
+  positionsJudged,
   replaySubject,
   sameNameOnTarget,
   setSubjectThemes,
@@ -35,6 +39,7 @@ import {
   subjectUnlinked,
   TARGET_POSITION_GONE,
   unlinkSubject,
+  verdictOn,
 } from './subject'
 
 const streamId = '0b4d1b9e-4f4a-4c1e-9f0a-3e2d1c0b9a88'
@@ -138,6 +143,80 @@ describe('subject decisions', () => {
   })
 })
 
+describe('judging two positions', () => {
+  const withBoth = rebuilt(added, pour, contre)
+
+  it('names the pair the same way whichever position comes first', () => {
+    expect(positionsJudged('pos-2', 'pos-1', true)).toEqual(positionsJudged('pos-1', 'pos-2', true))
+  })
+
+  it('records that two open positions go together, or against each other', () => {
+    expect(judgePositions('pos-2', 'pos-1', true)(withBoth)).toEqual(
+      Either.right([positionsJudged('pos-1', 'pos-2', true)]),
+    )
+    expect(judgePositions('pos-1', 'pos-2', false)(withBoth)).toEqual(
+      Either.right([positionsJudged('pos-1', 'pos-2', false)]),
+    )
+  })
+
+  it('writes nothing when the verdict already stands', () => {
+    const judged = rebuilt(added, pour, contre, positionsJudged('pos-1', 'pos-2', true))
+    expect(judgePositions('pos-2', 'pos-1', true)(judged)).toEqual(Either.right([]))
+    expect(judgePositions('pos-2', 'pos-1', false)(judged)).toEqual(
+      Either.right([positionsJudged('pos-1', 'pos-2', false)]),
+    )
+  })
+
+  it('refuses a position judged against itself, or one the subject no longer has', () => {
+    expect(judgePositions('pos-1', 'pos-1', true)(withBoth)).toEqual(
+      Either.left(new Rejected(SAME_POSITION)),
+    )
+    expect(judgePositions('pos-1', 'pos-9', true)(withBoth)).toEqual(
+      Either.left(new Rejected(POSITION_GONE)),
+    )
+  })
+
+  it('reads no verdict on a pair nobody judged, and the last one on a pair judged twice', () => {
+    expect(verdictOn(withBoth, 'pos-1', 'pos-2')).toBeUndefined()
+    const judged = rebuilt(
+      added,
+      pour,
+      contre,
+      positionsJudged('pos-1', 'pos-2', true),
+      positionsJudged('pos-2', 'pos-1', false),
+    )
+    expect(verdictOn(judged, 'pos-2', 'pos-1')).toBe(false)
+    expect(judged.judgements).toHaveLength(1)
+  })
+
+  it('forgets the verdicts on a position merged away', () => {
+    const merged = rebuilt(
+      added,
+      pour,
+      contre,
+      positionsJudged('pos-1', 'pos-2', true),
+      positionMergedInto('pos-2', 'pos-1'),
+    )
+    expect(merged.judgements).toEqual([])
+  })
+
+  it('takes a first verdict on a pair nobody judged', () => {
+    expect(judgeUnjudgedPositions('pos-2', 'pos-1', true)(withBoth)).toEqual(
+      Either.right([positionsJudged('pos-1', 'pos-2', true)]),
+    )
+  })
+
+  it('leaves a pair already judged as it stands, whatever the first verdict says', () => {
+    const judged = rebuilt(added, pour, contre, positionsJudged('pos-1', 'pos-2', false))
+    expect(judgeUnjudgedPositions('pos-1', 'pos-2', true)(judged)).toEqual(Either.right([]))
+  })
+
+  it('takes no first verdict on a position gone, or against itself: nothing is refused', () => {
+    expect(judgeUnjudgedPositions('pos-1', 'pos-9', true)(withBoth)).toEqual(Either.right([]))
+    expect(judgeUnjudgedPositions('pos-1', 'pos-1', true)(withBoth)).toEqual(Either.right([]))
+  })
+})
+
 describe('merging a subject into another', () => {
   const absorbedId = '7c1f0a52-6f0e-4d0b-8a57-1d2e3f4a5b6c'
   const duplicate = {
@@ -198,6 +277,26 @@ describe('merging a subject into another', () => {
     expect(absorbSubject(source, fates)(target)).toEqual(
       Either.right([subjectAbsorbed(absorbedId, [carriedGel])]),
     )
+  })
+
+  it('the subject that remains keeps the verdicts between the positions carried over, not those on a position folded', () => {
+    const neutre = positionAdded({
+      positionId: 'dup-3',
+      title: 'Sans avis',
+      description: 'Une description suffisamment longue.',
+    })
+    const judgedSource = absorbed(
+      subjectAdded(duplicate),
+      favorable,
+      gel,
+      neutre,
+      positionsJudged('dup-2', 'dup-3', true),
+      positionsJudged('dup-1', 'dup-2', true),
+    )
+    const decided = absorbSubject(judgedSource, [...fates, { positionId: 'dup-3' }])(target)
+    expect(Either.isRight(decided) && decided.right.slice(1)).toEqual([
+      positionsJudged('dup-2', 'dup-3', true),
+    ])
   })
 
   it('the subject that remains refuses a fold into a position it no longer has', () => {

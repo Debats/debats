@@ -78,6 +78,16 @@ export const PositionRemoved = S.Struct({
   payload: S.Struct({ positionId: S.String }),
 })
 
+/**
+ * Two positions of the subject judged against each other: held together, or
+ * one against the other. The pair is named once, the smaller id first. A pair
+ * nobody judged has no event, and reads as contradictory.
+ */
+export const PositionsJudged = S.Struct({
+  type: S.Literal('PositionsJudged'),
+  payload: S.Struct({ positionIds: S.Tuple(S.String, S.String), compatible: S.Boolean }),
+})
+
 export const SubjectDeleted = S.Struct({ type: S.Literal('SubjectDeleted'), payload: S.Struct({}) })
 
 /**
@@ -126,6 +136,7 @@ export const SubjectEvent = S.Union(
   PositionEdited,
   PositionMergedInto,
   PositionRemoved,
+  PositionsJudged,
   SubjectDeleted,
   SubjectMergedInto,
   SubjectAbsorbed,

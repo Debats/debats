@@ -38,10 +38,18 @@ export interface PositionState {
   deletedAt: Date | null
 }
 
+/** Two positions judged against each other, the smaller id first */
+export interface PositionJudgement {
+  positionIds: readonly [string, string]
+  compatible: boolean
+}
+
 /** What the journal says a subject is right now, positions included */
 export interface SubjectState {
   subject: Subject
   positions: readonly PositionState[]
+  /** The pairs somebody judged; any other pair reads as contradictory */
+  judgements: readonly PositionJudgement[]
   themes: readonly ThemeAssignmentPayload[]
   relatedSubjectIds: readonly string[]
   deletedAt: Date | null
@@ -53,6 +61,18 @@ export const livePositions = (state: SubjectState): Position[] =>
 
 export const findPosition = (state: SubjectState, positionId: string): Position | undefined =>
   livePositions(state).find((p) => p.id === positionId)
+
+/** A pair is one pair whichever position is named first */
+export const positionPair = (a: string, b: string): [string, string] => (a < b ? [a, b] : [b, a])
+
+const isPair = (judgement: PositionJudgement, a: string, b: string) => {
+  const [first, second] = positionPair(a, b)
+  return judgement.positionIds[0] === first && judgement.positionIds[1] === second
+}
+
+/** Whether the two positions were judged compatible; undefined while nobody judged them */
+export const verdictOn = (state: SubjectState, a: string, b: string): boolean | undefined =>
+  state.judgements.find((judgement) => isPair(judgement, a, b))?.compatible
 
 export interface SubjectInput {
   title: string
@@ -106,6 +126,11 @@ export const positionEdited = (input: PositionInput): SubjectEvent => ({
 export const positionMergedInto = (sourceId: string, targetId: string): SubjectEvent => ({
   type: 'PositionMergedInto',
   payload: { sourceId, targetId },
+})
+
+export const positionsJudged = (a: string, b: string, compatible: boolean): SubjectEvent => ({
+  type: 'PositionsJudged',
+  payload: { positionIds: positionPair(a, b), compatible },
 })
 
 export const subjectDeleted = (): SubjectEvent => ({ type: 'SubjectDeleted', payload: {} })
@@ -169,6 +194,40 @@ export const mergePositions =
       ? Either.right([positionMergedInto(sourceId, targetId)])
       : refused(POSITION_GONE)
 
+export const SAME_POSITION = 'Une position ne se compare pas à elle-même.'
+
+/**
+ * Both positions must still be open on the subject. The verdict holds for
+ * everyone who takes the two; one that already stands writes nothing.
+ */
+export const judgePositions =
+  (a: string, b: string, compatible: boolean): SubjectDecision =>
+  (state) => {
+    if (a === b) return refused(SAME_POSITION)
+    if (!findPosition(state, a) || !findPosition(state, b)) return refused(POSITION_GONE)
+    return Either.right(
+      verdictOn(state, a, b) === compatible ? [] : [positionsJudged(a, b, compatible)],
+    )
+  }
+
+/**
+ * The verdict of whoever records that an author took the two positions: it
+ * counts only on a pair nobody judged, and never overturns one. It comes with
+ * a statement, which it must not hold back: a position gone meanwhile writes
+ * nothing instead of refusing.
+ */
+export const judgeUnjudgedPositions =
+  (a: string, b: string, compatible: boolean): SubjectDecision =>
+  (state) =>
+    Either.right(
+      a !== b &&
+        findPosition(state, a) &&
+        findPosition(state, b) &&
+        verdictOn(state, a, b) === undefined
+        ? [positionsJudged(a, b, compatible)]
+        : [],
+    )
+
 export const POSITIONS_UNSETTLED =
   'Chaque position du sujet à fusionner doit être reportée ou fondue dans une autre, une seule fois.'
 export const TARGET_POSITION_GONE = 'Une des positions du sujet conservé n’existe plus.'
@@ -208,6 +267,7 @@ export const absorbSubject =
       ? refused(refusal)
       : Either.right([
           subjectAbsorbed(absorbed.subject.id, carried.map(asCarried)),
+          ...judgementsCarried(absorbed, carried),
           ...themesGained(state, absorbed),
           ...linksInherited(state, absorbed),
         ])
@@ -234,6 +294,12 @@ function nameAlreadyTaken(state: SubjectState, carried: readonly Position[]) {
   const twin = carried.find((p) => state.positions.some((own) => own.position.slug === p.slug))
   return twin && sameNameOnTarget(twin.title)
 }
+
+/** The verdicts between two positions carried over follow them; one on a position folded is lost */
+const judgementsCarried = (absorbed: SubjectState, carried: readonly Position[]): SubjectEvent[] =>
+  absorbed.judgements
+    .filter(({ positionIds }) => positionIds.every((id) => carried.some((p) => p.id === id)))
+    .map(({ positionIds: [a, b], compatible }) => positionsJudged(a, b, compatible))
 
 const asCarried = (position: Position): CarriedPosition => ({
   positionId: position.id,
@@ -284,6 +350,7 @@ function apply(
       return {
         subject: subjectFrom(stored, event.payload),
         positions: [],
+        judgements: [],
         themes: [],
         relatedSubjectIds: [],
         deletedAt: null,
@@ -359,15 +426,27 @@ function apply(
         },
       }))
     case 'PositionMergedInto':
-      return mapPosition(state, event.payload.sourceId, (p) => ({
-        ...p,
-        deletedAt: stored.occurredAt,
-      }))
+      return positionGone(state, event.payload.sourceId, stored.occurredAt)
     case 'PositionRemoved':
-      return mapPosition(state, event.payload.positionId, (p) => ({
-        ...p,
-        deletedAt: stored.occurredAt,
-      }))
+      return positionGone(state, event.payload.positionId, stored.occurredAt)
+    case 'PositionsJudged': {
+      const [a, b] = event.payload.positionIds
+      return {
+        ...state,
+        judgements: [
+          ...state.judgements.filter((judgement) => !isPair(judgement, a, b)),
+          { positionIds: positionPair(a, b), compatible: event.payload.compatible },
+        ],
+      }
+    }
+  }
+}
+
+/** A position that is gone takes the verdicts on it with it */
+function positionGone(state: SubjectState, positionId: string, at: Date): SubjectState {
+  return {
+    ...mapPosition(state, positionId, (p) => ({ ...p, deletedAt: at })),
+    judgements: state.judgements.filter(({ positionIds }) => !positionIds.includes(positionId)),
   }
 }
 

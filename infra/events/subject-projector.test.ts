@@ -9,6 +9,7 @@ import {
   subjectLinked,
   livePositions,
   positionMergedInto,
+  positionsJudged,
   replaySubject,
   subjectThemesSet,
   subjectStream,
@@ -141,12 +142,34 @@ describe.skipIf(!hasDatabase)('subject projector', () => {
     expect(unlinked).toHaveLength(0)
   })
 
-  it('merges a position away and deletes the subject with its positions', async () => {
-    await append(9, [positionMergedInto(contreId, pourId)])
+  const judgements = () =>
+    prisma().position_judgements.findMany({
+      where: { OR: [{ position_id_1: pourId }, { position_id_2: pourId }] },
+    })
+
+  it('keeps one row per judged pair, holding the last verdict', async () => {
+    await append(9, [positionsJudged(pourId, contreId, true)])
+    await append(10, [positionsJudged(contreId, pourId, false)])
+
+    const [first, second] = [pourId, contreId].sort()
+    expect(await judgements()).toMatchObject([
+      {
+        position_id_1: first,
+        position_id_2: second,
+        compatible: false,
+        created_by: actorId,
+        updated_by: actorId,
+      },
+    ])
+  })
+
+  it('merges a position away, with what was judged of it, and deletes the subject with its positions', async () => {
+    await append(11, [positionMergedInto(contreId, pourId)])
     const merged = await prisma().positions.findUniqueOrThrow({ where: { id: contreId } })
     expect(merged.deleted_at).not.toBeNull()
+    expect(await judgements()).toEqual([])
 
-    await append(10, [subjectDeleted()])
+    await append(12, [subjectDeleted()])
     const subject = await prisma().subjects.findUniqueOrThrow({ where: { id: subjectId } })
     const pour = await prisma().positions.findUniqueOrThrow({ where: { id: pourId } })
     expect(subject.deleted_at).not.toBeNull()

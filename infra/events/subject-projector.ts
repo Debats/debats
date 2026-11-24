@@ -8,7 +8,7 @@ import {
 import { StoredEvent } from '../../domain/events/event-store'
 import { PrismaTransaction } from '../prisma/client'
 import { leadDraftsToSubject } from './drafts-of-merged-subject'
-import { projectorOf } from './projector'
+import { auditOf, changedBy, projectorOf } from './projector'
 
 /**
  * Keeps subjects, positions, subject_themes and related_subjects in step
@@ -56,24 +56,23 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
       })
       return
     case 'PositionMergedInto':
-      await tx.positions.update({
-        where: { id: decoded.payload.sourceId },
-        data: deletedOn(stored.occurredAt),
-      })
-      return
+      return closePositions(tx, [decoded.payload.sourceId], stored.occurredAt)
     case 'PositionRemoved':
-      await tx.positions.update({
-        where: { id: decoded.payload.positionId },
-        data: deletedOn(stored.occurredAt),
-      })
-      return
-    case 'SubjectDeleted':
+      return closePositions(tx, [decoded.payload.positionId], stored.occurredAt)
+    case 'PositionsJudged':
+      return judgePair(tx, stored, decoded.payload)
+    case 'SubjectDeleted': {
       await tx.subjects.update({ where: { id: subjectId }, data: deletedOn(stored.occurredAt) })
-      await tx.positions.updateMany({
+      const open = await tx.positions.findMany({
         where: { subject_id: subjectId, deleted_at: null },
-        data: deletedOn(stored.occurredAt),
+        select: { id: true },
       })
-      return
+      return closePositions(
+        tx,
+        open.map((p) => p.id),
+        stored.occurredAt,
+      )
+    }
     case 'SubjectMergedInto':
       return mergeAway(tx, stored, decoded.payload)
     case 'SubjectAbsorbed':
@@ -103,10 +102,11 @@ async function mergeAway(
     where: { id: subjectId },
     data: { ...deletedOn(stored.occurredAt), merged_into_id: payload.targetId },
   })
-  await tx.positions.updateMany({
-    where: { id: { in: payload.positions.filter((p) => p.into).map((p) => p.positionId) } },
-    data: deletedOn(stored.occurredAt),
-  })
+  await closePositions(
+    tx,
+    payload.positions.filter((p) => p.into).map((p) => p.positionId),
+    stored.occurredAt,
+  )
   await tx.related_subjects.deleteMany({
     where: { OR: [{ subject_id_1: subjectId }, { subject_id_2: subjectId }] },
   })
@@ -115,6 +115,34 @@ async function mergeAway(
 
 /** A soft delete is a change of the row: it moves updated_at too */
 const deletedOn = (at: Date) => ({ deleted_at: at, updated_at: at })
+
+/** Positions that are gone take with them what was judged of them */
+async function closePositions(tx: PrismaTransaction, positionIds: string[], at: Date) {
+  if (positionIds.length === 0) return
+  await tx.positions.updateMany({ where: { id: { in: positionIds } }, data: deletedOn(at) })
+  await tx.position_judgements.deleteMany({
+    where: { OR: [{ position_id_1: { in: positionIds } }, { position_id_2: { in: positionIds } }] },
+  })
+}
+
+/** The last verdict on a pair stands; the event names the pair the smaller id first, as the table does */
+async function judgePair(
+  tx: PrismaTransaction,
+  stored: StoredEvent,
+  payload: Extract<SubjectEvent, { type: 'PositionsJudged' }>['payload'],
+) {
+  const [position_id_1, position_id_2] = payload.positionIds
+  await tx.position_judgements.upsert({
+    where: { position_id_1_position_id_2: { position_id_1, position_id_2 } },
+    create: {
+      position_id_1,
+      position_id_2,
+      compatible: payload.compatible,
+      ...auditOf(stored, 'a position judgement'),
+    },
+    update: { compatible: payload.compatible, ...changedBy(stored) },
+  })
+}
 
 async function createSubject(tx: PrismaTransaction, stored: StoredEvent, payload: SubjectContent) {
   await tx.subjects.create({
