@@ -7,16 +7,14 @@ import { loadJointDeclarationPage } from '../../../infra/queries/joint-declarati
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform } from '../../../domain/reputation/permissions'
 import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
-import { signatoriesLabel } from '../../../domain/read-models/joint-declaration'
 import ContentWithSidebar from '../../../components/layout/ContentWithSidebar'
 import HeroStats from '../../../components/layout/HeroStats'
 import PageHero from '../../../components/layout/PageHero'
-import ReadingGuide from '../../../components/layout/ReadingGuide'
 import { formatDate } from '../../../lib/format-date'
 import { plural } from '../../../lib/plural'
 import AddSignature from './AddSignature'
 import { jointDeclarationDescription } from './description'
-import SignatoryCard from './SignatoryCard'
+import SignatoriesCard from './SignatoriesCard'
 import TakenStanceCard from './TakenStanceCard'
 import TextCard from './TextCard'
 import styles from './joint-declaration.module.css'
@@ -95,14 +93,7 @@ export default async function JointDeclarationPage({ params }: PageProps) {
         aside={
           <>
             <TextCard declaration={declaration} />
-            <ReadingGuide
-              title="Comment lire cette page"
-              steps={[
-                'Une déclaration commune est un texte que plusieurs personnes ou organisations signent ensemble.',
-                'Chaque signature compte comme une prise de position de son auteur·rice, sur chaque position que le texte prend.',
-                'Le site ne montre que les signataires qu’il a recensé·es. La liste complète est à la source.',
-              ]}
-            />
+            <SignatoriesCard signatories={signatories} />
             <AddSignature
               declaration={declaration}
               engaged={engaged}
@@ -115,11 +106,12 @@ export default async function JointDeclarationPage({ params }: PageProps) {
         <section className={styles.block}>
           <div className={styles.head}>
             <h2 className={styles.title}>Ce que le texte défend</h2>
-            <p className={styles.lead}>
-              {engaged
-                ? 'Signer ce texte, c’est prendre chacune de ces positions.'
-                : 'Les sujets que ce texte engageait ne sont plus sur le site : il ne prend plus aucune position ici, et ne peut pas être signé tant qu’on ne lui en connaît pas une.'}
-            </p>
+            {!engaged && (
+              <p className={styles.lead}>
+                Les sujets que ce texte engageait ne sont plus sur le site : il ne prend plus aucune
+                position ici, et ne peut pas être signé tant qu’on ne lui en connaît pas une.
+              </p>
+            )}
           </div>
           {engaged && (
             <div className={styles.stances}>
@@ -128,40 +120,6 @@ export default async function JointDeclarationPage({ params }: PageProps) {
               ))}
             </div>
           )}
-        </section>
-
-        <section className={styles.block}>
-          <div className={styles.head}>
-            <h2 className={styles.title}>Signataires recensé·es sur Débats.co</h2>
-            <p className={styles.lead}>
-              {signatories.length === 0
-                ? 'Aucune signature n’est encore enregistrée pour ce texte.'
-                : !engaged
-                  ? `${signatoriesLabel(signatories.map(({ author }) => author))}.`
-                  : `${signatoriesLabel(signatories.map(({ author }) => author))} : chacun·e prend ${
-                      stances.length > 1 ? `les ${stances.length} positions` : 'la position'
-                    } du texte.`}
-            </p>
-          </div>
-          {signatories.length > 0 && (
-            <ul className={styles.signatories}>
-              {signatories.map((signatory) => (
-                <li key={`${signatory.author.kind}-${signatory.author.id}`}>
-                  <SignatoryCard signatory={signatory} />
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className={styles.lead}>
-            <a
-              href={declaration.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.sourceLink}
-            >
-              Voir le texte et ses signataires à la source
-            </a>
-          </p>
         </section>
       </ContentWithSidebar>
     </>

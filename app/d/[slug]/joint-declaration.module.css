@@ -4,10 +4,6 @@
   gap: 16px;
 }
 
-.block + .block {
-  margin-top: 40px;
-}
-
 .head {
   display: flex;
   flex-direction: column;
@@ -31,27 +27,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.signatories {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sourceLink,
-.sourceLink:link,
-.sourceLink:visited {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.sourceLink:hover {
-  color: var(--signal);
 }
 
 @media (max-width: 768px) {

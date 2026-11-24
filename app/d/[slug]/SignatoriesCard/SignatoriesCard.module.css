@@ -1,0 +1,63 @@
+.card {
+  composes: railCard from '../../../../styles/blocks.module.css';
+  gap: 14px;
+}
+
+.title {
+  composes: railCardTitle from '../../../../styles/blocks.module.css';
+}
+
+.count {
+  composes: meta from '../../../../styles/text.module.css';
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  min-width: 0;
+}
+
+.line,
+.line:link,
+.line:visited {
+  display: flex;
+  /* En haut de la rangée : deux voisins gardent leurs visages et leurs noms sur la même ligne, même quand un seul nom passe à la ligne */
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.line:hover .name {
+  color: var(--signal);
+}
+
+.role {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -7,3 +7,4 @@ tsconfig.tsbuildinfo
 .mcp.json
 next-env.d.ts
 prisma/generated
+supabase/.temp

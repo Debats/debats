@@ -1,6 +1,8 @@
+/* Un visage garde sa taille : dans une ligne étroite, c'est le texte qui cède */
 .avatar {
   border-radius: 50%;
   object-fit: cover;
+  flex: none;
 }
 
 .placeholder {
@@ -12,4 +14,5 @@
   color: var(--ink);
   font-family: var(--font-serif);
   line-height: 1;
+  flex: none;
 }

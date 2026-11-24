@@ -11,8 +11,3 @@
   line-height: 1.15;
   color: var(--ink);
 }
-
-.text {
-  composes: small from '../../../../styles/text.module.css';
-  font-size: 15px;
-}
