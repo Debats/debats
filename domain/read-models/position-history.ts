@@ -1,6 +1,5 @@
-import { courseOf, HeldPosition, lastStated, Step } from '../services/position-course'
+import { CourseEntry, HeldPosition, lastStated, Step } from '../services/position-course'
 import { dayKey } from '../value-objects/day'
-import { Compatibility } from './position-judgements'
 
 /**
  * The history of an author on a subject, drawn as lanes: one lane per
@@ -13,19 +12,16 @@ import { Compatibility } from './position-judgements'
  */
 
 /** One statement of the author on the subject, with whatever else the page shows of it */
-interface OnSubject {
+export interface OnSubject {
   position: { id: string; title: string }
   statement: { statedAt: Date; createdAt: Date }
 }
 
+/** A statement as her course reads it, carrying what the page gave to hand it back in its row */
+export type HistoryEntry<T extends OnSubject> = CourseEntry<T['position']> & { given: T }
+
 /** Whether she still holds the position of a lane today, or has left it since */
 export type LaneTone = 'held' | 'left'
-
-/** What a statement did to the positions she held: it left some, or joined them */
-export interface HistoryEvent<P> {
-  kind: 'leaves' | 'joins'
-  positions: P[]
-}
 
 export interface HistoryRow<T extends OnSubject> {
   entry: T
@@ -38,7 +34,8 @@ export interface HistoryRow<T extends OnSubject> {
   crossing: { lane: number; tone: LaneTone }[]
   /** The lanes a curve leaves to reach this statement */
   curvesFrom: number[]
-  event: HistoryEvent<T['position']> | null
+  /** The positions she keeps beside the one she takes here; none when she restates hers */
+  heldWith: T['position'][]
 }
 
 export interface PositionHistory<T extends OnSubject> {
@@ -48,20 +45,14 @@ export interface PositionHistory<T extends OnSubject> {
   rows: HistoryRow<T>[]
 }
 
+type Steps<T extends OnSubject> = ReadonlyArray<Step<HistoryEntry<T>>>
+
 /** The time she holds a position without a break, in indexes of the steps of her course */
 interface Stretch {
-  lane: number
+  position: string
   from: number
   /** The step that contradicted it, `null` while she holds it */
   until: number | null
-}
-
-type Entry<T extends OnSubject> = {
-  position: T['position']
-  statedAt: Date
-  recordedAt: Date
-  /** What the page gave, handed back in the row */
-  given: T
 }
 
 const toneOf = (stretch: Stretch): LaneTone => (stretch.until === null ? 'held' : 'left')
@@ -69,82 +60,66 @@ const toneOf = (stretch: Stretch): LaneTone => (stretch.until === null ? 'held' 
 const runsThrough = (stretch: Stretch, index: number) =>
   stretch.from < index && (stretch.until === null || stretch.until > index)
 
-/** Each step with the stretch its statement belongs to, and every stretch of the course */
-function stretchesOf<T extends OnSubject>(steps: ReadonlyArray<Step<Entry<T>>>) {
-  const lanes = new Map<string, number>()
-  const open = new Map<string, number>()
-  let stretches: Stretch[] = []
-
-  const placed = steps.map(({ entry, taken }, index) => {
-    const { id } = entry.position
-    if (!lanes.has(id)) lanes.set(id, lanes.size)
-    if (taken) {
-      const ended = new Set(taken.left.map((left) => open.get(left.position.id)))
-      stretches = stretches.map((s, at) => (ended.has(at) ? { ...s, until: index } : s))
-      open.set(id, stretches.length)
-      stretches = [...stretches, { lane: lanes.get(id)!, from: index, until: null }]
-    }
-    return open.get(id)!
+/** A stretch opens each time she takes a position, and ends at the first statement that leaves it */
+const stretchesOf = <T extends OnSubject>(steps: Steps<T>): Stretch[] =>
+  steps.flatMap(({ entry, taken }, from) => {
+    if (!taken) return []
+    const position = entry.position.id
+    const until = steps.findIndex(
+      (later, at) => at > from && !!later.taken?.left.some((left) => left.position.id === position),
+    )
+    return [{ position, from, until: until < 0 ? null : until }]
   })
-  return { lanes, stretches, placed }
-}
 
-type Taken<P> = { left: HeldPosition<P>[]; kept: HeldPosition<P>[] }
+/** The stretch a statement belongs to: the last one its position opened */
+const stretchAt = (stretches: Stretch[], position: string, index: number): Stretch =>
+  stretches.filter((s) => s.position === position && s.from <= index).at(-1)!
+
+/** A lane belongs to one position for the whole history, in the order she first stated them */
+const lanesOf = <T extends OnSubject>(steps: Steps<T>): Map<string, number> =>
+  new Map(
+    Array.from(new Set(steps.map(({ entry }) => entry.position.id))).map((id, lane) => [id, lane]),
+  )
 
 /**
  * Where the curves to a position taken come from: every position she leaves
  * for it, or else the one she stated last among those she keeps beside it.
  */
-function curveSources<P>({ left, kept }: Taken<P>): HeldPosition<P>[] {
-  if (left.length > 0) return left
-  return kept.length > 0 ? [lastStated(kept)] : []
-}
-
-function eventOf<P>(taken: Taken<P>): HistoryEvent<P> | null {
-  if (taken.left.length > 0) return { kind: 'leaves', positions: taken.left.map((h) => h.position) }
-  if (taken.kept.length > 0) return { kind: 'joins', positions: taken.kept.map((h) => h.position) }
-  return null
+function curveSources<P>(taken: { left: HeldPosition<P>[]; kept: HeldPosition<P>[] }) {
+  if (taken.left.length > 0) return taken.left
+  return taken.kept.length > 0 ? [lastStated(taken.kept)] : []
 }
 
 const distinct = <V>(values: V[]) => new Set(values).size
 
 /** There is a history to tell once she took two positions, and not all the same day */
-const hasHistory = (statements: ReadonlyArray<OnSubject>) =>
-  distinct(statements.map(({ position }) => position.id)) > 1 &&
-  distinct(statements.map(({ statement }) => dayKey(statement.statedAt))) > 1
+const hasHistory = <T extends OnSubject>(steps: Steps<T>) =>
+  distinct(steps.map(({ entry }) => entry.position.id)) > 1 &&
+  distinct(steps.map(({ entry }) => dayKey(entry.statedAt))) > 1
 
-/** `null` when there is no history to tell: one position restated, or positions all taken the same day */
-export function positionHistory<T extends OnSubject>(
-  statements: ReadonlyArray<T>,
-  compatible: Compatibility,
-): PositionHistory<T> | null {
-  if (!hasHistory(statements)) return null
+/**
+ * The history the steps of her course draw; `null` when there is none to
+ * tell: one position restated, or positions all taken the same day.
+ */
+export function historyOf<T extends OnSubject>(steps: Steps<T>): PositionHistory<T> | null {
+  if (!hasHistory(steps)) return null
 
-  const { steps } = courseOf(
-    statements.map(
-      (given): Entry<T> => ({
-        position: given.position,
-        statedAt: given.statement.statedAt,
-        recordedAt: given.statement.createdAt,
-        given,
-      }),
-    ),
-    compatible,
-  )
-  const { lanes, stretches, placed } = stretchesOf(steps)
+  const lanes = lanesOf(steps)
+  const stretches = stretchesOf(steps)
+  const laneOf = (position: string) => lanes.get(position)!
 
   const rows = steps.map(({ entry, taken }, index): HistoryRow<T> => {
-    const own = stretches[placed[index]]
+    const own = stretchAt(stretches, entry.position.id, index)
     return {
       entry: entry.given,
-      lane: own.lane,
+      lane: laneOf(own.position),
       tone: toneOf(own),
       restated: index > own.from,
       crossing: stretches
         .filter((s) => s !== own && runsThrough(s, index))
-        .map((s) => ({ lane: s.lane, tone: toneOf(s) })),
-      curvesFrom: taken ? curveSources(taken).map((held) => lanes.get(held.position.id)!) : [],
-      event: taken && eventOf(taken),
+        .map((s) => ({ lane: laneOf(s.position), tone: toneOf(s) })),
+      curvesFrom: taken ? curveSources(taken).map((held) => laneOf(held.position.id)) : [],
+      heldWith: taken ? taken.kept.map((held) => held.position) : [],
     }
   })
   return { lanes: lanes.size, rows: rows.reverse() }
@@ -155,12 +130,6 @@ const quoted = (titles: string[]) => titles.map((title) => `« ${title} »`)
 const listed = (items: string[]) =>
   items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} et ${items.at(-1)}`
 
-/**
- * What the row says of its event in words: « avec « Appel au cessez-le-feu » »
- * beside a position she holds with others, and nothing of a position she
- * left — the lane that ends and curves away says it.
- */
-export function historyEventLabel(event: HistoryEvent<{ title: string }>): string | null {
-  if (event.kind === 'leaves') return null
-  return `avec ${listed(quoted(event.positions.map((position) => position.title)))}`
-}
+/** What a row says of the positions she keeps beside the one taken: « avec « Appel au cessez-le-feu » » */
+export const heldWithLabel = (positions: ReadonlyArray<{ title: string }>): string =>
+  `avec ${listed(quoted(positions.map((position) => position.title)))}`

@@ -48,6 +48,23 @@
   color: var(--signal);
 }
 
+/*
+ * Une pastille de papier, posée à côté d'un texte : le type d'une prise de
+ * position, ce avec quoi une position est tenue. Son rayon est la moitié de
+ * sa hauteur : une pilule sur une ligne, un rectangle arrondi quand le texte
+ * passe à deux.
+ */
+.tag {
+  --tag-height: 24px;
+
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tag-height);
+  padding: 3px 10px;
+  border-radius: calc(var(--tag-height) / 2);
+  background-color: var(--paper-2);
+}
+
 /* Les cartes du rail : celle du sujet, celle de l'auteur */
 .railCard {
   padding: 24px;

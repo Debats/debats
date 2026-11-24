@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { positionsHeld } from './author-course'
+import { authorCourse } from './author-course'
 import { ALL_CONTRADICTORY, compatibilityOf } from './position-judgements'
 
 let recorded = 0
 
 const stated = (id: string, date: string) => ({
-  position: { id },
+  position: { id, title: id },
   statement: {
     statedAt: new Date(`${date}T00:00:00Z`),
     createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, recorded++)),
   },
 })
 
-const held = (...args: Parameters<typeof positionsHeld>) => Array.from(positionsHeld(...args))
+const held = (...args: Parameters<typeof authorCourse>) => Array.from(authorCourse(...args).held)
 
-describe('positionsHeld', () => {
+describe('authorCourse, the positions she holds today', () => {
   it('holds the one position of an author who keeps saying the same thing', () => {
     expect(
       held([stated('62', '2017-03-02'), stated('62', '2019-04-25')], ALL_CONTRADICTORY),

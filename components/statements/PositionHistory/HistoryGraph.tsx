@@ -15,7 +15,8 @@ const lineOf = (tone: LaneTone, part: string) =>
 /**
  * Ce que les couloirs dessinent à la hauteur d'une prise de position : les
  * couloirs qui traversent, son point, et la courbe qui y arrive d'un autre
- * couloir. Purement décoratif : la ligne dit la même chose en toutes lettres.
+ * couloir. Masqué aux lecteurs d'écran, qui lisent la date, la position et
+ * sa source sur la ligne.
  */
 export default function HistoryGraph({ lanes, row }: HistoryGraphProps) {
   // Les courbes se dessinent en unités de couloir : un couloir fait 1 de large, son axe est au milieu

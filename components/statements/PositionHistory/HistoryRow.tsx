@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { statementTypeOf } from '../../../domain/entities/statement'
 import { positionHref } from '../../../domain/read-models/hrefs'
-import { historyEventLabel, HistoryRow as Row } from '../../../domain/read-models/position-history'
+import { heldWithLabel, HistoryRow as Row } from '../../../domain/read-models/position-history'
 import { provenanceOf } from '../../../domain/read-models/statement-provenance'
 import { StatementWithDetails } from '../../../domain/repositories/statement-repository'
 import { dayKey } from '../../../domain/value-objects/day'
@@ -25,8 +25,6 @@ export default function HistoryRow({ subjectSlug, lanes, row }: HistoryRowProps)
     jointDeclaration: statement.jointDeclaration,
   })
 
-  const label = row.event && historyEventLabel(row.event)
-
   return (
     <li className={styles.row}>
       <time className={styles.date} dateTime={dayKey(statement.statedAt)}>
@@ -41,7 +39,9 @@ export default function HistoryRow({ subjectSlug, lanes, row }: HistoryRowProps)
           >
             {position.title}
           </Link>
-          {label && <span className={styles.event}>{label}</span>}
+          {row.heldWith.length > 0 && (
+            <span className={styles.heldWith}>{heldWithLabel(row.heldWith)}</span>
+          )}
         </p>
         <p className={styles.source}>{provenance.name}</p>
       </div>

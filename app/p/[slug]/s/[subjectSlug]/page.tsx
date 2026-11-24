@@ -21,8 +21,7 @@ import {
 import { elided } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
-import { positionsHeld } from '../../../../../domain/read-models/author-course'
-import { positionHistory } from '../../../../../domain/read-models/position-history'
+import { authorCourse } from '../../../../../domain/read-models/author-course'
 import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
@@ -99,9 +98,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const author = publicFigureRef(figure)
   const positions = groupStatementsByPosition(figureStatements)
   // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
-  const compatible = compatibilityOf(judged)
-  const hers = positionsHeld(figureStatements, compatible)
-  const history = positionHistory(figureStatements, compatible)
+  const { held: hers, history } = authorCourse(figureStatements, compatibilityOf(judged))
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(

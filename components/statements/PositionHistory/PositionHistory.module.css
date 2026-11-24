@@ -11,13 +11,18 @@
 }
 
 /*
- * Les couloirs : chaque position a le sien, large de --lane-width, et le
- * point d'une prise de position est à --node-y du haut de sa ligne, à la
- * hauteur de sa date et de son titre.
+ * Les couloirs : chaque position a le sien, large de --lane-width. Une ligne
+ * s'ouvre par un retrait --row-top puis une première ligne de texte haute de
+ * --head, que la date et le titre partagent : le point d'une prise de
+ * position est au milieu de cette première ligne, et s'en déduit.
  */
 .rows {
   --lane-width: 24px;
-  --node-y: 22px;
+  --row-top: 10px;
+  --row-gap: 22px;
+  --head: 24px;
+  --node: 16px;
+  --node-y: calc(var(--row-top) + var(--head) / 2);
   --stroke: 3px;
 
   list-style: none;
@@ -38,7 +43,8 @@
   grid-column: 1;
   grid-row: 1;
   color: var(--ink-2);
-  padding-top: 13px;
+  padding-top: var(--row-top);
+  line-height: var(--head);
 }
 
 .graph {
@@ -79,10 +85,10 @@
 
 .node {
   position: absolute;
-  left: calc((var(--lane) + 0.5) * var(--lane-width) - 8px);
-  top: calc(var(--node-y) - 8px);
-  width: 16px;
-  height: 16px;
+  left: calc((var(--lane) + 0.5) * var(--lane-width) - var(--node) / 2);
+  top: calc(var(--node-y) - var(--node) / 2);
+  width: var(--node);
+  height: var(--node);
   box-sizing: border-box;
   border-radius: 50%;
   background-color: var(--ink);
@@ -117,7 +123,7 @@
   grid-column: 3;
   grid-row: 1;
   min-width: 0;
-  padding: 10px 0 22px;
+  padding: var(--row-top) 0 var(--row-gap);
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -133,7 +139,7 @@
   flex-wrap: wrap;
   gap: 4px 10px;
   font-size: 15px;
-  line-height: 24px;
+  line-height: var(--head);
   font-weight: 600;
 }
 
@@ -141,25 +147,24 @@
   composes: inkLink from '../../../styles/blocks.module.css';
 }
 
+/* Une position quittée : l'encre s'adoucit sans cesser d'être lisible, le point creux dit le reste */
 .positionLeft,
 .positionLeft:link,
 .positionLeft:visited {
-  color: var(--ink-3);
+  color: var(--ink-2);
+  font-weight: 500;
 }
 
 .positionLeft:hover {
   color: var(--signal);
 }
 
-.event {
+.heldWith {
   composes: meta from '../../../styles/text.module.css';
+  composes: tag from '../../../styles/blocks.module.css';
   font-size: 11px;
   font-weight: 400;
   color: var(--ink-2);
-  background-color: var(--paper-2);
-  /* Une pastille sur une ligne, qui reste lisible quand plusieurs positions la font passer à deux */
-  border-radius: 12px;
-  padding: 3px 9px;
 }
 
 .source {

@@ -21,8 +21,7 @@ import {
 } from '../../../../../domain/services/author-on-subject'
 import { loadOrganisationSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
-import { positionsHeld } from '../../../../../domain/read-models/author-course'
-import { positionHistory } from '../../../../../domain/read-models/position-history'
+import { authorCourse } from '../../../../../domain/read-models/author-course'
 import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { reviewOf } from '../../../../review-of'
 import ReviewScope from '../../../../../components/review/ReviewScope'
@@ -106,9 +105,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
   const author = toAuthorRef(organisation)
   const positions = groupStatementsByPosition(organisationStatements)
   // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
-  const compatible = compatibilityOf(judged)
-  const hers = positionsHeld(organisationStatements, compatible)
-  const history = positionHistory(organisationStatements, compatible)
+  const { held: hers, history } = authorCourse(organisationStatements, compatibilityOf(judged))
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(
