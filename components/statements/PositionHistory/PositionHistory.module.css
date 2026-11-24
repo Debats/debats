@@ -1,0 +1,194 @@
+.section {
+  composes: section from '../../../styles/blocks.module.css';
+}
+
+.head {
+  composes: sectionHead from '../../../styles/blocks.module.css';
+}
+
+.title {
+  composes: sectionTitle from '../../../styles/blocks.module.css';
+}
+
+/*
+ * Les couloirs : chaque position a le sien, large de --lane-width, et le
+ * point d'une prise de position est à --node-y du haut de sa ligne, à la
+ * hauteur de sa date et de son titre.
+ */
+.rows {
+  --lane-width: 24px;
+  --node-y: 22px;
+  --stroke: 3px;
+
+  list-style: none;
+  margin: 0;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 104px auto minmax(0, 1fr);
+  column-gap: 14px;
+}
+
+.date {
+  composes: meta from '../../../styles/text.module.css';
+  grid-column: 1;
+  grid-row: 1;
+  color: var(--ink-2);
+  padding-top: 13px;
+}
+
+.graph {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  width: calc(var(--lanes) * var(--lane-width));
+}
+
+/* Le trait d'un couloir, sur son axe */
+.line {
+  position: absolute;
+  left: calc((var(--lane) + 0.5) * var(--lane-width) - var(--stroke) / 2);
+  width: var(--stroke);
+  background-color: var(--ink);
+}
+
+/* Une position quittée depuis : son couloir s'efface */
+.lineLeft {
+  composes: line;
+  background-color: var(--line-2);
+}
+
+.through {
+  top: 0;
+  bottom: 0;
+}
+
+.above {
+  top: 0;
+  height: var(--node-y);
+}
+
+.below {
+  top: var(--node-y);
+  bottom: 0;
+}
+
+.node {
+  position: absolute;
+  left: calc((var(--lane) + 0.5) * var(--lane-width) - 8px);
+  top: calc(var(--node-y) - 8px);
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-color: var(--ink);
+}
+
+.nodeLeft {
+  composes: node;
+  background-color: var(--card);
+  border: 2.5px solid var(--ink-3);
+}
+
+/* La courbe part du bas de la ligne, dans le couloir d'origine, et rejoint le point */
+.curves {
+  position: absolute;
+  inset: var(--node-y) 0 0;
+}
+
+.curves svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.curves path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: var(--stroke);
+}
+
+.body {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  padding: 10px 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.row:last-child .body {
+  padding-bottom: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.position {
+  composes: inkLink from '../../../styles/blocks.module.css';
+}
+
+.positionLeft,
+.positionLeft:link,
+.positionLeft:visited {
+  color: var(--ink-3);
+}
+
+.positionLeft:hover {
+  color: var(--signal);
+}
+
+.event {
+  composes: meta from '../../../styles/text.module.css';
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-2);
+  background-color: var(--paper-2);
+  /* Une pastille sur une ligne, qui reste lisible quand plusieurs positions la font passer à deux */
+  border-radius: 12px;
+  padding: 3px 9px;
+}
+
+.source {
+  composes: small from '../../../styles/text.module.css';
+  font-size: 13px;
+}
+
+/* Sur mobile la date passe au-dessus du titre : les couloirs gardent toute la hauteur */
+@media (max-width: 768px) {
+  .rows {
+    padding: 20px;
+  }
+
+  .row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .graph {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .date {
+    grid-column: 2;
+  }
+
+  .body {
+    grid-column: 2;
+    grid-row: 2;
+    padding-top: 0;
+  }
+}

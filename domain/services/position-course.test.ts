@@ -128,3 +128,48 @@ describe('courseOf, once positions were judged compatible', () => {
     ])
   })
 })
+
+describe('courseOf, statement by statement', () => {
+  const compatible = compatibilityOf([{ positionIds: ['ceasefire', 'genocide'], compatible: true }])
+  const taken = (steps: ReturnType<typeof courseOf>['steps']) =>
+    steps.map((step) => step.taken && { left: ids(step.taken.left), kept: ids(step.taken.kept) })
+
+  it('tells one step per statement, in time order', () => {
+    const { steps } = courseOf(
+      [stated('65', '2022-03-17'), stated('62', '2017-04-01'), stated('62', '2019-08-26')],
+      ALL_CONTRADICTORY,
+    )
+
+    expect(steps.map((step) => step.entry.position.id)).toEqual(['62', '62', '65'])
+  })
+
+  it('tells which positions she left when she took one, and nothing when she restates hers', () => {
+    const { steps } = courseOf(
+      [stated('62', '2017-04-01'), stated('62', '2019-08-26'), stated('65', '2022-03-17')],
+      ALL_CONTRADICTORY,
+    )
+
+    expect(taken(steps)).toEqual([{ left: [], kept: [] }, null, { left: ['62'], kept: [] }])
+  })
+
+  it('tells which positions she kept when she took one that goes with them', () => {
+    const { steps } = courseOf(
+      [stated('ceasefire', '2024-05-31'), stated('genocide', '2026-02-06')],
+      compatible,
+    )
+
+    expect(taken(steps)).toEqual([
+      { left: [], kept: [] },
+      { left: [], kept: ['ceasefire'] },
+    ])
+  })
+
+  it('hands back the statement it was given, whatever else it carries', () => {
+    const { steps } = courseOf(
+      [{ ...stated('62', '2017-04-01'), source: 'Programme' }],
+      ALL_CONTRADICTORY,
+    )
+
+    expect(steps[0].entry.source).toBe('Programme')
+  })
+})

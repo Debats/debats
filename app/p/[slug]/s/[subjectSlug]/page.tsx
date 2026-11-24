@@ -22,6 +22,7 @@ import { elided } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
 import { positionsHeld } from '../../../../../domain/read-models/author-course'
+import { positionHistory } from '../../../../../domain/read-models/position-history'
 import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
@@ -42,6 +43,7 @@ import AuthorRailCard from '../../../../../components/statements/AuthorRailCard'
 import FigureRailLines from '../../../../../components/statements/AuthorRailCard/FigureRailLines'
 import ContributeCard from '../../../../../components/statements/ContributeCard'
 import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
+import PositionHistory from '../../../../../components/statements/PositionHistory'
 import PositionAlignment from '../../../../../components/statements/PositionAlignment'
 import SubjectDebate from '../../../../../components/statements/SubjectDebate'
 import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
@@ -97,7 +99,9 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const author = publicFigureRef(figure)
   const positions = groupStatementsByPosition(figureStatements)
   // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
-  const hers = positionsHeld(figureStatements, compatibilityOf(judged))
+  const compatible = compatibilityOf(judged)
+  const hers = positionsHeld(figureStatements, compatible)
+  const history = positionHistory(figureStatements, compatible)
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(
@@ -183,6 +187,8 @@ export default async function FigureSubjectPage({ params }: PageProps) {
               : undefined
           }
         />
+
+        {history && <PositionHistory subjectSlug={subjectSlug} history={history} />}
 
         {positions.length > 0 && (
           <PositionAlignment
