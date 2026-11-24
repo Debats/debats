@@ -11,7 +11,9 @@ import {
   MembershipOrganisation,
 } from '../repositories/organisation-membership-repository'
 import { StatementWithAuthor, StatementWithDetails } from '../repositories/statement-repository'
+import { Compatibility } from '../read-models/position-judgements'
 import { authorKey } from './author-on-subject'
+import { courseOf, Move } from './position-course'
 
 /**
  * Analyses of an author (a public figure or an organisation) against the
@@ -116,7 +118,7 @@ export interface Companion {
   author: StatementAuthorRef
   /** Subjects where they share one of the author's positions */
   agreed: number
-  /** Subjects where they only took other positions */
+  /** Subjects where they share none, and took at least one that contradicts hers */
   disagreed: number
 }
 
@@ -129,17 +131,31 @@ export interface Company {
 
 export const COMPANY_LIMIT = 5
 
-/** Who stands with the author the most often, and who stands apart the most often */
+/**
+ * Who stands with the author the most often, and who stands apart the most
+ * often. Someone who only took positions compatible with hers on a subject is
+ * neither with her nor apart there: they did not say the same thing, and
+ * nothing they said goes against what she said.
+ */
 export function company(
   own: StatementWithDetails[],
   onSubjects: StatementWithAuthor[],
   self: StatementAuthor,
+  compatible: Compatibility,
   limit = COMPANY_LIMIT,
 ): Company {
+  const hers = ownSubjects(own)
+  const contradicts = ({ subject, theirs }: Stance) =>
+    (hers.get(subject.id)?.positions ?? []).some((mine) =>
+      theirs.some((other) => !compatible(mine.id, other.id)),
+    )
   const companions: Companion[] = others(own, onSubjects, self).map(({ author, stances }) => {
     const all = Array.from(stances.values())
-    const agreed = all.filter((s) => s.aligned).length
-    return { author, agreed, disagreed: all.length - agreed }
+    return {
+      author,
+      agreed: all.filter((s) => s.aligned).length,
+      disagreed: all.filter((s) => !s.aligned && contradicts(s)).length,
+    }
   })
   return {
     closest: companions
@@ -243,29 +259,44 @@ export interface PositionStep {
 
 export interface PositionChange {
   subject: SubjectRef
-  /** Each position in the order it was taken; a return to a former one is a step of its own */
+  /**
+   * The position she first left, then each position she left another for, in
+   * order; a return to a former one is a step of its own. A position taken
+   * beside one it is compatible with is no step: she left nothing for it.
+   */
   steps: PositionStep[]
 }
 
-const byStatedThenRecorded = (a: StatementWithDetails, b: StatementWithDetails) =>
-  a.statement.statedAt.getTime() - b.statement.statedAt.getTime() ||
-  a.statement.createdAt.getTime() - b.statement.createdAt.getTime()
+/** The steps a course makes: where the first move starts, then where each move leads */
+function stepsOf(moves: ReadonlyArray<Move<PositionRef>>): PositionStep[] {
+  const [first] = moves
+  if (!first) return []
+  return [
+    { position: first.from.position, statedAt: first.from.since },
+    ...moves.map(({ to }) => ({ position: to.position, statedAt: to.statedAt })),
+  ]
+}
 
-/** The subjects where the author moved from one position to another, latest move first */
-export function positionChanges(own: StatementWithDetails[]): PositionChange[] {
+/** The subjects where the author left a position for another, latest move first */
+export function positionChanges(
+  own: StatementWithDetails[],
+  compatible: Compatibility,
+): PositionChange[] {
   const bySubject = new Map<string, StatementWithDetails[]>()
   for (const entry of own) {
     bySubject.set(entry.subject.id, [...(bySubject.get(entry.subject.id) ?? []), entry])
   }
   return Array.from(bySubject.values())
     .map((entries) => {
-      const steps: PositionStep[] = []
-      for (const { statement, position } of [...entries].sort(byStatedThenRecorded)) {
-        if (steps.at(-1)?.position.id !== position.id) {
-          steps.push({ position: positionRef(position), statedAt: statement.statedAt })
-        }
-      }
-      return { subject: subjectRef(entries[0].subject), steps }
+      const { moves } = courseOf(
+        entries.map(({ statement, position }) => ({
+          position: positionRef(position),
+          statedAt: statement.statedAt,
+          recordedAt: statement.createdAt,
+        })),
+        compatible,
+      )
+      return { subject: subjectRef(entries[0].subject), steps: stepsOf(moves) }
     })
     .filter((change) => change.steps.length > 1)
     .sort((a, b) => b.steps.at(-1)!.statedAt.getTime() - a.steps.at(-1)!.statedAt.getTime())
@@ -423,11 +454,12 @@ export function analyseAuthor(
   own: StatementWithDetails[],
   onSubjects: StatementWithAuthor[],
   self: StatementAuthor,
+  compatible: Compatibility,
 ): AuthorAnalysis {
   return {
-    company: company(own, onSubjects, self),
+    company: company(own, onSubjects, self, compatible),
     standing: standing(own, onSubjects, self),
-    changes: positionChanges(own),
+    changes: positionChanges(own, compatible),
     profile: expressionProfile(own),
   }
 }

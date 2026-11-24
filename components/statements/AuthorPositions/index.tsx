@@ -11,6 +11,8 @@ interface AuthorPositionsProps {
   subjectSlug: string
   /** Les positions de l'auteur sur le sujet, avec ses prises de position */
   positions: PositionGroup[]
+  /** Celles qu'il tient aujourd'hui : les autres, il les a quittées */
+  held: ReadonlySet<string>
   company: SubjectCompany
   /** Le métier actuel de chaque personnalité, pour la nommer sous son nom */
   roles: Map<string, string>
@@ -26,6 +28,7 @@ interface AuthorPositionsProps {
 export default function AuthorPositions({
   subjectSlug,
   positions,
+  held,
   company,
   roles,
   editHref,
@@ -51,6 +54,7 @@ export default function AuthorPositions({
               key={group.position.id}
               subjectSlug={subjectSlug}
               group={group}
+              left={!held.has(group.position.id)}
               allies={company.alliesByPosition.get(group.position.id) ?? []}
               roles={roles}
               editHref={editHref}

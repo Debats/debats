@@ -24,6 +24,7 @@ import { createSubjectRepository } from '../database/subject-repository-supabase
 import { loadFigureAgreements } from './figure-agreements'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
 import { loadMovedStatements } from './position-changes'
+import { findJudgedPairs } from './position-judgements'
 import { getSubjectPositionsSummary } from './subject-positions-summary'
 
 type Client = SupabaseClient<Database>
@@ -127,16 +128,22 @@ export const loadHomePage = (
           {
             daily: loadDailySubject(supabase, statements, dailyDebate(debates, now)),
             moving: loadMovingDebates(subjects, movingDebates(debates, MOVING_DEBATES)),
+            // Two positions judged compatible are held together: taking the second is no change
+            judged: findJudgedPairs(
+              supabase,
+              movedStatements.map(({ subject }) => subject.id),
+            ),
           },
           unbounded,
         ),
-        Effect.map(({ daily, moving }) => ({
+        Effect.map(({ daily, moving, judged }) => ({
           figures,
           debates,
           daily,
           moving,
           agreements,
           movedStatements,
+          judged,
           toReview,
           latest: feed.entries,
         })),

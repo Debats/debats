@@ -16,6 +16,8 @@ import styles from './AuthorPositions.module.css'
 interface AuthorPositionCardProps {
   subjectSlug: string
   group: PositionGroup
+  /** Il l'a quittée pour une autre : ce n'est plus la sienne */
+  left: boolean
   /** Les autres qui ont pris la même position */
   allies: StatementAuthorRef[]
   /** Le métier actuel de chaque personnalité, pour la nommer sous son nom */
@@ -27,6 +29,7 @@ interface AuthorPositionCardProps {
 export default function AuthorPositionCard({
   subjectSlug,
   group,
+  left,
   allies,
   roles,
   editHref,
@@ -35,7 +38,7 @@ export default function AuthorPositionCard({
 
   return (
     <article className={styles.card}>
-      <p className={styles.kicker}>Sa position</p>
+      <p className={styles.kicker}>{left ? 'Position quittée' : 'Sa position'}</p>
       <h3 className={styles.positionTitle}>
         <Link href={positionHref(subjectSlug, position.slug)} className={styles.positionLink}>
           {position.title}

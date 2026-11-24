@@ -24,6 +24,7 @@ import {
   positionChanges,
   standing,
 } from './author-analyses'
+import { ALL_CONTRADICTORY, compatibilityOf } from '../read-models/position-judgements'
 
 const subjectOf = (title: string) =>
   createSubject({ title, presentation: 'Présentation longue.', problem: 'Problème ?' })
@@ -113,7 +114,7 @@ describe('company', () => {
   ]
 
   it('ranks who shares the most subjects with the author, and who stands apart the most', () => {
-    const result = company(own, onSubjects, self)
+    const result = company(own, onSubjects, self, ALL_CONTRADICTORY)
 
     expect(result.closest.map((c) => [c.author.name, c.agreed, c.disagreed])).toEqual([
       ['Albert Camus', 2, 1],
@@ -131,6 +132,7 @@ describe('company', () => {
       own,
       [...onSubjects, taken(camus, report, { on: '2025-01-01' }), taken(veil, report)],
       self,
+      ALL_CONTRADICTORY,
     )
 
     expect(result.closest).toHaveLength(1)
@@ -138,13 +140,26 @@ describe('company', () => {
   })
 
   it('keeps the given number of each', () => {
-    const result = company(own, onSubjects, self, 1)
+    const result = company(own, onSubjects, self, ALL_CONTRADICTORY, 1)
 
     expect(result.opposed.map((c) => c.author.name)).toEqual(['Simone Weil'])
   })
 
   it('stays empty when nobody else spoke', () => {
-    expect(company(own, mine, self)).toEqual({ closest: [], opposed: [] })
+    expect(company(own, mine, self, ALL_CONTRADICTORY)).toEqual({ closest: [], opposed: [] })
+  })
+
+  it('counts neither with her nor apart who only took positions compatible with hers', () => {
+    // Weil took « Garder 62 ans » and « Sortir »: the first now goes with « Reporter l’âge »
+    const together = compatibilityOf([{ positionIds: [report.id, maintien.id], compatible: true }])
+
+    const result = company(own, onSubjects, self, together)
+
+    expect(result.opposed.map((c) => [c.author.name, c.agreed, c.disagreed])).toEqual([
+      ['Simone Weil', 0, 1],
+      ['Albert Camus', 2, 1],
+    ])
+    expect(result.closest.map((c) => c.author.name)).toEqual(['Albert Camus'])
   })
 })
 
@@ -194,7 +209,7 @@ describe('positionChanges', () => {
       taken(veil, report, { on: '2024-05-01' }),
     ])
 
-    const changes = positionChanges(own)
+    const changes = positionChanges(own, ALL_CONTRADICTORY)
 
     expect(changes.map((c) => c.subject.title)).toEqual(['Les retraites', 'Le nucléaire'])
     expect(changes[1].steps.map((s) => [s.position.title, s.statedAt.toISOString()])).toEqual([
@@ -210,7 +225,7 @@ describe('positionChanges', () => {
       taken(veil, relance, { on: '2022-01-01' }),
     ])
 
-    expect(positionChanges(own)[0].steps.map((s) => s.position.title)).toEqual([
+    expect(positionChanges(own, ALL_CONTRADICTORY)[0].steps.map((s) => s.position.title)).toEqual([
       'Relancer',
       'Sortir',
       'Relancer',
@@ -218,7 +233,29 @@ describe('positionChanges', () => {
   })
 
   it('is empty for an author who never changed', () => {
-    expect(positionChanges(detailed([taken(veil, report), taken(veil, report)]))).toEqual([])
+    expect(
+      positionChanges(detailed([taken(veil, report), taken(veil, report)]), ALL_CONTRADICTORY),
+    ).toEqual([])
+  })
+
+  it('sees no change in a position taken beside one it is compatible with', () => {
+    const own = detailed([
+      taken(veil, relance, { on: '2020-01-01' }),
+      taken(veil, sortie, { on: '2021-01-01' }),
+    ])
+    const together = compatibilityOf([{ positionIds: [relance.id, sortie.id], compatible: true }])
+
+    expect(positionChanges(own, together)).toEqual([])
+    expect(positionChanges(own, ALL_CONTRADICTORY)).toHaveLength(1)
+  })
+
+  it('sees no change in two positions stated the same day', () => {
+    const own = detailed([
+      taken(veil, relance, { on: '2020-01-01' }),
+      taken(veil, sortie, { on: '2020-01-01' }),
+    ])
+
+    expect(positionChanges(own, ALL_CONTRADICTORY)).toEqual([])
   })
 })
 

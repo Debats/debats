@@ -5,6 +5,7 @@ import { pairsToShow } from '../domain/read-models/figure-agreements'
 import { debateLeanings, debateMap, newestDebates } from '../domain/read-models/home-debates'
 import { parseReviewSkip } from '../domain/read-models/home-page'
 import { latestChanges } from '../domain/read-models/position-changes'
+import { compatibilityOf } from '../domain/read-models/position-judgements'
 import { viewerOf } from '../domain/read-models/review'
 import ContentWithSidebar from '../components/layout/ContentWithSidebar'
 import { getAuthenticatedContributor } from './actions/get-authenticated-contributor'
@@ -67,7 +68,9 @@ export default async function HomePage({ searchParams }: PageProps) {
           <DebateLeanings leanings={debateLeanings(home.debates, LEANING_SUBJECTS)} />
           <MovingDebates moving={home.moving} />
           <FigurePairs pairs={pairsToShow(home.agreements, PAIRS)} />
-          <PositionChanges changes={latestChanges(home.movedStatements, CHANGES)} />
+          <PositionChanges
+            changes={latestChanges(home.movedStatements, CHANGES, compatibilityOf(home.judged))}
+          />
         </div>
       </ContentWithSidebar>
       <div className={styles.foot}>

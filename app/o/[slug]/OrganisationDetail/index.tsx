@@ -42,6 +42,8 @@ import {
 } from '../../../../domain/read-models/hrefs'
 import { statementsOnTheme } from '../../../../domain/services/statements-on-theme'
 import { subjectIdsOnTheme } from '../../../../infra/queries/subject-ids-on-theme'
+import { findJudgedPairs } from '../../../../infra/queries/position-judgements'
+import { compatibilityOf } from '../../../../domain/read-models/position-judgements'
 import OrganisationHero from '../OrganisationHero'
 import OrganisationMembers from '../OrganisationMembers'
 import OrganisationCohesion from '../OrganisationCohesion'
@@ -86,13 +88,16 @@ export default async function OrganisationDetail({
   const today = new Date()
   const { current, former } = splitMemberships(memberships, today)
   const groups = groupStatementsBySubject(statements)
+  const subjectIds = groups.map(({ subject }) => subject.id)
   // Only the Analyses tab reads everyone's statements on its subjects
   const onSubjects =
     activeTab === 'analyses'
-      ? await Effect.runPromise(
-          statementRepo.findBySubjectIdsWithAuthors(groups.map(({ subject }) => subject.id)),
-        )
+      ? await Effect.runPromise(statementRepo.findBySubjectIdsWithAuthors(subjectIds))
       : null
+  // Which positions of its subjects go together: what tells a change from two positions held at once
+  const compatible = compatibilityOf(
+    onSubjects ? await Effect.runPromise(findJudgedPairs(supabase, subjectIds)) : [],
+  )
   const canEdit = !!contributor && canPerform(contributor.reputation, 'edit_organisation')
   const canAffiliate = !!contributor && canPerform(contributor.reputation, 'add_membership')
   const canRemove = !!contributor && canPerform(contributor.reputation, 'remove_membership')
@@ -185,7 +190,7 @@ export default async function OrganisationDetail({
           <AuthorAnalyses
             author={organisationRef({ ...organisation, acronym })}
             who="cette organisation"
-            analysis={analyseAuthor(statements, onSubjects, self)}
+            analysis={analyseAuthor(statements, onSubjects, self, compatible)}
           >
             <OrganisationCohesion
               organisationSlug={slug}

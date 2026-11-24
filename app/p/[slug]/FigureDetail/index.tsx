@@ -48,6 +48,8 @@ import {
 } from '../../../../domain/read-models/hrefs'
 import { statementsOnTheme } from '../../../../domain/services/statements-on-theme'
 import { subjectIdsOnTheme } from '../../../../infra/queries/subject-ids-on-theme'
+import { findJudgedPairs } from '../../../../infra/queries/position-judgements'
+import { compatibilityOf } from '../../../../domain/read-models/position-judgements'
 import { groupStatementsBySubject } from '../../../../domain/services/statements-by-subject'
 import FigureAnalyses from '../FigureAnalyses'
 import FigureEngagements from '../FigureEngagements'
@@ -111,6 +113,10 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
     activeTab === 'analyses'
       ? await Effect.runPromise(statementRepo.findBySubjectIdsWithAuthors(subjectIds))
       : null
+  // Which positions of her subjects go together: what tells a change from two positions held at once
+  const compatible = compatibilityOf(
+    onSubjects ? await Effect.runPromise(findJudgedPairs(supabase, subjectIds)) : [],
+  )
   // Un seul jour pour toute la page : ce qui est en cours et ce que les libellés en disent
   const today = new Date()
   const affiliations = figureAffiliations(memberships, today)
@@ -204,7 +210,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
           <AuthorAnalyses
             author={publicFigureRef(figure)}
             who="cette personnalité"
-            analysis={analyseAuthor(statements, onSubjects, self)}
+            analysis={analyseAuthor(statements, onSubjects, self, compatible)}
           >
             {affiliations.current.length > 0 && (
               <FigureOrganisationsLine

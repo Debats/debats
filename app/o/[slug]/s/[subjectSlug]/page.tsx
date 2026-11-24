@@ -20,6 +20,9 @@ import {
   positionShares,
 } from '../../../../../domain/services/author-on-subject'
 import { loadOrganisationSubjectPage } from '../../../../../infra/queries/author-subject-page'
+import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
+import { authorCourse } from '../../../../../domain/read-models/author-course'
+import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { reviewOf } from '../../../../review-of'
 import ReviewScope from '../../../../../components/review/ReviewScope'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
@@ -44,6 +47,7 @@ import OrganisationRailLines from '../../../../../components/statements/AuthorRa
 import ContributeCard from '../../../../../components/statements/ContributeCard'
 import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
 import PositionAlignment from '../../../../../components/statements/PositionAlignment'
+import PositionCourse from '../../../../../components/statements/PositionCourse'
 import SubjectDebate from '../../../../../components/statements/SubjectDebate'
 import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
 import SubjectSynthesis from '../../../../../components/statements/SubjectSynthesis'
@@ -92,14 +96,17 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
 
   if (!organisation) notFound()
 
-  const [organisationStatements, contributor] = await Promise.all([
+  const [organisationStatements, judged, contributor] = await Promise.all([
     Effect.runPromise(statementRepo.findByOrganisationAndSubject(organisation.id, subject.id)),
+    Effect.runPromise(findJudgedPairs(supabase, [subject.id])),
     getAuthenticatedContributor(),
   ])
 
   const author = toAuthorRef(organisation)
   const positions = groupStatementsByPosition(organisationStatements)
-  const hers = new Set(positions.map(({ position }) => position.id))
+  // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
+  const course = authorCourse(organisationStatements, compatibilityOf(judged))
+  const hers = course.held
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(
@@ -179,15 +186,20 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
           authorName={author.name}
           subjectTitle={subject.title}
           statements={statements}
-          positionTitles={positions.map(({ position }) => position.title)}
+          positionTitles={positions
+            .filter(({ position }) => hers.has(position.id))
+            .map(({ position }) => position.title)}
           allies={page.alignment.everyone.withAuthor}
           undefended={countUndefended(debate)}
           latest={latestStatedAt(positions)}
         />
 
+        {course.summary && <PositionCourse summary={course.summary} />}
+
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
+          held={hers}
           company={company}
           roles={page.roles}
           editHref={canEdit ? statementEditHref : undefined}

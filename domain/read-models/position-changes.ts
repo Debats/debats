@@ -1,4 +1,5 @@
-import { dayKey } from '../value-objects/day'
+import { courseOf } from '../services/position-course'
+import { Compatibility } from './position-judgements'
 
 /** One statement of a public figure, as the search for changes reads it */
 export interface StatedPosition {
@@ -25,30 +26,31 @@ export interface PositionChange {
   to: ChangeSide
 }
 
-const byStatedThenRecorded = (a: StatedPosition, b: StatedPosition) =>
-  a.statedAt.getTime() - b.statedAt.getTime() || a.createdAt.getTime() - b.createdAt.getTime()
-
 /**
- * The last move of one figure on one subject, if she made one. Two positions
- * stated the same day are held together, not one after the other: the order
- * they were recorded in says nothing of the order they were said in, so no
- * change is read from it.
+ * The last move of one figure on one subject, if she made one. What a move
+ * is — a position left for one it contradicts, never two positions held
+ * together — is the course's to say.
  */
-function lastChange(statements: StatedPosition[]): PositionChange | null {
-  const ordered = [...statements].sort(byStatedThenRecorded)
-  const last = ordered.at(-1)
+function lastChange(
+  statements: StatedPosition[],
+  compatible: Compatibility,
+): PositionChange | null {
+  const { moves } = courseOf(
+    statements.map(({ position, statedAt, createdAt }) => ({
+      position,
+      statedAt,
+      recordedAt: createdAt,
+    })),
+    compatible,
+  )
+  const last = moves.at(-1)
   if (!last) return null
-  // Where the position she holds today begins: the statements before it are the ones she left
-  let arrival = ordered.length - 1
-  while (arrival > 0 && ordered[arrival - 1].position.id === last.position.id) arrival--
-  const before = ordered[arrival - 1]
-  const first = ordered[arrival]
-  if (!before || dayKey(before.statedAt) === dayKey(first.statedAt)) return null
+  const [{ figure, subject }] = statements
   return {
-    figure: last.figure,
-    subject: last.subject,
-    from: { title: before.position.title, statedAt: before.statedAt },
-    to: { title: first.position.title, statedAt: first.statedAt },
+    figure,
+    subject,
+    from: { title: last.from.position.title, statedAt: last.from.lastStatedAt },
+    to: { title: last.to.position.title, statedAt: last.to.statedAt },
   }
 }
 
@@ -60,6 +62,7 @@ function lastChange(statements: StatedPosition[]): PositionChange | null {
 export function latestChanges(
   statements: readonly StatedPosition[],
   limit: number,
+  compatible: Compatibility,
 ): PositionChange[] {
   const groups = new Map<string, StatedPosition[]>()
   for (const entry of statements) {
@@ -67,7 +70,7 @@ export function latestChanges(
     groups.set(key, [...(groups.get(key) ?? []), entry])
   }
   return Array.from(groups.values())
-    .map(lastChange)
+    .map((group) => lastChange(group, compatible))
     .filter((change) => change !== null)
     .sort((a, b) => b.to.statedAt.getTime() - a.to.statedAt.getTime())
     .slice(0, limit)

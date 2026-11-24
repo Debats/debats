@@ -5,6 +5,7 @@ import {
 import { FigureAgreement } from './figure-agreements'
 import { Debate, SiteFigures } from './home-debates'
 import { StatedPosition } from './position-changes'
+import { JudgedPair } from './position-judgements'
 import { StatementAuthorRef } from './statement-author'
 import { PositionSummary } from './subject-positions-summary'
 
@@ -62,6 +63,8 @@ export interface HomePage {
   agreements: FigureAgreement[]
   /** The statements of the figures who took several positions on a subject: where changes are read */
   movedStatements: StatedPosition[]
+  /** What was judged between the positions of those statements: compatible ones make no change */
+  judged: JudgedPair[]
   /** A statement nobody reviewed yet, offered to whoever looks; null when all were */
   toReview: StatementWithAuthorAndSubject | null
   /** The last statements of the whole site, newest stated first */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { latestChanges, StatedPosition } from './position-changes'
+import { ALL_CONTRADICTORY, compatibilityOf } from './position-judgements'
 
 const figure = (name: string) => ({ id: name, name, slug: name.toLowerCase() })
 const subject = (title: string) => ({ id: title, title, slug: title.toLowerCase() })
@@ -30,6 +31,7 @@ describe('latestChanges', () => {
         stated('Ada', 'Retraite', '65 ans', '2022-03-17'),
       ],
       5,
+      ALL_CONTRADICTORY,
     )
 
     expect(others).toEqual([])
@@ -46,6 +48,7 @@ describe('latestChanges', () => {
         stated('Ada', 'Retraite', '62 ans', '2017-04-01'),
       ],
       5,
+      ALL_CONTRADICTORY,
     )
 
     expect([change.from.title, change.to.title]).toEqual(['62 ans', '65 ans'])
@@ -58,6 +61,7 @@ describe('latestChanges', () => {
         stated('Ada', 'Lycées', 'Canicules', '2026-10-12'),
       ],
       5,
+      ALL_CONTRADICTORY,
     )
 
     expect(changes).toEqual([])
@@ -70,6 +74,7 @@ describe('latestChanges', () => {
         stated('Ada', 'Retraite', '62 ans', '2019-08-26'),
       ],
       5,
+      ALL_CONTRADICTORY,
     )
 
     expect(changes).toEqual([])
@@ -83,6 +88,7 @@ describe('latestChanges', () => {
         stated('Ada', 'Retraite', '62 ans', '2025-01-10'),
       ],
       5,
+      ALL_CONTRADICTORY,
     )
 
     expect([change.from.title, change.to.title]).toEqual(['65 ans', '62 ans'])
@@ -96,6 +102,7 @@ describe('latestChanges', () => {
         stated('Ada', 'Nucléaire', 'Sortie', '2023-01-01'),
       ],
       5,
+      ALL_CONTRADICTORY,
     )
 
     expect(changes).toEqual([])
@@ -112,8 +119,22 @@ describe('latestChanges', () => {
         stated('Cleo', 'SMIC', 'Hausse', '2011-01-01'),
       ],
       2,
+      ALL_CONTRADICTORY,
     )
 
     expect(changes.map((change) => change.figure.name)).toEqual(['Bob', 'Ada'])
+  })
+
+  it('sees no change in a figure who takes a position compatible with the one she held', () => {
+    const statements = [
+      stated('Ada', 'Gaza', 'Cessez-le-feu', '2024-05-31'),
+      stated('Ada', 'Gaza', 'Génocide', '2026-02-06'),
+    ]
+    const together = compatibilityOf([
+      { positionIds: ['Gaza-Cessez-le-feu', 'Gaza-Génocide'], compatible: true },
+    ])
+
+    expect(latestChanges(statements, 5, together)).toEqual([])
+    expect(latestChanges(statements, 5, ALL_CONTRADICTORY)).toHaveLength(1)
   })
 })

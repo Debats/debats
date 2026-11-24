@@ -20,6 +20,9 @@ import {
 } from '../../../../../domain/services/author-on-subject'
 import { elided } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
+import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
+import { authorCourse } from '../../../../../domain/read-models/author-course'
+import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
 import { subjectAt } from '../../../../s/merged-subject'
@@ -40,6 +43,7 @@ import FigureRailLines from '../../../../../components/statements/AuthorRailCard
 import ContributeCard from '../../../../../components/statements/ContributeCard'
 import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
 import PositionAlignment from '../../../../../components/statements/PositionAlignment'
+import PositionCourse from '../../../../../components/statements/PositionCourse'
 import SubjectDebate from '../../../../../components/statements/SubjectDebate'
 import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
 import SubjectSynthesis from '../../../../../components/statements/SubjectSynthesis'
@@ -85,14 +89,17 @@ export default async function FigureSubjectPage({ params }: PageProps) {
 
   if (!figure) notFound()
 
-  const [figureStatements, contributor] = await Promise.all([
+  const [figureStatements, judged, contributor] = await Promise.all([
     Effect.runPromise(statementRepo.findByPublicFigureAndSubject(figure.id, subject.id)),
+    Effect.runPromise(findJudgedPairs(supabase, [subject.id])),
     getAuthenticatedContributor(),
   ])
 
   const author = publicFigureRef(figure)
   const positions = groupStatementsByPosition(figureStatements)
-  const hers = new Set(positions.map(({ position }) => position.id))
+  // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
+  const course = authorCourse(figureStatements, compatibilityOf(judged))
+  const hers = course.held
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(
@@ -158,15 +165,20 @@ export default async function FigureSubjectPage({ params }: PageProps) {
           authorName={author.name}
           subjectTitle={subject.title}
           statements={statements}
-          positionTitles={positions.map(({ position }) => position.title)}
+          positionTitles={positions
+            .filter(({ position }) => hers.has(position.id))
+            .map(({ position }) => position.title)}
           allies={page.alignment.everyone.withAuthor}
           undefended={countUndefended(debate)}
           latest={latestStatedAt(positions)}
         />
 
+        {course.summary && <PositionCourse summary={course.summary} />}
+
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
+          held={hers}
           company={company}
           roles={page.roles}
           editHref={
