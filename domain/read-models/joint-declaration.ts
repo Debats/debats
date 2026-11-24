@@ -23,8 +23,27 @@ export interface JointDeclarationPage {
   declaration: JointDeclaration
   /** The positions the text takes, in the order they were recorded */
   stances: TakenStance[]
-  /** Who signed it, in the order the signatures were recorded */
+  /** Who signed it, the most documented first */
   signatories: Signatory[]
+}
+
+/** On how many subjects the site documents an author, by the author's id */
+export type DocumentedSubjects = ReadonlyMap<string, number>
+
+/**
+ * The signatories of a text, from the one the site documents on the most
+ * subjects to the one it documents on the fewest, personalities and
+ * organisations together; two documented alike read in the order of their
+ * names. A signatory the count does not name is documented on none.
+ */
+export function mostDocumentedFirst(
+  signatories: readonly StatementAuthorRef[],
+  documented: DocumentedSubjects,
+): StatementAuthorRef[] {
+  const subjectsOf = (author: StatementAuthorRef) => documented.get(author.id) ?? 0
+  return [...signatories].sort(
+    (a, b) => subjectsOf(b) - subjectsOf(a) || a.name.localeCompare(b.name, 'fr'),
+  )
 }
 
 /** What signing a joint declaration entails, said before the signature is added */
@@ -54,6 +73,7 @@ export interface JointDeclarationSummary {
   presentation?: string
   declaredAt: Date
   subjects: { title: string; slug: string }[]
+  /** Who signed it, the most documented first */
   signatories: StatementAuthorRef[]
 }
 

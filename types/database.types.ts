@@ -709,7 +709,6 @@ export type Database = {
           joint_declaration_id: string
           organisation_id: string | null
           public_figure_id: string | null
-          rank: number
         }
         Insert: {
           created_at: string
@@ -718,7 +717,6 @@ export type Database = {
           joint_declaration_id: string
           organisation_id?: string | null
           public_figure_id?: string | null
-          rank: number
         }
         Update: {
           created_at?: string
@@ -727,7 +725,6 @@ export type Database = {
           joint_declaration_id?: string
           organisation_id?: string | null
           public_figure_id?: string | null
-          rank?: number
         }
         Relationships: [
           {

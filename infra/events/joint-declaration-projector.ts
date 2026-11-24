@@ -130,15 +130,10 @@ const signatoryColumns = (author: StatementAuthor) => ({
 })
 
 async function addSignatory(tx: PrismaTransaction, stored: StoredEvent, author: StatementAuthor) {
-  const last = await tx.joint_declaration_signatories.aggregate({
-    where: { joint_declaration_id: stored.streamId },
-    _max: { rank: true },
-  })
   await tx.joint_declaration_signatories.create({
     data: {
       joint_declaration_id: stored.streamId,
       ...signatoryColumns(author),
-      rank: (last._max.rank ?? 0) + 1,
       created_by: actorOf(stored, 'a signatory of a joint declaration'),
       created_at: stored.occurredAt,
     },

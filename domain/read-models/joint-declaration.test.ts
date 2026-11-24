@@ -3,6 +3,7 @@ import {
   declarationsByYear,
   engagedSubjectsCount,
   JointDeclarationSummary,
+  mostDocumentedFirst,
   signatoriesLabel,
   signaturePreviewOf,
   signaturesCount,
@@ -29,6 +30,52 @@ const summary = (
     slug: `signataire-${index}`,
     acronym: null,
   })),
+})
+
+describe('mostDocumentedFirst', () => {
+  const signatory = (name: string, kind: 'public_figure' | 'organisation' = 'public_figure') => ({
+    kind,
+    id: name,
+    name,
+    slug: name.toLowerCase(),
+    acronym: null,
+  })
+  const names = (documented: Record<string, number>, ...signed: string[]) =>
+    mostDocumentedFirst(
+      signed.map((name) => signatory(name)),
+      new Map(Object.entries(documented)),
+    ).map((author) => author.name)
+
+  it('puts first who the site documents on the most subjects', () => {
+    expect(names({ Alma: 2, Bruno: 9, Chloé: 5 }, 'Alma', 'Bruno', 'Chloé')).toEqual([
+      'Bruno',
+      'Chloé',
+      'Alma',
+    ])
+  })
+
+  it('reads two signatories documented alike in the order of their names, as French sorts them', () => {
+    expect(names({ Zoé: 3, Émile: 3, Alma: 3 }, 'Zoé', 'Émile', 'Alma')).toEqual([
+      'Alma',
+      'Émile',
+      'Zoé',
+    ])
+  })
+
+  it('puts last a signatory the count does not name', () => {
+    expect(names({ Bruno: 1 }, 'Alma', 'Bruno')).toEqual(['Bruno', 'Alma'])
+  })
+
+  it('ranks personalities and organisations together', () => {
+    const ordered = mostDocumentedFirst(
+      [signatory('Alma'), signatory('Attac', 'organisation')],
+      new Map([
+        ['Alma', 1],
+        ['Attac', 4],
+      ]),
+    )
+    expect(ordered.map((author) => author.kind)).toEqual(['organisation', 'public_figure'])
+  })
 })
 
 describe('signatoriesLabel', () => {

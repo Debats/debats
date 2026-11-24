@@ -3,8 +3,10 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../types/database.types'
 import { rolesByFigure, roleOf } from '../../domain/read-models/author-role'
 import {
+  DocumentedSubjects,
   JointDeclarationPage,
   JointDeclarationSummary,
+  mostDocumentedFirst,
   TakenStance,
 } from '../../domain/read-models/joint-declaration'
 import {
@@ -21,6 +23,7 @@ import {
 import { DatabaseError } from '../../domain/repositories/errors'
 import { StatementContentColumns, toStatementContent } from '../database/statement-content-columns'
 import { databaseError } from '../database/database-error'
+import { fetchInChunks } from '../database/in-chunks'
 import {
   JointDeclarationRow,
   mapJointDeclarationRow,
@@ -29,29 +32,68 @@ import { createOccupationRepository } from '../database/occupation-repository-su
 
 /** A signatory row: exactly one of the two author tables is joined */
 interface SignatoryJoin {
-  rank: number
   public_figures: { id: string; name: string; slug: string } | null
   organisations: { id: string; name: string; slug: string; acronym: string | null } | null
 }
 
 const SIGNATORIES_EMBED = `
   joint_declaration_signatories (
-    rank,
     public_figures (id, name, slug),
     organisations (id, name, slug, acronym)
   )`
 
-/** Who signed, in the order the signatures were recorded */
+/** Who signed, in no order: `mostDocumentedFirst` gives them theirs */
 function signatoriesOf(rows: SignatoryJoin[]): StatementAuthorRef[] {
-  return [...rows]
-    .sort((a, b) => a.rank - b.rank)
-    .flatMap((row) =>
-      row.organisations
-        ? [organisationRef(row.organisations)]
-        : row.public_figures
-          ? [publicFigureRef(row.public_figures)]
-          : [],
-    )
+  return rows.flatMap((row) =>
+    row.organisations
+      ? [organisationRef(row.organisations)]
+      : row.public_figures
+        ? [publicFigureRef(row.public_figures)]
+        : [],
+  )
+}
+
+const SUMMARY_VIEW = {
+  public_figure: 'v_public_figure_activity_summary',
+  organisation: 'v_organisation_summary',
+} as const
+
+/** On how many subjects the site documents each author of one kind, read from its summary view */
+async function subjectsCounts(
+  supabase: SupabaseClient<Database>,
+  kind: StatementAuthorRef['kind'],
+  authors: readonly StatementAuthorRef[],
+): Promise<[string, number][]> {
+  // A signatory of several texts is asked for once
+  const ids = Array.from(
+    new Set(authors.filter((author) => author.kind === kind).map(({ id }) => id)),
+  )
+  const rows = await fetchInChunks(ids, async (chunk) => {
+    const { data, error } = await supabase
+      .from(SUMMARY_VIEW[kind])
+      .select('id, subjects_count')
+      .in('id', chunk)
+    if (error) throw error
+    return data
+  })
+  return rows.flatMap((row) => (row.id ? [[row.id, row.subjects_count ?? 0]] : []))
+}
+
+/** On how many subjects the site documents each of these authors */
+function loadDocumentedSubjects(
+  supabase: SupabaseClient<Database>,
+  authors: readonly StatementAuthorRef[],
+): Effect.Effect<DocumentedSubjects, DatabaseError> {
+  return Effect.tryPromise({
+    try: async () => {
+      const [figures, organisations] = await Promise.all([
+        subjectsCounts(supabase, 'public_figure', authors),
+        subjectsCounts(supabase, 'organisation', authors),
+      ])
+      return new Map([...figures, ...organisations])
+    },
+    catch: (error) => databaseError('Failed to count the subjects of signatories', error),
+  })
 }
 
 const PAGE_QUERY = `
@@ -121,16 +163,25 @@ export function loadJointDeclarationPage(
 
   return Effect.flatMap(text, (row) => {
     if (!row) return Effect.succeed(null)
-    const signatories = signatoriesOf(row.joint_declaration_signatories)
-    const figureIds = signatories.filter((s) => s.kind === 'public_figure').map((s) => s.id)
+    const signed = signatoriesOf(row.joint_declaration_signatories)
+    const figureIds = signed.filter((s) => s.kind === 'public_figure').map((s) => s.id)
     return Effect.map(
-      createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(figureIds),
-      (held): JointDeclarationPage => {
+      Effect.all(
+        [
+          loadDocumentedSubjects(supabase, signed),
+          createOccupationRepository(supabase).findCurrentHeldByPublicFigureIds(figureIds),
+        ],
+        { concurrency: 'unbounded' },
+      ),
+      ([documented, held]): JointDeclarationPage => {
         const roles = rolesByFigure(held)
         return {
           declaration: mapJointDeclarationRow(row),
           stances: stancesOf(row.joint_declaration_positions),
-          signatories: signatories.map((author) => ({ author, role: roleOf(author, roles) })),
+          signatories: mostDocumentedFirst(signed, documented).map((author) => ({
+            author,
+            role: roleOf(author, roles),
+          })),
         }
       },
     )
@@ -159,7 +210,7 @@ interface IndexRow {
 export function loadJointDeclarationIndex(
   supabase: SupabaseClient<Database>,
 ): Effect.Effect<JointDeclarationSummary[], DatabaseError> {
-  return Effect.tryPromise({
+  const texts = Effect.tryPromise({
     try: async () => {
       const { data, error } = await supabase
         .from('joint_declarations')
@@ -167,28 +218,42 @@ export function loadJointDeclarationIndex(
         .order('declared_at', { ascending: false })
 
       if (error) throw error
-      return (data as IndexRow[]).map(
-        (row): JointDeclarationSummary => ({
-          id: row.id,
-          title: row.title,
-          slug: row.slug,
-          ...(row.presentation ? { presentation: row.presentation } : {}),
-          declaredAt: new Date(row.declared_at),
-          subjects: [...row.joint_declaration_positions]
-            .sort((a, b) => a.rank - b.rank)
-            .filter((taken) => !taken.subjects.deleted_at)
-            .map((taken) => ({ title: taken.subjects.title, slug: taken.subjects.slug }))
-            // A text may take several positions on a subject: the subject is named once
-            .filter(
-              (subject, index, subjects) =>
-                subjects.findIndex((other) => other.slug === subject.slug) === index,
-            ),
-          signatories: signatoriesOf(row.joint_declaration_signatories),
-        }),
-      )
+      return data as IndexRow[]
     },
     catch: (error) => databaseError('Failed to fetch the joint declarations', error),
   })
+
+  return Effect.flatMap(texts, (rows) =>
+    Effect.map(
+      loadDocumentedSubjects(
+        supabase,
+        rows.flatMap((row) => signatoriesOf(row.joint_declaration_signatories)),
+      ),
+      (documented) =>
+        rows.map(
+          (row): JointDeclarationSummary => ({
+            id: row.id,
+            title: row.title,
+            slug: row.slug,
+            ...(row.presentation ? { presentation: row.presentation } : {}),
+            declaredAt: new Date(row.declared_at),
+            subjects: [...row.joint_declaration_positions]
+              .sort((a, b) => a.rank - b.rank)
+              .filter((taken) => !taken.subjects.deleted_at)
+              .map((taken) => ({ title: taken.subjects.title, slug: taken.subjects.slug }))
+              // A text may take several positions on a subject: the subject is named once
+              .filter(
+                (subject, index, subjects) =>
+                  subjects.findIndex((other) => other.slug === subject.slug) === index,
+              ),
+            signatories: mostDocumentedFirst(
+              signatoriesOf(row.joint_declaration_signatories),
+              documented,
+            ),
+          }),
+        ),
+    ),
+  )
 }
 
 const AUTHORED_COLUMNS = `

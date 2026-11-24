@@ -1015,7 +1015,6 @@ model joint_declaration_signatories {
   joint_declaration_id String             @db.Uuid
   public_figure_id     String?            @db.Uuid
   organisation_id      String?            @db.Uuid
-  rank                 Int
   created_by           String             @db.Uuid
   created_at           DateTime           @db.Timestamptz(6)
   id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

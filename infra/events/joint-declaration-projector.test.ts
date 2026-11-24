@@ -109,7 +109,7 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
     )
   })
 
-  it('writes the positions the text takes and who signed it, in the order they came', async () => {
+  it('writes the positions the text takes and who signed it', async () => {
     await append(1, [
       positionTaken(taken),
       signatoryAdded(publicFigureAuthor(figureId)),
@@ -130,12 +130,15 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
     ])
     const signatories = await prisma().joint_declaration_signatories.findMany({
       where: { joint_declaration_id: declarationId },
-      orderBy: { rank: 'asc' },
+      select: { public_figure_id: true, organisation_id: true, created_by: true },
     })
-    expect(signatories).toMatchObject([
-      { public_figure_id: figureId, organisation_id: null, rank: 1 },
-      { public_figure_id: null, organisation_id: organisationId, rank: 2 },
-    ])
+    expect(signatories).toHaveLength(2)
+    expect(signatories).toEqual(
+      expect.arrayContaining([
+        { public_figure_id: figureId, organisation_id: null, created_by: actorId },
+        { public_figure_id: null, organisation_id: organisationId, created_by: actorId },
+      ]),
+    )
   })
 
   it('follows a position merged into another, then lets go of a subject that leaves the site', async () => {
@@ -179,27 +182,28 @@ describe.skipIf(!hasDatabase)('joint declaration projector', () => {
     await append(9, [positionTaken(taken)])
   })
 
-  it('lets go of a signatory withdrawn, and ranks who signs next after the last, never beside them', async () => {
+  it('lets go of a signatory withdrawn, and takes them back when they sign again', async () => {
     await append(10, [signatoryWithdrawn(publicFigureAuthor(figureId))])
     expect(
       await prisma().joint_declaration_signatories.findMany({
         where: { joint_declaration_id: declarationId },
-        select: { public_figure_id: true, organisation_id: true, rank: true },
+        select: { public_figure_id: true, organisation_id: true },
       }),
-    ).toEqual([{ public_figure_id: null, organisation_id: organisationId, rank: 2 }])
+    ).toEqual([{ public_figure_id: null, organisation_id: organisationId }])
 
     // Found to have signed after all
     await append(11, [signatoryAdded(publicFigureAuthor(figureId))])
-    expect(
-      await prisma().joint_declaration_signatories.findMany({
-        where: { joint_declaration_id: declarationId },
-        select: { public_figure_id: true, rank: true },
-        orderBy: { rank: 'asc' },
-      }),
-    ).toEqual([
-      { public_figure_id: null, rank: 2 },
-      { public_figure_id: figureId, rank: 3 },
-    ])
+    const signatories = await prisma().joint_declaration_signatories.findMany({
+      where: { joint_declaration_id: declarationId },
+      select: { public_figure_id: true, organisation_id: true },
+    })
+    expect(signatories).toHaveLength(2)
+    expect(signatories).toEqual(
+      expect.arrayContaining([
+        { public_figure_id: null, organisation_id: organisationId },
+        { public_figure_id: figureId, organisation_id: null },
+      ]),
+    )
   })
 
   it('names the joint declaration on the statement a signature makes', async () => {

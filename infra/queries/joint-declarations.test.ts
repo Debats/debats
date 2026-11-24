@@ -59,10 +59,27 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
       where: { deleted_at: null, subjects: { deleted_at: null } },
       select: { id: true, subject_id: true, title: true },
     })
-    figure = await prisma().public_figures.findFirstOrThrow({ select: { id: true, name: true } })
-    organisation = await prisma().organisations.findFirstOrThrow({
-      select: { id: true, name: true },
-    })
+    // The signatories are chosen so that only the count of subjects can put the figure first: she is
+    // the most documented of the site, and the organisation, documented on nothing, bears a name
+    // that reads before hers
+    const documented = await supabase
+      .from('v_public_figure_activity_summary')
+      .select('id, name')
+      .gt('subjects_count', 1)
+      .order('subjects_count', { ascending: false })
+      .limit(1)
+      .single()
+    if (documented.error) throw documented.error
+    figure = { id: documented.data.id!, name: documented.data.name! }
+    const undocumented = await supabase
+      .from('v_organisation_summary')
+      .select('id, name')
+      .eq('subjects_count', 0)
+      .lt('name', figure.name)
+      .limit(1)
+      .single()
+    if (undocumented.error) throw undocumented.error
+    organisation = { id: undocumented.data.id!, name: undocumented.data.name! }
     const actor = await prisma().contributors.findFirstOrThrow({ select: { id: true } })
     await Effect.runPromise(
       runUnitOfWork((journal) =>
@@ -198,10 +215,13 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     const held = await Effect.runPromise(
       createJointDeclarationRepository(supabase).findHeld(declarationId),
     )
-    expect(held).toEqual({
-      positions: [{ subjectId: position.subject_id, positionId: position.id, quote }],
-      signatories: [publicFigureAuthor(figure.id), organisationAuthor(organisation.id)],
-    })
+    expect(held.positions).toEqual([
+      { subjectId: position.subject_id, positionId: position.id, quote },
+    ])
+    expect(held.signatories).toHaveLength(2)
+    expect(held.signatories).toEqual(
+      expect.arrayContaining([publicFigureAuthor(figure.id), organisationAuthor(organisation.id)]),
+    )
 
     const statements = createStatementRepository(supabase)
     expect(
@@ -338,7 +358,10 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     expect(feed).toEqual({ entries: [], total: 0 })
   })
 
-  it('reads the page of a text: what it takes position on, and who signed it, in order', async () => {
+  it('reads the page of a text: what it takes position on, and who signed it, the most documented first', async () => {
+    // Without the counts, the names alone would put the organisation first
+    expect(organisation.name.localeCompare(figure.name, 'fr')).toBeLessThan(0)
+
     const page = await Effect.runPromise(loadJointDeclarationPage(supabase, slug))
 
     expect(page?.declaration).toMatchObject({

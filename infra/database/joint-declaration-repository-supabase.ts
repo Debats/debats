@@ -125,9 +125,8 @@ export function createJointDeclarationRepository(
               .order('rank'),
             supabase
               .from('joint_declaration_signatories')
-              .select('public_figure_id, organisation_id, rank')
-              .eq('joint_declaration_id', declarationId)
-              .order('rank'),
+              .select('public_figure_id, organisation_id')
+              .eq('joint_declaration_id', declarationId),
           ])
           if (positions.error) throw positions.error
           if (signatories.error) throw signatories.error
