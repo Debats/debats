@@ -25,6 +25,8 @@ export default function HistoryRow({ subjectSlug, lanes, row }: HistoryRowProps)
     jointDeclaration: statement.jointDeclaration,
   })
 
+  const label = row.event && historyEventLabel(row.event)
+
   return (
     <li className={styles.row}>
       <time className={styles.date} dateTime={dayKey(statement.statedAt)}>
@@ -39,7 +41,7 @@ export default function HistoryRow({ subjectSlug, lanes, row }: HistoryRowProps)
           >
             {position.title}
           </Link>
-          {row.event && <span className={styles.event}>{historyEventLabel(row.event)}</span>}
+          {label && <span className={styles.event}>{label}</span>}
         </p>
         <p className={styles.source}>{provenance.name}</p>
       </div>

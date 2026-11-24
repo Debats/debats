@@ -185,10 +185,8 @@ describe('positionHistory', () => {
 describe('historyEventLabel', () => {
   const titled = (...titles: string[]) => titles.map((title) => ({ id: title, title }))
 
-  it('names the position she left', () => {
-    expect(historyEventLabel({ kind: 'leaves', positions: titled('Maintien à 62 ans') })).toBe(
-      'quitte « Maintien à 62 ans »',
-    )
+  it('says nothing of a position she left: the lanes show it', () => {
+    expect(historyEventLabel({ kind: 'leaves', positions: titled('Maintien à 62 ans') })).toBeNull()
   })
 
   it('names the position she holds with the one taken', () => {
@@ -198,8 +196,8 @@ describe('historyEventLabel', () => {
   })
 
   it('names every position when there are several', () => {
-    expect(historyEventLabel({ kind: 'leaves', positions: titled('A', 'B', 'C') })).toBe(
-      'quitte « A », « B » et « C »',
+    expect(historyEventLabel({ kind: 'joins', positions: titled('A', 'B', 'C') })).toBe(
+      'avec « A », « B » et « C »',
     )
   })
 })

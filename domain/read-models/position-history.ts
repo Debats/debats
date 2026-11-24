@@ -155,8 +155,12 @@ const quoted = (titles: string[]) => titles.map((title) => `« ${title} »`)
 const listed = (items: string[]) =>
   items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} et ${items.at(-1)}`
 
-/** What the row says of its event: « quitte « Maintien à 62 ans » », « avec « Appel au cessez-le-feu » » */
-export function historyEventLabel(event: HistoryEvent<{ title: string }>): string {
-  const verb = event.kind === 'leaves' ? 'quitte' : 'avec'
-  return `${verb} ${listed(quoted(event.positions.map((position) => position.title)))}`
+/**
+ * What the row says of its event in words: « avec « Appel au cessez-le-feu » »
+ * beside a position she holds with others, and nothing of a position she
+ * left — the lane that ends and curves away says it.
+ */
+export function historyEventLabel(event: HistoryEvent<{ title: string }>): string | null {
+  if (event.kind === 'leaves') return null
+  return `avec ${listed(quoted(event.positions.map((position) => position.title)))}`
 }
