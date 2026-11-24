@@ -35,6 +35,21 @@ describe('positionHistory', () => {
     expect(positionHistory([stated('62', '2017-03-02')], ALL_CONTRADICTORY)).toBeNull()
   })
 
+  it('has nothing to tell of an author who only restates one position', () => {
+    expect(
+      positionHistory([stated('62', '2017-03-02'), stated('62', '2019-04-25')], ALL_CONTRADICTORY),
+    ).toBeNull()
+  })
+
+  it('has nothing to tell of positions all taken the same day', () => {
+    expect(
+      positionHistory(
+        [stated('dotations', '2026-10-12'), stated('canicules', '2026-10-12')],
+        ALL_CONTRADICTORY,
+      ),
+    ).toBeNull()
+  })
+
   it('reads from the most recent statement to the oldest', () => {
     const history = positionHistory(
       [stated('62', '2019-04-25'), stated('65', '2022-03-17'), stated('62', '2017-03-02')],
@@ -44,20 +59,6 @@ describe('positionHistory', () => {
     expect(history.rows.map((row) => row.entry.statement.statedAt.getUTCFullYear())).toEqual([
       2022, 2019, 2017,
     ])
-  })
-
-  it('keeps an author who restates her position in one lane, held to this day', () => {
-    const history = positionHistory(
-      [stated('62', '2017-03-02'), stated('62', '2019-04-25')],
-      ALL_CONTRADICTORY,
-    )!
-
-    expect(history.lanes).toBe(1)
-    expect(drawn(history)).toEqual([
-      { position: '62', lane: 0, tone: 'held', restated: true, crossing: [], curvesFrom: [] },
-      { position: '62', lane: 0, tone: 'held', restated: false, crossing: [], curvesFrom: [] },
-    ])
-    expect(events(history)).toEqual([null, null])
   })
 
   it('jumps from the lane of the position left, which ends there, to the one taken', () => {

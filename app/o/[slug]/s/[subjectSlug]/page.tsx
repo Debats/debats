@@ -196,6 +196,8 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
           latest={latestStatedAt(positions)}
         />
 
+        {history && <PositionHistory subjectSlug={subjectSlug} history={history} />}
+
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
@@ -204,8 +206,6 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
           roles={page.roles}
           editHref={canEdit ? statementEditHref : undefined}
         />
-
-        {history && <PositionHistory subjectSlug={subjectSlug} history={history} />}
 
         {positions.length > 0 && (
           <PositionAlignment

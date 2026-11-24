@@ -1,4 +1,5 @@
 import { courseOf, HeldPosition, lastStated, Step } from '../services/position-course'
+import { dayKey } from '../value-objects/day'
 import { Compatibility } from './position-judgements'
 
 /**
@@ -105,12 +106,19 @@ function eventOf<P>(taken: Taken<P>): HistoryEvent<P> | null {
   return null
 }
 
-/** `null` under two statements: one statement is no history */
+const distinct = <V>(values: V[]) => new Set(values).size
+
+/** There is a history to tell once she took two positions, and not all the same day */
+const hasHistory = (statements: ReadonlyArray<OnSubject>) =>
+  distinct(statements.map(({ position }) => position.id)) > 1 &&
+  distinct(statements.map(({ statement }) => dayKey(statement.statedAt))) > 1
+
+/** `null` when there is no history to tell: one position restated, or positions all taken the same day */
 export function positionHistory<T extends OnSubject>(
   statements: ReadonlyArray<T>,
   compatible: Compatibility,
 ): PositionHistory<T> | null {
-  if (statements.length < 2) return null
+  if (!hasHistory(statements)) return null
 
   const { steps } = courseOf(
     statements.map(

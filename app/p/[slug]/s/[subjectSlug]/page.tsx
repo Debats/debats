@@ -175,6 +175,8 @@ export default async function FigureSubjectPage({ params }: PageProps) {
           latest={latestStatedAt(positions)}
         />
 
+        {history && <PositionHistory subjectSlug={subjectSlug} history={history} />}
+
         <AuthorPositions
           subjectSlug={subjectSlug}
           positions={positions}
@@ -187,8 +189,6 @@ export default async function FigureSubjectPage({ params }: PageProps) {
               : undefined
           }
         />
-
-        {history && <PositionHistory subjectSlug={subjectSlug} history={history} />}
 
         {positions.length > 0 && (
           <PositionAlignment
