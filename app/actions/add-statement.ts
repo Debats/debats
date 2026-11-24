@@ -13,6 +13,7 @@ import {
   NewStatement,
 } from '../../domain/use-cases/create-statement'
 import { figureHref, organisationHref } from '../../domain/read-models/hrefs'
+import { positionVerdictsOf } from '../../lib/forms/position-verdicts'
 import { statementArgumentsOf } from '../../lib/forms/statement-arguments'
 import { statementAuthorOf } from '../../lib/forms/statement-author'
 import { statementTopicOf } from '../../lib/forms/statement-topic'
@@ -42,6 +43,7 @@ export async function addStatementAction(input: NewStatement): Promise<ActionRes
       author: statementAuthorOf(input.author),
       topic: statementTopicOf(input.topic),
       arguments: statementArgumentsOf(input.arguments),
+      judgements: positionVerdictsOf(input.judgements),
     }),
     supabase,
   )

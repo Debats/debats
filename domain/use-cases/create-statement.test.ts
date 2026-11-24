@@ -19,7 +19,10 @@ import { Position, PositionId, PositionSlug, PositionTitle } from '../entities/p
 import { deedsIn, grantsIn } from './contributor-test-helpers'
 import { runFormWith } from './command-test-helpers'
 import { SubjectRepository } from '../repositories/subject-repository'
-import { journalWithSubjects, sampleSubject } from './subject-test-helpers'
+import { journalWithSubjects, samplePosition, sampleSubject } from './subject-test-helpers'
+import { positionsJudged, subjectStream } from '../aggregates/subject'
+import { StatementRepository } from '../repositories/statement-repository'
+import { PositionVerdict } from './statement-judgements'
 import {
   PublicFigure,
   PublicFigureId,
@@ -99,6 +102,7 @@ const validParams = {
   author: { kind: 'existing' as const, author: publicFigureAuthor('figure-1') },
   topic: onSubject('subject-1', 'pos-1'),
   arguments: { argumentIds: [] as string[], newArguments: [] },
+  judgements: [] as PositionVerdict[],
   content: {
     ...EMPTY_CONTENT_INPUT,
     quote: 'Une citation suffisamment longue pour être valide.',
@@ -117,9 +121,17 @@ const fakes = (
     arguments?: ArgumentRepository
     wikipedia?: WikipediaValidator
     subjects?: SubjectRepository
+    /** What the author already said on the subject: read only when a verdict comes with the statement */
+    statements?: { findByAuthorAndSubjectIds: () => Effect.Effect<Array<{ position: Position }>> }
   } = {},
 ) =>
   Layer.mergeAll(
+    Layer.succeed(
+      StatementRepository,
+      (overrides.statements ?? {
+        findByAuthorAndSubjectIds: () => Effect.succeed([]),
+      }) as unknown as StatementRepository,
+    ),
     /* Only read to tell a free title from a taken one, when a subject is created here */
     Layer.succeed(
       SubjectRepository,
@@ -819,5 +831,135 @@ describe('createStatementUseCase', () => {
       ])
     }
     expect(grantsIn(journal)).toEqual([['abc', 'added_statement_validated', 50]])
+  })
+})
+
+describe('createStatementUseCase, when the author already took another position on the subject', () => {
+  const retraites = sampleSubject('L’âge légal de départ à la retraite')
+  const sixty = samplePosition(retraites.id, 'Retraite à 60 ans')
+  const sixtyTwo = samplePosition(retraites.id, 'Maintien à 62 ans')
+  const sixtyFive = samplePosition(retraites.id, 'Report à 65 ans')
+  const all = [sixty, sixtyTwo, sixtyFive]
+
+  const positionsOfRetraites: PositionRepository = {
+    findById: (id) => Effect.succeed(all.find((p) => p.id === id) ?? null),
+    findBySubjectAndSlug: () => Effect.succeed(null),
+    findBySubjectId: () => Effect.succeed(all),
+  }
+
+  /** She already said « 60 ans »: the only position a verdict may be about */
+  const alreadyOnSixty = fakes({
+    positions: positionsOfRetraites,
+    statements: { findByAuthorAndSubjectIds: () => Effect.succeed([{ position: sixty }]) },
+  })
+
+  const params = {
+    ...validParams,
+    contributor: { id: 'abc', reputation: 0 },
+    topic: onSubject(retraites.id, sixtyTwo.id),
+  }
+
+  const judgementsIn = (journal: { all: () => Array<{ type: string; payload: unknown }> }) =>
+    journal
+      .all()
+      .filter((e) => e.type === 'PositionsJudged')
+      .map((e) => e.payload)
+
+  it('records what the contributor says of the two positions, with the statement', async () => {
+    const { run, journal } = await journalWithSubjects([retraites, all])
+
+    const result = await runFormWith(alreadyOnSixty)(
+      createStatementUseCase({
+        ...params,
+        judgements: [{ positionId: sixty.id, compatible: false }],
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(judgementsIn(journal)).toEqual([
+      { positionIds: [sixty.id, sixtyTwo.id].sort(), compatible: false },
+    ])
+    expect(journal.all().find((e) => e.type === 'PositionsJudged')).toMatchObject({
+      streamId: retraites.id,
+      actorId: 'abc',
+    })
+  })
+
+  it('leaves a pair already judged as it stands', async () => {
+    const { run, journal } = await journalWithSubjects([retraites, all])
+    await Effect.runPromise(
+      journal.append(
+        subjectStream(retraites.id),
+        4,
+        [positionsJudged(sixty.id, sixtyTwo.id, false)],
+        { actorId: 'founder' },
+      ),
+    )
+
+    const result = await runFormWith(alreadyOnSixty)(
+      createStatementUseCase({
+        ...params,
+        judgements: [{ positionId: sixty.id, compatible: true }],
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(judgementsIn(journal)).toEqual([
+      { positionIds: [sixty.id, sixtyTwo.id].sort(), compatible: false },
+    ])
+  })
+
+  it('ignores a verdict on a position the author never took', async () => {
+    const { run, journal } = await journalWithSubjects([retraites, all])
+
+    const result = await runFormWith(alreadyOnSixty)(
+      createStatementUseCase({
+        ...params,
+        judgements: [{ positionId: sixtyFive.id, compatible: true }],
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    expect(judgementsIn(journal)).toEqual([])
+  })
+
+  it('judges against the position opened in the same breath', async () => {
+    const { run, journal } = await journalWithSubjects([retraites, all])
+
+    const result = await runFormWith(alreadyOnSixty)(
+      createStatementUseCase({
+        ...params,
+        topic: proposingOn(retraites.id, {
+          positionTitle: 'Report à 64 ans',
+          positionDescription: 'L’âge légal est porté à 64 ans, sans aller au-delà.',
+        }),
+        judgements: [{ positionId: sixty.id, compatible: false }],
+      }),
+      run,
+    )
+
+    expect(Either.isRight(result)).toBe(true)
+    const opened = journal.all().find((e) => e.type === 'PositionAdded' && e.revision === 5)
+    const { positionId } = opened?.payload as { positionId: string }
+    expect(judgementsIn(journal)).toEqual([
+      { positionIds: [sixty.id, positionId].sort(), compatible: false },
+    ])
+  })
+
+  it('asks nothing of the statements when no verdict comes with it', async () => {
+    const { run } = await journalWithSubjects([retraites, all])
+    const neverRead = fakes({
+      positions: positionsOfRetraites,
+      statements: {
+        findByAuthorAndSubjectIds: () => Effect.die('the statements were read for nothing'),
+      },
+    })
+
+    const result = await runFormWith(neverRead)(createStatementUseCase(params), run)
+
+    expect(Either.isRight(result)).toBe(true)
   })
 })

@@ -37,6 +37,8 @@ export async function createStatementAction(
       sourceUrl: String(formData.get('sourceUrl') ?? ''),
       statedAt: String(formData.get('statedAt') ?? ''),
       arguments: readStatementArguments(formData),
+      // This form asks nothing of the positions its author already took
+      judgements: [],
     }),
   )
 

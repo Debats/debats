@@ -34,6 +34,7 @@ import {
   recordNewPosition,
 } from './create-position'
 import { authorIn, authorRewards, authorSettled, StatementAuthorInput } from './statement-author'
+import { PositionVerdict, recordVerdicts, verdictsOnTakenPositions } from './statement-judgements'
 import { grantEach, rewardFor } from './reward'
 import { openStream } from './aggregate-stream'
 import { allowedTo, found } from './preconditions'
@@ -72,6 +73,11 @@ type CreateStatementParams = {
   topic: StatementTopic
   /** Arguments the statement mobilises, chosen or proposed (Éloquent only) */
   arguments: StatementArgumentsInput
+  /**
+   * What the contributor says of the positions the author already took on the
+   * subject: compatible with this one, or not. Empty when nothing was asked.
+   */
+  judgements: readonly PositionVerdict[]
   /** What the statement carries, as the form holds it, read according to its type */
   content: StatementContentInput
   sourceName: string
@@ -241,6 +247,14 @@ export function createStatementUseCase(params: CreateStatementParams) {
     Effect.bind('validated', ({ contributor }) =>
       validateStatementArguments(contributor, params.arguments),
     ),
+    // Read before the transaction, as the positions and the author are
+    Effect.bind('verdicts', () =>
+      verdictsOnTakenPositions(
+        author.kind === 'existing' ? author.author : null,
+        topic.kind === 'existing' ? topic.subjectId : null,
+        params.judgements,
+      ),
+    ),
     /*
      * One transaction for the whole contribution: the proposed arguments open
      * their streams, an opened subject, position and author land on theirs,
@@ -274,6 +288,15 @@ export function createStatementUseCase(params: CreateStatementParams) {
                   argumentIds: recorded.argumentIds,
                 }),
                 settled.contributor.id,
+              ),
+              Effect.tap(() =>
+                recordVerdicts(
+                  events,
+                  writtenTopic.subjectId,
+                  settled.contributor.id,
+                  writtenTopic.positionId,
+                  settled.verdicts,
+                ),
               ),
               Effect.tap(() =>
                 grantEach(events, settled.contributor.id, [

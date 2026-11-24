@@ -52,6 +52,8 @@ import NewOrganisationPanel from './NewOrganisationPanel'
 import NewPositionPanel from './NewPositionPanel'
 import NewSubjectPanel from './NewSubjectPanel'
 import ProofreadingStatus from './ProofreadingStatus'
+import StanceQuestionField from './StanceQuestionField'
+import { useStanceQuestions } from './useStanceQuestions'
 import { contributionToRead } from './contribution-to-read'
 import { useAuthorChoice } from './useAuthorChoice'
 import { DeclarationToSign, useJointSignature } from './useJointSignature'
@@ -128,6 +130,12 @@ export default function NewStatementForm({
 
   const [content, setContent] = useState<StatementContentInput>(EMPTY_CONTENT_INPUT)
 
+  /** The date field stays uncontrolled; its day is mirrored here for the question that reads it */
+  const [statedOn, setStatedOn] = useState('')
+
+  /** The positions the author already took on the subject, when nobody said how they go with this one */
+  const stances = useStanceQuestions(author.input, topic.input, statedOn)
+
   /** An opinion on the writing, never enforced: it lives and dies here */
   const proofreading = useProofreading()
 
@@ -184,6 +192,7 @@ export default function NewStatementForm({
         sourceName: getFieldValue(form, 'sourceName'),
         statedAt: getFieldValue(form, 'statedAt'),
       })
+      setStatedOn(getFieldValue(form, 'statedAt'))
       if (!(e.target instanceof HTMLElement) || !e.target.id) return
       // The hint under the source is about the address the field holds, as it is typed
       if (e.target.id === 'sourceUrl') joint.sourceTyped(getFieldValue(form, 'sourceUrl'))
@@ -288,6 +297,7 @@ export default function NewStatementForm({
         statedAt: getFieldValue(form, 'statedAt'),
         // The ticked and proposed arguments are carried by the picker's hidden fields
         arguments: readStatementArguments(new FormData(form)),
+        judgements: stances.input,
       }
 
       try {
@@ -315,7 +325,7 @@ export default function NewStatementForm({
         setIsPending(false)
       }
     },
-    [author.input, content, joint.signing, submitSignature, topic.input],
+    [author.input, content, joint.signing, stances.input, submitSignature, topic.input],
   )
 
   if (signedResult) {
@@ -626,6 +636,16 @@ export default function NewStatementForm({
               </p>
             )}
           </div>
+
+          {stances.questions.map((question) => (
+            <StanceQuestionField
+              key={question.position.id}
+              authorName={authorName}
+              question={question}
+              compatible={stances.answers[question.position.id]}
+              onAnswer={stances.answer}
+            />
+          ))}
         </fieldset>
 
         <fieldset className={styles.section}>

@@ -339,6 +339,45 @@
   gap: 10px;
 }
 
+/* A position the author already took: does it go with the one being recorded? */
+.stance {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 16px 20px;
+  border: none;
+  border-radius: var(--radius-card);
+  background-color: var(--paper-2);
+  min-width: 0;
+}
+
+/* A legend escapes its box by default: float + width put it back in the flow */
+.stanceLegend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.stanceLegend strong {
+  font-weight: 600;
+}
+
+.stanceAnswer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+
 /* Opening a panel from within a sentence: the same grain as an action link */
 .inlineAction {
   composes: small from '../../../styles/text.module.css';

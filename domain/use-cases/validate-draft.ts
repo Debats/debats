@@ -194,6 +194,8 @@ function statementFromDraft(
             description: description ?? '',
           })),
         },
+        // A draft says nothing of the positions its author already took: the pair stays to be judged
+        judgements: [],
       }),
     ),
     Effect.map((statement) => ({ statementId: statement.id as string, declarationCreated: false })),
