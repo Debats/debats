@@ -21,7 +21,7 @@ import {
 import { elided } from '../../../../../lib/elision'
 import { loadFigureSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
-import { authorCourse } from '../../../../../domain/read-models/author-course'
+import { positionsHeld } from '../../../../../domain/read-models/author-course'
 import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { getAuthenticatedContributor } from '../../../../actions/get-authenticated-contributor'
 import { reviewOf } from '../../../../review-of'
@@ -43,7 +43,6 @@ import FigureRailLines from '../../../../../components/statements/AuthorRailCard
 import ContributeCard from '../../../../../components/statements/ContributeCard'
 import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
 import PositionAlignment from '../../../../../components/statements/PositionAlignment'
-import PositionCourse from '../../../../../components/statements/PositionCourse'
 import SubjectDebate from '../../../../../components/statements/SubjectDebate'
 import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
 import SubjectSynthesis from '../../../../../components/statements/SubjectSynthesis'
@@ -98,8 +97,7 @@ export default async function FigureSubjectPage({ params }: PageProps) {
   const author = publicFigureRef(figure)
   const positions = groupStatementsByPosition(figureStatements)
   // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
-  const course = authorCourse(figureStatements, compatibilityOf(judged))
-  const hers = course.held
+  const hers = positionsHeld(figureStatements, compatibilityOf(judged))
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(
@@ -172,8 +170,6 @@ export default async function FigureSubjectPage({ params }: PageProps) {
           undefended={countUndefended(debate)}
           latest={latestStatedAt(positions)}
         />
-
-        {course.summary && <PositionCourse summary={course.summary} />}
 
         <AuthorPositions
           subjectSlug={subjectSlug}

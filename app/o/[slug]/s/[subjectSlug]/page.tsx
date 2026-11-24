@@ -21,7 +21,7 @@ import {
 } from '../../../../../domain/services/author-on-subject'
 import { loadOrganisationSubjectPage } from '../../../../../infra/queries/author-subject-page'
 import { findJudgedPairs } from '../../../../../infra/queries/position-judgements'
-import { authorCourse } from '../../../../../domain/read-models/author-course'
+import { positionsHeld } from '../../../../../domain/read-models/author-course'
 import { compatibilityOf } from '../../../../../domain/read-models/position-judgements'
 import { reviewOf } from '../../../../review-of'
 import ReviewScope from '../../../../../components/review/ReviewScope'
@@ -47,7 +47,6 @@ import OrganisationRailLines from '../../../../../components/statements/AuthorRa
 import ContributeCard from '../../../../../components/statements/ContributeCard'
 import NeighbourSubjects from '../../../../../components/statements/NeighbourSubjects'
 import PositionAlignment from '../../../../../components/statements/PositionAlignment'
-import PositionCourse from '../../../../../components/statements/PositionCourse'
 import SubjectDebate from '../../../../../components/statements/SubjectDebate'
 import SubjectRailCard from '../../../../../components/statements/SubjectRailCard'
 import SubjectSynthesis from '../../../../../components/statements/SubjectSynthesis'
@@ -105,8 +104,7 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
   const author = toAuthorRef(organisation)
   const positions = groupStatementsByPosition(organisationStatements)
   // Ce qu'elle défend aujourd'hui : une position quittée pour une autre n'est plus la sienne
-  const course = authorCourse(organisationStatements, compatibilityOf(judged))
-  const hers = course.held
+  const hers = positionsHeld(organisationStatements, compatibilityOf(judged))
 
   // Le jour vient du bord : le domaine ne lit aucune horloge
   const page = await Effect.runPromise(
@@ -193,8 +191,6 @@ export default async function OrganisationSubjectPage({ params }: PageProps) {
           undefended={countUndefended(debate)}
           latest={latestStatedAt(positions)}
         />
-
-        {course.summary && <PositionCourse summary={course.summary} />}
 
         <AuthorPositions
           subjectSlug={subjectSlug}
