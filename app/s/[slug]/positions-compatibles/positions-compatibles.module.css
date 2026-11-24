@@ -1,0 +1,28 @@
+.page {
+  max-width: 1120px;
+  margin: 40px auto 0;
+  padding: 0 40px;
+}
+
+/* La liste des positions à gauche, la position choisie face aux autres à droite */
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.empty {
+  composes: body from '../../../../styles/text.module.css';
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 0 20px;
+  }
+
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

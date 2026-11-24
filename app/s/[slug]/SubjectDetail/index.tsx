@@ -114,6 +114,7 @@ export default async function SubjectDetail({
     !!contributor &&
     canPerform(contributor.reputation, major ? 'delete_major_subject' : 'delete_minor_subject')
   const canMerge = !!contributor && canPerform(contributor.reputation, 'merge_subjects')
+  const canJudge = !!contributor && canPerform(contributor.reputation, 'judge_positions')
 
   // The subject itself, and the statements its Chronologie tab lists
   const review = await reviewOf(supabase, contributor, [
@@ -150,11 +151,12 @@ export default async function SubjectDetail({
           statements: stats.statementsCount,
         }}
         adminMenu={
-          (canEditSubject || canMerge || canDelete) && (
+          (canEditSubject || canJudge || canMerge || canDelete) && (
             <SubjectAdminMenu
               subjectId={subject.id}
               subjectSlug={subject.slug}
               canEdit={canEditSubject}
+              canJudge={canJudge}
               canMerge={canMerge}
               canDelete={canDelete}
             />

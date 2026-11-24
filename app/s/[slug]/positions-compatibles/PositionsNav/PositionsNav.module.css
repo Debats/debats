@@ -1,0 +1,58 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entry,
+.entry:link,
+.entry:visited {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 16px;
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  color: var(--ink);
+}
+
+.entry:hover {
+  background-color: var(--paper-2);
+}
+
+.entry:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.entryOn,
+.entryOn:link,
+.entryOn:visited,
+.entryOn:hover {
+  background-color: var(--ink);
+  color: var(--card);
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.entryOn .title {
+  font-weight: 600;
+}
+
+.count {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.entryOn .count {
+  color: var(--line);
+}

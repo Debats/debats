@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteSubjectAction } from '../../../actions/delete-subject'
 import { subjectHref } from '../../../../domain/read-models/hrefs'
+import { subjectCompatibilityHref } from '../../../../domain/read-models/position-judgements'
 import { subjectMergeHref } from '../../../../domain/read-models/subject-merge'
 import AdminMenu from '../../../../components/ui/AdminMenu'
 import ConfirmAction from '../../../../components/ui/ConfirmAction'
@@ -12,6 +13,8 @@ interface SubjectAdminMenuProps {
   subjectId: string
   subjectSlug: string
   canEdit: boolean
+  /** May say which positions of the subject are compatible */
+  canJudge: boolean
   canMerge: boolean
   canDelete: boolean
 }
@@ -20,6 +23,7 @@ export default function SubjectAdminMenu({
   subjectId,
   subjectSlug,
   canEdit,
+  canJudge,
   canMerge,
   canDelete,
 }: SubjectAdminMenuProps) {
@@ -39,6 +43,15 @@ export default function SubjectAdminMenu({
       actions={[
         ...(canEdit
           ? [{ label: 'Modifier', icon: '✎', href: `${subjectHref(subjectSlug)}/modifier` }]
+          : []),
+        ...(canJudge
+          ? [
+              {
+                label: 'Positions compatibles',
+                icon: '⇄',
+                href: subjectCompatibilityHref(subjectSlug),
+              },
+            ]
           : []),
         ...(canMerge
           ? [
