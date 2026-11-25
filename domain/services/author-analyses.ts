@@ -13,7 +13,7 @@ import {
 import { StatementWithAuthor, StatementWithDetails } from '../repositories/statement-repository'
 import { Compatibility } from '../read-models/position-judgements'
 import { authorKey } from './author-on-subject'
-import { courseOf, Move } from './position-course'
+import { CourseEntry, courseOf, HeldPosition, Step } from './position-course'
 
 /**
  * Analyses of an author (a public figure or an organisation) against the
@@ -257,25 +257,48 @@ export interface PositionStep {
   statedAt: Date
 }
 
+/**
+ * One run of moves that follow each other: the positions she left together,
+ * then each position she took, the next one making her leave the one before
+ * and nothing else. A return to a former position is a step of its own.
+ */
+export interface PositionTrail {
+  /** Each with the day she had taken it */
+  left: PositionStep[]
+  taken: PositionStep[]
+}
+
 export interface PositionChange {
   subject: SubjectRef
   /**
-   * The position she first left, then each position she left another for, in
-   * order; a return to a former one is a step of its own. A position taken
-   * beside one it is compatible with is no step: she left nothing for it.
+   * In time order. Two moves share a trail only when the second left what
+   * the first took: once positions can be held together, she may leave one
+   * for another while keeping a third, and that is no chain. A position taken
+   * beside the ones it is compatible with is no move: she left nothing for it.
    */
-  steps: PositionStep[]
+  trails: PositionTrail[]
 }
 
-/** The steps a course makes: where the first move starts, then where each move leads */
-function stepsOf(moves: ReadonlyArray<Move<PositionRef>>): PositionStep[] {
-  const [first] = moves
-  if (!first) return []
-  return [
-    { position: first.from.position, statedAt: first.from.since },
-    ...moves.map(({ to }) => ({ position: to.position, statedAt: to.statedAt })),
-  ]
+type CourseStep = Step<CourseEntry<PositionRef>>
+
+const follows = (trail: PositionTrail | undefined, left: HeldPosition<PositionRef>[]) =>
+  left.length === 1 && trail?.taken.at(-1)?.position.id === left[0].position.id
+
+/** The trails a course makes: a move joins the trail before it when it left what that trail last took */
+function trailsOf(steps: ReadonlyArray<CourseStep>): PositionTrail[] {
+  return steps.reduce<PositionTrail[]>((trails, { entry, taken }) => {
+    if (!taken || taken.left.length === 0) return trails
+    const took = { position: entry.position, statedAt: entry.statedAt }
+    const last = trails.at(-1)
+    if (last && follows(last, taken.left)) {
+      return [...trails.slice(0, -1), { ...last, taken: [...last.taken, took] }]
+    }
+    const left = taken.left.map((held) => ({ position: held.position, statedAt: held.since }))
+    return [...trails, { left, taken: [took] }]
+  }, [])
 }
+
+const lastMoveOf = (change: PositionChange) => change.trails.at(-1)!.taken.at(-1)!.statedAt
 
 /** The subjects where the author left a position for another, latest move first */
 export function positionChanges(
@@ -288,7 +311,7 @@ export function positionChanges(
   }
   return Array.from(bySubject.values())
     .map((entries) => {
-      const { moves } = courseOf(
+      const { steps } = courseOf(
         entries.map(({ statement, position }) => ({
           position: positionRef(position),
           statedAt: statement.statedAt,
@@ -296,10 +319,10 @@ export function positionChanges(
         })),
         compatible,
       )
-      return { subject: subjectRef(entries[0].subject), steps: stepsOf(moves) }
+      return { subject: subjectRef(entries[0].subject), trails: trailsOf(steps) }
     })
-    .filter((change) => change.steps.length > 1)
-    .sort((a, b) => b.steps.at(-1)!.statedAt.getTime() - a.steps.at(-1)!.statedAt.getTime())
+    .filter((change) => change.trails.length > 0)
+    .sort((a, b) => lastMoveOf(b).getTime() - lastMoveOf(a).getTime())
 }
 
 /* How she expresses herself */

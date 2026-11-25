@@ -4,7 +4,7 @@ import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createStatementRepository } from '../../infra/database/statement-repository-supabase'
 import { findJudgedPairs } from '../../infra/queries/position-judgements'
-import { organisationAuthor, publicFigureAuthor } from '../../domain/entities/statement'
+import { authorRefOf } from '../../lib/forms/author-ref'
 import { JudgedPair } from '../../domain/read-models/position-judgements'
 import { TakenPosition, takenPositions } from '../../domain/read-models/stance-question'
 
@@ -26,17 +26,12 @@ export async function getTakenPositions(
   author: { kind: string; id: string },
   subjectId: string,
 ): Promise<TakenOnSubject> {
-  if (typeof author?.id !== 'string' || !author.id || typeof subjectId !== 'string' || !subjectId)
-    return NOTHING
+  const whose = authorRefOf(author)
+  if (!whose || typeof subjectId !== 'string' || !subjectId) return NOTHING
 
   const supabase = createAdminSupabaseClient()
   const statements = await Effect.runPromise(
-    createStatementRepository(supabase).findByAuthorAndSubjectIds(
-      author.kind === 'organisation'
-        ? organisationAuthor(author.id)
-        : publicFigureAuthor(author.id),
-      [subjectId],
-    ),
+    createStatementRepository(supabase).findByAuthorAndSubjectIds(whose, [subjectId]),
   )
   if (statements.length === 0) return NOTHING
 

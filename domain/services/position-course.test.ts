@@ -78,6 +78,35 @@ describe('courseOf, while every two positions exclude each other', () => {
     expect(moves).toEqual([])
     expect(ids(held)).toEqual(['62', '65'])
   })
+
+  it('keeps holding two positions said the same day, even once she only restates one of them', () => {
+    // Accepted for this version: the day she said both, she left neither, and restating one leaves nothing
+    const { held, moves } = course(
+      stated('62', '2017-04-01'),
+      stated('62', '2022-03-17'),
+      stated('65', '2022-03-17'),
+      stated('65', '2023-01-10'),
+      stated('65', '2024-01-10'),
+    )
+
+    expect(moves).toEqual([])
+    expect(ids(held)).toEqual(['62', '65'])
+  })
+
+  it('leaves the two positions she held together for a third, and holds one again when she takes it back', () => {
+    const { held, moves } = course(
+      stated('dotations', '2026-10-12'),
+      stated('canicules', '2026-10-12'),
+      stated('sobriete', '2026-11-01'),
+      stated('dotations', '2026-12-01'),
+    )
+
+    expect(moves.map((m) => [m.from.position.id, m.to.position.id])).toEqual([
+      ['dotations', 'sobriete'],
+      ['sobriete', 'dotations'],
+    ])
+    expect(held).toMatchObject([{ position: { id: 'dotations' }, since: day('2026-12-01') }])
+  })
 })
 
 describe('courseOf, once positions were judged compatible', () => {

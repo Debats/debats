@@ -14,6 +14,7 @@ import {
   SubjectTitle,
 } from '../entities/subject'
 import { StoredEvent, StreamRef } from '../events/event-store'
+import { orderedPair } from '../value-objects/pair'
 import { always, Decision, refused } from './decision'
 import { Decoded, replayStream } from './replay'
 import {
@@ -62,11 +63,8 @@ export const livePositions = (state: SubjectState): Position[] =>
 export const findPosition = (state: SubjectState, positionId: string): Position | undefined =>
   livePositions(state).find((p) => p.id === positionId)
 
-/** A pair is one pair whichever position is named first */
-export const positionPair = (a: string, b: string): [string, string] => (a < b ? [a, b] : [b, a])
-
 const isPair = (judgement: PositionJudgement, a: string, b: string) => {
-  const [first, second] = positionPair(a, b)
+  const [first, second] = orderedPair(a, b)
   return judgement.positionIds[0] === first && judgement.positionIds[1] === second
 }
 
@@ -130,7 +128,7 @@ export const positionMergedInto = (sourceId: string, targetId: string): SubjectE
 
 export const positionsJudged = (a: string, b: string, compatible: boolean): SubjectEvent => ({
   type: 'PositionsJudged',
-  payload: { positionIds: positionPair(a, b), compatible },
+  payload: { positionIds: orderedPair(a, b), compatible },
 })
 
 export const subjectDeleted = (): SubjectEvent => ({ type: 'SubjectDeleted', payload: {} })
@@ -186,12 +184,36 @@ export const editPosition =
       ? Either.right([positionEdited(input)])
       : refused(POSITION_NOT_FOUND)
 
-/** Both positions must still be open on the subject; the source disappears into the target */
+/**
+ * What was judged of the source holds for the target it becomes, wherever
+ * nobody judged the target itself: whoever held the source with another
+ * position still holds the two after the merge. The verdict between the
+ * source and the target has nothing left to say.
+ */
+const judgementsFollowing = (
+  state: SubjectState,
+  sourceId: string,
+  targetId: string,
+): SubjectEvent[] =>
+  state.judgements.flatMap(({ positionIds, compatible }) => {
+    if (!positionIds.includes(sourceId)) return []
+    const other = positionIds.find((id) => id !== sourceId)!
+    const settled = other === targetId || verdictOn(state, targetId, other) !== undefined
+    return settled ? [] : [positionsJudged(targetId, other, compatible)]
+  })
+
+/**
+ * Both positions must still be open on the subject; the source disappears
+ * into the target, which takes over the verdicts on it.
+ */
 export const mergePositions =
   (sourceId: string, targetId: string): SubjectDecision =>
   (state) =>
     findPosition(state, sourceId) && findPosition(state, targetId)
-      ? Either.right([positionMergedInto(sourceId, targetId)])
+      ? Either.right([
+          positionMergedInto(sourceId, targetId),
+          ...judgementsFollowing(state, sourceId, targetId),
+        ])
       : refused(POSITION_GONE)
 
 export const SAME_POSITION = 'Une position ne se compare pas à elle-même.'
@@ -435,7 +457,7 @@ function apply(
         ...state,
         judgements: [
           ...state.judgements.filter((judgement) => !isPair(judgement, a, b)),
-          { positionIds: positionPair(a, b), compatible: event.payload.compatible },
+          { positionIds: orderedPair(a, b), compatible: event.payload.compatible },
         ],
       }
     }

@@ -212,24 +212,65 @@ describe('positionChanges', () => {
     const changes = positionChanges(own, ALL_CONTRADICTORY)
 
     expect(changes.map((c) => c.subject.title)).toEqual(['Les retraites', 'Le nucléaire'])
-    expect(changes[1].steps.map((s) => [s.position.title, s.statedAt.toISOString()])).toEqual([
+    const [trail] = changes[1].trails
+    expect(trail.left.map((s) => [s.position.title, s.statedAt.toISOString()])).toEqual([
       ['Relancer', '2020-01-01T00:00:00.000Z'],
+    ])
+    expect(trail.taken.map((s) => [s.position.title, s.statedAt.toISOString()])).toEqual([
       ['Sortir', '2023-06-01T00:00:00.000Z'],
     ])
   })
 
-  it('keeps a return to a former position as a step of its own', () => {
+  const titles = (steps: { position: { title: string } }[]) => steps.map((s) => s.position.title)
+  const trailsOf = (...args: Parameters<typeof positionChanges>) =>
+    positionChanges(...args)[0].trails.map((trail) => [titles(trail.left), titles(trail.taken)])
+
+  it('keeps a return to a former position as a step of its own, on the same trail', () => {
     const own = detailed([
       taken(veil, relance, { on: '2020-01-01' }),
       taken(veil, sortie, { on: '2021-01-01' }),
       taken(veil, relance, { on: '2022-01-01' }),
     ])
 
-    expect(positionChanges(own, ALL_CONTRADICTORY)[0].steps.map((s) => s.position.title)).toEqual([
-      'Relancer',
-      'Sortir',
-      'Relancer',
+    expect(trailsOf(own, ALL_CONTRADICTORY)).toEqual([[['Relancer'], ['Sortir', 'Relancer']]])
+  })
+
+  it('never chains two moves the second of which did not leave what the first took', () => {
+    const [a, b, c, d] = ['Avis A', 'Avis B', 'Avis C', 'Avis D'].map((title) =>
+      positionOn(nucleaire.id, title),
+    )
+    const own = detailed([
+      taken(veil, a, { on: '2020-01-01' }),
+      taken(veil, b, { on: '2020-02-01' }),
+      taken(veil, c, { on: '2020-03-01' }),
+      taken(veil, d, { on: '2020-04-01' }),
     ])
+    const compatible = compatibilityOf(
+      [
+        [a, b],
+        [b, d],
+        [a, c],
+        [c, d],
+      ].map(([one, other]) => ({ positionIds: [one.id, other.id], compatible: true })),
+    )
+
+    // She left B for C, then A for D: she still holds C and D, and never went from C to D
+    expect(trailsOf(own, compatible)).toEqual([
+      [['Avis B'], ['Avis C']],
+      [['Avis A'], ['Avis D']],
+    ])
+  })
+
+  it('names every position she left at once', () => {
+    const [a, b, c] = ['Avis A', 'Avis B', 'Avis C'].map((title) => positionOn(nucleaire.id, title))
+    const own = detailed([
+      taken(veil, a, { on: '2020-01-01' }),
+      taken(veil, b, { on: '2020-02-01' }),
+      taken(veil, c, { on: '2020-03-01' }),
+    ])
+    const compatible = compatibilityOf([{ positionIds: [a.id, b.id], compatible: true }])
+
+    expect(trailsOf(own, compatible)).toEqual([[['Avis A', 'Avis B'], ['Avis C']]])
   })
 
   it('is empty for an author who never changed', () => {

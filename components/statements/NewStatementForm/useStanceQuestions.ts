@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import { getTakenPositions, TakenOnSubject } from '../../../app/actions/get-taken-positions'
 import { StatementAuthorInput, StatementTopic } from '../../../domain/use-cases/create-statement'
 import { PositionVerdict } from '../../../domain/use-cases/statement-judgements'
@@ -64,10 +65,13 @@ export function useStanceQuestions(
   useEffect(() => {
     if (!key) return
     const controller = new AbortController()
-    getTakenPositions({ kind: authorKind, id: authorId }, subjectId).then((known) => {
-      if (controller.signal.aborted) return
-      setRead({ key, known })
-    })
+    getTakenPositions({ kind: authorKind, id: authorId }, subjectId)
+      .then((known) => {
+        if (controller.signal.aborted) return
+        setRead({ key, known })
+      })
+      // A read that fails is reported, and asks nothing: the pair stays unjudged, to be judged from the subject
+      .catch((error: unknown) => Sentry.captureException(error))
     return () => controller.abort()
   }, [authorId, authorKind, key, subjectId])
 

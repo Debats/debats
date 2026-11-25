@@ -1,5 +1,10 @@
-import { Compatibility } from '../read-models/position-judgements'
 import { dayKey } from '../value-objects/day'
+
+/**
+ * Whether two positions are held together; a position always goes with
+ * itself. The course asks, whoever reads the verdicts answers.
+ */
+export type Compatibility = (a: string, b: string) => boolean
 
 /**
  * The course of one author on one subject: which positions she holds today,

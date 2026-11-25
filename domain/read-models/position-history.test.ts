@@ -54,6 +54,28 @@ describe('positionHistory', () => {
     ).toBeNull()
   })
 
+  it('has nothing to tell of positions all taken the same day, even restated later', () => {
+    expect(
+      positionHistory(
+        [
+          stated('dotations', '2026-10-12'),
+          stated('canicules', '2026-10-12'),
+          stated('dotations', '2026-11-12'),
+        ],
+        ALL_CONTRADICTORY,
+      ),
+    ).toBeNull()
+  })
+
+  it('has a history to tell once a position is taken on a later day than the first', () => {
+    expect(
+      positionHistory(
+        [stated('dotations', '2026-10-12'), stated('canicules', '2026-11-12')],
+        ALL_CONTRADICTORY,
+      ),
+    ).not.toBeNull()
+  })
+
   it('reads from the most recent statement to the oldest', () => {
     const history = positionHistory(
       [stated('62', '2019-04-25'), stated('65', '2022-03-17'), stated('62', '2017-03-02')],

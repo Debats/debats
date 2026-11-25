@@ -49,8 +49,7 @@
 }
 
 .heldBy {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  composes: meta from '../../../../../styles/text.module.css';
   color: var(--ink-2);
 }
 

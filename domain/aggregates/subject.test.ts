@@ -132,6 +132,76 @@ describe('subject decisions', () => {
     )
   })
 
+  describe('merging a position that was judged against others', () => {
+    const neutre = positionAdded({
+      positionId: 'pos-3',
+      title: 'Sans avis',
+      description: 'Une description suffisamment longue.',
+    })
+
+    it('carries the verdicts on the source over to the target', () => {
+      const judged = rebuilt(added, pour, contre, neutre, positionsJudged('pos-2', 'pos-3', true))
+
+      expect(mergePositions('pos-2', 'pos-1')(judged)).toEqual(
+        Either.right([
+          positionMergedInto('pos-2', 'pos-1'),
+          positionsJudged('pos-1', 'pos-3', true),
+        ]),
+      )
+    })
+
+    it('carries a verdict of contradiction as well: it was judged, it stays judged', () => {
+      const judged = rebuilt(added, pour, contre, neutre, positionsJudged('pos-2', 'pos-3', false))
+
+      expect(mergePositions('pos-2', 'pos-1')(judged)).toEqual(
+        Either.right([
+          positionMergedInto('pos-2', 'pos-1'),
+          positionsJudged('pos-1', 'pos-3', false),
+        ]),
+      )
+    })
+
+    it('keeps what was already judged of the target', () => {
+      const judged = rebuilt(
+        added,
+        pour,
+        contre,
+        neutre,
+        positionsJudged('pos-2', 'pos-3', true),
+        positionsJudged('pos-1', 'pos-3', false),
+      )
+
+      expect(mergePositions('pos-2', 'pos-1')(judged)).toEqual(
+        Either.right([positionMergedInto('pos-2', 'pos-1')]),
+      )
+    })
+
+    it('drops the verdict between the two positions merged: there is one position left', () => {
+      const judged = rebuilt(added, pour, contre, neutre, positionsJudged('pos-1', 'pos-2', true))
+
+      expect(mergePositions('pos-2', 'pos-1')(judged)).toEqual(
+        Either.right([positionMergedInto('pos-2', 'pos-1')]),
+      )
+    })
+
+    it('leaves the target judged as the source was, once replayed', () => {
+      const judged = rebuilt(added, pour, contre, neutre, positionsJudged('pos-2', 'pos-3', true))
+      const decided = mergePositions('pos-2', 'pos-1')(judged)
+      if (Either.isLeft(decided)) throw new Error('expected a merge')
+
+      const merged = rebuilt(
+        added,
+        pour,
+        contre,
+        neutre,
+        positionsJudged('pos-2', 'pos-3', true),
+        ...decided.right,
+      )
+
+      expect(merged.judgements).toEqual([{ positionIds: ['pos-1', 'pos-3'], compatible: true }])
+    })
+  })
+
   it('refuse a merge once one of the positions is gone', () => {
     const merged = rebuilt(added, pour, contre, positionMergedInto('pos-2', 'pos-1'))
     expect(mergePositions('pos-2', 'pos-1')(merged)).toEqual(

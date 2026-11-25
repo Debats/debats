@@ -77,4 +77,22 @@ describe('judgePositionsUseCase', () => {
       ),
     ).toEqual(Either.left(SAME_POSITION))
   })
+
+  it('refuses what is not a verdict on two positions, and writes nothing', async () => {
+    const { run, journal } = await seeded()
+    const written = journal.all().length
+    // What reaches a Server Function is JSON, whatever the type it declares
+    const asSent = (verdict: object) => judgePositionsUseCase({ ...params, ...verdict } as never)
+
+    for (const verdict of [
+      { compatible: 'oui' },
+      { positionIds: genocide.id },
+      { positionIds: [genocide.id] },
+      { subjectId: undefined },
+    ]) {
+      const result = await execute(asSent(verdict), run)
+      expect(Either.isLeft(result)).toBe(true)
+    }
+    expect(journal.all()).toHaveLength(written)
+  })
 })

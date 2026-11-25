@@ -1,5 +1,9 @@
 import { plural } from '../../lib/plural'
+import { Compatibility } from '../services/position-course'
+import { orderedPair } from '../value-objects/pair'
 import { subjectHref } from './hrefs'
+
+export type { Compatibility }
 
 /**
  * What was judged of two positions of a subject, as the pages read it. A
@@ -11,10 +15,7 @@ export interface JudgedPair {
   compatible: boolean
 }
 
-/** Whether two positions are held together; a position always goes with itself */
-export type Compatibility = (a: string, b: string) => boolean
-
-const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`)
+const pairKey = (a: string, b: string) => orderedPair(a, b).join('|')
 
 /** The verdict on a pair: undefined while nobody judged it */
 export const verdictIn = (pairs: readonly JudgedPair[]) => {

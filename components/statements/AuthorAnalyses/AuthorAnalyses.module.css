@@ -170,10 +170,19 @@
   gap: 6px;
 }
 
+/* Une position quittée en même temps que la précédente : elles vont ensemble, aucune ne mène à l'autre */
+.stepBeside {
+  composes: step;
+}
+
 .step + .step::before {
   content: '→';
   margin-right: 8px;
   color: var(--ink-3);
+}
+
+.step + .stepBeside::before {
+  content: 'et';
 }
 
 .stepPosition {

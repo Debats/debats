@@ -90,16 +90,19 @@ function curveSources<P>(taken: { left: HeldPosition<P>[]; kept: HeldPosition<P>
   return taken.kept.length > 0 ? [lastStated(taken.kept)] : []
 }
 
-const distinct = <V>(values: V[]) => new Set(values).size
-
-/** There is a history to tell once she took two positions, and not all the same day */
-const hasHistory = <T extends OnSubject>(steps: Steps<T>) =>
-  distinct(steps.map(({ entry }) => entry.position.id)) > 1 &&
-  distinct(steps.map(({ entry }) => dayKey(entry.statedAt))) > 1
+/**
+ * There is a history to tell once she took a position on a later day than
+ * the first she spoke: something then happened over time, a jump or a
+ * branch. Restating later what she said the first day draws neither.
+ */
+function hasHistory<T extends OnSubject>(steps: Steps<T>) {
+  const firstDay = steps.length > 0 && dayKey(steps[0].entry.statedAt)
+  return steps.some(({ entry, taken }) => taken !== null && dayKey(entry.statedAt) !== firstDay)
+}
 
 /**
  * The history the steps of her course draw; `null` when there is none to
- * tell: one position restated, or positions all taken the same day.
+ * tell: no position taken after the first day she spoke.
  */
 export function historyOf<T extends OnSubject>(steps: Steps<T>): PositionHistory<T> | null {
   if (!hasHistory(steps)) return null

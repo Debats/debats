@@ -4,7 +4,7 @@ import {
   StatementAuthorRef,
 } from '../../../domain/read-models/statement-author'
 import { PositionChange } from '../../../domain/services/author-analyses'
-import { formatMonthYear } from '../../../lib/format-date'
+import PositionTrailSteps from './PositionTrailSteps'
 import styles from './AuthorAnalyses.module.css'
 
 interface PositionChangesCardProps {
@@ -36,14 +36,9 @@ export default function PositionChangesCard({ changes, author, who }: PositionCh
               >
                 {change.subject.title}
               </Link>
-              <ol className={styles.steps}>
-                {change.steps.map((step, index) => (
-                  <li key={`${step.position.id}-${index}`} className={styles.step}>
-                    <span className={styles.stepPosition}>{step.position.title}</span>
-                    <span className={styles.meta}>{formatMonthYear(step.statedAt)}</span>
-                  </li>
-                ))}
-              </ol>
+              {change.trails.map((trail, index) => (
+                <PositionTrailSteps key={index} trail={trail} />
+              ))}
             </li>
           ))}
         </ul>

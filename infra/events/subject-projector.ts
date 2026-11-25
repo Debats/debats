@@ -6,6 +6,7 @@ import {
   ThemeAssignmentPayload,
 } from '../../domain/aggregates/subject-events'
 import { StoredEvent } from '../../domain/events/event-store'
+import { orderedPair } from '../../domain/value-objects/pair'
 import { PrismaTransaction } from '../prisma/client'
 import { leadDraftsToSubject } from './drafts-of-merged-subject'
 import { auditOf, changedBy, projectorOf } from './projector'
@@ -38,7 +39,7 @@ async function apply(decoded: SubjectEvent, stored: StoredEvent, tx: PrismaTrans
     case 'SubjectLinked':
       return linkIfMissing(tx, subjectId, decoded.payload.subjectId, stored.actorId)
     case 'SubjectUnlinked': {
-      const [subject_id_1, subject_id_2] = orderPair(subjectId, decoded.payload.subjectId)
+      const [subject_id_1, subject_id_2] = orderedPair(subjectId, decoded.payload.subjectId)
       await tx.related_subjects.deleteMany({ where: { subject_id_1, subject_id_2 } })
       return
     }
@@ -247,7 +248,7 @@ async function linkIfMissing(
   otherId: string,
   actorId: string | null,
 ) {
-  const [subject_id_1, subject_id_2] = orderPair(subjectId, otherId)
+  const [subject_id_1, subject_id_2] = orderedPair(subjectId, otherId)
   const found = await tx.related_subjects.findUnique({
     where: { subject_id_1_subject_id_2: { subject_id_1, subject_id_2 } },
     select: { subject_id_1: true },
@@ -256,5 +257,3 @@ async function linkIfMissing(
   if (!actorId) throw new Error('Cannot link subjects without an actor')
   await tx.related_subjects.create({ data: { subject_id_1, subject_id_2, created_by: actorId } })
 }
-
-const orderPair = (a: string, b: string): [string, string] => (a < b ? [a, b] : [b, a])
