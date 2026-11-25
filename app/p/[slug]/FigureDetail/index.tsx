@@ -219,6 +219,7 @@ export default async function FigureDetail({ slug, activeTab, viewParams }: Figu
                   statements,
                   onSubjects,
                   self,
+                  compatible,
                   affiliations.current.map(({ organisation }) => organisation),
                 )}
               />

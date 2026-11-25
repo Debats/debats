@@ -199,6 +199,7 @@ export default async function OrganisationDetail({
                 statements,
                 onSubjects,
                 self,
+                compatible,
                 current.map(({ figure }) => figure),
               )}
             />

@@ -161,6 +161,87 @@ describe('company', () => {
     ])
     expect(result.closest.map((c) => c.author.name)).toEqual(['Albert Camus'])
   })
+
+  it('reads her stance in the positions she holds: who shares one she left stands apart', () => {
+    const moved = [
+      taken(veil, relance, { on: '2020-01-01' }),
+      taken(veil, sortie, { on: '2023-06-01' }),
+    ]
+
+    const result = company(
+      detailed(moved),
+      [...moved, taken(camus, relance), taken(weil, sortie)],
+      self,
+      ALL_CONTRADICTORY,
+    )
+
+    expect(result.closest.map((c) => c.author.name)).toEqual(['Simone Weil'])
+    expect(result.opposed.map((c) => c.author.name)).toEqual(['Albert Camus'])
+  })
+})
+
+describe('the analyses of an author who left a position', () => {
+  const org = organisationAuthor(attac.id)
+
+  it('stands her where she is today, not where she was', () => {
+    const moved = [
+      taken(veil, relance, { on: '2020-01-01' }),
+      taken(veil, sortie, { on: '2023-06-01' }),
+    ]
+    const onSubjects = [...moved, taken(camus, relance), taken(weil, relance)]
+
+    const result = standing(detailed(moved), onSubjects, self, ALL_CONTRADICTORY)
+
+    expect(result.subjects[0].positions.map((p) => p.title)).toEqual(['Sortir'])
+    expect(result.subjects[0]).toMatchObject({ withLeading: false, leading: { title: 'Relancer' } })
+  })
+
+  it('sets apart the member who stayed on the position her organisation left', () => {
+    const moved = [
+      taken(attac, maintien, { on: '2020-01-01' }),
+      taken(attac, report, { on: '2023-06-01' }),
+    ]
+    const members = [{ id: 'veil', name: 'Simone Veil', slug: 'simone-veil' }]
+
+    const [cohesion] = memberCohesion(
+      detailed(moved),
+      [...moved, taken(veil, maintien)],
+      org,
+      ALL_CONTRADICTORY,
+      members,
+    )
+
+    expect(cohesion.positions.map((p) => p.title)).toEqual(['Reporter l’âge'])
+    expect(cohesion.aligned).toEqual([])
+    expect(cohesion.apart.map((a) => a.figure.name)).toEqual(['Simone Veil'])
+  })
+
+  it('compares her to her organisation by the position she holds', () => {
+    const moved = [
+      taken(veil, relance, { on: '2020-01-01' }),
+      taken(veil, sortie, { on: '2023-06-01' }),
+    ]
+    const organisations = [
+      {
+        id: 'attac',
+        name: 'Attac',
+        slug: 'attac',
+        acronym: null,
+        organisationType: 'ngo' as const,
+      },
+    ]
+
+    const [line] = organisationsLine(
+      detailed(moved),
+      [...moved, taken(attac, relance)],
+      self,
+      ALL_CONTRADICTORY,
+      organisations,
+    )
+
+    expect(line.aligned).toEqual([])
+    expect(line.apart.map((s) => s.mine.map((p) => p.title))).toEqual([['Sortir']])
+  })
 })
 
 describe('standing', () => {
@@ -176,7 +257,7 @@ describe('standing', () => {
       taken(weil, sortie),
     ]
 
-    const result = standing(own, onSubjects, self)
+    const result = standing(own, onSubjects, self, ALL_CONTRADICTORY)
 
     expect(result.subjects.map((s) => [s.subject.title, s.authors, s.withLeading])).toEqual([
       ['Les retraites', 4, false],
@@ -192,7 +273,12 @@ describe('standing', () => {
 
   it('counts a tie as standing with the leading position', () => {
     const mine = [taken(veil, report)]
-    const result = standing(detailed(mine), [...mine, taken(camus, maintien)], self)
+    const result = standing(
+      detailed(mine),
+      [...mine, taken(camus, maintien)],
+      self,
+      ALL_CONTRADICTORY,
+    )
 
     expect(result.subjects[0]).toMatchObject({ withLeading: true, leading: { authors: 1 } })
   })
@@ -343,7 +429,7 @@ describe('memberCohesion', () => {
       taken(publicFigureRef({ id: 'other', name: 'Autre', slug: 'autre' }), report),
     ]
 
-    const cohesion = memberCohesion(own, onSubjects, org, members)
+    const cohesion = memberCohesion(own, onSubjects, org, ALL_CONTRADICTORY, members)
 
     expect(
       cohesion.map((c) => [
@@ -361,7 +447,7 @@ describe('memberCohesion', () => {
 
   it('has nothing to say without members', () => {
     const mine = [taken(attac, maintien)]
-    expect(memberCohesion(detailed(mine), mine, org, [])).toEqual([])
+    expect(memberCohesion(detailed(mine), mine, org, ALL_CONTRADICTORY, [])).toEqual([])
   })
 })
 
@@ -377,7 +463,7 @@ describe('organisationsLine', () => {
     const cgt = organisationRef({ id: 'cgt', name: 'CGT', slug: 'cgt', acronym: 'CGT' })
     const onSubjects = [...mine, taken(attac, maintien), taken(attac, relance), taken(cgt, hausse)]
 
-    const line = organisationsLine(own, onSubjects, self, organisations)
+    const line = organisationsLine(own, onSubjects, self, ALL_CONTRADICTORY, organisations)
 
     expect(
       line.map((l) => [
@@ -393,6 +479,8 @@ describe('organisationsLine', () => {
 
   it('leaves out an organisation that spoke on none of her subjects', () => {
     const mine = [taken(veil, report)]
-    expect(organisationsLine(detailed(mine), mine, self, organisations)).toEqual([])
+    expect(organisationsLine(detailed(mine), mine, self, ALL_CONTRADICTORY, organisations)).toEqual(
+      [],
+    )
   })
 })
