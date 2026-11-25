@@ -124,6 +124,8 @@ export default async function SubjectDetail({
     ...(timeline ?? []).flatMap((year) => year.entries.map((entry) => entry.statementId)),
   ])
 
+  const shareUrl = `${SITE_URL}${subjectHref(subject.slug)}`
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -170,7 +172,8 @@ export default async function SubjectDetail({
             <SubjectShare
               slug={subject.slug}
               title={subject.title}
-              caption={shareCaption(subject, `${SITE_URL}${subjectHref(subject.slug)}`)}
+              url={shareUrl}
+              caption={shareCaption(subject, shareUrl)}
             />
           </>
         }

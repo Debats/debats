@@ -14,9 +14,14 @@ import styles from './SubjectShare.module.css'
 interface SubjectShareProps {
   slug: string
   title: string
+  /** The whole address of the subject page, for who shares the link alone */
+  url: string
   /** The text that goes with the images where they are posted; it ends on the link to the subject */
   caption: string
 }
+
+/** What the dialogue copies: the text that goes with the images, or the link alone */
+type Copied = 'text' | 'link'
 
 /**
  * The pause between two downloads, in milliseconds. A browser drops downloads
@@ -44,19 +49,20 @@ const IMAGES_FAULT =
 const SLIDES_FAULT = 'Le carrousel n’a pas pu être chargé. Réessayez dans un instant.'
 
 const COPY_FAULT =
-  'Le texte n’a pas pu être copié. Vous pouvez le sélectionner et le copier à la main.'
+  'La copie n’a pas abouti. Vous pouvez sélectionner le texte ci-dessus, qui se termine par le lien, et le copier à la main.'
 
 /**
  * Sharing a subject: a carousel of images that say who thinks what, and the
  * text to post with them. The text carries the link to the subject, since
- * nobody can click an image.
+ * nobody can click an image; the link can also be copied alone, for who wants
+ * neither the images nor the text.
  */
-export default function SubjectShare({ slug, title, caption }: SubjectShareProps) {
+export default function SubjectShare({ slug, title, url, caption }: SubjectShareProps) {
   const [slides, setSlides] = useState<ShareSlide[] | null>(null)
   const [downloading, setDownloading] = useState(false)
   // The download link of each slide, by slide: the strip hands them over as it mounts
   const links = useRef(new Map<string, HTMLAnchorElement>())
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<Copied | null>(null)
   const [fault, setFault] = useState<string | null>(null)
   const { prepare, files, failed } = usePreparedImages()
   const hasShareSheet = useShareSheet()
@@ -95,12 +101,12 @@ export default function SubjectShare({ slug, title, caption }: SubjectShareProps
     setDownloading(false)
   }
 
-  async function copyText() {
+  async function copy(what: Copied) {
     setFault(null)
     try {
-      await navigator.clipboard.writeText(caption)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(what === 'link' ? url : caption)
+      setCopied(what)
+      setTimeout(() => setCopied(null), 2000)
     } catch (cause) {
       // A browser refuses its clipboard to a page it does not trust, or that lost the focus
       Sentry.captureException(cause)
@@ -153,8 +159,11 @@ export default function SubjectShare({ slug, title, caption }: SubjectShareProps
               <Button onClick={downloadAll} disabled={!hasSlides || downloading}>
                 {downloading ? 'Téléchargement…' : 'Télécharger les images'}
               </Button>
-              <Button variant="secondary" onClick={copyText}>
-                {copied ? 'Texte copié !' : 'Copier le texte'}
+              <Button variant="secondary" onClick={() => copy('text')}>
+                {copied === 'text' ? 'Texte copié !' : 'Copier le texte'}
+              </Button>
+              <Button variant="secondary" onClick={() => copy('link')}>
+                {copied === 'link' ? 'Lien copié !' : 'Copier le lien seul'}
               </Button>
               {hasShareSheet && hasSlides && !failed && (
                 <Button variant="secondary" onClick={share} disabled={!files}>
