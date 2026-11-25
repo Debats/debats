@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { PublicFigureActivitySummary } from '../value-objects/public-figure-activity-summary'
-import { FIGURES_PER_ROW, mostSpokenFigures } from './home-page'
+import {
+  FIGURES_PER_ROW,
+  mostSpokenFigures,
+  mostSpokenOrganisations,
+  ORGANISATIONS_PER_ROW,
+} from './home-page'
+import { OrganisationSummary } from './organisation-summary'
 
 const figure = (
   name: string,
@@ -66,5 +72,69 @@ describe('mostSpokenFigures', () => {
     const figures = [figure('Alma'), figure('Boris')]
 
     expect(mostSpokenFigures(figures, lately({ Alma: 1, Boris: 1 }), 16)).toHaveLength(2)
+  })
+})
+
+describe('mostSpokenOrganisations', () => {
+  const organisation = (
+    name: string,
+    over: Partial<OrganisationSummary> = {},
+  ): OrganisationSummary => ({
+    id: name,
+    name,
+    slug: name.toLowerCase(),
+    acronym: null,
+    organisationType: 'political_party',
+    presentation: '',
+    membersCount: 0,
+    statementsCount: 1,
+    subjectsCount: 1,
+    ...over,
+  })
+  const named = (organisations: OrganisationSummary[]) => organisations.map(({ name }) => name)
+
+  it('lists the organisations that spoke on the most subjects lately, whatever they weigh otherwise', () => {
+    const organisations = [
+      organisation('Ancien', { membersCount: 70 }),
+      organisation('Vif'),
+      organisation('Remuant'),
+    ]
+
+    expect(
+      named(mostSpokenOrganisations(organisations, lately({ Vif: 9, Remuant: 4, Ancien: 1 }), 3)),
+    ).toEqual(['Vif', 'Remuant', 'Ancien'])
+  })
+
+  it('never shows an organisation that said nothing lately', () => {
+    expect(
+      mostSpokenOrganisations([organisation('Ancien', { membersCount: 70 })], lately({}), 3),
+    ).toEqual([])
+  })
+
+  it('settles those that spoke on as many subjects lately by the most engaged, then by name', () => {
+    const organisations = [
+      organisation('Zèbre'),
+      organisation('Autruche'),
+      organisation('Baleine', { membersCount: 40 }),
+    ]
+
+    expect(
+      named(
+        mostSpokenOrganisations(organisations, lately({ Zèbre: 2, Autruche: 2, Baleine: 2 }), 3),
+      ),
+    ).toEqual(['Baleine', 'Autruche', 'Zèbre'])
+  })
+
+  it('shows full rows only: the cards that would start a row are left out', () => {
+    const spoke = Array.from({ length: ORGANISATIONS_PER_ROW + 1 }, (_, index) => `O${index}`)
+    const each = lately(Object.fromEntries(spoke.map((name) => [name, 1])))
+
+    expect(
+      mostSpokenOrganisations(
+        spoke.map((name) => organisation(name)),
+        each,
+        2 * ORGANISATIONS_PER_ROW,
+      ),
+    ).toHaveLength(ORGANISATIONS_PER_ROW)
   })
 })

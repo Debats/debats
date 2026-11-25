@@ -14,11 +14,12 @@ import {
   HOME_SHELVES,
   HomePage,
   mostSpokenFigures,
+  mostSpokenOrganisations,
 } from '../../domain/read-models/home-page'
-import { orderByEngagement } from '../../domain/read-models/organisation-summary'
 import {
   spokenSince,
   subjectsByFigure,
+  subjectsByOrganisation,
   voicesBySubject,
 } from '../../domain/read-models/spoken-lately'
 import { DatabaseError } from '../../domain/repositories/errors'
@@ -112,7 +113,11 @@ export const loadHomePage = (
             total: figures.publicFigures,
           },
           organisations: {
-            shown: orderByEngagement(organisations).slice(0, HOME_SHELVES.organisations),
+            shown: mostSpokenOrganisations(
+              organisations,
+              subjectsByOrganisation(spoken),
+              HOME_SHELVES.organisations,
+            ),
             total: organisations.length,
           },
           declarations,

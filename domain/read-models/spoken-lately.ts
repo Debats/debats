@@ -39,13 +39,24 @@ function countDistinct(pairs: ReadonlyArray<readonly [string, string]>): Map<str
 export const voicesBySubject = (statements: readonly SubjectVoice[]): Map<string, number> =>
   countDistinct(statements.map(({ subjectId, author }) => [subjectId, authorKey(author)]))
 
-/** public figure id → on how many distinct subjects these statements make her speak */
-export const subjectsByFigure = (statements: readonly SubjectVoice[]): Map<string, number> =>
+/** author id → on how many distinct subjects these statements make an author of that kind speak */
+const subjectsByAuthorOf = (
+  kind: StatementAuthorKind,
+  statements: readonly SubjectVoice[],
+): Map<string, number> =>
   countDistinct(
     statements
-      .filter(({ author }) => author.kind === 'public_figure')
+      .filter(({ author }) => author.kind === kind)
       .map(({ subjectId, author }) => [author.id, subjectId]),
   )
+
+/** public figure id → on how many distinct subjects these statements make her speak */
+export const subjectsByFigure = (statements: readonly SubjectVoice[]): Map<string, number> =>
+  subjectsByAuthorOf('public_figure', statements)
+
+/** organisation id → on how many distinct subjects these statements make it speak */
+export const subjectsByOrganisation = (statements: readonly SubjectVoice[]): Map<string, number> =>
+  subjectsByAuthorOf('organisation', statements)
 
 /** What `lately` counts for a subject or an author; nothing when it does not name it */
 export const spokenLatelyOn = (lately: ReadonlyMap<string, number>, counted: { id: string }) =>

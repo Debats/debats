@@ -18,7 +18,7 @@ export default function FigureShelf({
 }) {
   return (
     <Shelf
-      title="Personnalités"
+      title="Personnalités les plus actives"
       total={figures.total}
       more={{ href: FIGURES_HREF, label: 'Toutes les personnalités' }}
       listClassName={styles.faces}

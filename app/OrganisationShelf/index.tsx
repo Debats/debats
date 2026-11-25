@@ -4,7 +4,7 @@ import { ORGANISATIONS_HREF } from '../../domain/read-models/hrefs'
 import { OrganisationSummary } from '../../domain/read-models/organisation-summary'
 import Shelf from '../Shelf'
 
-/** Le rayon des organisations, sur l'accueil : les plus engagées dans le débat public. */
+/** Le rayon des organisations, sur l'accueil : celles qui se sont exprimées sur le plus de sujets ces trente derniers jours. */
 export default function OrganisationShelf({
   organisations,
 }: {
@@ -12,7 +12,7 @@ export default function OrganisationShelf({
 }) {
   return (
     <Shelf
-      title="Organisations"
+      title="Organisations les plus actives"
       total={organisations.total}
       more={{ href: ORGANISATIONS_HREF, label: 'Toutes les organisations' }}
       columnMin={340}

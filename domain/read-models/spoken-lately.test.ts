@@ -3,6 +3,7 @@ import {
   bySpokenLately,
   spokenSince,
   subjectsByFigure,
+  subjectsByOrganisation,
   SubjectVoice,
   voicesBySubject,
 } from './spoken-lately'
@@ -59,6 +60,26 @@ describe('subjectsByFigure', () => {
 
   it('leaves the organisations out', () => {
     expect(subjectsByFigure([spoke(organisation('attac'), 's1')]).size).toBe(0)
+  })
+})
+
+describe('subjectsByOrganisation', () => {
+  it('counts the distinct subjects each organisation spoke on', () => {
+    const subjects = subjectsByOrganisation([
+      spoke(organisation('attac'), 's1'),
+      spoke(organisation('attac'), 's1'),
+      spoke(organisation('attac'), 's2'),
+      spoke(organisation('cgt'), 's1'),
+    ])
+
+    expect(Array.from(subjects.entries())).toEqual([
+      ['attac', 2],
+      ['cgt', 1],
+    ])
+  })
+
+  it('leaves the public figures out', () => {
+    expect(subjectsByOrganisation([spoke(figure('alma'), 's1')]).size).toBe(0)
   })
 })
 

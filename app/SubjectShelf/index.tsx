@@ -8,7 +8,7 @@ import SubjectShelfCard from './SubjectShelfCard'
 export default function SubjectShelf({ subjects }: { subjects: Glimpse<Debate> }) {
   return (
     <Shelf
-      title="Sujets"
+      title="Sujets les plus actifs"
       total={subjects.total}
       more={{ href: SUBJECTS_HREF, label: 'Tous les sujets' }}
       columnMin={280}
