@@ -4,7 +4,6 @@ import ActionLink from '../../components/ui/ActionLink'
 import { debateShares } from '../../domain/read-models/home-debates'
 import { DailySubject as DailySubjectDetail } from '../../domain/read-models/home-page'
 import { subjectHref } from '../../domain/read-models/hrefs'
-import { positionAuthors } from '../../domain/read-models/subject-positions-summary'
 import { plural } from '../../lib/plural'
 import FacingQuote from './FacingQuote'
 import PositionVoices from './PositionVoices'
@@ -12,17 +11,13 @@ import styles from './DailySubject.module.css'
 
 /**
  * Le sujet du jour, en une : sa problématique, comment les voix se
- * répartissent entre ses positions, qui les porte, et les dernières paroles
- * dites pour les deux positions les plus soutenues, face à face.
+ * répartissent entre ses positions, et les dernières paroles dites pour les
+ * deux positions les plus soutenues, face à face.
  */
 export default function DailySubject({ daily }: { daily: DailySubjectDetail }) {
-  const { debate, positions, quotes } = daily
+  const { debate, quotes } = daily
   const shares = debateShares(debate)
   const href = subjectHref(debate.slug)
-  const facesOf = (positionId: string) => {
-    const position = positions.find((summary) => summary.positionId === positionId)
-    return position ? positionAuthors(position) : []
-  }
 
   return (
     <section className={styles.card}>
@@ -44,13 +39,7 @@ export default function DailySubject({ daily }: { daily: DailySubjectDetail }) {
         <ShareStrip shares={shares} size="medium" />
         <ul className={styles.positions}>
           {shares.map((share, rank) => (
-            <PositionVoices
-              key={share.key}
-              rank={rank}
-              share={share}
-              subjectSlug={debate.slug}
-              authors={facesOf(share.key)}
-            />
+            <PositionVoices key={share.key} rank={rank} share={share} subjectSlug={debate.slug} />
           ))}
         </ul>
       </div>

@@ -9,6 +9,7 @@ import ComingSoon from '../ui/ComingSoon'
 import ShareButton from '../ui/ShareButton'
 import { useShareButtonContext } from '../ui/ShareButton/ShareButtonContext'
 import {
+  ANALYSES_HREF,
   ARGUMENTS_HREF,
   JOINT_DECLARATIONS_HREF,
   STATEMENTS_HREF,
@@ -34,6 +35,7 @@ const navEntries: NavEntry[] = [
   { label: 'Déclarations', href: JOINT_DECLARATIONS_HREF },
   { label: 'Arguments', href: ARGUMENTS_HREF },
   { label: 'Prises de position', href: STATEMENTS_HREF },
+  { label: 'Analyses', href: ANALYSES_HREF },
 ]
 
 export default function Header() {

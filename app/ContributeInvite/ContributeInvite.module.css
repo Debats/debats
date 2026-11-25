@@ -1,0 +1,80 @@
+/* L'encart d'encre qui clôt l'accueil : l'appel, puis par où commencer */
+.invite {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 32px 56px;
+  align-items: center;
+  padding: 48px;
+  background-color: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-card);
+}
+
+.pitch {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.kicker {
+  composes: label from '../../styles/text.module.css';
+  color: var(--line-2);
+}
+
+.title {
+  composes: display from '../../styles/text.module.css';
+  color: var(--paper);
+}
+
+.text {
+  composes: body from '../../styles/text.module.css';
+  color: var(--line-2);
+  margin-bottom: 6px;
+}
+
+.ways {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ways > li + li {
+  border-top: 1px solid var(--ink-2);
+}
+
+.way,
+.way:link,
+.way:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 0;
+  color: var(--paper);
+}
+
+.wayTitle {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.wayText {
+  composes: small from '../../styles/text.module.css';
+  color: var(--line-2);
+}
+
+.way:hover .wayTitle {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 900px) {
+  .invite {
+    grid-template-columns: 1fr;
+    padding: 32px 24px;
+  }
+}

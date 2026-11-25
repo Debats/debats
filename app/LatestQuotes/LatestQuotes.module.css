@@ -5,9 +5,19 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /*
+   * Dans un rail à hauteur fixée, la liste prend la place libre et ne montre
+   * que des entrées entières : celle qui ne tient plus passe dans une colonne
+   * suivante, hors du cadre.
+   */
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .entry {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -63,4 +73,11 @@
 .subject:hover,
 .positionLink:hover {
   color: var(--signal);
+}
+
+/* Sur un téléphone, le rail passe sous le sujet du jour : quatre entrées suffisent */
+@media (max-width: 768px) {
+  .entry:nth-child(n + 5) {
+    display: none;
+  }
 }

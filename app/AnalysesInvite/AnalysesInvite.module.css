@@ -1,0 +1,30 @@
+/* Un encart de papier plus soutenu, comme ceux qui closent une page */
+.invite {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 32px 40px;
+  background-color: var(--paper-2);
+  border-radius: var(--radius-card);
+}
+
+.kicker {
+  composes: label from '../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.title {
+  composes: display from '../../styles/text.module.css';
+}
+
+.text {
+  composes: body from '../../styles/text.module.css';
+  max-width: 620px;
+}
+
+@media (max-width: 768px) {
+  .invite {
+    padding: 24px 20px;
+  }
+}

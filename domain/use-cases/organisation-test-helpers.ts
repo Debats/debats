@@ -118,6 +118,7 @@ export function fakePublicFigureRepo(seed: PublicFigure[] = []): PublicFigureRep
     searchByName: () => Effect.succeed(seed),
     getStats: () => Effect.succeed({ publicFigureId: '', subjectsCount: 0, statementsCount: 0 }),
     findSummariesByIds: () => Effect.succeed([]),
+    findMostDocumented: () => Effect.succeed([]),
   }
 }
 

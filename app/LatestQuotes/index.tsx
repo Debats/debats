@@ -1,67 +1,41 @@
-import Link from 'next/link'
-import AuthorAvatar from '../../components/statements/AuthorAvatar'
-import StatementBody from '../../components/statements/StatementBody'
+import RuledSection from '../../components/layout/RuledSection'
+import { LatestEntry } from '../../domain/read-models/home-page'
 import { STATEMENTS_HREF } from '../../domain/read-models/hrefs'
-import { subjectHref } from '../../domain/read-models/hrefs'
-import { authorHref, authorOnSubjectHref } from '../../domain/read-models/statement-author'
-import { StatementWithAuthorAndSubject } from '../../domain/repositories/statement-repository'
-import { formatShortDate } from '../../lib/format-date'
-import HomeSection from '../HomeSection'
 import SignedQuote from './SignedQuote'
+import StatedQuote from './StatedQuote'
 import styles from './LatestQuotes.module.css'
 
 /**
- * Les dernières prises de position du site, dans le rail de l'accueil : qui,
- * sur quel sujet, ce qui a été dit ou fait, pour quelle position.
+ * Les dernières prises de position du site, dans le rail de l'accueil : ce
+ * que chacun·e a dit ou fait, et les textes signés à plusieurs, une entrée
+ * par texte.
  */
-export default function LatestQuotes({ entries }: { entries: StatementWithAuthorAndSubject[] }) {
+export default function LatestQuotes({ entries }: { entries: LatestEntry[] }) {
   if (entries.length === 0) return null
 
   return (
-    <HomeSection
+    <RuledSection
       title="Dernières prises de position"
       more={{ href: STATEMENTS_HREF, label: 'Tout le flux' }}
     >
       <ol className={styles.list}>
-        {entries.map(({ statement, author, position, subject }) =>
-          statement.jointDeclaration ? (
+        {entries.map((latest) =>
+          latest.kind === 'signatures' ? (
             <SignedQuote
-              key={statement.id}
-              author={author}
-              declaration={statement.jointDeclaration}
-              source={{ name: statement.sourceName, statedAt: statement.statedAt }}
+              key={latest.declaration.id}
+              declaration={latest.declaration}
+              source={{
+                name: latest.first.statement.sourceName,
+                statedAt: latest.first.statement.statedAt,
+              }}
+              named={latest.named}
+              others={latest.others}
             />
           ) : (
-            <li key={statement.id} className={styles.entry}>
-              <p className={styles.meta}>
-                {formatShortDate(statement.statedAt)} · {statement.sourceName}
-              </p>
-              <div className={styles.who}>
-                <AuthorAvatar author={author} size={36} />
-                <p className={styles.line}>
-                  <Link href={authorHref(author)} className={styles.name}>
-                    {author.name}
-                  </Link>{' '}
-                  sur{' '}
-                  <Link href={subjectHref(subject.slug)} className={styles.subject}>
-                    {subject.title}
-                  </Link>
-                </p>
-              </div>
-              <StatementBody content={statement.content} />
-              <p className={styles.position}>
-                pour{' '}
-                <Link
-                  href={authorOnSubjectHref(author, subject.slug)}
-                  className={styles.positionLink}
-                >
-                  {position.title}
-                </Link>
-              </p>
-            </li>
+            <StatedQuote key={latest.entry.statement.id} entry={latest.entry} />
           ),
         )}
       </ol>
-    </HomeSection>
+    </RuledSection>
   )
 }

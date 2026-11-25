@@ -30,7 +30,7 @@ export interface Debate {
   positions: DebatePosition[]
 }
 
-/** A theme as the map of debates names it */
+/** A theme as the card of a subject names it */
 export interface DebateTheme {
   name: string
   slug: string
@@ -47,7 +47,7 @@ export interface DebateShare {
   share: number
 }
 
-/** The site's content, counted: the figures at the foot of the home page */
+/** The site's content, counted: what the home page heads its sections with, and the analyses close on */
 export interface SiteFigures {
   subjects: number
   positions: number
@@ -70,7 +70,7 @@ const comparable = (debate: Debate): boolean => debate.voices >= MIN_VOICES_TO_C
 
 /**
  * How far back the home page looks for what was just added. The page words it
- * « cette semaine » (`app/MovingDebates`): the two change together.
+ * « cette semaine » (`app/analyses/MovingDebates`): the two change together.
  */
 const RECENT_DAYS = 7
 
@@ -114,55 +114,20 @@ export function debateShares(debate: Debate): DebateShare[] {
 export const leadingPositions = (debate: Debate): DebatePosition[] =>
   heldPositions(debate).slice(0, 2)
 
-/** A theme on the map of debates: its most spoken-on subjects, and how many it holds in all */
-export interface ThemeDebates {
-  theme: DebateTheme
-  debates: Debate[]
-  subjectsCount: number
-}
-
-/** The map of debates: the themes it draws, and the ones it only names */
-export interface DebateMap {
-  themes: ThemeDebates[]
-  others: Array<Pick<ThemeDebates, 'theme' | 'subjectsCount'>>
-}
-
 /**
- * The map of debates: subjects grouped under their first theme, the themes
- * holding the most subjects first. As many themes as asked are drawn with
- * their most spoken-on subjects; the others are named with their count, so
- * no theme is hidden for want of room. A subject without a theme has no
- * place on a map by theme.
+ * The subjects the most voices spoke on: the ones the home page opens its
+ * subjects with. The subject it already details above is left out, so the
+ * page never shows a subject twice.
  */
-export function debateMap(
+export const mostSpokenDebates = (
   debates: readonly Debate[],
-  room: { themes: number; subjectsPerTheme: number },
-): DebateMap {
-  const groups = new Map<string, { theme: DebateTheme; debates: Debate[] }>()
-  for (const debate of debates) {
-    if (debate.theme === null) continue
-    const group = groups.get(debate.theme.slug) ?? { theme: debate.theme, debates: [] }
-    group.debates.push(debate)
-    groups.set(debate.theme.slug, group)
-  }
-
-  const ranked = Array.from(groups.values())
-    .map(({ theme, debates: held }) => ({
-      theme,
-      subjectsCount: held.length,
-      debates: [...held]
-        .sort((a, b) => b.voices - a.voices || a.title.localeCompare(b.title, 'fr'))
-        .slice(0, room.subjectsPerTheme),
-    }))
-    .sort(
-      (a, b) => b.subjectsCount - a.subjectsCount || a.theme.name.localeCompare(b.theme.name, 'fr'),
-    )
-
-  return {
-    themes: ranked.slice(0, room.themes),
-    others: ranked.slice(room.themes).map(({ theme, subjectsCount }) => ({ theme, subjectsCount })),
-  }
-}
+  limit: number,
+  detailed: Debate | null,
+): Debate[] =>
+  debates
+    .filter((debate) => debate.voices > 0 && debate.id !== detailed?.id)
+    .sort((a, b) => b.voices - a.voices || a.title.localeCompare(b.title, 'fr'))
+    .slice(0, limit)
 
 /** The subjects statements were just added to, the busiest first, then the most spoken on */
 export const movingDebates = (debates: readonly Debate[], limit: number): Debate[] =>
@@ -219,7 +184,3 @@ export function debateLeanings(debates: readonly Debate[], limit: number): Debat
   const settled = ranked.slice(split.length).reverse().slice(0, limit)
   return { split, settled }
 }
-
-/** The subjects opened last, newest first */
-export const newestDebates = (debates: readonly Debate[], limit: number): Debate[] =>
-  [...debates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit)

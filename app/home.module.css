@@ -1,18 +1,81 @@
-/* Le rythme vertical entre les blocs de l'accueil : aucun bloc ne sait lequel le précède */
-.blocks {
-  display: flex;
-  flex-direction: column;
-  gap: 56px;
+/* Le sujet du jour et, à sa droite, le rail des dernières prises de position */
+.lead {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-gutter);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.daily {
+  grid-column: span 8;
+  min-width: 0;
 }
 
 /*
- * Ce qui clôt la page, sur toute la largeur, après la colonne et son rail :
- * la marge est ici et non sous la colonne, pour que le rail, qui descend
- * jusqu'au bas de la colonne, ne vienne pas buter contre ce qui suit.
+ * Le rail prend la hauteur du sujet du jour, ni plus ni moins : son contenu
+ * est sorti du flux, c'est la carte voisine qui fixe la hauteur de la rangée.
+ * Sans sujet du jour, il garde de quoi montrer quelques prises de position.
  */
-.foot {
+.rail {
+  grid-column: span 4;
+  position: relative;
+  min-height: 480px;
+}
+
+.railFrame {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  gap: 72px;
-  margin-top: 72px;
+}
+
+/* La section du rail remplit le cadre : sa liste s'arrête où le cadre s'arrête */
+.railFrame > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/*
+ * Les rayons de l'accueil, sur toute la largeur, sous le sujet du jour et son
+ * rail : aucun ne sait lequel le précède, le rythme vertical est ici.
+ */
+.shelves {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 64px auto 0;
+  padding: 0 var(--container-gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+@media (max-width: 768px) {
+  .lead {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 0 var(--container-gutter-mobile);
+  }
+
+  .daily,
+  .rail {
+    grid-column: span 1;
+  }
+
+  /* L'un sous l'autre, le rail retrouve sa propre hauteur */
+  .rail {
+    min-height: 0;
+  }
+
+  .railFrame {
+    position: static;
+  }
+
+  .shelves {
+    margin-top: 48px;
+    padding: 0 var(--container-gutter-mobile);
+    gap: 48px;
+  }
 }

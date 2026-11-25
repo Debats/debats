@@ -1,0 +1,46 @@
+.card,
+.card:link,
+.card:visited {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 24px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  transition: box-shadow 0.15s ease;
+}
+
+.card:hover {
+  color: var(--ink);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.theme {
+  composes: label from '../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  text-wrap: pretty;
+}
+
+/* La problématique prend la hauteur libre : les barres s'alignent d'une carte à l'autre */
+.problem {
+  flex: 1 1 auto;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.counts {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
+}

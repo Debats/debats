@@ -1,0 +1,22 @@
+.chapter {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  /* Une ancre ne glisse ni sous l'en-tête collant ni sous la barre d'ancres */
+  scroll-margin-top: 140px;
+}
+
+/* Un chapitre sans bloc à montrer ne laisse pas un titre seul */
+.chapter:has(.blocks:empty) {
+  display: none;
+}
+
+.title {
+  composes: displayLarge from '../../../styles/text.module.css';
+}
+
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}

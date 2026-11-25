@@ -6,6 +6,7 @@ import {
   ARGUMENTS_HREF,
   CONTRIBUTE_HREF,
   JOINT_DECLARATIONS_HREF,
+  REVIEW_QUEUE_HREF,
 } from '../../domain/read-models/hrefs'
 import styles from './footer.module.css'
 
@@ -120,6 +121,7 @@ export default async function Footer() {
             title="Participer"
             links={[
               { href: CONTRIBUTE_HREF, label: 'Contribuer' },
+              { href: REVIEW_QUEUE_HREF, label: 'Revue' },
               { href: '/guide', label: "Mode d'emploi" },
               { href: '/reputation', label: 'Réputation' },
               { href: '/contact', label: 'Contact' },

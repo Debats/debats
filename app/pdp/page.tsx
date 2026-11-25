@@ -14,14 +14,11 @@ import {
   parseFeedParams,
 } from '../../domain/read-models/statement-feed'
 import { roleOf, rolesByFigure } from '../../domain/read-models/author-role'
-import { subjectHref } from '../../domain/read-models/hrefs'
-import { authorOnSubjectHref } from '../../domain/read-models/statement-author'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
 import ReadingGuide from '../../components/layout/ReadingGuide'
 import ReviewScope from '../../components/review/ReviewScope'
-import DatedStatement from '../../components/statements/DatedStatement'
-import SignedDeclaration from '../../components/statements/SignedDeclaration'
+import FeedEntry from '../../components/statements/FeedEntry'
 import Button from '../../components/ui/Button'
 import { plural } from '../../lib/plural'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
@@ -147,36 +144,14 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
         ) : (
           <ReviewScope {...review}>
             <div className={styles.card}>
-              {feed.entries.map(({ statement, author, position, subject, arguments: used }) =>
-                statement.jointDeclaration ? (
-                  <SignedDeclaration
-                    key={statement.id}
-                    author={author}
-                    role={roleOf(author, roles)}
-                    declaration={statement.jointDeclaration}
-                    source={{
-                      name: statement.sourceName,
-                      url: statement.sourceUrl,
-                      statedAt: statement.statedAt,
-                    }}
-                    touch={order === 'touched' ? lastTouch(statement) : undefined}
-                  />
-                ) : (
-                  <DatedStatement
-                    key={statement.id}
-                    author={author}
-                    role={roleOf(author, roles)}
-                    position={{
-                      title: position.title,
-                      href: authorOnSubjectHref(author, subject.slug),
-                    }}
-                    subject={{ title: subject.title, href: subjectHref(subject.slug) }}
-                    statement={statement}
-                    touch={order === 'touched' ? lastTouch(statement) : undefined}
-                    arguments={used}
-                  />
-                ),
-              )}
+              {feed.entries.map((entry) => (
+                <FeedEntry
+                  key={entry.statement.id}
+                  entry={entry}
+                  role={roleOf(entry.author, roles)}
+                  touch={order === 'touched' ? lastTouch(entry.statement) : undefined}
+                />
+              ))}
             </div>
           </ReviewScope>
         )}

@@ -110,6 +110,21 @@
   gap: 12px;
 }
 
+/* Sept entrées sur un écran d'ordinateur portable : le menu se resserre avant de déborder */
+@media (max-width: 1300px) and (min-width: 1025px) {
+  .container {
+    gap: 24px;
+  }
+
+  .nav {
+    gap: 14px;
+  }
+
+  .navLink {
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 1024px) {
   .container {
     flex-wrap: wrap;

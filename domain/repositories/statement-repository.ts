@@ -61,14 +61,14 @@ export interface StatementRepository {
   ): Effect.Effect<StatementWithAuthor[], DatabaseError>
 
   /**
-   * A statement nobody has confirmed nor flagged yet, the last added first,
-   * never one the viewer added herself; `skip` passes over as many, to ask
-   * for another. Null when every statement has been reviewed.
+   * A page of the statements nobody has confirmed nor flagged yet, the last
+   * added first, never one the viewer added herself, with how many there are
+   * in all. Past the end of the queue, the page is empty and counts none.
    */
-  findOneToReview(
+  findToReview(
     viewerId: string | null,
-    skip: number,
-  ): Effect.Effect<StatementWithAuthorAndSubject | null, DatabaseError>
+    page: { limit: number; offset: number },
+  ): Effect.Effect<FeedPage, DatabaseError>
 
   /**
    * The last statement of a position that carries words (a declaration or a

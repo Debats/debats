@@ -17,11 +17,13 @@ import { createJointDeclarationRepository } from '../infra/database/joint-declar
 import {
   argumentHref,
   figureHref,
+  ANALYSES_HREF,
   ARGUMENTS_HREF,
   JOINT_DECLARATIONS_HREF,
   jointDeclarationHref,
   occupationFamilyHref,
   organisationHref,
+  REVIEW_QUEUE_HREF,
   STATEMENTS_HREF,
   subjectHref,
   themeHref,
@@ -71,6 +73,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}${JOINT_DECLARATIONS_HREF}`,
       changeFrequency: 'weekly',
       priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}${ANALYSES_HREF}`,
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}${REVIEW_QUEUE_HREF}`,
+      changeFrequency: 'daily',
+      priority: 0.5,
     },
     {
       url: `${BASE_URL}/metiers`,

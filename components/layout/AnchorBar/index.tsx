@@ -4,7 +4,8 @@ export interface AnchorBarItem {
   /** L'identifiant de la section visée dans la page */
   anchor: string
   label: string
-  count: number
+  /** Combien la section en compte, quand elle se compte */
+  count?: number
 }
 
 interface AnchorBarProps {
@@ -12,7 +13,7 @@ interface AnchorBarProps {
   ariaLabel: string
 }
 
-/** Barre collée sous l'en-tête d'un index : une pilule par section de la page. */
+/** Barre collée sous l'en-tête d'une longue page : une pilule par section. */
 export default function AnchorBar({ items, ariaLabel }: AnchorBarProps) {
   return (
     <nav className={styles.bar} aria-label={ariaLabel}>
@@ -20,7 +21,7 @@ export default function AnchorBar({ items, ariaLabel }: AnchorBarProps) {
         {items.map((item) => (
           <a key={item.anchor} href={`#${item.anchor}`} className={styles.pill}>
             {item.label}
-            <span className={styles.count}>{item.count}</span>
+            {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
           </a>
         ))}
       </div>

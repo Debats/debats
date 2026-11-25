@@ -37,6 +37,7 @@ const fakePublicFigureRepo = {
   findSummariesByCreatedAt: () => Effect.succeed([]),
   findSummaryById: () => Effect.succeed(null),
   findSummariesByIds: () => Effect.succeed([]),
+  findMostDocumented: () => Effect.succeed([]),
   findIndexEntries: () => Effect.succeed([]),
   findAllIds: () => Effect.succeed([]),
 } as unknown as PublicFigureRepository

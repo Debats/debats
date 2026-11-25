@@ -1,0 +1,18 @@
+/* Les chapitres, l'un sous l'autre sur toute la largeur : aucun ne sait lequel le précède */
+.chapters {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 48px auto 0;
+  padding: 0 var(--container-gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 88px;
+}
+
+@media (max-width: 768px) {
+  .chapters {
+    margin-top: 32px;
+    padding: 0 var(--container-gutter-mobile);
+    gap: 64px;
+  }
+}

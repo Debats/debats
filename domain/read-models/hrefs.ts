@@ -23,8 +23,14 @@ export const FIGURES_HREF = '/p'
 /** A public figure's page */
 export const figureHref = (slug: string): string => `${FIGURES_HREF}/${slug}`
 
+/** The index of every organisation */
+export const ORGANISATIONS_HREF = '/o'
+
 /** An organisation's page */
-export const organisationHref = (slug: string): string => `/o/${slug}`
+export const organisationHref = (slug: string): string => `${ORGANISATIONS_HREF}/${slug}`
+
+/** The analyses of the whole site: what is compared across subjects, figures and organisations */
+export const ANALYSES_HREF = '/analyses'
 
 /** A theme's page */
 export const themeHref = (slug: string): string => `/themes/${slug}`
@@ -92,6 +98,9 @@ export const takeJointPositionHref = (declaration: { slug: string }): string =>
 
 /** Where a visitor learns how to contribute, and signs in to do it */
 export const CONTRIBUTE_HREF = '/contribuer'
+
+/** The queue of the statements nobody reviewed yet */
+export const REVIEW_QUEUE_HREF = '/revue'
 
 /** The form that adds a statement, the subject already chosen */
 export const newStatementOnSubjectHref = (subject: { id: string; title: string }): string =>

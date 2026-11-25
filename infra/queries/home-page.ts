@@ -5,49 +5,40 @@ import {
   dailyDebate,
   Debate,
   leadingPositions,
-  movingDebates,
+  mostSpokenDebates,
   recentSince,
 } from '../../domain/read-models/home-debates'
 import {
-  DAILY_FACES,
   DailySubject,
+  HOME_LATEST_STATEMENTS,
+  HOME_SHELVES,
   HomePage,
-  MOVING_DEBATES,
-  MovingDebate,
 } from '../../domain/read-models/home-page'
-import { publicFigureRef } from '../../domain/read-models/statement-author'
+import {
+  declarationIdsIn,
+  gatherSignatures,
+  signatureOfFeedEntry,
+  SIGNATURES_WINDOW,
+} from '../../domain/read-models/gathered-signatures'
+import { orderByEngagement } from '../../domain/read-models/organisation-summary'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { StatementRepository } from '../../domain/repositories/statement-repository'
-import { SubjectRepository } from '../../domain/repositories/subject-repository'
+import { createOrganisationRepository } from '../database/organisation-repository-supabase'
+import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createStatementRepository } from '../database/statement-repository-supabase'
-import { createSubjectRepository } from '../database/subject-repository-supabase'
-import { loadFigureAgreements } from './figure-agreements'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
-import { loadMovedStatements } from './position-changes'
-import { findJudgedPairs } from './position-judgements'
-import { getSubjectPositionsSummary } from './subject-positions-summary'
+import { loadLatestJointDeclarations, loadSignatories } from './joint-declarations'
 
 type Client = SupabaseClient<Database>
-
-/** How many of the site's last statements the rail shows */
-const LATEST_STATEMENTS = 4
-
-/**
- * How many pairs of figures to read. The page shows each figure once, so the
- * few it shows are picked among many more: the first pairs all share the same
- * two or three most present figures.
- */
-const PAIR_CANDIDATES = 40
 
 const unbounded = { concurrency: 'unbounded' } as const
 
 /**
- * The subject of the day in detail: the faces behind each position, and the
- * last words said for its two leading ones. A leading position that only
- * holds votes has nothing to quote, and is simply not quoted.
+ * The subject of the day in detail: the last words said for its two leading
+ * positions. A leading position that only holds votes has nothing to quote,
+ * and is simply not quoted.
  */
 const loadDailySubject = (
-  supabase: Client,
   statements: StatementRepository,
   debate: Debate | null,
 ): Effect.Effect<DailySubject | null, DatabaseError> =>
@@ -55,99 +46,70 @@ const loadDailySubject = (
     ? Effect.succeed(null)
     : pipe(
         Effect.all(
-          {
-            positions: getSubjectPositionsSummary(supabase, debate.id, {
-              authorsLimit: DAILY_FACES,
-            }),
-            quotes: Effect.all(
-              leadingPositions(debate).map((position) =>
-                statements.findLatestQuotedByPositionId(position.id),
-              ),
-              unbounded,
-            ),
-          },
+          leadingPositions(debate).map((position) =>
+            statements.findLatestQuotedByPositionId(position.id),
+          ),
           unbounded,
         ),
-        Effect.map(({ positions, quotes }) => ({
-          debate,
-          positions,
-          quotes: quotes.filter((quote) => quote !== null),
-        })),
+        Effect.map((quotes) => ({ debate, quotes: quotes.filter((quote) => quote !== null) })),
       )
 
 /**
- * The moving subjects with the first faces of who spoke on each: the public
- * figures the subject card already shows, read for all of them at once.
- */
-const loadMovingDebates = (
-  subjects: SubjectRepository,
-  debates: Debate[],
-): Effect.Effect<MovingDebate[], DatabaseError> =>
-  pipe(
-    subjects.findSummariesByIds(debates.map((debate) => debate.id)),
-    Effect.map((summaries) =>
-      debates.map((debate) => ({
-        debate,
-        faces: (summaries.find((summary) => summary.id === debate.id)?.figures ?? []).map(
-          publicFigureRef,
-        ),
-      })),
-    ),
-  )
-
-/**
- * Everything the home page shows, as one Effect the page runs once: the
- * figures, the debates and the last statements together, then what depends on
- * those debates — the detail of the subject the day picked, the faces of the
- * subjects that move. `now` is the instant the page renders at: it names the
- * day and where « recent » starts. `reviewer` is who looks, null for a
- * visitor, and how many unreviewed statements she asked to pass over.
+ * Everything the home page shows, as one Effect the page runs once: what the
+ * four shelves are cut from and the last statements together, then the detail
+ * of the subject the day picked and who signed the texts the last
+ * statements sign. `now` is the instant the page renders at: it
+ * names the day.
  */
 export const loadHomePage = (
   supabase: Client,
   now: Date,
-  reviewer: { id: string | null; skip: number },
 ): Effect.Effect<HomePage, DatabaseError> => {
   const statements = createStatementRepository(supabase)
-  const subjects = createSubjectRepository(supabase)
   return pipe(
     Effect.all(
       {
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
-        feed: statements.findFeed({}, 'stated', { limit: LATEST_STATEMENTS, offset: 0 }),
-        agreements: loadFigureAgreements(supabase, PAIR_CANDIDATES),
-        movedStatements: loadMovedStatements(supabase),
-        toReview: statements.findOneToReview(reviewer.id, reviewer.skip),
+        feed: statements.findFeed({}, 'stated', { limit: SIGNATURES_WINDOW, offset: 0 }),
+        publicFigures: createPublicFigureRepository(supabase).findMostDocumented(
+          HOME_SHELVES.publicFigures,
+        ),
+        organisations: createOrganisationRepository(supabase).findSummaries(),
+        declarations: loadLatestJointDeclarations(supabase, HOME_SHELVES.declarations),
       },
       unbounded,
     ),
-    Effect.flatMap(({ figures, debates, feed, agreements, movedStatements, toReview }) =>
-      pipe(
+    Effect.flatMap(({ figures, debates, feed, publicFigures, organisations, declarations }) => {
+      const picked = dailyDebate(debates, now)
+      return pipe(
         Effect.all(
-          {
-            daily: loadDailySubject(supabase, statements, dailyDebate(debates, now)),
-            moving: loadMovingDebates(subjects, movingDebates(debates, MOVING_DEBATES)),
-            // Two positions judged compatible are held together: taking the second is no change
-            judged: findJudgedPairs(
-              supabase,
-              movedStatements.map(({ subject }) => subject.id),
-            ),
-          },
+          [
+            loadDailySubject(statements, picked),
+            loadSignatories(supabase, declarationIdsIn(feed.entries, signatureOfFeedEntry)),
+          ],
           unbounded,
         ),
-        Effect.map(({ daily, moving, judged }) => ({
-          figures,
-          debates,
+        Effect.map(([daily, signatories]) => ({
           daily,
-          moving,
-          agreements,
-          movedStatements,
-          judged,
-          toReview,
-          latest: feed.entries,
+          latest: gatherSignatures(
+            feed.entries,
+            signatureOfFeedEntry,
+            signatories,
+            HOME_LATEST_STATEMENTS,
+          ),
+          subjects: {
+            shown: mostSpokenDebates(debates, HOME_SHELVES.subjects, picked),
+            total: figures.subjects,
+          },
+          publicFigures: { shown: publicFigures, total: figures.publicFigures },
+          organisations: {
+            shown: orderByEngagement(organisations).slice(0, HOME_SHELVES.organisations),
+            total: organisations.length,
+          },
+          declarations,
         })),
-      ),
-    ),
+      )
+    }),
   )
 }

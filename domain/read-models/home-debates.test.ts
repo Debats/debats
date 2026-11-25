@@ -3,13 +3,12 @@ import {
   dailyDebate,
   Debate,
   debateLeanings,
-  debateMap,
   debateShares,
   leadingPositions,
   leadOf,
   MIN_VOICES_TO_COMPARE,
+  mostSpokenDebates,
   movingDebates,
-  newestDebates,
   recentSince,
 } from './home-debates'
 
@@ -145,64 +144,28 @@ describe('recentSince', () => {
   })
 })
 
-describe('newestDebates', () => {
-  it('lists the subjects opened last, newest first, up to the limit', () => {
-    const debates = [
-      debate('old', { createdAt: new Date('2026-10-01T00:00:00Z') }),
-      debate('new', { createdAt: new Date('2026-11-12T00:00:00Z') }),
-      debate('mid', { createdAt: new Date('2026-11-04T00:00:00Z') }),
-    ]
+describe('mostSpokenDebates', () => {
+  it('lists the subjects the most voices spoke on, up to the limit', () => {
+    const debates = [debate('some', { voices: 12 }), debate('most', { voices: 400 }), debate('few')]
 
-    expect(newestDebates(debates, 2).map((d) => d.id)).toEqual(['new', 'mid'])
-  })
-})
-
-describe('debateMap', () => {
-  const economy = { name: 'Économie', slug: 'economie' }
-  const health = { name: 'Santé', slug: 'sante' }
-  const housing = { name: 'Logement', slug: 'logement' }
-  const on = (id: string, theme: Debate['theme'], voices = 10) => debate(id, { theme, voices })
-
-  it('groups the subjects under their first theme, the theme with most subjects first', () => {
-    const map = debateMap([on('h1', health), on('e1', economy), on('e2', economy)], {
-      themes: 2,
-      subjectsPerTheme: 2,
-    })
-
-    expect(map.themes.map((entry) => [entry.theme.slug, entry.subjectsCount])).toEqual([
-      ['economie', 2],
-      ['sante', 1],
-    ])
+    expect(mostSpokenDebates(debates, 2, null).map((d) => d.id)).toEqual(['most', 'some'])
   })
 
-  it('shows under each theme the subjects most voices spoke on, and still counts the others', () => {
-    const map = debateMap(
-      [on('small', economy, 3), on('big', economy, 40), on('mid', economy, 12)],
-      { themes: 1, subjectsPerTheme: 2 },
-    )
+  it('leaves out the subject the page already details, and shows the next one instead', () => {
+    const daily = debate('daily', { voices: 400 })
+    const debates = [daily, debate('second', { voices: 40 }), debate('third', { voices: 20 })]
 
-    expect(map.themes[0].debates.map((d) => d.id)).toEqual(['big', 'mid'])
-    expect(map.themes[0].subjectsCount).toBe(3)
+    expect(mostSpokenDebates(debates, 2, daily).map((d) => d.id)).toEqual(['second', 'third'])
   })
 
-  it('names the themes it has no room to draw, with how many subjects each holds', () => {
-    const map = debateMap(
-      [on('e1', economy), on('e2', economy), on('h1', health), on('l1', housing)],
-      { themes: 1, subjectsPerTheme: 2 },
-    )
+  it('names subjects as spoken on in the order of their titles', () => {
+    const debates = [debate('b', { title: 'Le nucléaire' }), debate('a', { title: 'L’A69' })]
 
-    expect(map.themes.map((entry) => entry.theme.slug)).toEqual(['economie'])
-    expect(map.others).toEqual([
-      { theme: housing, subjectsCount: 1 },
-      { theme: health, subjectsCount: 1 },
-    ])
+    expect(mostSpokenDebates(debates, 2, null).map((d) => d.id)).toEqual(['a', 'b'])
   })
 
-  it('leaves a subject without a theme off the map', () => {
-    const map = debateMap([on('free', null), on('e1', economy)], { themes: 3, subjectsPerTheme: 2 })
-
-    expect(map.themes.flatMap((entry) => entry.debates.map((d) => d.id))).toEqual(['e1'])
-    expect(map.others).toEqual([])
+  it('never shows a subject nobody spoke on', () => {
+    expect(mostSpokenDebates([debate('empty', { voices: 0 })], 3, null)).toEqual([])
   })
 })
 

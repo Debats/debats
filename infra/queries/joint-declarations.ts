@@ -206,51 +206,109 @@ interface IndexRow {
   joint_declaration_signatories: SignatoryJoin[]
 }
 
-/** Every joint declaration of the site, with the subjects it engages and who signed it */
-export function loadJointDeclarationIndex(
+/** The joint declarations, newest first — all of them, or the first few — and how many there are in all */
+const fetchTexts = (
   supabase: SupabaseClient<Database>,
-): Effect.Effect<JointDeclarationSummary[], DatabaseError> {
-  const texts = Effect.tryPromise({
+  limit?: number,
+): Effect.Effect<{ rows: IndexRow[]; total: number }, DatabaseError> =>
+  Effect.tryPromise({
     try: async () => {
-      const { data, error } = await supabase
+      const newestFirst = supabase
         .from('joint_declarations')
-        .select(INDEX_QUERY)
+        .select(INDEX_QUERY, { count: 'exact' })
         .order('declared_at', { ascending: false })
+      const { data, error, count } = await (limit === undefined
+        ? newestFirst
+        : newestFirst.limit(limit))
 
       if (error) throw error
-      return data as IndexRow[]
+      const rows = data as IndexRow[]
+      return { rows, total: count ?? rows.length }
     },
     catch: (error) => databaseError('Failed to fetch the joint declarations', error),
   })
 
-  return Effect.flatMap(texts, (rows) =>
+/** The texts as an index or a shelf shows them, their signatories from the most documented to the least */
+const summarised = (
+  supabase: SupabaseClient<Database>,
+  rows: IndexRow[],
+): Effect.Effect<JointDeclarationSummary[], DatabaseError> =>
+  Effect.map(
+    loadDocumentedSubjects(
+      supabase,
+      rows.flatMap((row) => signatoriesOf(row.joint_declaration_signatories)),
+    ),
+    (documented) =>
+      rows.map(
+        (row): JointDeclarationSummary => ({
+          id: row.id,
+          title: row.title,
+          slug: row.slug,
+          ...(row.presentation ? { presentation: row.presentation } : {}),
+          declaredAt: new Date(row.declared_at),
+          subjects: [...row.joint_declaration_positions]
+            .sort((a, b) => a.rank - b.rank)
+            .filter((taken) => !taken.subjects.deleted_at)
+            .map((taken) => ({ title: taken.subjects.title, slug: taken.subjects.slug }))
+            // A text may take several positions on a subject: the subject is named once
+            .filter(
+              (subject, index, subjects) =>
+                subjects.findIndex((other) => other.slug === subject.slug) === index,
+            ),
+          signatories: mostDocumentedFirst(
+            signatoriesOf(row.joint_declaration_signatories),
+            documented,
+          ),
+        }),
+      ),
+  )
+
+/** Every joint declaration of the site, with the subjects it engages and who signed it */
+export const loadJointDeclarationIndex = (
+  supabase: SupabaseClient<Database>,
+): Effect.Effect<JointDeclarationSummary[], DatabaseError> =>
+  Effect.flatMap(fetchTexts(supabase), ({ rows }) => summarised(supabase, rows))
+
+/** The latest joint declarations, and how many the site holds: what a page that only opens the index reads */
+export const loadLatestJointDeclarations = (
+  supabase: SupabaseClient<Database>,
+  limit: number,
+): Effect.Effect<{ shown: JointDeclarationSummary[]; total: number }, DatabaseError> =>
+  Effect.flatMap(fetchTexts(supabase, limit), ({ rows, total }) =>
+    Effect.map(summarised(supabase, rows), (shown) => ({ shown, total })),
+  )
+
+/**
+ * Who signed each of these joint declarations, from the most documented on
+ * the site to the least: declaration id → its signatories
+ */
+export const loadSignatories = (
+  supabase: SupabaseClient<Database>,
+  declarationIds: readonly string[],
+): Effect.Effect<Map<string, StatementAuthorRef[]>, DatabaseError> => {
+  if (declarationIds.length === 0) return Effect.succeed(new Map())
+  const signed = Effect.tryPromise({
+    try: async () => {
+      const { data, error } = await supabase
+        .from('joint_declarations')
+        .select(`id, ${SIGNATORIES_EMBED}`)
+        .in('id', [...declarationIds])
+      if (error) throw error
+      return (data as { id: string; joint_declaration_signatories: SignatoryJoin[] }[]).map(
+        (row) => ({ id: row.id, signatories: signatoriesOf(row.joint_declaration_signatories) }),
+      )
+    },
+    catch: (error) => databaseError('Failed to fetch the signatories of joint declarations', error),
+  })
+  return Effect.flatMap(signed, (texts) =>
     Effect.map(
       loadDocumentedSubjects(
         supabase,
-        rows.flatMap((row) => signatoriesOf(row.joint_declaration_signatories)),
+        texts.flatMap(({ signatories }) => signatories),
       ),
       (documented) =>
-        rows.map(
-          (row): JointDeclarationSummary => ({
-            id: row.id,
-            title: row.title,
-            slug: row.slug,
-            ...(row.presentation ? { presentation: row.presentation } : {}),
-            declaredAt: new Date(row.declared_at),
-            subjects: [...row.joint_declaration_positions]
-              .sort((a, b) => a.rank - b.rank)
-              .filter((taken) => !taken.subjects.deleted_at)
-              .map((taken) => ({ title: taken.subjects.title, slug: taken.subjects.slug }))
-              // A text may take several positions on a subject: the subject is named once
-              .filter(
-                (subject, index, subjects) =>
-                  subjects.findIndex((other) => other.slug === subject.slug) === index,
-              ),
-            signatories: mostDocumentedFirst(
-              signatoriesOf(row.joint_declaration_signatories),
-              documented,
-            ),
-          }),
+        new Map(
+          texts.map(({ id, signatories }) => [id, mostDocumentedFirst(signatories, documented)]),
         ),
     ),
   )

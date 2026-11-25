@@ -1,0 +1,14 @@
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--shelf-column), 100%), 1fr));
+  gap: 20px;
+}
+
+/* La carte remplit sa case : celles d'une rangée gardent la même hauteur */
+.cell {
+  display: grid;
+  min-width: 0;
+}

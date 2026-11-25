@@ -23,6 +23,12 @@ export interface PublicFigureRepository {
 
   /** The activity summaries of these figures, by name */
   findSummariesByIds(ids: string[]): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
+
+  /**
+   * The figures documented on the most subjects, then by the most statements,
+   * then by name: the first of them, without reading the others
+   */
+  findMostDocumented(limit: number): Effect.Effect<PublicFigureActivitySummary[], DatabaseError>
 }
 
 export const PublicFigureRepository =

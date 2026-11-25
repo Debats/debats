@@ -1,0 +1,19 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  background-color: var(--card);
+  border-radius: var(--radius-card);
+}
+
+.label {
+  composes: label from '../../../../styles/text.module.css';
+  color: var(--ink-2);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+}

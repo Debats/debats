@@ -1893,6 +1893,13 @@ export type Database = {
         Args: { p_skip?: number; p_viewer?: string | null }
         Returns: string | null
       }
+      get_statements_to_review: {
+        Args: { p_limit?: number; p_offset?: number; p_viewer?: string | null }
+        Returns: {
+          id: string
+          total: number
+        }[]
+      }
       get_site_figures: {
         Args: never
         Returns: {

@@ -34,12 +34,12 @@
   color: var(--ink-2);
 }
 
-.publicFigureText strong {
+.name {
   font-weight: 600;
-  color: var(--ink);
 }
 
-.publicFigureText em {
+.publicFigureText em,
+.declaration {
   font-style: italic;
   color: var(--ink);
 }

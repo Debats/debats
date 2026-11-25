@@ -1,0 +1,52 @@
+.faces {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* Seize visages : deux rangées de huit, quatre de quatre, jamais de rangée entamée */
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 28px 16px;
+}
+
+@media (max-width: 1024px) {
+  .faces {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Sur un téléphone, huit visages suffisent : quatre rangées de deux */
+@media (max-width: 560px) {
+  .faces {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .faces > li:nth-child(n + 9) {
+    display: none;
+  }
+}
+
+.face,
+.face:link,
+.face:visited {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.name {
+  margin-top: 6px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.face:hover .name {
+  color: var(--signal);
+}
+
+.subjects {
+  composes: meta from '../../styles/text.module.css';
+  color: var(--ink-2);
+}

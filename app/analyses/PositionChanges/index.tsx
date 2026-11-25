@@ -1,0 +1,23 @@
+import RuledSection from '../../../components/layout/RuledSection'
+import { PositionChange } from '../../../domain/read-models/position-changes'
+import PositionChangeCard from './PositionChangeCard'
+import styles from './PositionChanges.module.css'
+
+/**
+ * Elle, il a changé de position : les derniers changements que le site a
+ * relevés, la position quittée et la position prise, chacune datée. Sans
+ * changement à montrer, le bloc ne se montre pas.
+ */
+export default function PositionChanges({ changes }: { changes: PositionChange[] }) {
+  if (changes.length === 0) return null
+
+  return (
+    <RuledSection nested title="Elle, il a changé de position">
+      <ul className={styles.cards}>
+        {changes.map((change) => (
+          <PositionChangeCard key={`${change.figure.id}-${change.subject.id}`} change={change} />
+        ))}
+      </ul>
+    </RuledSection>
+  )
+}

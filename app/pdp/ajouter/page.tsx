@@ -4,7 +4,7 @@ import { Effect } from 'effect'
 import { notFound, redirect } from 'next/navigation'
 import { getAuthenticatedContributor } from '../../actions/get-authenticated-contributor'
 import { canPerform, getRank } from '../../../domain/reputation/permissions'
-import { subjectHref } from '../../../domain/read-models/hrefs'
+import { CONTRIBUTE_HREF, subjectHref } from '../../../domain/read-models/hrefs'
 import { createAdminSupabaseClient } from '../../../infra/supabase/admin'
 import { createSubjectRepository } from '../../../infra/database/subject-repository-supabase'
 import { loadJointDeclarationPage } from '../../../infra/queries/joint-declarations'
@@ -35,7 +35,8 @@ export default async function NouvellePositionPage({ searchParams }: PageProps) 
   const contributor = await getAuthenticatedContributor()
 
   if (!contributor) {
-    redirect('/')
+    // A visitor learns there how to contribute, and signs in to do it
+    redirect(CONTRIBUTE_HREF)
   }
 
   const params = await searchParams

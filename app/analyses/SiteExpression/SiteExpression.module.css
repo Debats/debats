@@ -1,0 +1,5 @@
+.note {
+  composes: small from '../../../styles/text.module.css';
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}

@@ -395,30 +395,38 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch statements with authors for position', error),
       }),
 
-    findOneToReview: (viewerId: string | null, skip: number) =>
+    findToReview: (viewerId: string | null, page: { limit: number; offset: number }) =>
       Effect.tryPromise({
         try: async () => {
-          // The function picks which statement; the feed query then reads it as any other
-          const picked = await supabase.rpc('get_statement_to_review', {
+          // The function picks which statements and counts them; the feed query then reads them as any other
+          const picked = await supabase.rpc('get_statements_to_review', {
             p_viewer: viewerId,
-            p_skip: skip,
+            p_limit: page.limit,
+            p_offset: page.offset,
           })
           if (picked.error) throw picked.error
-          if (!picked.data) return null
+          const queued = picked.data as { id: string; total: number }[]
+          if (queued.length === 0) return { entries: [], total: 0 }
 
+          const ids = queued.map(({ id }) => id)
           const { data, error } = await supabase
             .from('statements')
             .select(feedQuery(undefined))
-            .eq('id', picked.data)
-            .maybeSingle()
+            .in('id', ids)
           if (error) throw error
-          return data
-            ? mapStatementWithAuthorAndSubjectRow(
-                data as unknown as StatementWithAuthorAndSubjectRow,
-              )
-            : null
+          const entries = (data as unknown as StatementWithAuthorAndSubjectRow[]).map(
+            mapStatementWithAuthorAndSubjectRow,
+          )
+          // The second read comes back in no order: the queue's is restored
+          const rank = new Map(ids.map((id, index) => [id, index]))
+          return {
+            entries: entries.sort(
+              (a, b) => (rank.get(a.statement.id) ?? 0) - (rank.get(b.statement.id) ?? 0),
+            ),
+            total: Number(queued[0].total),
+          }
         },
-        catch: (error) => dbError('Failed to fetch a statement to review', error),
+        catch: (error) => dbError('Failed to fetch the statements to review', error),
       }),
 
     findLatestQuotedByPositionId: (positionId: string) =>
