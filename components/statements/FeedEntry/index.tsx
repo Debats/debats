@@ -1,47 +1,52 @@
-import { subjectHref } from '../../../domain/read-models/hrefs'
-import { authorOnSubjectHref } from '../../../domain/read-models/statement-author'
+import { roleOf } from '../../../domain/read-models/author-role'
+import { FeedEntry as Entry } from '../../../domain/read-models/feed-entries'
 import { StatementTouch } from '../../../domain/read-models/statement-feed'
 import { StatementWithAuthorAndSubject } from '../../../domain/repositories/statement-repository'
-import DatedStatement from '../DatedStatement'
-import SignedDeclaration from '../SignedDeclaration'
+import FeedStatement from '../FeedStatement'
+import SignedByMany from '../SignedByMany'
 
 interface FeedEntryProps {
-  entry: StatementWithAuthorAndSubject
-  /** Le métier ou la fonction de l'auteur·rice, quand la liste le connaît */
-  role?: string
-  /** Donné quand la liste se lit par dernière modification */
-  touch?: StatementTouch
+  entry: Entry
+  /** Les métiers et fonctions des personnalités de la liste, quand elle les connaît */
+  roles?: Map<string, string>
+  /** Donné quand la liste se lit par dernière modification : ce qui a touché chaque prise de position */
+  touchOf?: (entry: StatementWithAuthorAndSubject) => StatementTouch
 }
 
 /**
- * Une entrée d'une liste de prises de position de tout le site : la signature
- * d'une déclaration commune se lit comme telle, toute autre prise de position
- * avec sa position et son sujet.
+ * Une entrée du flux, dans la page qui le liste en entier. Les signatures
+ * d'un texte tiennent en une ligne ; ce qu'un·e auteur·rice a dit ou fait le
+ * même jour reste détaillé, chaque prise de position avec sa source et ce
+ * qui permet de la relire.
  */
-export default function FeedEntry({ entry, role, touch }: FeedEntryProps) {
-  const { statement, author, position, subject, arguments: used } = entry
+export default function FeedEntry({ entry, roles, touchOf }: FeedEntryProps) {
+  if (entry.kind === 'signatures') {
+    const { statement } = entry.first
+    return (
+      <SignedByMany
+        declaration={entry.declaration}
+        source={{
+          name: statement.sourceName,
+          url: statement.sourceUrl,
+          statedAt: statement.statedAt,
+        }}
+        named={entry.named}
+        others={entry.others}
+      />
+    )
+  }
 
-  return statement.jointDeclaration ? (
-    <SignedDeclaration
-      author={author}
-      role={role}
-      declaration={statement.jointDeclaration}
-      source={{
-        name: statement.sourceName,
-        url: statement.sourceUrl,
-        statedAt: statement.statedAt,
-      }}
-      touch={touch}
-    />
-  ) : (
-    <DatedStatement
-      author={author}
-      role={role}
-      position={{ title: position.title, href: authorOnSubjectHref(author, subject.slug) }}
-      subject={{ title: subject.title, href: subjectHref(subject.slug) }}
-      statement={statement}
-      touch={touch}
-      arguments={used}
-    />
+  const statements = entry.kind === 'sameDay' ? entry.entries : [entry.entry]
+  return (
+    <>
+      {statements.map((stated) => (
+        <FeedStatement
+          key={stated.statement.id}
+          entry={stated}
+          role={roles && roleOf(stated.author, roles)}
+          touch={touchOf?.(stated)}
+        />
+      ))}
+    </>
   )
 }

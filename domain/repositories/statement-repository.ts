@@ -5,7 +5,8 @@ import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { ArgumentRef } from '../read-models/argument'
-import { FeedFilters, FeedOrder } from '../read-models/statement-feed'
+import { FeedEntriesPage, FeedRanking } from '../read-models/feed-entries'
+import { FeedFilters } from '../read-models/statement-feed'
 
 export class DatabaseError extends Error {
   readonly _tag = 'DatabaseError'
@@ -140,14 +141,16 @@ export interface StatementRepository {
   findIdsBySubjectId(subjectId: string): Effect.Effect<string[], DatabaseError>
 
   /**
-   * The live statements of the whole site, narrowed and paged: newest stated
-   * first, or last touched first
+   * The feed of the whole site, narrowed, ranked and paged by entries: the
+   * signatures of one joint declaration make one entry, and so does what one
+   * author said or did the same day (`read-models/feed-entries.ts`). The one
+   * reading of the last statements of the site: rails and feed page alike.
    */
   findFeed(
     filters: FeedFilters,
-    order: FeedOrder,
+    ranking: FeedRanking,
     page: { limit: number; offset: number },
-  ): Effect.Effect<FeedPage, DatabaseError>
+  ): Effect.Effect<FeedEntriesPage, DatabaseError>
 
   /** The first and last days an opinion was stated on a subject; null without any */
   findStatedSpanBySubjectId(subjectId: string): Effect.Effect<StatedSpan | null, DatabaseError>
@@ -175,14 +178,10 @@ export interface StatementRepository {
   findIdsByArgumentId(argumentId: string): Effect.Effect<string[], DatabaseError>
 
   /**
-   * Get the N most recent statements by date
+   * The last statements made on one subject, newest stated first. Across the
+   * site, the last statements are read from the feed (`findFeed`).
    */
-  findLatest(limit: number, subjectId?: string): Effect.Effect<LatestStatement[], DatabaseError>
-
-  /**
-   * Get the N most recently reported statements by created_at date
-   */
-  findLatestReported(limit: number): Effect.Effect<LatestStatement[], DatabaseError>
+  findLatest(limit: number, subjectId: string): Effect.Effect<LatestStatement[], DatabaseError>
 }
 
 export const StatementRepository = Context.GenericTag<StatementRepository>('StatementRepository')

@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import Link from 'next/link'
 import { JointDeclarationRef } from '../../../domain/entities/joint-declaration'
-import { nameSeparator, signedTail } from '../../../domain/read-models/gathered-signatures'
+import { nameSeparator, signedTail } from '../../../domain/read-models/feed-entries'
 import { jointDeclarationHref } from '../../../domain/read-models/hrefs'
 import { authorHref, StatementAuthorRef } from '../../../domain/read-models/statement-author'
 

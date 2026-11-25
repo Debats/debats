@@ -14,12 +14,6 @@ import {
   HOME_SHELVES,
   HomePage,
 } from '../../domain/read-models/home-page'
-import {
-  declarationIdsIn,
-  gatherSignatures,
-  signatureOfFeedEntry,
-  SIGNATURES_WINDOW,
-} from '../../domain/read-models/gathered-signatures'
 import { orderByEngagement } from '../../domain/read-models/organisation-summary'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { StatementRepository } from '../../domain/repositories/statement-repository'
@@ -27,7 +21,7 @@ import { createOrganisationRepository } from '../database/organisation-repositor
 import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createStatementRepository } from '../database/statement-repository-supabase'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
-import { loadLatestJointDeclarations, loadSignatories } from './joint-declarations'
+import { loadLatestJointDeclarations } from './joint-declarations'
 
 type Client = SupabaseClient<Database>
 
@@ -57,9 +51,8 @@ const loadDailySubject = (
 /**
  * Everything the home page shows, as one Effect the page runs once: what the
  * four shelves are cut from and the last statements together, then the detail
- * of the subject the day picked and who signed the texts the last
- * statements sign. `now` is the instant the page renders at: it
- * names the day.
+ * of the subject the day picked. `now` is the instant the page renders at:
+ * it names the day.
  */
 export const loadHomePage = (
   supabase: Client,
@@ -71,7 +64,7 @@ export const loadHomePage = (
       {
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
-        feed: statements.findFeed({}, 'stated', { limit: SIGNATURES_WINDOW, offset: 0 }),
+        feed: statements.findFeed({}, 'stated', { limit: HOME_LATEST_STATEMENTS, offset: 0 }),
         publicFigures: createPublicFigureRepository(supabase).findMostDocumented(
           HOME_SHELVES.publicFigures,
         ),
@@ -83,21 +76,10 @@ export const loadHomePage = (
     Effect.flatMap(({ figures, debates, feed, publicFigures, organisations, declarations }) => {
       const picked = dailyDebate(debates, now)
       return pipe(
-        Effect.all(
-          [
-            loadDailySubject(statements, picked),
-            loadSignatories(supabase, declarationIdsIn(feed.entries, signatureOfFeedEntry)),
-          ],
-          unbounded,
-        ),
-        Effect.map(([daily, signatories]) => ({
+        loadDailySubject(statements, picked),
+        Effect.map((daily) => ({
           daily,
-          latest: gatherSignatures(
-            feed.entries,
-            signatureOfFeedEntry,
-            signatories,
-            HOME_LATEST_STATEMENTS,
-          ),
+          latest: feed.entries,
           subjects: {
             shown: mostSpokenDebates(debates, HOME_SHELVES.subjects, picked),
             total: figures.subjects,

@@ -13,7 +13,7 @@ import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
 import ReadingGuide from '../../components/layout/ReadingGuide'
 import ReviewScope from '../../components/review/ReviewScope'
-import FeedEntry from '../../components/statements/FeedEntry'
+import FeedStatement from '../../components/statements/FeedStatement'
 import Button from '../../components/ui/Button'
 import { plural } from '../../lib/plural'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
@@ -92,7 +92,7 @@ export default async function ReviewQueuePage({ searchParams }: PageProps) {
           <ReviewScope marks={{}} viewer={viewerOf(contributor)}>
             <div className={styles.card}>
               {queue.entries.map((entry) => (
-                <FeedEntry key={entry.statement.id} entry={entry} />
+                <FeedStatement key={entry.statement.id} entry={entry} />
               ))}
             </div>
           </ReviewScope>

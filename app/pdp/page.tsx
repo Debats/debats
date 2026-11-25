@@ -13,7 +13,8 @@ import {
   lastTouch,
   parseFeedParams,
 } from '../../domain/read-models/statement-feed'
-import { roleOf, rolesByFigure } from '../../domain/read-models/author-role'
+import { rolesByFigure } from '../../domain/read-models/author-role'
+import { leadOf, statementsOf } from '../../domain/read-models/feed-entries'
 import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
 import ReadingGuide from '../../components/layout/ReadingGuide'
@@ -69,8 +70,10 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
     Effect.runPromise(createSubjectRepository(supabase).findSummariesByActivity(ACTIVE_SUBJECTS)),
     Effect.runPromise(loadJointDeclarationIndex(supabase)),
   ])
+  // The statements the page shows whole: the signatures of a text are told in one line
+  const shown = statementsOf(feed.entries)
   const figureIds = Array.from(
-    new Set(feed.entries.filter((e) => e.author.kind === 'public_figure').map((e) => e.author.id)),
+    new Set(shown.filter((e) => e.author.kind === 'public_figure').map((e) => e.author.id)),
   )
   const roles = rolesByFigure(
     await Effect.runPromise(
@@ -80,7 +83,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
   const review = await reviewOf(
     supabase,
     await getAuthenticatedContributor(),
-    feed.entries.map(({ statement }) => statement.id),
+    shown.map(({ statement }) => statement.id),
   )
   const shownUpTo = Math.min(page * FEED_PAGE_SIZE, feed.total)
   const hasMore = shownUpTo < feed.total
@@ -93,9 +96,9 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
         intro={introOf(order)}
         aside={
           <p className={styles.count}>
-            <span className={styles.countNumber}>{feed.total}</span>
+            <span className={styles.countNumber}>{feed.statements}</span>
             <span className={styles.countLabel}>
-              {plural(feed.total, 'prise de position', 'prises de position')}
+              {plural(feed.statements, 'prise de position', 'prises de position')}
             </span>
           </p>
         }
@@ -146,10 +149,12 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
             <div className={styles.card}>
               {feed.entries.map((entry) => (
                 <FeedEntry
-                  key={entry.statement.id}
+                  key={leadOf(entry).statement.id}
                   entry={entry}
-                  role={roleOf(entry.author, roles)}
-                  touch={order === 'touched' ? lastTouch(entry.statement) : undefined}
+                  roles={roles}
+                  touchOf={
+                    order === 'touched' ? ({ statement }) => lastTouch(statement) : undefined
+                  }
                 />
               ))}
             </div>

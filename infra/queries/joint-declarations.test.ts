@@ -17,6 +17,7 @@ import {
   organisationAuthor,
   publicFigureAuthor,
 } from '../../domain/entities/statement'
+import { leadOf } from '../../domain/read-models/feed-entries'
 import { createJointDeclarationRepository } from '../database/joint-declaration-repository-supabase'
 import { createStatementRepository } from '../database/statement-repository-supabase'
 import { runUnitOfWork } from '../events/unit-of-work'
@@ -146,7 +147,7 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     await prisma().$disconnect()
   })
 
-  it('narrows the feed to the signatures of the text, each naming it', async () => {
+  it('narrows the feed to the text: one entry for its signatures, naming it and who signed', async () => {
     const feed = await Effect.runPromise(
       createStatementRepository(supabase).findFeed({ jointDeclarationSlug: slug }, 'stated', {
         limit: 20,
@@ -154,10 +155,17 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
       }),
     )
 
-    expect(feed.total).toBe(1)
-    expect(feed.entries.map(({ statement }) => [statement.id, statement.jointDeclaration])).toEqual(
-      [[statementId, { id: declarationId, title: `Appel de test ${tag}`, slug }]],
-    )
+    expect(feed).toMatchObject({ total: 1, statements: 1 })
+    expect(feed.entries).toEqual([
+      expect.objectContaining({
+        kind: 'signatures',
+        declaration: { id: declarationId, title: `Appel de test ${tag}`, slug },
+        first: expect.objectContaining({ statement: expect.objectContaining({ id: statementId }) }),
+        others: 0,
+      }),
+    ])
+    const [entry] = feed.entries
+    expect(entry.kind === 'signatures' && entry.named.map(({ id }) => id)).toContain(figure.id)
   })
 
   it('names the text on the statement a subject page features, when it is a signature', async () => {
@@ -275,8 +283,8 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     const feed = await Effect.runPromise(
       statements.findFeed({ jointDeclarationSlug: slug }, 'stated', { limit: 20, offset: 0 }),
     )
-    expect(feed.total).toBe(1)
-    expect(feed.entries.map(({ statement }) => statement.id)).toEqual([statementId])
+    expect(feed).toMatchObject({ total: 1, statements: 1 })
+    expect(leadOf(feed.entries[0]).statement.id).toBe(statementId)
 
     const made = await Effect.runPromise(
       statements.findSignatureIds(declarationId, publicFigureAuthor(figure.id)),
@@ -355,7 +363,7 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
         { limit: 20, offset: 0 },
       ),
     )
-    expect(feed).toEqual({ entries: [], total: 0 })
+    expect(feed).toEqual({ entries: [], total: 0, statements: 0 })
   })
 
   it('reads the page of a text: what it takes position on, and who signed it, the most documented first', async () => {

@@ -1,11 +1,8 @@
-import {
-  StatementWithAuthor,
-  StatementWithAuthorAndSubject,
-} from '../repositories/statement-repository'
+import { StatementWithAuthor } from '../repositories/statement-repository'
 import { PublicFigureActivitySummary } from '../value-objects/public-figure-activity-summary'
 import { Debate } from './home-debates'
 import { JointDeclarationSummary } from './joint-declaration'
-import { Gathered } from './gathered-signatures'
+import { FeedEntry } from './feed-entries'
 import { OrganisationSummary } from './organisation-summary'
 
 /**
@@ -26,9 +23,6 @@ export const HOME_SHELVES = {
  */
 export const HOME_LATEST_STATEMENTS = 12
 
-/** An entry of the rail: a statement of an author's own, or the signatures of one text, gathered */
-export type LatestEntry = Gathered<StatementWithAuthorAndSubject>
-
 /** The subject of the day as the home page details it */
 export interface DailySubject {
   debate: Debate
@@ -47,7 +41,7 @@ export interface HomePage {
   /** Null while no subject has gathered enough voices */
   daily: DailySubject | null
   /** The last statements of the whole site, newest stated first, the signatures of a text gathered */
-  latest: LatestEntry[]
+  latest: FeedEntry[]
   /** The subjects the most voices spoke on, without the subject of the day */
   subjects: Shelf<Debate>
   /** The public figures the site documents on the most subjects */

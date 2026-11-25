@@ -38,8 +38,7 @@
   font-weight: 600;
 }
 
-.publicFigureText em,
-.declaration {
+.position {
   font-style: italic;
   color: var(--ink);
 }

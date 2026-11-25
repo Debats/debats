@@ -1889,6 +1889,24 @@ export type Database = {
           subject_title: string
         }[]
       }
+      get_feed_entries: {
+        Args: {
+          p_author_kind?: string
+          p_declaration_slug?: string
+          p_limit?: number
+          p_offset?: number
+          p_order?: string
+          p_statement_type?: Database['public']['Enums']['statement_type']
+          p_theme_slug?: string
+        }
+        Returns: {
+          declaration_id: string | null
+          size: number
+          statement_ids: string[]
+          statements: number
+          total: number
+        }[]
+      }
       get_statement_to_review: {
         Args: { p_skip?: number; p_viewer?: string | null }
         Returns: string | null

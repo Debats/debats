@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
-import { Effect, Option } from 'effect'
+import { Effect, Option, pipe } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../types/database.types'
 import {
@@ -11,7 +11,9 @@ import {
 } from '../../domain/entities/statement'
 import { LatestStatement } from '../../domain/read-models/latest-statement'
 import { ArgumentRef } from '../../domain/read-models/argument'
-import { FeedOrder } from '../../domain/read-models/statement-feed'
+import { feedEntriesOf } from '../../domain/read-models/feed-entries'
+import { loadSignatories } from '../queries/joint-declarations'
+import { fetchInChunks } from './in-chunks'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import {
   organisationRef,
@@ -179,49 +181,24 @@ interface StatementWithAuthorAndSubjectRow extends StatementWithAuthorRow {
   positions: PositionRow & { subjects: SubjectRow }
 }
 
-/** What narrowing a feed query needs from the builder, whatever it selects */
-interface FeedQueryBuilder {
-  is(column: string, value: null): this
-  not(column: string, operator: string, value: null): this
-  eq(column: string, value: string): this
-}
-
 /**
- * The feed query: every live statement with its author, position, subject
- * and arguments (none required). Filtering by theme joins the subject's
- * themes, which only then narrows to subjects that have one.
+ * A statement as a list of the whole site shows it: with its author, its
+ * position, its subject and its arguments (none required). Which statements a
+ * list holds, and in which order, is for a function of the database to say
+ * (`get_feed_entries`, `get_statements_to_review`).
  */
-const feedQuery = (themeSlug: string | undefined) => `
+const FEED_QUERY = `
   ${STATEMENT_COLUMNS},
   positions!inner (
     id, title, slug, description, subject_id, created_by, created_at, updated_at, deleted_at,
     subjects!inner (
       id, title, slug, presentation, problem, picture_url, created_by, created_at, updated_at, deleted_at
-      ${themeSlug ? ', subject_themes!inner (themes!inner (slug))' : ''}
     )
   ),
   public_figures (id, name, slug),
   organisations (id, name, slug, acronym),
   ${ARGUMENTS_EMBED}
 `
-
-/**
- * What the feed lists: the statements, a signature of a joint declaration
- * counted once whatever the number of positions the text takes (the view of
- * migration 20261122130000). The entry of a signature says who signed which
- * text, so the one statement that stands for it only lends its day.
- */
-const FEED_SOURCE = 'feed_statements'
-
-/**
- * The columns each order of the feed reads, the second settling the ties of
- * the first: many statements share a stated day, and a merge touches several
- * statements at the same instant, so paging needs an order that never wavers.
- */
-const FEED_ORDER_COLUMNS: Record<FeedOrder, readonly [string, string]> = {
-  stated: ['stated_at', 'created_at'],
-  touched: ['updated_at', 'id'],
-}
 
 function mapStatementWithAuthorAndSubjectRow(
   row: StatementWithAuthorAndSubjectRow,
@@ -247,43 +224,27 @@ const LATEST_STATEMENT_QUERY = `
     )
   ),
   public_figures (id, name, slug),
-  organisations (id, name, slug, acronym),
-  joint_declarations (id, title, slug)
+  organisations (id, name, slug, acronym)
 `
 
 interface LatestStatementRow {
   id: string
   stated_at: string
-  created_at: string | null
   source_name: string
   positions: { title: string; slug: string; subjects: { title: string; slug: string } }
   public_figures: FigureJoin | null
   organisations: OrganisationJoin | null
-  joint_declarations: JointDeclarationJoin | null
 }
 
-/**
- * `standsFor` says what a row born of a signature stands for: the whole
- * signature across the site, where it is one entry, or the one statement the
- * signatory holds on the subject whose rail it is read on.
- */
-function mapLatestStatementRow(
-  row: LatestStatementRow,
-  datedBy: 'stated_at' | 'created_at',
-  standsFor: 'signature' | 'statement',
-): LatestStatement {
-  const date = datedBy === 'stated_at' ? row.stated_at : row.created_at
+function mapLatestStatementRow(row: LatestStatementRow): LatestStatement {
   return {
-    ...(standsFor === 'signature' && row.joint_declarations
-      ? { jointDeclaration: row.joint_declarations }
-      : {}),
     statementId: row.id,
     author: toAuthorRef(row.public_figures, row.organisations),
     positionTitle: row.positions.title,
     positionSlug: row.positions.slug,
     subjectTitle: row.positions.subjects.title,
     subjectSlug: row.positions.subjects.slug,
-    statedAt: date ? new Date(date) : new Date(),
+    statedAt: new Date(row.stated_at),
     sourceName: row.source_name,
   }
 }
@@ -313,18 +274,24 @@ function mapStatementWithDetailsRow(row: StatementWithDetailsRow): StatementWith
   }
 }
 
-/** The id of the joint declaration that bears a slug; null when none does */
-async function jointDeclarationIdOf(
+/**
+ * These statements as a list of the whole site shows them — author, position,
+ * subject, arguments —, in the order their ids are given: a function of the
+ * database picked and ranked them, a second read comes back in no order.
+ */
+async function readFeedStatements(
   supabase: SupabaseClient<Database>,
-  slug: string,
-): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('joint_declarations')
-    .select('id')
-    .eq('slug', slug)
-    .maybeSingle()
-  if (error) throw error
-  return data?.id ?? null
+  ids: readonly string[],
+): Promise<StatementWithAuthorAndSubject[]> {
+  const rows = await fetchInChunks([...ids], async (chunk) => {
+    const { data, error } = await supabase.from('statements').select(FEED_QUERY).in('id', chunk)
+    if (error) throw error
+    return data as unknown as StatementWithAuthorAndSubjectRow[]
+  })
+  const rank = new Map(ids.map((id, index) => [id, index]))
+  return rows
+    .map(mapStatementWithAuthorAndSubjectRow)
+    .sort((a, b) => (rank.get(a.statement.id) ?? 0) - (rank.get(b.statement.id) ?? 0))
 }
 
 export function createStatementRepository(supabase: SupabaseClient<Database>): StatementRepository {
@@ -408,20 +375,10 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
           const queued = picked.data as { id: string; total: number }[]
           if (queued.length === 0) return { entries: [], total: 0 }
 
-          const ids = queued.map(({ id }) => id)
-          const { data, error } = await supabase
-            .from('statements')
-            .select(feedQuery(undefined))
-            .in('id', ids)
-          if (error) throw error
-          const entries = (data as unknown as StatementWithAuthorAndSubjectRow[]).map(
-            mapStatementWithAuthorAndSubjectRow,
-          )
-          // The second read comes back in no order: the queue's is restored
-          const rank = new Map(ids.map((id, index) => [id, index]))
           return {
-            entries: entries.sort(
-              (a, b) => (rank.get(a.statement.id) ?? 0) - (rank.get(b.statement.id) ?? 0),
+            entries: await readFeedStatements(
+              supabase,
+              queued.map(({ id }) => id),
             ),
             total: Number(queued[0].total),
           }
@@ -596,55 +553,53 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch the statement ids of a subject', error),
       }),
 
-    findFeed: (filters, order, page) =>
-      Effect.tryPromise({
-        try: async () => {
-          // A joint declaration is named by its slug in the address, by its id on a statement
-          const declarationId = filters.jointDeclarationSlug
-            ? await jointDeclarationIdOf(supabase, filters.jointDeclarationSlug)
-            : undefined
-          // A slug no text bears narrows to nothing, rather than to everything
-          if (declarationId === null) return { entries: [], total: 0 }
-          // The same narrowing for the count and for the page
-          const narrowed = <Q extends FeedQueryBuilder>(query: Q): Q => {
-            let q = query
-              .is('deleted_at', null)
-              .is('positions.deleted_at', null)
-              .is('positions.subjects.deleted_at', null)
-            if (declarationId) q = q.eq('joint_declaration_id', declarationId)
-            if (filters.authorKind === 'public_figure') q = q.not('public_figure_id', 'is', null)
-            if (filters.authorKind === 'organisation') q = q.not('organisation_id', 'is', null)
-            if (filters.statementType) q = q.eq('statement_type', filters.statementType)
-            if (filters.themeSlug) {
-              q = q.eq('positions.subjects.subject_themes.themes.slug', filters.themeSlug)
+    findFeed: (filters, ranking, page) =>
+      pipe(
+        Effect.tryPromise({
+          try: async () => {
+            // The function narrows, gathers, ranks and pages the entries; their statements are then read
+            const { data, error } = await supabase.rpc('get_feed_entries', {
+              p_order: ranking,
+              p_limit: page.limit,
+              p_offset: page.offset,
+              p_author_kind: filters.authorKind,
+              p_theme_slug: filters.themeSlug,
+              p_statement_type: filters.statementType,
+              p_declaration_slug: filters.jointDeclarationSlug,
+            })
+            if (error) throw error
+            const listed = data.map((row) => ({
+              declarationId: row.declaration_id,
+              statementIds: row.statement_ids,
+              size: Number(row.size),
+            }))
+            return {
+              listed,
+              statements: await readFeedStatements(
+                supabase,
+                listed.flatMap(({ statementIds }) => statementIds),
+              ),
+              // Past the last page nothing is listed, and nothing says how much the feed holds
+              total: Number(data[0]?.total ?? 0),
+              gathered: Number(data[0]?.statements ?? 0),
             }
-            return q
-          }
-          const counted = await narrowed(
-            supabase
-              .from(FEED_SOURCE)
-              .select(feedQuery(filters.themeSlug), { count: 'exact', head: true }),
-          )
-          if (counted.error) throw counted.error
-          const total = counted.count ?? 0
-          // PostgREST refuses a range past the end: a page beyond the last one is simply empty
-          if (page.offset >= total) return { entries: [], total }
-          const { data, error } = await narrowed(
-            supabase.from(FEED_SOURCE).select(feedQuery(filters.themeSlug)),
-          )
-            .order(FEED_ORDER_COLUMNS[order][0], { ascending: false })
-            .order(FEED_ORDER_COLUMNS[order][1], { ascending: false })
-            .range(page.offset, page.offset + page.limit - 1)
-          if (error) throw error
-          return {
-            entries: (data as unknown as StatementWithAuthorAndSubjectRow[]).map(
-              mapStatementWithAuthorAndSubjectRow,
+          },
+          catch: (error) => dbError('Failed to fetch the statements feed', error),
+        }),
+        Effect.flatMap(({ listed, statements, total, gathered }) =>
+          Effect.map(
+            loadSignatories(
+              supabase,
+              listed.flatMap(({ declarationId }) => declarationId ?? []),
             ),
-            total,
-          }
-        },
-        catch: (error) => dbError('Failed to fetch the statements feed', error),
-      }),
+            (signatories) => ({
+              entries: feedEntriesOf(listed, statements, signatories, filters.authorKind),
+              total,
+              statements: gathered,
+            }),
+          ),
+        ),
+      ),
 
     findSignatureId: (jointDeclarationId, author, positionId) =>
       Effect.tryPromise({
@@ -718,53 +673,22 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch the statement ids of an argument', error),
       }),
 
-    findLatest: (limit: number, subjectId?: string) =>
+    findLatest: (limit: number, subjectId: string) =>
       Effect.tryPromise({
         try: async () => {
-          /*
-           * Across the site a signature counts once, as in the feed; on one
-           * subject it is the statement the signatory holds there, whichever
-           * of the signature's statements stands for it elsewhere.
-           */
-          const { data, error } = await (subjectId
-            ? supabase
-                .from('statements')
-                .select(LATEST_STATEMENT_QUERY)
-                .is('deleted_at', null)
-                .eq('positions.subject_id', subjectId)
-                .order('stated_at', { ascending: false })
-                .limit(limit)
-            : supabase
-                .from(FEED_SOURCE)
-                .select(LATEST_STATEMENT_QUERY)
-                .is('deleted_at', null)
-                .order('stated_at', { ascending: false })
-                .limit(limit))
-
-          if (error) throw error
-          return (data as unknown as LatestStatementRow[]).map((row) =>
-            mapLatestStatementRow(row, 'stated_at', subjectId ? 'statement' : 'signature'),
-          )
-        },
-        catch: (error) => dbError('Failed to fetch latest statements', error),
-      }),
-
-    findLatestReported: (limit: number) =>
-      Effect.tryPromise({
-        try: async () => {
+          // On one subject, a signature is the statement the signatory holds there
           const { data, error } = await supabase
-            .from(FEED_SOURCE)
+            .from('statements')
             .select(LATEST_STATEMENT_QUERY)
             .is('deleted_at', null)
-            .order('created_at', { ascending: false })
+            .eq('positions.subject_id', subjectId)
+            .order('stated_at', { ascending: false })
             .limit(limit)
 
           if (error) throw error
-          return (data as unknown as LatestStatementRow[]).map((row) =>
-            mapLatestStatementRow(row, 'created_at', 'signature'),
-          )
+          return (data as unknown as LatestStatementRow[]).map(mapLatestStatementRow)
         },
-        catch: (error) => dbError('Failed to fetch latest reported statements', error),
+        catch: (error) => dbError('Failed to fetch latest statements', error),
       }),
   }
 }

@@ -2,69 +2,84 @@ import Link from 'next/link'
 import AuthorAvatar from '../../statements/AuthorAvatar'
 import AuthorAvatarStack from '../../statements/AuthorAvatarStack'
 import SignedTogether from '../../statements/SignedTogether'
+import TookTogether from '../../statements/TookTogether'
 import { formatShortDate } from '../../../lib/format-date'
 import styles from './StatementList.module.css'
-import { Gathered } from '../../../domain/read-models/gathered-signatures'
+import { FeedEntry, leadOf } from '../../../domain/read-models/feed-entries'
 import { subjectHref } from '../../../domain/read-models/hrefs'
-import { LatestStatement } from '../../../domain/read-models/latest-statement'
 import { authorHref, authorOnSubjectHref } from '../../../domain/read-models/statement-author'
 
 interface StatementListProps {
   title: string
-  /** Les prises de position à lister, les signatures d'un même texte réunies en une entrée */
-  entries: Gathered<LatestStatement>[]
+  /** Des entrées du flux : une prise de position, les signatures d'un texte, ou ce qu'un·e auteur·rice a dit le même jour */
+  entries: FeedEntry[]
+  /** Le jour que la liste affiche : celui où la position a été prise, ou celui de son ajout au site */
+  datedBy?: 'stated' | 'added'
 }
 
-export default function StatementList({ title, entries }: StatementListProps) {
+export default function StatementList({ title, entries, datedBy = 'stated' }: StatementListProps) {
   if (entries.length === 0) return null
 
   return (
     <div>
       <h2 className={styles.title}>{title}</h2>
       <ul className={styles.statementsList}>
-        {entries.map((gathered) =>
-          gathered.kind === 'signatures' ? (
-            <li key={gathered.declaration.id} className={styles.statementItem}>
-              <AuthorAvatarStack authors={gathered.named} max={gathered.named.length} size={36} />
+        {entries.map((entry) => {
+          const { statement, author, position, subject } = leadOf(entry)
+          return (
+            <li key={statement.id} className={styles.statementItem}>
+              {entry.kind === 'signatures' ? (
+                <AuthorAvatarStack authors={entry.named} max={entry.named.length} size={36} />
+              ) : (
+                <AuthorAvatar author={author} size={36} />
+              )}
               <div className={styles.statementContent}>
                 <p className={styles.publicFigureText}>
-                  <SignedTogether
-                    declaration={gathered.declaration}
-                    named={gathered.named}
-                    others={gathered.others}
-                    nameClassName={styles.name}
-                    titleClassName={styles.declaration}
-                  />
+                  {entry.kind === 'signatures' && (
+                    <SignedTogether
+                      declaration={entry.declaration}
+                      named={entry.named}
+                      others={entry.others}
+                      nameClassName={styles.name}
+                      titleClassName={styles.position}
+                    />
+                  )}
+                  {entry.kind === 'sameDay' && (
+                    <TookTogether
+                      author={entry.author}
+                      entries={entry.entries}
+                      nameClassName={styles.name}
+                      positionClassName={styles.position}
+                    />
+                  )}
+                  {entry.kind === 'statement' && (
+                    <>
+                      <Link href={authorHref(author)} className={styles.name}>
+                        {author.name}
+                      </Link>{' '}
+                      {author.kind === 'organisation'
+                        ? 'a pris position pour'
+                        : 's’est déclaré·e pour'}{' '}
+                      <Link
+                        href={authorOnSubjectHref(author, subject.slug)}
+                        className={styles.position}
+                      >
+                        {position.title}
+                      </Link>{' '}
+                      dans le débat{' '}
+                      <Link href={subjectHref(subject.slug)} className={styles.name}>
+                        {subject.title}
+                      </Link>
+                    </>
+                  )}
                 </p>
-                <p className={styles.date}>{formatShortDate(gathered.first.statedAt)}</p>
+                <p className={styles.date}>
+                  {formatShortDate(datedBy === 'added' ? statement.createdAt : statement.statedAt)}
+                </p>
               </div>
             </li>
-          ) : (
-            <li key={gathered.entry.statementId} className={styles.statementItem}>
-              <AuthorAvatar author={gathered.entry.author} size={36} />
-              <div className={styles.statementContent}>
-                <p className={styles.publicFigureText}>
-                  <Link href={authorHref(gathered.entry.author)} className={styles.name}>
-                    {gathered.entry.author.name}
-                  </Link>{' '}
-                  {gathered.entry.author.kind === 'organisation'
-                    ? 'a pris position pour'
-                    : 's’est déclaré·e pour'}{' '}
-                  <Link
-                    href={authorOnSubjectHref(gathered.entry.author, gathered.entry.subjectSlug)}
-                  >
-                    <em>{gathered.entry.positionTitle}</em>
-                  </Link>{' '}
-                  dans le débat{' '}
-                  <Link href={subjectHref(gathered.entry.subjectSlug)} className={styles.name}>
-                    {gathered.entry.subjectTitle}
-                  </Link>
-                </p>
-                <p className={styles.date}>{formatShortDate(gathered.entry.statedAt)}</p>
-              </div>
-            </li>
-          ),
-        )}
+          )
+        })}
       </ul>
     </div>
   )
