@@ -1,9 +1,8 @@
 import { Effect } from 'effect'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '../../types/database.types'
-import { voicesBySubject } from '../../domain/read-models/spoken-lately'
+import { SubjectVoice } from '../../domain/read-models/spoken-lately'
 import { DatabaseError } from '../../domain/repositories/errors'
-import { authorKey } from '../../domain/services/author-on-subject'
 import { dayKey } from '../../domain/value-objects/day'
 import { databaseError } from '../database/database-error'
 import { fetchAllRows } from '../database/fetch-all-pages'
@@ -15,7 +14,7 @@ interface VoiceRow {
 }
 
 /** Who a statement gives a voice to, when she is still on the site */
-const liveAuthorOf = (row: VoiceRow): { kind: string; id: string } | null => {
+const liveAuthorOf = (row: VoiceRow): SubjectVoice['author'] | null => {
   if (row.public_figures && row.public_figures.deleted_at === null)
     return { kind: 'public_figure', id: row.public_figures.id }
   if (row.organisations && row.organisations.deleted_at === null)
@@ -24,16 +23,16 @@ const liveAuthorOf = (row: VoiceRow): { kind: string; id: string } | null => {
 }
 
 /**
- * How many voices spoke on each subject since a day: subject id → the
- * distinct live authors of the live statements stated that day or after. A
- * voice is counted as the home page counts it (`get_home_debates`); only the
- * days differ. What the home page and the index of the subjects rank the
- * subjects being spoken on with.
+ * Who spoke on which subject since a day: the live statements stated that day
+ * or after, of live authors, on live subjects — a voice as the home page
+ * counts it (`get_home_debates`); only the days differ. What the home page
+ * and the index of the subjects count the voices and the subjects of late
+ * from (`domain/read-models/spoken-lately.ts`).
  */
-export function loadVoicesSince(
+export function loadSpokenSince(
   supabase: SupabaseClient<Database>,
   since: Date,
-): Effect.Effect<Map<string, number>, DatabaseError> {
+): Effect.Effect<SubjectVoice[], DatabaseError> {
   return Effect.tryPromise({
     try: async () => {
       const rows = await fetchAllRows<VoiceRow>((offset, limit) =>
@@ -53,15 +52,11 @@ export function loadVoicesSince(
           .range(offset, offset + limit - 1)
           .overrideTypes<VoiceRow[], { merge: false }>(),
       )
-      return voicesBySubject(
-        rows.flatMap((row) => {
-          const author = liveAuthorOf(row)
-          return author
-            ? [{ subjectId: row.positions.subject_id, authorKey: authorKey(author) }]
-            : []
-        }),
-      )
+      return rows.flatMap((row) => {
+        const author = liveAuthorOf(row)
+        return author ? [{ subjectId: row.positions.subject_id, author }] : []
+      })
     },
-    catch: (error) => databaseError('Failed to count the voices of late', error),
+    catch: (error) => databaseError('Failed to read who spoke of late', error),
   })
 }

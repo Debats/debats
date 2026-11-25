@@ -193,21 +193,5 @@ export function createPublicFigureRepository(supabase: SupabaseClient): PublicFi
         },
         catch: (error) => dbError('Failed to fetch public figure summaries by ids', error),
       }),
-
-    findMostDocumented: (limit: number) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { data, error } = await supabase
-            .from('v_public_figure_activity_summary')
-            .select('*')
-            .order('subjects_count', { ascending: false })
-            .order('statements_count', { ascending: false })
-            .order('name')
-            .limit(limit)
-          if (error) throw error
-          return (data as ActivitySummaryRow[]).map(mapSummaryRow)
-        },
-        catch: (error) => dbError('Failed to fetch the most documented public figures', error),
-      }),
   }
 }
