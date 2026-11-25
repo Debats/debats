@@ -17,9 +17,9 @@ interface ShelfProps {
 }
 
 /**
- * Un rayon de l'accueil : un titre, combien l'index en compte, le lien qui y
- * mène, et quelques-uns de ses éléments côte à côte. Un rayon qui n'a rien à
- * exposer ne se montre pas.
+ * Un rayon de l'accueil : un titre, le lien vers l'index avec ce qu'il
+ * compte, et quelques-uns de ses éléments côte à côte. Un rayon qui n'a rien
+ * à exposer ne se montre pas.
  */
 export default function Shelf({
   title,
@@ -30,9 +30,11 @@ export default function Shelf({
   children,
 }: ShelfProps) {
   if (Children.count(children) === 0) return null
+  // The count is the index's, not the shelf's: it goes with the link that leads there
+  const toIndex = { href: more.href, label: `${more.label} (${total.toLocaleString('fr-FR')})` }
 
   return (
-    <RuledSection title={title} count={total} more={more} moreInHead>
+    <RuledSection title={title} more={toIndex} moreInHead>
       <ul
         className={listClassName ?? styles.cards}
         style={{ '--shelf-column': `${columnMin}px` } as CSSProperties}
