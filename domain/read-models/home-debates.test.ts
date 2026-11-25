@@ -10,6 +10,8 @@ import {
   mostSpokenDebates,
   movingDebates,
   recentSince,
+  spokenSince,
+  voicesBySubject,
 } from './home-debates'
 
 const debate = (id: string, over: Partial<Debate> = {}): Debate => ({
@@ -144,28 +146,72 @@ describe('recentSince', () => {
   })
 })
 
-describe('mostSpokenDebates', () => {
-  it('lists the subjects the most voices spoke on, up to the limit', () => {
-    const debates = [debate('some', { voices: 12 }), debate('most', { voices: 400 }), debate('few')]
+describe('voicesBySubject', () => {
+  it('counts the distinct authors who spoke on each subject', () => {
+    const voices = voicesBySubject([
+      { subjectId: 's1', authorKey: 'alma' },
+      { subjectId: 's1', authorKey: 'alma' },
+      { subjectId: 's1', authorKey: 'boris' },
+      { subjectId: 's2', authorKey: 'alma' },
+    ])
 
-    expect(mostSpokenDebates(debates, 2, null).map((d) => d.id)).toEqual(['most', 'some'])
+    expect(Array.from(voices.entries())).toEqual([
+      ['s1', 2],
+      ['s2', 1],
+    ])
+  })
+})
+
+describe('spokenSince', () => {
+  it('goes thirty days back from the day the page renders on', () => {
+    expect(spokenSince(noon('2026-11-25'))).toEqual(noon('2026-10-26'))
+  })
+})
+
+describe('mostSpokenDebates', () => {
+  const lately = (voices: Record<string, number>) => new Map(Object.entries(voices))
+
+  it('lists the subjects the most voices spoke on lately, up to the limit', () => {
+    const debates = [debate('some'), debate('most'), debate('few')]
+
+    expect(
+      mostSpokenDebates(debates, lately({ some: 12, most: 40, few: 1 }), 2, null).map((d) => d.id),
+    ).toEqual(['most', 'some'])
+  })
+
+  it('ranks by the voices of late, not by those of all time', () => {
+    const debates = [debate('old', { voices: 400 }), debate('live', { voices: 20 })]
+
+    expect(
+      mostSpokenDebates(debates, lately({ old: 2, live: 15 }), 2, null).map((d) => d.id),
+    ).toEqual(['live', 'old'])
+  })
+
+  it('never shows a subject nobody spoke on lately, however many spoke on it before', () => {
+    expect(mostSpokenDebates([debate('old', { voices: 400 })], lately({}), 3, null)).toEqual([])
   })
 
   it('leaves out the subject the page already details, and shows the next one instead', () => {
-    const daily = debate('daily', { voices: 400 })
-    const debates = [daily, debate('second', { voices: 40 }), debate('third', { voices: 20 })]
+    const daily = debate('daily')
+    const debates = [daily, debate('second'), debate('third')]
 
-    expect(mostSpokenDebates(debates, 2, daily).map((d) => d.id)).toEqual(['second', 'third'])
+    expect(
+      mostSpokenDebates(debates, lately({ daily: 40, second: 9, third: 5 }), 2, daily).map(
+        (d) => d.id,
+      ),
+    ).toEqual(['second', 'third'])
   })
 
-  it('names subjects as spoken on in the order of their titles', () => {
-    const debates = [debate('b', { title: 'Le nucléaire' }), debate('a', { title: 'L’A69' })]
+  it('puts first, of two subjects as spoken on lately, the one more voices spoke on in all, then by title', () => {
+    const debates = [
+      debate('b', { title: 'Le nucléaire', voices: 10 }),
+      debate('a', { title: 'L’A69', voices: 10 }),
+      debate('c', { title: 'Zone à faibles émissions', voices: 90 }),
+    ]
 
-    expect(mostSpokenDebates(debates, 2, null).map((d) => d.id)).toEqual(['a', 'b'])
-  })
-
-  it('never shows a subject nobody spoke on', () => {
-    expect(mostSpokenDebates([debate('empty', { voices: 0 })], 3, null)).toEqual([])
+    expect(
+      mostSpokenDebates(debates, lately({ a: 3, b: 3, c: 3 }), 3, null).map((d) => d.id),
+    ).toEqual(['c', 'a', 'b'])
   })
 })
 

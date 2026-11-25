@@ -114,20 +114,56 @@ export function debateShares(debate: Debate): DebateShare[] {
 export const leadingPositions = (debate: Debate): DebatePosition[] =>
   heldPositions(debate).slice(0, 2)
 
+/** How far back the home page looks for the subjects being spoken on */
+const SPOKEN_LATELY_DAYS = 30
+
 /**
- * The subjects the most voices spoke on: the ones the home page opens its
- * subjects with. The subject it already details above is left out, so the
+ * The day the home page counts the voices of late from, given when it
+ * renders: a position counts when it was taken since — the day it was stated,
+ * not the day the site recorded it.
+ */
+export const spokenSince = (now: Date): Date =>
+  new Date(now.getTime() - SPOKEN_LATELY_DAYS * 24 * 60 * 60 * 1000)
+
+/** One statement, reduced to who spoke on which subject */
+export interface SubjectVoice {
+  subjectId: string
+  /** `authorKey` of who spoke */
+  authorKey: string
+}
+
+/** subject id → how many distinct authors these statements give a voice to */
+export function voicesBySubject(statements: readonly SubjectVoice[]): Map<string, number> {
+  const authors = new Map<string, Set<string>>()
+  for (const { subjectId, authorKey } of statements) {
+    authors.set(subjectId, (authors.get(subjectId) ?? new Set()).add(authorKey))
+  }
+  return new Map(Array.from(authors, ([subjectId, voices]) => [subjectId, voices.size]))
+}
+
+/**
+ * The subjects the most voices spoke on lately: the ones the home page opens
+ * its subjects with. `lately` counts, for each subject, the voices of the
+ * positions taken since `spokenSince`; a subject nobody spoke on since is not
+ * shown. Two subjects as spoken on lately read from the one more voices spoke
+ * on in all. The subject the page already details above is left out, so the
  * page never shows a subject twice.
  */
 export const mostSpokenDebates = (
   debates: readonly Debate[],
+  lately: ReadonlyMap<string, number>,
   limit: number,
   detailed: Debate | null,
-): Debate[] =>
-  debates
-    .filter((debate) => debate.voices > 0 && debate.id !== detailed?.id)
-    .sort((a, b) => b.voices - a.voices || a.title.localeCompare(b.title, 'fr'))
+): Debate[] => {
+  const spoken = (debate: Debate) => lately.get(debate.id) ?? 0
+  return debates
+    .filter((debate) => spoken(debate) > 0 && debate.id !== detailed?.id)
+    .sort(
+      (a, b) =>
+        spoken(b) - spoken(a) || b.voices - a.voices || a.title.localeCompare(b.title, 'fr'),
+    )
     .slice(0, limit)
+}
 
 /** The subjects statements were just added to, the busiest first, then the most spoken on */
 export const movingDebates = (debates: readonly Debate[], limit: number): Debate[] =>

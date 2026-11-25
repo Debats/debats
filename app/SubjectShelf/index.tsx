@@ -4,7 +4,7 @@ import { SUBJECTS_HREF } from '../../domain/read-models/hrefs'
 import Shelf from '../Shelf'
 import SubjectShelfCard from './SubjectShelfCard'
 
-/** Le rayon des sujets, sur l'accueil : ceux où le plus de voix se sont exprimées. */
+/** Le rayon des sujets, sur l'accueil : ceux où le plus de voix se sont exprimées ces trente derniers jours. */
 export default function SubjectShelf({ subjects }: { subjects: Glimpse<Debate> }) {
   return (
     <Shelf

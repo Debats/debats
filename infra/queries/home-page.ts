@@ -7,6 +7,7 @@ import {
   leadingPositions,
   mostSpokenDebates,
   recentSince,
+  spokenSince,
 } from '../../domain/read-models/home-debates'
 import {
   DailySubject,
@@ -20,7 +21,7 @@ import { StatementRepository } from '../../domain/repositories/statement-reposit
 import { createOrganisationRepository } from '../database/organisation-repository-supabase'
 import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createStatementRepository } from '../database/statement-repository-supabase'
-import { loadHomeDebates, loadSiteFigures } from './home-debates'
+import { loadHomeDebates, loadSiteFigures, loadVoicesSince } from './home-debates'
 import { loadLatestJointDeclarations } from './joint-declarations'
 
 type Client = SupabaseClient<Database>
@@ -64,6 +65,7 @@ export const loadHomePage = (
       {
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
+        spokenLately: loadVoicesSince(supabase, spokenSince(now)),
         feed: statements.findFeed({}, 'stated', 'signatures-and-days', {
           limit: HOME_LATEST_STATEMENTS,
           offset: 0,
@@ -76,25 +78,27 @@ export const loadHomePage = (
       },
       unbounded,
     ),
-    Effect.flatMap(({ figures, debates, feed, publicFigures, organisations, declarations }) => {
-      const picked = dailyDebate(debates, now)
-      return pipe(
-        loadDailySubject(statements, picked),
-        Effect.map((daily) => ({
-          daily,
-          latest: feed.entries,
-          subjects: {
-            shown: mostSpokenDebates(debates, HOME_SHELVES.subjects, picked),
-            total: figures.subjects,
-          },
-          publicFigures: { shown: publicFigures, total: figures.publicFigures },
-          organisations: {
-            shown: orderByEngagement(organisations).slice(0, HOME_SHELVES.organisations),
-            total: organisations.length,
-          },
-          declarations,
-        })),
-      )
-    }),
+    Effect.flatMap(
+      ({ figures, debates, spokenLately, feed, publicFigures, organisations, declarations }) => {
+        const picked = dailyDebate(debates, now)
+        return pipe(
+          loadDailySubject(statements, picked),
+          Effect.map((daily) => ({
+            daily,
+            latest: feed.entries,
+            subjects: {
+              shown: mostSpokenDebates(debates, spokenLately, HOME_SHELVES.subjects, picked),
+              total: figures.subjects,
+            },
+            publicFigures: { shown: publicFigures, total: figures.publicFigures },
+            organisations: {
+              shown: orderByEngagement(organisations).slice(0, HOME_SHELVES.organisations),
+              total: organisations.length,
+            },
+            declarations,
+          })),
+        )
+      },
+    ),
   )
 }

@@ -42,7 +42,7 @@ export interface HomePage {
   daily: DailySubject | null
   /** The last statements of the whole site, newest stated first, the signatures of a text gathered */
   latest: FeedEntry[]
-  /** The subjects the most voices spoke on, without the subject of the day */
+  /** The subjects the most voices spoke on in the last thirty days, without the subject of the day */
   subjects: Glimpse<Debate>
   /** The public figures the site documents on the most subjects */
   publicFigures: Glimpse<PublicFigureActivitySummary>
