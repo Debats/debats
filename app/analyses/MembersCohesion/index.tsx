@@ -23,13 +23,13 @@ export default function MembersCohesion({ cohesion }: { cohesion: Cohesion[] }) 
       <AnalysisCard>
         <BarList
           tone="org"
-          items={cohesion.map(({ organisation, aligned, apart, subjects }) => ({
+          items={cohesion.map(({ organisation, aligned, beside, apart, subjects }) => ({
             key: organisation.id,
             lead: <AuthorAvatar author={organisation} size={40} />,
             label: organisation.name,
             href: `${organisationHref(organisation.slug)}/analyses`,
-            part: aligned / (aligned + apart),
-            value: `${aligned} fois la même position, ${apart} fois une autre · ${subjects} ${plural(subjects, 'sujet', 'sujets')}`,
+            part: aligned / (aligned + beside + apart),
+            value: `${aligned} fois la même position, ${beside > 0 ? `${beside} fois une position compatible, ` : ''}${apart} fois une autre · ${subjects} ${plural(subjects, 'sujet', 'sujets')}`,
           }))}
         />
       </AnalysisCard>

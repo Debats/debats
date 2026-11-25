@@ -3,7 +3,7 @@ import { FigureAgreement } from '../read-models/figure-agreements'
 import { Compatibility } from '../read-models/position-judgements'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { authorKey } from './author-on-subject'
-import { relationOf, standsOf, standsWithLeading, supportOf } from './stands'
+import { Relation, relationOf, standsOf, standsWithLeading, supportOf } from './stands'
 
 /**
  * Analyses of the whole site: what the Analyses tab of a public figure or an
@@ -325,19 +325,25 @@ export interface MembersCohesion {
   organisation: StatementAuthorRef
   /** How many times a member holds one of the organisation's positions on one of its subjects */
   aligned: number
+  /** How many times a member holds none of them there, but only positions compatible with the line */
+  beside: number
   /** How many times a member holds none there, one of hers contradicting the line */
   apart: number
-  /** The subjects of the organisation where at least one member stands with it or apart */
+  /** The subjects of the organisation at least one member spoke on */
   subjects: number
 }
+
+/** How many times the members of an organisation spoke on its subjects */
+const memberVoices = ({ aligned, beside, apart }: MembersCohesion): number =>
+  aligned + beside + apart
 
 /**
  * For each organisation, whether its members follow its line: the block of an
  * organisation's Analyses tab (`memberCohesion`), summed over its subjects.
- * A member who only holds positions compatible with the line is neither with
- * it nor apart. `membersOf` gives the current members of each organisation.
- * Only organisations whose members stand enough on its subjects are listed,
- * those whose members stand the most first.
+ * A member who only holds positions compatible with the line stands beside
+ * it: neither with it nor apart. `membersOf` gives the current members of
+ * each organisation. Only organisations whose members spoke enough on its
+ * subjects are listed, those whose members spoke the most first.
  */
 export function membersCohesion(
   statements: readonly SiteStatement[],
@@ -355,25 +361,22 @@ export function membersCohesion(
         const stances = figures.get(id)
         return stances ? [stances] : []
       })
-      const cohesion = { organisation: author, aligned: 0, apart: 0, subjects: 0 }
+      const cohesion = { organisation: author, aligned: 0, beside: 0, apart: 0, subjects: 0 }
       bySubject.forEach((line, subjectId) => {
         const relations = members.flatMap((member) => {
           const theirs = member.bySubject.get(subjectId)
           return theirs ? [relationOf(line, theirs, compatible)] : []
         })
-        const aligned = relations.filter((relation) => relation === 'with').length
-        const apart = relations.filter((relation) => relation === 'apart').length
-        cohesion.aligned += aligned
-        cohesion.apart += apart
-        cohesion.subjects += aligned + apart > 0 ? 1 : 0
+        const standing = (relation: Relation) => relations.filter((r) => r === relation).length
+        cohesion.aligned += standing('with')
+        cohesion.beside += standing('beside')
+        cohesion.apart += standing('apart')
+        cohesion.subjects += relations.length > 0 ? 1 : 0
       })
       return cohesion
     })
-    .filter(({ aligned, apart }) => aligned + apart >= minVoices)
-    .sort(
-      (a, b) =>
-        b.aligned + b.apart - (a.aligned + a.apart) || byName(a.organisation, b.organisation),
-    )
+    .filter((cohesion) => memberVoices(cohesion) >= minVoices)
+    .sort((a, b) => memberVoices(b) - memberVoices(a) || byName(a.organisation, b.organisation))
     .slice(0, limit)
 }
 

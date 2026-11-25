@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { figureHref, organisationOnSubjectHref } from '../../../../domain/read-models/hrefs'
 import { SubjectCohesion } from '../../../../domain/services/author-analyses'
 import { plural } from '../../../../lib/plural'
+import MembersElsewhere from './MembersElsewhere'
 import styles from './OrganisationCohesion.module.css'
 
 interface OrganisationCohesionProps {
@@ -28,15 +29,16 @@ export default function OrganisationCohesion({
   membersCount,
 }: OrganisationCohesionProps) {
   const aligned = cohesion.reduce((sum, c) => sum + c.aligned.length, 0)
+  const beside = cohesion.reduce((sum, c) => sum + c.beside.length, 0)
   const apart = cohesion.reduce((sum, c) => sum + c.apart.length, 0)
-  const spoken = cohesion.filter((c) => c.aligned.length + c.apart.length > 0)
+  const spoken = cohesion.filter((c) => c.aligned.length + c.beside.length + c.apart.length > 0)
 
   return (
     <section className={styles.card}>
       <h3 className={styles.title}>Ses membres suivent-ils la ligne ?</h3>
       <p className={styles.subtitle}>
-        Sur chaque sujet où l’organisation s’est exprimée, ses membres actuels qui prennent la même
-        position, une autre, ou qui ne se sont pas exprimés.
+        Sur chaque sujet où l’organisation s’est exprimée, ses membres actuels qui tiennent la même
+        position, une position compatible, une autre, ou qui ne se sont pas exprimés.
       </p>
       {membersCount === 0 ? (
         <p className={styles.empty}>Aucune personnalité n’est affiliée à cette organisation.</p>
@@ -50,8 +52,9 @@ export default function OrganisationCohesion({
           <p className={styles.headline}>
             <span className={styles.number}>{aligned}</span>
             <span className={styles.headlineText}>
-              fois la même position que l’organisation, {apart} fois une autre, sur {spoken.length}{' '}
-              {plural(spoken.length, 'sujet', 'sujets')}
+              fois la même position que l’organisation,{' '}
+              {beside > 0 && `${beside} fois une position compatible, `}
+              {apart} fois une autre, sur {spoken.length} {plural(spoken.length, 'sujet', 'sujets')}
             </span>
           </p>
           <ul className={styles.rows}>
@@ -69,22 +72,8 @@ export default function OrganisationCohesion({
                     <span className={styles.lineLabel}>Même position</span> {names(c.aligned)}
                   </p>
                 )}
-                {c.apart.length > 0 && (
-                  <p className={styles.line}>
-                    <span className={styles.lineLabel}>Autre position</span>{' '}
-                    {c.apart.map((a, index) => (
-                      <span key={a.figure.id}>
-                        {index > 0 && ', '}
-                        <Link href={figureHref(a.figure.slug)} className={styles.member}>
-                          {a.figure.name}
-                        </Link>{' '}
-                        <span className={styles.meta}>
-                          ({a.positions.map((p) => p.title).join(', ')})
-                        </span>
-                      </span>
-                    ))}
-                  </p>
-                )}
+                <MembersElsewhere label="Position compatible" members={c.beside} />
+                <MembersElsewhere label="Autre position" members={c.apart} />
                 {c.silent > 0 && (
                   <p className={styles.silent}>
                     {c.silent} {plural(c.silent, 'membre', 'membres')} sans prise de position

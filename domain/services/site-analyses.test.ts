@@ -383,7 +383,7 @@ describe('membersCohesion', () => {
     expect([cohesion.aligned, cohesion.apart]).toEqual([1, 0])
   })
 
-  it('counts a member neither with nor apart when she only took positions compatible with the line', () => {
+  it('counts beside the line, neither with it nor apart, a member who only holds positions compatible with it', () => {
     const [cohesion] = membersCohesion(
       [took(lfi, 's1', 'moratorium'), took(alma, 's1', 'abandon'), took(boris, 's1', 'build')],
       members,
@@ -392,7 +392,22 @@ describe('membersCohesion', () => {
       options,
     )
 
-    expect([cohesion.aligned, cohesion.apart, cohesion.subjects]).toEqual([0, 1, 1])
+    expect([cohesion.aligned, cohesion.beside, cohesion.apart, cohesion.subjects]).toEqual([
+      0, 1, 1, 1,
+    ])
+  })
+
+  it('counts a subject where the members only stand beside the line', () => {
+    const [cohesion] = membersCohesion(
+      [took(lfi, 's1', 'moratorium'), took(alma, 's1', 'abandon')],
+      members,
+      () => true,
+      options,
+    )
+
+    expect([cohesion.aligned, cohesion.beside, cohesion.apart, cohesion.subjects]).toEqual([
+      0, 1, 0, 1,
+    ])
   })
 
   it('leaves out an organisation whose members spoke too little on its subjects', () => {

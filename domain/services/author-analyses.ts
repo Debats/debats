@@ -405,7 +405,8 @@ export function expressionProfile(
 
 /* An organisation and its members */
 
-export interface MemberApart {
+/** A member who does not hold the line of the organisation, with the positions she holds instead */
+export interface MemberElsewhere {
   figure: MembershipFigure
   positions: PositionRef[]
 }
@@ -417,10 +418,12 @@ export interface SubjectCohesion {
   /** Members who hold one of them */
   aligned: MembershipFigure[]
   /**
-   * Members who hold none, one of theirs contradicting the line. A member who
-   * only holds positions compatible with it is neither with it nor apart.
+   * Members who hold none of them, but only positions compatible with the
+   * line: they did not say the same thing, and nothing they said goes against it
    */
-  apart: MemberApart[]
+  beside: MemberElsewhere[]
+  /** Members who hold none, one of theirs contradicting the line */
+  apart: MemberElsewhere[]
   /** Members who did not speak on the subject */
   silent: number
 }
@@ -441,17 +444,16 @@ export function memberCohesion(
   )
   return Array.from(hers.values()).map(({ subject, positions }) => {
     const aligned: MembershipFigure[] = []
-    const apart: MemberApart[] = []
-    let spoke = 0
+    const elsewhere: Record<'beside' | 'apart', MemberElsewhere[]> = { beside: [], apart: [] }
     for (const { author, stances } of spoken) {
       const stance = stances.get(subject.id)
       if (!stance) continue
-      spoke += 1
       const figure = memberById.get(author.id)!
       if (stance.relation === 'with') aligned.push(figure)
-      if (stance.relation === 'apart') apart.push({ figure, positions: stance.theirs })
+      else elsewhere[stance.relation].push({ figure, positions: stance.theirs })
     }
-    return { subject, positions, aligned, apart, silent: members.length - spoke }
+    const spoke = aligned.length + elsewhere.beside.length + elsewhere.apart.length
+    return { subject, positions, aligned, ...elsewhere, silent: members.length - spoke }
   })
 }
 

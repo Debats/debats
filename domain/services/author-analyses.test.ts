@@ -279,7 +279,7 @@ describe('the analyses of an author, facing someone who left a position', () => 
     })
   })
 
-  it('leaves neither with the line nor apart the member who only holds a compatible position', () => {
+  it('sets beside the line, neither with it nor apart, the member who only holds a compatible position', () => {
     const line = [taken(attac, report)]
     const members = [{ id: 'veil', name: 'Simone Veil', slug: 'simone-veil' }]
     const compatible = compatibilityOf([
@@ -295,6 +295,32 @@ describe('the analyses of an author, facing someone who left a position', () => 
     )
 
     expect(cohesion).toMatchObject({ aligned: [], apart: [], silent: 0 })
+    expect(cohesion.beside.map((b) => [b.figure.name, b.positions.map((p) => p.title)])).toEqual([
+      ['Simone Veil', ['Garder 62 ans']],
+    ])
+  })
+
+  it('counts every member once: with the line, beside it, apart, or silent', () => {
+    const line = [taken(attac, report)]
+    const members = [veil, camus, weil].map(({ id, name, slug }) => ({ id, name, slug }))
+    const points = positionOn(retraites.id, 'Passer à un système à points')
+    const compatible = compatibilityOf([{ positionIds: [report.id, points.id], compatible: true }])
+
+    // Veil holds the line, Camus a position that goes with it, Weil one against it, Sartre said nothing
+    const [cohesion] = memberCohesion(
+      detailed(line),
+      [...line, taken(veil, report), taken(camus, points), taken(weil, maintien)],
+      organisationAuthor(attac.id),
+      compatible,
+      [...members, { id: 'sartre', name: 'Jean-Paul Sartre', slug: 'jean-paul-sartre' }],
+    )
+
+    expect([
+      cohesion.aligned.length,
+      cohesion.beside.length,
+      cohesion.apart.length,
+      cohesion.silent,
+    ]).toEqual([1, 1, 1, 1])
   })
 })
 
@@ -593,9 +619,11 @@ describe('the page of an author and the analyses of the site', () => {
       onItsPage.reduce((sum, cohesion) => sum + count(cohesion), 0)
     expect(onTheSite).toMatchObject({
       aligned: total((cohesion) => cohesion.aligned.length),
+      beside: total((cohesion) => cohesion.beside.length),
       apart: total((cohesion) => cohesion.apart.length),
     })
-    expect(onTheSite.aligned + onTheSite.apart).toBeGreaterThan(0)
+    // Each of the three is exercised: the comparison would hold on three zeros
+    expect([onTheSite.aligned, onTheSite.beside, onTheSite.apart].every((n) => n > 0)).toBe(true)
   })
 
   it('stand a public figure with the most supported position on the same subjects', () => {
