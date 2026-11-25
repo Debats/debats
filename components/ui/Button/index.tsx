@@ -12,6 +12,9 @@ interface ButtonAsButton extends ButtonBaseProps {
   type?: 'button' | 'submit'
   onClick?: () => void
   disabled?: boolean
+  /** Pour un bouton qui déplie : l'état et l'identifiant de ce qu'il révèle */
+  'aria-expanded'?: boolean
+  'aria-controls'?: string
   target?: undefined
   rel?: undefined
 }
@@ -21,6 +24,8 @@ interface ButtonAsLink extends ButtonBaseProps {
   type?: undefined
   onClick?: undefined
   disabled?: undefined
+  'aria-expanded'?: undefined
+  'aria-controls'?: undefined
   target?: string
   rel?: string
 }
@@ -34,6 +39,8 @@ export default function Button({
   type = 'button',
   onClick,
   disabled,
+  'aria-expanded': ariaExpanded,
+  'aria-controls': ariaControls,
   target,
   rel,
   children,
@@ -49,7 +56,14 @@ export default function Button({
   }
 
   return (
-    <button className={className} type={type} onClick={onClick} disabled={disabled}>
+    <button
+      className={className}
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
+    >
       {children}
     </button>
   )

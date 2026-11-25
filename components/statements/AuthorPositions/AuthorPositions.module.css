@@ -79,6 +79,20 @@
   gap: 10px;
 }
 
+/* Une longue liste, repliée sur ses visages */
+.folded {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.foldedHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 .ally,
 .ally:link,
 .ally:visited {

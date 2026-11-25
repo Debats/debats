@@ -1,15 +1,13 @@
 import Link from 'next/link'
-import AuthorAvatar from '../AuthorAvatar'
+import AllyList from './AllyList'
+import FoldedAllies from './FoldedAllies'
+import AuthorAvatarStack from '../AuthorAvatarStack'
 import ArgumentChips from '../ArgumentChips'
 import StatementBody from '../StatementBody'
 import StatementSource from '../StatementSource'
 import EditLink from '../../ui/EditLink'
-import { roleOf } from '../../../domain/read-models/author-role'
 import { positionHref } from '../../../domain/read-models/hrefs'
-import {
-  authorOnSubjectHref,
-  StatementAuthorRef,
-} from '../../../domain/read-models/statement-author'
+import { StatementAuthorRef } from '../../../domain/read-models/statement-author'
 import { PositionGroup } from '../../../domain/services/author-on-subject'
 import styles from './AuthorPositions.module.css'
 
@@ -24,6 +22,12 @@ interface AuthorPositionCardProps {
   roles: Map<string, string>
   editHref?: (statementId: string) => string
 }
+
+/** Au-delà, la liste des alliés se replie */
+const UNFOLDED_ALLIES = 6
+
+/** Visages montrés tant que la liste est repliée : le bouton dit le total */
+const PREVIEWED_ALLIES = 6
 
 /** Une position de l'auteur, ses prises de position, et qui le rejoint. */
 export default function AuthorPositionCard({
@@ -58,24 +62,23 @@ export default function AuthorPositionCard({
       {allies.length > 0 && (
         <div className={styles.allies}>
           <p className={styles.alliesLabel}>Même position</p>
-          <ul className={styles.allyList}>
-            {allies.map((ally) => {
-              // `roleOf` sait qu'une organisation alliée n'a pas de métier à
-              // chercher dans une table indexée par personnalité.
-              const role = roleOf(ally, roles)
-              return (
-                <li key={`${ally.kind}-${ally.id}`}>
-                  <Link href={authorOnSubjectHref(ally, subjectSlug)} className={styles.ally}>
-                    <AuthorAvatar author={ally} size={32} />
-                    <span className={styles.allyBody}>
-                      <span className={styles.allyName}>{ally.name}</span>
-                      {role && <span className={styles.allyRole}>{role}</span>}
-                    </span>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
+          {allies.length > UNFOLDED_ALLIES ? (
+            <FoldedAllies
+              count={allies.length}
+              preview={
+                <AuthorAvatarStack
+                  authors={allies.slice(0, PREVIEWED_ALLIES)}
+                  max={PREVIEWED_ALLIES}
+                  size={32}
+                  subjectSlug={subjectSlug}
+                />
+              }
+            >
+              <AllyList subjectSlug={subjectSlug} allies={allies} roles={roles} />
+            </FoldedAllies>
+          ) : (
+            <AllyList subjectSlug={subjectSlug} allies={allies} roles={roles} />
+          )}
         </div>
       )}
     </article>
