@@ -26,17 +26,17 @@ describe.skipIf(!hasDatabase)('get_moved_statements', () => {
 })
 
 describe.skipIf(!hasDatabase)('get_statements_to_review', () => {
-  it('offers statements nobody confirmed nor flagged, and others on the next page', async () => {
+  it('offers a page of statements nobody confirmed nor flagged, each once', async () => {
     const supabase = createAdminSupabaseClient()
     const statements = createStatementRepository(supabase)
 
-    const first = await Effect.runPromise(statements.findToReview(null, { limit: 2, offset: 0 }))
-    const second = await Effect.runPromise(statements.findToReview(null, { limit: 2, offset: 2 }))
-    if (first.total < 4) throw new Error('Fewer than four unreviewed statements locally')
+    // One read: other tests add statements meanwhile, and two pages read apart could overlap
+    const { entries: offered, total } = await Effect.runPromise(
+      statements.findToReview(null, { limit: 4, offset: 0 }),
+    )
+    if (total < 4) throw new Error('Fewer than four unreviewed statements locally')
 
-    const offered = [...first.entries, ...second.entries]
     expect(new Set(offered.map(({ statement }) => statement.id)).size).toBe(4)
-    expect(second.total).toBe(first.total)
     for (const { statement } of offered) {
       const { count: confirmed } = await supabase
         .from('confirmations')
@@ -72,8 +72,9 @@ describe.skipIf(!hasDatabase)('get_statements_to_review', () => {
       statements.findToReview(null, { limit: 20, offset: 0 }),
     )
     const added = entries.map(({ statement }) => statement.createdAt.getTime())
+    // Well past the end: other tests add statements to the queue meanwhile
     const past = await Effect.runPromise(
-      statements.findToReview(null, { limit: 20, offset: total }),
+      statements.findToReview(null, { limit: 20, offset: total + 50 }),
     )
 
     expect(added).toEqual([...added].sort((a, b) => b - a))

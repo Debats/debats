@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import Link from 'next/link'
-import { listSeparator } from '../../../domain/read-models/feed-entries'
+import { nameSeparator, othersTail } from '../../../domain/read-models/feed-entries'
 import {
   authorHref,
   authorOnSubjectHref,
@@ -10,8 +10,10 @@ import { StatementWithAuthorAndSubject } from '../../../domain/repositories/stat
 
 interface TookTogetherProps {
   author: StatementAuthorRef
-  /** Ce qu'elle ou il a dit ou fait ce jour-là, dans l'ordre où le lister */
+  /** Les premières de ses prises de position de ce jour-là : celles que la phrase nomme */
   entries: StatementWithAuthorAndSubject[]
+  /** Combien d'autres elle ou il en a fait ce jour-là */
+  others: number
   /** Le style du nom, puis celui des positions, propres à la liste qui écrit la phrase */
   nameClassName?: string
   positionClassName?: string
@@ -19,17 +21,18 @@ interface TookTogetherProps {
 
 /**
  * La phrase de ce qu'un·e auteur·rice a dit ou fait le même jour : « Alma a
- * pris position pour A, B et C ». Le nom mène à sa page, chaque position à ce
- * qu'elle ou il en dit sur son sujet. Une position prise deux fois ce jour-là
- * n'est nommée qu'une fois.
+ * pris position pour A, B, C et 4 autres ». Le nom mène à sa page, chaque
+ * position à ce qu'elle ou il en dit sur son sujet. Une position prise deux
+ * fois ce jour-là n'est nommée qu'une fois.
  */
 export default function TookTogether({
   author,
   entries,
+  others,
   nameClassName,
   positionClassName,
 }: TookTogetherProps) {
-  const taken = entries.filter(
+  const named = entries.filter(
     (entry, index) => entries.findIndex((e) => e.position.id === entry.position.id) === index,
   )
 
@@ -39,14 +42,15 @@ export default function TookTogether({
         {author.name}
       </Link>{' '}
       a pris position pour{' '}
-      {taken.map(({ position, subject }, index) => (
+      {named.map(({ position, subject }, index) => (
         <Fragment key={position.id}>
-          {listSeparator(index, taken.length)}
+          {nameSeparator(index, named.length, others)}
           <Link href={authorOnSubjectHref(author, subject.slug)} className={positionClassName}>
             {position.title}
           </Link>
         </Fragment>
       ))}
+      {othersTail(others)}
     </>
   )
 }

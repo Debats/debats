@@ -11,8 +11,8 @@ import {
 } from '../../domain/entities/statement'
 import { LatestStatement } from '../../domain/read-models/latest-statement'
 import { ArgumentRef } from '../../domain/read-models/argument'
-import { feedEntriesOf } from '../../domain/read-models/feed-entries'
-import { loadSignatories } from '../queries/joint-declarations'
+import { feedEntriesOf, NAMED_IN_ENTRY } from '../../domain/read-models/feed-entries'
+import { loadSignatories } from './joint-declaration-signatories'
 import { fetchInChunks } from './in-chunks'
 import { Position, PositionId, PositionSlug, PositionTitle } from '../../domain/entities/position'
 import {
@@ -553,7 +553,7 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
         catch: (error) => dbError('Failed to fetch the statement ids of a subject', error),
       }),
 
-    findFeed: (filters, ranking, page) =>
+    findFeed: (filters, ranking, gathering, page) =>
       pipe(
         Effect.tryPromise({
           try: async () => {
@@ -566,6 +566,8 @@ export function createStatementRepository(supabase: SupabaseClient<Database>): S
               p_theme_slug: filters.themeSlug,
               p_statement_type: filters.statementType,
               p_declaration_slug: filters.jointDeclarationSlug,
+              p_gather_days: gathering === 'signatures-and-days',
+              p_shown: NAMED_IN_ENTRY,
             })
             if (error) throw error
             const listed = data.map((row) => ({

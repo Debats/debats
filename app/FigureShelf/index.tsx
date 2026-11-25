@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import FigureAvatar from '../../components/figures/FigureAvatar'
-import { Shelf as Shelved } from '../../domain/read-models/home-page'
+import { Glimpse } from '../../domain/read-models/home-page'
 import { FIGURES_HREF, figureHref } from '../../domain/read-models/hrefs'
 import { PublicFigureActivitySummary } from '../../domain/value-objects/public-figure-activity-summary'
 import { plural } from '../../lib/plural'
@@ -14,7 +14,7 @@ import styles from './FigureShelf.module.css'
 export default function FigureShelf({
   figures,
 }: {
-  figures: Shelved<PublicFigureActivitySummary>
+  figures: Glimpse<PublicFigureActivitySummary>
 }) {
   return (
     <Shelf

@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { StatementWithAuthorAndSubject } from '../repositories/statement-repository'
 import {
   feedEntriesOf,
-  listSeparator,
-  NAMED_SIGNATORIES,
+  NAMED_IN_ENTRY,
   nameSeparator,
+  othersTail,
   signedTail,
   statementsOf,
 } from './feed-entries'
@@ -50,7 +50,18 @@ describe('feedEntriesOf', () => {
       new Map(),
     )
 
-    expect(entry).toEqual({ kind: 'sameDay', author: alma, entries: [second, first] })
+    expect(entry).toEqual({ kind: 'sameDay', author: alma, entries: [second, first], others: 0 })
+  })
+
+  it('counts what an author said the same day beyond the statements that were read', () => {
+    const [entry] = feedEntriesOf(
+      [{ declarationId: null, statementIds: ['3', '2', '1'], size: 37 }],
+      [statement('1', alma), statement('2', alma), statement('3', alma)],
+      new Map(),
+    )
+
+    expect(entry).toMatchObject({ kind: 'sameDay', others: 34 })
+    expect(entry.kind === 'sameDay' && entry.entries).toHaveLength(3)
   })
 
   it('makes one entry of the signatures of a text, naming the first of its signatories and counting the others', () => {
@@ -65,7 +76,7 @@ describe('feedEntriesOf', () => {
 
     expect(entry).toMatchObject({ kind: 'signatures', declaration: manifesto, first: signature })
     expect(entry.kind === 'signatures' && names(entry.named)).toEqual(['Emma', 'David', 'Chloé'])
-    expect(entry).toMatchObject({ others: 5 - NAMED_SIGNATORIES })
+    expect(entry).toMatchObject({ others: 5 - NAMED_IN_ENTRY })
   })
 
   it('names only the signatories the feed is narrowed to, and counts the signatures it lists', () => {
@@ -133,7 +144,7 @@ describe('statementsOf', () => {
     expect(
       statementsOf([
         { kind: 'statement', entry: own },
-        { kind: 'sameDay', author: alma, entries: [first, second] },
+        { kind: 'sameDay', author: alma, entries: [first, second], others: 0 },
         { kind: 'signatures', declaration: manifesto, first: signature, named: [alma], others: 0 },
       ]),
     ).toEqual([own, first, second])
@@ -169,13 +180,19 @@ describe('the sentence of signatures gathered', () => {
   })
 })
 
-describe('listSeparator', () => {
-  const listed = (items: string[]) =>
-    items.map((item, index) => listSeparator(index, items.length) + item).join('')
+describe('the list of what an author took the same day', () => {
+  const listed = (items: string[], others = 0) =>
+    items.map((item, index) => nameSeparator(index, items.length, others) + item).join('') +
+    othersTail(others)
 
-  it('joins what an author took the same day: commas, then « et » before the last', () => {
+  it('joins the positions: commas, then « et » before the last', () => {
     expect(listed(['A'])).toBe('A')
     expect(listed(['A', 'B'])).toBe('A et B')
     expect(listed(['A', 'B', 'C'])).toBe('A, B et C')
+  })
+
+  it('names the first and counts the others', () => {
+    expect(listed(['A', 'B', 'C'], 34)).toBe('A, B, C et 34 autres')
+    expect(listed(['A', 'B', 'C'], 1)).toBe('A, B, C et 1 autre')
   })
 })

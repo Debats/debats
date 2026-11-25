@@ -5,7 +5,7 @@ import { Position } from '../entities/position'
 import { Subject } from '../entities/subject'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { ArgumentRef } from '../read-models/argument'
-import { FeedEntriesPage, FeedRanking } from '../read-models/feed-entries'
+import { FeedEntriesPage, FeedGathering, FeedRanking } from '../read-models/feed-entries'
 import { FeedFilters } from '../read-models/statement-feed'
 
 export class DatabaseError extends Error {
@@ -142,13 +142,15 @@ export interface StatementRepository {
 
   /**
    * The feed of the whole site, narrowed, ranked and paged by entries: the
-   * signatures of one joint declaration make one entry, and so does what one
-   * author said or did the same day (`read-models/feed-entries.ts`). The one
-   * reading of the last statements of the site: rails and feed page alike.
+   * signatures of one joint declaration make one entry, and so does, when
+   * asked, what one author said or did the same day
+   * (`read-models/feed-entries.ts`). The one reading of the last statements
+   * of the site: rails and feed page alike.
    */
   findFeed(
     filters: FeedFilters,
     ranking: FeedRanking,
+    gathering: FeedGathering,
     page: { limit: number; offset: number },
   ): Effect.Effect<FeedEntriesPage, DatabaseError>
 

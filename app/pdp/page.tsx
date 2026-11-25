@@ -19,7 +19,7 @@ import ContentWithSidebar from '../../components/layout/ContentWithSidebar'
 import PageHero from '../../components/layout/PageHero'
 import ReadingGuide from '../../components/layout/ReadingGuide'
 import ReviewScope from '../../components/review/ReviewScope'
-import FeedEntry from '../../components/statements/FeedEntry'
+import FeedEntryRow from '../../components/statements/FeedEntryRow'
 import Button from '../../components/ui/Button'
 import { plural } from '../../lib/plural'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
@@ -61,7 +61,8 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
   const supabase = createAdminSupabaseClient()
   const [feed, themes, activeSubjects, declarations] = await Promise.all([
     Effect.runPromise(
-      createStatementRepository(supabase).findFeed(filters, order, {
+      // Each statement is detailed with its source: only the signatures of a text are gathered
+      createStatementRepository(supabase).findFeed(filters, order, 'signatures', {
         limit: FEED_PAGE_SIZE,
         offset: (page - 1) * FEED_PAGE_SIZE,
       }),
@@ -148,7 +149,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
           <ReviewScope {...review}>
             <div className={styles.card}>
               {feed.entries.map((entry) => (
-                <FeedEntry
+                <FeedEntryRow
                   key={leadOf(entry).statement.id}
                   entry={entry}
                   roles={roles}
@@ -164,7 +165,7 @@ export default async function StatementsFeedPage({ searchParams }: PageProps) {
         {feed.total > 0 && (
           <div className={styles.footer}>
             <p className={styles.range}>
-              {shownUpTo} sur {feed.total}
+              {shownUpTo} sur {feed.total} {plural(feed.total, 'entrée', 'entrées')}
             </p>
             {hasMore && (
               <Button href={feedHref(filters, order, page + 1)} variant="secondary">

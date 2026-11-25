@@ -1,5 +1,5 @@
 import JointDeclarationCard from '../../components/joint-declarations/JointDeclarationCard'
-import { Shelf as Shelved } from '../../domain/read-models/home-page'
+import { Glimpse } from '../../domain/read-models/home-page'
 import { JOINT_DECLARATIONS_HREF } from '../../domain/read-models/hrefs'
 import { JointDeclarationSummary } from '../../domain/read-models/joint-declaration'
 import Shelf from '../Shelf'
@@ -8,7 +8,7 @@ import Shelf from '../Shelf'
 export default function DeclarationShelf({
   declarations,
 }: {
-  declarations: Shelved<JointDeclarationSummary>
+  declarations: Glimpse<JointDeclarationSummary>
 }) {
   return (
     <Shelf

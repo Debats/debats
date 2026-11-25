@@ -1,5 +1,5 @@
 import OrganisationCard from '../../components/organisations/OrganisationCard'
-import { Shelf as Shelved } from '../../domain/read-models/home-page'
+import { Glimpse } from '../../domain/read-models/home-page'
 import { ORGANISATIONS_HREF } from '../../domain/read-models/hrefs'
 import { OrganisationSummary } from '../../domain/read-models/organisation-summary'
 import Shelf from '../Shelf'
@@ -8,7 +8,7 @@ import Shelf from '../Shelf'
 export default function OrganisationShelf({
   organisations,
 }: {
-  organisations: Shelved<OrganisationSummary>
+  organisations: Glimpse<OrganisationSummary>
 }) {
   return (
     <Shelf

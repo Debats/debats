@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run lint:css && npm run format:check && npm run typecheck && NODE_ENV=production npm run build",
     "test": "vitest",
-    "test:db": "node --env-file=.env.local node_modules/vitest/vitest.mjs run infra",
+    "test:db": "node --env-file=.env.local node_modules/vitest/vitest.mjs run infra --no-file-parallelism",
     "test:ui": "vitest --ui",
     "migrate": "supabase link --project-ref $SUPABASE_PROJECT_ID && supabase db push",
     "postinstall": "prisma generate",

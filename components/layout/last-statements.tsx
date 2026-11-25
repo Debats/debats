@@ -14,7 +14,10 @@ export default async function LastStatements() {
   const statements = createStatementRepository(createAdminSupabaseClient())
   const [taken, added] = await Effect.runPromise(
     Effect.all(
-      [statements.findFeed({}, 'stated', SHOWN), statements.findFeed({}, 'added', SHOWN)],
+      [
+        statements.findFeed({}, 'stated', 'signatures-and-days', SHOWN),
+        statements.findFeed({}, 'added', 'signatures-and-days', SHOWN),
+      ],
       {
         concurrency: 'unbounded',
       },

@@ -25,14 +25,32 @@ import { FeedOrder } from './statement-feed'
  */
 export type FeedRanking = FeedOrder | 'added'
 
-/** How many signatories a gathered entry names before counting the others */
-export const NAMED_SIGNATORIES = 3
+/**
+ * What a reading of the feed gathers: the signatures of one text always, and
+ * on top of that what one author said or did the same day. A rail gathers
+ * both, to hold in a sentence; a page that details each statement with its
+ * source only gathers the signatures.
+ */
+export type FeedGathering = 'signatures' | 'signatures-and-days'
+
+/**
+ * How much a gathered entry names before counting the others: signatories of
+ * a text, or positions an author took the same day.
+ */
+export const NAMED_IN_ENTRY = 3
 
 export type FeedEntry =
   /** One statement of an author's own */
   | { kind: 'statement'; entry: StatementWithAuthorAndSubject }
-  /** What one author said or did the same day, in the order of the feed */
-  | { kind: 'sameDay'; author: StatementAuthorRef; entries: StatementWithAuthorAndSubject[] }
+  /** What one author said or did the same day */
+  | {
+      kind: 'sameDay'
+      author: StatementAuthorRef
+      /** The first of them, in the order of the feed: those the entry names */
+      entries: StatementWithAuthorAndSubject[]
+      /** How many more she made that day */
+      others: number
+    }
   /** The signatures of one joint declaration */
   | {
       kind: 'signatures'
@@ -91,12 +109,12 @@ export function feedEntriesOf(
         (author) => !authorKind || author.kind === authorKind,
       )
       // Never more names than signatures listed: a signatory may hold no statement the feed lists
-      const named = everyone.slice(0, Math.min(NAMED_SIGNATORIES, size))
+      const named = everyone.slice(0, Math.min(NAMED_IN_ENTRY, size))
       return [{ kind: 'signatures', declaration, first, named, others: size - named.length }]
     }
-    return read.length === 1
+    return size === 1
       ? [{ kind: 'statement', entry: first }]
-      : [{ kind: 'sameDay', author: first.author, entries: read }]
+      : [{ kind: 'sameDay', author: first.author, entries: read, others: size - read.length }]
   })
 }
 
@@ -116,20 +134,20 @@ export const statementsOf = (entries: readonly FeedEntry[]): StatementWithAuthor
     return entry.kind === 'sameDay' ? entry.entries : []
   })
 
-/** What comes before the item at `index` in a list of `count`: nothing, a comma, or « et » before the last */
-export const listSeparator = (index: number, count: number): string => {
+/**
+ * What comes before the item at `index` among the `named` ones of a gathered
+ * entry — signatories, or positions: nothing, a comma, or « et » before the
+ * last, unless others are counted after it.
+ */
+export const nameSeparator = (index: number, named: number, others: number): string => {
   if (index === 0) return ''
-  return index === count - 1 ? ' et ' : ', '
+  return others === 0 && index === named - 1 ? ' et ' : ', '
 }
 
-/**
- * What comes before the name at `index` among the `named` signatories of a
- * text: as in any list, but the last name takes a comma too when others are
- * counted after it.
- */
-export const nameSeparator = (index: number, named: number, others: number): string =>
-  listSeparator(index, others === 0 ? named : named + 1)
+/** What counts the others after the named ones: « et 41 autres », nothing when there is none */
+export const othersTail = (others: number): string =>
+  others > 0 ? ` et ${others} ${plural(others, 'autre', 'autres')}` : ''
 
-/** What follows the names: « et 41 autres ont signé », « a signé » */
+/** What follows the names of who signed a text: « et 41 autres ont signé », « a signé » */
 export const signedTail = (named: number, others: number): string =>
-  `${others > 0 ? ` et ${others} ${plural(others, 'autre', 'autres')}` : ''} ${plural(named + others, 'a signé', 'ont signé')}`
+  `${othersTail(others)} ${plural(named + others, 'a signé', 'ont signé')}`

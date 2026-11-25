@@ -99,23 +99,6 @@ interface OwnSubject {
 }
 
 /**
- * Where the author stands on each of her subjects: the positions she holds
- * today. One she left for another is not hers any more, and nobody stands
- * with her for sharing it.
- */
-function ownSubjects(
-  own: StatementWithDetails[],
-  compatible: Compatibility,
-): Map<string, OwnSubject> {
-  return new Map(
-    coursesBySubject(own, compatible).map(({ subject, course }) => [
-      subject.id,
-      { subject, positions: course.held.map((held) => held.position) },
-    ]),
-  )
-}
-
-/**
  * Where everyone stands today on the author's subjects, herself included:
  * the one reading of `stands.ts`, hers from her own statements, the others'
  * from everyone's statements on her subjects.
@@ -150,20 +133,38 @@ function standsOn(
   )
 }
 
-/** Everyone else on the author's subjects, with where they stand on each towards her */
-function others(
+/**
+ * What every analysis of an author is read from: where everyone stands on
+ * her subjects, where she stands herself — the positions she holds today, a
+ * position she left being hers no more —, and how each of the others stands
+ * towards her.
+ */
+interface Reading {
+  stands: Stands<PositionRef>
+  /** Her subjects, in the order she first spoke on them */
+  hers: Map<string, OwnSubject>
+  others: OtherAuthor[]
+}
+
+function readingOf(
   own: StatementWithDetails[],
   onSubjects: StatementWithAuthor[],
   self: StatementAuthor,
   compatible: Compatibility,
-): OtherAuthor[] {
-  const hers = ownSubjects(own, compatible)
-  const stands = standsOn(own, onSubjects, self, compatible)
+): Reading {
   const selfKey = authorKey(self)
+  const stands = standsOn(own, onSubjects, self, compatible)
+  const held = stands.get(selfKey)
+  const hers = new Map(
+    own.map(({ subject }): [string, OwnSubject] => [
+      subject.id,
+      { subject: subjectRef(subject), positions: held?.get(subject.id) ?? [] },
+    ]),
+  )
+
   const authors = new Map(onSubjects.map(({ author }) => [authorKey(author), author]))
   authors.delete(selfKey)
-
-  return Array.from(authors.entries()).flatMap(([key, author]) => {
+  const others = Array.from(authors.entries()).flatMap(([key, author]) => {
     const stances = new Map<string, Stance>()
     stands.get(key)?.forEach((theirs, subjectId) => {
       const mine = hers.get(subjectId)
@@ -176,6 +177,7 @@ function others(
     })
     return stances.size > 0 ? [{ author, stances }] : []
   })
+  return { stands, hers, others }
 }
 
 const byName = (a: { author: { name: string } }, b: { author: { name: string } }) =>
@@ -213,8 +215,8 @@ export function company(
   compatible: Compatibility,
   limit = COMPANY_LIMIT,
 ): Company {
-  const everyoneElse = others(own, onSubjects, self, compatible)
-  const companions: Companion[] = everyoneElse.map(({ author, stances }) => {
+  const { others } = readingOf(own, onSubjects, self, compatible)
+  const companions: Companion[] = others.map(({ author, stances }) => {
     const all = Array.from(stances.values())
     return {
       author,
@@ -267,7 +269,7 @@ export function standing(
   self: StatementAuthor,
   compatible: Compatibility,
 ): Standing {
-  const stands = standsOn(own, onSubjects, self, compatible)
+  const { stands, hers } = readingOf(own, onSubjects, self, compatible)
   const support = supportOf(stands)
   const titles = new Map(
     Array.from(stands.values()).flatMap((bySubject) =>
@@ -276,7 +278,7 @@ export function standing(
       ),
     ),
   )
-  const subjects = Array.from(ownSubjects(own, compatible).values())
+  const subjects = Array.from(hers.values())
     .map(({ subject, positions }) => {
       const onSubject = support.get(subject.id)!
       const most = leadingSupport(onSubject)
@@ -433,10 +435,11 @@ export function memberCohesion(
 ): SubjectCohesion[] {
   if (members.length === 0) return []
   const memberById = new Map(members.map((m) => [m.id, m]))
-  const spoken = others(own, onSubjects, self, compatible).filter(
+  const { hers, others } = readingOf(own, onSubjects, self, compatible)
+  const spoken = others.filter(
     ({ author }) => author.kind === 'public_figure' && memberById.has(author.id),
   )
-  return Array.from(ownSubjects(own, compatible).values()).map(({ subject, positions }) => {
+  return Array.from(hers.values()).map(({ subject, positions }) => {
     const aligned: MembershipFigure[] = []
     const apart: MemberApart[] = []
     let spoke = 0
@@ -478,9 +481,9 @@ export function organisationsLine(
   compatible: Compatibility,
   organisations: MembershipOrganisation[],
 ): OrganisationLine[] {
-  const hers = ownSubjects(own, compatible)
+  const { hers, others } = readingOf(own, onSubjects, self, compatible)
   const stancesOf = new Map(
-    others(own, onSubjects, self, compatible)
+    others
       .filter(({ author }) => author.kind === 'organisation')
       .map(({ author, stances }) => [author.id, stances]),
   )

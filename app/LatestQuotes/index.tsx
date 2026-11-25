@@ -1,15 +1,14 @@
 import RuledSection from '../../components/layout/RuledSection'
-import { FeedEntry } from '../../domain/read-models/feed-entries'
+import { FeedEntry, leadOf } from '../../domain/read-models/feed-entries'
 import { STATEMENTS_HREF } from '../../domain/read-models/hrefs'
-import SameDayQuote from './SameDayQuote'
-import SignedQuote from './SignedQuote'
+import GatheredQuote from './GatheredQuote'
 import StatedQuote from './StatedQuote'
 import styles from './LatestQuotes.module.css'
 
 /**
- * Les dernières entrées du flux, dans le rail de l'accueil : ce que chacun·e
- * a dit ou fait, les textes signés à plusieurs en une entrée par texte, et
- * une entrée par auteur·rice pour ce qui s'est dit le même jour.
+ * Les dernières entrées du flux, dans le rail de l'accueil. Une prise de
+ * position s'y lit avec ses mots ; les signatures d'un texte, ou ce qu'un·e
+ * auteur·rice a dit le même jour, tiennent en une phrase.
  */
 export default function LatestQuotes({ entries }: { entries: FeedEntry[] }) {
   if (entries.length === 0) return null
@@ -20,33 +19,13 @@ export default function LatestQuotes({ entries }: { entries: FeedEntry[] }) {
       more={{ href: STATEMENTS_HREF, label: 'Tout le flux' }}
     >
       <ol className={styles.list}>
-        {entries.map((latest) => {
-          switch (latest.kind) {
-            case 'signatures':
-              return (
-                <SignedQuote
-                  key={latest.declaration.id}
-                  declaration={latest.declaration}
-                  source={{
-                    name: latest.first.statement.sourceName,
-                    statedAt: latest.first.statement.statedAt,
-                  }}
-                  named={latest.named}
-                  others={latest.others}
-                />
-              )
-            case 'sameDay':
-              return (
-                <SameDayQuote
-                  key={latest.entries[0].statement.id}
-                  author={latest.author}
-                  entries={latest.entries}
-                />
-              )
-            case 'statement':
-              return <StatedQuote key={latest.entry.statement.id} entry={latest.entry} />
-          }
-        })}
+        {entries.map((entry) =>
+          entry.kind === 'statement' ? (
+            <StatedQuote key={entry.entry.statement.id} entry={entry.entry} />
+          ) : (
+            <GatheredQuote key={leadOf(entry).statement.id} entry={entry} />
+          ),
+        )}
       </ol>
     </RuledSection>
   )

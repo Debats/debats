@@ -1893,9 +1893,11 @@ export type Database = {
         Args: {
           p_author_kind?: string
           p_declaration_slug?: string
+          p_gather_days?: boolean
           p_limit?: number
           p_offset?: number
           p_order?: string
+          p_shown?: number
           p_statement_type?: Database['public']['Enums']['statement_type']
           p_theme_slug?: string
         }

@@ -149,10 +149,12 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
 
   it('narrows the feed to the text: one entry for its signatures, naming it and who signed', async () => {
     const feed = await Effect.runPromise(
-      createStatementRepository(supabase).findFeed({ jointDeclarationSlug: slug }, 'stated', {
-        limit: 20,
-        offset: 0,
-      }),
+      createStatementRepository(supabase).findFeed(
+        { jointDeclarationSlug: slug },
+        'stated',
+        'signatures',
+        { limit: 20, offset: 0 },
+      ),
     )
 
     expect(feed).toMatchObject({ total: 1, statements: 1 })
@@ -281,7 +283,10 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
     )
 
     const feed = await Effect.runPromise(
-      statements.findFeed({ jointDeclarationSlug: slug }, 'stated', { limit: 20, offset: 0 }),
+      statements.findFeed({ jointDeclarationSlug: slug }, 'stated', 'signatures', {
+        limit: 20,
+        offset: 0,
+      }),
     )
     expect(feed).toMatchObject({ total: 1, statements: 1 })
     expect(leadOf(feed.entries[0]).statement.id).toBe(statementId)
@@ -360,6 +365,7 @@ describe.skipIf(!hasDatabase)('joint declaration reads', () => {
       createStatementRepository(supabase).findFeed(
         { jointDeclarationSlug: `inconnu-${tag}` },
         'stated',
+        'signatures',
         { limit: 20, offset: 0 },
       ),
     )

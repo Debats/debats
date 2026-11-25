@@ -64,7 +64,10 @@ export const loadHomePage = (
       {
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
-        feed: statements.findFeed({}, 'stated', { limit: HOME_LATEST_STATEMENTS, offset: 0 }),
+        feed: statements.findFeed({}, 'stated', 'signatures-and-days', {
+          limit: HOME_LATEST_STATEMENTS,
+          offset: 0,
+        }),
         publicFigures: createPublicFigureRepository(supabase).findMostDocumented(
           HOME_SHELVES.publicFigures,
         ),

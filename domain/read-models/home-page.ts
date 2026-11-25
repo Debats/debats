@@ -31,7 +31,7 @@ export interface DailySubject {
 }
 
 /** A shelf of the home page: the few it shows, and how many its index holds */
-export interface Shelf<Shown> {
+export interface Glimpse<Shown> {
   shown: Shown[]
   total: number
 }
@@ -43,11 +43,11 @@ export interface HomePage {
   /** The last statements of the whole site, newest stated first, the signatures of a text gathered */
   latest: FeedEntry[]
   /** The subjects the most voices spoke on, without the subject of the day */
-  subjects: Shelf<Debate>
+  subjects: Glimpse<Debate>
   /** The public figures the site documents on the most subjects */
-  publicFigures: Shelf<PublicFigureActivitySummary>
+  publicFigures: Glimpse<PublicFigureActivitySummary>
   /** The organisations the most engaged in the debate */
-  organisations: Shelf<OrganisationSummary>
+  organisations: Glimpse<OrganisationSummary>
   /** The latest joint declarations */
-  declarations: Shelf<JointDeclarationSummary>
+  declarations: Glimpse<JointDeclarationSummary>
 }

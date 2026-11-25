@@ -1,11 +1,11 @@
 import { Debate } from '../../domain/read-models/home-debates'
-import { Shelf as Shelved } from '../../domain/read-models/home-page'
+import { Glimpse } from '../../domain/read-models/home-page'
 import { SUBJECTS_HREF } from '../../domain/read-models/hrefs'
 import Shelf from '../Shelf'
 import SubjectShelfCard from './SubjectShelfCard'
 
 /** Le rayon des sujets, sur l'accueil : ceux où le plus de voix se sont exprimées. */
-export default function SubjectShelf({ subjects }: { subjects: Shelved<Debate> }) {
+export default function SubjectShelf({ subjects }: { subjects: Glimpse<Debate> }) {
   return (
     <Shelf
       title="Sujets"
