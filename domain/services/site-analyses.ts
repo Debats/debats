@@ -1,14 +1,17 @@
 import { STATEMENT_TYPES, StatementType } from '../entities/statement'
+import { FigureAgreement } from '../read-models/figure-agreements'
 import { Compatibility } from '../read-models/position-judgements'
 import { StatementAuthorRef } from '../read-models/statement-author'
 import { authorKey } from './author-on-subject'
+import { relationOf, standsOf, standsWithLeading, supportOf } from './stands'
 
 /**
  * Analyses of the whole site: what the Analyses tab of a public figure or an
  * organisation says about one author (`author-analyses.ts`), read here across
- * all of them. Pure functions over every statement of the site, with the same
- * readings: two authors agree on a subject when they share a position there,
- * the leading position is the one the most authors took.
+ * all of them. Pure functions over every statement of the site, on the one
+ * reading both share (`stands.ts`): an author stands where she is today, two
+ * authors are with each other, apart or beside each other, and the leading
+ * position is the one the most authors hold.
  */
 
 export interface SubjectRef {
@@ -26,42 +29,48 @@ export interface SiteStatement {
   /** A signature of a joint declaration, rather than words or deeds of her own */
   signed: boolean
   sourceName: string
+  statedAt: Date
+  /** When the site recorded it: what orders two statements of the same day */
+  recordedAt: Date
 }
 
-/** What one author took, subject by subject */
+type Held = Array<{ id: string }>
+
+/** Where one author stands today, subject by subject */
 interface Stances {
   author: StatementAuthorRef
-  /** subject id → the positions she took there */
-  bySubject: Map<string, Set<string>>
+  /** subject id → the positions she holds there */
+  bySubject: Map<string, Held>
 }
 
-function stancesByAuthor(statements: readonly SiteStatement[]): Map<string, Stances> {
-  const byAuthor = new Map<string, Stances>()
-  for (const { author, subject, positionId } of statements) {
-    const key = authorKey(author)
-    const stances = byAuthor.get(key) ?? { author, bySubject: new Map<string, Set<string>>() }
-    stances.bySubject.set(
-      subject.id,
-      (stances.bySubject.get(subject.id) ?? new Set()).add(positionId),
-    )
-    byAuthor.set(key, stances)
-  }
-  return byAuthor
+/** Where every author of the site stands today */
+function stancesByAuthor(
+  statements: readonly SiteStatement[],
+  compatible: Compatibility,
+): Stances[] {
+  const authors = new Map(statements.map(({ author }) => [authorKey(author), author]))
+  const stands = standsOf(
+    statements.map((statement) => ({
+      authorKey: authorKey(statement.author),
+      subjectId: statement.subject.id,
+      position: { id: statement.positionId },
+      statedAt: statement.statedAt,
+      recordedAt: statement.recordedAt,
+    })),
+    compatible,
+  )
+  return Array.from(stands.entries()).map(([key, bySubject]) => ({
+    author: authors.get(key)!,
+    bySubject,
+  }))
 }
 
 const subjectsById = (statements: readonly SiteStatement[]): Map<string, SubjectRef> =>
   new Map(statements.map(({ subject }) => [subject.id, subject]))
 
-const isFigure = ({ author }: Stances) => author.kind === 'public_figure'
+const isFigure = ({ author }: { author: StatementAuthorRef }) => author.kind === 'public_figure'
 
-const byName = (a: StatementAuthorRef, b: StatementAuthorRef) => a.name.localeCompare(b.name, 'fr')
-
-const shares = (mine: Set<string>, theirs: Set<string>) =>
-  Array.from(mine).some((position) => theirs.has(position))
-
-/** One of these positions goes against one of those: they were not judged compatible */
-const contradicts = (mine: Set<string>, theirs: Set<string>, compatible: Compatibility) =>
-  Array.from(mine).some((m) => Array.from(theirs).some((t) => !compatible(m, t)))
+const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, 'fr')
 
 /* Who speaks */
 
@@ -91,16 +100,18 @@ export function speakersByFamily(
   familiesOf: ReadonlyMap<string, ReadonlySet<string>>,
   families: readonly SpeakingFamily[],
 ): FamilySpeakers[] {
-  const counts = new Map<string, { voices: number; figures: number }>()
-  for (const stances of Array.from(stancesByAuthor(statements).values()).filter(isFigure)) {
-    for (const familyId of Array.from(familiesOf.get(stances.author.id) ?? [])) {
-      const count = counts.get(familyId) ?? { voices: 0, figures: 0 }
-      counts.set(familyId, {
-        voices: count.voices + stances.bySubject.size,
-        figures: count.figures + 1,
-      })
-    }
+  const subjectsOf = new Map<string, Set<string>>()
+  for (const { author, subject } of statements.filter(isFigure)) {
+    subjectsOf.set(author.id, (subjectsOf.get(author.id) ?? new Set()).add(subject.id))
   }
+
+  const counts = new Map<string, { voices: number; figures: number }>()
+  subjectsOf.forEach((subjects, figureId) => {
+    for (const familyId of Array.from(familiesOf.get(figureId) ?? [])) {
+      const count = counts.get(familyId) ?? { voices: 0, figures: 0 }
+      counts.set(familyId, { voices: count.voices + subjects.size, figures: count.figures + 1 })
+    }
+  })
   return families
     .flatMap((family) => {
       const count = counts.get(family.id)
@@ -109,13 +120,13 @@ export function speakersByFamily(
     .sort((a, b) => b.voices - a.voices || a.family.position - b.family.position)
 }
 
-/* Who thinks otherwise */
+/* Who thinks like whom, who thinks otherwise */
 
 /** Two public figures and how often they stand apart */
 export interface OpposedPair {
   a: StatementAuthorRef
   b: StatementAuthorRef
-  /** The subjects both spoke on without sharing a position, one of hers contradicting one of his */
+  /** The subjects both stand on, apart from each other */
   opposedSubjects: number
   /** The subjects both spoke on */
   commonSubjects: number
@@ -125,66 +136,122 @@ export interface OpposedPair {
 
 const EXAMPLES = 3
 
+/** Two figures present enough to be paired, and the subjects they have in common */
+interface Paired {
+  a: StatementAuthorRef
+  b: StatementAuthorRef
+  common: number
+  /** The subjects they stand with each other on, then apart */
+  agreed: SubjectRef[]
+  opposed: SubjectRef[]
+}
+
 /**
- * The pairs of public figures who stand apart on the most subjects, each
- * figure appearing once: the counterpart of the pairs that agree
- * (`read-models/figure-agreements.ts`), with the same threshold of presence.
- * Two figures who only took compatible positions on a subject are not
- * opposed there: nothing one said goes against what the other said.
+ * Every two public figures who spoke on enough subjects, compared on the
+ * subjects both spoke on. Two who only hold compatible positions on a subject
+ * neither agree nor are opposed there.
  */
-export function opposedPairs(
+function pairsOf(
   statements: readonly SiteStatement[],
   compatible: Compatibility,
-  { minSubjects, limit }: { minSubjects: number; limit: number },
-): OpposedPair[] {
+  minSubjects: number,
+): Paired[] {
   const subjects = subjectsById(statements)
-  const present = Array.from(stancesByAuthor(statements).values())
+  const present = stancesByAuthor(statements, compatible)
     .filter((stances) => isFigure(stances) && stances.bySubject.size >= minSubjects)
     .sort((x, y) => byName(x.author, y.author))
+  const named = (ids: string[]) =>
+    ids.map((id) => subjects.get(id)!).sort((x, y) => x.title.localeCompare(y.title, 'fr'))
 
-  const pairs: Array<OpposedPair & { agreedSubjects: number }> = []
-  present.forEach((first, index) => {
-    for (const second of present.slice(index + 1)) {
+  return present.flatMap((first, index) =>
+    present.slice(index + 1).map((second): Paired => {
       const common = Array.from(first.bySubject.keys()).filter((id) => second.bySubject.has(id))
-      const agreed = common.filter((id) =>
-        shares(first.bySubject.get(id)!, second.bySubject.get(id)!),
-      )
-      const opposed = common.filter(
-        (id) =>
-          !agreed.includes(id) &&
-          contradicts(first.bySubject.get(id)!, second.bySubject.get(id)!, compatible),
-      )
-      if (opposed.length === 0) continue
-      pairs.push({
+      const standing = (relation: 'with' | 'apart') =>
+        common.filter(
+          (id) =>
+            relationOf(first.bySubject.get(id)!, second.bySubject.get(id)!, compatible) ===
+            relation,
+        )
+      return {
         a: first.author,
         b: second.author,
-        opposedSubjects: opposed.length,
-        commonSubjects: common.length,
-        agreedSubjects: agreed.length,
-        examples: opposed
-          .map((id) => subjects.get(id)!)
-          .sort((x, y) => x.title.localeCompare(y.title, 'fr'))
-          .slice(0, EXAMPLES),
-      })
-    }
-  })
-
-  const shown: OpposedPair[] = []
-  const seen = new Set<string>()
-  const ranked = pairs.sort(
-    (x, y) =>
-      y.opposedSubjects - x.opposedSubjects ||
-      x.agreedSubjects - y.agreedSubjects ||
-      byName(x.a, y.a) ||
-      byName(x.b, y.b),
+        common: common.length,
+        agreed: named(standing('with')),
+        opposed: named(standing('apart')),
+      }
+    }),
   )
-  for (const { agreedSubjects: _agreed, ...pair } of ranked) {
+}
+
+/** The first pairs of a ranking, each figure appearing once: the most present ones would fill every card */
+function eachFigureOnce(ranked: readonly Paired[], limit: number): Paired[] {
+  const shown: Paired[] = []
+  const seen = new Set<string>()
+  for (const pair of ranked) {
     if (shown.length === limit) break
     if (seen.has(pair.a.id) || seen.has(pair.b.id)) continue
     shown.push(pair)
     seen.add(pair.a.id).add(pair.b.id)
   }
   return shown
+}
+
+interface PairsOptions {
+  /** Only figures who spoke on this many subjects are paired */
+  minSubjects: number
+  limit: number
+}
+
+/**
+ * The pairs of public figures who stand with each other on the most subjects,
+ * each figure appearing once. The choice is mechanical: nobody picks which
+ * pair is worth showing.
+ */
+export function agreeingPairs(
+  statements: readonly SiteStatement[],
+  compatible: Compatibility,
+  { minSubjects, limit }: PairsOptions,
+): FigureAgreement[] {
+  const ranked = pairsOf(statements, compatible, minSubjects)
+    .filter((pair) => pair.agreed.length > 0)
+    .sort(
+      (x, y) =>
+        y.agreed.length - x.agreed.length ||
+        x.common - y.common ||
+        byName(x.a, y.a) ||
+        byName(x.b, y.b),
+    )
+  return eachFigureOnce(ranked, limit).map((pair) => ({
+    a: pair.a,
+    b: pair.b,
+    agreedSubjects: pair.agreed.length,
+    commonSubjects: pair.common,
+    examples: pair.agreed.slice(0, EXAMPLES),
+  }))
+}
+
+/** The pairs of public figures who stand apart on the most subjects, each figure appearing once */
+export function opposedPairs(
+  statements: readonly SiteStatement[],
+  compatible: Compatibility,
+  { minSubjects, limit }: PairsOptions,
+): OpposedPair[] {
+  const ranked = pairsOf(statements, compatible, minSubjects)
+    .filter((pair) => pair.opposed.length > 0)
+    .sort(
+      (x, y) =>
+        y.opposed.length - x.opposed.length ||
+        x.agreed.length - y.agreed.length ||
+        byName(x.a, y.a) ||
+        byName(x.b, y.b),
+    )
+  return eachFigureOnce(ranked, limit).map((pair) => ({
+    a: pair.a,
+    b: pair.b,
+    opposedSubjects: pair.opposed.length,
+    commonSubjects: pair.common,
+    examples: pair.opposed.slice(0, EXAMPLES),
+  }))
 }
 
 /* Where each stands against everyone */
@@ -198,28 +265,10 @@ export interface FigureStanding {
 }
 
 export interface Standings {
-  /** Who most often takes the most supported position, most often first */
+  /** Who most often holds the most supported position, most often first */
   withLeading: FigureStanding[]
-  /** Who most often takes another, most often first */
+  /** Who most often holds another, most often first */
   elsewhere: FigureStanding[]
-}
-
-/** subject id → how many distinct authors took each of its positions, and how many spoke at all */
-function supportBySubject(
-  authors: readonly Stances[],
-): Map<string, { byPosition: Map<string, number>; authors: number }> {
-  const support = new Map<string, { byPosition: Map<string, number>; authors: number }>()
-  for (const { bySubject } of authors) {
-    bySubject.forEach((positions, subjectId) => {
-      const entry = support.get(subjectId) ?? { byPosition: new Map<string, number>(), authors: 0 }
-      positions.forEach((position) =>
-        entry.byPosition.set(position, (entry.byPosition.get(position) ?? 0) + 1),
-      )
-      entry.authors += 1
-      support.set(subjectId, entry)
-    })
-  }
-  return support
 }
 
 /**
@@ -230,10 +279,13 @@ function supportBySubject(
  */
 export function standings(
   statements: readonly SiteStatement[],
+  compatible: Compatibility,
   { minSubjects, limit }: { minSubjects: number; limit: number },
 ): Standings {
-  const authors = Array.from(stancesByAuthor(statements).values())
-  const support = supportBySubject(authors)
+  const authors = stancesByAuthor(statements, compatible)
+  const support = supportOf(
+    new Map(authors.map(({ author, bySubject }) => [authorKey(author), bySubject])),
+  )
 
   const ranked = authors
     .filter(isFigure)
@@ -241,11 +293,9 @@ export function standings(
       const compared = Array.from(bySubject.entries()).filter(
         ([subjectId]) => support.get(subjectId)!.authors > 1,
       )
-      const withLeading = compared.filter(([subjectId, positions]) => {
-        const { byPosition } = support.get(subjectId)!
-        const most = Math.max(...Array.from(byPosition.values()))
-        return Array.from(positions).some((position) => byPosition.get(position) === most)
-      })
+      const withLeading = compared.filter(([subjectId, positions]) =>
+        standsWithLeading(positions, support.get(subjectId)!),
+      )
       return { figure: author, withLeading: withLeading.length, compared: compared.length }
     })
     .filter(({ compared }) => compared >= minSubjects)
@@ -273,22 +323,21 @@ export function standings(
 
 export interface MembersCohesion {
   organisation: StatementAuthorRef
-  /** How many times a member took one of the organisation's positions on one of its subjects */
+  /** How many times a member holds one of the organisation's positions on one of its subjects */
   aligned: number
-  /** How many times a member only took other positions there */
+  /** How many times a member holds none there, one of hers contradicting the line */
   apart: number
-  /** The subjects of the organisation at least one member spoke on */
+  /** The subjects of the organisation where at least one member stands with it or apart */
   subjects: number
 }
 
 /**
  * For each organisation, whether its members follow its line: the block of an
  * organisation's Analyses tab (`memberCohesion`), summed over its subjects.
- * A member who only took positions compatible with the line is neither with
- * it nor apart: she did not say the same thing, and nothing she said goes
- * against it. `membersOf` gives the current members of each organisation. Only
- * organisations whose members spoke enough on its subjects are listed, those
- * whose members spoke the most first.
+ * A member who only holds positions compatible with the line is neither with
+ * it nor apart. `membersOf` gives the current members of each organisation.
+ * Only organisations whose members stand enough on its subjects are listed,
+ * those whose members stand the most first.
  */
 export function membersCohesion(
   statements: readonly SiteStatement[],
@@ -296,7 +345,7 @@ export function membersCohesion(
   compatible: Compatibility,
   { minVoices, limit }: { minVoices: number; limit: number },
 ): MembersCohesion[] {
-  const authors = Array.from(stancesByAuthor(statements).values())
+  const authors = stancesByAuthor(statements, compatible)
   const figures = new Map(authors.filter(isFigure).map((stances) => [stances.author.id, stances]))
 
   return authors
@@ -308,14 +357,12 @@ export function membersCohesion(
       })
       const cohesion = { organisation: author, aligned: 0, apart: 0, subjects: 0 }
       bySubject.forEach((line, subjectId) => {
-        const spoke = members.flatMap((member) => {
+        const relations = members.flatMap((member) => {
           const theirs = member.bySubject.get(subjectId)
-          return theirs ? [theirs] : []
+          return theirs ? [relationOf(line, theirs, compatible)] : []
         })
-        const aligned = spoke.filter((theirs) => shares(line, theirs)).length
-        const apart = spoke.filter(
-          (theirs) => !shares(line, theirs) && contradicts(line, theirs, compatible),
-        ).length
+        const aligned = relations.filter((relation) => relation === 'with').length
+        const apart = relations.filter((relation) => relation === 'apart').length
         cohesion.aligned += aligned
         cohesion.apart += apart
         cohesion.subjects += aligned + apart > 0 ? 1 : 0

@@ -25,6 +25,7 @@ import {
   standing,
 } from './author-analyses'
 import { ALL_CONTRADICTORY, compatibilityOf } from '../read-models/position-judgements'
+import { membersCohesion, SiteStatement, standings } from './site-analyses'
 
 const subjectOf = (title: string) =>
   createSubject({ title, presentation: 'Présentation longue.', problem: 'Problème ?' })
@@ -241,6 +242,59 @@ describe('the analyses of an author who left a position', () => {
 
     expect(line.aligned).toEqual([])
     expect(line.apart.map((s) => s.mine.map((p) => p.title))).toEqual([['Sortir']])
+  })
+})
+
+describe('the analyses of an author, facing someone who left a position', () => {
+  /** Camus held « Relancer », then left it for « Sortir » */
+  const camusMoved = [
+    taken(camus, relance, { on: '2020-01-01' }),
+    taken(camus, sortie, { on: '2023-06-01' }),
+  ]
+
+  it('no longer stands her with who left the position she holds', () => {
+    const mine = [taken(veil, relance)]
+
+    const result = company(detailed(mine), [...mine, ...camusMoved], self, ALL_CONTRADICTORY)
+
+    expect(result.closest).toEqual([])
+    expect(result.opposed.map((c) => c.author.name)).toEqual(['Albert Camus'])
+  })
+
+  it('does not count for a position the voice of who left it', () => {
+    const mine = [taken(veil, sortie)]
+
+    const result = standing(
+      detailed(mine),
+      [...mine, ...camusMoved, taken(weil, relance)],
+      self,
+      ALL_CONTRADICTORY,
+    )
+
+    // Veil and Camus hold « Sortir », Weil alone holds « Relancer »
+    expect(result.subjects[0]).toMatchObject({
+      authors: 3,
+      withLeading: true,
+      leading: { title: 'Sortir', authors: 2 },
+    })
+  })
+
+  it('leaves neither with the line nor apart the member who only holds a compatible position', () => {
+    const line = [taken(attac, report)]
+    const members = [{ id: 'veil', name: 'Simone Veil', slug: 'simone-veil' }]
+    const compatible = compatibilityOf([
+      { positionIds: [report.id, maintien.id], compatible: true },
+    ])
+
+    const [cohesion] = memberCohesion(
+      detailed(line),
+      [...line, taken(veil, maintien)],
+      organisationAuthor(attac.id),
+      compatible,
+      members,
+    )
+
+    expect(cohesion).toMatchObject({ aligned: [], apart: [], silent: 0 })
   })
 })
 
@@ -482,5 +536,81 @@ describe('organisationsLine', () => {
     expect(organisationsLine(detailed(mine), mine, self, ALL_CONTRADICTORY, organisations)).toEqual(
       [],
     )
+  })
+})
+
+describe('the page of an author and the analyses of the site', () => {
+  /** The statements as the analyses of the whole site read them */
+  const acrossTheSite = (entries: StatementWithAuthor[]): SiteStatement[] =>
+    entries.map(({ statement, author, position }) => {
+      const subject = subjects.get(position.subjectId)!
+      return {
+        author,
+        subject: { id: subject.id, title: subject.title, slug: subject.slug },
+        positionId: position.id,
+        type: 'declaration',
+        signed: false,
+        sourceName: statement.sourceName,
+        statedAt: statement.statedAt,
+        recordedAt: statement.createdAt,
+      }
+    })
+
+  // Attac moved on the retirements; Veil stayed on what it left, Camus follows it, Weil is beside it
+  const line = [
+    taken(attac, maintien, { on: '2020-01-01' }),
+    taken(attac, report, { on: '2023-06-01' }),
+    taken(attac, relance),
+  ]
+  const everyone = [
+    ...line,
+    taken(veil, maintien),
+    taken(veil, relance),
+    taken(camus, report),
+    taken(camus, sortie, { on: '2020-01-01' }),
+    taken(camus, relance, { on: '2023-06-01' }),
+    taken(weil, sortie),
+  ]
+  const compatible = compatibilityOf([{ positionIds: [relance.id, sortie.id], compatible: true }])
+  const members = [veil, camus, weil].map(({ id, name, slug }) => ({ id, name, slug }))
+
+  it('count the same members with the line of an organisation, and the same apart', () => {
+    const onItsPage = memberCohesion(
+      detailed(line),
+      everyone,
+      organisationAuthor(attac.id),
+      compatible,
+      members,
+    )
+    const [onTheSite] = membersCohesion(
+      acrossTheSite(everyone),
+      new Map([[attac.id, new Set(members.map(({ id }) => id))]]),
+      compatible,
+      { minVoices: 1, limit: 5 },
+    )
+
+    const total = (count: (cohesion: (typeof onItsPage)[number]) => number) =>
+      onItsPage.reduce((sum, cohesion) => sum + count(cohesion), 0)
+    expect(onTheSite).toMatchObject({
+      aligned: total((cohesion) => cohesion.aligned.length),
+      apart: total((cohesion) => cohesion.apart.length),
+    })
+    expect(onTheSite.aligned + onTheSite.apart).toBeGreaterThan(0)
+  })
+
+  it('stand a public figure with the most supported position on the same subjects', () => {
+    const mine = everyone.filter(({ author }) => author.id === camus.id)
+
+    const onHerPage = standing(detailed(mine), everyone, publicFigureAuthor(camus.id), compatible)
+    const { withLeading, elsewhere } = standings(acrossTheSite(everyone), compatible, {
+      minSubjects: 1,
+      limit: 5,
+    })
+    const onTheSite = [...withLeading, ...elsewhere].find(({ figure }) => figure.id === camus.id)
+
+    expect(onTheSite).toMatchObject({
+      compared: onHerPage.comparedCount,
+      withLeading: onHerPage.withLeadingCount,
+    })
   })
 })

@@ -11,6 +11,8 @@ import { fetchAllRows } from '../database/fetch-all-pages'
 type Client = SupabaseClient<Database>
 
 interface StatementRow {
+  stated_at: string
+  created_at: string
   statement_type: SiteStatement['type']
   joint_declaration_id: string | null
   source_name: string
@@ -27,7 +29,7 @@ interface StatementRow {
 }
 
 const STATEMENT_COLUMNS = `
-  statement_type, joint_declaration_id, source_name, position_id,
+  statement_type, joint_declaration_id, source_name, position_id, stated_at, created_at,
   positions!inner (deleted_at, subjects!inner (id, title, slug, deleted_at)),
   public_figures (id, name, slug, deleted_at),
   organisations (id, name, slug, acronym, deleted_at)`
@@ -43,7 +45,7 @@ const authorOf = (row: StatementRow): SiteStatement['author'] | null => {
 /**
  * Every statement of the site whose position, subject and author are still
  * there, as the analyses of the site read them: who, on which subject, for
- * which position, how. The whole table is read, page after page: the day it
+ * which position, when, how. The whole table is read, page after page: the day it
  * weighs too much, the analyses get a projection of their own.
  */
 export function loadSiteStatements(
@@ -77,6 +79,8 @@ export function loadSiteStatements(
                 type: row.statement_type,
                 signed: row.joint_declaration_id !== null,
                 sourceName: row.source_name,
+                statedAt: new Date(row.stated_at),
+                recordedAt: new Date(row.created_at),
               },
             ]
           : []

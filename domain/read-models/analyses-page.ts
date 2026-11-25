@@ -1,5 +1,6 @@
 import { OccupationFamily } from '../entities/occupation-family'
 import {
+  agreeingPairs,
   FamilySpeakers,
   MembersCohesion,
   membersCohesion,
@@ -13,7 +14,7 @@ import {
   standings,
 } from '../services/site-analyses'
 import { ArgumentSummary } from './argument'
-import { FigureAgreement, MIN_SUBJECTS_TO_PAIR, pairsToShow } from './figure-agreements'
+import { FigureAgreement, MIN_SUBJECTS_TO_PAIR } from './figure-agreements'
 import { Debate, DebateLeanings, debateLeanings, SiteFigures } from './home-debates'
 import { latestChanges, PositionChange, StatedPosition } from './position-changes'
 import { compatibilityOf, JudgedPair } from './position-judgements'
@@ -61,8 +62,6 @@ export interface AnalysesMaterial {
   debates: Debate[]
   /** The busiest first */
   moving: MovingDebate[]
-  /** The pairs of public figures agreeing on the most subjects: more than the page shows */
-  agreements: FigureAgreement[]
   /** The statements of the figures who took several positions on a subject: where changes are read */
   movedStatements: StatedPosition[]
   /** Every pair of positions that was judged: compatible ones make neither a change nor a disagreement */
@@ -100,6 +99,7 @@ export interface AnalysesPage {
 export function analysesOf(material: AnalysesMaterial): AnalysesPage {
   const { statements } = material
   const compatible = compatibilityOf(material.judged)
+  const pairs = { minSubjects: MIN_SUBJECTS_TO_PAIR, limit: ANALYSES_SHOWN.pairs }
 
   return {
     leanings: debateLeanings(material.debates, ANALYSES_SHOWN.leaningSubjects),
@@ -114,12 +114,9 @@ export function analysesOf(material: AnalysesMaterial): AnalysesPage {
         .slice(0, ANALYSES_SHOWN.arguments),
       total: material.arguments.length,
     },
-    agreeing: pairsToShow(material.agreements, ANALYSES_SHOWN.pairs),
-    opposed: opposedPairs(statements, compatible, {
-      minSubjects: MIN_SUBJECTS_TO_PAIR,
-      limit: ANALYSES_SHOWN.pairs,
-    }),
-    standings: standings(statements, {
+    agreeing: agreeingPairs(statements, compatible, pairs),
+    opposed: opposedPairs(statements, compatible, pairs),
+    standings: standings(statements, compatible, {
       minSubjects: MIN_SUBJECTS_TO_STAND,
       limit: ANALYSES_SHOWN.standings,
     }),

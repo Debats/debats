@@ -18,6 +18,8 @@ const took = (
   type: 'declaration',
   signed: false,
   sourceName: 'Le Monde',
+  statedAt: new Date('2026-01-01'),
+  recordedAt: new Date('2026-01-01'),
 })
 
 const argument = (title: string, statementsCount: number): ArgumentSummary => ({
@@ -40,7 +42,6 @@ const material = (over: Partial<AnalysesMaterial> = {}): AnalysesMaterial => ({
   },
   debates: [],
   moving: [],
-  agreements: [],
   movedStatements: [],
   judged: [],
   statements: [],

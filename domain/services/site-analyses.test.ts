@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { ALL_CONTRADICTORY } from '../read-models/position-judgements'
 import { organisationRef, publicFigureRef } from '../read-models/statement-author'
 import {
+  agreeingPairs,
   membersCohesion,
   opposedPairs,
   siteExpression,
@@ -28,8 +29,13 @@ const took = (
   type: 'declaration',
   signed: false,
   sourceName: 'Le Monde',
+  statedAt: new Date('2026-01-01'),
+  recordedAt: new Date('2026-01-01'),
   ...over,
 })
+
+/** « She took it that day »: what orders the positions an author took on a subject */
+const on = (day: string) => ({ statedAt: new Date(day), recordedAt: new Date(day) })
 
 const alma = figure('Alma')
 const boris = figure('Boris')
@@ -205,6 +211,7 @@ describe('standings', () => {
         ...onEach(alma, ['s1', 's2'], 'major'),
         ...onEach(boris, ['s1', 's2'], 'minor'),
       ],
+      ALL_CONTRADICTORY,
       { minSubjects: 2, limit: 1 },
     )
 
@@ -224,6 +231,7 @@ describe('standings', () => {
         took(alma, 's2', 'a'),
         took(boris, 's2', 'b'),
       ],
+      ALL_CONTRADICTORY,
       { minSubjects: 2, limit: 2 },
     )
 
@@ -233,6 +241,7 @@ describe('standings', () => {
   it('compares a figure only on the subjects somebody else spoke on, and ranks her only with enough of them', () => {
     const { withLeading, elsewhere } = standings(
       [...crowd(['s1']), took(alma, 's1', 'major'), took(alma, 'alone', 'a')],
+      ALL_CONTRADICTORY,
       options,
     )
 
@@ -243,6 +252,7 @@ describe('standings', () => {
     const lone = party('Parti')
     const { withLeading, elsewhere } = standings(
       [...onEach(lone, ['s1', 's2'], 'a'), ...onEach(alma, ['s1', 's2'], 'a')],
+      ALL_CONTRADICTORY,
       { minSubjects: 2, limit: 5 },
     )
 
@@ -253,11 +263,84 @@ describe('standings', () => {
   it('ranks a figure who takes the most supported position half the time with those who most often do', () => {
     const { withLeading, elsewhere } = standings(
       [...crowd(['s1', 's2']), took(alma, 's1', 'major'), took(alma, 's2', 'minor')],
+      ALL_CONTRADICTORY,
       { minSubjects: 2, limit: 10 },
     )
 
     expect(withLeading.map(({ figure: who }) => who.name)).toContain('Alma')
     expect(elsewhere).toEqual([])
+  })
+
+  it('stands a figure where she is today: the position she left neither leads nor counts for her', () => {
+    // Alma left « major » for « minor » on both subjects; Boris holds « minor » too
+    const { withLeading, elsewhere } = standings(
+      [
+        ...onEach(figure('Xavier'), ['s1', 's2'], 'major'),
+        ...['s1', 's2'].map((subject) => took(alma, subject, 'major', on('2024-01-01'))),
+        ...onEach(alma, ['s1', 's2'], 'minor'),
+        ...onEach(boris, ['s1', 's2'], 'minor'),
+      ],
+      ALL_CONTRADICTORY,
+      { minSubjects: 2, limit: 10 },
+    )
+
+    // « minor » leads with two voices against one: had her former position counted, they would tie
+    expect(withLeading.map(({ figure: who }) => who.name)).toEqual(['Alma', 'Boris'])
+    expect(elsewhere.map(({ figure: who }) => who.name)).toEqual(['Xavier'])
+  })
+})
+
+describe('agreeingPairs', () => {
+  const options = { minSubjects: 2, limit: 4 }
+
+  it('pairs the figures who hold a position in common on the most subjects, with some of those subjects', () => {
+    const [pair] = agreeingPairs(
+      [...onEach(alma, ['s1', 's2', 's3'], 'a'), ...onEach(boris, ['s1', 's2'], 'a')],
+      ALL_CONTRADICTORY,
+      options,
+    )
+
+    expect(pair).toMatchObject({ agreedSubjects: 2, commonSubjects: 2 })
+    expect([pair.a.name, pair.b.name]).toEqual(['Alma', 'Boris'])
+    expect(pair.examples.map(({ slug }) => slug)).toEqual(['s1', 's2'])
+  })
+
+  it('shows each figure once', () => {
+    const subjects = ['s1', 's2']
+    const pairs = agreeingPairs(
+      [alma, boris, chloe, david].flatMap((who) => onEach(who, subjects, 'a')),
+      ALL_CONTRADICTORY,
+      options,
+    )
+
+    expect(pairs.map(({ a, b }) => [a.name, b.name])).toEqual([
+      ['Alma', 'Boris'],
+      ['Chloé', 'David'],
+    ])
+  })
+
+  it('no longer pairs a figure with who holds the position she left', () => {
+    const pairs = agreeingPairs(
+      [
+        ...['s1', 's2'].map((subject) => took(alma, subject, 'a', on('2024-01-01'))),
+        ...onEach(alma, ['s1', 's2'], 'b'),
+        ...onEach(boris, ['s1', 's2'], 'a'),
+      ],
+      ALL_CONTRADICTORY,
+      options,
+    )
+
+    expect(pairs).toEqual([])
+  })
+
+  it('leaves out the figures who spoke on too few subjects', () => {
+    const pairs = agreeingPairs(
+      [...onEach(alma, ['s1', 's2'], 'a'), took(boris, 's1', 'a')],
+      ALL_CONTRADICTORY,
+      options,
+    )
+
+    expect(pairs).toEqual([])
   })
 })
 

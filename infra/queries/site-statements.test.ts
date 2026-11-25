@@ -104,6 +104,8 @@ describe.skipIf(!hasDatabase)('site statements', () => {
         type: 'declaration',
         signed: false,
         sourceName: `Source ${tag}`,
+        statedAt: new Date('2026-01-15'),
+        recordedAt: expect.any(Date),
       },
     ])
   })

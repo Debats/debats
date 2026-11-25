@@ -14,6 +14,15 @@ import { StatementWithAuthor, StatementWithDetails } from '../repositories/state
 import { Compatibility } from '../read-models/position-judgements'
 import { authorKey } from './author-on-subject'
 import { CourseEntry, courseOf, HeldPosition, Step } from './position-course'
+import {
+  leadingSupport,
+  Relation,
+  relationOf,
+  Stands,
+  standsOf,
+  standsWithLeading,
+  supportOf,
+} from './stands'
 
 /**
  * Analyses of an author (a public figure or an organisation) against the
@@ -37,12 +46,13 @@ export interface PositionRef {
   slug: string
 }
 
-/** What another author took on one of the author's subjects */
+/** Where another author stands on one of the author's subjects */
 interface Stance {
   subject: SubjectRef
+  /** The positions they hold there today */
   theirs: PositionRef[]
-  /** They share at least one of the author's positions there */
-  aligned: boolean
+  /** How they stand towards the author there */
+  relation: Relation
 }
 
 /** Another author's stances, one per subject in common */
@@ -105,7 +115,42 @@ function ownSubjects(
   )
 }
 
-/** Everyone else on the author's subjects, with what they took on each */
+/**
+ * Where everyone stands today on the author's subjects, herself included:
+ * the one reading of `stands.ts`, hers from her own statements, the others'
+ * from everyone's statements on her subjects.
+ */
+function standsOn(
+  own: StatementWithDetails[],
+  onSubjects: StatementWithAuthor[],
+  self: StatementAuthor,
+  compatible: Compatibility,
+): Stands<PositionRef> {
+  const selfKey = authorKey(self)
+  return standsOf(
+    [
+      ...own.map(({ statement, position, subject }) => ({
+        authorKey: selfKey,
+        subjectId: subject.id,
+        position: positionRef(position),
+        statedAt: statement.statedAt,
+        recordedAt: statement.createdAt,
+      })),
+      ...onSubjects
+        .filter(({ author }) => authorKey(author) !== selfKey)
+        .map(({ statement, author, position }) => ({
+          authorKey: authorKey(author),
+          subjectId: position.subjectId,
+          position: positionRef(position),
+          statedAt: statement.statedAt,
+          recordedAt: statement.createdAt,
+        })),
+    ],
+    compatible,
+  )
+}
+
+/** Everyone else on the author's subjects, with where they stand on each towards her */
 function others(
   own: StatementWithDetails[],
   onSubjects: StatementWithAuthor[],
@@ -113,25 +158,24 @@ function others(
   compatible: Compatibility,
 ): OtherAuthor[] {
   const hers = ownSubjects(own, compatible)
+  const stands = standsOn(own, onSubjects, self, compatible)
   const selfKey = authorKey(self)
-  const byAuthor = new Map<string, OtherAuthor>()
-  for (const { author, position } of onSubjects) {
-    const key = authorKey(author)
-    if (key === selfKey) continue
-    const subject = hers.get(position.subjectId)
-    if (!subject) continue
-    const other = byAuthor.get(key) ?? { author, stances: new Map<string, Stance>() }
-    const stance = other.stances.get(position.subjectId) ?? {
-      subject: subject.subject,
-      theirs: [],
-      aligned: false,
-    }
-    if (!stance.theirs.some((p) => p.id === position.id)) stance.theirs.push(positionRef(position))
-    stance.aligned = stance.aligned || subject.positions.some((p) => p.id === position.id)
-    other.stances.set(position.subjectId, stance)
-    byAuthor.set(key, other)
-  }
-  return Array.from(byAuthor.values())
+  const authors = new Map(onSubjects.map(({ author }) => [authorKey(author), author]))
+  authors.delete(selfKey)
+
+  return Array.from(authors.entries()).flatMap(([key, author]) => {
+    const stances = new Map<string, Stance>()
+    stands.get(key)?.forEach((theirs, subjectId) => {
+      const mine = hers.get(subjectId)
+      if (!mine) return
+      stances.set(subjectId, {
+        subject: mine.subject,
+        theirs,
+        relation: relationOf(mine.positions, theirs, compatible),
+      })
+    })
+    return stances.size > 0 ? [{ author, stances }] : []
+  })
 }
 
 const byName = (a: { author: { name: string } }, b: { author: { name: string } }) =>
@@ -169,18 +213,13 @@ export function company(
   compatible: Compatibility,
   limit = COMPANY_LIMIT,
 ): Company {
-  const hers = ownSubjects(own, compatible)
-  const contradicts = ({ subject, theirs }: Stance) =>
-    (hers.get(subject.id)?.positions ?? []).some((mine) =>
-      theirs.some((other) => !compatible(mine.id, other.id)),
-    )
   const everyoneElse = others(own, onSubjects, self, compatible)
   const companions: Companion[] = everyoneElse.map(({ author, stances }) => {
     const all = Array.from(stances.values())
     return {
       author,
-      agreed: all.filter((s) => s.aligned).length,
-      disagreed: all.filter((s) => !s.aligned && contradicts(s)).length,
+      agreed: all.filter((s) => s.relation === 'with').length,
+      disagreed: all.filter((s) => s.relation === 'apart').length,
     }
   })
   return {
@@ -218,53 +257,38 @@ export interface Standing {
   withLeadingCount: number
 }
 
-/** The distinct authors behind each position of a subject */
-interface Voices {
-  title: string
-  authors: Set<string>
-}
-
-/** Who took which position, subject by subject; the author's own statements count too */
-function voicesBySubject(
-  own: StatementWithDetails[],
-  onSubjects: StatementWithAuthor[],
-  self: StatementAuthor,
-): Map<string, Map<string, Voices>> {
-  const bySubject = new Map<string, Map<string, Voices>>()
-  const count = (subjectId: string, position: PositionRef, key: string) => {
-    const positions = bySubject.get(subjectId) ?? new Map<string, Voices>()
-    const voices = positions.get(position.id) ?? { title: position.title, authors: new Set() }
-    voices.authors.add(key)
-    positions.set(position.id, voices)
-    bySubject.set(subjectId, positions)
-  }
-  for (const { author, position } of onSubjects)
-    count(position.subjectId, position, authorKey(author))
-  for (const { subject, position } of own) count(subject.id, position, authorKey(self))
-  return bySubject
-}
-
-/** On each subject, whether the author stands with the most supported position */
+/**
+ * On each subject, whether the author stands with the most supported
+ * position: the one the most authors hold today, herself counted.
+ */
 export function standing(
   own: StatementWithDetails[],
   onSubjects: StatementWithAuthor[],
   self: StatementAuthor,
   compatible: Compatibility,
 ): Standing {
-  const voices = voicesBySubject(own, onSubjects, self)
+  const stands = standsOn(own, onSubjects, self, compatible)
+  const support = supportOf(stands)
+  const titles = new Map(
+    Array.from(stands.values()).flatMap((bySubject) =>
+      Array.from(bySubject.values()).flatMap((positions) =>
+        positions.map((position): [string, string] => [position.id, position.title]),
+      ),
+    ),
+  )
   const subjects = Array.from(ownSubjects(own, compatible).values())
     .map(({ subject, positions }) => {
-      const byPosition = voices.get(subject.id)!
-      const onSubject = Array.from(byPosition.values())
-      const most = Math.max(...onSubject.map((v) => v.authors.size))
-      const leading = onSubject.find((v) => v.authors.size === most)!
-      const everyone = new Set(onSubject.flatMap((v) => Array.from(v.authors)))
+      const onSubject = support.get(subject.id)!
+      const most = leadingSupport(onSubject)
+      const [leadingId] = Array.from(onSubject.byPosition.entries()).find(
+        ([, authors]) => authors === most,
+      )!
       return {
         subject,
         positions,
-        leading: { title: leading.title, authors: most },
-        authors: everyone.size,
-        withLeading: positions.some((p) => byPosition.get(p.id)?.authors.size === most),
+        leading: { title: titles.get(leadingId)!, authors: most },
+        authors: onSubject.authors,
+        withLeading: standsWithLeading(positions, onSubject),
       }
     })
     .sort((a, b) => b.authors - a.authors || a.subject.title.localeCompare(b.subject.title, 'fr'))
@@ -388,9 +412,12 @@ export interface SubjectCohesion {
   subject: SubjectRef
   /** The organisation's positions on the subject */
   positions: PositionRef[]
-  /** Members who share one of them */
+  /** Members who hold one of them */
   aligned: MembershipFigure[]
-  /** Members who only took other positions */
+  /**
+   * Members who hold none, one of theirs contradicting the line. A member who
+   * only holds positions compatible with it is neither with it nor apart.
+   */
   apart: MemberApart[]
   /** Members who did not speak on the subject */
   silent: number
@@ -412,20 +439,16 @@ export function memberCohesion(
   return Array.from(ownSubjects(own, compatible).values()).map(({ subject, positions }) => {
     const aligned: MembershipFigure[] = []
     const apart: MemberApart[] = []
+    let spoke = 0
     for (const { author, stances } of spoken) {
       const stance = stances.get(subject.id)
       if (!stance) continue
+      spoke += 1
       const figure = memberById.get(author.id)!
-      if (stance.aligned) aligned.push(figure)
-      else apart.push({ figure, positions: stance.theirs })
+      if (stance.relation === 'with') aligned.push(figure)
+      if (stance.relation === 'apart') apart.push({ figure, positions: stance.theirs })
     }
-    return {
-      subject,
-      positions,
-      aligned,
-      apart,
-      silent: members.length - aligned.length - apart.length,
-    }
+    return { subject, positions, aligned, apart, silent: members.length - spoke }
   })
 }
 
@@ -441,9 +464,9 @@ export interface SubjectAgainstOrganisation {
 
 export interface OrganisationLine {
   organisation: MembershipOrganisation
-  /** Subjects where she shares one of the organisation's positions */
+  /** Subjects where she holds one of the organisation's positions */
   aligned: SubjectAgainstOrganisation[]
-  /** Subjects where she only took other positions */
+  /** Subjects where she holds none, one of hers contradicting the organisation's */
   apart: SubjectAgainstOrganisation[]
 }
 
@@ -471,8 +494,8 @@ export function organisationsLine(
         mine: hers.get(stance.subject.id)?.positions ?? [],
         theirs: stance.theirs,
       }
-      if (stance.aligned) line.aligned.push(compared)
-      else line.apart.push(compared)
+      if (stance.relation === 'with') line.aligned.push(compared)
+      if (stance.relation === 'apart') line.apart.push(compared)
     }
     return [line]
   })

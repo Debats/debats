@@ -16,20 +16,12 @@ import { createArgumentRepository } from '../database/argument-repository-supaba
 import { createOccupationFamilyRepository } from '../database/occupation-family-repository-supabase'
 import { createOccupationRepository } from '../database/occupation-repository-supabase'
 import { createSubjectRepository } from '../database/subject-repository-supabase'
-import { loadFigureAgreements } from './figure-agreements'
 import { loadHomeDebates, loadSiteFigures } from './home-debates'
 import { loadMovedStatements } from './position-changes'
 import { findAllJudgedPairs } from './position-judgements'
 import { loadCurrentMembers, loadSiteStatements } from './site-statements'
 
 type Client = SupabaseClient<Database>
-
-/**
- * How many pairs of figures to read. The page shows each figure once, so the
- * few it shows are picked among many more: the first pairs all share the same
- * two or three most present figures.
- */
-const PAIR_CANDIDATES = 40
 
 const unbounded = { concurrency: 'unbounded' } as const
 
@@ -71,7 +63,6 @@ export const loadAnalysesPage = (
       {
         figures: loadSiteFigures(supabase),
         debates: loadHomeDebates(supabase, recentSince(now)),
-        agreements: loadFigureAgreements(supabase, PAIR_CANDIDATES),
         movedStatements: loadMovedStatements(supabase),
         judged: findAllJudgedPairs(supabase),
         statements: loadSiteStatements(supabase),
