@@ -116,7 +116,7 @@ export default function SiteSearch() {
                             : styles.item,
                       })}
                     >
-                      <SearchHitRow hit={hit} />
+                      <SearchHitRow hit={hit} query={query} />
                     </li>
                   )
                 })}

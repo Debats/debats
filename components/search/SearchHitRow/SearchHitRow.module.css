@@ -43,3 +43,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Le passage trouvé : deux lignes au plus, les mots cherchés portés par l'encre */
+.excerpt {
+  composes: small from '../../../styles/text.module.css';
+  display: -webkit-box;
+  margin-top: 2px;
+  font-size: 13px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.found {
+  background-color: transparent;
+  font-weight: 600;
+  color: var(--ink);
+}

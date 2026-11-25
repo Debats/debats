@@ -3,7 +3,8 @@ import OrganisationLogo from '../../organisations/OrganisationLogo'
 import { StatementAuthorRef } from '../../../domain/read-models/statement-author'
 
 interface AuthorAvatarProps {
-  author: StatementAuthorRef
+  /** Ce que le visuel lit d'un auteur ; une référence entière convient */
+  author: Pick<StatementAuthorRef, 'kind' | 'name' | 'slug' | 'acronym'>
   size?: number
 }
 

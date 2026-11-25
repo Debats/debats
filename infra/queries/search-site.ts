@@ -16,17 +16,26 @@ function toHit(row: Record<string, unknown>): SearchHit {
     title: row.title as string,
     slug: row.slug as string,
     detail: (row.detail as string | null) ?? null,
+    excerpt: (row.excerpt as string | null) ?? null,
   }
-  if (kind !== 'position') return { ...found, kind }
+  if (kind !== 'position' && kind !== 'statement') return { ...found, kind }
   if (typeof row.subject_slug !== 'string')
-    throw new Error(`Position ${found.id} found without the slug of its subject`)
-  return { ...found, kind, subjectSlug: row.subject_slug }
+    throw new Error(`${kind} ${found.id} found without the slug of its subject`)
+  if (kind === 'position') return { ...found, kind, subjectSlug: row.subject_slug }
+  const authorKind = row.author_kind
+  if (authorKind !== 'public_figure' && authorKind !== 'organisation')
+    throw new Error(`Statement ${found.id} found without the kind of its author`)
+  return { ...found, kind, authorKind, subjectSlug: row.subject_slug }
 }
 
 /**
  * Everything the site knows under a few words: subjects, positions, public
- * figures, organisations, arguments and themes, the best matches of each
- * kind first (the `search_site` function, accent- and typo-tolerant).
+ * figures, organisations, statements, joint declarations, arguments, themes
+ * and occupations, the best matches of each kind first (the `search_site`
+ * function). What bears the words in its title comes first, accents and
+ * typos forgiven; then what is attached to a thing so found (the public
+ * figures of an occupation, the subjects of a theme); then what holds every
+ * word in its long text, with the excerpt where they stand.
  */
 export function searchSite(
   supabase: SupabaseClient,

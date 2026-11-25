@@ -39,7 +39,7 @@ export default function SearchResults({ query, groups }: SearchResultsProps) {
             {group.hits.map((hit) => (
               <li key={hit.id}>
                 <Link href={searchHitHref(hit)} className={styles.hit}>
-                  <SearchHitRow hit={hit} />
+                  <SearchHitRow hit={hit} query={query} />
                 </Link>
               </li>
             ))}

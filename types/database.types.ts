@@ -1983,7 +1983,9 @@ export type Database = {
       search_site: {
         Args: { p_per_kind?: number; p_query: string }
         Returns: {
+          author_kind: string
           detail: string
+          excerpt: string
           id: string
           kind: string
           score: number

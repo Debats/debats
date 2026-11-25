@@ -37,7 +37,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       <PageHero
         kicker="Explorer"
         title="Rechercher"
-        intro="Un sujet, une position, une personnalité, une organisation, un argument ou une thématique. Les accents et les fautes de frappe sont pardonnés."
+        intro="Un sujet, une position, une personnalité, une organisation, un métier, un argument, une thématique, ou quelques mots d’une prise de position. Les accents et les fautes de frappe sont pardonnés."
       >
         <SearchForm initialQuery={raw} autoFocus={raw === ''} />
       </PageHero>
