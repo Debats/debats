@@ -16,6 +16,7 @@ interface AuthorSubjectHeroProps {
   role?: React.ReactNode
   counts: {
     statements: number
+    /** Toutes celles qu'il a prises sur le sujet, tenues ou quittées depuis */
     positions: number
     /** Les autres voix du sujet qui défendent une de ses positions */
     allies: number
@@ -82,8 +83,7 @@ export default function AuthorSubjectHero({
           </span>
           <span aria-hidden="true">·</span>
           <span>
-            {counts.positions}{' '}
-            {plural(counts.positions, 'position défendue', 'positions défendues')}
+            {counts.positions} {plural(counts.positions, 'position prise', 'positions prises')}
           </span>
           <span aria-hidden="true">·</span>
           <span>{counts.allies} voix du même avis</span>
