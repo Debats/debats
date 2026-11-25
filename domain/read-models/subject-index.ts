@@ -1,4 +1,5 @@
 import { SubjectActivitySummary } from '../repositories/subject-repository'
+import { bySpokenLately } from './spoken-lately'
 
 /** A theme as the subjects index names it */
 export interface ThemeRef {
@@ -58,9 +59,17 @@ export function groupSubjectsByTheme(entries: SubjectIndexEntry[]): ThemeSection
   })
 }
 
-/** The flat view of the index: every subject, the most documented first */
-export function subjectsByActivity(entries: SubjectIndexEntry[]): SubjectIndexEntry[] {
-  return [...entries].sort(byStatements)
+/**
+ * The flat view of the index: every subject, from the one the most voices
+ * spoke on lately (`spoken-lately.ts`). The subjects as spoken on lately —
+ * and all those nobody spoke on lately — read from the most documented.
+ */
+export function subjectsByActivity(
+  entries: SubjectIndexEntry[],
+  lately: ReadonlyMap<string, number>,
+): SubjectIndexEntry[] {
+  const spokenFirst = bySpokenLately(lately)
+  return [...entries].sort((a, b) => spokenFirst(a, b) || byStatements(a, b))
 }
 
 /** Up to this many statements, a subject still needs documenting */

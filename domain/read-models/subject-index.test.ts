@@ -104,14 +104,39 @@ describe('subjectsToDocument', () => {
 })
 
 describe('subjectsByActivity', () => {
-  it('lists every subject, the most documented first, ties by title', () => {
-    const sorted = subjectsByActivity([
-      entry('Le SMIC', 6, economie),
-      entry('Orphelin', 36, null),
-      entry('Le cannabis', 6, sante),
-    ])
+  const lately = (voices: Record<string, number>) =>
+    new Map(Object.entries(voices).map(([title, count]) => [`subject-${title}`, count]))
 
-    expect(sorted.map((s) => s.title)).toEqual(['Orphelin', 'Le cannabis', 'Le SMIC'])
+  it('lists first the subjects the most voices spoke on lately, whatever was said on them before', () => {
+    const sorted = subjectsByActivity(
+      [entry('Ancien', 400, null), entry('Vif', 12, economie), entry('Remuant', 30, sante)],
+      lately({ Vif: 45, Remuant: 6 }),
+    )
+
+    expect(sorted.map((s) => s.title)).toEqual(['Vif', 'Remuant', 'Ancien'])
+  })
+
+  it('keeps every subject: those nobody spoke on lately follow, the most documented first, ties by title', () => {
+    const sorted = subjectsByActivity(
+      [
+        entry('Le SMIC', 6, economie),
+        entry('Orphelin', 36, null),
+        entry('Le cannabis', 6, sante),
+        entry('Vif', 1, economie),
+      ],
+      lately({ Vif: 2 }),
+    )
+
+    expect(sorted.map((s) => s.title)).toEqual(['Vif', 'Orphelin', 'Le cannabis', 'Le SMIC'])
+  })
+
+  it('settles two subjects as spoken on lately by the most documented', () => {
+    const sorted = subjectsByActivity(
+      [entry('Peu', 3, economie), entry('Beaucoup', 80, sante)],
+      lately({ Peu: 5, Beaucoup: 5 }),
+    )
+
+    expect(sorted.map((s) => s.title)).toEqual(['Beaucoup', 'Peu'])
   })
 })
 

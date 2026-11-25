@@ -10,8 +10,6 @@ import {
   mostSpokenDebates,
   movingDebates,
   recentSince,
-  spokenSince,
-  voicesBySubject,
 } from './home-debates'
 
 const debate = (id: string, over: Partial<Debate> = {}): Debate => ({
@@ -143,28 +141,6 @@ describe('leadingPositions', () => {
 describe('recentSince', () => {
   it('counts as recent what the last seven days brought', () => {
     expect(recentSince(new Date('2026-11-13T09:30:00Z'))).toEqual(new Date('2026-11-06T09:30:00Z'))
-  })
-})
-
-describe('voicesBySubject', () => {
-  it('counts the distinct authors who spoke on each subject', () => {
-    const voices = voicesBySubject([
-      { subjectId: 's1', authorKey: 'alma' },
-      { subjectId: 's1', authorKey: 'alma' },
-      { subjectId: 's1', authorKey: 'boris' },
-      { subjectId: 's2', authorKey: 'alma' },
-    ])
-
-    expect(Array.from(voices.entries())).toEqual([
-      ['s1', 2],
-      ['s2', 1],
-    ])
-  })
-})
-
-describe('spokenSince', () => {
-  it('goes thirty days back from the day the page renders on', () => {
-    expect(spokenSince(noon('2026-11-25'))).toEqual(noon('2026-10-26'))
   })
 })
 

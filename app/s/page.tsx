@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import { Effect } from 'effect'
 import { createAdminSupabaseClient } from '../../infra/supabase/admin'
 import { createSubjectRepository } from '../../infra/database/subject-repository-supabase'
+import { loadVoicesSince } from '../../infra/queries/spoken-lately'
+import { spokenSince } from '../../domain/read-models/spoken-lately'
 import { getAuthenticatedContributor } from '../actions/get-authenticated-contributor'
 import { canPerform } from '../../domain/reputation/permissions'
 import {
@@ -46,6 +48,11 @@ export default async function SubjectsPage({ searchParams }: PageProps) {
     searchParams,
   ])
   const view = parseIndexView(params[INDEX_VIEW_PARAM])
+  // Only the view that ranks by activity counts the voices of late
+  const spokenLately =
+    view === 'activity'
+      ? await Effect.runPromise(loadVoicesSince(supabase, spokenSince(new Date())))
+      : new Map<string, number>()
   const canAddSubject = !!contributor && canPerform(contributor.reputation, 'add_subject')
   const sections = groupSubjectsByTheme(entries)
   const totals = subjectIndexTotals(entries)
@@ -116,7 +123,7 @@ export default async function SubjectsPage({ searchParams }: PageProps) {
               <IndexViewToggle active={view} />
             </div>
             {view === 'activity' ? (
-              <MostActiveSubjects subjects={subjectsByActivity(entries)} />
+              <MostActiveSubjects subjects={subjectsByActivity(entries, spokenLately)} />
             ) : (
               <div className={styles.sections}>
                 {sections.map((section) => (

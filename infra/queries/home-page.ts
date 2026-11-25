@@ -7,7 +7,6 @@ import {
   leadingPositions,
   mostSpokenDebates,
   recentSince,
-  spokenSince,
 } from '../../domain/read-models/home-debates'
 import {
   DailySubject,
@@ -16,13 +15,15 @@ import {
   HomePage,
 } from '../../domain/read-models/home-page'
 import { orderByEngagement } from '../../domain/read-models/organisation-summary'
+import { spokenSince } from '../../domain/read-models/spoken-lately'
 import { DatabaseError } from '../../domain/repositories/errors'
 import { StatementRepository } from '../../domain/repositories/statement-repository'
 import { createOrganisationRepository } from '../database/organisation-repository-supabase'
 import { createPublicFigureRepository } from '../database/public-figure-repository-supabase'
 import { createStatementRepository } from '../database/statement-repository-supabase'
-import { loadHomeDebates, loadSiteFigures, loadVoicesSince } from './home-debates'
+import { loadHomeDebates, loadSiteFigures } from './home-debates'
 import { loadLatestJointDeclarations } from './joint-declarations'
+import { loadVoicesSince } from './spoken-lately'
 
 type Client = SupabaseClient<Database>
 
