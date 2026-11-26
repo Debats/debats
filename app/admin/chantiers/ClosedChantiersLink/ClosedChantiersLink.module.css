@@ -1,0 +1,5 @@
+/* Under the list, apart from it: the way to what the list leaves out */
+.closed {
+  font-family: var(--font-sans);
+  margin: 28px 0 0;
+}

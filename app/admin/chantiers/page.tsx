@@ -1,6 +1,11 @@
 import { Metadata } from 'next'
 import { Effect } from 'effect'
 import { Chantier, ChantierMessage } from '../../../domain/entities/chantier'
+import {
+  ChantierListParams,
+  listChantiers,
+  parseChantierListView,
+} from '../../../domain/read-models/chantier-list'
 import { tallyDrafts } from '../../../domain/read-models/chantier-summary'
 import { chantierCostCents } from '../../../domain/services/chantier-budget'
 import { chantierSpend } from '../../../domain/use-cases/chantier-spend'
@@ -12,6 +17,7 @@ import { dollars } from '../../../lib/dollars'
 import { getAdminContributor } from '../../actions/admin-guard'
 import styles from '../drafts/admin-drafts.module.css'
 import ChantierCard from './ChantierCard'
+import ClosedChantiersLink from './ClosedChantiersLink'
 import LaunchChantierForm from './LaunchChantierForm'
 import listStyles from './chantiers.module.css'
 
@@ -24,7 +30,11 @@ export const metadata: Metadata = {
 const lastAgentWord = (messages: ChantierMessage[]): ChantierMessage | null =>
   [...messages].reverse().find(({ role }) => role === 'agent') ?? null
 
-export default async function ChantiersPage() {
+interface Props {
+  searchParams: Promise<ChantierListParams>
+}
+
+export default async function ChantiersPage({ searchParams }: Props) {
   const contributor = await getAdminContributor()
   if (!contributor) {
     return (
@@ -38,30 +48,34 @@ export default async function ChantiersPage() {
   const chantiers = createChantierRepository(supabase)
   const drafts = createDraftStatementRepository(supabase)
   const services = liveServices(supabase)
+  const view = parseChantierListView(await searchParams)
 
-  const cards = await Effect.runPromise(
-    Effect.flatMap(chantiers.findAll(), (all: Chantier[]) =>
-      Effect.forEach(
-        all,
-        (chantier) =>
-          Effect.map(
-            /* The three readings at once: the session is asked while the base answers */
-            Effect.all(
-              {
-                produced: drafts.findByChantier(chantier.id),
-                messages: chantiers.findMessages(chantier.id),
-                spend: Effect.provide(chantierSpend(chantier), services),
-              },
-              { concurrency: 'unbounded' },
-            ),
-            ({ produced, messages, spend }) => ({
-              chantier,
-              tally: tallyDrafts(produced),
-              spend,
-              lastWord: lastAgentWord(messages),
-            }),
-          ),
-        { concurrency: 4 },
+  /* What the card of a chantier shows. The three readings at once: the session is asked while the base answers */
+  const cardOf = (chantier: Chantier) =>
+    Effect.all(
+      {
+        produced: drafts.findByChantier(chantier.id),
+        messages: chantiers.findMessages(chantier.id),
+        spend: Effect.provide(chantierSpend(chantier), services),
+      },
+      { concurrency: 'unbounded' },
+    ).pipe(
+      Effect.map(({ produced, messages, spend }) => ({
+        chantier,
+        tally: tallyDrafts(produced),
+        spend,
+        lastWord: lastAgentWord(messages),
+      })),
+    )
+
+  /* A chantier the view hides is not read any further: neither its drafts, nor its thread, nor its session */
+  const { cards, closedCount } = await Effect.runPromise(
+    chantiers.findAll().pipe(
+      Effect.map((all) => listChantiers(all, view)),
+      Effect.flatMap(({ shown, closedCount }) =>
+        Effect.forEach(shown, cardOf, { concurrency: 4 }).pipe(
+          Effect.map((cards) => ({ cards, closedCount })),
+        ),
       ),
     ),
   )
@@ -83,7 +97,9 @@ export default async function ChantiersPage() {
       <LaunchChantierForm />
 
       {cards.length === 0 ? (
-        <p className={styles.empty}>Aucun chantier pour l’instant.</p>
+        <p className={styles.empty}>
+          {closedCount === 0 ? 'Aucun chantier pour l’instant.' : 'Aucun chantier ouvert.'}
+        </p>
       ) : (
         <>
           <p className={listStyles.total}>
@@ -103,6 +119,7 @@ export default async function ChantiersPage() {
           </div>
         </>
       )}
+      <ClosedChantiersLink view={view} closedCount={closedCount} />
     </div>
   )
 }
